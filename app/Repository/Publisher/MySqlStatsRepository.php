@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Publisher;
 
@@ -35,6 +36,7 @@ use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
+
 use function bin2hex;
 
 class MySqlStatsRepository implements StatsRepository
@@ -736,22 +738,25 @@ class MySqlStatsRepository implements StatsRepository
     private function executeQuery(string $query, DateTimeInterface $dateStart): array
     {
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
-        $this->setDbSessionTimezone($dateTimeZone);
+        $tz = $this->setDbSessionTimezone($dateTimeZone);
         $queryResult = DB::select($query);
-        $this->unsetDbSessionTimeZone();
+        if ($tz) {
+            $this->unsetDbSessionTimeZone($tz);
+        }
 
         return $queryResult;
     }
 
-    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): void
+    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): string
     {
-        DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
+        $tz = DB::selectOne('SELECT @@session.time_zone AS tz');
         DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
+        return $tz->tz ?? '';
     }
 
-    private function unsetDbSessionTimeZone(): void
+    private function unsetDbSessionTimeZone($tz): void
     {
-        DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
+        DB::statement('SET time_zone = ?', [$tz]);
     }
 
     private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array

@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Common\Application\Factory;
 
@@ -53,7 +54,7 @@ final class TaxonomyItemFactory
             $item['values'] = $item['list'];
             unset($item['list']);
         }
-        
+
         if (!isset($item['type'])) {
             $item['type'] = 'dict';
         }
@@ -66,7 +67,7 @@ final class TaxonomyItemFactory
         );
     }
 
-    public static function groupingItem(string $key, string $label, Item...$items): Item
+    public static function groupingItem(string $key, string $label, Item ...$items): Item
     {
         return (new Item(
             new Type(Type::TYPE_GROUP),

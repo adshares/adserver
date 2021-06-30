@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
@@ -31,6 +32,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use DateTimeImmutable;
 use Exception;
 use Illuminate\Support\Facades\DB;
+
 use function factory;
 
 class SiteRankReassessRequestCommandTest extends ConsoleTestCase
@@ -76,7 +78,7 @@ class SiteRankReassessRequestCommandTest extends ConsoleTestCase
 
         DB::insert(
             'INSERT INTO network_case_logs_hourly_stats (publisher_id,site_id,views_all,views,clicks_all,clicks) '
-            .'VALUES (0x00000000000000000000000000000001,?,?,?,?,?)',
+            . 'VALUES (0x00000000000000000000000000000001,?,?,?,?,?)',
             [hex2bin($site->uuid), $views, $views, $clicks, $clicks]
         );
 
@@ -110,7 +112,7 @@ class SiteRankReassessRequestCommandTest extends ConsoleTestCase
 
         DB::insert(
             'INSERT INTO network_case_logs_hourly_stats (publisher_id,site_id,views_all,views,revenue_case) '
-            .'VALUES (0x00000000000000000000000000000001,?,?,?,?)',
+            . 'VALUES (0x00000000000000000000000000000001,?,?,?,?)',
             [hex2bin($site->uuid), $views, $views, $revenue]
         );
 
@@ -145,8 +147,8 @@ class SiteRankReassessRequestCommandTest extends ConsoleTestCase
 
         DB::insert(
             'INSERT INTO network_case_logs_hourly_stats '
-            .'(publisher_id,site_id,views_all,views,clicks_all,clicks,revenue_case) '
-            .'VALUES (0x00000000000000000000000000000001,?,?,?,?,?,?)',
+            . '(publisher_id,site_id,views_all,views,clicks_all,clicks,revenue_case) '
+            . 'VALUES (0x00000000000000000000000000000001,?,?,?,?,?,?)',
             [hex2bin($site->uuid), $views, $views, $clicks, $clicks, $revenue]
         );
 
@@ -291,7 +293,7 @@ class SiteRankReassessRequestCommandTest extends ConsoleTestCase
 
         DB::insert(
             'INSERT INTO network_case_logs_hourly_stats (publisher_id,site_id,views_all,views) '
-            .'VALUES (0x00000000000000000000000000000001,?,?,?)',
+            . 'VALUES (0x00000000000000000000000000000001,?,?,?)',
             [hex2bin($site->uuid), $views, $views]
         );
     }

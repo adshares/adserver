@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -25,6 +26,8 @@ use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+
 use function array_merge;
 use function in_array;
 use function sprintf;
@@ -220,12 +223,13 @@ class Config extends Model
 
     public static function fetchAdminSettings(): array
     {
-        $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
-            ->get()
-            ->pluck('value', 'key')
-            ->toArray();
-
-        return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);
+        return Cache::rememberForever('config.admin', function () {
+            $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
+                ->get()
+                ->pluck('value', 'key')
+                ->toArray();
+            return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);
+        });
     }
 
     public static function updateAdminSettings(array $settings): void
@@ -233,5 +237,6 @@ class Config extends Model
         foreach ($settings as $key => $value) {
             self::upsertByKey($key, $value);
         }
+        Cache::forget('config.admin');
     }
 }

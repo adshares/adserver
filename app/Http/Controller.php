@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,7 +33,9 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 abstract class Controller extends BaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+    use AuthorizesRequests;
+    use DispatchesJobs;
+    use ValidatesRequests;
 
     protected static function json($data = [], $code = 200, $errors = false): JsonResponse
     {
@@ -47,7 +50,7 @@ abstract class Controller extends BaseController
     /**
      * @deprecated
      */
-    protected function validateRequestObject(Request $request, String $name, array $rules)
+    protected function validateRequestObject(Request $request, string $name, array $rules)
     {
         if (!$request->has($name)) {
             throw new UnprocessableEntityHttpException("Missing request object '$name'");

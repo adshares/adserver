@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -35,26 +36,26 @@ class CampaignRepository
 
     public function fetchActiveCampaigns(): Collection
     {
-        $query = Campaign::where('status', Campaign::STATUS_ACTIVE);
+        $query = Campaign::where('campaigns.status', Campaign::STATUS_ACTIVE);
 
         $query->where(
             function ($q) {
-                $q->where('time_end', '>', new DateTime())
-                    ->orWhere('time_end', null);
+                $q->where('campaigns.time_end', '>', new DateTime())
+                    ->orWhere('campaigns.time_end', null);
             }
         );
 
-        return $query->get();
+        return $query->with('banners')->get();
     }
 
     public function fetchCampaignByIds(array $campaignIds): Collection
     {
-        return Campaign::whereIn('id', $campaignIds)->get();
+        return Campaign::whereIn('id', $campaignIds)->with('banners')->get();
     }
 
     public function fetchCampaignById(int $campaignId): Campaign
     {
-        return (new Campaign())->findOrFail($campaignId);
+        return (new Campaign())->with('banners')->findOrFail($campaignId);
     }
 
     public function fetchCampaignByIdWithConversions(int $campaignId): Campaign

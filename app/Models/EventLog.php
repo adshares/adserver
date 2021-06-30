@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -39,6 +40,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use stdClass;
+
 use function hex2bin;
 
 /**
@@ -84,7 +86,7 @@ class EventLog extends Model
     public const TYPE_VIEW = 'view';
 
     public const TYPE_CLICK = 'click';
-    
+
     public const TYPE_SHADOW_CLICK = 'shadow-click';
 
     public const TYPE_CONVERSION = 'conversion';
@@ -184,7 +186,7 @@ SQL;
         }
 
         if (DB::isMySql()) {
-            $query->getQuery()->fromRaw($query->getQuery()->from.' FORCE INDEX ('.self::INDEX_CREATED_AT.')');
+            $query->getQuery()->fromRaw($query->getQuery()->from . ' FORCE INDEX (' . self::INDEX_CREATED_AT . ')');
         }
 
         return $query->get();
@@ -196,7 +198,7 @@ SQL;
         foreach (array_chunk($eventIds, self::CHUNK_SIZE) as $ids) {
             $query = sprintf(
                 self::SQL_QUERY_SELECT_EVENTS_TO_UPDATE_WITH_ADPAY_REPORT_TEMPLATE,
-                str_repeat('?,', count($ids) - 1).'?'
+                str_repeat('?,', count($ids) - 1) . '?'
             );
             $result = array_merge($result, DB::select($query, $ids));
         }
@@ -240,10 +242,10 @@ SQL;
         $attr = $log->getAttributes();
         $query =
             "INSERT INTO event_logs ("
-            .implode(',', array_keys($attr))
-            .") select ?"
-            .str_repeat(",?", count($attr) - 1)
-            ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
+            . implode(',', array_keys($attr))
+            . ") select ?"
+            . str_repeat(",?", count($attr) - 1)
+            . " from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
         DB::affectingStatement($query, array_merge(array_values($attr), [$attr['event_id']]));
 
         DB::commit();
@@ -292,10 +294,10 @@ SQL;
         $attr = $log->getAttributes();
         $query =
             "INSERT INTO event_logs ("
-            .implode(',', array_keys($attr))
-            .") select ?"
-            .str_repeat(",?", count($attr) - 1)
-            ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
+            . implode(',', array_keys($attr))
+            . ") select ?"
+            . str_repeat(",?", count($attr) - 1)
+            . " from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
         DB::affectingStatement($query, array_merge(array_values($attr), [$attr['event_id']]));
 
         DB::commit();

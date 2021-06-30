@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
@@ -31,6 +32,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
 use Illuminate\Http\Response;
 use SodiumException;
+
 use function bin2hex;
 use function hash;
 use function hex2bin;
@@ -52,7 +54,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywords($banner)
         );
 
@@ -75,7 +77,7 @@ class ClassificationControllerTest extends TestCase
         $banner->delete();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywords($banner)
         );
 
@@ -90,7 +92,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsWithoutId($banner)
         );
 
@@ -105,7 +107,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsWithoutSignature($banner)
         );
 
@@ -120,7 +122,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsWithoutTimestamp($banner)
         );
 
@@ -135,7 +137,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsInvalidSignature($banner)
         );
 
@@ -150,12 +152,12 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywords($banner)
         );
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsWithOlderTimestamp($banner)
         );
 
@@ -177,7 +179,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsError($banner)
         );
 
@@ -193,7 +195,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsErrorWithoutCode($banner)
         );
 
@@ -205,7 +207,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
             $this->getKeywordsEmpty()
         );
 
@@ -220,7 +222,7 @@ class ClassificationControllerTest extends TestCase
         $banner = $this->insertBanner();
 
         $response = $this->patchJson(
-            self::URI_UPDATE.'unknown_classifier',
+            self::URI_UPDATE . 'unknown_classifier',
             $this->getKeywords($banner)
         );
 
@@ -251,7 +253,7 @@ class ClassificationControllerTest extends TestCase
         $timestamp = time();
         $message = hash(
             'sha256',
-            hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+            hex2bin($banner->creative_sha1) . $timestamp . ClassifierExternalKeywordsSerializer::serialize($keywords)
         );
         $signature = $this->sign($message);
 
@@ -294,7 +296,7 @@ class ClassificationControllerTest extends TestCase
         $keywords = $this->getKeywords($banner);
         $keywords[0]['signature'] =
             '000000000000000000000000000000000000000000000000000000000000000000000000000000000'
-            .'00000000000000000000000000000000000000000000000';
+            . '00000000000000000000000000000000000000000000000';
 
         return $keywords;
     }
@@ -309,7 +311,7 @@ class ClassificationControllerTest extends TestCase
         $timestamp = 1566463900;
         $message = hash(
             'sha256',
-            hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+            hex2bin($banner->creative_sha1) . $timestamp . ClassifierExternalKeywordsSerializer::serialize($keywords)
         );
         $signature = $this->sign($message);
 

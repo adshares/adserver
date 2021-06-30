@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -117,7 +118,7 @@ class AuthController extends Controller
                 Response::HTTP_TOO_MANY_REQUESTS,
                 [
                     'message' => 'You can request to resend email activation every 15 minutes.'
-                        .' Please wait 15 minutes or less.',
+                        . ' Please wait 15 minutes or less.',
                 ]
             );
         }
@@ -157,8 +158,8 @@ class AuthController extends Controller
                 Response::HTTP_TOO_MANY_REQUESTS,
                 [
                     'message' => "You have already requested email change.\n"
-                        ."You can request email change every 5 minutes.\n"
-                        .'Please wait 5 minutes or less to start configuring another email address.',
+                        . "You can request email change every 5 minutes.\n"
+                        . 'Please wait 5 minutes or less to start configuring another email address.',
                 ]
             );
         }
@@ -261,10 +262,12 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
-        if (Auth::guard()->attempt(
-            $request->only('email', 'password'),
-            $request->filled('remember')
-        )) {
+        if (
+            Auth::guard()->attempt(
+                $request->only('email', 'password'),
+                $request->filled('remember')
+            )
+        ) {
             Auth::user()->generateApiKey();
 
             return $this->check();

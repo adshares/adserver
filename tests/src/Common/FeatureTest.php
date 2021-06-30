@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,13 +19,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Tests\Common;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Feature;
+
 use function factory;
 
 class FeatureTest extends TestCase
@@ -34,7 +36,7 @@ class FeatureTest extends TestCase
     public function testEnabled(): void
     {
         factory(Config::class)->create([
-            'key' => self::FEATURE_KEY.'-enabled',
+            'key' => self::FEATURE_KEY . '-enabled',
             'value' => '1',
         ]);
 
@@ -49,7 +51,7 @@ class FeatureTest extends TestCase
     public function testEnabledFalse(): void
     {
         factory(Config::class)->create([
-            'key' => self::FEATURE_KEY.'-enabled',
+            'key' => self::FEATURE_KEY . '-enabled',
             'value' => '0',
         ]);
 

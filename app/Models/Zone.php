@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -27,24 +28,27 @@ use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use function array_map;
+use Illuminate\Support\Facades\Cache;
+
 use function array_unique;
 use function hex2bin;
 
 /**
- * @property Site   site
- * @property int    id
+ * @property Site site
+ * @property int id
  * @property string name
  * @property string code
  * @property string uuid
- * @property int    site_id
+ * @property int site_id
  * @property string size
  * @property string label
  * @property string type
  * @property int status
- * @property array  tags
+ * @property array tags
  * @mixin Builder
  */
 class Zone extends Model
@@ -59,91 +63,101 @@ class Zone extends Model
 
     public const STATUS_ARCHIVED = 2;
 
-    public const STATUSES
-        = [
-            self::STATUS_DRAFT,
-            self::STATUS_ACTIVE,
-            self::STATUS_ARCHIVED,
-        ];
+    public const STATUSES = [
+        self::STATUS_DRAFT,
+        self::STATUS_ACTIVE,
+        self::STATUS_ARCHIVED,
+    ];
 
     public $publisher_id;
 
-    protected $fillable
-        = [
-            'name',
-            'size',
-            'type',
-            'status',
-            'uuid',
-        ];
+    protected $fillable = [
+        'name',
+        'size',
+        'type',
+        'status',
+        'uuid',
+    ];
 
-    protected $visible
-        = [
-            'id',
-            'name',
-            'code',
-            'label',
-            'size',
-            'status',
-            'tags',
-            'type',
-            'uuid'
-        ];
+    protected $visible = [
+        'id',
+        'name',
+        'code',
+        'label',
+        'size',
+        'status',
+        'tags',
+        'type',
+        'uuid'
+    ];
 
-    protected $appends
-        = [
-            'code',
-            'label',
-            'tags',
-        ];
+    protected $appends = [
+        'code',
+        'label',
+        'tags',
+    ];
 
     protected $touches = ['site'];
 
-    protected $traitAutomate
-        = [
-            'uuid' => 'BinHex',
-        ];
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
 
-    protected $dispatchesEvents
-        = [
-            'creating' => GenerateUUID::class,
-        ];
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
+    ];
 
-    public static function fetchByPublicId(string $uuid): ?Zone
+    public static function fetchByPublicId(string $uuid): ?self
     {
-        return self::where('uuid', hex2bin($uuid))->first();
+        if (false === ($binId = @hex2bin($uuid))) {
+            return null;
+        }
+
+        return Cache::remember(
+            'zones.' . $uuid,
+            (int)(config('app.network_data_cache_ttl') / 60),
+            function () use ($binId) {
+                return self::where('uuid', $binId)->with(
+                    [
+                        'site',
+                        'site.zones',
+                        'site.user',
+                    ]
+                )->first();
+            }
+        );
     }
 
     public static function findByPublicIds(array $publicIds): Collection
     {
-        $ids = [];
-        foreach ($publicIds as $id) {
-            $binId = @hex2bin($id);
-            if ($binId !== false) {
-                $ids[] = $binId;
+        $zones = [];
+        foreach (array_unique($publicIds) as $uuid) {
+            if (null !== ($zone = self::fetchByPublicId($uuid))) {
+                $zones[] = $zone;
             }
         }
-        $binUniquePublicIds = array_unique($ids);
-
-        return self::whereIn('uuid', $binUniquePublicIds)->get();
+        return collect($zones);
     }
 
     public static function fetchPublisherPublicIdByPublicId(string $publicId): string
     {
-        $zone = self::where('uuid', hex2bin($publicId))->firstOrFail();
-        $user = $zone->site->user;
+        if (null === ($zone = self::fetchByPublicId($publicId))) {
+            throw (new ModelNotFoundException())->setModel(static::class);
+        }
 
-        return $user->uuid;
+        return $zone->site->user->uuid;
     }
 
     public static function fetchSitePublicIdByPublicId(string $publicId): string
     {
-        $zone = self::where('uuid', hex2bin($publicId))->firstOrFail();
+        if (null === ($zone = self::fetchByPublicId($publicId))) {
+            throw (new ModelNotFoundException())->setModel(static::class);
+        }
 
         return $zone->site->uuid;
     }
 
-    public function site()
+    public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
     }

@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -55,6 +56,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
 use function urlencode;
 
 class SupplyController extends Controller
@@ -117,7 +119,8 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Cannot run in iframe');
         }
         if ($decodedQueryData['page']['pop'] ?? false) {
-            if (DomainReader::domain($decodedQueryData['page']['ref'] ?? '')
+            if (
+                DomainReader::domain($decodedQueryData['page']['ref'] ?? '')
                 != DomainReader::domain($decodedQueryData['page']['url'] ?? '')
             ) {
                 throw new BadRequestHttpException('Bad request.');
@@ -348,7 +351,8 @@ class SupplyController extends Controller
 
     private function validateEventRequest(Request $request): void
     {
-        if (!$request->query->has('r')
+        if (
+            !$request->query->has('r')
             || !$request->query->has('ctx')
             || !Utils::isUuidValid($request->query->get('cid'))
         ) {

@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Services;
 
@@ -41,9 +42,9 @@ use Throwable;
 
 final class NowPayments
 {
-    const NOW_PAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
+    private const NOW_PAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 
-    const NOW_PAYMENTS_URL = 'https://nowpayments.io/payment';
+    private const NOW_PAYMENTS_URL = 'https://nowpayments.io/payment';
 
     /** @var string */
     private $apiKey;
@@ -119,8 +120,8 @@ final class NowPayments
             'dataSource' => "woocommerce",
             'apiKey' => $this->apiKey,
             'ipnURL' => SecureUrl::change(route('now-payments.notify', ['uuid' => $user->uuid])),
-            'successURL' => $panelUrl.'/now-payments/success',
-            'cancelURL' => $panelUrl.'/now-payments/canceled',
+            'successURL' => $panelUrl . '/now-payments/success',
+            'cancelURL' => $panelUrl . '/now-payments/canceled',
             'orderID' => $orderId,
             'customerEmail' => $user->email,
             'paymentCurrency' => $this->currency,
@@ -368,7 +369,7 @@ final class NowPayments
         try {
             $client = new Client();
             $response = $client->get(
-                self::NOW_PAYMENTS_API_URL.'/estimate?'.http_build_query(
+                self::NOW_PAYMENTS_API_URL . '/estimate?' . http_build_query(
                     ['amount' => 100, 'currency_from' => $this->currency, 'currency_to' => $currency]
                 ),
                 [RequestOptions::HEADERS => ['x-api-key' => $this->apiKey]]

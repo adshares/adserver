@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -90,11 +91,13 @@ class Token extends Model
 
     private static function canGenerate(int $user_id, string $tag, int $older_then_seconds): bool
     {
-        if (self::where('user_id', $user_id)->where('tag', $tag)->where(
-            'created_at',
-            '>',
-            date('Y-m-d H:i:s', time() - $older_then_seconds)
-        )->count()) {
+        if (
+            self::where('user_id', $user_id)->where('tag', $tag)->where(
+                'created_at',
+                '>',
+                date('Y-m-d H:i:s', time() - $older_then_seconds)
+            )->count()
+        ) {
             return false;
         }
 

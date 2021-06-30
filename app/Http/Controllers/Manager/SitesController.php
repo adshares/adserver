@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -371,7 +372,7 @@ class SitesController extends Controller
         }
         if (SitesRejectedDomain::isDomainRejected($domain)) {
             throw new UnprocessableEntityHttpException(
-                'The subdomain '.$domain.' is not supported. Please use your own domain.'
+                'The subdomain ' . $domain . ' is not supported. Please use your own domain.'
             );
         }
     }

@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -20,7 +21,6 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -31,6 +31,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\Cache;
+
 use function array_map;
 use function hex2bin;
 
@@ -40,6 +42,9 @@ use function hex2bin;
  */
 class NetworkBanner extends Model
 {
+    use AutomateMutators;
+    use BinHex;
+
     private const TYPE_HTML = 'html';
 
     private const TYPE_IMAGE = 'image';
@@ -83,9 +88,6 @@ class NetworkBanner extends Model
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPM = 'network_campaigns.max_cpm';
 
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPC = 'network_campaigns.max_cpc';
-
-    use AutomateMutators;
-    use BinHex;
 
     /**
      * The attributes that are mass assignable.
@@ -138,9 +140,19 @@ class NetworkBanner extends Model
         return with(new static())->getTable();
     }
 
-    public static function findByUuid(string $bannerId): ?self
+    public static function fetchByPublicId(string $uuid): ?self
     {
-        return self::where('uuid', hex2bin($bannerId))->first();
+        if (false === ($binId = @hex2bin($uuid))) {
+            return null;
+        }
+
+        return Cache::remember(
+            'network_banners.' . $uuid,
+            (int)(config('app.network_data_cache_ttl') / 60),
+            function () use ($binId) {
+                return self::where('uuid', $binId)->with(['campaign'])->first();
+            }
+        );
     }
 
     public static function fetch(int $limit, int $offset): Collection
@@ -231,7 +243,7 @@ class NetworkBanner extends Model
         }
 
         if (null !== $networkBannerFilter->getLandingUrl()) {
-            $query->where('network_campaigns.landing_url', 'like', '%'.$networkBannerFilter->getLandingUrl().'%');
+            $query->where('network_campaigns.landing_url', 'like', '%' . $networkBannerFilter->getLandingUrl() . '%');
         }
 
         return $query;
@@ -404,15 +416,5 @@ class NetworkBanner extends Model
     public function banners(): HasMany
     {
         return $this->hasMany(Classification::class);
-    }
-
-    public static function fetchByPublicId(string $publicId): ?self
-    {
-        return self::where('uuid', hex2bin($publicId))->first();
-    }
-
-    public static function fetchByPublicIdWithCampaign(string $publicId)
-    {
-        return self::with('campaign')->where('uuid', hex2bin($publicId))->first();
     }
 }

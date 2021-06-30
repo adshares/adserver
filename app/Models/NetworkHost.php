@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Models;
 
@@ -33,6 +34,7 @@ use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+
 use function json_decode;
 use function json_encode;
 
@@ -148,7 +150,7 @@ class NetworkHost extends Model
             new NullUrl(),
             new NullUrl(),
             new NullUrl(),
-            new SecureUrl($this->attributes['host'].'/adshares/inventory/list'),
+            new SecureUrl($this->attributes['host'] . '/adshares/inventory/list'),
             new EmptyAccountId(),
             null,
             Info::CAPABILITY_ADVERTISER

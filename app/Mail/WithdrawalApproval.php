@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -24,11 +25,13 @@ use Adshares\Ads\Util\AdsConverter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+
 use function config;
 
 class WithdrawalApproval extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     private $tokenId;
 
@@ -52,7 +55,7 @@ class WithdrawalApproval extends Mailable
     public function build(): self
     {
         $variables = [
-            'url' => config('app.adpanel_url')."/auth/withdrawal-confirmation/{$this->tokenId}",
+            'url' => config('app.adpanel_url') . "/auth/withdrawal-confirmation/{$this->tokenId}",
             'amount' => AdsConverter::clicksToAds($this->amount),
             'currency' => strtoupper($this->currency),
             'fee' => AdsConverter::clicksToAds($this->fee),

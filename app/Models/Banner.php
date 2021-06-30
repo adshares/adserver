@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -32,6 +33,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
+
 use function hex2bin;
 use function in_array;
 
@@ -52,6 +55,10 @@ use function in_array;
  */
 class Banner extends Model
 {
+    use AutomateMutators;
+    use BinHex;
+    use SoftDeletes;
+
     public const TYPE_IMAGE = 0;
 
     public const TYPE_HTML = 1;
@@ -73,10 +80,6 @@ class Banner extends Model
     public const STATUS_REJECTED = 3;
 
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
-
-    use AutomateMutators;
-    use BinHex;
-    use SoftDeletes;
 
     protected $dates = [
         'deleted_at',
@@ -179,6 +182,26 @@ class Banner extends Model
     public static function fetchBanner(string $bannerUuid): ?self
     {
         return self::where('uuid', hex2bin($bannerUuid))->first();
+    }
+
+    public static function fetchByPublicId(string $uuid): ?self
+    {
+        if (false === ($binId = @hex2bin($uuid))) {
+            return null;
+        }
+
+        return Cache::remember(
+            'banners.' . $uuid,
+            (int)(config('app.network_data_cache_ttl') / 60),
+            function () use ($binId) {
+                return self::where('uuid', $binId)->with(
+                    [
+                        'campaign',
+                        'campaign.user',
+                    ]
+                )->first();
+            }
+        );
     }
 
     public static function fetchBannerByPublicIds(array $publicIds): Collection

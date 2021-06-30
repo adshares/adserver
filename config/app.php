@@ -114,6 +114,7 @@ return [
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
     'check_zone_domain' => (bool)env('CHECK_ZONE_DOMAIN', false),
     'allow_zone_in_iframe' => (bool)env('ALLOW_ZONE_IN_IFRAME', true),
+    'network_data_cache_ttl' => (int)env('NETWORK_DATA_CACHE_TTL', 60),
 
     'campaign_min_budget' => (int)env('CAMPAIGN_MIN_BUDGET',5000000000),
     'campaign_min_cpm' => (int)env('CAMPAIGN_MIN_CPM',5000000000),

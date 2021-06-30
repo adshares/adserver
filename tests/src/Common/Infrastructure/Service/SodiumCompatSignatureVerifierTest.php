@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Tests\Common\Infrastructure\Service;
 
@@ -28,8 +29,8 @@ use PHPUnit\Framework\TestCase;
 
 class SodiumCompatSignatureVerifierTest extends TestCase
 {
-    const PRIVATE_KEY = 'CB5A6B541436A904BCFEE0CCE2D2B207977012492A035C5455027D5E48176EE1';
-    const PUBLIC_KEY = 'A25FFEE788D6E06D2DA70B48E44BCA0ABC5E5BEB16252B3E022C6C7B971EECC2';
+    private const PRIVATE_KEY = 'CB5A6B541436A904BCFEE0CCE2D2B207977012492A035C5455027D5E48176EE1';
+    private const PUBLIC_KEY = 'A25FFEE788D6E06D2DA70B48E44BCA0ABC5E5BEB16252B3E022C6C7B971EECC2';
 
     public function testIfCreatedSignatureIsCorrect(): void
     {

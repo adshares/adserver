@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,7 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -43,12 +45,12 @@ class DemandSendPayments extends BaseCommand
     public function handle(Ads $ads): int
     {
         if (!$this->lock()) {
-            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
+            $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
 
             return self::STATUS_LOCKED;
         }
 
-        $this->info('Start command '.self::COMMAND_SIGNATURE);
+        $this->info('Start command ' . self::COMMAND_SIGNATURE);
 
         $allPayments = Payment::fetchByStatus(Payment::STATE_NEW, false);
         /** @var $zeroPayments Collection */
@@ -70,7 +72,7 @@ class DemandSendPayments extends BaseCommand
             return self::STATUS_OK;
         }
 
-        $this->info("Sending $paymentCount payments from ".config('app.adshares_address').'.');
+        $this->info("Sending $paymentCount payments from " . config('app.adshares_address') . '.');
 
         try {
             $tx = $ads->sendPayments($payments);

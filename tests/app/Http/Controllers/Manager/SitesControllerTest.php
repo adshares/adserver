@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -33,6 +34,7 @@ use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTimeImmutable;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+
 use function GuzzleHttp\json_decode;
 
 class SitesControllerTest extends TestCase
@@ -93,7 +95,7 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
 
-        $response = $this->getJson(self::URI.'/1');
+        $response = $this->getJson(self::URI . '/1');
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -111,7 +113,7 @@ class SitesControllerTest extends TestCase
 
         $id = $this->getIdFromLocation($response->headers->get('Location'));
 
-        $response = $this->getJson(self::URI.'/'.$id);
+        $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::SITE_STRUCTURE)
             ->assertJsonFragment(
@@ -357,10 +359,10 @@ JSON
         $this->actingAs($user, 'api');
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $response = $this->patchJson(self::URI."/{$site->id}", ['site' => $data]);
+        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => $data]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $this->getJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_OK)->assertJsonFragment(
+        $this->getJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_OK)->assertJsonFragment(
             [
                 'name' => $data['name'] ?? $site->name,
                 'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
@@ -375,9 +377,9 @@ JSON
         $this->actingAs($user, 'api');
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $this->deleteJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_OK);
+        $this->deleteJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_OK);
 
-        $this->getJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+        $this->getJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testDeleteSiteWithZones(): void
@@ -395,7 +397,7 @@ JSON
             ]
         );
 
-        $this->deleteJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_OK);
+        $this->deleteJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_OK);
 
         $this->assertDatabaseMissing(
             'sites',
@@ -429,7 +431,7 @@ JSON
             ]
         );
 
-        $this->getJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+        $this->getJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testFailDeleteNotOwnedSite(): void
@@ -440,7 +442,7 @@ JSON
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
         $this->actingAs(factory(User::class)->create(), 'api');
-        $this->deleteJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+        $this->deleteJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function updateDataProvider(): array
@@ -484,13 +486,13 @@ JSON
         $site->zones(
             factory(Zone::class, 3)->create(['site_id' => $site->id])
         );
-        $response = $this->getJson(self::URI."/{$site->id}");
+        $response = $this->getJson(self::URI . "/{$site->id}");
         $response->assertJsonCount(3, 'adUnits');
 
-        $response = $this->patchJson(self::URI."/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $response = $this->getJson(self::URI."/{$site->id}");
+        $response = $this->getJson(self::URI . "/{$site->id}");
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::SITE_STRUCTURE);
         $response->assertJsonCount(2, 'adUnits');
@@ -561,13 +563,13 @@ JSON
         $site->zones(
             factory(Zone::class, 3)->create(['site_id' => $site->id])
         );
-        $response = $this->getJson(self::URI."/{$site->id}");
+        $response = $this->getJson(self::URI . "/{$site->id}");
         $response->assertJsonCount(3, 'adUnits');
 
-        $response = $this->patchJson(self::URI."/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $response = $this->getJson(self::URI."/{$site->id}");
+        $response = $this->getJson(self::URI . "/{$site->id}");
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::SITE_STRUCTURE);
         $response->assertJsonCount(2, 'adUnits');
@@ -586,7 +588,7 @@ JSON
 
         $id = $this->getIdFromLocation($postResponse->headers->get('Location'));
 
-        $response = $this->getJson(self::URI.'/'.$id);
+        $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonCount(
             2,
             'filtering'
@@ -689,7 +691,7 @@ JSON
         /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $response = $this->getJson('/api/sites/'.$site->id.'/codes');
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
 
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(['codes']);
     }
@@ -702,7 +704,7 @@ JSON
         /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $response = $this->getJson('/api/sites/'.$site->id.'/codes');
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -720,7 +722,7 @@ JSON
             factory(Zone::class)->create(['site_id' => $site->id, 'size' => $size]);
         }
 
-        $response = $this->getJson('/api/sites/sizes/'.$site->id);
+        $response = $this->getJson('/api/sites/sizes/' . $site->id);
 
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SIZES_STRUCTURE);
         self::assertEquals($sizes, $response->json('sizes'));
@@ -740,7 +742,7 @@ JSON
             ]
         );
 
-        $response = $this->getJson('/api/sites/'.$site->id.'/rank');
+        $response = $this->getJson('/api/sites/' . $site->id . '/rank');
 
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::RANK_STRUCTURE);
         self::assertEquals(0.2, $response->json('rank'));

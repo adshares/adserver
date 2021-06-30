@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Common;
 
@@ -26,6 +27,7 @@ use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
 use RuntimeException;
+
 use function implode;
 use function sprintf;
 use function str_replace;
@@ -98,15 +100,15 @@ abstract class MySqlQueryBuilder
         $this->query = str_replace('#columns', $replacement, $this->query);
 
         $additional = implode(' ', $this->whereConditions);
-        $replacement = $additional ? 'WHERE '.$additional : '';
+        $replacement = $additional ? 'WHERE ' . $additional : '';
         $this->query = str_replace('#where', $replacement, $this->query);
 
         $additional = implode(',', $this->groupByColumns);
-        $replacement = $additional ? 'GROUP BY '.$additional : '';
+        $replacement = $additional ? 'GROUP BY ' . $additional : '';
         $this->query = str_replace('#groupBy', $replacement, $this->query);
 
         $additional = implode(' ', $this->havingConditions);
-        $replacement = $additional ? 'HAVING '.$additional : '';
+        $replacement = $additional ? 'HAVING ' . $additional : '';
         $this->query = str_replace('#having', $replacement, $this->query);
 
         $additional = implode(' ', $this->joins);

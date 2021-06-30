@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -36,6 +37,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use DateTimeImmutable;
 use stdClass;
 use Throwable;
+
 use function sprintf;
 
 class SupplyProcessPayments extends BaseCommand
@@ -96,12 +98,12 @@ SQL;
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->getName().' already running');
+            $this->info('Command ' . $this->getName() . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->getName());
+        $this->info('Start command ' . $this->getName());
 
         $adsPayments = AdsPayment::fetchByStatus(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE);
 
@@ -142,7 +144,7 @@ SQL;
             NetworkCaseLogsHourlyMeta::invalidate($timestamp);
         }
 
-        $this->info('End command '.$this->getName());
+        $this->info('End command ' . $this->getName());
     }
 
     private function handleEventPaymentCandidate(AdsPayment $incomingPayment): void
@@ -173,7 +175,7 @@ SQL;
                     $offset
                 );
                 $paymentDetailsSize = count($paymentDetails);
-            } catch (EmptyInventoryException|UnexpectedClientResponseException $clientException) {
+            } catch (EmptyInventoryException | UnexpectedClientResponseException $clientException) {
                 return;
             }
 
@@ -210,7 +212,7 @@ SQL;
             return [];
         }
 
-        $whereInPlaceholder = str_repeat('?,', count($adsPaymentIds) - 1).'?';
+        $whereInPlaceholder = str_repeat('?,', count($adsPaymentIds) - 1) . '?';
         $query = sprintf(
             self::SQL_QUERY_SELECT_TIMESTAMPS_TO_UPDATE_TEMPLATE,
             $whereInPlaceholder,

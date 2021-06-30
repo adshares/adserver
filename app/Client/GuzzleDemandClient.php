@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Client;
 
@@ -48,6 +49,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
+
 use function GuzzleHttp\json_decode;
 use function json_encode;
 
@@ -56,7 +58,7 @@ final class GuzzleDemandClient implements DemandClient
     private const VERSION = '0.1';
 
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
-    .'?limit={limit}&offset={offset}';
+    . '?limit={limit}&offset={offset}';
 
     /** @var ClassifierExternalRepository */
     private $classifierRepository;
@@ -312,7 +314,7 @@ final class GuzzleDemandClient implements DemandClient
 
         foreach ($expectedKeys as $key) {
             if (!isset($data[$key])) {
-                Log::debug(__METHOD__.' Invalid info.json: '.json_encode($data));
+                Log::debug(__METHOD__ . ' Invalid info.json: ' . json_encode($data));
 
                 throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
             }
@@ -359,7 +361,8 @@ final class GuzzleDemandClient implements DemandClient
         $checksum = $banner['checksum'] ?? '';
         $invalidClassifiers = [];
         foreach ($classification as $classifier => $classificationItem) {
-            if (!isset($classificationItem['signature']) || !isset($classificationItem['signed_at'])
+            if (
+                !isset($classificationItem['signature']) || !isset($classificationItem['signed_at'])
                 || !$this->classifierExternalSignatureVerifier->isSignatureValid(
                     (string)$classifier,
                     $classificationItem['signature'],
@@ -369,7 +372,8 @@ final class GuzzleDemandClient implements DemandClient
                         $classificationItem['signed_at']
                     )->getTimestamp(),
                     $classificationItem['keywords'] ?? []
-                )) {
+                )
+            ) {
                 $invalidClassifiers[] = $classifier;
             }
         }

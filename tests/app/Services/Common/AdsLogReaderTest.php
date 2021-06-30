@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Services\Common;
 
@@ -118,7 +119,7 @@ final class AdsLogReaderTest extends TestCase
             "tx": {
                 "data": "11010001000000FA86C45B",
                 "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF50024EED1D3BC0D'
-            .'95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
+            . '95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
                 "time": "1539606266",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -189,7 +190,7 @@ final class AdsLogReaderTest extends TestCase
             "tx": {
                 "data": "11010001000000FA86C45B",
                 "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF5002'
-            .'4EED1D3BC0D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
+            . '4EED1D3BC0D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
                 "time": "1539606266",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -520,7 +521,7 @@ final class AdsLogReaderTest extends TestCase
             "tx": {
                 "data": "11010001000000FA86C45B",
                 "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF50024EED1D3BC0'
-            .'D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
+            . 'D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
                 "time": "1539606266",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",

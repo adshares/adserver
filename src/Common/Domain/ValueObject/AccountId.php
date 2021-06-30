@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -17,12 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Id;
 use Adshares\Common\Exception\InvalidArgumentException;
+
 use function dechex;
 use function ord;
 use function preg_match;
@@ -42,8 +45,8 @@ final class AccountId implements Id
     {
         if (!self::isValid($value, $strict)) {
             throw new InvalidArgumentException("'$value' is NOT a"
-                .($strict ? ' STRICTLY' : '')
-                .' VALID AccountId representation.');
+                . ($strict ? ' STRICTLY' : '')
+                . ' VALID AccountId representation.');
         }
 
         $this->value = strtoupper($value);
@@ -52,8 +55,8 @@ final class AccountId implements Id
     public static function isValid(string $value, bool $strict = false): bool
     {
         $pattern = '/^[0-9A-F]{4}-[0-9A-F]{8}-([0-9A-F]{4}|'
-            .self::LOOSELY_VALID_CHECKSUM
-            .')$/i';
+            . self::LOOSELY_VALID_CHECKSUM
+            . ')$/i';
 
         if (1 === preg_match($pattern, $value)) {
             $checksum = strtoupper(substr($value, -4));

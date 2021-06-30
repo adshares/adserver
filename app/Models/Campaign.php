@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -38,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
+
 use function hex2bin;
 
 /**
@@ -370,10 +372,12 @@ class Campaign extends Model
             $budget = $budget->add($this->getBudgetForCurrentDateTime());
         }
 
-        if (!$this->updateBlockadeOrFailIfNotAllowed(
-            $exchangeRate->toClick($budget->total()),
-            $exchangeRate->toClick($budget->bonusable())
-        )) {
+        if (
+            !$this->updateBlockadeOrFailIfNotAllowed(
+                $exchangeRate->toClick($budget->total()),
+                $exchangeRate->toClick($budget->bonusable())
+            )
+        ) {
             return false;
         }
 
@@ -439,9 +443,11 @@ class Campaign extends Model
 
     private function getBudgetForCurrentDateTime(): AdvertiserBudget
     {
-        if ($this->time_end !== null
+        if (
+            $this->time_end !== null
             && DateTime::createFromFormat(DateTimeInterface::ATOM, $this->time_end)
-            < DateUtils::getDateTimeRoundedToCurrentHour()) {
+            < DateUtils::getDateTimeRoundedToCurrentHour()
+        ) {
             return new AdvertiserBudget();
         }
 

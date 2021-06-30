@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -25,21 +26,21 @@ final class AdsUtils
     /**
      * Minimum transfer fee `TXS_MIN_FEE`
      */
-    const TXS_MIN_FEE = 10000;
+    public const TXS_MIN_FEE = 10000;
 
     /**
      * Local transfer coefficient `TXS_PUT_FEE`
      */
-    const TXS_LOCAL_FEE = 0.0005;
+    public const TXS_LOCAL_FEE = 0.0005;
 
-    const TXS_LOCAL_FEE_DIVISOR = 2000;
+    public const TXS_LOCAL_FEE_DIVISOR = 2000;
 
     /**
      * Remote transfer coefficient `TXS_LNG_FEE`
      */
-    const TXS_REMOTE_FEE = 0.0005;
+    public const TXS_REMOTE_FEE = 0.0005;
 
-    const TXS_REMOTE_FEE_DIVISOR = 2000;
+    public const TXS_REMOTE_FEE_DIVISOR = 2000;
 
     /**
      * Calculates transfer amount basing on total (amount + fee).

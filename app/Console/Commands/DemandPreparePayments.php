@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,7 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -39,7 +41,7 @@ class DemandPreparePayments extends BaseCommand
 {
     public const COMMAND_SIGNATURE = 'ops:demand:payments:prepare';
 
-    protected $signature = self::COMMAND_SIGNATURE.'
+    protected $signature = self::COMMAND_SIGNATURE . '
                             {--c|chunkSize=10000}
                             {--f|from= : Date from which unpaid events will be searched}
                             {--t|to= : Date to which unpaid events will be searched}';
@@ -59,12 +61,12 @@ class DemandPreparePayments extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
+            $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.self::COMMAND_SIGNATURE);
+        $this->info('Start command ' . self::COMMAND_SIGNATURE);
         $from = $this->getDateTimeFromOption('from') ?: new DateTime('-24 hour');
         $to = $this->getDateTimeFromOption('to');
         if ($from !== null && $to !== null && $to < $from) {
@@ -134,7 +136,7 @@ class DemandPreparePayments extends BaseCommand
             DB::commit();
 
             $this->info("and a license fee of {$licensePayment->fee} clicks"
-                ." payable to {$licensePayment->account_address}.");
+                . " payable to {$licensePayment->account_address}.");
         }
         while (true) {
             $events = EventLog::fetchUnpaidEvents($from, $to, (int)$this->option('chunkSize'));
@@ -187,7 +189,7 @@ class DemandPreparePayments extends BaseCommand
             DB::commit();
 
             $this->info("and a license fee of {$licensePayment->fee} clicks"
-                ." payable to {$licensePayment->account_address}.");
+                . " payable to {$licensePayment->account_address}.");
         }
 
         $this->invalidateStatisticsForPreparedEvents($from, $to);
@@ -262,10 +264,10 @@ class DemandPreparePayments extends BaseCommand
             );
         }
 
-        return new DateTime('@'.$timestamp);
+        return new DateTime('@' . $timestamp);
     }
 
-    private function invalidateStatisticsForPreparedEvents(DateTimeInterface $from, ?DateTimeInterface $to):void
+    private function invalidateStatisticsForPreparedEvents(DateTimeInterface $from, ?DateTimeInterface $to): void
     {
         $timestamp = DateUtils::roundTimestampToHour($from->getTimestamp());
         $toTimestamp = null !== $to ? $to->getTimestamp() : time();

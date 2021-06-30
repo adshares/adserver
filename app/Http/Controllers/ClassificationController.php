@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
 use function sprintf;
 
 class ClassificationController extends Controller
@@ -75,9 +77,11 @@ class ClassificationController extends Controller
 
         foreach ($inputs as $input) {
             /** @var $banner Banner */
-            if (null === ($banner = $banners->get($input['id']))
+            if (
+                null === ($banner = $banners->get($input['id']))
                 || null === ($classification =
-                    BannerClassification::fetchByBannerIdAndClassifier($banner->id, $classifier))) {
+                    BannerClassification::fetchByBannerIdAndClassifier($banner->id, $classifier))
+            ) {
                 Log::info(
                     sprintf(
                         '[classification update] Missing banner id (%s) from classifier (%s)',
@@ -125,7 +129,7 @@ class ClassificationController extends Controller
                 Log::info(
                     sprintf(
                         '[classification update] Banner id (%s) has more recent classification from classifier (%s). '
-                        .'%s <= %s',
+                        . '%s <= %s',
                         $input['id'],
                         $classifier,
                         $signedAt->format(DateTimeInterface::ATOM),
@@ -140,17 +144,19 @@ class ClassificationController extends Controller
             $checksum = $banner->creative_sha1;
             $keywords = $input['keywords'] ?? [];
 
-            if (!$this->signatureVerifier->isSignatureValid(
-                $classifier,
-                $signature,
-                $checksum,
-                $timestamp,
-                $keywords
-            )) {
+            if (
+                !$this->signatureVerifier->isSignatureValid(
+                    $classifier,
+                    $signature,
+                    $checksum,
+                    $timestamp,
+                    $keywords
+                )
+            ) {
                 Log::info(
                     sprintf(
                         '[classification update] Invalid signature for banner id (%s),'
-                        .' checksum (%s) from classifier (%s)',
+                        . ' checksum (%s) from classifier (%s)',
                         $input['id'],
                         $checksum,
                         $classifier

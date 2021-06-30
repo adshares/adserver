@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -22,6 +23,7 @@ namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
+
 use function mt_rand;
 use function sprintf;
 use function str_replace;
@@ -79,7 +81,7 @@ final class Uuid implements Id
     public static function caseId(): self
     {
         $idV4 = (string)self::v4();
-        $caseId = substr($idV4, 0, -2).'00';
+        $caseId = substr($idV4, 0, -2) . '00';
 
         return new self($caseId);
     }

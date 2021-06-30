@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -52,6 +53,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
 use function base64_decode;
 use function json_decode;
 use function sprintf;
@@ -144,10 +146,10 @@ SQL;
                 $headers = [];
                 foreach ($response->headers->allPreserveCase() as $name => $value) {
                     if (0 === strpos($name, 'X-')) {
-                        $headers[] = "$name:".implode(',', $value);
+                        $headers[] = "$name:" . implode(',', $value);
                     }
                 }
-                echo implode("\n", $headers)."\n\n";
+                echo implode("\n", $headers) . "\n\n";
                 echo base64_encode($banner->creative_contents);
             }
         );
@@ -163,14 +165,14 @@ SQL;
         );
         $response->headers->addCacheControlDirective('no-transform');
 
-        $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
+        $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '') . $mime);
 
         return $response;
     }
 
     private function getBanner(string $id): Banner
     {
-        $banner = Banner::fetchBanner($id);
+        $banner = Banner::fetchByPublicId($id);
 
         if ($banner === null) {
             abort(404);
@@ -202,8 +204,8 @@ SQL;
 
         $response->setCache(
             [
-                'etag' => md5(md5_file($jsPath).implode(':', $params)),
-                'last_modified' => new DateTime('@'.filemtime($jsPath)),
+                'etag' => md5(md5_file($jsPath) . implode(':', $params)),
+                'last_modified' => new DateTime('@' . filemtime($jsPath)),
                 'max_age' => 3600 * 24 * 30,
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
@@ -404,7 +406,8 @@ SQL;
 
     private function validateEventRequest(Request $request): void
     {
-        if (!$request->query->has('ctx')
+        if (
+            !$request->query->has('ctx')
             || !$request->query->has('cid')
             || !$request->query->has('pto')
             || !$request->query->has('pid')
@@ -489,7 +492,7 @@ SQL;
             return [];
         }
 
-        $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1).'?';
+        $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1) . '?';
         $query = sprintf(
             self::SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE,
             $whereInPlaceholder,

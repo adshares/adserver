@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
@@ -31,6 +32,7 @@ use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
 use Illuminate\Database\Eloquent\Collection;
+
 use function factory;
 
 class DemandSendPaymentsTest extends ConsoleTestCase
@@ -136,7 +138,7 @@ class DemandSendPaymentsTest extends ConsoleTestCase
             "tx": {
                 "data": "14010000000000F403BE5B0100850000000100",
                 "signature": "F501E9507021B49423DE3CBF4BBA7829145D2595873F75070B8A5F1A1D0E71E7BC'
-            .'999CA737DA2E5A4B2DFC296D2F441078D47081D10A2C9249BDFE278DB1120F",
+            . '999CA737DA2E5A4B2DFC296D2F441078D47081D10A2C9249BDFE278DB1120F",
                 "time": "1539179508",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -154,8 +156,8 @@ class DemandSendPaymentsTest extends ConsoleTestCase
                 "size": "95",
                 "hashpath_size": "7",
                 "data": "0501000000000003000000CDFFBD5B010001000000000000B864D94500000084966'
-            .'1171A830B4412AE89A8B0C3A29E05D1AE2D521232529F2CCFD1626B8681D385884C3193'
-            .'D11D3993CD3F9AD90E210D362FEDBE5DCDC092DE8DDBAC4FDA07",
+            . '1171A830B4412AE89A8B0C3A29E05D1AE2D521232529F2CCFD1626B8681D385884C3193'
+            . 'D11D3993CD3F9AD90E210D362FEDBE5DCDC092DE8DDBAC4FDA07",
                 "hashpath": [
                     "9638C9D17A7BDB5309C46D6B78365853230459AE606BA3181C94456022523F4C",
                     "1737AEDFD0F8EEB8E39BC3DF08C4FEE79197D0CAB7CAB682FE4F26E272DA380F",
@@ -184,7 +186,7 @@ class DemandSendPaymentsTest extends ConsoleTestCase
                     }
                 ],
                 "signature": "849661171A830B4412AE89A8B0C3A29E05D1AE2D521232529F2CCFD1'
-            .'626B8681D385884C3193D11D3993CD3F9AD90E210D362FEDBE5DCDC092DE8DDBAC4FDA07"
+            . '626B8681D385884C3193D11D3993CD3F9AD90E210D362FEDBE5DCDC092DE8DDBAC4FDA07"
             }
         }';
     }

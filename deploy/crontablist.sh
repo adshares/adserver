@@ -132,3 +132,7 @@ echo ""
 echo -n "12 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:filtering-options:update"
 echo ""
+
+echo -n "*/5 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:demand:cdn:upload"
+echo ""

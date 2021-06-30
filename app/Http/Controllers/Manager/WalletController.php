@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -52,6 +53,7 @@ use stdClass;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
 use function config;
 
 class WalletController extends Controller
@@ -185,8 +187,10 @@ class WalletController extends Controller
 
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
 
-        if (UserLedgerEntry::TYPE_WITHDRAWAL !== $userLedgerEntry->type
-            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $userLedgerEntry->status) {
+        if (
+            UserLedgerEntry::TYPE_WITHDRAWAL !== $userLedgerEntry->type
+            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $userLedgerEntry->status
+        ) {
             throw new UnprocessableEntityHttpException('Payment already approved');
         }
 
@@ -195,13 +199,15 @@ class WalletController extends Controller
 
         $currency = $token['payload']['request']['currency'] ?? 'ADS';
         if ($currency === 'BTC') {
-            if (false === $exchange->transfer(
-                $token['payload']['request']['amount'],
-                $currency,
-                $token['payload']['request']['to'],
-                SecureUrl::change(route('withdraw.exchange')),
-                $token['payload']['ledgerEntry']
-            )) {
+            if (
+                false === $exchange->transfer(
+                    $token['payload']['request']['amount'],
+                    $currency,
+                    $token['payload']['request']['to'],
+                    SecureUrl::change(route('withdraw.exchange')),
+                    $token['payload']['ledgerEntry']
+                )
+            ) {
                 $userLedgerEntry->status = UserLedgerEntry::STATUS_NET_ERROR;
                 $userLedgerEntry->save();
             }
@@ -221,9 +227,11 @@ class WalletController extends Controller
 
     public function cancelWithdrawal(UserLedgerEntry $entry): JsonResponse
     {
-        if (Auth::user()->id !== $entry->user_id
+        if (
+            Auth::user()->id !== $entry->user_id
             || UserLedgerEntry::TYPE_WITHDRAWAL !== $entry->type
-            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $entry->status) {
+            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $entry->status
+        ) {
             throw new NotFoundHttpException();
         }
 
@@ -413,13 +421,13 @@ class WalletController extends Controller
                 [
                     'chain_id'    => 1,
                     'network_name'    => 'Ethereum',
-                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
+                    // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ],
                 [
                     'chain_id'    => 56,
                     'network_name'    => 'Binance Smart Chain',
-                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
+                    // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ]
             ]
@@ -505,9 +513,9 @@ class WalletController extends Controller
             $request->all(),
             [
                 self::FIELD_TYPES => 'array',
-                self::FIELD_TYPES.'.*' => ['integer', Rule::in(UserLedgerEntry::ALLOWED_TYPE_LIST)],
-                self::FIELD_DATE_FROM => 'date_format:'.DateTimeInterface::ATOM,
-                self::FIELD_DATE_TO => 'date_format:'.DateTimeInterface::ATOM,
+                self::FIELD_TYPES . '.*' => ['integer', Rule::in(UserLedgerEntry::ALLOWED_TYPE_LIST)],
+                self::FIELD_DATE_FROM => 'date_format:' . DateTimeInterface::ATOM,
+                self::FIELD_DATE_TO => 'date_format:' . DateTimeInterface::ATOM,
                 self::FIELD_LIMIT => ['integer', 'min:1'],
                 self::FIELD_OFFSET => ['integer', 'min:0'],
             ]

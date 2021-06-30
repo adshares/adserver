@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -6,8 +7,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
@@ -86,7 +87,7 @@ class BidStrategyControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI.'?attach-default=true');
+        $response = $this->getJson(self::URI . '?attach-default=true');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::STRUCTURE_CHECK);
         $response->assertJsonCount(1);
@@ -131,7 +132,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategy = BidStrategy::register('test', $user->id);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $bidStrategyEdited = BidStrategy::fetchByPublicId($bidStrategyPublicId)->toArray();
@@ -148,7 +149,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategy = BidStrategy::register('test', $user->id + 1);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -160,7 +161,7 @@ class BidStrategyControllerTest extends TestCase
 
         $bidStrategyPublicId = '0123456789abcdef0123456789abcdef';
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -172,7 +173,7 @@ class BidStrategyControllerTest extends TestCase
 
         $bidStrategyInvalidPublicId = 1000;
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyInvalidPublicId, self::DATA);
+        $response = $this->patchJson(self::URI . '/' . $bidStrategyInvalidPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -201,7 +202,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategy = BidStrategy::register('test', $user->id);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
@@ -360,11 +361,11 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategy->bidStrategyDetails()->save(BidStrategyDetail::create($bidStrategyCategory, $bidStrategyRank));
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->get(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet');
+        $response = $this->get(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet');
         $response->assertStatus(Response::HTTP_OK);
         $fileName = 'test.xlsx';
         Storage::put($fileName, $response->streamedContent());
-        $fileNameWithPath = Storage::path('').$fileName;
+        $fileNameWithPath = Storage::path('') . $fileName;
         $reader = IOFactory::createReaderForFile($fileNameWithPath);
         $reader->setReadDataOnly(true);
         $spreadsheet = $reader->load($fileNameWithPath);
@@ -409,7 +410,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategy = BidStrategy::register('test', $user->id);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet');
+        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet');
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
@@ -422,7 +423,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategyPublicId = $bidStrategy->uuid;
         $file = UploadedFile::fake()->image('avatar.jpg');
 
-        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet', ['file' => $file]);
+        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet', ['file' => $file]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -439,7 +440,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategy = BidStrategy::register('test', $user->id);
         $bidStrategyPublicId = $bidStrategy->uuid;
         $fileName = 'text.xlsx';
-        $fileNameWithPath = Storage::path('').$fileName;
+        $fileNameWithPath = Storage::path('') . $fileName;
         $this->generateXlsx($fileNameWithPath, $bidStrategyName, $bidStrategyData);
         $file = new UploadedFile(
             $fileNameWithPath,
@@ -453,7 +454,7 @@ class BidStrategyControllerTest extends TestCase
         DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
 
-        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet', ['file' => $file]);
+        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet', ['file' => $file]);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
 
         Storage::delete($fileName);
@@ -472,7 +473,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategy = BidStrategy::register($bidStrategyName, $user->id);
         $bidStrategyPublicId = $bidStrategy->uuid;
         $fileName = 'text.xlsx';
-        $fileNameWithPath = Storage::path('').$fileName;
+        $fileNameWithPath = Storage::path('') . $fileName;
         $this->generateXlsx($fileNameWithPath, $bidStrategyName, $bidStrategyData);
         $file = new UploadedFile(
             $fileNameWithPath,
@@ -482,7 +483,7 @@ class BidStrategyControllerTest extends TestCase
             true
         );
 
-        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet', ['file' => $file]);
+        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet', ['file' => $file]);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $updatedBidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
