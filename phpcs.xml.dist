@@ -10,5 +10,15 @@
 
     <rule ref="PHPCompatibility"/>
     <rule ref="PSR2"/>
-<!--    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes" />-->
+    <!--<rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
+        <properties>
+            <property name="spacesCountAroundEqualsSign" value="0"/>
+        </properties>
+    </rule>-->
+
+    <file>app/</file>
+    <file>src/</file>
+    <file>tests/</file>
+    <file>lib/</file>
+
 </ruleset>
