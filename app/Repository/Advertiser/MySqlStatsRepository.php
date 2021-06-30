@@ -1059,7 +1059,7 @@ SQL;
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $tz = $this->setDbSessionTimezone($dateTimeZone);
         $queryResult = DB::select($query, $bindings);
-        if($tz) {
+        if ($tz) {
             $this->unsetDbSessionTimeZone($tz);
         }
 

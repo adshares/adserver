@@ -738,7 +738,7 @@ class MySqlStatsRepository implements StatsRepository
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $tz = $this->setDbSessionTimezone($dateTimeZone);
         $queryResult = DB::select($query);
-        if($tz) {
+        if ($tz) {
             $this->unsetDbSessionTimeZone($tz);
         }
 

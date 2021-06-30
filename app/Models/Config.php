@@ -222,7 +222,7 @@ class Config extends Model
 
     public static function fetchAdminSettings(): array
     {
-        return Cache::rememberForever('config.admin', function() {
+        return Cache::rememberForever('config.admin', function () {
             $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
                 ->get()
                 ->pluck('value', 'key')
