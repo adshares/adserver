@@ -756,7 +756,7 @@ class MySqlStatsRepository implements StatsRepository
 
     private function unsetDbSessionTimeZone($tz): void
     {
-        DB::statement('SET time_zone = ?', [$tz]);
+        DB::statement(sprintf("SET time_zone = '%s'", $tz));
     }
 
     private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
