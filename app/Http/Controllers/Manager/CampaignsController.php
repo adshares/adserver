@@ -1,6 +1,7 @@
-<?php declare(strict_types = 1);
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+<?php
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,6 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
@@ -59,6 +62,7 @@ use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
 use function response;
 use function strrpos;
 
@@ -133,7 +137,7 @@ class CampaignsController extends Controller
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
             $bidStrategyUuid = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
-        } catch (ExchangeRateNotAvailableException|ConfigException $exception) {
+        } catch (ExchangeRateNotAvailableException | ConfigException $exception) {
             return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
@@ -248,10 +252,10 @@ class CampaignsController extends Controller
 
     private static function decorateUrlWithSize(string $url, string $size): string
     {
-        $sizeSuffix = '#'.$size;
+        $sizeSuffix = '#' . $size;
         $length = strlen($sizeSuffix);
 
-        return (substr($url, -$length) === $sizeSuffix) ? $url : $url.$sizeSuffix;
+        return (substr($url, -$length) === $sizeSuffix) ? $url : $url . $sizeSuffix;
     }
 
     private function prepareConversionsFromInput(array $input): array
@@ -308,8 +312,10 @@ class CampaignsController extends Controller
             $user = Auth::user();
             $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyUuid);
 
-            if (null === $bidStrategy
-                || ($bidStrategy->user_id !== $user->id && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)) {
+            if (
+                null === $bidStrategy
+                || ($bidStrategy->user_id !== $user->id && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)
+            ) {
                 throw new UnprocessableEntityHttpException('Bid strategy could not be accessed.');
             }
 
@@ -560,8 +566,10 @@ class CampaignsController extends Controller
 
     private function createBannerClassificationsForCampaign(Campaign $campaign): void
     {
-        if (Campaign::STATUS_ACTIVE !== $campaign->status
-            || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
+        if (
+            Campaign::STATUS_ACTIVE !== $campaign->status
+            || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())
+        ) {
             return;
         }
 

@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Client;
 
@@ -37,6 +38,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+
 use function config;
 use function GuzzleHttp\json_decode;
 use function sprintf;
@@ -55,7 +57,7 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchPageRank(string $url): PageRank
     {
-        $path = self::API_PATH.'/page-rank/'.urlencode($url);
+        $path = self::API_PATH . '/page-rank/' . urlencode($url);
 
         try {
             $response = $this->client->get($path);
@@ -75,8 +77,10 @@ final class GuzzleAdUserClient implements AdUser
             );
         }
 
-        if (!isset($body->rank) || !isset($body->info) || !is_numeric($body->rank)
-            || !in_array($body->info, self::PAGE_INFOS)) {
+        if (
+            !isset($body->rank) || !isset($body->info) || !is_numeric($body->rank)
+            || !in_array($body->info, self::PAGE_INFOS)
+        ) {
             throw new UnexpectedClientResponseException(
                 sprintf('Unexpected response format from the AdUser for (%s)', $url)
             );
@@ -87,7 +91,7 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchPageRankBatch(array $urls): array
     {
-        return $this->postUrls(self::API_PATH.'/page-rank', $urls);
+        return $this->postUrls(self::API_PATH . '/page-rank', $urls);
     }
 
     private function postUrls(string $path, array $urls): array
@@ -120,7 +124,7 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchTargetingOptions(): Taxonomy
     {
-        $path = self::API_PATH.'/taxonomy';
+        $path = self::API_PATH . '/taxonomy';
         try {
             $response = $this->client->get($path);
             $taxonomy = json_decode((string)$response->getBody(), true);
@@ -178,6 +182,6 @@ final class GuzzleAdUserClient implements AdUser
 
     public function reassessPageRankBatch(array $urls): array
     {
-        return $this->postUrls(self::API_PATH.'/reassessment', $urls);
+        return $this->postUrls(self::API_PATH . '/reassessment', $urls);
     }
 }

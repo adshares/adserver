@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2021 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -36,12 +37,12 @@ class BackupAdServerStatisticsCommand extends BaseCommand
     {
         $day = $this->option('day');
         if (null === $day && !$this->lock()) {
-            $this->info('Command '.$this->getName().' already running');
+            $this->info('Command ' . $this->getName() . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->getName());
+        $this->info('Start command ' . $this->getName());
 
         if ($day !== null) {
             if (false === ($timestamp = strtotime($day))) {
@@ -50,19 +51,19 @@ class BackupAdServerStatisticsCommand extends BaseCommand
                 return;
             }
 
-            $date = new DateTimeImmutable('@'.$timestamp);
+            $date = new DateTimeImmutable('@' . $timestamp);
         } else {
             $date = new DateTimeImmutable('-1 day');
         }
 
         $this->exportStatistics($date);
 
-        $this->info('End command '.$this->getName());
+        $this->info('End command ' . $this->getName());
     }
 
     private function exportStatistics(DateTimeImmutable $date): void
     {
-        $file = Storage::disk('public')->path($date->format('Ymd').'_statistics.csv');
+        $file = Storage::disk('public')->path($date->format('Ymd') . '_statistics.csv');
         $from = $date->setTime(0, 0);
         $to = $date->setTime(23, 59, 59, 999999);
 

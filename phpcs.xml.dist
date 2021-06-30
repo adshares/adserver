@@ -4,12 +4,12 @@
          xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
 
     <arg name="basepath" value="."/>
-    <arg name="cache" value="storage/phpcs-cache"/>
+    <arg name="cache" value=".phpcs-cache"/>
     <arg name="colors"/>
     <arg name="extensions" value="php"/>
 
     <rule ref="PHPCompatibility"/>
-    <rule ref="PSR2"/>
+    <rule ref="PSR12"/>
     <!--<rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
         <properties>
             <property name="spacesCountAroundEqualsSign" value="0"/>

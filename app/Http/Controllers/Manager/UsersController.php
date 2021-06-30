@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
@@ -34,9 +35,9 @@ use Illuminate\Http\Request;
 
 class UsersController extends Controller
 {
-    const MIN_DAY_VIEWS = 1000;
+    private const MIN_DAY_VIEWS = 1000;
 
-    const MAX_CHANGE = 9.999;
+    private const MAX_CHANGE = 9.999;
 
     public function browse(Request $request): LengthAwarePaginator
     {
@@ -45,12 +46,12 @@ class UsersController extends Controller
             $domains =
                 DB::select(
                     'SELECT DISTINCT user_id from sites WHERE deleted_at IS NULL AND domain LIKE ? LIMIT 100',
-                    ['%'.$query.'%']
+                    ['%' . $query . '%']
                 );
             $campaigns =
                 DB::select(
                     'SELECT DISTINCT user_id from campaigns WHERE deleted_at IS NULL AND landing_url LIKE ? LIMIT 100',
-                    ['%'.$query.'%']
+                    ['%' . $query . '%']
                 );
 
             $ids = array_unique(
@@ -70,7 +71,7 @@ class UsersController extends Controller
                 )
             );
 
-            return User::where('email', 'LIKE', '%'.$query.'%')->orWhereIn('id', $ids)->paginate();
+            return User::where('email', 'LIKE', '%' . $query . '%')->orWhereIn('id', $ids)->paginate();
         }
 
         return User::paginate();
@@ -95,7 +96,7 @@ class UsersController extends Controller
         }
 
         $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
-        $query = '%'.$request->get('q', '').'%';
+        $query = '%' . $request->get('q', '') . '%';
 
         $advertisers =
             DB::select(
@@ -253,7 +254,7 @@ class UsersController extends Controller
         }
 
         $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
-        $query = '%'.$request->get('q', '').'%';
+        $query = '%' . $request->get('q', '') . '%';
 
         $publishers =
             DB::select(

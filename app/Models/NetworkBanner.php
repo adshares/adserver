@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -41,6 +42,9 @@ use function hex2bin;
  */
 class NetworkBanner extends Model
 {
+    use AutomateMutators;
+    use BinHex;
+
     private const TYPE_HTML = 'html';
 
     private const TYPE_IMAGE = 'image';
@@ -84,9 +88,6 @@ class NetworkBanner extends Model
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPM = 'network_campaigns.max_cpm';
 
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPC = 'network_campaigns.max_cpc';
-
-    use AutomateMutators;
-    use BinHex;
 
     /**
      * The attributes that are mass assignable.
@@ -242,7 +243,7 @@ class NetworkBanner extends Model
         }
 
         if (null !== $networkBannerFilter->getLandingUrl()) {
-            $query->where('network_campaigns.landing_url', 'like', '%'.$networkBannerFilter->getLandingUrl().'%');
+            $query->where('network_campaigns.landing_url', 'like', '%' . $networkBannerFilter->getLandingUrl() . '%');
         }
 
         return $query;

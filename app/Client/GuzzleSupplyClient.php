@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Client;
 
@@ -30,6 +31,7 @@ use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
+
 use function GuzzleHttp\json_decode;
 
 final class GuzzleSupplyClient implements SupplyClient

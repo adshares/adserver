@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -119,7 +120,7 @@ class AdsSendOne implements ShouldQueue
             if (in_array($exception->getCode(), self::QUEUE_TRY_AGAIN_EXCEPTION_CODES, true)) {
                 $logMessage = sprintf(
                     '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).'
-                    .' Will be tried again later. Exception code (%s)',
+                    . ' Will be tried again later. Exception code (%s)',
                     $this->addressTo,
                     $this->amount,
                     $this->message ?? '',

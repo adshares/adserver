@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -41,29 +42,29 @@ final class NowPaymentsLog extends Model
 {
     use JsonValue;
 
-    const STATUS_INIT = 'init';
+    public const STATUS_INIT = 'init';
 
-    const STATUS_WAITING = 'waiting';
+    public const STATUS_WAITING = 'waiting';
 
-    const STATUS_CONFIRMING = 'confirming';
+    public const STATUS_CONFIRMING = 'confirming';
 
-    const STATUS_CONFIRMED = 'confirmed';
+    public const STATUS_CONFIRMED = 'confirmed';
 
-    const STATUS_SENDING = 'sending';
+    public const STATUS_SENDING = 'sending';
 
-    const STATUS_PARTIALLY_PAID = 'partially-paid';
+    public const STATUS_PARTIALLY_PAID = 'partially-paid';
 
-    const STATUS_FINISHED = 'finished';
+    public const STATUS_FINISHED = 'finished';
 
-    const STATUS_FAILED = 'failed';
+    public const STATUS_FAILED = 'failed';
 
-    const STATUS_REFUNDED = 'refunded';
+    public const STATUS_REFUNDED = 'refunded';
 
-    const STATUS_EXPIRED = 'expired';
+    public const STATUS_EXPIRED = 'expired';
 
-    const STATUS_DEPOSIT_INIT = 'deposit-init';
+    public const STATUS_DEPOSIT_INIT = 'deposit-init';
 
-    const STATUS_DEPOSIT = 'deposit';
+    public const STATUS_DEPOSIT = 'deposit';
 
     public $timestamps = false;
 

@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -50,14 +51,14 @@ class InventoryImporterCommand extends BaseCommand
         if (!$this->lock(self::getLockName())) {
             $this->info(
                 'Supply inventory processing already running. Command '
-                .$this->signature
-                .' cannot be started while import from demand or export to adselect is in progress'
+                . $this->signature
+                . ' cannot be started while import from demand or export to adselect is in progress'
             );
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command ' . $this->signature);
 
         $this->removeNonExistentHosts();
 
@@ -134,6 +135,6 @@ class InventoryImporterCommand extends BaseCommand
 
     public static function getLockName(): string
     {
-        return config('app.adserver_id').'SupplyInventoryProcessing';
+        return config('app.adserver_id') . 'SupplyInventoryProcessing';
     }
 }

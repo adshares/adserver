@@ -1,6 +1,7 @@
-<?php declare(strict_types = 1);
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+<?php
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,6 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
@@ -167,7 +170,7 @@ class BidStrategyController extends Controller
             while (null !== ($value = $sheet->getCellByColumnAndRow(3, $row)->getValue())) {
                 if (100 !== $value) {
                     $category = $sheet->getCellByColumnAndRow(1, $row)->getValue();
-                    $bidStrategyDetails[] = BidStrategyDetail::create($category, (float)$value/100);
+                    $bidStrategyDetails[] = BidStrategyDetail::create($category, (float)$value / 100);
                 }
 
                 ++$row;
@@ -188,8 +191,8 @@ class BidStrategyController extends Controller
         $result = [];
 
         foreach ($options as $option) {
-            $key = ('' === $parentKey) ? $option['key'] : $parentKey.':'.$option['key'];
-            $label = ('' === $parentLabel) ? $option['label'] : $parentLabel.'|'.$option['label'];
+            $key = ('' === $parentKey) ? $option['key'] : $parentKey . ':' . $option['key'];
+            $label = ('' === $parentLabel) ? $option['label'] : $parentLabel . '|' . $option['label'];
 
             if (isset($option['children'])) {
                 array_push(
@@ -217,8 +220,8 @@ class BidStrategyController extends Controller
         $result = [];
 
         foreach ($optionValues as $optionValue) {
-            $key = ('' === $parentKey) ? $optionValue['value'] : $parentKey.':'.$optionValue['value'];
-            $label = ('' === $parentLabel) ? $optionValue['label'] : $parentLabel.'/'.$optionValue['label'];
+            $key = ('' === $parentKey) ? $optionValue['value'] : $parentKey . ':' . $optionValue['value'];
+            $label = ('' === $parentLabel) ? $optionValue['label'] : $parentLabel . '/' . $optionValue['label'];
 
             $result[] = [
                 'key' => $key,
@@ -339,9 +342,11 @@ class BidStrategyController extends Controller
         if (null === $bidStrategy) {
             throw new NotFoundHttpException('Bid strategy does not exist.');
         }
-        if ($bidStrategy->user_id !== $user->id
+        if (
+            $bidStrategy->user_id !== $user->id
             && !($bidStrategy->user_id === BidStrategy::ADMINISTRATOR_ID
-                && $user->isAdmin())) {
+                && $user->isAdmin())
+        ) {
             throw new UnprocessableEntityHttpException(
                 sprintf('Bid strategy (%s) could not be accessed.', $bidStrategy->name)
             );

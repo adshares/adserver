@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
@@ -362,7 +363,7 @@ class StatsController extends Controller
         $name = $this->formatReportName($from, $to);
         $reportMeta = ReportMeta::register(
             $user->id,
-            $name.'_'.($campaign->name ?? 'all_campaigns'),
+            $name . '_' . ($campaign->name ?? 'all_campaigns'),
             ReportMeta::TYPE_ADVERTISER
         );
 
@@ -412,7 +413,7 @@ class StatsController extends Controller
         $name = $this->formatReportName($from, $to);
         $reportMeta = ReportMeta::register(
             $user->id,
-            $name.'_'.($site->name ?? 'all_sites'),
+            $name . '_' . ($site->name ?? 'all_sites'),
             ReportMeta::TYPE_PUBLISHER
         );
 
@@ -460,7 +461,7 @@ class StatsController extends Controller
             throw new BadRequestHttpException('Report deleted');
         }
 
-        $uri = ReportsStorage::getPath().$reportUuid;
+        $uri = ReportsStorage::getPath() . $reportUuid;
 
         $filename = sprintf(
             'report_%s.xlsx',
@@ -470,7 +471,7 @@ class StatsController extends Controller
         $headers = [
             'Access-Control-Expose-Headers' => 'Content-Disposition',
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename='.$filename,
+            'Content-Disposition' => 'attachment; filename=' . $filename,
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
             'Expires' => '0',

@@ -1,6 +1,7 @@
-<?php declare(strict_types = 1);
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+<?php
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,6 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -53,12 +56,12 @@ class DemandBlockRequiredAmount extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command ' . $this->signature . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command ' . $this->signature);
 
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
 
@@ -67,12 +70,12 @@ class DemandBlockRequiredAmount extends BaseCommand
         UserLedgerEntry::pushBlockedToProcessing();
 
         $blockades = Campaign::fetchRequiredBudgetsPerUser();
-        $this->info('Attempt to create '.count($blockades).' blockades.');
+        $this->info('Attempt to create ' . count($blockades) . ' blockades.');
         $this->blockAmountOrSuspendCampaigns($blockades, $exchangeRate);
 
         DB::commit();
 
-        $this->info('Created '.count($blockades).' new blocking Ledger entries.');
+        $this->info('Created ' . count($blockades) . ' new blocking Ledger entries.');
     }
 
     private function blockAmountOrSuspendCampaigns(Collection $blockade, ExchangeRate $exchangeRate): void

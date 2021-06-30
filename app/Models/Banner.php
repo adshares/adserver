@@ -1,13 +1,14 @@
 <?php
-/**
+
+/*
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -54,6 +55,10 @@ use function in_array;
  */
 class Banner extends Model
 {
+    use AutomateMutators;
+    use BinHex;
+    use SoftDeletes;
+
     public const TYPE_IMAGE = 0;
 
     public const TYPE_HTML = 1;
@@ -75,10 +80,6 @@ class Banner extends Model
     public const STATUS_REJECTED = 3;
 
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
-
-    use AutomateMutators;
-    use BinHex;
-    use SoftDeletes;
 
     protected $dates = [
         'deleted_at',

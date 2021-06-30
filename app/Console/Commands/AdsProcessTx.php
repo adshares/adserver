@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -81,12 +82,12 @@ class AdsProcessTx extends BaseCommand
     public function handle(): int
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->getName().' already running');
+            $this->info('Command ' . $this->getName() . ' already running');
 
             return self::EXIT_CODE_LOCKED;
         }
 
-        $this->info('Start command '.$this->getName());
+        $this->info('Start command ' . $this->getName());
 
         try {
             $transactionCount = $this->adsLogReader->parseLog();

@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -17,7 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -38,6 +40,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+
 use function ceil;
 use function sprintf;
 
@@ -64,7 +67,7 @@ class AdPayEventExportCommand extends BaseCommand
         $isCommandExecutedAutomatically = null === $optionTo;
 
         if (null === $optionTo && !$this->lock()) {
-            $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
+            $this->info('[AdPayEventExport] Command ' . $this->signature . ' already running.');
 
             return;
         }
@@ -75,7 +78,7 @@ class AdPayEventExportCommand extends BaseCommand
             return;
         }
 
-        $this->info('[AdPayEventExport] Start command '.$this->signature);
+        $this->info('[AdPayEventExport] Start command ' . $this->signature);
 
         if (null !== $optionFrom) {
             if (false === ($timestampFrom = strtotime($optionFrom))) {
@@ -84,7 +87,7 @@ class AdPayEventExportCommand extends BaseCommand
                 return;
             }
 
-            $dateFromEvents = new DateTimeImmutable('@'.$this->correctUserTimestamp($timestampFrom));
+            $dateFromEvents = new DateTimeImmutable('@' . $this->correctUserTimestamp($timestampFrom));
             $dateFromConversions = $dateFromEvents;
         } else {
             $dateFromEvents = DateTimeImmutable::createFromMutable(
@@ -108,7 +111,7 @@ class AdPayEventExportCommand extends BaseCommand
                 return;
             }
 
-            $dateTo = new DateTimeImmutable('@'.$timestampTo);
+            $dateTo = new DateTimeImmutable('@' . $timestampTo);
         } else {
             $dateTo = new DateTimeImmutable(self::DEFAULT_EXPORT_TIME_TO);
         }
@@ -131,7 +134,7 @@ class AdPayEventExportCommand extends BaseCommand
             try {
                 $event->updateWithUserContext($this->userContext($adUser, $event));
                 $event->save();
-            } catch (ImpressionContextException|RuntimeException $e) {
+            } catch (ImpressionContextException | RuntimeException $e) {
                 Log::error(
                     sprintf(
                         '%s {"command":"%s","event":"%d","error":"%s"}',

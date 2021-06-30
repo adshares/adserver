@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,6 +36,7 @@ use Adshares\Supply\Domain\ValueObject\Status;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+
 use function hex2bin;
 
 class NetworkCampaignRepository implements CampaignRepository
@@ -78,7 +80,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'campaign.id'
             )
             ->where('campaign.source_address', $address)
-            ->where('campaign.'.self::STATUS_FIELD, Status::STATUS_TO_DELETE)
+            ->where('campaign.' . self::STATUS_FIELD, Status::STATUS_TO_DELETE)
             ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }
 

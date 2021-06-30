@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,13 +19,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTimeInterface;
+
 use function in_array;
 use function sprintf;
 
@@ -122,7 +124,7 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 
         $this->where(
             sprintf(
-                $dateColumn." BETWEEN '%s' AND '%s'",
+                $dateColumn . " BETWEEN '%s' AND '%s'",
                 $this->convertDateTimeToMySqlDate($dateStart),
                 $this->convertDateTimeToMySqlDate($dateEnd)
             )
@@ -232,34 +234,40 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 
     private function addJoins(string $type): void
     {
-        if (in_array(
-            $type,
-            [
+        if (
+            in_array(
+                $type,
+                [
                 StatsRepository::TYPE_VIEW,
                 StatsRepository::TYPE_VIEW_UNIQUE,
                 StatsRepository::TYPE_CLICK,
-            ]
-        )) {
+                ]
+            )
+        ) {
             $this->join('network_impressions i', 'e.network_impression_id = i.id');
         }
 
-        if (in_array(
-            $type,
-            [
+        if (
+            in_array(
+                $type,
+                [
                 StatsRepository::TYPE_CLICK,
                 StatsRepository::TYPE_CLICK_ALL,
-            ]
-        )) {
+                ]
+            )
+        ) {
             $this->join('network_case_clicks clicks', 'e.id = clicks.network_case_id');
         }
 
-        if (in_array(
-            $type,
-            [
+        if (
+            in_array(
+                $type,
+                [
                 StatsRepository::TYPE_REVENUE_BY_CASE,
                 StatsRepository::TYPE_REVENUE_BY_HOUR,
-            ]
-        )) {
+                ]
+            )
+        ) {
             $this->join('network_case_payments ncp', 'e.id = ncp.network_case_id');
         }
 

@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,9 +25,11 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CliDriver;
 use Adshares\Adserver\Models\User;
+
 use function file_exists;
 use function GuzzleHttp\json_encode;
 use function str_pad;
+
 use const STR_PAD_LEFT;
 
 class AdsSend extends BaseCommand
@@ -41,7 +44,7 @@ class AdsSend extends BaseCommand
     public function handle(AdsClient $adsClient): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command ' . $this->signature . ' already running');
 
             return;
         }

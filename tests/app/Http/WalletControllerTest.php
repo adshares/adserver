@@ -1,5 +1,6 @@
 <?php
-/**
+
+/*
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
@@ -29,6 +30,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+
 use function sprintf;
 
 class WalletControllerTest extends TestCase
@@ -460,7 +462,7 @@ class WalletControllerTest extends TestCase
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
-        $response = $this->getJson('/api/wallet/history?types[]='.UserLedgerEntry::TYPE_DEPOSIT);
+        $response = $this->getJson('/api/wallet/history?types[]=' . UserLedgerEntry::TYPE_DEPOSIT);
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertExactJson(

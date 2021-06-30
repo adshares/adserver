@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -92,17 +93,17 @@ SQL;
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->name.' already running');
+            $this->info('Command ' . $this->name . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->name);
+        $this->info('Start command ' . $this->name);
 
         $sites = $this->selectSites();
         $this->update($sites);
 
-        $this->info('Finish command '.$this->name);
+        $this->info('Finish command ' . $this->name);
     }
 
     private function selectSites(): array
@@ -113,7 +114,7 @@ SQL;
             $sites[$row->id]['url'] = $row->url;
             $sites[$row->id]['extra'][] = [
                 'reason' => 'many views',
-                'message' => 'Views: '.NumberFormat::toFormattedString($row->views, '#,##0'),
+                'message' => 'Views: ' . NumberFormat::toFormattedString($row->views, '#,##0'),
             ];
         }
 
@@ -134,7 +135,7 @@ SQL;
             $sites[$row->id]['extra'][] = [
                 'reason' => 'top revenue',
                 'message' => trim(
-                    'TOP 30 revenue: '.NumberFormat::toFormattedString(
+                    'TOP 30 revenue: ' . NumberFormat::toFormattedString(
                         $row->revenue / 1e11,
                         NumberFormat::FORMAT_CURRENCY_USD_SIMPLE
                     )
@@ -226,14 +227,16 @@ SQL;
                     continue;
                 }
 
-                if (in_array(
-                    $status,
-                    [
+                if (
+                    in_array(
+                        $status,
+                        [
                         AdUser::REASSESSMENT_STATE_PROCESSING,
                         AdUser::REASSESSMENT_STATE_LOCKED,
                         AdUser::REASSESSMENT_STATE_ACCEPTED,
-                    ]
-                )) {
+                        ]
+                    )
+                ) {
                     if (isset($result['reassess_available_at'])) {
                         $date = DateTimeImmutable::createFromFormat(
                             DateTimeImmutable::ATOM,

@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -52,7 +53,7 @@ class CamelizeJsonResponse
         return preg_replace_callback(
             '/"([^"]+?)"\s*:/',
             function (array $input): string {
-                return '"'.camel_case($input[1]).'":';
+                return '"' . camel_case($input[1]) . '":';
             },
             $json
         );

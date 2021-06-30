@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -37,7 +38,7 @@ trait AutomateMutators
         if (empty($this->traitAutomate[$key])) {
             return parent::getAttribute($key);
         }
-        $func = lcfirst($this->traitAutomate[$key]).'Accessor';
+        $func = lcfirst($this->traitAutomate[$key]) . 'Accessor';
 
         return $this->$func(parent::getAttribute($key));
     }
@@ -55,7 +56,7 @@ trait AutomateMutators
         if (empty($this->traitAutomate[$key])) {
             return parent::setAttribute($key, $value);
         }
-        $func = lcfirst($this->traitAutomate[$key]).'Mutator';
+        $func = lcfirst($this->traitAutomate[$key]) . 'Mutator';
 
         return $this->$func($key, $value);
     }

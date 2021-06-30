@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -36,7 +37,7 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
 {
     public const COMMAND_SIGNATURE = 'ops:stats:aggregate:advertiser';
 
-    protected $signature = self::COMMAND_SIGNATURE.' {--hour=} {--B|bulk}';
+    protected $signature = self::COMMAND_SIGNATURE . ' {--hour=} {--B|bulk}';
 
     protected $description = 'Aggregates events data for statistics';
 
@@ -54,12 +55,12 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
     {
         $hour = $this->option('hour');
         if (null === $hour && !$this->lock()) {
-            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
+            $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.self::COMMAND_SIGNATURE);
+        $this->info('Start command ' . self::COMMAND_SIGNATURE);
 
         if ($hour !== null) {
             if (false === ($timestamp = strtotime($hour))) {
@@ -74,7 +75,7 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
 
         $this->aggregateAllInvalidHours();
 
-        $this->info('End command '.self::COMMAND_SIGNATURE);
+        $this->info('End command ' . self::COMMAND_SIGNATURE);
         $this->release();
     }
 
@@ -103,7 +104,7 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
             DB::beginTransaction();
 
             try {
-                $this->aggregateForHour(new DateTime('@'.$logsHourlyMeta->id));
+                $this->aggregateForHour(new DateTime('@' . $logsHourlyMeta->id));
 
                 if ($logsHourlyMeta->isActual()) {
                     $logsHourlyMeta->updateAfterProcessing(

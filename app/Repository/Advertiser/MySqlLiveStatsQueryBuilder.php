@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,13 +19,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTimeInterface;
+
 use function in_array;
 use function sprintf;
 
@@ -71,7 +73,7 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_CLICK:
                 $this->column(
                     "SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1 "
-                    .'AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS c'
+                    . 'AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS c'
                 );
                 break;
             case StatsRepository::TYPE_CLICK_ALL:
@@ -80,8 +82,8 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_VIEW_UNIQUE:
                 $this->column(
                     "COUNT(DISTINCT (CASE WHEN e.event_type = 'view' "
-                    .'AND (e.human_score >= 0.5 OR e.human_score IS NULL) '
-                    .'THEN IFNULL(e.user_id, e.tracking_id) END)) AS c'
+                    . 'AND (e.human_score >= 0.5 OR e.human_score IS NULL) '
+                    . 'THEN IFNULL(e.user_id, e.tracking_id) END)) AS c'
                 );
                 break;
             case StatsRepository::TYPE_STATS:
@@ -94,7 +96,7 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->column(
             "SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1 "
-            .'AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS clicks'
+            . 'AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS clicks'
         );
         $this->column(
             "SUM(IF(e.event_type = 'view' AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS views"

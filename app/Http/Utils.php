@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,6 +30,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
+
 use function bin2hex;
 use function config;
 use function is_string;
@@ -36,6 +38,7 @@ use function sha1;
 use function sprintf;
 use function strlen;
 use function substr;
+
 use const true;
 
 class Utils

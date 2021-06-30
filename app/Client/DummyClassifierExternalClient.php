@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Client;
 
@@ -29,6 +30,7 @@ use Illuminate\Http\Request;
 use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+
 use function time;
 
 final class DummyClassifierExternalClient implements ClassifierExternalClient
@@ -49,7 +51,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             $keywords = ['category' => ['crypto', 'gambling']];
             $message = hash(
                 'sha256',
-                hex2bin($checksum).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+                hex2bin($checksum) . $timestamp . ClassifierExternalKeywordsSerializer::serialize($keywords)
             );
 
             try {

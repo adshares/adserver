@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -74,16 +75,16 @@ class SiteRankUpdateCommand extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->name.' already running');
+            $this->info('Command ' . $this->name . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->name);
+        $this->info('Start command ' . $this->name);
 
         $lastId = 0;
         $isOptionAll = (bool)$this->option('all');
-        $this->siteBaseUrl = config('app.adpanel_url').'/publisher/site/';
+        $this->siteBaseUrl = config('app.adpanel_url') . '/publisher/site/';
         $this->notificationDateTimeThreshold =
             Config::fetchDateTime(Config::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD);
 
@@ -101,7 +102,7 @@ class SiteRankUpdateCommand extends BaseCommand
 
         $this->sendEmails();
 
-        $this->info('Finish command '.$this->name);
+        $this->info('Finish command ' . $this->name);
     }
 
     private function update(Collection $sites): void
@@ -164,13 +165,15 @@ class SiteRankUpdateCommand extends BaseCommand
 
             $pageRank = new PageRank($result['rank'], $result['info']);
             if ($pageRank->getRank() !== $site->rank || $pageRank->getInfo() !== $site->info) {
-                if (AdUser::PAGE_INFO_UNKNOWN === $site->info
+                if (
+                    AdUser::PAGE_INFO_UNKNOWN === $site->info
                     && AdUser::PAGE_INFO_UNKNOWN !== $pageRank->getInfo()
                     && $pageRank->getRank() >= self::EMAIL_NOTIFICATION_RANK_MINIMAL
-                    && $site->created_at > $this->notificationDateTimeThreshold) {
+                    && $site->created_at > $this->notificationDateTimeThreshold
+                ) {
                     $this->mails[$site->user_id][] = [
                         'name' => $site->name,
-                        'url' => $this->siteBaseUrl.$site->id,
+                        'url' => $this->siteBaseUrl . $site->id,
                     ];
                 }
 

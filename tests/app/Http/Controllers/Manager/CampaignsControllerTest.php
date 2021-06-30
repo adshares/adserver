@@ -1,13 +1,14 @@
 <?php
-/**
+
+/*
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
@@ -35,6 +36,7 @@ use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+
 use function factory;
 
 final class CampaignsControllerTest extends TestCase
@@ -54,7 +56,7 @@ final class CampaignsControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI.'/1');
+        $response = $this->getJson(self::URI . '/1');
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -71,7 +73,7 @@ final class CampaignsControllerTest extends TestCase
         if ($returnValue === Response::HTTP_CREATED) {
             $id = $this->getIdFromLocation($response->headers->get('Location'));
 
-            $response = $this->getJson(self::URI.'/'.$id);
+            $response = $this->getJson(self::URI . '/' . $id);
             $response->assertStatus(Response::HTTP_OK);
         }
     }
@@ -120,7 +122,7 @@ final class CampaignsControllerTest extends TestCase
         $this->assertCount(1, Campaign::where('id', $campaignId)->get());
         $this->assertCount(1, Banner::where('id', $bannerId)->get());
 
-        $response = $this->deleteJson(self::URI."/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaignId}");
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $this->assertCount(0, Campaign::where('id', $campaignId)->get());
@@ -128,7 +130,7 @@ final class CampaignsControllerTest extends TestCase
         $this->assertCount(1, Campaign::withTrashed()->where('id', $campaignId)->get());
         $this->assertCount(1, Banner::withTrashed()->where('id', $bannerId)->get());
 
-        $response = $this->deleteJson(self::URI."/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaignId}");
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -143,7 +145,7 @@ final class CampaignsControllerTest extends TestCase
         ]);
 
         $response = $this->putJson(
-            self::URI."/{$campaign->id}/status",
+            self::URI . "/{$campaign->id}/status",
             [
                 'campaign' => ['status' => Campaign::STATUS_ACTIVE],
             ]
@@ -158,12 +160,12 @@ final class CampaignsControllerTest extends TestCase
 
         $campaign = factory(Campaign::class)->create([
             'user_id' => $user->id,
-            'budget' => 10*10e9,
+            'budget' => 10 * 10e9,
         ]);
         $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
 
         $this->putJson(
-            self::URI."/{$campaign->id}/status",
+            self::URI . "/{$campaign->id}/status",
             [
                 'campaign' => ['status' => Campaign::STATUS_ACTIVE],
             ]
@@ -182,7 +184,7 @@ final class CampaignsControllerTest extends TestCase
         $user = $this->createUser();
         $campaign = factory(Campaign::class)->create([
             'user_id' => $user->id,
-            'budget' => 10*10e9,
+            'budget' => 10 * 10e9,
         ]);
         $banner = factory(Banner::class)->create([
             'campaign_id' => $campaign->id,
@@ -190,7 +192,7 @@ final class CampaignsControllerTest extends TestCase
         ]);
 
         $response = $this->putJson(
-            self::URI."/{$campaign->id}/banner/{$banner->id}/status",
+            self::URI . "/{$campaign->id}/banner/{$banner->id}/status",
             [
                 'banner' => [
                     'status' => $bannerStatusSet,
@@ -207,7 +209,7 @@ final class CampaignsControllerTest extends TestCase
         $user = $this->createUser();
         $campaign = factory(Campaign::class)->create([
             'user_id' => $user->id,
-            'budget' => 10*10e9,
+            'budget' => 10 * 10e9,
         ]);
         $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
         $banner = factory(Banner::class)->create([
@@ -216,7 +218,7 @@ final class CampaignsControllerTest extends TestCase
         ]);
 
         $this->putJson(
-            self::URI."/{$campaign->id}/banner/{$banner->id}/status",
+            self::URI . "/{$campaign->id}/banner/{$banner->id}/status",
             [
                 'banner' => [
                     'status' => Banner::STATUS_ACTIVE,
@@ -229,7 +231,7 @@ final class CampaignsControllerTest extends TestCase
 
     private function createUser(): User
     {
-        $userBalance = 50*10e9;
+        $userBalance = 50 * 10e9;
 
         $user = factory(User::class)->create();
         factory(UserLedgerEntry::class)->create(['user_id' => $user->id, 'amount' => $userBalance]);
@@ -256,7 +258,7 @@ final class CampaignsControllerTest extends TestCase
         $campaignId = $this->createCampaignForUser($user);
         $this->createBannerForCampaign($campaignId);
 
-        $response = $this->deleteJson(self::URI."/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaignId}");
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -272,8 +274,8 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenStatusChange(): array
     {
         return [
-            'insufficient funds' => [300*1e9, Response::HTTP_BAD_REQUEST],
-            'sufficient funds' => [10*1e9, Response::HTTP_NO_CONTENT],
+            'insufficient funds' => [300 * 1e9, Response::HTTP_BAD_REQUEST],
+            'sufficient funds' => [10 * 1e9, Response::HTTP_NO_CONTENT],
         ];
     }
 
@@ -341,7 +343,7 @@ final class CampaignsControllerTest extends TestCase
         $response1->assertStatus(Response::HTTP_CREATED);
         $id = $this->getIdFromLocation($response1->headers->get('Location'));
 
-        $response = $this->getJson(self::URI.'/'.$id);
+        $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson(['campaign' => ['basicInformation' => ['status' => $status]]]);
     }
@@ -382,7 +384,7 @@ final class CampaignsControllerTest extends TestCase
                 ],
             ]
         );
-        $response = $this->patchJson(self::URI.'/'.$id, ['campaign' => $campaignInputDataUpdated]);
+        $response = $this->patchJson(self::URI . '/' . $id, ['campaign' => $campaignInputDataUpdated]);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         $currentBidStrategyUuid = Campaign::find($id)->bid_strategy_uuid;
         self::assertNotEquals($previousBidStrategyUuid, $currentBidStrategyUuid);
@@ -405,7 +407,7 @@ final class CampaignsControllerTest extends TestCase
         $id = $this->getIdFromLocation($response->headers->get('Location'));
 
         $response = $this->patchJson(
-            self::URI.'/'.$id,
+            self::URI . '/' . $id,
             ['campaign' => array_merge($campaignInputData, $bidStrategyData)]
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

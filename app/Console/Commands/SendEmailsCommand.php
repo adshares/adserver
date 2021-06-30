@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -17,7 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -27,6 +29,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Common\Dto\EmailData;
 use Adshares\Adserver\Services\Common\EmailJobsQueuing;
 use Illuminate\Support\Collection;
+
 use function file;
 use function is_readable;
 use function sprintf;
@@ -58,12 +61,12 @@ class SendEmailsCommand extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command ' . $this->signature . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command ' . $this->signature);
 
         if (null === ($emailData = $this->getMessage())) {
             $this->info('[SendEmailsCommand] Cannot read email data.');
@@ -107,7 +110,7 @@ class SendEmailsCommand extends BaseCommand
         $this->emailJobsQueuing->addEmail($emailData, $recipients);
         $this->deleteEmailFromDatabase();
 
-        $this->info('Finish command '.$this->signature);
+        $this->info('Finish command ' . $this->signature);
     }
 
     private function getAddressesFromFile(string $file): Collection
@@ -187,8 +190,10 @@ class SendEmailsCommand extends BaseCommand
 
     private function deleteEmailFromDatabase(): void
     {
-        if (null === $this->option('preview-address') && null !== ($emailId = $this->option('email_id'))
-            && null !== ($email = Email::fetchById((int)$emailId))) {
+        if (
+            null === $this->option('preview-address') && null !== ($emailId = $this->option('email_id'))
+            && null !== ($email = Email::fetchById((int)$emailId))
+        ) {
             $email->delete();
         }
     }

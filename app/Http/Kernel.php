@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -59,17 +60,17 @@ class Kernel extends HttpKernel
 
     protected $middlewareGroups = [
         self::USER_ACCESS => [
-            self::AUTH.':api',
+            self::AUTH . ':api',
             Impersonation::class,
         ],
         self::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION => [
-            self::AUTH.':api',
+            self::AUTH . ':api',
         ],
         self::GUEST_ACCESS => [
             RequireGuestAccess::class,
         ],
         self::ADMIN_ACCESS => [
-            self::AUTH.':api',
+            self::AUTH . ':api',
             RequireAdminAccess::class,
         ],
         self::JSON_API => [

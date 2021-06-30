@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,15 +32,15 @@ class UpdateTargetingOptions extends BaseCommand
     public function handle(TargetingOptionsImporter $service): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command ' . $this->signature . ' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command ' . $this->signature);
 
         $service->import();
 
-        $this->info('Finish command '.$this->signature);
+        $this->info('Finish command ' . $this->signature);
     }
 }

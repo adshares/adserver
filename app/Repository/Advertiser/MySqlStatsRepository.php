@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
@@ -39,6 +40,7 @@ use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
+
 use function bin2hex;
 
 class MySqlStatsRepository implements StatsRepository
@@ -875,13 +877,15 @@ SQL;
 
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
     {
-        if (empty(
-            $this->executeQuery(
-                self::SQL_QUERY_SELECT_FIRST_EVENT_ID_FROM_DATE_RANGE,
-                $dateStart,
-                [$dateStart, $dateEnd]
+        if (
+            empty(
+                $this->executeQuery(
+                    self::SQL_QUERY_SELECT_FIRST_EVENT_ID_FROM_DATE_RANGE,
+                    $dateStart,
+                    [$dateStart, $dateEnd]
+                )
             )
-        )) {
+        ) {
             throw new MissingEventsException(
                 sprintf(
                     'No events in range from %s to %s',
@@ -920,13 +924,15 @@ SQL;
         );
         DB::commit();
 
-        if (!empty(
-            $this->executeQuery(
-                self::SQL_QUERY_SELECT_FIRST_CONVERSION_ID_FROM_DATE_RANGE,
-                $dateStart,
-                [$dateStart, $dateEnd]
+        if (
+            !empty(
+                $this->executeQuery(
+                    self::SQL_QUERY_SELECT_FIRST_CONVERSION_ID_FROM_DATE_RANGE,
+                    $dateStart,
+                    [$dateStart, $dateEnd]
+                )
             )
-        )) {
+        ) {
             DB::beginTransaction();
             $this->executeQuery(
                 self::DELETE_FROM_CONVERSIONS_HOURLY_WHERE_HOUR_TIMESTAMP,
@@ -1029,10 +1035,12 @@ SQL;
         ?string $campaignId,
         ?string $bannerId
     ): array {
-        if (in_array($type, [
+        if (
+            in_array($type, [
             StatsRepository::TYPE_SUM,
             StatsRepository::TYPE_SUM_BY_PAYMENT,
-        ])) {
+            ])
+        ) {
             return [];
         }
 
@@ -1476,9 +1484,9 @@ SQL;
             ->where('ch.advertiser_id', $advertiserId)
             ->selectRaw(
                 'ch.campaign_id AS campaign_id,'
-                .'cd.uuid AS uuid,'
-                .'SUM(ch.cost) AS cost,'
-                .'SUM(ch.occurrences) AS occurrences'
+                . 'cd.uuid AS uuid,'
+                . 'SUM(ch.cost) AS cost,'
+                . 'SUM(ch.occurrences) AS occurrences'
             )
             ->join('conversion_definitions AS cd', 'ch.conversion_definition_id', '=', 'cd.id')
             ->groupBy('ch.campaign_id', 'ch.conversion_definition_id');

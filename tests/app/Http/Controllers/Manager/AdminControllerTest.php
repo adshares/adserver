@@ -1,13 +1,14 @@
 <?php
-/**
+
+/*
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -27,6 +28,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+
 use function json_decode;
 
 final class AdminControllerTest extends TestCase
@@ -221,7 +223,7 @@ final class AdminControllerTest extends TestCase
         $response = $this->putJson(self::URI_REJECTED_DOMAINS, $data);
         $response->assertStatus($expectedStatus);
     }
-    
+
     public function invalidRejectedDomainsProvider(): array
     {
         return [

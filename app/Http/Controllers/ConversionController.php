@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -41,6 +42,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
 use function base64_decode;
 use function sprintf;
 
@@ -78,7 +80,7 @@ class ConversionController extends Controller
                 throw new BadRequestHttpException('Missing case id');
             }
 
-            return redirect($baseUrlNext.route(Route::currentRouteName(), ['uuid' => $uuid], false));
+            return redirect($baseUrlNext . route(Route::currentRouteName(), ['uuid' => $uuid], false));
         }
 
         $response = self::json(['status' => 'OK'], Response::HTTP_OK);
@@ -103,7 +105,7 @@ class ConversionController extends Controller
                 return $this->createOnePixelResponse();
             }
 
-            return redirect($baseUrlNext.route(Route::currentRouteName(), ['uuid' => $uuid], false));
+            return redirect($baseUrlNext . route(Route::currentRouteName(), ['uuid' => $uuid], false));
         }
 
         $response = $this->createOnePixelResponse();
@@ -111,7 +113,7 @@ class ConversionController extends Controller
 
         try {
             $this->processConversion($uuid, $request);
-        } catch (BadRequestHttpException|NotFoundHttpException $exception) {
+        } catch (BadRequestHttpException | NotFoundHttpException $exception) {
             Log::info(
                 sprintf(
                     '[DemandController] conversion error %d (%s)',
@@ -135,7 +137,7 @@ class ConversionController extends Controller
                 throw new BadRequestHttpException('Missing case id');
             }
 
-            return redirect($baseUrlNext.route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
+            return redirect($baseUrlNext . route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
         }
 
         $response = self::json(['status' => 'OK'], Response::HTTP_OK);
@@ -160,7 +162,7 @@ class ConversionController extends Controller
                 return $this->createOnePixelResponse();
             }
 
-            return redirect($baseUrlNext.route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
+            return redirect($baseUrlNext . route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
         }
 
         $response = $this->createOnePixelResponse();
@@ -168,7 +170,7 @@ class ConversionController extends Controller
 
         try {
             $this->processConversionClick($campaignUuid, $request);
-        } catch (BadRequestHttpException|NotFoundHttpException $exception) {
+        } catch (BadRequestHttpException | NotFoundHttpException $exception) {
             Log::info(
                 sprintf(
                     '[DemandController] click conversion error %d (%s)',

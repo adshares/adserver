@@ -1,13 +1,14 @@
 <?php
-/**
+
+/*
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -51,7 +52,7 @@ class AdsMeTest extends ConsoleTestCase
             "tx": {
                 "data": "10010000000000010000000000E986C45B",
                 "signature": "749E930A3054A1ACB7926E34FB18ACC712AED8F9431891F376CE01279A'
-                .'9D5B927F80FD2F0BBEE3FE083E7721FF9C7DBCAFED9BD536ED2F634102BE22D2091703",
+                . '9D5B927F80FD2F0BBEE3FE083E7721FF9C7DBCAFED9BD536ED2F634102BE22D2091703",
                 "time": "1539606249"
             },
             "account": {

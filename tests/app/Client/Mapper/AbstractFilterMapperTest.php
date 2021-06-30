@@ -1,13 +1,14 @@
 <?php
-/**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,12 +19,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Client\Mapper;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Tests\TestCase;
+
 use function json_decode;
 
 class AbstractFilterMapperTest extends TestCase
@@ -80,7 +82,7 @@ JSON;
         $keywords = json_decode($keywordsJson, true);
 
         return [
-            'typical'=>[
+            'typical' => [
                 $keywords,
                 [
                     'nx:j' => ['s2'],
@@ -102,19 +104,19 @@ JSON;
 
                 ],
             ],
-            'single'=>[
+            'single' => [
                 ['one'],
                 ['one'],
             ],
-            'double'=>[
+            'double' => [
                 ['one', 'two'],
                 ['one', 'two'],
             ],
-            'single with colon'=>[
+            'single with colon' => [
                 ['pets:cats', 'one:two'],
                 ['pets:cats', 'one:two'],
             ],
-            'double with colon'=>[
+            'double with colon' => [
                 ['pets:cats'],
                 ['pets:cats'],
             ],

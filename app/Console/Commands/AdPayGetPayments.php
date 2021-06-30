@@ -1,6 +1,7 @@
 <?php
-/**
- * Copyright (c) 2018 Adshares sp. z o.o.
+
+/*
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,7 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -35,6 +37,7 @@ use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use Illuminate\Support\Collection;
+
 use function count;
 use function hex2bin;
 use function in_array;
@@ -53,7 +56,7 @@ class AdPayGetPayments extends BaseCommand
 
     public const STATUS_REQUEST_FAILED = 3;
 
-    protected $signature = self::COMMAND_SIGNATURE.'
+    protected $signature = self::COMMAND_SIGNATURE . '
                             {--t|timestamp=}
                             {--f|force}
                             {--r|recalculate}
@@ -64,15 +67,15 @@ class AdPayGetPayments extends BaseCommand
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): int
     {
         if (!$this->lock()) {
-            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
+            $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
 
             return self::STATUS_LOCKED;
         }
 
-        $this->info('Start command '.self::COMMAND_SIGNATURE);
+        $this->info('Start command ' . self::COMMAND_SIGNATURE);
 
         $timestamp = $this->getReportTimestamp();
-        $exchangeRate = $this->getExchangeRate($exchangeRateReader, new DateTime('@'.$timestamp));
+        $exchangeRate = $this->getExchangeRate($exchangeRateReader, new DateTime('@' . $timestamp));
         $limit = (int)$this->option('chunkSize');
         $offset = 0;
 
@@ -85,7 +88,7 @@ class AdPayGetPayments extends BaseCommand
         do {
             try {
                 $calculations = $this->getCalculations($adPay, $timestamp, $limit, $offset);
-            } catch (AdPayReportNotReadyException|UnexpectedClientResponseException $recoverableException) {
+            } catch (AdPayReportNotReadyException | UnexpectedClientResponseException $recoverableException) {
                 $this->info(
                     sprintf(
                         'Exception during fetching payment report from adpay (%s) (%s)',
