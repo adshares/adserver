@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f1dc041b5ed329f1eb22a8b790a15e58",
+    "content-hash": "1a928e82b660f87906f845f3de0b8916",
     "packages": [
         {
             "name": "adshares/ads-client",
@@ -9405,7 +9405,6 @@
         "ext-intl": "*",
         "ext-json": "*",
         "ext-libxml": "*",
-        "ext-memcached": "*",
         "ext-openssl": "*",
         "ext-pdo_mysql": "*",
         "ext-sodium": "*",
