@@ -22,11 +22,12 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
-use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Services\AdsExchange;
+use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
@@ -40,6 +41,7 @@ use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 
@@ -156,5 +158,16 @@ class AppServiceProvider extends ServiceProvider
                 );
             }
         );
+    }
+
+    public function boot()
+    {
+        if (config('app.debug')) {
+            DB::listen(
+                function ($query) {
+                    Log::debug($query->sql);
+                }
+            );
+        }
     }
 }

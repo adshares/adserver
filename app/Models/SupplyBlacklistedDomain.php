@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,6 +21,8 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+
 use function filter_var;
 use function strpos;
 
@@ -48,6 +50,7 @@ class SupplyBlacklistedDomain extends Model
 
         $model = new self(['domain' => $domain]);
         $model->save();
+        Cache::forget('supply_blacklisted_domains');
     }
 
     public static function isDomainBlacklisted(string $domain): bool
@@ -56,15 +59,20 @@ class SupplyBlacklistedDomain extends Model
             return true;
         }
 
+        $blacklisted = Cache::rememberForever('supply_blacklisted_domains', function () {
+            return self::all()->pluck('domain', 'domain')->toArray();
+        });
+
         $domainParts = explode('.', $domain);
         $domainPartsCount = count($domainParts);
 
-        $domains = [];
         for ($i = 0; $i < $domainPartsCount; $i++) {
-            $domains[] = implode('.', $domainParts);
+            if (array_key_exists(implode('.', $domainParts), $blacklisted)) {
+                return true;
+            }
             array_shift($domainParts);
         }
 
-        return self::whereIn('domain', $domains)->get()->count() > 0;
+        return false;
     }
 }

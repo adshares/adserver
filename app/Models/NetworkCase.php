@@ -111,7 +111,7 @@ SQL;
             return null;
         }
 
-        $banner = NetworkBanner::fetchByPublicIdWithCampaign($bannerId);
+        $banner = NetworkBanner::fetchByPublicId($bannerId);
         if (!$banner) {
             return null;
         }

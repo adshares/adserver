@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
+
 use function hex2bin;
 use function in_array;
 
@@ -179,6 +181,26 @@ class Banner extends Model
     public static function fetchBanner(string $bannerUuid): ?self
     {
         return self::where('uuid', hex2bin($bannerUuid))->first();
+    }
+
+    public static function fetchByPublicId(string $uuid): ?self
+    {
+        if (false === ($binId = @hex2bin($uuid))) {
+            return null;
+        }
+
+        return Cache::remember(
+            'banners.' . $uuid,
+            (int)(config('app.network_data_cache_ttl') / 60),
+            function () use ($binId) {
+                return self::where('uuid', $binId)->with(
+                    [
+                        'campaign',
+                        'campaign.user',
+                    ]
+                )->first();
+            }
+        );
     }
 
     public static function fetchBannerByPublicIds(array $publicIds): Collection

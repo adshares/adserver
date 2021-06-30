@@ -59,20 +59,20 @@ class UpdateServeDomainsCommand extends BaseCommand
                 file_get_contents($jsPath)
             );
 
-            if($n = $this->option("list-domains")) {
+            if ($n = $this->option('list-domains')) {
                 $interval = 24 * 3600 * 14;
 
                 $x = time();
                 $x -= $x % $interval;
 
-                for($i=0;$i<$n;$i++) {
+                for ($i = 0; $i < $n; $i++) {
                     $y = $x + $i * $interval;
 
                     $process = new Process(
                         ['nodejs'],
                         null,
                         null,
-                        str_replace_first('new Date()', 'new Date('. ($y*1000) .')', $jsCode)
+                        str_replace(['new Date()', 'new Date'], 'new Date(' . ($y * 1000) . ')', $jsCode)
                     );
 
                     if ($process->run() === 0) {
@@ -81,7 +81,7 @@ class UpdateServeDomainsCommand extends BaseCommand
                         throw new RuntimeException($process->getErrorOutput());
                     }
 
-                    printf("%s - %s %s\n", date("d.m.Y", $y), date("d.m.Y", $y+$interval), $url);
+                    printf("%s - %s %s\n", date('d.m.Y', $y), date('d.m.Y', $y + $interval), $url);
                 }
             } else {
                 $process = new Process(

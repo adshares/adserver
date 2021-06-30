@@ -37,6 +37,11 @@ class SupplyBlacklistedDomainTest extends TestCase
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('example.com'));
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('one.example.com'));
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('www.one.example.com'));
+
+        SupplyBlacklistedDomain::register('adshares.net');
+
+        $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('adshares.net'));
+        $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('all.adshares.net'));
     }
 
     public function testBlacklistedSpecial(): void

@@ -280,7 +280,7 @@ class GuzzleAdSelectClient implements AdSelect
         foreach ($params as $requestId => $bannerIds) {
             foreach ($bannerIds as $item) {
                 $bannerId = $item['banner_id'] ?? null;
-                $banner = $bannerId ? NetworkBanner::findByUuid((string)$bannerId) : null;
+                $banner = $bannerId ? NetworkBanner::fetchByPublicId((string)$bannerId) : null;
 
                 if (null === $banner) {
                     if ($bannerId) {

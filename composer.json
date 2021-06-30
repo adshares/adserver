@@ -9,6 +9,7 @@
         "ext-intl": "*",
         "ext-json": "*",
         "ext-libxml": "*",
+        "ext-memcached": "*",
         "ext-openssl": "*",
         "ext-pdo_mysql": "*",
         "ext-sodium": "*",
@@ -81,6 +82,7 @@
             "@php artisan config:clear",
             "phpunit --configuration phpunit-ci.xml"
         ],
+        "dev": "/bin/bash -c '(source .env && if [ -f \".env.local\" ]; then source .env.local; fi && php -t ./public -S ${APP_HOST}:${APP_PORT})'",
         "post-root-package-install": [
             "@php artisan key:generate"
         ],

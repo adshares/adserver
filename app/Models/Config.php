@@ -25,6 +25,8 @@ use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+
 use function array_merge;
 use function in_array;
 use function sprintf;
@@ -220,12 +222,13 @@ class Config extends Model
 
     public static function fetchAdminSettings(): array
     {
-        $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
-            ->get()
-            ->pluck('value', 'key')
-            ->toArray();
-
-        return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);
+        return Cache::rememberForever('config.admin', function() {
+            $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
+                ->get()
+                ->pluck('value', 'key')
+                ->toArray();
+            return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);
+        });
     }
 
     public static function updateAdminSettings(array $settings): void
@@ -233,5 +236,6 @@ class Config extends Model
         foreach ($settings as $key => $value) {
             self::upsertByKey($key, $value);
         }
+        Cache::forget('config.admin');
     }
 }

@@ -170,7 +170,7 @@ SQL;
 
     private function getBanner(string $id): Banner
     {
-        $banner = Banner::fetchBanner($id);
+        $banner = Banner::fetchByPublicId($id);
 
         if ($banner === null) {
             abort(404);

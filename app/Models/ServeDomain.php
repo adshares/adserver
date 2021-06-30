@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Models;
 use DateTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @property string base_url
@@ -50,6 +51,7 @@ class ServeDomain extends Model
         }
         $serveDomain->updated_at = new DateTime();
         $serveDomain->save();
+        Cache::forget('serve-domain.current');
     }
 
     public static function changeUrlHost(string $url): string
@@ -59,7 +61,9 @@ class ServeDomain extends Model
 
     public static function current(): string
     {
-        return ServeDomain::orderBy('id', 'DESC')->first()->base_url;
+        return Cache::rememberForever('serve-domain.current', function() {
+            return ServeDomain::orderBy('id', 'DESC')->first()->base_url;
+        });
     }
 
     public static function fetch(): array

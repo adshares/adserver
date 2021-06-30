@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -31,6 +30,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\Cache;
+
 use function array_map;
 use function hex2bin;
 
@@ -138,9 +139,19 @@ class NetworkBanner extends Model
         return with(new static())->getTable();
     }
 
-    public static function findByUuid(string $bannerId): ?self
+    public static function fetchByPublicId(string $uuid): ?self
     {
-        return self::where('uuid', hex2bin($bannerId))->first();
+        if (false === ($binId = @hex2bin($uuid))) {
+            return null;
+        }
+
+        return Cache::remember(
+            'network_banners.' . $uuid,
+            (int)(config('app.network_data_cache_ttl') / 60),
+            function () use ($binId) {
+                return self::where('uuid', $binId)->with(['campaign'])->first();
+            }
+        );
     }
 
     public static function fetch(int $limit, int $offset): Collection
@@ -404,15 +415,5 @@ class NetworkBanner extends Model
     public function banners(): HasMany
     {
         return $this->hasMany(Classification::class);
-    }
-
-    public static function fetchByPublicId(string $publicId): ?self
-    {
-        return self::where('uuid', hex2bin($publicId))->first();
-    }
-
-    public static function fetchByPublicIdWithCampaign(string $publicId)
-    {
-        return self::with('campaign')->where('uuid', hex2bin($publicId))->first();
     }
 }
