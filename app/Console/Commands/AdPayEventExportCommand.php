@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
@@ -40,9 +41,10 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
-
-use function ceil;
-use function sprintf;
+use Spatie\Fork\Fork;
+use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\Lock;
+use Symfony\Component\Lock\Store\FlockStore;
 
 class AdPayEventExportCommand extends BaseCommand
 {
@@ -54,7 +56,7 @@ class AdPayEventExportCommand extends BaseCommand
 
     private const DEFAULT_EXPORT_TIME_TO = '-10 minutes';
 
-    protected $signature = 'ops:adpay:event:export {--from=} {--to=}';
+    protected $signature = 'ops:adpay:event:export {--from=} {--to=} {--t|threads=4}';
 
     protected $description = 'Exports event data to AdPay';
 
@@ -66,7 +68,8 @@ class AdPayEventExportCommand extends BaseCommand
         $optionTo = $this->option('to');
         $isCommandExecutedAutomatically = null === $optionTo;
 
-        if (null === $optionTo && !$this->lock()) {
+        $lock = new Lock(new Key($this->getName()), new FlockStore(), null, false);
+        if (null === $optionTo && !$lock->acquire()) {
             $this->info('[AdPayEventExport] Command ' . $this->signature . ' already running.');
 
             return;
@@ -121,6 +124,7 @@ class AdPayEventExportCommand extends BaseCommand
 
         $commandExecutionTime = microtime(true) - $commandStartTime;
         $this->info(sprintf('[AdPayEventExport] Finished after %d seconds', (int)$commandExecutionTime));
+        $lock->release();
     }
 
     private function updateEventLogWithAdUserData(AdUser $adUser, Collection $events): void
@@ -276,6 +280,7 @@ class AdPayEventExportCommand extends BaseCommand
 
         $dateToTemporary = $dateFrom;
 
+        $threads = [];
         for ($pack = 0; $pack < $packCount; $pack++) {
             $dateFromTemporary = $dateToTemporary;
             $dateToTemporary = $dateToTemporary->modify(sprintf('+%d seconds', $packInterval));
@@ -288,54 +293,75 @@ class AdPayEventExportCommand extends BaseCommand
                 break;
             }
 
-            $eventsToExport =
-                EventLog::where('created_at', '>', $dateFromTemporary)
-                    ->where('created_at', '<=', $dateToTemporary)
-                    ->get();
+            $threads[] = function () use ($adPay, $adUser, $dateFromTemporary, $dateToTemporary, $pack) {
+                $this->exportEventsPack($adPay, $adUser, $pack, $dateFromTemporary, $dateToTemporary);
+            };
+        }
 
-            Log::debug(
-                sprintf(
-                    '[AdPayEventExport] Pack [%d]. Events to export: %d (%s -> %s, %s s)',
-                    $pack + 1,
-                    count($eventsToExport),
-                    $dateFromTemporary->format(DateTimeInterface::ATOM),
-                    $dateToTemporary->format(DateTimeInterface::ATOM),
-                    $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp()
-                )
-            );
+        Fork::new()
+            ->concurrent((int)$this->option('threads'))
+            ->before(
+                function () {
+                    DB::connection()->reconnect();
+                }
+            )
+            ->run(...$threads);
 
-            $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
-
-            $timeStart = $dateFromTemporary->modify('+1 second');
-            $timeEnd = $dateToTemporary;
-            if ($timeStart > $timeEnd) {
-                $timeEnd = $timeStart;
-            }
-
-            $views = DemandEventMapper::mapEventCollectionToArray(
-                $eventsToExport->filter(
-                    function ($item) {
-                        return EventLog::TYPE_VIEW === $item->event_type;
-                    }
-                )
-            );
-            $adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
-
-            $clicks = DemandEventMapper::mapEventCollectionToArray(
-                $eventsToExport->filter(
-                    function ($item) {
-                        return EventLog::TYPE_CLICK === $item->event_type;
-                    }
-                )
-            );
-            $adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
-
-            if ($isCommandExecutedAutomatically) {
-                Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateToTemporary);
-            }
+        if ($isCommandExecutedAutomatically && $packCount > 0) {
+            Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateTo);
         }
 
         $this->info(sprintf('[AdPayEventExport] Finished exporting %d events', $eventsCount));
+    }
+
+    private function exportEventsPack(
+        AdPay $adPay,
+        AdUser $adUser,
+        int $pack,
+        DateTimeImmutable $dateFrom,
+        DateTimeImmutable $dateTo
+    ): void {
+        $eventsToExport =
+            EventLog::where('created_at', '>', $dateFrom)
+                ->where('created_at', '<=', $dateTo)
+                ->get();
+
+        Log::debug(
+            sprintf(
+                '[AdPayEventExport] Pack [%d]. Events to export: %d (%s -> %s, %s s)',
+                $pack + 1,
+                count($eventsToExport),
+                $dateFrom->format(DateTimeInterface::ATOM),
+                $dateTo->format(DateTimeInterface::ATOM),
+                $dateTo->getTimestamp() - $dateFrom->getTimestamp()
+            )
+        );
+
+        $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
+
+        $timeStart = $dateFrom->modify('+1 second');
+        $timeEnd = $dateTo;
+        if ($timeStart > $timeEnd) {
+            $timeEnd = $timeStart;
+        }
+
+        $views = DemandEventMapper::mapEventCollectionToArray(
+            $eventsToExport->filter(
+                function ($item) {
+                    return EventLog::TYPE_VIEW === $item->event_type;
+                }
+            )
+        );
+        $adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
+
+        $clicks = DemandEventMapper::mapEventCollectionToArray(
+            $eventsToExport->filter(
+                function ($item) {
+                    return EventLog::TYPE_CLICK === $item->event_type;
+                }
+            )
+        );
+        $adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
     }
 
     private function exportConversionsInPacks(
