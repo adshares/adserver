@@ -14,6 +14,7 @@
         "ext-sodium": "*",
         "ext-zip": "*",
         "adshares/ads-client": "^1",
+        "adshares/fork": "dev-master",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",
         "doctrine/collections": " v1.5",
@@ -105,6 +106,10 @@
         "ads-php-client": {
             "type":"git",
             "url": "https://github.com/adshares/ads-php-client.git"
+        },
+        "adshares-fork": {
+            "type":"git",
+            "url": "https://github.com/adshares/fork.git"
         }
     },
     "minimum-stability": "dev",
