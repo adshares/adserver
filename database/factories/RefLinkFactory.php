@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -19,18 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+use Adshares\Adserver\Models\User;
+use Faker\Generator as Faker;
 
-namespace Adshares\Common;
-
-use Adshares\Adserver\Models\Config;
-
-final class Feature
-{
-    public const REFERRAL_REFUND = 'referral-refund';
-
-    public static function enabled(string $feature): bool
-    {
-        return Config::isTrueOnly("$feature-enabled");
-    }
-}
+$factory->define(\Adshares\Adserver\Models\RefLink::class, function (Faker $faker) {
+    return [
+        'user_id' => function() {
+            return factory(User::class)->create()->id;
+        },
+        'token' => $faker->unique()->asciify(),
+    ];
+});

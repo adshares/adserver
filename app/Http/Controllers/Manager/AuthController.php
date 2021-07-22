@@ -28,6 +28,7 @@ use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ExchangeRate;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -94,8 +95,13 @@ class AuthController extends Controller
 
         DB::commit();
 
-        if (Feature::enabled(Feature::BONUS_NEW_USERS)) {
-            $user->awardBonus(Config::fetchInt(Config::BONUS_NEW_USER_AMOUNT));
+        if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
+            try {
+                $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+                $user->awardBonus($exchangeRate->toClick($user->refLink->bonus));
+            } catch (ExchangeRateNotAvailableException $exception) {
+                Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
+            }
         }
 
         $this->sendCrmMailOnUserRegistered($user);

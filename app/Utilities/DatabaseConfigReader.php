@@ -22,7 +22,7 @@
 namespace Adshares\Adserver\Utilities;
 
 use Adshares\Adserver\Models\Config;
-use Config as SystemConfig;
+use Illuminate\Support\Facades\Config as SystemConfig;
 
 class DatabaseConfigReader
 {

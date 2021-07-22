@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\UserEmailActivate;
-use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
@@ -60,40 +60,47 @@ class AuthControllerTest extends TestCase
         ],
     ];
 
-    public function testRegister(): Token
+    public function testRegister(): void
     {
-        Mail::fake();
-
-        $response = $this->postJson(
-            '/auth/register',
-            [
-                'user' => [
-                    'email' => 'tester@test.xx',
-                    'password' => '87654321',
-                    'isAdvertiser' => true,
-                    'isPublisher' => true,
-                ],
-                'uri' => '/auth/email-activation/',
-            ]
-        );
-
-        $response->assertStatus(Response::HTTP_CREATED);
-
+        $user = $this->registerUser();
         Mail::assertQueued(UserEmailActivate::class);
-
         self::assertCount(1, Token::all());
 
-        return Token::first();
+        $this->assertFalse($user->isEmailConfirmed);
+        $this->assertNull($user->refLink);
+
+        $this->activateUser($user);
+        self::assertEmpty(Token::all());
+        $this->assertTrue($user->isEmailConfirmed);
+        $this->assertNull($user->refLink);
+    }
+
+    public function testRegisterWithReferral(): void
+    {
+        $refLink = factory(RefLink::class)->create();
+        $this->assertFalse($refLink->used);
+
+        $user = $this->registerUser($refLink->token);
+        $this->assertNotNull($user->refLink);
+        $this->assertEquals($refLink->token, $user->refLink->token);
+        $this->assertTrue($user->refLink->used);
+
+        $this->activateUser($user);
+        $this->assertNotNull($user->refLink);
+        $this->assertEquals($refLink->token, $user->refLink->token);
+        $this->assertTrue($user->refLink->used);
+    }
+
+    public function testRegisterWithInvalidReferral(): void
+    {
+        $user = $this->registerUser('dummy_token');
+        $this->assertNull($user->refLink);
     }
 
     public function testEmailActivateWithBonus(): void
     {
-        Config::upsertInt(Config::BONUS_NEW_USER_ENABLED, 1);
-        Config::upsertInt(Config::BONUS_NEW_USER_AMOUNT, 1000);
-
-        $activationToken = $this->testRegister();
-
-        $user = User::find($activationToken->user_id)->first();
+        $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
+        $user = $this->registerUser($refLink->token);
 
         self::assertSame(
             [0, 0, 0],
@@ -104,20 +111,10 @@ class AuthControllerTest extends TestCase
             ]
         );
 
-        $response = $this->postJson(
-            '/auth/email/activate',
-            [
-                'user' => [
-                    'emailConfirmToken' => $activationToken->uuid,
-                ],
-            ]
-        );
-
-        $response->assertStatus(Response::HTTP_OK);
-        self::assertEmpty(Token::all());
+        $this->activateUser($user);
 
         self::assertSame(
-            [1000, 1000, 0],
+            [300, 300, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
@@ -128,12 +125,8 @@ class AuthControllerTest extends TestCase
 
     public function testEmailActivateNoBonus(): void
     {
-        Config::upsertInt(Config::BONUS_NEW_USER_ENABLED, 0);
-
-        $activationToken = $this->testRegister();
-
-        $user = User::find($activationToken->user_id)->first();
-
+        $refLink = factory(RefLink::class)->create(['bonus' => 0, 'refund' => 0.5]);
+        $user = $this->registerUser($refLink->token);
         self::assertSame(
             [0, 0, 0],
             [
@@ -143,18 +136,7 @@ class AuthControllerTest extends TestCase
             ]
         );
 
-        $response = $this->postJson(
-            '/auth/email/activate',
-            [
-                'user' => [
-                    'emailConfirmToken' => $activationToken->uuid,
-                ],
-            ]
-        );
-
-        $response->assertStatus(Response::HTTP_OK);
-        self::assertEmpty(Token::all());
-
+        $this->activateUser($user);
         self::assertSame(
             [0, 0, 0],
             [
@@ -203,5 +185,39 @@ class AuthControllerTest extends TestCase
         unset($structure['exchangeRate']);
 
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure($structure);
+    }
+
+    public function registerUser(?string $referralToken = null): User
+    {
+        $response = $this->postJson(
+            '/auth/register',
+            [
+                'user' => [
+                    'email' => 'tester@test.xx',
+                    'password' => '87654321',
+                    'referral_token' => $referralToken,
+                ],
+                'uri' => '/auth/email-activation/',
+            ]
+        );
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        return User::where('email', 'tester@test.xx')->firstOrFail();
+    }
+
+    public function activateUser(User $user): void
+    {
+        $activationToken = Token::where('user_id', $user->id)->where('tag', 'email-activate')->firstOrFail();
+
+        $response = $this->postJson(
+            '/auth/email/activate',
+            [
+                'user' => [
+                    'emailConfirmToken' => $activationToken->uuid,
+                ],
+            ]
+        );
+        $response->assertStatus(Response::HTTP_OK);
+        $user->refresh();
     }
 }

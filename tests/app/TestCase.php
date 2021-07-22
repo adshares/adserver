@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Mail;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -33,6 +34,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp()
     {
         parent::setUp();
+        Mail::fake();
 
         $this->app->bind(
             ExchangeRateRepository::class,
