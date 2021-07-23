@@ -23,12 +23,16 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\Ownership;
+use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * @property int id
@@ -51,6 +55,7 @@ class RefLink extends Model
 {
     use AutomateMutators;
     use SoftDeletes;
+    use Ownership;
 
     protected $attributes = [
         'single_use' => false,
@@ -59,6 +64,7 @@ class RefLink extends Model
     ];
 
     protected $fillable = [
+        'user_id',
         'token',
         'comment',
         'valid_until',
@@ -71,7 +77,7 @@ class RefLink extends Model
 
     public static array $rules = [
         'user_id' => 'required',
-        'token' => 'required|max:64',
+        'token' => 'required|min:6|max:64|unique:ref_links',
     ];
 
     protected $casts = [
@@ -94,6 +100,20 @@ class RefLink extends Model
         return $this->belongsTo(User::class);
     }
 
+    public static function fetchAll(): Collection
+    {
+        return RefLink::select('*')
+            ->selectSub(
+                function (\Illuminate\Database\Query\Builder $query) {
+                    $query->from('users')
+                        ->selectRaw('COUNT(*)')
+                        ->whereRaw('users.ref_link_id = ref_links.id');
+                },
+                'usageCount'
+            )
+            ->get();
+    }
+
     public static function fetchByToken(string $token): ?self
     {
         return RefLink::where('token', $token)
@@ -107,5 +127,10 @@ class RefLink extends Model
                     $query->where('single_use', false)->orWhere('used', false);
                 }
             )->first();
+    }
+
+    public static function generateToken(): string
+    {
+        return Utils::urlSafeBase64Encode(hex2bin(UuidStringGenerator::v4()));
     }
 }

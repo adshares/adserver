@@ -1,13 +1,13 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
+use Adshares\Adserver\Http\Controllers\Manager\RefLinksController;
 use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\StatsController;
@@ -96,6 +97,9 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
     Route::get('notifications', [NotificationsController::class, 'read']);
     Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
+
+    Route::get('ref-links', [RefLinksController::class, 'browse']);
+    Route::post('ref-links', [RefLinksController::class, 'add']);
 
     Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
     Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
