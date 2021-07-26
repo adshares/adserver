@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use \Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -100,16 +101,38 @@ class RefLink extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function calculateRefund(int $amount): int
+    {
+        $refund = $this->refund ?? Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION);
+        return (int)floor($amount * $refund) - $this->calculateBonus($amount);
+    }
+
+    public function calculateBonus(int $amount): int
+    {
+        $refund = $this->refund ?? Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION);
+        return (int)round(floor($amount * $refund) * (1.0 - $this->kept_refund));
+    }
+
     public static function fetchAll(): Collection
     {
         return RefLink::select('*')
             ->selectSub(
-                function (\Illuminate\Database\Query\Builder $query) {
+                function (QueryBuilder $query) {
                     $query->from('users')
                         ->selectRaw('COUNT(*)')
                         ->whereRaw('users.ref_link_id = ref_links.id');
                 },
                 'usageCount'
+            )
+            ->selectSub(
+                function (QueryBuilder $query) {
+                    $query->from('user_ledger_entries')
+                        ->selectRaw('SUM(amount)')
+                        ->whereRaw('user_ledger_entries.ref_link_id = ref_links.id')
+                        ->where('status', UserLedgerEntry::STATUS_ACCEPTED)
+                        ->where('type', UserLedgerEntry::TYPE_REFUND);
+                },
+                'refunded'
             )
             ->get();
     }

@@ -19,6 +19,9 @@
  */
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 class ReferralRefundConfig extends Migration
@@ -46,6 +49,10 @@ class ReferralRefundConfig extends Migration
                 'created_at' => new DateTime(),
             ]
         );
+        Schema::table('user_ledger_entries', function (Blueprint $table) {
+            $table->bigInteger('ref_link_id')->nullable(true);
+            $table->index('ref_link_id', UserLedgerEntry::INDEX_REF_LINK_ID);
+        });
     }
 
     /**
@@ -55,6 +62,10 @@ class ReferralRefundConfig extends Migration
      */
     public function down()
     {
+        Schema::table('user_ledger_entries', function (Blueprint $table) {
+            $table->dropIndex(UserLedgerEntry::INDEX_REF_LINK_ID);
+            $table->dropColumn('ref_link_id');
+        });
         DB::table('configs')->where('key', 'referral-refund-enabled')->delete();
         DB::table('configs')->where('key', 'referral-refund-commission')->delete();
         DB::table('configs')->insert(

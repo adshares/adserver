@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\Email;
@@ -262,6 +261,11 @@ class User extends Authenticatable
         return UserLedgerEntry::getBonusBalanceByUserId($this->id);
     }
 
+    public function getRefundBalance(): int
+    {
+        return UserLedgerEntry::getBonusBalanceByUserId($this->id);
+    }
+
     public function refLink(): BelongsTo
     {
         return $this->belongsTo(RefLink::class);
@@ -279,9 +283,9 @@ class User extends Authenticatable
         $user->save();
     }
 
-    public function awardBonus(int $amount): void
+    public function awardBonus(int $amount, ?RefLink $refLink = null): void
     {
-        UserLedgerEntry::awardBonusToUser($this, $amount);
+        UserLedgerEntry::insertUserBonus($this->id, $amount, $refLink);
     }
 
     public function confirmEmail(): void

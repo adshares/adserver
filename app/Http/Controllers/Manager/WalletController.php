@@ -346,6 +346,7 @@ class WalletController extends Controller
             -$amount,
             UserLedgerEntry::STATUS_AWAITING_APPROVAL,
             UserLedgerEntry::TYPE_WITHDRAWAL,
+            null,
             'BTC'
         )->addressed(null, $addressTo);
 

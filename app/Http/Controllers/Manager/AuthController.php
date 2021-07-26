@@ -98,7 +98,7 @@ class AuthController extends Controller
         if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
             try {
                 $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-                $user->awardBonus($exchangeRate->toClick($user->refLink->bonus));
+                $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
             } catch (ExchangeRateNotAvailableException $exception) {
                 Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
             }

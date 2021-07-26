@@ -206,14 +206,19 @@ class Config extends Model
         $config->save();
     }
 
-    public static function upsertDateTime(string $key, DateTimeInterface $date): void
+    public static function upsertDateTime(string $key, DateTimeInterface $value): void
     {
-        self::upsertByKey($key, $date->format(DateTimeInterface::ATOM));
+        self::upsertByKey($key, $value->format(DateTimeInterface::ATOM));
     }
 
-    public static function upsertInt(string $key, int $id): void
+    public static function upsertInt(string $key, int $value): void
     {
-        self::upsertByKey($key, (string)$id);
+        self::upsertByKey($key, (string)$value);
+    }
+
+    public static function upsertFloat(string $key, float $value): void
+    {
+        self::upsertByKey($key, (string)$value);
     }
 
     public static function isTrueOnly(string $key): bool

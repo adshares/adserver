@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Http\Response;
 
@@ -81,6 +82,7 @@ class RefLinksControllerTest extends TestCase
         $this->assertEquals(100, $data['bonus']);
         $this->assertEquals(0.5, $data['refund']);
         $this->assertEquals(0.25, $data['keptRefund']);
+        $this->assertEquals(0, $data['refunded']);
         $this->assertEquals('2021-02-01 02:00:00', $data['refundValidUntil']);
     }
 
@@ -100,6 +102,45 @@ class RefLinksControllerTest extends TestCase
         $data = $response->json()[0];
 
         $this->assertEquals(2, $data['usageCount']);
+    }
+
+    public function testBrowseRefLinksWithRefund(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $refLink = factory(RefLink::class)->create(['user_id' => $user->id]);
+
+        factory(UserLedgerEntry::class)->create(
+            [
+                'user_id' => $user->id,
+                'type' => UserLedgerEntry::TYPE_REFUND,
+                'ref_link_id' => $refLink->id,
+                'amount' => 1000,
+            ]
+        );
+        factory(UserLedgerEntry::class)->create(
+            [
+                'user_id' => $user->id,
+                'type' => UserLedgerEntry::TYPE_REFUND,
+                'ref_link_id' => $refLink->id,
+                'amount' => 200,
+            ]
+        );
+        factory(UserLedgerEntry::class)->create(
+            [
+                'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
+                'ref_link_id' => $refLink->id,
+                'amount' => 2000,
+            ]
+        );
+
+        $response = $this->getJson(self::URI);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1);
+        $data = $response->json()[0];
+
+        $this->assertEquals(1200, $data['refunded']);
     }
 
     public function testAddRefLink(): void

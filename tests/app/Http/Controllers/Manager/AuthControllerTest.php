@@ -27,6 +27,7 @@ use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
@@ -121,6 +122,14 @@ class AuthControllerTest extends TestCase
                 $user->getWalletBalance(),
             ]
         );
+
+        $entry = UserLedgerEntry::where('user_id', $user->id)
+            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
+            ->firstOrFail();
+
+        $this->assertEquals(300, $entry->amount);
+        $this->assertNotNull($entry->refLink);
+        $this->assertEquals($refLink->id, $entry->refLink->id);
     }
 
     public function testEmailActivateNoBonus(): void

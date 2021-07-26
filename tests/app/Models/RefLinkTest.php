@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Tests\Models;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Tests\TestCase;
 
@@ -67,5 +68,59 @@ class RefLinkTest extends TestCase
 
         $dbRefLink = RefLink::fetchByToken('foo3');
         $this->assertNull($dbRefLink);
+    }
+
+    public function testCalculateRefundAmount(): void
+    {
+        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.1);
+
+        /** @var RefLink $refLink */
+        $refLink = factory(RefLink::class)->create();
+        $this->assertEquals(0, $refLink->calculateRefund(0));
+        $this->assertEquals(10, $refLink->calculateRefund(100));
+        $this->assertEquals(0, $refLink->calculateRefund(1));
+
+        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.33333]);
+        $this->assertEquals(3, $refLink->calculateRefund(100));
+
+        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.66666]);
+        $this->assertEquals(7, $refLink->calculateRefund(100));
+
+        $refLink = factory(RefLink::class)->create(['kept_refund' => 0]);
+        $this->assertEquals(0, $refLink->calculateRefund(100));
+
+        $refLink = factory(RefLink::class)->create(['refund' => 0.6, 'kept_refund' => 0.8]);
+        $this->assertEquals(0, $refLink->calculateRefund(0));
+        $this->assertEquals(48, $refLink->calculateRefund(100));
+
+        $refLink = factory(RefLink::class)->create(['refund' => 0.5, 'kept_refund' => 0.5]);
+        $this->assertEquals(1, $refLink->calculateRefund(7));
+    }
+
+    public function testCalculateBonusAmount(): void
+    {
+        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.1);
+
+        /** @var RefLink $refLink */
+        $refLink = factory(RefLink::class)->create();
+        $this->assertEquals(0, $refLink->calculateBonus(0));
+        $this->assertEquals(0, $refLink->calculateBonus(100));
+        $this->assertEquals(0, $refLink->calculateBonus(10));
+
+        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.33333]);
+        $this->assertEquals(7, $refLink->calculateBonus(100));
+
+        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.66666]);
+        $this->assertEquals(3, $refLink->calculateBonus(100));
+
+        $refLink = factory(RefLink::class)->create(['kept_refund' => 0]);
+        $this->assertEquals(10, $refLink->calculateBonus(100));
+
+        $refLink = factory(RefLink::class)->create(['refund' => 0.6, 'kept_refund' => 0.8]);
+        $this->assertEquals(0, $refLink->calculateBonus(0));
+        $this->assertEquals(12, $refLink->calculateBonus(100));
+
+        $refLink = factory(RefLink::class)->create(['refund' => 0.5, 'kept_refund' => 0.5]);
+        $this->assertEquals(2, $refLink->calculateBonus(7));
     }
 }
