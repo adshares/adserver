@@ -47,7 +47,7 @@ class SettingsResponse implements Arrayable
 
     private Id $coldWalletAddress;
 
-    private bool $referralRefundEnabled;
+    private int $referralRefundEnabled;
 
     private Commission $referralRefundCommission;
 
@@ -63,7 +63,7 @@ class SettingsResponse implements Arrayable
         Email $supportEmail,
         int $coldWalletIsActive,
         Id $coldWalletAddress,
-        bool $referralRefundEnabled,
+        int $referralRefundEnabled,
         Commission $referralRefundCommission,
         Commission $advertiserCommission,
         Commission $publisherCommission
@@ -103,7 +103,7 @@ class SettingsResponse implements Arrayable
             new Email($supportEmail),
             (int)$coldWalletIsActive,
             $coldWalletAddress ? new AccountId((string)$coldWalletAddress) : new EmptyAccountId(),
-            (bool)$referralRefundEnabled,
+            (int)$referralRefundEnabled,
             new Commission((float)$referralRefundCommission),
             new Commission((float)$advertiserCommission),
             new Commission((float)$publisherCommission)

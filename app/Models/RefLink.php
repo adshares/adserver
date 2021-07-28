@@ -25,13 +25,14 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use \Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -51,12 +52,14 @@ use Illuminate\Support\Collection;
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property ?Carbon deleted_at
+ * @method static RefLink create(array $input = [])
  */
 class RefLink extends Model
 {
     use AutomateMutators;
     use SoftDeletes;
     use Ownership;
+    use DateAtom;
 
     protected $attributes = [
         'single_use' => false,
@@ -77,8 +80,15 @@ class RefLink extends Model
     ];
 
     public static array $rules = [
-        'user_id' => 'required',
+        'user_id' => 'required|numeric',
         'token' => 'required|min:6|max:64|unique:ref_links',
+        'comment' => 'max:255',
+        'valid_until' => 'date',
+        'single_use' => 'boolean',
+        'bonus' => 'numeric|min:0',
+        'refund' => 'numeric|min:0|max:1',
+        'kept_refund' => 'numeric|min:0|max:1',
+        'refund_valid_until' => 'date',
     ];
 
     protected $casts = [
@@ -94,6 +104,11 @@ class RefLink extends Model
     protected $dates = [
         'valid_until',
         'refund_valid_until',
+    ];
+
+    protected $traitAutomate = [
+        'valid_until' => 'DateAtom',
+        'refund_valid_until' => 'DateAtom',
     ];
 
     public function user(): BelongsTo
@@ -113,7 +128,7 @@ class RefLink extends Model
         return (int)round(floor($amount * $refund) * (1.0 - $this->kept_refund));
     }
 
-    public static function fetchAll(): Collection
+    public static function fetchByUser(int $userId): Collection
     {
         return RefLink::select('*')
             ->selectSub(
@@ -127,13 +142,14 @@ class RefLink extends Model
             ->selectSub(
                 function (QueryBuilder $query) {
                     $query->from('user_ledger_entries')
-                        ->selectRaw('SUM(amount)')
+                        ->selectRaw('IFNULL(SUM(amount), 0)')
                         ->whereRaw('user_ledger_entries.ref_link_id = ref_links.id')
                         ->where('status', UserLedgerEntry::STATUS_ACCEPTED)
                         ->where('type', UserLedgerEntry::TYPE_REFUND);
                 },
                 'refunded'
             )
+            ->where('user_id', $userId)
             ->get();
     }
 

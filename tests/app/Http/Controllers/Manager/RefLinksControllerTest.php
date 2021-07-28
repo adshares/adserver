@@ -54,7 +54,7 @@ class RefLinksControllerTest extends TestCase
                 'bonus' => 100,
                 'refund' => 0.5,
                 'kept_refund' => 0.25,
-                'refund_valid_until' => '2021-02-01 02:00:00',
+                'refund_valid_until' => '2021-02-01T02:00:00Z',
             ]
         );
         // default ref link
@@ -71,11 +71,11 @@ class RefLinksControllerTest extends TestCase
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(4);
-        $data = $response->json()[0];
+        $data = $response->json()[3];
 
         $this->assertEquals('dummy-token', $data['token']);
         $this->assertEquals('test comment', $data['comment']);
-        $this->assertEquals('2021-01-01 01:00:00', $data['validUntil']);
+        $this->assertEquals('2021-01-01T01:00:00+00:00', $data['validUntil']);
         $this->assertEquals(true, $data['singleUse']);
         $this->assertEquals(false, $data['used']);
         $this->assertEquals(0, $data['usageCount']);
@@ -83,7 +83,7 @@ class RefLinksControllerTest extends TestCase
         $this->assertEquals(0.5, $data['refund']);
         $this->assertEquals(0.25, $data['keptRefund']);
         $this->assertEquals(0, $data['refunded']);
-        $this->assertEquals('2021-02-01 02:00:00', $data['refundValidUntil']);
+        $this->assertEquals('2021-02-01T02:00:00+00:00', $data['refundValidUntil']);
     }
 
     public function testBrowseRefLinksWithUsage(): void
@@ -251,8 +251,8 @@ class RefLinksControllerTest extends TestCase
                     'singleUse' => true,
                     'bonus' => 100,
                     'refund' => 0.5,
-                    'kept_refund' => 0.25,
-                    'refundValidUntil' => '2021-02-01 02:00:00',
+                    'keptRefund' => 0.25,
+                    'refundValidUntil' => '2021-02-01T02:00:00Z',
                 ]
             ]
         );
@@ -265,11 +265,41 @@ class RefLinksControllerTest extends TestCase
 
         $this->assertEquals('dummy-token', $data['token']);
         $this->assertEquals('test comment', $data['comment']);
-        $this->assertEquals('2021-01-01 01:00:00', $data['validUntil']);
+        $this->assertEquals('2021-01-01T01:00:00+00:00', $data['validUntil']);
         $this->assertEquals(true, $data['singleUse']);
         $this->assertEquals(100, $data['bonus']);
         $this->assertEquals(0.5, $data['refund']);
         $this->assertEquals(0.25, $data['keptRefund']);
-        $this->assertEquals('2021-02-01 02:00:00', $data['refundValidUntil']);
+        $this->assertEquals('2021-02-01T02:00:00+00:00', $data['refundValidUntil']);
+    }
+
+    public function testAddRefLinkValidation(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
+
+        $response = $this->postJson(
+            self::URI,
+            [
+                'refLink' => [
+                    'token' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                    'validUntil' => 'foo_date',
+                    'singleUse' => 'invalid bool',
+                    'bonus' => -100,
+                    'refund' => 15,
+                    'keptRefund' => -0.5,
+                    'refundValidUntil' => 'foo_date+time',
+                ]
+            ]
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $errors = $response->json()['errors'];
+        $this->assertArrayHasKey('token', $errors);
+        $this->assertArrayHasKey('validUntil', $errors);
+        $this->assertArrayHasKey('singleUse', $errors);
+        $this->assertArrayHasKey('bonus', $errors);
+        $this->assertArrayHasKey('refund', $errors);
+        $this->assertArrayHasKey('keptRefund', $errors);
+        $this->assertArrayHasKey('refundValidUntil', $errors);
     }
 }

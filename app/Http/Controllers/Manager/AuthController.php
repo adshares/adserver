@@ -28,11 +28,9 @@ use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\ExchangeRate;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
-use Adshares\Common\Feature;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Http\JsonResponse;
@@ -250,7 +248,11 @@ class AuthController extends Controller
         return self::json(
             array_merge(
                 $user->toArray(),
-                ['exchange_rate' => $exchangeRate]
+                [
+                    'exchange_rate' => $exchangeRate,
+                    'referral_refund_enabled' => Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED),
+                    'referral_refund_commission' => Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION),
+                ]
             )
         );
     }
@@ -269,10 +271,10 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         if (
-            Auth::guard()->attempt(
-                $request->only('email', 'password'),
-                $request->filled('remember')
-            )
+        Auth::guard()->attempt(
+            $request->only('email', 'password'),
+            $request->filled('remember')
+        )
         ) {
             Auth::user()->generateApiKey();
 

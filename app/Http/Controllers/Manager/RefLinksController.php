@@ -22,7 +22,6 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\RefLink;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,7 +33,12 @@ class RefLinksController extends Controller
 {
     public function browse(): JsonResponse
     {
-        return self::json(RefLink::fetchAll()->toArray());
+        return self::json(
+            RefLink::fetchByUser(Auth::user()->id)
+                ->sortByDesc('id')
+                ->values()
+                ->toArray()
+        );
     }
 
     public function add(Request $request): JsonResponse
@@ -55,7 +59,11 @@ class RefLinksController extends Controller
         }
 
         Validator::make($input, RefLink::$rules)->validate();
-        $refLink = RefLink::create($input);
+        try {
+            $refLink = RefLink::create($input);
+        } catch (\Throwable $exception) {
+            $r = $exception;
+        }
 
         return self::json($refLink, Response::HTTP_CREATED);
     }
