@@ -188,6 +188,7 @@ class ConfigTest extends TestCase
             'support-email' => 'mail@example.com',
             'referral-refund-enabled' => '0',
             'referral-refund-commission' => '0',
+            'registration-mode' => 'public',
         ];
 
         self::assertEquals($adminSettings, Config::fetchAdminSettings());
@@ -209,6 +210,7 @@ class ConfigTest extends TestCase
             'support-email' => 'mail3@example.com',
             'referral-refund-enabled' => '1',
             'referral-refund-commission' => '0.5',
+            'registration-mode' => 'private',
         ];
 
         Config::updateAdminSettings($adminSettings);

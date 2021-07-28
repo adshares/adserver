@@ -150,18 +150,7 @@ final class AdminControllerTest extends TestCase
         $response = $this->get(self::URI_SETTINGS);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([
-            'settings' =>
-                [
-                    'hotwalletMinValue' => 500000000000000,
-                    'hotwalletMaxValue' => 2000000000000000,
-                    'coldWalletIsActive' => 0,
-                    'coldWalletAddress' => '',
-                    'adserverName' => 'AdServer',
-                    'technicalEmail' => 'mail@example.com',
-                    'supportEmail' => 'mail@example.com',
-                    'advertiserCommission' => 0.01,
-                    'publisherCommission' => 0.01,
-                ],
+            'settings' => $this->settings(),
         ]);
     }
 
@@ -182,6 +171,8 @@ final class AdminControllerTest extends TestCase
                     'advertiserCommission' => 0.05,
                     'publisherCommission' => 0.06,
                     'referralRefundEnabled' => 1,
+                    'referralRefundCommission' => 0.5,
+                    'registrationMode' => 'private',
                 ],
         ];
 
@@ -191,6 +182,16 @@ final class AdminControllerTest extends TestCase
         $response = $this->get(self::URI_SETTINGS);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson($updatedValues);
+    }
+
+    public function testInvalidRegistrationMode(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $settings = $this->settings();
+        $settings['registrationMode'] = 'dummy';
+
+        $response = $this->putJson(self::URI_SETTINGS, ['settings' => $settings]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testRejectedDomainsGet(): void
@@ -276,5 +277,23 @@ final class AdminControllerTest extends TestCase
         $deletedDomains = SitesRejectedDomain::onlyTrashed()->get();
         self::assertCount(1, $deletedDomains);
         self::assertEquals('example1.com', $deletedDomains->first()->domain);
+    }
+
+    private function settings(): array
+    {
+        return [
+            'hotwalletMinValue' => 500000000000000,
+            'hotwalletMaxValue' => 2000000000000000,
+            'coldWalletIsActive' => 0,
+            'coldWalletAddress' => '',
+            'adserverName' => 'AdServer',
+            'technicalEmail' => 'mail@example.com',
+            'supportEmail' => 'mail@example.com',
+            'advertiserCommission' => 0.01,
+            'publisherCommission' => 0.01,
+            'referralRefundEnabled' => 0,
+            'referralRefundCommission' => 0,
+            'registrationMode' => 'public',
+        ];
     }
 }

@@ -52,7 +52,8 @@ $factory->define(
             new Url($host.'/adshares/inventory/list'),
             new AccountId('0001-00000004-DBEB'),
             new Email($faker->companyEmail),
-            ['PUB', 'ADV']
+            ['PUB', 'ADV'],
+            'public'
         );
 
         $info->setDemandFee(0.01);

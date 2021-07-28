@@ -19,28 +19,33 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+namespace Adshares\Config;
 
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Mail;
+use RuntimeException;
 
-abstract class TestCase extends BaseTestCase
+final class RegistrationMode
 {
-    use CreatesApplication;
-    use RefreshDatabase;
+    public const PUBLIC = 'public';
+    public const RESTRICTED = 'restricted';
+    public const PRIVATE = 'private';
 
-    protected function setUp(): void
+    private function __construct()
     {
-        parent::setUp();
-        Mail::fake();
+    }
 
-        $this->app->bind(
-            ExchangeRateRepository::class,
-            static function () {
-                return new DummyExchangeRateRepository();
-            }
-        );
+    public static function cases(): array
+    {
+        return [
+            self::PUBLIC,
+            self::RESTRICTED,
+            self::PRIVATE
+        ];
+    }
+
+    public static function validate(string $value): void
+    {
+        if (!in_array($value, self::cases())) {
+            throw new RuntimeException(sprintf('Given value %s is not correct.', $value));
+        }
     }
 }
