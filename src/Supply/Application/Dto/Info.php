@@ -82,7 +82,7 @@ final class Info
         UrlInterface $inventoryUrl,
         Id $adsAddress,
         ?Email $supportEmail,
-        string ...$capabilities
+        array $capabilities
     ) {
         $this->validateCapabilities($capabilities);
 
@@ -125,7 +125,7 @@ final class Info
             new Url($data['inventoryUrl']),
             $adsAddress,
             $email,
-            ...$data['capabilities'] ?? $data['supported']
+            $data['capabilities'] ?? $data['supported']
         );
 
         if (isset($data['demandFee'])) {

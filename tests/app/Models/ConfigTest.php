@@ -186,8 +186,8 @@ class ConfigTest extends TestCase
             'adserver-name' => 'AdServer',
             'technical-email' => 'mail@example.com',
             'support-email' => 'mail@example.com',
-            'bonus-new-users-enabled' => '0',
-            'bonus-new-users-amount' => '0',
+            'referral-refund-enabled' => '0',
+            'referral-refund-commission' => '0',
         ];
 
         self::assertEquals($adminSettings, Config::fetchAdminSettings());
@@ -207,8 +207,8 @@ class ConfigTest extends TestCase
             'adserver-name' => 'xxx',
             'technical-email' => 'mail2@example.com',
             'support-email' => 'mail3@example.com',
-            'bonus-new-users-enabled' => '1',
-            'bonus-new-users-amount' => '1',
+            'referral-refund-enabled' => '1',
+            'referral-refund-commission' => '0.5',
         ];
 
         Config::updateAdminSettings($adminSettings);

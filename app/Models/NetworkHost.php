@@ -153,7 +153,7 @@ class NetworkHost extends Model
             new SecureUrl($this->attributes['host'] . '/adshares/inventory/list'),
             new EmptyAccountId(),
             null,
-            Info::CAPABILITY_ADVERTISER
+            [Info::CAPABILITY_ADVERTISER]
         );
     }
 

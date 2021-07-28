@@ -181,6 +181,7 @@ final class AdminControllerTest extends TestCase
                     'supportEmail' => 'mail@example.com3',
                     'advertiserCommission' => 0.05,
                     'publisherCommission' => 0.06,
+                    'referralRefundEnabled' => 1,
                 ],
         ];
 
