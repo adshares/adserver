@@ -108,8 +108,13 @@ class Handler extends ExceptionHandler
         );
     }
 
-    private function response(string $message, int $code, array $trace, array $errors = [], ?string $detail = ''): JsonResponse
-    {
+    private function response(
+        string $message,
+        int $code,
+        array $trace,
+        array $errors = [],
+        ?string $detail = ''
+    ): JsonResponse {
         $data = [
             'code' => $code,
             'message' => (config('app.env') === Utils::ENV_DEV || $code < 500) ? $message : 'Internal error',
@@ -158,12 +163,14 @@ class Handler extends ExceptionHandler
                 str_replace(
                     ["\n", "\r"],
                     ' ',
-                    json_encode(array_filter(
-                        $e->getTrace(),
-                        function (array $row) {
-                            return stripos($row['file'] ?? '', 'vendor') === false;
-                        }
-                    ))
+                    json_encode(
+                        array_filter(
+                            $e->getTrace(),
+                            function (array $row) {
+                                return stripos($row['file'] ?? '', 'vendor') === false;
+                            }
+                        )
+                    )
                 )
             )
         );

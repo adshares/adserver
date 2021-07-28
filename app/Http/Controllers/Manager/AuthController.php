@@ -271,10 +271,10 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         if (
-        Auth::guard()->attempt(
-            $request->only('email', 'password'),
-            $request->filled('remember')
-        )
+            Auth::guard()->attempt(
+                $request->only('email', 'password'),
+                $request->filled('remember')
+            )
         ) {
             Auth::user()->generateApiKey();
 

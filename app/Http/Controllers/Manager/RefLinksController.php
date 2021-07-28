@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -59,11 +60,7 @@ class RefLinksController extends Controller
         }
 
         Validator::make($input, RefLink::$rules)->validate();
-        try {
-            $refLink = RefLink::create($input);
-        } catch (\Throwable $exception) {
-            $r = $exception;
-        }
+        $refLink = RefLink::create($input);
 
         return self::json($refLink, Response::HTTP_CREATED);
     }
