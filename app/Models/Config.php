@@ -79,15 +79,15 @@ class Config extends Model
 
     public const SUPPORT_EMAIL = 'support-email';
 
-    public const BONUS_NEW_USER_ENABLED = 'bonus-new-users-enabled';
-
-    public const BONUS_NEW_USER_AMOUNT = 'bonus-new-users-amount';
-
     public const PANEL_PLACEHOLDER_NOTIFICATION_TIME = 'panel-placeholder-notification-time';
 
     public const PANEL_PLACEHOLDER_UPDATE_TIME = 'panel-placeholder-update-time';
 
     public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
+
+    public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
+
+    public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
@@ -100,8 +100,8 @@ class Config extends Model
         self::ADSERVER_NAME => '',
         self::TECHNICAL_EMAIL => '',
         self::SUPPORT_EMAIL => '',
-        self::BONUS_NEW_USER_ENABLED => '',
-        self::BONUS_NEW_USER_AMOUNT => '',
+        self::REFERRAL_REFUND_ENABLED => '',
+        self::REFERRAL_REFUND_COMMISSION => '',
     ];
 
     public $incrementing = false;
@@ -206,14 +206,19 @@ class Config extends Model
         $config->save();
     }
 
-    public static function upsertDateTime(string $key, DateTimeInterface $date): void
+    public static function upsertDateTime(string $key, DateTimeInterface $value): void
     {
-        self::upsertByKey($key, $date->format(DateTimeInterface::ATOM));
+        self::upsertByKey($key, $value->format(DateTimeInterface::ATOM));
     }
 
-    public static function upsertInt(string $key, int $id): void
+    public static function upsertInt(string $key, int $value): void
     {
-        self::upsertByKey($key, (string)$id);
+        self::upsertByKey($key, (string)$value);
+    }
+
+    public static function upsertFloat(string $key, float $value): void
+    {
+        self::upsertByKey($key, (string)$value);
     }
 
     public static function isTrueOnly(string $key): bool

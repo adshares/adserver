@@ -25,6 +25,7 @@ namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Adshares\Common\Domain\ValueObject\Url;
@@ -42,47 +43,33 @@ final class Info
         self::CAPABILITY_ADVERTISER,
     ];
 
-    /** @var string */
-    private $module;
+    private string $module;
 
-    /** @var string */
-    private $name;
+    private string $name;
 
-    /** @var string */
-    private $version;
+    private string $version;
 
-    /** @var array */
-    private $capabilities;
+    private array $capabilities;
 
-    /** @var UrlInterface */
-    private $panelUrl;
+    private UrlInterface $panelUrl;
 
-    /** @var UrlInterface */
-    private $privacyUrl;
+    private UrlInterface $privacyUrl;
 
-    /** @var UrlInterface */
-    private $termsUrl;
+    private UrlInterface $termsUrl;
 
-    /** @var UrlInterface */
-    private $inventoryUrl;
+    private UrlInterface $inventoryUrl;
 
-    /** @var UrlInterface */
-    private $serverUrl;
+    private UrlInterface $serverUrl;
 
-    /** @var Id */
-    private $adsAddress;
+    private Id $adsAddress;
 
-    /** @var Email|null */
-    private $supportEmail;
+    private ?Email $supportEmail;
 
-    /** @var float|null */
-    private $demandFee;
+    private ?float $demandFee;
 
-    /** @var float|null */
-    private $supplyFee;
+    private ?float $supplyFee;
 
-    /** @var InfoStatistics|null */
-    private $statistics;
+    private ?InfoStatistics $statistics;
 
     public function __construct(
         string $module,

@@ -39,6 +39,9 @@ trait DateAtom
         }
 
         $date = DateTime::createFromFormat(DATE_ATOM, $value);
+        if ($date === false) {
+            $date = new DateTime($value);
+        }
         $date->setTimezone(new DateTimeZone(config('app.timezone')));
 
         $this->attributes[$key] = $date;

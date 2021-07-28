@@ -31,7 +31,6 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
-use Adshares\Common\Feature;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Http\JsonResponse;
@@ -94,8 +93,13 @@ class AuthController extends Controller
 
         DB::commit();
 
-        if (Feature::enabled(Feature::BONUS_NEW_USERS)) {
-            $user->awardBonus(Config::fetchInt(Config::BONUS_NEW_USER_AMOUNT));
+        if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
+            try {
+                $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+                $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
+            } catch (ExchangeRateNotAvailableException $exception) {
+                Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
+            }
         }
 
         $this->sendCrmMailOnUserRegistered($user);
@@ -244,7 +248,11 @@ class AuthController extends Controller
         return self::json(
             array_merge(
                 $user->toArray(),
-                ['exchange_rate' => $exchangeRate]
+                [
+                    'exchange_rate' => $exchangeRate,
+                    'referral_refund_enabled' => Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED),
+                    'referral_refund_commission' => Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION),
+                ]
             )
         );
     }

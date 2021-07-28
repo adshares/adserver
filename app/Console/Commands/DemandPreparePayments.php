@@ -91,7 +91,7 @@ class DemandPreparePayments extends BaseCommand
         if ($conversionCount > 0) {
             $totalLicenseFee = 0;
             $eventLogIds = [];
-            $groupedConversions = $this->processAndGroupConversionsByRecipient(
+            $groupedConversions = $this->processAndGroupEventsByRecipient(
                 $conversions,
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
@@ -149,11 +149,13 @@ class DemandPreparePayments extends BaseCommand
             }
 
             $totalLicenseFee = 0;
+            $eventLogIds = [];
             $groupedEvents = $this->processAndGroupEventsByRecipient(
                 $events,
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
-                $totalLicenseFee
+                $totalLicenseFee,
+                $eventLogIds
             );
 
             $this->info(sprintf('In that, there are %d recipients,', count($groupedEvents)));
@@ -200,36 +202,11 @@ class DemandPreparePayments extends BaseCommand
         \Illuminate\Database\Eloquent\Collection $events,
         float $demandLicenseFeeCoefficient,
         float $demandOperatorFeeCoefficient,
-        int &$totalLicenseFee
-    ): Collection {
-        return $events->each(
-            static function (EventLog $entry) use (
-                $demandLicenseFeeCoefficient,
-                $demandOperatorFeeCoefficient,
-                &$totalLicenseFee
-            ) {
-                $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
-                $entry->license_fee = $licenseFee;
-                $totalLicenseFee += $licenseFee;
-
-                $amountAfterFee = $entry->event_value - $licenseFee;
-                $operatorFee = (int)floor($amountAfterFee * $demandOperatorFeeCoefficient);
-                $entry->operator_fee = $operatorFee;
-
-                $entry->paid_amount = $amountAfterFee - $operatorFee;
-            }
-        )->groupBy('pay_to');
-    }
-
-    private function processAndGroupConversionsByRecipient(
-        \Illuminate\Database\Eloquent\Collection $events,
-        float $demandLicenseFeeCoefficient,
-        float $demandOperatorFeeCoefficient,
         int &$totalLicenseFee,
         array &$eventLogIds
     ): Collection {
         return $events->each(
-            static function (Conversion $entry) use (
+            static function ($entry) use (
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
                 &$totalLicenseFee,

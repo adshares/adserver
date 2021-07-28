@@ -75,6 +75,8 @@ class UpdateAdminSettings extends FormRequest
             'settings.support_email' => 'required|email|max:255',
             'settings.advertiser_commission' => 'numeric|between:0,1|nullable',
             'settings.publisher_commission' => 'numeric|between:0,1|nullable',
+            'settings.referral_refund_enabled' => 'required|boolean',
+            'settings.referral_refund_commission' => 'numeric|between:0,1|nullable',
         ];
     }
 
@@ -87,6 +89,7 @@ class UpdateAdminSettings extends FormRequest
             Config::ADSERVER_NAME => (string)$values['adserver_name'],
             Config::TECHNICAL_EMAIL => (new Email($values['technical_email']))->toString(),
             Config::SUPPORT_EMAIL => (new Email($values['support_email']))->toString(),
+            Config::REFERRAL_REFUND_ENABLED => (int)$values['referral_refund_enabled'],
         ];
 
         if (isset($values['hotwallet_min_value'])) {
@@ -107,6 +110,12 @@ class UpdateAdminSettings extends FormRequest
 
         if (isset($values['publisher_commission'])) {
             $data[Config::OPERATOR_RX_FEE] = (new Commission((float)$values['publisher_commission']))->getValue();
+        }
+
+        if (isset($values['referral_refund_commission'])) {
+            $data[Config::REFERRAL_REFUND_COMMISSION] = (new Commission(
+                (float)$values['referral_refund_commission']
+            ))->getValue();
         }
 
         return $data;
