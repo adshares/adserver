@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Tests;
 
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Faker\Factory;
+use Faker\Generator;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Mail;
 
@@ -31,10 +33,13 @@ abstract class TestCase extends BaseTestCase
     use CreatesApplication;
     use RefreshDatabase;
 
+    protected Generator $faker;
+
     protected function setUp(): void
     {
         parent::setUp();
         Mail::fake();
+        $this->faker = Factory::create();
 
         $this->app->bind(
             ExchangeRateRepository::class,

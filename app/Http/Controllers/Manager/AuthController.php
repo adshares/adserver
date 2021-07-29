@@ -28,10 +28,12 @@ use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Config\RegistrationMode;
 use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,6 +43,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class AuthController extends Controller
 {
@@ -54,12 +57,27 @@ class AuthController extends Controller
 
     public function register(Request $request): JsonResponse
     {
+        $registrationMode = Config::fetchStringOrFail(Config::REGISTRATION_MODE);
+        if (RegistrationMode::PRIVATE === $registrationMode) {
+            throw new AccessDeniedHttpException('Private registration enabled');
+        }
+
+        $data = $request->input('user');
+        $refLink = null;
+        if (isset($data['referral_token'])) {
+            $refLink = RefLink::fetchByToken($data['referral_token']);
+        }
+
+        if (RegistrationMode::RESTRICTED === $registrationMode && null === $refLink) {
+            throw new AccessDeniedHttpException('Restricted registration enabled');
+        }
+
         $this->validateRequestObject($request, 'user', User::$rules_add);
         Validator::make($request->all(), ['uri' => 'required'])->validate();
 
         DB::beginTransaction();
 
-        $user = User::register($request->input('user'));
+        $user = User::register($data, $refLink);
         $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
         $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
 

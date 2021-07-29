@@ -179,8 +179,8 @@ final class UserLedgerEntryTest extends TestCase
 
     public function testRefundAndBonus(): void
     {
-        Config::upsertInt(Config::REFERRAL_REFUND_ENABLED, 1);
-        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.2);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_ENABLED => 1]);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.2]);
 
         /** @var User $user1 */
         $user1 = factory(User::class)->create();

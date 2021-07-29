@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\UserEmailActivate;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -31,6 +32,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Config\RegistrationMode;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
@@ -61,7 +63,7 @@ class AuthControllerTest extends TestCase
         ],
     ];
 
-    public function testRegister(): void
+    public function testPublicRegister(): void
     {
         $user = $this->registerUser();
         Mail::assertQueued(UserEmailActivate::class);
@@ -74,6 +76,36 @@ class AuthControllerTest extends TestCase
         self::assertEmpty(Token::all());
         $this->assertTrue($user->isEmailConfirmed);
         $this->assertNull($user->refLink);
+    }
+
+    public function testRestrictedRegister(): void
+    {
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::RESTRICTED]);
+
+        $user = $this->registerUser(null, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+
+        $user = $this->registerUser('dummy-token', Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+
+        $refLink = factory(RefLink::class)->create(['single_use' => true]);
+        $user = $this->registerUser($refLink->token);
+        $this->assertNotNull($user);
+
+        $user = $this->registerUser($refLink->token, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+    }
+
+    public function testPrivateRegister(): void
+    {
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::PRIVATE]);
+
+        $user = $this->registerUser(null, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+
+        $refLink = factory(RefLink::class)->create();
+        $user = $this->registerUser($refLink->token, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
     }
 
     public function testRegisterWithReferral(): void
@@ -196,22 +228,23 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure($structure);
     }
 
-    public function registerUser(?string $referralToken = null): User
+    public function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
     {
+        $email = $this->faker->unique()->email;
         $response = $this->postJson(
             '/auth/register',
             [
                 'user' => [
-                    'email' => 'tester@test.xx',
+                    'email' => $email,
                     'password' => '87654321',
                     'referral_token' => $referralToken,
                 ],
                 'uri' => '/auth/email-activation/',
             ]
         );
-        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertStatus($status);
 
-        return User::where('email', 'tester@test.xx')->firstOrFail();
+        return User::where('email', $email)->first();
     }
 
     public function activateUser(User $user): void

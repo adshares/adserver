@@ -133,7 +133,7 @@ class User extends Authenticatable
         'is_subscribed',
     ];
 
-    public static function register(array $data): User
+    public static function register(array $data, ?RefLink $refLink): User
     {
         $user = new User($data);
         $user->password = $data['password'];
@@ -141,13 +141,10 @@ class User extends Authenticatable
         $user->is_advertiser = true;
         $user->is_publisher = true;
 
-        if (isset($data['referral_token'])) {
-            $refLink = RefLink::fetchByToken($data['referral_token']);
-            if (null !== $refLink) {
-                $user->ref_link_id = $refLink->id;
-                $refLink->used = true;
-                $refLink->saveOrFail();
-            }
+        if (null !== $refLink) {
+            $user->ref_link_id = $refLink->id;
+            $refLink->used = true;
+            $refLink->saveOrFail();
         }
 
         $user->saveOrFail();

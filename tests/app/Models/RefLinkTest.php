@@ -73,7 +73,7 @@ class RefLinkTest extends TestCase
 
     public function testCalculateRefundAmount(): void
     {
-        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.1);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
 
         /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create();
@@ -100,7 +100,7 @@ class RefLinkTest extends TestCase
 
     public function testCalculateBonusAmount(): void
     {
-        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.1);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
 
         /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create();
