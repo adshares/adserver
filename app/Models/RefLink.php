@@ -42,16 +42,18 @@ use Illuminate\Support\Collection;
  * @property User user
  * @property string token
  * @property ?string comment
- * @property ?Carbon valid_until
+ * @property ?string valid_until
  * @property bool single_use
  * @property bool used
  * @property int bonus
  * @property ?float refund
  * @property ?float kept_refund
- * @property ?Carbon refund_valid_until
+ * @property ?string refund_valid_until
+ * @property bool refund_active
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property ?Carbon deleted_at
+ * @property string status
  * @method static RefLink create(array $input = [])
  */
 class RefLink extends Model
@@ -60,6 +62,10 @@ class RefLink extends Model
     use SoftDeletes;
     use Ownership;
     use DateAtom;
+
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_USED = 'used';
+    public const STATUS_OUTDATED = 'outdated';
 
     protected $attributes = [
         'single_use' => false,
@@ -128,6 +134,24 @@ class RefLink extends Model
         return (int)round(floor($amount * $refund) * (1.0 - $this->kept_refund));
     }
 
+    public function getStatusAttribute(): string
+    {
+        if (null !== $this->valid_until && (new Carbon($this->valid_until))->isBefore(now())) {
+            return self::STATUS_OUTDATED;
+        }
+
+        if ($this->single_use && $this->used) {
+            return self::STATUS_USED;
+        }
+
+        return self::STATUS_ACTIVE;
+    }
+
+    public function getRefundActiveAttribute(): bool
+    {
+        return null === $this->refund_valid_until || (new Carbon($this->refund_valid_until))->isAfter(now());
+    }
+
     public static function fetchByUser(int $userId): Collection
     {
         return RefLink::select('*')
@@ -153,19 +177,23 @@ class RefLink extends Model
             ->get();
     }
 
-    public static function fetchByToken(string $token): ?self
+    public static function fetchByToken(string $token, bool $withInactive = false): ?self
     {
-        return RefLink::where('token', $token)
-            ->where(
-                function (Builder $query) {
-                    $query->whereNull('valid_until')->orWhere('valid_until', '>=', Carbon::now());
-                }
-            )
-            ->where(
-                function (Builder $query) {
-                    $query->where('single_use', false)->orWhere('used', false);
-                }
-            )->first();
+        $builder = RefLink::where('token', $token);
+        if (!$withInactive) {
+            $builder
+                ->where(
+                    function (Builder $query) {
+                        $query->whereNull('valid_until')->orWhere('valid_until', '>=', Carbon::now());
+                    }
+                )
+                ->where(
+                    function (Builder $query) {
+                        $query->where('single_use', false)->orWhere('used', false);
+                    }
+                );
+        }
+        return $builder->first();
     }
 
     public static function generateToken(): string

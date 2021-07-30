@@ -31,6 +31,84 @@ class RefLinksControllerTest extends TestCase
 {
     private const URI = '/api/ref-links';
 
+    public function testRefLinkInfoWhenRefLinkIsNotFound(): void
+    {
+        $response = $this->getJson(self::URI . '/info/dummy-token');
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testRefLinkInfo(): void
+    {
+        factory(RefLink::class)->create(
+            [
+                'token' => 'my-token',
+                'valid_until' => null,
+                'single_use' => false,
+            ]
+        );
+
+        $response = $this->getJson(self::URI . '/info/my-token');
+        $response->assertStatus(Response::HTTP_OK);
+        $data = $response->json();
+
+        $this->assertEquals(['token', 'status'], array_keys($data));
+        $this->assertEquals('my-token', $data['token']);
+        $this->assertEquals(RefLink::STATUS_ACTIVE, $data['status']);
+    }
+
+    public function testOutDatedRefLinkInfo(): void
+    {
+        factory(RefLink::class)->create(
+            [
+                'token' => 'my-token',
+                'valid_until' => '2020-01-01 01:00:00',
+            ]
+        );
+
+        $response = $this->getJson(self::URI . '/info/my-token');
+        $response->assertStatus(Response::HTTP_OK);
+        $data = $response->json();
+
+        $this->assertEquals('my-token', $data['token']);
+        $this->assertEquals(RefLink::STATUS_OUTDATED, $data['status']);
+    }
+
+    public function testUnusedRefLinkInfo(): void
+    {
+        factory(RefLink::class)->create(
+            [
+                'token' => 'my-token',
+                'single_use' => true,
+                'used' => false,
+            ]
+        );
+
+        $response = $this->getJson(self::URI . '/info/my-token');
+        $response->assertStatus(Response::HTTP_OK);
+        $data = $response->json();
+
+        $this->assertEquals('my-token', $data['token']);
+        $this->assertEquals(RefLink::STATUS_ACTIVE, $data['status']);
+    }
+
+    public function testUsedRefLinkInfo(): void
+    {
+        factory(RefLink::class)->create(
+            [
+                'token' => 'my-token',
+                'single_use' => true,
+                'used' => true,
+            ]
+        );
+
+        $response = $this->getJson(self::URI . '/info/my-token');
+        $response->assertStatus(Response::HTTP_OK);
+        $data = $response->json();
+
+        $this->assertEquals('my-token', $data['token']);
+        $this->assertEquals(RefLink::STATUS_USED, $data['status']);
+    }
+
     public function testBrowseRefLinksWhenNoRefLinks(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
@@ -48,7 +126,7 @@ class RefLinksControllerTest extends TestCase
         factory(RefLink::class)->create(
             [
                 'user_id' => $user->id,
-                'token' => 'dummy-token',
+                'token' => 'my-token',
                 'comment' => 'test comment',
                 'valid_until' => '2021-01-01 01:00:00',
                 'single_use' => true,
@@ -74,7 +152,7 @@ class RefLinksControllerTest extends TestCase
         $response->assertJsonCount(4);
         $data = $response->json()[3];
 
-        $this->assertEquals('dummy-token', $data['token']);
+        $this->assertEquals('my-token', $data['token']);
         $this->assertEquals('test comment', $data['comment']);
         $this->assertEquals('2021-01-01T01:00:00+00:00', $data['validUntil']);
         $this->assertEquals(true, $data['singleUse']);
