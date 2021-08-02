@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Config\RegistrationMode;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -92,6 +91,8 @@ class Config extends Model
 
     public const REGISTRATION_MODE = 'registration-mode';
 
+    public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
+
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
         self::OPERATOR_RX_FEE => '',
@@ -105,7 +106,8 @@ class Config extends Model
         self::SUPPORT_EMAIL => '',
         self::REFERRAL_REFUND_ENABLED => '',
         self::REFERRAL_REFUND_COMMISSION => '',
-        self::REGISTRATION_MODE => RegistrationMode::PUBLIC,
+        self::REGISTRATION_MODE => '',
+        self::AUTO_CONFIRMATION_ENABLED => '',
     ];
 
     public $incrementing = false;

@@ -324,7 +324,7 @@ class SitesController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (!$user->isEmailConfirmed) {
+        if (!$user->is_email_confirmed) {
             return self::json(['message' => 'Confirm e-mail to get code'], JsonResponse::HTTP_FORBIDDEN);
         }
 

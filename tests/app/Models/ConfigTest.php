@@ -189,6 +189,7 @@ class ConfigTest extends TestCase
             'referral-refund-enabled' => '0',
             'referral-refund-commission' => '0',
             'registration-mode' => 'public',
+            'auto-confirmation-enabled' => '1',
         ];
 
         self::assertEquals($adminSettings, Config::fetchAdminSettings());
@@ -211,6 +212,7 @@ class ConfigTest extends TestCase
             'referral-refund-enabled' => '1',
             'referral-refund-commission' => '0.5',
             'registration-mode' => 'private',
+            'auto-confirmation-enabled' => '0',
         ];
 
         Config::updateAdminSettings($adminSettings);

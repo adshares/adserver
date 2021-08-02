@@ -27,6 +27,7 @@ use Adshares\Adserver\Mail\Crm\UserRegistered;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
+use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -95,32 +96,44 @@ class AuthController extends Controller
         DB::beginTransaction();
         $token = Token::check($request->input('user.email_confirm_token'));
         if (false === $token) {
+            DB::rollBack();
             return self::json([], Response::HTTP_FORBIDDEN);
         }
 
         /** @var User $user */
         $user = User::find($token['user_id']);
-
         if (empty($user)) {
+            DB::rollBack();
             return self::json([], Response::HTTP_FORBIDDEN);
         }
 
         $user->confirmEmail();
-
+        if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+            $this->confirmUser($user);
+        }
         $user->save();
-
         DB::commit();
 
-        if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
-            try {
-                $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-                $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
-            } catch (ExchangeRateNotAvailableException $exception) {
-                Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
-            }
+        $this->sendCrmMailOnUserRegistered($user);
+
+        return self::json($user->toArray());
+    }
+
+
+    public function confirm(int $userId): JsonResponse
+    {
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            return self::json([], Response::HTTP_NOT_FOUND);
         }
 
-        $this->sendCrmMailOnUserRegistered($user);
+        DB::beginTransaction();
+        $this->confirmUser($user);
+        $user->save();
+        DB::commit();
+
+        Mail::to($user)->queue(new UserConfirmed());
 
         return self::json($user->toArray());
     }
@@ -411,6 +424,19 @@ class AuthController extends Controller
         DB::commit();
 
         return self::json($user->toArray());
+    }
+
+    private function confirmUser(User $user): void
+    {
+        $user->confirm();
+        if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
+            try {
+                $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+                $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
+            } catch (ExchangeRateNotAvailableException $exception) {
+                Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
+            }
+        }
     }
 
     private function sendCrmMailOnUserRegistered(User $user): void

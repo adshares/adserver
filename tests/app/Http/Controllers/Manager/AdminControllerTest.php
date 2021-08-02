@@ -173,6 +173,7 @@ final class AdminControllerTest extends TestCase
                     'referralRefundEnabled' => 1,
                     'referralRefundCommission' => 0.5,
                     'registrationMode' => 'private',
+                    'autoConfirmationEnabled' => 0,
                 ],
         ];
 
@@ -294,6 +295,7 @@ final class AdminControllerTest extends TestCase
             'referralRefundEnabled' => 0,
             'referralRefundCommission' => 0,
             'registrationMode' => 'public',
+            'autoConfirmationEnabled' => 1,
         ];
     }
 }

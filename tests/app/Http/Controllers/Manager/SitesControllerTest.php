@@ -686,7 +686,12 @@ JSON
     public function testSiteCodesOk(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['email_confirmed_at' => new DateTimeImmutable('-1 hour')]);
+        $user = factory(User::class)->create(
+            [
+                'email_confirmed_at' => new DateTimeImmutable('-1 hour'),
+                'confirmed_at' => new DateTimeImmutable('-1 hour'),
+            ]
+        );
         $this->actingAs($user, 'api');
         /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);

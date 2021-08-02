@@ -57,6 +57,8 @@ class SettingsResponse implements Arrayable
 
     private string $registrationMode;
 
+    private int $autoConfirmationEnabled;
+
     public function __construct(
         int $hotWalletMinValue,
         int $hotWalletMaxValue,
@@ -69,7 +71,8 @@ class SettingsResponse implements Arrayable
         Commission $referralRefundCommission,
         Commission $advertiserCommission,
         Commission $publisherCommission,
-        string $registrationMode
+        string $registrationMode,
+        int $autoConfirmationEnabled
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
         $this->hotWalletMaxValue = $hotWalletMaxValue;
@@ -83,6 +86,7 @@ class SettingsResponse implements Arrayable
         $this->advertiserCommission = $advertiserCommission;
         $this->publisherCommission = $publisherCommission;
         $this->registrationMode = $registrationMode;
+        $this->autoConfirmationEnabled = $autoConfirmationEnabled;
     }
 
     public static function fromConfigModel(array $data): self
@@ -99,6 +103,7 @@ class SettingsResponse implements Arrayable
         $referralRefundEnabled = $data[Config::REFERRAL_REFUND_ENABLED];
         $referralRefundCommission = $data[Config::REFERRAL_REFUND_COMMISSION];
         $registrationMode = $data[Config::REGISTRATION_MODE];
+        $autoConfirmationEnabled = $data[Config::AUTO_CONFIRMATION_ENABLED];
 
         return new self(
             (int)$hotWalletMinValue,
@@ -112,7 +117,8 @@ class SettingsResponse implements Arrayable
             new Commission((float)$referralRefundCommission),
             new Commission((float)$advertiserCommission),
             new Commission((float)$publisherCommission),
-            $registrationMode
+            $registrationMode,
+            (int)$autoConfirmationEnabled
         );
     }
 
@@ -131,6 +137,7 @@ class SettingsResponse implements Arrayable
             'advertiser_commission' => $this->advertiserCommission->getValue(),
             'publisher_commission' => $this->publisherCommission->getValue(),
             'registration_mode' => $this->registrationMode,
+            'auto_confirmation_enabled' => $this->autoConfirmationEnabled,
         ];
 
         return ['settings' => $data];
