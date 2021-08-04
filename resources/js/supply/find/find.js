@@ -382,29 +382,7 @@ var isOccluded = function(rect, el)
 var isVisible = function (el) {
     if (!isRendered(el) || !isWindowVisible())
         return false;
-
-    var rootEl = el;
-    var rootRect = getBoundRect(el);
-    var intersect = rootRect;
-    var rootArea = rootRect.width * rootRect.height;
-    el = el.parentElement;
-
-    while (el.parentElement) {
-        var rect = getBoundRect(el, true);
-        intersect = rectIntersect(intersect, rect);
-        var area = intersect ? intersect.width * intersect.height : 0;
-        if(area < rootArea / 2)
-            return false;
-        el = el.parentElement;
-    }
-
-    var viewsize = viewSize();
-    intersect = rectIntersect(intersect, viewsize);
-    if(isOccluded(intersect, rootEl)) {
-        return false;
-    }
-    var area = intersect ? intersect.width * intersect.height : 0;
-    return area >= rootArea / 2;
+    return true;
 };
 
 var impressionId;
