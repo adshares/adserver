@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddConfirmedAtToUsers extends Migration
+class AddAdminConfirmedAtToUsers extends Migration
 {
     /**
      * Run the migrations.
@@ -33,9 +33,9 @@ class AddConfirmedAtToUsers extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->timestamp('confirmed_at')->nullable();
+            $table->timestamp('admin_confirmed_at')->nullable();
         });
-        DB::statement('UPDATE users SET confirmed_at = email_confirmed_at');
+        DB::statement('UPDATE users SET admin_confirmed_at = email_confirmed_at');
         DB::table('configs')->insert(
             [
                 'key' => 'auto-confirmation-enabled',
@@ -53,7 +53,7 @@ class AddConfirmedAtToUsers extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('confirmed_at');
+            $table->dropColumn('admin_confirmed_at');
         });
         DB::table('configs')->where('key', 'auto-confirmation-enabled')->delete();
     }

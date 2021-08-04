@@ -324,8 +324,8 @@ class SitesController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (!$user->is_email_confirmed) {
-            return self::json(['message' => 'Confirm e-mail to get code'], JsonResponse::HTTP_FORBIDDEN);
+        if (!$user->is_confirmed) {
+            return self::json(['message' => 'Confirm account to get code'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         return self::json(['codes' => SiteCodeGenerator::generate($site, $request->toConfig())]);

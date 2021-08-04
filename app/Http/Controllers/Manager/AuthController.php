@@ -107,9 +107,9 @@ class AuthController extends Controller
             return self::json([], Response::HTTP_FORBIDDEN);
         }
 
-        $user->confirmEmail();
+        $this->confirmEmail($user);
         if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
-            $this->confirmUser($user);
+            $this->confirmAdmin($user);
         }
         $user->save();
         DB::commit();
@@ -129,7 +129,7 @@ class AuthController extends Controller
         }
 
         DB::beginTransaction();
-        $this->confirmUser($user);
+        $this->confirmAdmin($user);
         $user->save();
         DB::commit();
 
@@ -426,9 +426,24 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    private function confirmUser(User $user): void
+    private function confirmEmail(User $user): void
     {
-        $user->confirm();
+        $user->confirmEmail();
+        if ($user->is_confirmed) {
+            $this->awardBonus($user);
+        }
+    }
+
+    private function confirmAdmin(User $user): void
+    {
+        $user->confirmAdmin();
+        if ($user->is_confirmed) {
+            $this->awardBonus($user);
+        }
+    }
+
+    private function awardBonus(User $user): void
+    {
         if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
             try {
                 $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();

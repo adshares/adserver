@@ -72,12 +72,14 @@ class AuthControllerTest extends TestCase
         self::assertCount(1, Token::all());
 
         $this->assertFalse($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
         $this->assertNull($user->refLink);
 
         $this->activateUser($user);
         self::assertEmpty(Token::all());
         $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
         $this->assertTrue($user->is_confirmed);
         $this->assertNull($user->refLink);
         Mail::assertNotQueued(UserConfirmed::class);
@@ -89,15 +91,18 @@ class AuthControllerTest extends TestCase
 
         $user = $this->registerUser();
         $this->assertFalse($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
 
         $this->activateUser($user);
         $this->assertTrue($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
 
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
         $this->confirmUser($user);
         $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
         $this->assertTrue($user->is_confirmed);
         Mail::assertQueued(UserConfirmed::class);
     }
@@ -212,7 +217,7 @@ class AuthControllerTest extends TestCase
         );
     }
 
-    public function testManualConfirmationWithBonus(): void
+    public function testActiveManualConfirmationWithBonus(): void
     {
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
@@ -241,6 +246,54 @@ class AuthControllerTest extends TestCase
 
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
         $this->confirmUser($user);
+
+        self::assertSame(
+            [300, 300, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $entry = UserLedgerEntry::where('user_id', $user->id)
+            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
+            ->firstOrFail();
+
+        $this->assertEquals(300, $entry->amount);
+        $this->assertNotNull($entry->refLink);
+        $this->assertEquals($refLink->id, $entry->refLink->id);
+    }
+
+    public function testInactiveManualConfirmationWithBonus(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
+
+        $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
+        $user = $this->registerUser($refLink->token);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->confirmUser($user);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $this->activateUser($user);
 
         self::assertSame(
             [300, 300, 0],

@@ -43,12 +43,13 @@ use Illuminate\Support\Facades\Hash;
  * @property string email
  * @property Carbon|null created_at
  * @property DateTime|null email_confirmed_at
- * @property DateTime|null confirmed_at
+ * @property DateTime|null admin_confirmed_at
  * @property string uuid
  * @property int|null ref_link_id
  * @property RefLink|null refLink
  * @property int subscribe
  * @property bool is_email_confirmed
+ * @property bool is_admin_confirmed
  * @property bool is_confirmed
  * @mixin Builder
  */
@@ -83,7 +84,7 @@ class User extends Authenticatable
     protected $dates = [
         'deleted_at',
         'email_confirmed_at',
-        'confirmed_at',
+        'admin_confirmed_at',
     ];
 
     /**
@@ -122,6 +123,7 @@ class User extends Authenticatable
         'is_admin',
         'api_token',
         'is_email_confirmed',
+        'is_admin_confirmed',
         'is_confirmed',
         'is_subscribed',
         'adserver_wallet',
@@ -134,6 +136,7 @@ class User extends Authenticatable
     protected $appends = [
         'adserver_wallet',
         'is_email_confirmed',
+        'is_admin_confirmed',
         'is_confirmed',
         'is_subscribed',
     ];
@@ -162,9 +165,14 @@ class User extends Authenticatable
         return null !== $this->email_confirmed_at;
     }
 
+    public function getIsAdminConfirmedAttribute(): bool
+    {
+        return null !== $this->admin_confirmed_at;
+    }
+
     public function getIsConfirmedAttribute(): bool
     {
-        return null !== $this->confirmed_at;
+        return $this->is_email_confirmed && $this->is_admin_confirmed;
     }
 
     public function getIsSubscribedAttribute(): bool
@@ -301,9 +309,9 @@ class User extends Authenticatable
         $this->subscription(true);
     }
 
-    public function confirm(): void
+    public function confirmAdmin(): void
     {
-        $this->confirmed_at = new DateTime();
+        $this->admin_confirmed_at = new DateTime();
     }
 
     public function subscription(bool $subscribe): void
