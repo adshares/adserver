@@ -35,7 +35,7 @@ class AddAdminConfirmedAtToUsers extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->timestamp('admin_confirmed_at')->nullable();
         });
-        DB::statement('UPDATE users SET admin_confirmed_at = email_confirmed_at');
+        DB::statement('UPDATE users SET admin_confirmed_at = IFNULL(email_confirmed_at, NOW())');
         DB::table('configs')->insert(
             [
                 'key' => 'auto-confirmation-enabled',
