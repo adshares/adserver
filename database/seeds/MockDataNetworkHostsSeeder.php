@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,7 +43,8 @@ class MockDataNetworkHostsSeeder extends Seeder
             new Url('http://webserver/adshares/inventory/list'),
             new AccountId('0001-00000004-DBEB'),
             new Email('mail@example.com'),
-            'PUB', 'ADV'
+            ['PUB', 'ADV'],
+            'public'
         );
 
         $info->setDemandFee(0.01);

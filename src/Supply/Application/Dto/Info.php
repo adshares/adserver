@@ -31,6 +31,7 @@ use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlInterface;
+use Adshares\Config\RegistrationMode;
 
 final class Info
 {
@@ -69,6 +70,8 @@ final class Info
 
     private ?float $supplyFee;
 
+    private string $registrationMode;
+
     private ?InfoStatistics $statistics;
 
     public function __construct(
@@ -82,7 +85,8 @@ final class Info
         UrlInterface $inventoryUrl,
         Id $adsAddress,
         ?Email $supportEmail,
-        string ...$capabilities
+        array $capabilities,
+        string $registrationMode
     ) {
         $this->validateCapabilities($capabilities);
 
@@ -97,6 +101,7 @@ final class Info
         $this->serverUrl = $serverUrl;
         $this->adsAddress = $adsAddress;
         $this->supportEmail = $supportEmail;
+        $this->registrationMode = $registrationMode;
     }
 
     public function validateCapabilities(array $values): void
@@ -125,7 +130,8 @@ final class Info
             new Url($data['inventoryUrl']),
             $adsAddress,
             $email,
-            ...$data['capabilities'] ?? $data['supported']
+            $data['capabilities'] ?? $data['supported'],
+            $data['registrationMode'] ?? RegistrationMode::PUBLIC
         );
 
         if (isset($data['demandFee'])) {
@@ -156,6 +162,7 @@ final class Info
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
             'adsAddress' => $this->adsAddress->toString(),
+            'registrationMode' => $this->registrationMode,
         ];
 
         if (null !== $this->supportEmail) {

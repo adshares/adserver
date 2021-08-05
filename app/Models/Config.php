@@ -89,6 +89,10 @@ class Config extends Model
 
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
 
+    public const REGISTRATION_MODE = 'registration-mode';
+
+    public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
+
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
         self::OPERATOR_RX_FEE => '',
@@ -102,6 +106,8 @@ class Config extends Model
         self::SUPPORT_EMAIL => '',
         self::REFERRAL_REFUND_ENABLED => '',
         self::REFERRAL_REFUND_COMMISSION => '',
+        self::REGISTRATION_MODE => '',
+        self::AUTO_CONFIRMATION_ENABLED => '',
     ];
 
     public $incrementing = false;

@@ -24,9 +24,65 @@ namespace Adshares\Adserver\Tests\Models;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Tests\TestCase;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class RefLinkTest extends TestCase
 {
+    public function testStatus(): void
+    {
+        $refLink = new RefLink();
+        $refLink->valid_until = null;
+        $refLink->single_use = false;
+        $refLink->used = false;
+        $this->assertEquals(RefLink::STATUS_ACTIVE, $refLink->status);
+
+        $refLink = new RefLink();
+        $refLink->valid_until = null;
+        $refLink->single_use = true;
+        $refLink->used = false;
+        $this->assertEquals(RefLink::STATUS_ACTIVE, $refLink->status);
+
+        $refLink = new RefLink();
+        $refLink->valid_until = null;
+        $refLink->single_use = true;
+        $refLink->used = true;
+        $this->assertEquals(RefLink::STATUS_USED, $refLink->status);
+
+        $refLink = new RefLink();
+        $refLink->valid_until = now()->addDay();
+        $refLink->single_use = false;
+        $refLink->used = false;
+        $this->assertEquals(RefLink::STATUS_ACTIVE, $refLink->status);
+
+        $refLink = new RefLink();
+        $refLink->valid_until = now()->subDay();
+        $refLink->single_use = false;
+        $refLink->used = false;
+        $this->assertEquals(RefLink::STATUS_OUTDATED, $refLink->status);
+
+        $refLink = new RefLink();
+        $refLink->valid_until = now()->subDay();
+        $refLink->single_use = true;
+        $refLink->used = true;
+        $this->assertEquals(RefLink::STATUS_OUTDATED, $refLink->status);
+    }
+
+    public function testRefundActive(): void
+    {
+        $refLink = new RefLink();
+        $refLink->refund_valid_until = null;
+        $this->assertTrue($refLink->refund_active);
+
+        $refLink = new RefLink();
+        $refLink->refund_valid_until = now()->addDay();
+        $this->assertTrue($refLink->refund_active);
+
+        $refLink = new RefLink();
+        $refLink->refund_valid_until = now()->subDay();
+        $this->assertFalse($refLink->refund_active);
+    }
+
     public function testFetchByToken(): void
     {
         $refLink1 = factory(RefLink::class)->create(['token' => 'foo1']);
@@ -73,7 +129,7 @@ class RefLinkTest extends TestCase
 
     public function testCalculateRefundAmount(): void
     {
-        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.1);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
 
         /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create();
@@ -100,7 +156,7 @@ class RefLinkTest extends TestCase
 
     public function testCalculateBonusAmount(): void
     {
-        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.1);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
 
         /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create();

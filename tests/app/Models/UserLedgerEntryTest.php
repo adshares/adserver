@@ -179,8 +179,8 @@ final class UserLedgerEntryTest extends TestCase
 
     public function testRefundAndBonus(): void
     {
-        Config::upsertInt(Config::REFERRAL_REFUND_ENABLED, 1);
-        Config::upsertFloat(Config::REFERRAL_REFUND_COMMISSION, 0.2);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_ENABLED => 1]);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.2]);
 
         /** @var User $user1 */
         $user1 = factory(User::class)->create();
@@ -249,6 +249,45 @@ final class UserLedgerEntryTest extends TestCase
         self::assertEquals(0, $user3->getBalance());
         self::assertEquals(0, $user3->getWalletBalance());
         self::assertEquals(0, $user3->getBonusBalance());
+    }
+
+    public function testRefundAndBonusAfterDeadline(): void
+    {
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_ENABLED => 1]);
+        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.2]);
+
+        /** @var User $user1 */
+        $user1 = factory(User::class)->create();
+        /** @var RefLink $refLink1 */
+        $refLink1 = factory(RefLink::class)->create(
+            [
+                'user_id' => $user1->id,
+                'refund' => 0.5,
+                'kept_refund' => 0.5,
+                'refund_valid_until' => now()->subDay()
+            ]
+        );
+        /** @var User $user2 */
+        $user2 = factory(User::class)->create(['ref_link_id' => $refLink1->id]);
+        $this->createSomeEntries($user2);
+
+        self::assertEquals(0, $user1->getBalance());
+        self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getBonusBalance());
+
+        self::assertEquals(240, $user2->getBalance());
+        self::assertEquals(50, $user2->getWalletBalance());
+        self::assertEquals(190, $user2->getBonusBalance());
+
+        UserLedgerEntry::processAdExpense($user2->id, 240);
+
+        self::assertEquals(0, $user1->getBalance());
+        self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getBonusBalance());
+
+        self::assertEquals(0, $user2->getBalance());
+        self::assertEquals(0, $user2->getWalletBalance());
+        self::assertEquals(0, $user2->getBonusBalance());
     }
 
     private function createSomeEntries(User $user): void

@@ -26,6 +26,8 @@ use Adshares\Adserver\Rules\AccountIdRule;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Config\RegistrationMode;
+use Illuminate\Validation\Rule;
 
 class UpdateAdminSettings extends FormRequest
 {
@@ -51,7 +53,7 @@ class UpdateAdminSettings extends FormRequest
     {
         $blacklistedAccountIds = [new AccountId(config('app.adshares_address'))];
 
-        return [
+        $rules = [
             'settings.cold_wallet_is_active' => 'required|boolean',
             'settings.hotwallet_min_value' => [
                 'required_if:settings.cold_wallet_is_active,1',
@@ -76,8 +78,17 @@ class UpdateAdminSettings extends FormRequest
             'settings.advertiser_commission' => 'numeric|between:0,1|nullable',
             'settings.publisher_commission' => 'numeric|between:0,1|nullable',
             'settings.referral_refund_enabled' => 'required|boolean',
-            'settings.referral_refund_commission' => 'numeric|between:0,1|nullable',
+            'settings.referral_refund_commission' => [
+                'required_if:settings.referral_refund_enabled,1',
+                'numeric',
+                'between:0,1',
+                'nullable',
+            ],
+            'settings.auto_confirmation_enabled' => 'required|boolean',
         ];
+        $rules['settings.registration_mode'] = ['required', Rule::in(RegistrationMode::cases())];
+
+        return $rules;
     }
 
     public function toConfigFormat(): array
@@ -90,6 +101,8 @@ class UpdateAdminSettings extends FormRequest
             Config::TECHNICAL_EMAIL => (new Email($values['technical_email']))->toString(),
             Config::SUPPORT_EMAIL => (new Email($values['support_email']))->toString(),
             Config::REFERRAL_REFUND_ENABLED => (int)$values['referral_refund_enabled'],
+            Config::REGISTRATION_MODE => (string)$values['registration_mode'],
+            Config::AUTO_CONFIRMATION_ENABLED => (int)$values['auto_confirmation_enabled'],
         ];
 
         if (isset($values['hotwallet_min_value'])) {

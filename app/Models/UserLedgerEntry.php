@@ -347,7 +347,7 @@ class UserLedgerEntry extends Model
         ];
 
         if (Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED)) {
-            if (null !== ($refLink = User::find($userId)->refLink)) {
+            if (null !== ($refLink = User::find($userId)->refLink) && $refLink->refund_active) {
                 $entries[] = self::insertUserRefund(
                     $refLink->user_id,
                     $refLink->calculateRefund($payableAmount),

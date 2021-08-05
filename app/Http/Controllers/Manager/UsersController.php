@@ -42,6 +42,7 @@ class UsersController extends Controller
     public function browse(Request $request): LengthAwarePaginator
     {
         $query = $request->get('q');
+
         if ($query) {
             $domains =
                 DB::select(
@@ -71,10 +72,37 @@ class UsersController extends Controller
                 )
             );
 
-            return User::where('email', 'LIKE', '%' . $query . '%')->orWhereIn('id', $ids)->paginate();
+            $builder = User::where('email', 'LIKE', '%' . $query . '%')->orWhereIn('id', $ids);
+        } else {
+            $builder = User::query();
         }
 
-        return User::paginate();
+        foreach ((array)$request->get('f', []) as $filter) {
+            switch ($filter) {
+                case 'email-unconfirmed':
+                    $builder->whereNull('email_confirmed_at');
+                    break;
+                case 'admin-unconfirmed':
+                    $builder->whereNull('admin_confirmed_at');
+                    break;
+                case 'advertisers':
+                    $builder->where('is_advertiser', true);
+                    break;
+                case 'publishers':
+                    $builder->where('is_publisher', true);
+                    break;
+            }
+        }
+
+        $direction = $request->get('d') === 'desc' ? 'desc' : 'asc';
+        switch ($request->get('o')) {
+            case 'email':
+                $builder->orderBy('email', $direction);
+                break;
+        }
+        $builder->orderBy('id');
+
+        return $builder->paginate();
     }
 
     public function advertisers(Request $request): JsonResponse

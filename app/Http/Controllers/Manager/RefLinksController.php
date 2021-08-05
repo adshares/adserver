@@ -28,10 +28,22 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class RefLinksController extends Controller
 {
+    public function info(string $token): JsonResponse
+    {
+        if (null === ($refLink = RefLink::fetchByToken($token, true))) {
+            throw new NotFoundHttpException(sprintf('No ref link found for token: %s', $token));
+        }
+        return self::json([
+            'token' => $refLink->token,
+            'status' => $refLink->status,
+        ]);
+    }
+
     public function browse(): JsonResponse
     {
         return self::json(

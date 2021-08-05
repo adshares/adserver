@@ -243,6 +243,13 @@ class WalletController extends Controller
 
     public function withdraw(Request $request): JsonResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user->is_confirmed) {
+            return self::json(['message' => 'Confirm account to withdraw funds'], JsonResponse::HTTP_FORBIDDEN);
+        }
+
         if ($request->get('currency') === 'BTC') {
             return $this->withdrawBtc($request);
         }

@@ -24,6 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\UserEmailActivate;
+use Adshares\Adserver\Mail\UserConfirmed;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -31,6 +33,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Config\RegistrationMode;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
@@ -54,6 +57,7 @@ class AuthControllerTest extends TestCase
             'lastPaymentAt',
         ],
         'isEmailConfirmed',
+        'isConfirmed',
         'exchangeRate' => [
             'validAt',
             'value',
@@ -61,19 +65,76 @@ class AuthControllerTest extends TestCase
         ],
     ];
 
-    public function testRegister(): void
+    public function testPublicRegister(): void
     {
         $user = $this->registerUser();
         Mail::assertQueued(UserEmailActivate::class);
         self::assertCount(1, Token::all());
 
-        $this->assertFalse($user->isEmailConfirmed);
+        $this->assertFalse($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
+        $this->assertFalse($user->is_confirmed);
         $this->assertNull($user->refLink);
 
         $this->activateUser($user);
         self::assertEmpty(Token::all());
-        $this->assertTrue($user->isEmailConfirmed);
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
         $this->assertNull($user->refLink);
+        Mail::assertNotQueued(UserConfirmed::class);
+    }
+
+    public function testManualConfirmationRegister(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
+
+        $user = $this->registerUser();
+        $this->assertFalse($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
+        $this->assertFalse($user->is_confirmed);
+
+        $this->activateUser($user);
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
+        $this->assertFalse($user->is_confirmed);
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->confirmUser($user);
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
+        Mail::assertQueued(UserConfirmed::class);
+    }
+
+    public function testRestrictedRegister(): void
+    {
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::RESTRICTED]);
+
+        $user = $this->registerUser(null, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+
+        $user = $this->registerUser('dummy-token', Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+
+        $refLink = factory(RefLink::class)->create(['single_use' => true]);
+        $user = $this->registerUser($refLink->token);
+        $this->assertNotNull($user);
+
+        $user = $this->registerUser($refLink->token, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+    }
+
+    public function testPrivateRegister(): void
+    {
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::PRIVATE]);
+
+        $user = $this->registerUser(null, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
+
+        $refLink = factory(RefLink::class)->create();
+        $user = $this->registerUser($refLink->token, Response::HTTP_FORBIDDEN);
+        $this->assertNull($user);
     }
 
     public function testRegisterWithReferral(): void
@@ -156,6 +217,102 @@ class AuthControllerTest extends TestCase
         );
     }
 
+    public function testActiveManualConfirmationWithBonus(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
+
+        $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
+        $user = $this->registerUser($refLink->token);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $this->activateUser($user);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->confirmUser($user);
+
+        self::assertSame(
+            [300, 300, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $entry = UserLedgerEntry::where('user_id', $user->id)
+            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
+            ->firstOrFail();
+
+        $this->assertEquals(300, $entry->amount);
+        $this->assertNotNull($entry->refLink);
+        $this->assertEquals($refLink->id, $entry->refLink->id);
+    }
+
+    public function testInactiveManualConfirmationWithBonus(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
+
+        $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
+        $user = $this->registerUser($refLink->token);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->confirmUser($user);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $this->activateUser($user);
+
+        self::assertSame(
+            [300, 300, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $entry = UserLedgerEntry::where('user_id', $user->id)
+            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
+            ->firstOrFail();
+
+        $this->assertEquals(300, $entry->amount);
+        $this->assertNotNull($entry->refLink);
+        $this->assertEquals($refLink->id, $entry->refLink->id);
+    }
+
     public function testCheck(): void
     {
         $this->app->bind(
@@ -196,22 +353,23 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure($structure);
     }
 
-    public function registerUser(?string $referralToken = null): User
+    public function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
     {
+        $email = $this->faker->unique()->email;
         $response = $this->postJson(
             '/auth/register',
             [
                 'user' => [
-                    'email' => 'tester@test.xx',
+                    'email' => $email,
                     'password' => '87654321',
                     'referral_token' => $referralToken,
                 ],
                 'uri' => '/auth/email-activation/',
             ]
         );
-        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertStatus($status);
 
-        return User::where('email', 'tester@test.xx')->firstOrFail();
+        return User::where('email', $email)->first();
     }
 
     public function activateUser(User $user): void
@@ -226,6 +384,13 @@ class AuthControllerTest extends TestCase
                 ],
             ]
         );
+        $response->assertStatus(Response::HTTP_OK);
+        $user->refresh();
+    }
+
+    public function confirmUser(User $user): void
+    {
+        $response = $this->postJson('/admin/users/' . $user->id . '/confirm');
         $response->assertStatus(Response::HTTP_OK);
         $user->refresh();
     }

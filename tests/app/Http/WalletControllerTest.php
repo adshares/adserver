@@ -109,7 +109,7 @@ class WalletControllerTest extends TestCase
         Mail::fake();
         Queue::fake();
 
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
 
         $this->actingAs($user, 'api');
@@ -148,7 +148,7 @@ class WalletControllerTest extends TestCase
     {
         Mail::fake();
 
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
 
         $this->actingAs($user, 'api');
@@ -210,7 +210,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawWithMemo(): void
     {
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
@@ -227,9 +227,25 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
-    public function testWithdrawInvalidAddress(): void
+    public function testWithdrawNoConfirmed(): void
     {
         $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => 100000000000,
+                'to' => '0001-00000000-ABC',// invalid address
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testWithdrawInvalidAddress(): void
+    {
+        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
@@ -245,7 +261,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInvalidMemo(): void
     {
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
@@ -262,7 +278,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInsufficientFunds(): void
     {
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $amount = 20 * (10 ** 11);
         $this->generateUserIncome($user->id, $amount);
         $this->actingAs($user, 'api');
@@ -279,7 +295,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInvalidAmount(): void
     {
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',

@@ -19,33 +19,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+namespace Adshares\Adserver\Mail;
 
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
-use Faker\Factory;
-use Faker\Generator;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-abstract class TestCase extends BaseTestCase
+class UserConfirmed extends Mailable
 {
-    use CreatesApplication;
-    use RefreshDatabase;
+    use Queueable;
+    use SerializesModels;
 
-    protected Generator $faker;
-
-    protected function setUp(): void
+    public function build(): Mailable
     {
-        parent::setUp();
-        Mail::fake();
-        $this->faker = Factory::create();
-
-        $this->app->bind(
-            ExchangeRateRepository::class,
-            static function () {
-                return new DummyExchangeRateRepository();
-            }
+        return $this->markdown('emails.user-confirmed')->with(
+            [
+            ]
         );
     }
 }
