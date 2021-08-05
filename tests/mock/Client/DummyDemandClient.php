@@ -200,8 +200,8 @@ final class DummyDemandClient implements DemandClient
             new Url('https://inventory.example.com/import'),
             new AccountId('0001-00000004-DBEB'),
             new Email('mail@example.com'),
-            'PUB',
-            'ADV'
+            ['PUB', 'ADV'],
+            'public'
         );
 
         $info->setDemandFee(0.01);

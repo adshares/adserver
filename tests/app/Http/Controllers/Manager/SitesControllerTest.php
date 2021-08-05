@@ -683,30 +683,37 @@ JSON
         ];
     }
 
-    public function testSiteCodesOk(): void
+    public function testSiteCodesConfirm(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['email_confirmed_at' => new DateTimeImmutable('-1 hour')]);
+        $user = factory(User::class)->create(['email_confirmed_at' => null, 'admin_confirmed_at' => null]);
         $this->actingAs($user, 'api');
         /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
         $response = $this->getJson('/api/sites/' . $site->id . '/codes');
-
-        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(['codes']);
-    }
-
-    public function testSiteCodesForbidden(): void
-    {
-        /** @var User $user */
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
-        /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-
-        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
-
         $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $user->email_confirmed_at = new DateTimeImmutable('-1 hour');
+        $user->admin_confirmed_at = null;
+        $user->saveOrFail();
+
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $user->email_confirmed_at = null;
+        $user->admin_confirmed_at = new DateTimeImmutable('-1 hour');
+        $user->saveOrFail();
+
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $user->email_confirmed_at = new DateTimeImmutable('-1 hour');
+        $user->admin_confirmed_at = new DateTimeImmutable('-1 hour');
+        $user->saveOrFail();
+
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
+        $response->assertStatus(Response::HTTP_OK);
     }
 
     public function testSiteSizes(): void

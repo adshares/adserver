@@ -50,6 +50,7 @@ use const PHP_INT_MAX;
  * @property string currency
  * @property int currency_amount
  * @property User user
+ * @property ?RefLink refLink
  */
 class UserLedgerEntry extends Model
 {
@@ -58,6 +59,8 @@ class UserLedgerEntry extends Model
     public const INDEX_USER_ID = 'user_ledger_entry_user_id_index';
 
     public const INDEX_CREATED_AT = 'user_ledger_entry_created_at_index';
+
+    public const INDEX_REF_LINK_ID = 'user_ledger_entry_ref_link_id_index';
 
     public const STATUS_ACCEPTED = 0;
 
@@ -91,6 +94,8 @@ class UserLedgerEntry extends Model
 
     public const TYPE_BONUS_EXPENSE = 6;
 
+    public const TYPE_REFUND = 7;
+
     public const ALLOWED_STATUS_LIST = [
         self::STATUS_ACCEPTED,
         self::STATUS_REJECTED,
@@ -106,6 +111,7 @@ class UserLedgerEntry extends Model
     public const ALLOWED_TYPE_LIST = [
         self::TYPE_UNKNOWN,
         self::TYPE_DEPOSIT,
+        self::TYPE_REFUND,
         self::TYPE_WITHDRAWAL,
         self::TYPE_AD_INCOME,
         self::TYPE_AD_EXPENSE,
@@ -115,6 +121,7 @@ class UserLedgerEntry extends Model
 
     public const CREDIT_TYPES = [
         self::TYPE_DEPOSIT,
+        self::TYPE_REFUND,
         self::TYPE_AD_INCOME,
         self::TYPE_BONUS_INCOME,
     ];
@@ -146,6 +153,7 @@ class UserLedgerEntry extends Model
         'status' => 'int',
         'type' => 'int',
         'user_id' => 'int',
+        'ref_link_id' => 'int',
     ];
 
     public static function waitingPayments(): int
@@ -245,6 +253,7 @@ class UserLedgerEntry extends Model
         int $amount,
         int $status,
         int $type,
+        RefLink $refLink = null,
         string $currency = 'ADS',
         ?int $currencyAmount = null
     ): self {
@@ -255,6 +264,9 @@ class UserLedgerEntry extends Model
         $userLedgerEntry->type = $type;
         $userLedgerEntry->currency = $currency;
         $userLedgerEntry->currency_amount = $currencyAmount;
+        if (null !== $refLink) {
+            $userLedgerEntry->ref_link_id = $refLink->id;
+        }
 
         return $userLedgerEntry;
     }
@@ -329,12 +341,27 @@ class UserLedgerEntry extends Model
             );
         }
 
-        return array_filter(
-            [
-                self::insertAdExpense($status, $userId, $bonusableAmount, self::TYPE_BONUS_EXPENSE),
-                self::insertAdExpense($status, $userId, $payableAmount, self::TYPE_AD_EXPENSE),
-            ]
-        );
+        $entries = [
+            self::insertAdExpense($status, $userId, $bonusableAmount, self::TYPE_BONUS_EXPENSE),
+            self::insertAdExpense($status, $userId, $payableAmount, self::TYPE_AD_EXPENSE),
+        ];
+
+        if (Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED)) {
+            if (null !== ($refLink = User::find($userId)->refLink) && $refLink->refund_active) {
+                $entries[] = self::insertUserRefund(
+                    $refLink->user_id,
+                    $refLink->calculateRefund($payableAmount),
+                    $refLink
+                );
+                $entries[] = self::insertUserBonus(
+                    $userId,
+                    $refLink->calculateBonus($payableAmount),
+                    $refLink
+                );
+            }
+        }
+
+        return array_filter($entries);
     }
 
     public static function blockAdExpense(int $userId, int $totalAmount, int $maxBonus = PHP_INT_MAX): array
@@ -369,18 +396,36 @@ class UserLedgerEntry extends Model
         return self::addAdExpense(self::STATUS_ACCEPTED, $userId, $totalAmount, $maxBonus);
     }
 
-    public static function awardBonusToUser(User $user, int $amount): void
+    public static function insertUserBonus(int $userId, int $amount, ?RefLink $refLink = null): ?self
     {
         if ($amount <= 0) {
-            throw new InvalidArgumentException('Awarded bonus has to be more than 0');
+            return null;
         }
-
-        self::construct(
-            $user->id,
+        $obj = self::construct(
+            $userId,
             $amount,
             self::STATUS_ACCEPTED,
-            self::TYPE_BONUS_INCOME
-        )->save();
+            self::TYPE_BONUS_INCOME,
+            $refLink
+        );
+        $obj->save();
+        return $obj;
+    }
+
+    public static function insertUserRefund(int $userId, int $amount, ?RefLink $refLink = null): ?self
+    {
+        if ($amount <= 0) {
+            return null;
+        }
+        $obj = self::construct(
+            $userId,
+            $amount,
+            self::STATUS_ACCEPTED,
+            self::TYPE_REFUND,
+            $refLink
+        );
+        $obj->save();
+        return $obj;
     }
 
     private static function insertAdExpense(int $status, int $userId, int $amount, int $type): ?self
@@ -388,7 +433,6 @@ class UserLedgerEntry extends Model
         if ($amount === 0) {
             return null;
         }
-
         $obj = self::construct(
             $userId,
             -$amount,
@@ -396,13 +440,17 @@ class UserLedgerEntry extends Model
             $type
         );
         $obj->save();
-
         return $obj;
     }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function refLink(): BelongsTo
+    {
+        return $this->belongsTo(RefLink::class);
     }
 
     public function setStatusAttribute(int $status): void
@@ -439,6 +487,9 @@ class UserLedgerEntry extends Model
         switch ($this->type) {
             case self::TYPE_DEPOSIT:
                 $type = 'deposit';
+                break;
+            case self::TYPE_REFUND:
+                $type = 'refund';
                 break;
             case self::TYPE_WITHDRAWAL:
                 $type = 'withdrawal';

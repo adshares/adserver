@@ -30,7 +30,7 @@ final class MysqlQueryBuilderTest extends TestCase
 {
     protected $mysqlBuilder;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $type = 'type';
 

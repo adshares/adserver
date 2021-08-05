@@ -23,12 +23,12 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\Email;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -43,11 +43,14 @@ use Illuminate\Support\Facades\Hash;
  * @property string email
  * @property Carbon|null created_at
  * @property DateTime|null email_confirmed_at
+ * @property DateTime|null admin_confirmed_at
  * @property string uuid
- * @property string referral_id
- * @property int|null referrer_user_id
+ * @property int|null ref_link_id
+ * @property RefLink|null refLink
  * @property int subscribe
- * @property bool isEmailConfirmed
+ * @property bool is_email_confirmed
+ * @property bool is_admin_confirmed
+ * @property bool is_confirmed
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -81,6 +84,7 @@ class User extends Authenticatable
     protected $dates = [
         'deleted_at',
         'email_confirmed_at',
+        'admin_confirmed_at',
     ];
 
     /**
@@ -119,9 +123,10 @@ class User extends Authenticatable
         'is_admin',
         'api_token',
         'is_email_confirmed',
+        'is_admin_confirmed',
+        'is_confirmed',
         'is_subscribed',
         'adserver_wallet',
-        'referral_id',
     ];
 
     protected $traitAutomate = [
@@ -131,11 +136,12 @@ class User extends Authenticatable
     protected $appends = [
         'adserver_wallet',
         'is_email_confirmed',
+        'is_admin_confirmed',
+        'is_confirmed',
         'is_subscribed',
-        'referral_id',
     ];
 
-    public static function register(array $data): User
+    public static function register(array $data, ?RefLink $refLink): User
     {
         $user = new User($data);
         $user->password = $data['password'];
@@ -143,15 +149,13 @@ class User extends Authenticatable
         $user->is_advertiser = true;
         $user->is_publisher = true;
 
-        if (isset($data['referral_id'])) {
-            $userReferrer = self::fetchByUuid(bin2hex(Utils::urlSafeBase64Decode($data['referral_id'])));
-
-            if (null !== $userReferrer) {
-                $user->referrer_user_id = $userReferrer->id;
-            }
+        if (null !== $refLink) {
+            $user->ref_link_id = $refLink->id;
+            $refLink->used = true;
+            $refLink->saveOrFail();
         }
 
-        $user->save();
+        $user->saveOrFail();
 
         return $user;
     }
@@ -159,6 +163,16 @@ class User extends Authenticatable
     public function getIsEmailConfirmedAttribute(): bool
     {
         return null !== $this->email_confirmed_at;
+    }
+
+    public function getIsAdminConfirmedAttribute(): bool
+    {
+        return null !== $this->admin_confirmed_at;
+    }
+
+    public function getIsConfirmedAttribute(): bool
+    {
+        return $this->is_email_confirmed && $this->is_admin_confirmed;
     }
 
     public function getIsSubscribedAttribute(): bool
@@ -176,11 +190,6 @@ class User extends Authenticatable
             'total_funds_change' => 0,
             'last_payment_at' => 0,
         ];
-    }
-
-    public function getReferralIdAttribute(): string
-    {
-        return Utils::urlSafeBase64Encode(hex2bin($this->uuid));
     }
 
     public function setPasswordAttribute($value): void
@@ -267,6 +276,16 @@ class User extends Authenticatable
         return UserLedgerEntry::getBonusBalanceByUserId($this->id);
     }
 
+    public function getRefundBalance(): int
+    {
+        return UserLedgerEntry::getBonusBalanceByUserId($this->id);
+    }
+
+    public function refLink(): BelongsTo
+    {
+        return $this->belongsTo(RefLink::class);
+    }
+
     public static function createAdmin(Email $email, string $name, string $password): void
     {
         $user = new self();
@@ -279,15 +298,20 @@ class User extends Authenticatable
         $user->save();
     }
 
-    public function awardBonus(int $amount): void
+    public function awardBonus(int $amount, ?RefLink $refLink = null): void
     {
-        UserLedgerEntry::awardBonusToUser($this, $amount);
+        UserLedgerEntry::insertUserBonus($this->id, $amount, $refLink);
     }
 
     public function confirmEmail(): void
     {
         $this->email_confirmed_at = new DateTime();
         $this->subscription(true);
+    }
+
+    public function confirmAdmin(): void
+    {
+        $this->admin_confirmed_at = new DateTime();
     }
 
     public function subscription(bool $subscribe): void

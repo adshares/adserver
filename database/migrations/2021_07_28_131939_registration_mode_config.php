@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -19,33 +18,34 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+use Adshares\Adserver\Facades\DB;
+use Illuminate\Database\Migrations\Migration;
 
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
-use Faker\Factory;
-use Faker\Generator;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Mail;
-
-abstract class TestCase extends BaseTestCase
+class RegistrationModeConfig extends Migration
 {
-    use CreatesApplication;
-    use RefreshDatabase;
-
-    protected Generator $faker;
-
-    protected function setUp(): void
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
     {
-        parent::setUp();
-        Mail::fake();
-        $this->faker = Factory::create();
-
-        $this->app->bind(
-            ExchangeRateRepository::class,
-            static function () {
-                return new DummyExchangeRateRepository();
-            }
+        DB::table('configs')->insert(
+            [
+                'key' => 'registration-mode',
+                'value' => 'public',
+                'created_at' => new DateTime(),
+            ]
         );
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        DB::table('configs')->where('key', 'registration-mode')->delete();
     }
 }

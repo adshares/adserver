@@ -64,6 +64,7 @@ class Handler extends ExceptionHandler
                 $exception->getMessage(),
                 Response::HTTP_INTERNAL_SERVER_ERROR,
                 $exception->getTrace(),
+                [],
                 $exception->getSql()
             );
         }
@@ -80,7 +81,8 @@ class Handler extends ExceptionHandler
             return $this->response(
                 $exception->getMessage(),
                 Response::HTTP_UNPROCESSABLE_ENTITY,
-                $exception->getTrace()
+                $exception->getTrace(),
+                $exception->errors()
             );
         }
 
@@ -106,12 +108,21 @@ class Handler extends ExceptionHandler
         );
     }
 
-    private function response(string $message, int $code, array $trace, ?string $detail = ''): JsonResponse
-    {
+    private function response(
+        string $message,
+        int $code,
+        array $trace,
+        array $errors = [],
+        ?string $detail = ''
+    ): JsonResponse {
         $data = [
             'code' => $code,
             'message' => (config('app.env') === Utils::ENV_DEV || $code < 500) ? $message : 'Internal error',
         ];
+
+        if (!empty($errors)) {
+            $data['errors'] = $errors;
+        }
 
         if (config('app.env') === Utils::ENV_DEV) {
             $data['trace'] = $trace;
@@ -152,12 +163,14 @@ class Handler extends ExceptionHandler
                 str_replace(
                     ["\n", "\r"],
                     ' ',
-                    json_encode(array_filter(
-                        $e->getTrace(),
-                        function (array $row) {
-                            return stripos($row['file'] ?? '', 'vendor') === false;
-                        }
-                    ))
+                    json_encode(
+                        array_filter(
+                            $e->getTrace(),
+                            function (array $row) {
+                                return stripos($row['file'] ?? '', 'vendor') === false;
+                            }
+                        )
+                    )
                 )
             )
         );

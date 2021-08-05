@@ -33,29 +33,31 @@ use Illuminate\Contracts\Support\Arrayable;
 
 class SettingsResponse implements Arrayable
 {
-    private $advertiserCommission;
+    private int $hotWalletMinValue;
 
-    private $publisherCommission;
+    private int $hotWalletMaxValue;
 
-    private $hotWalletMinValue;
+    private int $coldWalletIsActive;
 
-    private $hotWalletMaxValue;
+    private string $adserverName;
 
-    private $coldWalletIsActive;
+    private Email $technicalEmail;
 
-    private $adserverName;
+    private Email $supportEmail;
 
-    private $technicalEmail;
+    private Id $coldWalletAddress;
 
-    private $supportEmail;
+    private int $referralRefundEnabled;
 
-    private $coldWalletAddress;
+    private Commission $referralRefundCommission;
 
-    /** @var bool */
-    private $bonusEnabled;
+    private Commission $advertiserCommission;
 
-    /** @var int */
-    private $bonusAmount;
+    private Commission $publisherCommission;
+
+    private string $registrationMode;
+
+    private int $autoConfirmationEnabled;
 
     public function __construct(
         int $hotWalletMinValue,
@@ -65,22 +67,26 @@ class SettingsResponse implements Arrayable
         Email $supportEmail,
         int $coldWalletIsActive,
         Id $coldWalletAddress,
-        bool $bonusEnabled,
-        int $bonusAmount,
-        ?Commission $advertiserCommission,
-        ?Commission $publisherCommission
+        int $referralRefundEnabled,
+        Commission $referralRefundCommission,
+        Commission $advertiserCommission,
+        Commission $publisherCommission,
+        string $registrationMode,
+        int $autoConfirmationEnabled
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
         $this->hotWalletMaxValue = $hotWalletMaxValue;
         $this->adserverName = $adserverName;
         $this->technicalEmail = $technicalEmail;
         $this->supportEmail = $supportEmail;
-        $this->advertiserCommission = $advertiserCommission;
-        $this->publisherCommission = $publisherCommission;
         $this->coldWalletIsActive = $coldWalletIsActive;
         $this->coldWalletAddress = $coldWalletAddress;
-        $this->bonusEnabled = $bonusEnabled;
-        $this->bonusAmount = $bonusAmount;
+        $this->referralRefundEnabled = $referralRefundEnabled;
+        $this->referralRefundCommission = $referralRefundCommission;
+        $this->advertiserCommission = $advertiserCommission;
+        $this->publisherCommission = $publisherCommission;
+        $this->registrationMode = $registrationMode;
+        $this->autoConfirmationEnabled = $autoConfirmationEnabled;
     }
 
     public static function fromConfigModel(array $data): self
@@ -94,9 +100,10 @@ class SettingsResponse implements Arrayable
         $adserverName = $data[Config::ADSERVER_NAME];
         $technicalEmail = $data[Config::TECHNICAL_EMAIL];
         $supportEmail = $data[Config::SUPPORT_EMAIL];
-
-        $bonusEnabled = $data[Config::BONUS_NEW_USER_ENABLED];
-        $bonusAmount = $data[Config::BONUS_NEW_USER_AMOUNT];
+        $referralRefundEnabled = $data[Config::REFERRAL_REFUND_ENABLED];
+        $referralRefundCommission = $data[Config::REFERRAL_REFUND_COMMISSION];
+        $registrationMode = $data[Config::REGISTRATION_MODE];
+        $autoConfirmationEnabled = $data[Config::AUTO_CONFIRMATION_ENABLED];
 
         return new self(
             (int)$hotWalletMinValue,
@@ -106,10 +113,12 @@ class SettingsResponse implements Arrayable
             new Email($supportEmail),
             (int)$coldWalletIsActive,
             $coldWalletAddress ? new AccountId((string)$coldWalletAddress) : new EmptyAccountId(),
-            (bool)$bonusEnabled,
-            (int)$bonusAmount,
+            (int)$referralRefundEnabled,
+            new Commission((float)$referralRefundCommission),
             new Commission((float)$advertiserCommission),
-            new Commission((float)$publisherCommission)
+            new Commission((float)$publisherCommission),
+            $registrationMode,
+            (int)$autoConfirmationEnabled
         );
     }
 
@@ -123,17 +132,13 @@ class SettingsResponse implements Arrayable
             'adserver_name' => $this->adserverName,
             'technical_email' => $this->technicalEmail->toString(),
             'support_email' => $this->supportEmail->toString(),
-            'bonus_new_users_enabled' => $this->bonusEnabled,
-            'bonus_new_users_amount' => $this->bonusAmount,
+            'referral_refund_enabled' => $this->referralRefundEnabled,
+            'referral_refund_commission' => $this->referralRefundCommission->getValue(),
+            'advertiser_commission' => $this->advertiserCommission->getValue(),
+            'publisher_commission' => $this->publisherCommission->getValue(),
+            'registration_mode' => $this->registrationMode,
+            'auto_confirmation_enabled' => $this->autoConfirmationEnabled,
         ];
-
-        if ($this->advertiserCommission) {
-            $data['advertiser_commission'] = $this->advertiserCommission->getValue();
-        }
-
-        if ($this->publisherCommission) {
-            $data['publisher_commission'] = $this->publisherCommission->getValue();
-        }
 
         return ['settings' => $data];
     }

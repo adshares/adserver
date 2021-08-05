@@ -66,6 +66,7 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
+        $settings = Config::fetchAdminSettings();
         return new self(
             new Info(
                 self::ADSHARES_MODULE_NAME,
@@ -77,9 +78,9 @@ final class InfoResponse implements Arrayable
                 new SecureUrl((string)config('app.terms_url')),
                 new SecureUrl(route('demand-inventory')),
                 new AccountId((string)config('app.adshares_address')),
-                new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]),
-                Info::CAPABILITY_ADVERTISER,
-                Info::CAPABILITY_PUBLISHER
+                new Email($settings[Config::SUPPORT_EMAIL]),
+                [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
+                $settings[Config::REGISTRATION_MODE]
             )
         );
     }

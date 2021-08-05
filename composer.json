@@ -72,29 +72,20 @@
             "phpcs"
         ],
         "test": [
-            "@php artisan config:clear",
             "phpunit --testsuite Application,Unit"
         ],
         "test-coverage": [
-            "@php artisan config:clear",
             "phpunit --testsuite Application,Unit --coverage-text"
         ],
         "test-ci": [
-            "@php artisan config:clear",
             "phpunit --configuration phpunit-ci.xml"
         ],
-        "dev": "/bin/bash -c '(source .env && if [ -f \".env.local\" ]; then source .env.local; fi && php -t ./public -S ${APP_HOST}:${APP_PORT})'",
+        "dev": "/bin/bash -c '(source .env && if [ -f \".env.local\" ]; then source .env.local; fi && php -t ./public -S ${APP_HOST:-localhost}:${APP_PORT:-8010})'",
         "post-root-package-install": [
             "@php artisan key:generate"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
-        ],
-        "post-install-cmd": [
-            "@php artisan optimize"
-        ],
-        "post-update-cmd": [
-            "@php artisan optimize"
         ]
     },
     "config": {

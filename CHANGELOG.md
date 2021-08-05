@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2021-08-05
+### Added
+- Refund referral program
+- Restricted & private registration modes
+- Manual account confirmation
+
 ## [1.8.2] - 2021-07-16
 ### Changed
 - Multi-threaded event sending to Adpay
@@ -447,7 +453,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.8.2...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.9.0...develop
+[1.9.0]: https://github.com/adshares/adserver/compare/v1.8.2...v1.9.0
 [1.8.2]: https://github.com/adshares/adserver/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/adshares/adserver/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/adshares/adserver/compare/v1.7.2...v1.8.0

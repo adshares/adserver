@@ -19,42 +19,33 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+namespace Adshares\Config;
 
-use DateTime;
-use DateTimeZone;
+use RuntimeException;
 
-use function config;
-
-use const DATE_ATOM;
-
-trait DateAtom
+final class RegistrationMode
 {
-    public function dateAtomMutator($key, ?string $value): void
+    public const PUBLIC = 'public';
+    public const RESTRICTED = 'restricted';
+    public const PRIVATE = 'private';
+
+    private function __construct()
     {
-        if (!$value) {
-            $this->attributes[$key] = null;
-
-            return;
-        }
-
-        $date = DateTime::createFromFormat(DATE_ATOM, $value);
-        if ($date === false) {
-            $date = new DateTime($value);
-        }
-        $date->setTimezone(new DateTimeZone(config('app.timezone')));
-
-        $this->attributes[$key] = $date;
     }
 
-    public function dateAtomAccessor(?DateTime $value): ?string
+    public static function cases(): array
     {
-        if (!$value) {
-            return null;
+        return [
+            self::PUBLIC,
+            self::RESTRICTED,
+            self::PRIVATE
+        ];
+    }
+
+    public static function validate(string $value): void
+    {
+        if (!in_array($value, self::cases())) {
+            throw new RuntimeException(sprintf('Given value %s is not correct.', $value));
         }
-
-        $value->setTimezone(config('app.timezone'));
-
-        return $value->format(DATE_ATOM);
     }
 }

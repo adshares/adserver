@@ -298,14 +298,18 @@ class AdPayEventExportCommand extends BaseCommand
             };
         }
 
-        Fork::new()
-            ->concurrent((int)$this->option('threads'))
-            ->before(
-                function () {
-                    DB::connection()->reconnect();
-                }
-            )
-            ->run(...$threads);
+        if (count($threads) === 1) {
+            call_user_func(reset($threads));
+        } else {
+            Fork::new()
+                ->concurrent((int)$this->option('threads'))
+                ->before(
+                    function () {
+                        DB::connection()->reconnect();
+                    }
+                )
+                ->run(...$threads);
+        }
 
         if ($isCommandExecutedAutomatically && $packCount > 0) {
             Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateTo);

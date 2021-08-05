@@ -25,11 +25,13 @@ namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlInterface;
+use Adshares\Config\RegistrationMode;
 
 final class Info
 {
@@ -42,47 +44,35 @@ final class Info
         self::CAPABILITY_ADVERTISER,
     ];
 
-    /** @var string */
-    private $module;
+    private string $module;
 
-    /** @var string */
-    private $name;
+    private string $name;
 
-    /** @var string */
-    private $version;
+    private string $version;
 
-    /** @var array */
-    private $capabilities;
+    private array $capabilities;
 
-    /** @var UrlInterface */
-    private $panelUrl;
+    private UrlInterface $panelUrl;
 
-    /** @var UrlInterface */
-    private $privacyUrl;
+    private UrlInterface $privacyUrl;
 
-    /** @var UrlInterface */
-    private $termsUrl;
+    private UrlInterface $termsUrl;
 
-    /** @var UrlInterface */
-    private $inventoryUrl;
+    private UrlInterface $inventoryUrl;
 
-    /** @var UrlInterface */
-    private $serverUrl;
+    private UrlInterface $serverUrl;
 
-    /** @var Id */
-    private $adsAddress;
+    private Id $adsAddress;
 
-    /** @var Email|null */
-    private $supportEmail;
+    private ?Email $supportEmail;
 
-    /** @var float|null */
-    private $demandFee;
+    private ?float $demandFee;
 
-    /** @var float|null */
-    private $supplyFee;
+    private ?float $supplyFee;
 
-    /** @var InfoStatistics|null */
-    private $statistics;
+    private string $registrationMode;
+
+    private ?InfoStatistics $statistics;
 
     public function __construct(
         string $module,
@@ -95,7 +85,8 @@ final class Info
         UrlInterface $inventoryUrl,
         Id $adsAddress,
         ?Email $supportEmail,
-        string ...$capabilities
+        array $capabilities,
+        string $registrationMode
     ) {
         $this->validateCapabilities($capabilities);
 
@@ -110,6 +101,7 @@ final class Info
         $this->serverUrl = $serverUrl;
         $this->adsAddress = $adsAddress;
         $this->supportEmail = $supportEmail;
+        $this->registrationMode = $registrationMode;
     }
 
     public function validateCapabilities(array $values): void
@@ -138,7 +130,8 @@ final class Info
             new Url($data['inventoryUrl']),
             $adsAddress,
             $email,
-            ...$data['capabilities'] ?? $data['supported']
+            $data['capabilities'] ?? $data['supported'],
+            $data['registrationMode'] ?? RegistrationMode::PUBLIC
         );
 
         if (isset($data['demandFee'])) {
@@ -169,6 +162,7 @@ final class Info
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
             'adsAddress' => $this->adsAddress->toString(),
+            'registrationMode' => $this->registrationMode,
         ];
 
         if (null !== $this->supportEmail) {
