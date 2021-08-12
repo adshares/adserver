@@ -34,7 +34,7 @@ class AddRefLinkIdToUsersTable extends Migration
      */
     public function up()
     {
-        foreach (User::all() as $user) {
+        foreach (User::withTrashed()->get() as $user) {
             $reflink = new RefLink();
             $reflink->user_id = $user->id;
             $reflink->token = Utils::urlSafeBase64Encode(hex2bin($user->uuid));

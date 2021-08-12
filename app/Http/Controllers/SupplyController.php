@@ -34,6 +34,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
@@ -175,7 +176,7 @@ class SupplyController extends Controller
     {
         $params = [
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
-            '.' . config('app.adserver_id'),
+            '.' . CssUtils::normalizeClass(config('app.adserver_id')),
         ];
 
         $jsPath = public_path('-/find.js');

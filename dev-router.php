@@ -18,32 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+declare(strict_types=1);
 
-class ChangeNetworkCampaignsPublisherIdNull extends Migration
-{
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
-    {
-        DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('json', 'text');
-        Schema::table('network_campaigns', function (Blueprint $table) {
-            $table->binary('publisher_id', 16)->nullable()->change();
-        });
-    }
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-    }
+if (file_exists($_SERVER['DOCUMENT_ROOT'] . $path)) {
+    return false;
+} else {
+    $_SERVER['SCRIPT_FILENAME'] = './public/index.php';
+    include './public/index.php';
 }

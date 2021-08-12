@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -18,32 +19,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+declare(strict_types=1);
 
-class ChangeNetworkCampaignsPublisherIdNull extends Migration
+namespace Adshares\Adserver\Utilities;
+
+final class CssUtils
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public static function normalizeClass(string $class): string
     {
-        DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('json', 'text');
-        Schema::table('network_campaigns', function (Blueprint $table) {
-            $table->binary('publisher_id', 16)->nullable()->change();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
+        //-?[_a-zA-Z]+[_a-zA-Z0-9-]*
+        $class = preg_replace('/[^_a-zA-Z0-9-]/', '_', $class);
+        if (!preg_match('/^-?[_a-zA-Z]/', $class)) {
+            $class = '_' . $class;
+        }
+        return $class;
     }
 }

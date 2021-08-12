@@ -133,7 +133,9 @@ class AuthController extends Controller
         $user->save();
         DB::commit();
 
-        Mail::to($user)->queue(new UserConfirmed());
+        if ($user->is_confirmed) {
+            Mail::to($user)->queue(new UserConfirmed());
+        }
 
         return self::json($user->toArray());
     }
