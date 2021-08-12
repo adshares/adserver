@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Services\Publisher;
 
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 
@@ -155,7 +156,7 @@ CODE;
                 self::CODE_TEMPLATE_POP,
                 [
                     '{{zoneId}}'        => $zone->uuid,
-                    '{{selectorClass}}' => config('app.adserver_id'),
+                    '{{selectorClass}}' => CssUtils::normalizeClass(config('app.adserver_id')),
                     '{{dataOptions}}'   => self::getDataOptionsForPops($config),
                     '{{fallback}}'      => self::getFallback($config),
                 ]
@@ -168,7 +169,7 @@ CODE;
             '{{zoneId}}'        => $zone->uuid,
             '{{width}}'         => $size[0],
             '{{height}}'        => $size[1],
-            '{{selectorClass}}' => config('app.adserver_id'),
+            '{{selectorClass}}' => CssUtils::normalizeClass(config('app.adserver_id')),
             '{{dataOptions}}'   => self::getDataOptions($config),
             '{{fallback}}'      => self::getFallback($config),
         ];

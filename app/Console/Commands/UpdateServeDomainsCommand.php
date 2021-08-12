@@ -69,11 +69,16 @@ class UpdateServeDomainsCommand extends BaseCommand
                 for ($i = 0; $i < $n; $i++) {
                     $y = $x + $i * $interval;
 
+                    $date = 'new Date(' . ($y * 1000) . ')';
+                    $code = str_replace(['new Date()'], $date, $jsCode, $count);
+                    if ($count === 0) {
+                        $code = str_replace(['new Date'], $date, $code);
+                    }
                     $process = new Process(
                         ['nodejs'],
                         null,
                         null,
-                        str_replace(['new Date()', 'new Date'], 'new Date(' . ($y * 1000) . ')', $jsCode)
+                        $code
                     );
 
                     if ($process->run() === 0) {
