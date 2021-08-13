@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -76,7 +77,9 @@ class NetworkImpression extends Model
         string $impressionId,
         string $trackingId,
         ImpressionContext $impressionContext,
-        UserContext $userContext
+        UserContext $userContext,
+        FoundBanners $foundBanners,
+        array $zones
     ): void {
         if (self::where('impression_id', hex2bin($impressionId))->first()) {
             return;
@@ -85,7 +88,12 @@ class NetworkImpression extends Model
         $log = new self();
         $log->impression_id = $impressionId;
         $log->tracking_id = $trackingId;
-        $log->context = $impressionContext->toArray();
+
+        $context = $impressionContext->toArray();
+        $context['banners'] = $foundBanners->toArray();
+        $context['zones'] = $zones;
+        $log->context = $context;
+
         $log->setFieldsDependentOnUserContext($userContext);
         $log->save();
     }

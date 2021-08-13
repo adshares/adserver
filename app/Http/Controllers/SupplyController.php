@@ -161,15 +161,19 @@ class SupplyController extends Controller
             }
         }
 
+        $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
+        $foundBanners = $bannerFinder->findBanners($zones, $context);
+
         NetworkImpression::register(
             Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
             Utils::hexUuidFromBase64UrlWithChecksum($tid),
             $impressionContext,
-            $userContext
+            $userContext,
+            $foundBanners,
+            $zones
         );
-        $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
 
-        return self::json($bannerFinder->findBanners($zones, $context));
+        return self::json($foundBanners);
     }
 
     public function findScript(): StreamedResponse
