@@ -122,6 +122,7 @@ class UsersController extends Controller
         } else {
             $interval = 7;
         }
+        $interval = 50;
 
         $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
         $query = '%' . $request->get('q', '') . '%';
@@ -267,7 +268,7 @@ class UsersController extends Controller
     {
         if (strtolower((string)$request->get('g')) === 'user') {
             $emailColumn = 'u.email';
-            $domainColumn = 'GROUP_CONCAT(DISTINCT s.domain SEPARATOR ", ")';
+            $domainColumn = 'GROUP_CONCAT(s.domain SEPARATOR ", ")';
             $groupBy = 'u.email';
         } else {
             $emailColumn = 'GROUP_CONCAT(DISTINCT u.email SEPARATOR ", ")';
@@ -291,6 +292,9 @@ class UsersController extends Controller
                     GROUP_CONCAT(DISTINCT u.id SEPARATOR ",") AS user_ids,
                     %s AS email,
                     %s AS domain,
+                    GROUP_CONCAT(s.url SEPARATOR ",") AS url,
+                    GROUP_CONCAT(s.rank SEPARATOR ",") AS rank,
+                    GROUP_CONCAT(s.info SEPARATOR ",") AS info,
                     SUM(IFNULL(lc.views, 0)) AS current_views,
                     SUM(IFNULL(lc.views_all, 0)) AS current_views_all,
                     SUM(IFNULL(lc.clicks, 0)) AS current_clicks,
@@ -360,6 +364,9 @@ class UsersController extends Controller
                     'user_ids' => $this->extractUserIds($row->user_ids),
                     'email' => $row->email,
                     'domain' => $row->domain,
+                    'url' => $row->url,
+                    'rank' => $row->rank,
+                    'info' => $row->info,
                     'views' => (int)$row->current_views,
                     'viewsDiff' => $row->current_views - $row->last_views,
                     'viewsChange' => min(
