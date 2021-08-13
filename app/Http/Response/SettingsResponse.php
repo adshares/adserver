@@ -59,6 +59,8 @@ class SettingsResponse implements Arrayable
 
     private int $autoConfirmationEnabled;
 
+    private string $aduserInfoUrl;
+
     public function __construct(
         int $hotWalletMinValue,
         int $hotWalletMaxValue,
@@ -72,7 +74,8 @@ class SettingsResponse implements Arrayable
         Commission $advertiserCommission,
         Commission $publisherCommission,
         string $registrationMode,
-        int $autoConfirmationEnabled
+        int $autoConfirmationEnabled,
+        string $aduserInfoUrl
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
         $this->hotWalletMaxValue = $hotWalletMaxValue;
@@ -87,6 +90,7 @@ class SettingsResponse implements Arrayable
         $this->publisherCommission = $publisherCommission;
         $this->registrationMode = $registrationMode;
         $this->autoConfirmationEnabled = $autoConfirmationEnabled;
+        $this->aduserInfoUrl = $aduserInfoUrl;
     }
 
     public static function fromConfigModel(array $data): self
@@ -104,6 +108,7 @@ class SettingsResponse implements Arrayable
         $referralRefundCommission = $data[Config::REFERRAL_REFUND_COMMISSION];
         $registrationMode = $data[Config::REGISTRATION_MODE];
         $autoConfirmationEnabled = $data[Config::AUTO_CONFIRMATION_ENABLED];
+        $aduserInfoUrl = config('app.aduser_info_url');
 
         return new self(
             (int)$hotWalletMinValue,
@@ -118,7 +123,8 @@ class SettingsResponse implements Arrayable
             new Commission((float)$advertiserCommission),
             new Commission((float)$publisherCommission),
             $registrationMode,
-            (int)$autoConfirmationEnabled
+            (int)$autoConfirmationEnabled,
+            $aduserInfoUrl
         );
     }
 
@@ -138,6 +144,7 @@ class SettingsResponse implements Arrayable
             'publisher_commission' => $this->publisherCommission->getValue(),
             'registration_mode' => $this->registrationMode,
             'auto_confirmation_enabled' => $this->autoConfirmationEnabled,
+            'aduser_info_url' => $this->aduserInfoUrl,
         ];
 
         return ['settings' => $data];

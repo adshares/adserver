@@ -19,8 +19,8 @@
  */
 
 $appUrl = env('APP_URL', 'http://localhost');
-
 $appEnv = env('APP_ENV', 'production');
+$aduserUrl = env('ADUSER_BASE_URL', env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION')));
 
 return [
     'name' => env('APP_NAME', 'AdServer'),
@@ -106,7 +106,8 @@ return [
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
     'ads_operator_server_url' => env('ADS_OPERATOR_SERVER_URL', 'https://ads-operator.adshares.net'),
-    'aduser_base_url' => env('ADUSER_BASE_URL', env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION'))),
+    'aduser_base_url' => $aduserUrl,
+    'aduser_info_url' => env('ADUSER_INFO_URL', $aduserUrl . '/panel.html?rated=1&url={domain}'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'x_adselect_version' => env('X_ADSELECT_VERSION', 'php'),
