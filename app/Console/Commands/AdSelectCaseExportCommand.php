@@ -64,7 +64,8 @@ class AdSelectCaseExportCommand extends BaseCommand
 
         $this->info('[AdSelectCaseExport] Start command ' . $this->signature);
 
-        $this->updateImpressions();
+        //
+        //$this->updateImpressions();
         $this->exportCases();
         $this->exportCaseClicks();
 
