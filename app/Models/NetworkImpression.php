@@ -90,8 +90,8 @@ class NetworkImpression extends Model
         $log->tracking_id = $trackingId;
 
         $context = $impressionContext->toArray();
-        $context['banners'] = $foundBanners->toArray();
-        $context['zones'] = $zones;
+//        $context['banners'] = $foundBanners->toArray();
+//        $context['zones'] = $zones;
         $log->context = $context;
 
         $log->setFieldsDependentOnUserContext($userContext);
