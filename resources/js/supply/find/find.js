@@ -382,29 +382,7 @@ var isOccluded = function(rect, el)
 var isVisible = function (el) {
     if (!isRendered(el) || !isWindowVisible())
         return false;
-
-    var rootEl = el;
-    var rootRect = getBoundRect(el);
-    var intersect = rootRect;
-    var rootArea = rootRect.width * rootRect.height;
-    el = el.parentElement;
-
-    while (el.parentElement) {
-        var rect = getBoundRect(el, true);
-        intersect = rectIntersect(intersect, rect);
-        var area = intersect ? intersect.width * intersect.height : 0;
-        if(area < rootArea / 2)
-            return false;
-        el = el.parentElement;
-    }
-
-    var viewsize = viewSize();
-    intersect = rectIntersect(intersect, viewsize);
-    if(isOccluded(intersect, rootEl)) {
-        return false;
-    }
-    var area = intersect ? intersect.width * intersect.height : 0;
-    return area >= rootArea / 2;
+    return true;
 };
 
 var impressionId;
@@ -440,7 +418,7 @@ var getRandId = function(bytes) {
     return chars.join('');
 }
 
-var aduserPixel = function (impressionId) {
+var aduserPixel = function (impressionId, onload) {
     if (!serverOrigin) return;
     var path = '/supply/register?iid=';
     var url = serverOrigin + path + impressionId;
@@ -451,7 +429,21 @@ var aduserPixel = function (impressionId) {
     if(tags.length) {
         return false;
     }
+
     var iframe = createIframeFromUrl(url);
+
+    if(onload) {
+        var loaded = false;
+        var loadFn = function() {
+            if(loaded) return;
+            loaded = true;
+            onload();
+        };
+        iframe.onerror = iframe.onabort = iframe.onload = loadFn;
+        setTimeout(loadFn, 500);
+    }
+
+
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
     dwmthURLS[url] = 1;
@@ -645,98 +637,102 @@ var bannerLoaded = function() {
 };
 
 domReady(function () {
-    if(!aduserPixel(getImpressionId())) {
-        return;
-    }
-    getActiveZones(function(zones, params) {
-        var data = encodeZones(params);
+    aduserPixel(getImpressionId(), function () {
+        getActiveZones(function (zones, params) {
+            var data = encodeZones(params);
 
-        var url = serverOrigin + '/supply/find';
-        var options = {
-            json: true
-        };
-        if (data.length <= 800) {
-            // safe limit for url
-            url += '?' + data;
-        } else {
-            options.method = 'post';
-            options.post = data;
-        }
+            var url = serverOrigin + '/supply/find';
+            var options = {
+                json: true
+            };
+            if (data.length <= 800) {
+                // safe limit for url
+                url += '?' + data;
+            } else {
+                options.method = 'post';
+                options.post = data;
+            }
 
-        fetchURL(url, options).then(function (banners) {
-            bannersToLoad = 0;
+            fetchURL(url, options).then(function (banners) {
+                bannersToLoad = 0;
 
-            banners.forEach(function(banner, i) {
-                var zone = zones[i] || {options: {}};
+                banners.forEach(function (banner, i) {
+                    var zone = zones[i] || {options: {}};
 
-                if (!banner || typeof banner != 'object') {
-                    insertBackfill(zone.destElement, zone.backfill);
-                    return;
-                }
-
-                if(banner.extra_check) {
-                    if(!extraBannerCheck(banner, banner.extra_check)) {
+                    if (!banner || typeof banner != 'object') {
                         insertBackfill(zone.destElement, zone.backfill);
                         return;
                     }
-                }
 
-                banner.destElement = zone.destElement;
-                banner.backfill = zone.backfill;
-
-                if (zone.options.min_cpm > banner.rpm) {
-                    insertBackfill(zone.destElement, zone.backfill);
-                } else {
-                    bannersToLoad++;
-                    fetchBanner(banner, {page: params[0], zone: params[i + 1] || {}}, zone.options);
-                }
-            });
-        }, function() {
-            zones.forEach(function(zone, i) {
-                if (!zone.destElement) {
-                    console.log('no element to replace');
-                    return;
-                }
-                insertBackfill(zone.destElement, zone.backfill);
-            });
-            allBannersLoaded();
-        });
-
-        addListener(topwin, 'message', function (event) {
-            var has_access = dwmthACL.some(function(win) {
-                try {
-                    return win && (win === event.source);
-                } catch(e) {
-                    return false;
-                }
-            });
-            if (has_access && event.data)
-            {
-                var data, isString = typeof event.data == "string";
-                if (isString) {
-                    data = JSON.parse(event.data);
-                } else {
-                    data = event.data;
-                }
-                if (data.insertElem) {
-                    data.insertElem.forEach(function (request) {
-                        if(dwmthACL.length >= 5 * zones.length) return;
-                        if(request.type == 'iframe') {
-                            if(dwmthURLS[request.url]) return;
-                            var iframe = addTrackingIframe(request.url);
-                            dwmthACL.push(iframe.contentWindow);
-                            dwmthURLS[request.url] = 1;
-                        } else if(request.type == 'img') {
-                            if(dwmthURLS[request.url]) return;
-                            addTrackingImage(request.url);
-                            dwmthACL.push(null);
-                            dwmthURLS[request.url] = 1;
+                    if (banner.extra_check) {
+                        if (!extraBannerCheck(banner, banner.extra_check)) {
+                            insertBackfill(zone.destElement, zone.backfill);
+                            return;
                         }
-                    });
+                    }
+
+                    banner.destElement = zone.destElement;
+                    banner.backfill = zone.backfill;
+
+                    if (zone.options.min_cpm > banner.rpm) {
+                        insertBackfill(zone.destElement, zone.backfill);
+                    } else {
+                        bannersToLoad++;
+                        fetchBanner(banner, {page: params[0], zone: params[i + 1] || {}}, zone.options);
+                    }
+                });
+            }, function () {
+                zones.forEach(function (zone, i) {
+                    if (!zone.destElement) {
+                        console.log('no element to replace');
+                        return;
+                    }
+                    insertBackfill(zone.destElement, zone.backfill);
+                });
+                allBannersLoaded();
+            });
+
+            addListener(topwin, 'message', function (event) {
+                var has_access = dwmthACL.some(function (win) {
+                    try {
+                        return win && (win === event.source);
+                    } catch (e) {
+                        return false;
+                    }
+                });
+                if (has_access && event.data) {
+                    var data, isString = typeof event.data == "string";
+                    if (isString) {
+                        data = JSON.parse(event.data);
+                    } else {
+                        data = event.data;
+                    }
+                    if (data.insertElem) {
+                        data.insertElem.forEach(function (request) {
+                            if (dwmthACL.length >= 5 * zones.length) {
+                                return;
+                            }
+                            if (request.type == 'iframe') {
+                                if (dwmthURLS[request.url]) {
+                                    return;
+                                }
+                                var iframe = addTrackingIframe(request.url);
+                                dwmthACL.push(iframe.contentWindow);
+                                dwmthURLS[request.url] = 1;
+                            } else if (request.type == 'img') {
+                                if (dwmthURLS[request.url]) {
+                                    return;
+                                }
+                                addTrackingImage(request.url);
+                                dwmthACL.push(null);
+                                dwmthURLS[request.url] = 1;
+                            }
+                        });
+                    }
                 }
-            }
-        });
-    });
+            });
+        })
+    })
 });
 
 var addTrackingIframe = function (url) {

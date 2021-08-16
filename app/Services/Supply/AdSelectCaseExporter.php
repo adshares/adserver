@@ -64,9 +64,9 @@ class AdSelectCaseExporter
     public function exportCases(int $caseIdFrom): int
     {
         $exported = 0;
-        $impressionIdMax = NetworkImpressionUpdater::getLastUpdatedId();
 
         $maxId = NetworkCase::max('id');
+        $impressionIdMax = 0xFFFFFFFFFFFFF;
         $totalEstimate = $maxId - $caseIdFrom + 1;
 
         do {
