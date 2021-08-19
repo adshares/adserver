@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\InvoiceUtils;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -62,6 +63,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property ?Carbon deleted_at
+ * @property string download_url
  */
 class Invoice extends Model
 {
@@ -94,7 +96,7 @@ class Invoice extends Model
         'buyer_vat_id' => 'required|max:32',
         'currency' => 'required|min:3|max:3',
         'net_amount' => 'numeric|min:0',
-        'comments' => 'required|max:256',
+        'comments' => 'max:256',
     ];
 
     protected $casts = [
@@ -110,9 +112,18 @@ class Invoice extends Model
         'due_date',
     ];
 
+    protected $appends = [
+        'download_url',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getDownloadUrlAttribute(): string
+    {
+        return (new SecureUrl(route('invoices.download', ['invoice_id' => $this->id])))->toString();
     }
 
     public static function getNextSequence(string $type, DateTimeInterface $date): int
@@ -135,7 +146,7 @@ class Invoice extends Model
         $proforma->due_date = $proforma->issued_date->copy()->addDays(self::DEFAULT_DUE_DAYS);
 
         $proforma->number = InvoiceUtils::formatNumber(
-            $settings[Config::PROFORMA_NUMBER_FORMAT],
+            $settings[Config::INVOICE_NUMBER_FORMAT],
             self::getNextSequence(self::TYPE_PROFORMA, $proforma->issued_date),
             $proforma->issued_date,
             config('app.adserver_id')

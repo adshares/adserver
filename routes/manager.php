@@ -44,6 +44,7 @@ use Adshares\Adserver\Http\Controllers\Manager\BidStrategyController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
+use Adshares\Adserver\Http\Controllers\Manager\InvoicesController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
 use Adshares\Adserver\Http\Controllers\Manager\RefLinksController;
@@ -136,6 +137,9 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
 
         Route::get('ref-links', [RefLinksController::class, 'browse']);
         Route::post('ref-links', [RefLinksController::class, 'add']);
+        Route::get('invoices', [InvoicesController::class, 'browse']);
+        Route::post('invoices', [InvoicesController::class, 'add']);
+        Route::get('invoices/{invoice_id}/download', [InvoicesController::class, 'download'])->name('invoices.download');
 
         Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);

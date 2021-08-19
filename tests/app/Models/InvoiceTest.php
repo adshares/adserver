@@ -41,7 +41,9 @@ class InvoiceTest extends TestCase
                 Config::INVOICE_COMPANY_CITY => 'MockCity',
                 Config::INVOICE_COMPANY_COUNTRY => 'DE',
                 Config::INVOICE_COMPANY_VAT_ID => 'DE999888777',
-                Config::PROFORMA_NUMBER_FORMAT => 'PROF AAAA/NN/MM/YYYY',
+                Config::INVOICE_COMPANY_BANK_ACCOUNT_NAME => 'BANK A (ABC)',
+                Config::INVOICE_COMPANY_BANK_ACCOUNT_NUMBER => '11 1111 2222 3333',
+                Config::INVOICE_NUMBER_FORMAT => 'PROF AAAA/NN/MM/YYYY',
             ]
         );
     }
@@ -177,6 +179,8 @@ class InvoiceTest extends TestCase
         $this->assertStringContainsString('230', $proforma->html_output);
         $this->assertStringContainsString('23%', $proforma->html_output);
         $this->assertStringContainsString('Test comment', $proforma->html_output);
+        $this->assertStringContainsString('BANK A (ABC)', $proforma->html_output);
+        $this->assertStringContainsString('11 1111 2222 3333', $proforma->html_output);
     }
 
     private static function getInvoiceData(array $data = []): array

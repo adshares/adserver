@@ -65,14 +65,17 @@ class Config extends Model
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
     public const REGISTRATION_MODE = 'registration-mode';
     public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
-    public const PROFORMA_ENABLED = 'proforma_enabled';
-    public const PROFORMA_NUMBER_FORMAT = 'proforma_number_format';
+    public const INVOICE_ENABLED = 'invoice_enabled';
+    public const INVOICE_CURRENCIES = 'invoice_currencies';
+    public const INVOICE_NUMBER_FORMAT = 'invoice_number_format';
     public const INVOICE_COMPANY_NAME = 'invoice_company_name';
     public const INVOICE_COMPANY_ADDRESS = 'invoice_company_address';
     public const INVOICE_COMPANY_POSTAL_CODE = 'invoice_company_postal_code';
     public const INVOICE_COMPANY_CITY = 'invoice_company_city';
     public const INVOICE_COMPANY_COUNTRY = 'invoice_company_country';
     public const INVOICE_COMPANY_VAT_ID = 'invoice_company_vat_id';
+    public const INVOICE_COMPANY_BANK_ACCOUNT_NAME = 'invoice_company_bank_account_name';
+    public const INVOICE_COMPANY_BANK_ACCOUNT_NUMBER = 'invoice_company_bank_account_number';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
@@ -89,14 +92,17 @@ class Config extends Model
         self::REFERRAL_REFUND_COMMISSION => '',
         self::REGISTRATION_MODE => '',
         self::AUTO_CONFIRMATION_ENABLED => '',
-        self::PROFORMA_ENABLED => '',
-        self::PROFORMA_NUMBER_FORMAT => '',
+        self::INVOICE_ENABLED => '',
+        self::INVOICE_CURRENCIES => '',
+        self::INVOICE_NUMBER_FORMAT => '',
         self::INVOICE_COMPANY_NAME => '',
         self::INVOICE_COMPANY_ADDRESS => '',
         self::INVOICE_COMPANY_POSTAL_CODE => '',
         self::INVOICE_COMPANY_CITY => '',
         self::INVOICE_COMPANY_COUNTRY => '',
         self::INVOICE_COMPANY_VAT_ID => '',
+        self::INVOICE_COMPANY_BANK_ACCOUNT_NAME => '',
+        self::INVOICE_COMPANY_BANK_ACCOUNT_NUMBER => '',
     ];
 
     public $incrementing = false;
