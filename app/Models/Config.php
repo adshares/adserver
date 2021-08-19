@@ -38,60 +38,41 @@ use function sprintf;
 class Config extends Model
 {
     public const ADS_LOG_START = 'ads-log-start';
-
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
-
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
-
     public const LICENCE_TX_FEE = 'licence-tx-fee';
-
     public const LICENCE_RX_FEE = 'licence-rx-fee';
-
     public const LICENCE_ACCOUNT = 'licence-account';
-
     public const BID_STRATEGY_UUID_DEFAULT = 'bid-strategy-uuid-default';
-
     public const ADPAY_BID_STRATEGY_EXPORT_TIME = 'adpay-bid-strategy-export';
-
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
-
     public const ADPAY_LAST_EXPORTED_CONVERSION_TIME = 'adpay-last-conversion-time';
-
     public const ADPAY_LAST_EXPORTED_EVENT_TIME = 'adpay-last-event-time';
-
     public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
-
     public const LAST_UPDATED_IMPRESSION_ID = 'last-updated-impression-id';
-
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
-
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
-
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
-
     public const COLD_WALLET_ADDRESS = 'cold-wallet-address';
-
     public const COLD_WALLET_IS_ACTIVE = 'cold-wallet-is-active';
-
     public const ADSERVER_NAME = 'adserver-name';
-
     public const TECHNICAL_EMAIL = 'technical-email';
-
     public const SUPPORT_EMAIL = 'support-email';
-
     public const PANEL_PLACEHOLDER_NOTIFICATION_TIME = 'panel-placeholder-notification-time';
-
     public const PANEL_PLACEHOLDER_UPDATE_TIME = 'panel-placeholder-update-time';
-
     public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
-
     public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
-
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
-
     public const REGISTRATION_MODE = 'registration-mode';
-
     public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
+    public const PROFORMA_ENABLED = 'proforma_enabled';
+    public const PROFORMA_NUMBER_FORMAT = 'proforma_number_format';
+    public const INVOICE_COMPANY_NAME = 'invoice_company_name';
+    public const INVOICE_COMPANY_ADDRESS = 'invoice_company_address';
+    public const INVOICE_COMPANY_POSTAL_CODE = 'invoice_company_postal_code';
+    public const INVOICE_COMPANY_CITY = 'invoice_company_city';
+    public const INVOICE_COMPANY_COUNTRY = 'invoice_company_country';
+    public const INVOICE_COMPANY_VAT_ID = 'invoice_company_vat_id';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
@@ -108,6 +89,14 @@ class Config extends Model
         self::REFERRAL_REFUND_COMMISSION => '',
         self::REGISTRATION_MODE => '',
         self::AUTO_CONFIRMATION_ENABLED => '',
+        self::PROFORMA_ENABLED => '',
+        self::PROFORMA_NUMBER_FORMAT => '',
+        self::INVOICE_COMPANY_NAME => '',
+        self::INVOICE_COMPANY_ADDRESS => '',
+        self::INVOICE_COMPANY_POSTAL_CODE => '',
+        self::INVOICE_COMPANY_CITY => '',
+        self::INVOICE_COMPANY_COUNTRY => '',
+        self::INVOICE_COMPANY_VAT_ID => '',
     ];
 
     public $incrementing = false;
