@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2021-08-20
+### Added
+- Invoices & deposit in FIAT
+
 ## [1.9.2] - 2021-08-13
 ### Added
 - Aduser info in admin report
@@ -461,7 +465,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.9.2...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.0...develop
+[1.10.0]: https://github.com/adshares/adserver/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/adshares/adserver/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/adshares/adserver/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/adshares/adserver/compare/v1.8.2...v1.9.0
