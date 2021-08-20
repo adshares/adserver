@@ -190,6 +190,16 @@ class ConfigTest extends TestCase
             'referral-refund-commission' => '0',
             'registration-mode' => 'public',
             'auto-confirmation-enabled' => '1',
+            'invoice-enabled' => '0',
+            'invoice-currencies' => 'EUR,USD',
+            'invoice-number-format' => 'INV NNNN/MM/YYYY',
+            'invoice-company-name' => '',
+            'invoice-company-address' => '',
+            'invoice-company-postal-code' => '',
+            'invoice-company-city' => '',
+            'invoice-company-country' => '',
+            'invoice-company-vat-id' => '',
+            'invoice-company-bank-accounts' => '',
         ];
 
         self::assertEquals($adminSettings, Config::fetchAdminSettings());
@@ -213,6 +223,16 @@ class ConfigTest extends TestCase
             'referral-refund-commission' => '0.5',
             'registration-mode' => 'private',
             'auto-confirmation-enabled' => '0',
+            'invoice-enabled' => '1',
+            'invoice-currencies' => 'PLN',
+            'invoice-number-format' => 'AAAA/YYYY',
+            'invoice-company-name' => 'Foo',
+            'invoice-company-address' => 'Mock street',
+            'invoice-company-postal-code' => '1212-89',
+            'invoice-company-city' => 'FooCity',
+            'invoice-company-country' => 'GB',
+            'invoice-company-vat-id' => '123123123123',
+            'invoice-company-bank-accounts' => '{}',
         ];
 
         Config::updateAdminSettings($adminSettings);
