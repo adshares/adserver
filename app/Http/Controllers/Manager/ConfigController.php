@@ -22,18 +22,38 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Utilities\InvoiceUtils;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\Intl\Countries;
 
 class ConfigController extends Controller
 {
-    /**
-     * Return adserver adshares address.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function adsharesAddress()
+
+    public function adsharesAddress(): JsonResponse
     {
         return self::json(['adsharesAddress' => config('app.adshares_address')], 200);
+    }
+
+    public function countries(): JsonResponse
+    {
+        $countries = [];
+        foreach (Countries::getNames() as $code => $name) {
+            $countries[$code] = [
+                'code' => $code,
+                'name' => $name,
+                'eu_tax' => false,
+            ];
+            if ('MK' === $code) {
+                $countries['XI'] = [
+                    'code' => 'XI',
+                    'name' => 'Northern Ireland',
+                    'eu_tax' => false,
+                ];
+            }
+        }
+        foreach (InvoiceUtils::EU_COUNTRIES as $code) {
+            $countries[$code]['eu_tax'] = true;
+        }
+        return self::json(array_values($countries));
     }
 }

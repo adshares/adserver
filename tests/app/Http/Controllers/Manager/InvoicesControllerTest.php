@@ -42,8 +42,7 @@ class InvoicesControllerTest extends TestCase
                 Config::INVOICE_COMPANY_ADDRESS => 'Mock address 11.23/45',
                 Config::INVOICE_COMPANY_COUNTRY => 'DE',
                 Config::INVOICE_COMPANY_VAT_ID => 'DE999888777',
-                Config::INVOICE_COMPANY_BANK_ACCOUNT_NAME => 'BANK A (ABC)',
-                Config::INVOICE_COMPANY_BANK_ACCOUNT_NUMBER => '11 1111 2222 3333',
+                Config::INVOICE_COMPANY_BANK_ACCOUNTS => '{"USD":{"name":"BANK A (ABC)","number":"11 1111 2222 3333"}}',
                 Config::INVOICE_NUMBER_FORMAT => 'PROF NN/MM/YYYY',
             ]
         );

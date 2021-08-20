@@ -26,6 +26,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalApproval;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -87,9 +88,12 @@ class WalletController extends Controller
     private const FIELD_BTC = 'btc';
 
     private const FIELD_NOW_PAYMENTS = 'now_payments';
+
     private const FIELD_UNWRAPPERS = 'unwrappers';
 
     private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
+
+    private const FIELD_FIAT = 'fiat';
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
@@ -420,6 +424,12 @@ class WalletController extends Controller
 
         $address = $this->getAdServerAdsAddress();
 
+        $fiatDeposit = Config::isTrueOnly(Config::INVOICE_ENABLED) ? [
+            'minAmount' => config('app.fiat_deposit_min_amount'),
+            'maxAmount' => config('app.fiat_deposit_max_amount'),
+            'currencies' => explode(',', Config::fetchStringOrFail(Config::INVOICE_CURRENCIES)),
+        ] : null;
+
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
             self::FIELD_ADDRESS      => $address->toString(),
@@ -438,7 +448,8 @@ class WalletController extends Controller
                     // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ]
-            ]
+            ],
+            self::FIELD_FIAT => $fiatDeposit,
         ];
 
         return self::json($resp);

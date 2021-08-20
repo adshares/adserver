@@ -65,17 +65,16 @@ class Config extends Model
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
     public const REGISTRATION_MODE = 'registration-mode';
     public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
-    public const INVOICE_ENABLED = 'invoice_enabled';
-    public const INVOICE_CURRENCIES = 'invoice_currencies';
-    public const INVOICE_NUMBER_FORMAT = 'invoice_number_format';
-    public const INVOICE_COMPANY_NAME = 'invoice_company_name';
-    public const INVOICE_COMPANY_ADDRESS = 'invoice_company_address';
-    public const INVOICE_COMPANY_POSTAL_CODE = 'invoice_company_postal_code';
-    public const INVOICE_COMPANY_CITY = 'invoice_company_city';
-    public const INVOICE_COMPANY_COUNTRY = 'invoice_company_country';
-    public const INVOICE_COMPANY_VAT_ID = 'invoice_company_vat_id';
-    public const INVOICE_COMPANY_BANK_ACCOUNT_NAME = 'invoice_company_bank_account_name';
-    public const INVOICE_COMPANY_BANK_ACCOUNT_NUMBER = 'invoice_company_bank_account_number';
+    public const INVOICE_ENABLED = 'invoice-enabled';
+    public const INVOICE_CURRENCIES = 'invoice-currencies';
+    public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
+    public const INVOICE_COMPANY_NAME = 'invoice-company-name';
+    public const INVOICE_COMPANY_ADDRESS = 'invoice-company-address';
+    public const INVOICE_COMPANY_POSTAL_CODE = 'invoice-company-postal-code';
+    public const INVOICE_COMPANY_CITY = 'invoice-company-city';
+    public const INVOICE_COMPANY_COUNTRY = 'invoice-company-country';
+    public const INVOICE_COMPANY_VAT_ID = 'invoice-company-vat-id';
+    public const INVOICE_COMPANY_BANK_ACCOUNTS = 'invoice-company-bank-accounts';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
@@ -101,8 +100,7 @@ class Config extends Model
         self::INVOICE_COMPANY_CITY => '',
         self::INVOICE_COMPANY_COUNTRY => '',
         self::INVOICE_COMPANY_VAT_ID => '',
-        self::INVOICE_COMPANY_BANK_ACCOUNT_NAME => '',
-        self::INVOICE_COMPANY_BANK_ACCOUNT_NUMBER => '',
+        self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
     ];
 
     public $incrementing = false;
@@ -192,6 +190,11 @@ class Config extends Model
         }
 
         return (string)self::fetchByKeyOrFail($key)->value;
+    }
+
+    public static function fetchJsonOrFail(string $key): array
+    {
+        return json_decode(self::fetchStringOrFail($key), true);
     }
 
     public static function upsertByKey(string $key, string $value): void

@@ -35,14 +35,14 @@ class InvoiceTest extends TestCase
         config(['app.adserver_id' => 'abc123123123']);
         Config::updateAdminSettings(
             [
+                Config::INVOICE_CURRENCIES => 'USD',
                 Config::INVOICE_COMPANY_NAME => 'Operator sp. z o.o.',
                 Config::INVOICE_COMPANY_ADDRESS => 'Mock address 11.23/45',
                 Config::INVOICE_COMPANY_POSTAL_CODE => '99/456',
                 Config::INVOICE_COMPANY_CITY => 'MockCity',
                 Config::INVOICE_COMPANY_COUNTRY => 'DE',
                 Config::INVOICE_COMPANY_VAT_ID => 'DE999888777',
-                Config::INVOICE_COMPANY_BANK_ACCOUNT_NAME => 'BANK A (ABC)',
-                Config::INVOICE_COMPANY_BANK_ACCOUNT_NUMBER => '11 1111 2222 3333',
+                Config::INVOICE_COMPANY_BANK_ACCOUNTS => '{"USD":{"name":"BANK A (ABC)","number":"11 1111 2222 3333"}}',
                 Config::INVOICE_NUMBER_FORMAT => 'PROF AAAA/NN/MM/YYYY',
             ]
         );

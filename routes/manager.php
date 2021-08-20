@@ -132,6 +132,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
 
 # actions
         Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
+        Route::get('countries', [ConfigController::class, 'countries']);
         Route::get('notifications', [NotificationsController::class, 'read']);
         Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
 
