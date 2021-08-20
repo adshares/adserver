@@ -23,7 +23,10 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\InvoiceUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -32,14 +35,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
+use mikehaertl\wkhtmlto\Pdf;
+use RuntimeException;
+use Symfony\Component\Intl\Countries;
+use Throwable;
 
 /**
  * @property int id
+ * @property string uuid
  * @property int user_id
  * @property User user
  * @property string type
  * @property string number
- * @property Carbon issued_date
+ * @property Carbon issue_date
  * @property Carbon due_date
  * @property string seller_name
  * @property string seller_address
@@ -60,6 +69,7 @@ use Illuminate\Support\Carbon;
  * @property string vat_rate
  * @property string comments
  * @property string html_output
+ * @property string pdf_file
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property ?Carbon deleted_at
@@ -69,7 +79,7 @@ class Invoice extends Model
 {
     use AutomateMutators;
     use SoftDeletes;
-    use Ownership;
+    use BinHex;
 
     public const TYPE_PROFORMA = 'proforma';
 
@@ -107,8 +117,12 @@ class Invoice extends Model
         'vat_amount' => 'float',
     ];
 
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
+
     protected $dates = [
-        'issued_date',
+        'issue_date',
         'due_date',
     ];
 
@@ -116,23 +130,76 @@ class Invoice extends Model
         'download_url',
     ];
 
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    public function getSellerCountryNameAttribute(): string
+    {
+        return Countries::getName($this->seller_country);
+    }
+
+    public function getBuyerCountryNameAttribute(): string
+    {
+        return Countries::getName($this->buyer_country);
+    }
+
+    public function getBankAccountAttribute(): array
+    {
+        $accounts = Config::fetchJsonOrFail(Config::INVOICE_COMPANY_BANK_ACCOUNTS);
+        if (!array_key_exists($this->currency, $accounts)) {
+            return [
+                'number' => null,
+                'name' => null,
+            ];
+        }
+        return $accounts[$this->currency];
+    }
+
+    public function getPdfFileAttribute(): string
+    {
+        $disk = Storage::disk('local');
+        $directory = sprintf('invoices/%s', $this->issue_date->format('Y-m'));
+        $path = sprintf('%s/%s.pdf', $directory, $this->uuid);
+        if (!$disk->exists($path)) {
+            $disk->makeDirectory($directory);
+            $pdf = new Pdf($this->html_output);
+            if (!$pdf->saveAs($disk->path($path))) {
+                throw new RuntimeException(
+                    sprintf('Error during creating PDF for %s: %s', $this->uuid, $pdf->getError())
+                );
+            }
+        }
+        return $disk->path($path);
+    }
+
     public function getDownloadUrlAttribute(): string
     {
-        return (new SecureUrl(route('invoices.download', ['invoice_id' => $this->id])))->toString();
+        return (new SecureUrl(route('invoices.download', ['invoice_uuid' => $this->uuid])))->toString();
+    }
+
+    protected function renderHtml(): string
+    {
+        return view('invoices/proforma-en', ['invoice' => $this])->render();
     }
 
     public static function getNextSequence(string $type, DateTimeInterface $date): int
     {
         return self::withTrashed()
                 ->where('type', $type)
-                ->whereYear('issued_date', (int)$date->format('Y'))
-                ->whereMonth('issued_date', (int)$date->format('n'))
+                ->whereYear('issue_date', (int)$date->format('Y'))
+                ->whereMonth('issue_date', (int)$date->format('n'))
                 ->count() + 1;
+    }
+
+    public static function fetchByPublicId(string $publicId): ?self
+    {
+        return self::where('uuid', hex2bin($publicId))->first();
     }
 
     public static function createProforma(array $input = []): self
@@ -142,15 +209,8 @@ class Invoice extends Model
         $proforma = new self();
         $proforma->user_id = (int)$input['user_id'];
         $proforma->type = self::TYPE_PROFORMA;
-        $proforma->issued_date = now()->startOfDay();
-        $proforma->due_date = $proforma->issued_date->copy()->addDays(self::DEFAULT_DUE_DAYS);
-
-        $proforma->number = InvoiceUtils::formatNumber(
-            $settings[Config::INVOICE_NUMBER_FORMAT],
-            self::getNextSequence(self::TYPE_PROFORMA, $proforma->issued_date),
-            $proforma->issued_date,
-            config('app.adserver_id')
-        );
+        $proforma->issue_date = now()->startOfDay();
+        $proforma->due_date = $proforma->issue_date->copy()->addDays(self::DEFAULT_DUE_DAYS);
 
         $proforma->seller_name = $settings[Config::INVOICE_COMPANY_NAME];
         $proforma->seller_address = $settings[Config::INVOICE_COMPANY_ADDRESS];
@@ -174,9 +234,22 @@ class Invoice extends Model
         $proforma->vat_amount = reset($vatRate) * $proforma->net_amount;
         $proforma->gross_amount = $proforma->net_amount + $proforma->vat_amount;
 
-        $proforma->html_output = 'test';
+        DB::beginTransaction();
+        try {
+            $proforma->number = InvoiceUtils::formatNumber(
+                $settings[Config::INVOICE_NUMBER_FORMAT],
+                self::getNextSequence(self::TYPE_PROFORMA, $proforma->issue_date),
+                $proforma->issue_date,
+                config('app.adserver_id')
+            );
+            $proforma->html_output = $proforma->renderHtml();
+            $proforma->saveOrFail();
+            DB::commit();
+        } catch (Throwable $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
 
-        $proforma->saveOrFail();
         return $proforma;
     }
 }

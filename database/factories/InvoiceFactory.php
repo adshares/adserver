@@ -33,7 +33,7 @@ $factory->define(
             },
             'type' => \Adshares\Adserver\Models\Invoice::TYPE_PROFORMA,
             'number' => $faker->unique()->numerify('PROF ###/##/####'),
-            'issued_date' => $issuedDate,
+            'issue_date' => $issuedDate,
             'due_date' => $issuedDate->addDays(14),
             'seller_name' => $faker->company,
             'seller_address' => $faker->address,

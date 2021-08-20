@@ -21,11 +21,13 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Mail\InvoiceCreated;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Invoice;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Mail;
 
 class InvoicesControllerTest extends TestCase
 {
@@ -100,21 +102,25 @@ class InvoicesControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->postJson(self::URI, [
-            'invoice' => [
-                'buyerName' => 'Foo co.',
-                'buyerAddress' => 'Dummy address',
-                'buyerCountry' => 'PL',
-                'buyerVatId' => 'PL123123123',
-                'currency' => 'USD',
-                'net_amount' => 1000,
+        $response = $this->postJson(
+            self::URI,
+            [
+                'invoice' => [
+                    'buyerName' => 'Foo co.',
+                    'buyerAddress' => 'Dummy address',
+                    'buyerCountry' => 'PL',
+                    'buyerVatId' => 'PL123123123',
+                    'currency' => 'USD',
+                    'net_amount' => 1000,
+                ]
             ]
-        ]);
+        );
         $response->assertStatus(Response::HTTP_CREATED);
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
+        Mail::assertQueued(InvoiceCreated::class);
     }
 
     public function testAddInvoiceValidation(): void

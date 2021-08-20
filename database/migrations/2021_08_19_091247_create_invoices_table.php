@@ -36,10 +36,11 @@ class CreateInvoicesTable extends Migration
             'invoices',
             function (Blueprint $table) {
                 $table->bigIncrements('id');
+                $table->binary('uuid', 16);
                 $table->bigInteger('user_id')->unsigned();
                 $table->string('type', 16);
                 $table->string('number', 64)->unique();
-                $table->timestamp('issued_date');
+                $table->timestamp('issue_date');
                 $table->timestamp('due_date');
                 $table->string('seller_name', 256);
                 $table->string('seller_address', 256);

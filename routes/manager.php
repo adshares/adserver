@@ -140,7 +140,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::post('ref-links', [RefLinksController::class, 'add']);
         Route::get('invoices', [InvoicesController::class, 'browse']);
         Route::post('invoices', [InvoicesController::class, 'add']);
-        Route::get('invoices/{invoice_id}/download', [InvoicesController::class, 'download'])->name('invoices.download');
 
         Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);

@@ -22,15 +22,21 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Mail\InvoiceCreated;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
+use function Psy\debug;
 
 class InvoicesController extends Controller
 {
@@ -68,6 +74,18 @@ class InvoicesController extends Controller
         }
         $invoice = Invoice::createProforma($input);
 
+        $mail = new InvoiceCreated($invoice);
+        $mail->attach($invoice->pdf_file);
+        Mail::to($user)->bcc(config('app.adshares_operator_email'))->queue($mail);
+
         return self::json($invoice, Response::HTTP_CREATED);
+    }
+
+    public function download(string $uuid): BinaryFileResponse
+    {
+        if (!Utils::isUuidValid($uuid) || null === ($invoice = Invoice::fetchByPublicId($uuid))) {
+            throw new NotFoundHttpException(sprintf('Cannot find invoice %s', $uuid));
+        }
+        return response()->file($invoice->pdf_file);
     }
 }

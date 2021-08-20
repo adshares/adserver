@@ -35,14 +35,14 @@ class InvoiceTest extends TestCase
         config(['app.adserver_id' => 'abc123123123']);
         Config::updateAdminSettings(
             [
-                Config::INVOICE_CURRENCIES => 'USD',
+                Config::INVOICE_CURRENCIES => 'EUR',
                 Config::INVOICE_COMPANY_NAME => 'Operator sp. z o.o.',
                 Config::INVOICE_COMPANY_ADDRESS => 'Mock address 11.23/45',
                 Config::INVOICE_COMPANY_POSTAL_CODE => '99/456',
                 Config::INVOICE_COMPANY_CITY => 'MockCity',
                 Config::INVOICE_COMPANY_COUNTRY => 'DE',
                 Config::INVOICE_COMPANY_VAT_ID => 'DE999888777',
-                Config::INVOICE_COMPANY_BANK_ACCOUNTS => '{"USD":{"name":"BANK A (ABC)","number":"11 1111 2222 3333"}}',
+                Config::INVOICE_COMPANY_BANK_ACCOUNTS => '{"EUR":{"name":"BANK A (ABC)","number":"11 1111 2222 3333"}}',
                 Config::INVOICE_NUMBER_FORMAT => 'PROF AAAA/NN/MM/YYYY',
             ]
         );
@@ -57,16 +57,16 @@ class InvoiceTest extends TestCase
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addMonth()));
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addYear()));
 
-        factory(Invoice::class)->create(['issued_date' => $date]);
-        factory(Invoice::class)->create(['issued_date' => $date]);
-        factory(Invoice::class)->create(['issued_date' => $date])->delete();
+        factory(Invoice::class)->create(['issue_date' => $date]);
+        factory(Invoice::class)->create(['issue_date' => $date]);
+        factory(Invoice::class)->create(['issue_date' => $date])->delete();
 
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->subMonth()));
         $this->assertEquals(4, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date));
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addMonth()));
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addYear()));
 
-        factory(Invoice::class)->create(['issued_date' => $date->copy()->addMonth()]);
+        factory(Invoice::class)->create(['issue_date' => $date->copy()->addMonth()]);
 
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->subMonth()));
         $this->assertEquals(4, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date));
@@ -80,12 +80,13 @@ class InvoiceTest extends TestCase
         $user = factory(User::class)->create();
         $proforma = Invoice::createProforma(self::getInvoiceData(['user_id' => $user->id]));
 
+        $this->assertNotEmpty($proforma->uuid);
         $this->assertEquals($user->id, $proforma->user_id);
         $this->assertEquals($user->id, $proforma->user->id);
         $this->assertEquals(Invoice::TYPE_PROFORMA, $proforma->type);
         $this->assertEquals('PROF abc1/01/08/2021', $proforma->number);
-        $this->assertEquals(now()->startOfDay(), $proforma->issued_date);
-        $this->assertEquals(now()->startOfDay()->addDays(Invoice::DEFAULT_DUE_DAYS), $proforma->due_date);
+        $this->assertEquals('2021-08-04', $proforma->issue_date->format('Y-m-d'));
+        $this->assertEquals('2021-08-11', $proforma->due_date->format('Y-m-d'));
         $this->assertEquals('Operator sp. z o.o.', $proforma->seller_name);
         $this->assertEquals('Mock address 11.23/45', $proforma->seller_address);
         $this->assertEquals('99/456', $proforma->seller_postal_code);
@@ -160,8 +161,8 @@ class InvoiceTest extends TestCase
         $proforma = Invoice::createProforma(self::getInvoiceData(['user_id' => $user->id]));
 
         $this->assertStringContainsString('PROF abc1/01/08/2021', $proforma->html_output);
-        $this->assertStringContainsString('2021-08-04', $proforma->html_output);
-        $this->assertStringContainsString('2021-08-18', $proforma->due_date);
+        $this->assertStringContainsString('04-08-2021', $proforma->html_output);
+        $this->assertStringContainsString('11-08-2021', $proforma->html_output);
         $this->assertStringContainsString('Operator sp. z o.o.', $proforma->html_output);
         $this->assertStringContainsString('Mock address 11.23/45', $proforma->html_output);
         $this->assertStringContainsString('99/456', $proforma->html_output);
@@ -174,13 +175,14 @@ class InvoiceTest extends TestCase
         $this->assertStringContainsString('Dummy city', $proforma->html_output);
         $this->assertStringContainsString('Poland', $proforma->html_output);
         $this->assertStringContainsString('PL123123123', $proforma->html_output);
-        $this->assertStringContainsString('1000', $proforma->html_output);
-        $this->assertStringContainsString('1230', $proforma->html_output);
-        $this->assertStringContainsString('230', $proforma->html_output);
+        $this->assertStringContainsString('1 000,00', $proforma->html_output);
+        $this->assertStringContainsString('1 230,00', $proforma->html_output);
+        $this->assertStringContainsString('230,00', $proforma->html_output);
         $this->assertStringContainsString('23%', $proforma->html_output);
         $this->assertStringContainsString('Test comment', $proforma->html_output);
         $this->assertStringContainsString('BANK A (ABC)', $proforma->html_output);
         $this->assertStringContainsString('11 1111 2222 3333', $proforma->html_output);
+        $this->assertStringContainsString('EUR', $proforma->html_output);
     }
 
     private static function getInvoiceData(array $data = []): array
