@@ -42,6 +42,7 @@ use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
@@ -170,5 +171,14 @@ class AppServiceProvider extends ServiceProvider
                 }
             );
         }
+        Blade::directive('date', function ($date) {
+            return "<?php echo (new \DateTime($date))->format('d-m-Y'); ?>";
+        });
+        Blade::directive('money', function ($money) {
+            return "<?php echo number_format($money, 2, ',', ' '); ?>";
+        });
+        Blade::directive('spellout', function ($number) {
+            return "<?php echo (new \NumberFormatter('en', \NumberFormatter::SPELLOUT))->format($number); ?>";
+        });
     }
 }
