@@ -216,7 +216,7 @@ class Utils
             )
         );
 
-        $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
+        $response->headers->set('P3P', 'CP="CAO OUR"'); // Platform for Privacy Preferences
 
         $response->setCache(
             [
