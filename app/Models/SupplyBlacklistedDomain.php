@@ -60,7 +60,7 @@ class SupplyBlacklistedDomain extends Model
             return true;
         }
 
-        $blacklisted = Cache::rememberForever('supply_blacklisted_domains', function () {
+        $blacklisted = Cache::remember('supply_blacklisted_domains', 10, function () {
             return self::all()->pluck('domain', 'domain')->toArray();
         });
 
