@@ -81,6 +81,16 @@ final class Option
         $this->subSelector = new Selector();
     }
 
+    public function key(): string
+    {
+        return $this->key;
+    }
+
+    public function exclude(array $exclusion): void
+    {
+        $this->subSelector->exclude($exclusion);
+    }
+
     public function withValues(OptionValue ...$values)
     {
         $this->values = $values;
@@ -95,7 +105,7 @@ final class Option
         return $this;
     }
 
-    public function toArrayRecursiveWithoutEmptyFields(): array
+    public function toArrayRecursiveWithoutEmptyFields(string $path = '', array $exclusions = []): array
     {
         return array_filter(
             [
@@ -103,8 +113,8 @@ final class Option
                 'key' => $this->key,
                 'label' => $this->label,
                 'allow_input' => $this->allowInput,
-                'children' => $this->subSelector->toArrayRecursiveWithoutEmptyFields(),
-                'values' => $this->valuesToArray(),
+                'children' => $this->subSelector->toArrayRecursiveWithoutEmptyFields($path),
+                'values' => $this->valuesToArray($exclusions),
             ],
             function ($item) {
                 return !empty($item) || is_bool($item);
@@ -112,14 +122,14 @@ final class Option
         );
     }
 
-    private function valuesToArray(): array
+    private function valuesToArray(array $exclusions = []): array
     {
-        return array_map(
-            function (OptionValue $option) {
-                return $option->toArray();
+        return array_values(array_filter(array_map(
+            function (OptionValue $option) use ($exclusions) {
+                return $option->toArray($exclusions);
             },
             $this->values
-        );
+        )));
     }
 
     public function isViewable(): bool

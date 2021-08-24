@@ -32,11 +32,22 @@ use function array_filter;
 final class Selector
 {
     /** @var Option[] */
-    private $options;
+    private array $options;
+
+    private array $exclusions = [];
 
     public function __construct(Option ...$options)
     {
         $this->options = $options;
+    }
+
+    public function exclude(array $exclusions): self
+    {
+        $this->exclusions = $exclusions;
+        foreach ($this->options as $option) {
+            $option->exclude($exclusions);
+        }
+        return $this;
     }
 
     public static function fromTaxonomy(Taxonomy $taxonomy): Selector
@@ -49,14 +60,20 @@ final class Selector
         ));
     }
 
-    public function toArrayRecursiveWithoutEmptyFields(): array
+    public function toArrayRecursiveWithoutEmptyFields(string $path = ''): array
     {
-        return array_map(
-            static function (Option $option) {
-                return $option->toArrayRecursiveWithoutEmptyFields();
+        return array_values(array_filter(array_map(
+            function (Option $option) use ($path) {
+                $subPath = $path . '/' . $option->key();
+                $exclusion = $this->exclusions[$subPath] ?? false;
+//                dump($subPath, $exclusion);
+                if ($exclusion === true) {
+                    return [];
+                }
+                return $option->toArrayRecursiveWithoutEmptyFields($subPath, is_array($exclusion) ? $exclusion : []);
             },
             $this->onlyViewable()
-        );
+        )));
     }
 
     public function isEmpty(): bool

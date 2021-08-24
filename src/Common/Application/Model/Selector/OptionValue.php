@@ -47,17 +47,24 @@ final class OptionValue
         $this->description = $description;
     }
 
-    public function toArray(): array
+    public function toArray(array $exclusions = []): array
     {
         $array = [
             'label' => $this->label,
             'value' => str_replace('-', '_', $this->value),
         ];
 
+        if (in_array($array['value'], $exclusions)) {
+            return [];
+        }
+
         if ($this->options) {
             foreach ($this->options as $option) {
                 /** @var $option OptionValue */
-                $array['values'][] = $option->toArray();
+                $subOption = $option->toArray($exclusions);
+                if (!empty($subOption)) {
+                    $array['values'][] = $subOption;
+                }
             }
         }
 

@@ -73,6 +73,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
     public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy
     {
         $url = $classifier->getBaseUrl() . self::PATH_API . self::PATH_TAXONOMY;
+        dump($url, $this->buildHeaders($classifier));
         try {
             $result = $this->client->get(
                 $url,
