@@ -62,7 +62,7 @@ class ServeDomain extends Model
 
     public static function current(): string
     {
-        return Cache::rememberForever('serve-domain.current', function () {
+        return Cache::remember('serve-domain.current', 60, function () {
             return ServeDomain::orderBy('id', 'DESC')->first()->base_url;
         });
     }

@@ -117,14 +117,20 @@ class UsersController extends Controller
             $groupBy = $landingUrlColumn;
         }
 
-        if (strtolower((string)$request->get('i')) === 'day') {
+        $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
+        if (strtolower((string)$request->get('i')) === 'hour') {
             $interval = 1;
+            $unit = 'HOUR';
+            $viewsLimit /= 24;
+        } elseif (strtolower((string)$request->get('i')) === 'day') {
+            $interval = 1;
+            $unit = 'DAY';
         } else {
             $interval = 7;
+            $unit = 'DAY';
+            $viewsLimit *= 7;
         }
-        $interval = 50;
 
-        $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
         $query = '%' . $request->get('q', '') . '%';
 
         $advertisers =
@@ -155,7 +161,7 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM event_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                         AND NOW() - INTERVAL 2 HOUR
                     GROUP BY l.campaign_id
                 ) lc ON lc.campaign_id = c.uuid
@@ -168,8 +174,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM event_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
-                        AND NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
+                        AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.campaign_id
                 ) lp ON lp.campaign_id = c.uuid
                 WHERE c.deleted_at IS NULL AND c.status = %d AND (c.landing_url LIKE ? OR u.email LIKE ?)
@@ -179,8 +185,11 @@ class UsersController extends Controller
                     $emailColumn,
                     $landingUrlColumn,
                     $interval,
+                    $unit,
                     $interval * 2,
+                    $unit,
                     $interval,
+                    $unit,
                     Campaign::STATUS_ACTIVE,
                     $groupBy
                 ),
@@ -276,13 +285,20 @@ class UsersController extends Controller
             $groupBy = 's.domain';
         }
 
-        if (strtolower((string)$request->get('i')) === 'day') {
+        $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
+        if (strtolower((string)$request->get('i')) === 'hour') {
             $interval = 1;
+            $unit = 'HOUR';
+            $viewsLimit /= 24;
+        } elseif (strtolower((string)$request->get('i')) === 'day') {
+            $interval = 1;
+            $unit = 'DAY';
         } else {
             $interval = 7;
+            $unit = 'DAY';
+            $viewsLimit *= 7;
         }
 
-        $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
         $query = '%' . $request->get('q', '') . '%';
 
         $publishers =
@@ -314,7 +330,7 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM network_case_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                         AND NOW() - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lc ON lc.site_id = s.uuid
@@ -327,8 +343,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM network_case_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
-                        AND NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
+                        AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lp ON lp.site_id = s.uuid
                 WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ?)
@@ -338,16 +354,19 @@ class UsersController extends Controller
                     $emailColumn,
                     $domainColumn,
                     $interval,
+                    $unit,
                     $interval * 2,
+                    $unit,
                     $interval,
+                    $unit,
                     Site::STATUS_ACTIVE,
                     $groupBy
                 ),
                 [
                     $query,
                     $query,
-                    $viewsLimit * $interval,
-                    $viewsLimit * $interval,
+                    $viewsLimit,
+                    $viewsLimit,
                 ]
             );
 
