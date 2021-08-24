@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.1] - 2021-08-23
+### Added
+- Hourly interval admin report
+- Quality tags support
+### Fixed
+- Minor fixes
+
 ## [1.10.0] - 2021-08-20
 ### Added
 - Invoices & deposit in FIAT
