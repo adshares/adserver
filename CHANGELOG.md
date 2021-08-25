@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Serve subdomain for Aduser events
+- Campaign name in admin reports
 ### Fixed
 - Quality tag in filtering
 - Checking site domain
