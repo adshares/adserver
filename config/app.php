@@ -107,6 +107,7 @@ return [
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
     'ads_operator_server_url' => env('ADS_OPERATOR_SERVER_URL', 'https://ads-operator.adshares.net'),
     'aduser_base_url' => $aduserUrl,
+    'aduser_serve_subdomain' => env('ADUSER_SERVE_SUBDOMAIN'),
     'aduser_info_url' => env('ADUSER_INFO_URL', $aduserUrl . '/panel.html?rated=1&url={domain}'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),

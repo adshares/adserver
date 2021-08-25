@@ -37,4 +37,18 @@ class DomainReader
 
         return $host && strpos($host, 'www.') === 0 ? substr($host, 4) : (string)$host;
     }
+
+    public static function checkDomain(string $url, string $domain): bool
+    {
+        $urlDomain = self::domain($url);
+        if ($urlDomain === $domain) {
+            return true;
+        }
+
+        if (strpos($urlDomain, '.' . $domain) !== false) {
+            return true;
+        }
+
+        return false;
+    }
 }

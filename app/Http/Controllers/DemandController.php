@@ -353,7 +353,9 @@ SQL;
         }
         $keywords = $context['page']['keywords'] ?? '';
 
-        $adUserEndpoint = config('app.aduser_base_url');
+        $adUserEndpoint = config('app.aduser_serve_subdomain') ?
+            ServeDomain::current(config('app.aduser_serve_subdomain')) :
+            config('app.aduser_base_url');
 
         if ($adUserEndpoint) {
             $adUserUrl = sprintf(

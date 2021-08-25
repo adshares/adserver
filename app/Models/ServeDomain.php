@@ -60,10 +60,15 @@ class ServeDomain extends Model
         return preg_replace('#([a-z]+\:\/\/)(.*?)/#i', self::current() . '/', $url);
     }
 
-    public static function current(): string
+    public static function current(?string $subDomain = null): string
     {
-        return Cache::remember('serve-domain.current', 60, function () {
-            return ServeDomain::orderBy('id', 'DESC')->first()->base_url;
+        return Cache::remember('serve-domain.current.' . $subDomain, 60, function () use ($subDomain) {
+            $domain = ServeDomain::orderBy('id', 'DESC')->first();
+            $url = $domain !== null ? $domain->base_url : config('app.serve_base_url');
+            if (!empty($subDomain)) {
+                $url = str_replace('://', "://$subDomain.", $url);
+            }
+            return $url;
         });
     }
 

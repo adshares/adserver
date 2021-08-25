@@ -140,6 +140,7 @@ class UsersController extends Controller
                     GROUP_CONCAT(DISTINCT u.id SEPARATOR ",") AS user_ids,
                     %s AS email,
                     %s AS landing_url,
+                    GROUP_CONCAT(DISTINCT c.name SEPARATOR ", ") AS name,
                     SUM(IFNULL(lc.views, 0)) AS current_views,
                     SUM(IFNULL(lc.views_all, 0)) AS current_views_all,
                     SUM(IFNULL(lc.views_unique, 0)) AS current_views_unique,
@@ -226,6 +227,7 @@ class UsersController extends Controller
                     'user_ids' => $this->extractUserIds($row->user_ids),
                     'email' => $row->email,
                     'domain' => $domain,
+                    'name' => $row->name,
                     'views' => (int)$row->current_views,
                     'viewsDiff' => $row->current_views - $row->last_views,
                     'viewsChange' => min(

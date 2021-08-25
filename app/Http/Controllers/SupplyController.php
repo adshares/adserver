@@ -29,10 +29,10 @@ use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -41,8 +41,8 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
-use Carbon\Carbon;
 use DateTime;
+use DateTimeInterface;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -78,18 +78,18 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         }
 
-        if ($data) {
-        } elseif ('GET' === $request->getRealMethod()) {
-            $data = $request->getQueryString();
-        } elseif ('POST' === $request->getRealMethod()) {
-            $data = (string)$request->getContent();
-        } elseif ('OPTIONS' === $request->getRealMethod()) {
-            $response->setStatusCode(Response::HTTP_NO_CONTENT);
-            $response->headers->set('Access-Control-Max-Age', 1728000);
-
-            return $response;
-        } else {
-            throw new BadRequestHttpException('Invalid method');
+        if (!$data) {
+            if ('GET' === $request->getRealMethod()) {
+                $data = $request->getQueryString();
+            } elseif ('POST' === $request->getRealMethod()) {
+                $data = (string)$request->getContent();
+            } elseif ('OPTIONS' === $request->getRealMethod()) {
+                $response->setStatusCode(Response::HTTP_NO_CONTENT);
+                $response->headers->set('Access-Control-Max-Age', 1728000);
+                return $response;
+            } else {
+                throw new BadRequestHttpException('Invalid method');
+            }
         }
 
         if (!$data) {
@@ -154,10 +154,8 @@ class SupplyController extends Controller
                 foreach ($zones as &$zone) {
                     $zone['options']['cpa_only'] = true;
                 }
-            } else {
-                if (config('app.env') != 'dev') {
-                    return self::json([]);
-                }
+            } elseif (config('app.env') != 'dev') {
+                return self::json([]);
             }
         }
 
@@ -203,29 +201,26 @@ class SupplyController extends Controller
         $response->setCache(
             [
                 'last_modified' => new DateTime(),
-                'max_age'       => 3600 * 24 * 1,
-                's_maxage'      => 3600 * 24 * 1,
-                'private'       => false,
-                'public'        => true,
+                'max_age' => 3600 * 24 * 1,
+                's_maxage' => 3600 * 24 * 1,
+                'private' => false,
+                'public' => true,
             ]
         );
 
         return $response;
     }
 
-    public function logNetworkClick(Request $request, string $bannerId)
+    public function logNetworkClick(Request $request, string $bannerId): RedirectResponse
     {
         $this->validateEventRequest($request);
 
         $url = $this->getRedirectionUrlFromQuery($request);
 
         if (!$url) {
-            $banner = NetworkBanner::where('uuid', hex2bin($bannerId))->first();
-
-            if (!$banner) {
+            if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
                 throw new NotFoundHttpException();
             }
-
             $url = $banner->click_url;
         }
 
@@ -386,15 +381,22 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $adUserUrl = sprintf(
-            '%s/register/%s/%s/%s.html',
-            config('app.aduser_base_url'),
-            urlencode(config('app.adserver_id')),
-            $trackingId,
-            $impressionId
-        );
+        $adUserEndpoint = config('app.aduser_serve_subdomain') ?
+            ServeDomain::current(config('app.aduser_serve_subdomain')) :
+            config('app.aduser_base_url');
 
-        $response->headers->set('Location', SecureUrl::change($adUserUrl));
+        if ($adUserEndpoint) {
+            $adUserUrl = sprintf(
+                '%s/register/%s/%s/%s.html',
+                $adUserEndpoint,
+                urlencode(config('app.adserver_id')),
+                $trackingId,
+                $impressionId
+            );
+
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FOUND);
+            $response->headers->set('Location', new SecureUrl($adUserUrl));
+        }
 
         return $response;
     }
@@ -421,34 +423,34 @@ class SupplyController extends Controller
         $info = $networkHost->info ?? null;
 
         $data = [
-            'url'                   => $banner->serve_url,
-            'supplyName'            => config('app.name'),
-            'supplyTermsUrl'        => config('app.terms_url'),
-            'supplyPrivacyUrl'      => config('app.privacy_url'),
-            'supplyPanelUrl'        => config('app.adpanel_url'),
-            'supplyBannerReportUrl' => SecureUrl::change(
+            'url' => $banner->serve_url,
+            'supplyName' => config('app.name'),
+            'supplyTermsUrl' => config('app.terms_url'),
+            'supplyPrivacyUrl' => config('app.privacy_url'),
+            'supplyPanelUrl' => config('app.adpanel_url'),
+            'supplyBannerReportUrl' => new SecureUrl(
                 route(
                     'report-ad',
                     [
                         'banner_id' => $bannerId,
-                        'case_id'   => $caseId,
+                        'case_id' => $caseId,
                     ]
                 )
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
-            'demand'                => false,
-            'bannerType'            => $banner->type,
+            'demand' => false,
+            'bannerType' => $banner->type,
         ];
 
         if ($info) {
             $data = array_merge(
                 $data,
                 [
-                    'demand'           => true,
-                    'demandName'       => $info->getName(),
-                    'demandTermsUrl'   => $info->getTermsUrl() ?? null,
+                    'demand' => true,
+                    'demandName' => $info->getName(),
+                    'demandTermsUrl' => $info->getTermsUrl() ?? null,
                     'demandPrivacyUrl' => $info->getPrivacyUrl() ?? null,
-                    'demandPanelUrl'   => $info->getPanelUrl(),
+                    'demandPanelUrl' => $info->getPanelUrl(),
                 ]
             );
         }
@@ -539,8 +541,8 @@ class SupplyController extends Controller
             [
                 'meta' => [
                     'total_events_count' => $meta->total_events_count,
-                    'updated_at' => $meta->updated_at->format(Carbon::ATOM),
-                    ],
+                    'updated_at' => $meta->updated_at->format(DateTimeInterface::ATOM),
+                ],
                 'categories' => $result,
             ]
         );
