@@ -62,18 +62,24 @@ final class Selector
 
     public function toArrayRecursiveWithoutEmptyFields(string $path = ''): array
     {
-        return array_values(array_filter(array_map(
-            function (Option $option) use ($path) {
-                $subPath = $path . '/' . $option->key();
-                $exclusion = $this->exclusions[$subPath] ?? false;
-//                dump($subPath, $exclusion);
-                if ($exclusion === true) {
-                    return [];
-                }
-                return $option->toArrayRecursiveWithoutEmptyFields($subPath, is_array($exclusion) ? $exclusion : []);
-            },
-            $this->onlyViewable()
-        )));
+        return array_values(
+            array_filter(
+                array_map(
+                    function (Option $option) use ($path) {
+                        $subPath = $path . '/' . $option->key();
+                        $exclusion = $this->exclusions[$subPath] ?? false;
+                        if ($exclusion === true) {
+                            return [];
+                        }
+                        return $option->toArrayRecursiveWithoutEmptyFields(
+                            $subPath,
+                            is_array($exclusion) ? $exclusion : []
+                        );
+                    },
+                    $this->onlyViewable()
+                )
+            )
+        );
     }
 
     public function isEmpty(): bool
