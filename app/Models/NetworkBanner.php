@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Supply\Domain\ValueObject\Status;
@@ -37,6 +38,9 @@ use function array_map;
 use function hex2bin;
 
 /**
+ * @property string click_url
+ * @property string serve_url
+ * @property string type
  * @property NetworkCampaign campaign
  * @mixin Builder
  */
@@ -142,15 +146,14 @@ class NetworkBanner extends Model
 
     public static function fetchByPublicId(string $uuid): ?self
     {
-        if (false === ($binId = @hex2bin($uuid))) {
+        if (!Utils::isUuidValid($uuid)) {
             return null;
         }
-
         return Cache::remember(
             'network_banners.' . $uuid,
             (int)(config('app.network_data_cache_ttl') / 60),
-            function () use ($binId) {
-                return self::where('uuid', $binId)->with(['campaign'])->first();
+            function () use ($uuid) {
+                return self::where('uuid', hex2bin($uuid))->with(['campaign'])->first();
             }
         );
     }
