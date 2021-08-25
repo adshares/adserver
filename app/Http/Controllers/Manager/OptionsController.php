@@ -26,18 +26,24 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\TargetingReachRequest;
+use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class OptionsController extends Controller
 {
     private ConfigurationRepository $optionsRepository;
+    private ClassifierExternalRepository $classifierRepository;
 
-    public function __construct(ConfigurationRepository $optionsRepository)
-    {
+    public function __construct(
+        ConfigurationRepository $optionsRepository,
+        ClassifierExternalRepository $classifierRepository
+    ) {
         $this->optionsRepository = $optionsRepository;
+        $this->classifierRepository = $classifierRepository;
     }
 
     public function campaigns(): JsonResponse
@@ -51,19 +57,17 @@ class OptionsController extends Controller
         );
     }
 
-    public function targeting(): JsonResponse
+    public function targeting(Request $request): JsonResponse
     {
-        return self::json(
-            new OptionsSelector(
-                $this->optionsRepository->fetchTargetingOptions()->exclude(
-                    [
-                        '/site/category' => [
-                            'quality',
-                        ]
-                    ]
-                )
-            )
-        );
+        $exclusions = [];
+        if ($request->get('e')) {
+            $exclusions = [
+                '/site/category' => [
+                    'quality',
+                ]
+            ];
+        }
+        return self::json(new OptionsSelector($this->optionsRepository->fetchTargetingOptions()->exclude($exclusions)));
     }
 
     public function targetingReach(TargetingReachRequest $request): JsonResponse
@@ -78,9 +82,18 @@ class OptionsController extends Controller
         return self::json($targetingReach->toArray());
     }
 
-    public function filtering(): JsonResponse
+    public function filtering(Request $request): JsonResponse
     {
-        return self::json(new OptionsSelector($this->optionsRepository->fetchFilteringOptions()));
+        $exclusions = [];
+        if ($request->get('e')) {
+            $exclusions = [
+                sprintf(
+                    '/%s:category',
+                    $this->classifierRepository->fetchDefaultClassifierName()
+                ) => ['adult']
+            ];
+        }
+        return self::json(new OptionsSelector($this->optionsRepository->fetchFilteringOptions()->exclude($exclusions)));
     }
 
     public function languages(): JsonResponse
