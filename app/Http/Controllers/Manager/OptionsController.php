@@ -26,7 +26,6 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\TargetingReachRequest;
-use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -35,15 +34,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 class OptionsController extends Controller
 {
     private ConfigurationRepository $optionsRepository;
-    private ClassifierExternalRepository $classifierRepository;
 
-    public function __construct(
-        ConfigurationRepository $optionsRepository,
-        ClassifierExternalRepository $classifierRepository
-    )
+    public function __construct(ConfigurationRepository $optionsRepository)
     {
         $this->optionsRepository = $optionsRepository;
-        $this->classifierRepository = $classifierRepository;
     }
 
     public function campaigns(): JsonResponse
@@ -86,18 +80,7 @@ class OptionsController extends Controller
 
     public function filtering(): JsonResponse
     {
-        return self::json(
-            new OptionsSelector(
-                $this->optionsRepository->fetchFilteringOptions()->exclude(
-                    [
-                        sprintf(
-                            '/%s:category',
-                            $this->classifierRepository->fetchDefaultClassifierName()
-                        ) => ['quality']
-                    ]
-                )
-            )
-        );
+        return self::json(new OptionsSelector($this->optionsRepository->fetchFilteringOptions()));
     }
 
     public function languages(): JsonResponse
