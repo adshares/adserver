@@ -28,20 +28,32 @@ use PHPUnit\Framework\TestCase;
 
 final class DomainReaderTest extends TestCase
 {
-    /**
-     * @dataProvider urlProvider
-     */
-    public function testDomainRead(string $url, string $expectedDomain): void
+
+    public function testDomainRead(): void
     {
-        $this->assertEquals($expectedDomain, DomainReader::domain($url));
+        $this->assertEquals('example.com', DomainReader::domain('http://example.com'));
+        $this->assertEquals('example.com', DomainReader::domain('https://example.com'));
+        $this->assertEquals('example.com', DomainReader::domain('https://www.example.com'));
+        $this->assertEquals('example.com', DomainReader::domain('https://example.com:8080/find?a=1'));
     }
 
-    public function urlProvider(): array
+    public function testCheckDomain(): void
     {
-        return [
-            ['https://example.com', 'example.com'],
-            ['https://www.example.com', 'example.com'],
-            ['https://example.com:8080/find?a=1', 'example.com'],
-        ];
+        $this->assertTrue(DomainReader::checkDomain('http://example.com', 'example.com'));
+        $this->assertTrue(DomainReader::checkDomain('https://example.com', 'example.com'));
+        $this->assertTrue(DomainReader::checkDomain('https://www.example.com', 'example.com'));
+        $this->assertTrue(DomainReader::checkDomain('https://example.com:8080/find?a=1', 'example.com'));
+        $this->assertTrue(DomainReader::checkDomain('https://sub1.example.com', 'example.com'));
+        $this->assertTrue(DomainReader::checkDomain('https://sub1.sub2.example.com', 'example.com'));
+
+        $this->assertFalse(DomainReader::checkDomain('https://foo.com', 'example.com'));
+        $this->assertFalse(DomainReader::checkDomain('https://example.foo.com', 'example.com'));
+
+        $this->assertTrue(DomainReader::checkDomain('https://sub1.example.com', 'sub1.example.com'));
+        $this->assertTrue(DomainReader::checkDomain('https://sub2.sub1.example.com', 'sub1.example.com'));
+        $this->assertTrue(DomainReader::checkDomain('https://www.sub1.example.com', 'sub1.example.com'));
+        $this->assertFalse(DomainReader::checkDomain('https://example.com', 'sub1.example.com'));
+        $this->assertFalse(DomainReader::checkDomain('https://www.example.com', 'sub1.example.com'));
+        $this->assertFalse(DomainReader::checkDomain('https://sub1.sub2.example.com', 'sub1.example.com'));
     }
 }

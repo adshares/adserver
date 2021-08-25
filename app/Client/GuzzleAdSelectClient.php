@@ -159,7 +159,6 @@ class GuzzleAdSelectClient implements AdSelect
 
         $zoneMap = [];
         $sitesMap = [];
-        $pageDomain = DomainReader::domain($context->url());
 
         $zoneList = Zone::findByPublicIds($zoneIds);
         /** @var Zone $zone */
@@ -203,7 +202,7 @@ class GuzzleAdSelectClient implements AdSelect
             if (
                 $sitesMap[$siteId]['active'] && (
                 !config('app.check_zone_domain')
-                || $pageDomain && $pageDomain === $sitesMap[$siteId]['domain']
+                || DomainReader::checkDomain($context->url(), $sitesMap[$siteId]['domain'])
                 )
             ) {
                 $zoneMap[$zone->uuid] = $zone;

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Serve subdomain for Aduser events
 ### Fixed
 - Quality tag in filtering
+- Checking site domain
 
 ## [1.10.1] - 2021-08-24
 ### Added
