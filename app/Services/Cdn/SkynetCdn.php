@@ -65,7 +65,7 @@ final class SkynetCdn extends CdnProvider
 
         $content = json_decode($response->getBody()->getContents());
 
-        return sprintf('%s/%s', $this->apiUrl, $content->skylink);
+        return sprintf('%s/%s/', $this->apiUrl, $content->skylink);
     }
 
     private function getClient(): Client
