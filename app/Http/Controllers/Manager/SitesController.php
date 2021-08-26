@@ -32,7 +32,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
-use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
+use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Dto\PageRank;
@@ -54,12 +54,12 @@ class SitesController extends Controller
     /** @var SiteCategoriesValidator */
     private $siteCategoriesValidator;
 
-    /** @var SiteClassificationUpdater */
+    /** @var SiteFilteringUpdater */
     private $siteClassificationUpdater;
 
     public function __construct(
         SiteCategoriesValidator $siteCategoriesValidator,
-        SiteClassificationUpdater $siteClassificationUpdater
+        SiteFilteringUpdater $siteClassificationUpdater
     ) {
         $this->siteCategoriesValidator = $siteCategoriesValidator;
         $this->siteClassificationUpdater = $siteClassificationUpdater;
@@ -141,8 +141,8 @@ class SitesController extends Controller
     private function filterOutHelperKeywords(): Closure
     {
         return function ($key) {
-            return SiteClassificationUpdater::INTERNAL_CLASSIFIER_NAMESPACE !== $key
-                && false === strpos($key, SiteClassificationUpdater::KEYWORD_CLASSIFIED);
+            return SiteFilteringUpdater::INTERNAL_CLASSIFIER_NAMESPACE !== $key
+                && false === strpos($key, SiteFilteringUpdater::KEYWORD_CLASSIFIED);
         };
     }
 

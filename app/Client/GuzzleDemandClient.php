@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
-use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
+use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -384,8 +384,8 @@ final class GuzzleDemandClient implements DemandClient
         $flatClassification = [];
         foreach ($classification as $classifier => $classificationItem) {
             $keywords = $classificationItem['keywords'] ?? [];
-            $keywords[SiteClassificationUpdater::KEYWORD_CLASSIFIED] =
-                SiteClassificationUpdater::KEYWORD_CLASSIFIED_VALUE;
+            $keywords[SiteFilteringUpdater::KEYWORD_CLASSIFIED] =
+                SiteFilteringUpdater::KEYWORD_CLASSIFIED_VALUE;
 
             $flatClassification[$classifier] = AbstractFilterMapper::generateNestedStructure(
                 $keywords
