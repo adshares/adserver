@@ -25,7 +25,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
+use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -214,10 +214,10 @@ JSON
 
     public function testCreateSiteError(): void
     {
-        $siteClassificationUpdater = $this->createMock(SiteClassificationUpdater::class);
+        $siteClassificationUpdater = $this->createMock(SiteFilteringUpdater::class);
         $siteClassificationUpdater->method('addClassificationToFiltering')
             ->willThrowException(new RuntimeException('test-exception'));
-        $this->instance(SiteClassificationUpdater::class, $siteClassificationUpdater);
+        $this->instance(SiteFilteringUpdater::class, $siteClassificationUpdater);
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);

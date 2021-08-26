@@ -26,7 +26,7 @@ namespace Adshares\Adserver\Services\Supply;
 use Adshares\Adserver\Models\Site;
 use Adshares\Classify\Domain\Model\Classification;
 
-class SiteClassificationUpdater
+class SiteFilteringUpdater
 {
     public const INTERNAL_CLASSIFIER_NAMESPACE = 'classify';
 
@@ -54,6 +54,16 @@ class SiteClassificationUpdater
         $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE] = [
             $this->getClassificationForRejectedBanners($site->user_id)->keyword(),
         ];
+
+        $baseRequires = json_decode(config('site_filtering_require'), true);
+        if (is_array($baseRequires)) {
+            $siteRequires = array_merge_recursive($siteRequires, $baseRequires);
+        }
+
+        $baseExcludes = json_decode(config('site_filtering_exclude'), true);
+        if (is_array($baseExcludes)) {
+            $siteExcludes = array_merge_recursive($siteExcludes, $baseExcludes);
+        }
 
         $site->site_excludes = $siteExcludes;
         $site->site_requires = $siteRequires;

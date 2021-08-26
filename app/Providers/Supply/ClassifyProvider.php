@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
+use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Classify\Infrastructure\Service\LocalClassifier;
 use Illuminate\Support\ServiceProvider;
@@ -35,7 +35,7 @@ class ClassifyProvider extends ServiceProvider
         $this->app->bind(
             ClassifierInterface::class,
             function () {
-                return new LocalClassifier(SiteClassificationUpdater::INTERNAL_CLASSIFIER_NAMESPACE);
+                return new LocalClassifier(SiteFilteringUpdater::INTERNAL_CLASSIFIER_NAMESPACE);
             }
         );
     }
