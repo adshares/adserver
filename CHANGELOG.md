@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.10.3] - 2021-08-26
 ### Added
 - Default targeting & filtering
 ### Fixed
@@ -486,7 +488,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.2...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.3...develop
+[1.10.3]: https://github.com/adshares/adserver/compare/v1.10.2...v1.10.3
 [1.10.2]: https://github.com/adshares/adserver/compare/v1.10.1...v1.10.2
 [1.10.1]: https://github.com/adshares/adserver/compare/v1.10.0...v1.10.1
 [1.10.0]: https://github.com/adshares/adserver/compare/v1.9.2...v1.10.0
