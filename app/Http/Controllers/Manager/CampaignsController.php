@@ -558,8 +558,20 @@ class CampaignsController extends Controller
     {
         $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
 
-        $input['targeting_requires'] = $targetingProcessor->processTargeting($input['targeting']['requires'] ?? []);
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting($input['targeting']['excludes'] ?? []);
+        $requires = $input['targeting']['requires'] ?? [];
+        $baseRequires = json_decode(config('app.campaign_targeting_require') ?? '', true);
+        if (is_array($baseRequires)) {
+            $requires = array_merge_recursive($requires, $baseRequires);
+        }
+
+        $excludes = $input['targeting']['excludes'] ?? [];
+        $baseExcludes = json_decode(config('app.campaign_targeting_exclude') ?? '', true);
+        if (is_array($baseExcludes)) {
+            $excludes = array_merge_recursive($excludes, $baseExcludes);
+        }
+
+        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires);
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes);
 
         return $input;
     }

@@ -55,12 +55,12 @@ class SiteFilteringUpdater
             $this->getClassificationForRejectedBanners($site->user_id)->keyword(),
         ];
 
-        $baseRequires = json_decode(config('site_filtering_require'), true);
+        $baseRequires = json_decode(config('app.site_filtering_require') ?? '', true);
         if (is_array($baseRequires)) {
             $siteRequires = array_merge_recursive($siteRequires, $baseRequires);
         }
 
-        $baseExcludes = json_decode(config('site_filtering_exclude'), true);
+        $baseExcludes = json_decode(config('app.site_filtering_exclude') ?? '', true);
         if (is_array($baseExcludes)) {
             $siteExcludes = array_merge_recursive($siteExcludes, $baseExcludes);
         }
