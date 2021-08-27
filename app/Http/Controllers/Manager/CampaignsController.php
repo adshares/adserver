@@ -561,19 +561,30 @@ class CampaignsController extends Controller
         $requires = $input['targeting']['requires'] ?? [];
         $baseRequires = json_decode(config('app.campaign_targeting_require') ?? '', true);
         if (is_array($baseRequires)) {
-            $requires = array_merge_recursive($requires, $baseRequires);
+            $requires = array_map([__CLASS__, 'normalize'], array_merge_recursive($requires, $baseRequires));
         }
 
         $excludes = $input['targeting']['excludes'] ?? [];
         $baseExcludes = json_decode(config('app.campaign_targeting_exclude') ?? '', true);
         if (is_array($baseExcludes)) {
-            $excludes = array_merge_recursive($excludes, $baseExcludes);
+            $excludes = array_map([__CLASS__, 'normalize'], array_merge_recursive($excludes, $baseExcludes));
         }
 
         $input['targeting_requires'] = $targetingProcessor->processTargeting($requires);
         $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes);
 
         return $input;
+    }
+
+    private static function normalize($arr)
+    {
+        if (!is_array($arr) || empty($arr)) {
+            return $arr;
+        }
+        if (array_keys($arr) !== range(0, count($arr) - 1)) {
+            return $arr;
+        }
+        return array_unique($arr);
     }
 
     private function createBannerClassificationsForCampaign(Campaign $campaign): void
