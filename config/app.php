@@ -156,6 +156,7 @@ return [
     'cdn_provider' => env('CDN_PROVIDER'),
     'skynet_api_url' => env('SKYNET_API_URL'),
     'skynet_api_key' => env('SKYNET_API_KEY'),
+    'skynet_cdn_url' => env('SKYNET_CDN_URL'),
     'site_filtering_require' => env('SITE_FILTERING_REQUIRE'),
     'site_filtering_exclude' => env('SITE_FILTERING_EXCLUDE'),
     'campaign_targeting_require' => env('CAMPAIGN_TARGETING_REQUIRE'),

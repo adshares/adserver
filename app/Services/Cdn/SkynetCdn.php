@@ -30,12 +30,15 @@ final class SkynetCdn extends CdnProvider
 
     private string $apiKey;
 
+    private string $cdnUrl;
+
     private static ?Client $client = null;
 
-    public function __construct(string $apiUrl, string $apiKey)
+    public function __construct(string $apiUrl, string $apiKey, string $cdnUrl)
     {
         $this->apiUrl = $apiUrl;
         $this->apiKey = $apiKey;
+        $this->cdnUrl = $cdnUrl;
     }
 
     public function uploadBanner(Banner $banner): string
@@ -65,7 +68,7 @@ final class SkynetCdn extends CdnProvider
 
         $content = json_decode($response->getBody()->getContents());
 
-        return sprintf('%s/%s/', $this->apiUrl, $content->skylink);
+        return sprintf('%s/%s/', $this->cdnUrl, $content->skylink);
     }
 
     private function getClient(): Client
