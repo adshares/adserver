@@ -587,17 +587,29 @@ var getActiveZones = function(call_func) {
 
             zone.backfill = findBackfillCode(tag);
 
+            const checkFallbackRate = function () {
+                if (Math.random() < zone.options.fallback_rate) {
+                    zone.__invalid = true;
+                    param.__invalid = true;
+                    insertBackfill(tag, zone.backfill);
+                }
+            }
+
             if (zone.options.adblock_only) {
                 waiting++;
                 abd = abd || new BlockDetector();
                 abd.detect(function () {
                     waiting--;
+                    checkFallbackRate();
+
                 }, function () {
                     zone.__invalid = true;
                     param.__invalid = true;
                     waiting--;
                     insertBackfill(tag, zone.backfill);
                 })
+            } else {
+                checkFallbackRate();
             }
 
         }

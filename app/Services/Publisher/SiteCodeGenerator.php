@@ -191,6 +191,10 @@ CODE;
             $options[] = 'min_cpm=' . $config->getMinCpm();
         }
 
+        if (null !== $config->getFallbackRate()) {
+            $options[] = 'fallback_rate=' . $config->getFallbackRate();
+        }
+
         if (empty($options)) {
             return '';
         }
@@ -247,6 +251,6 @@ CODE;
 
         $fallback = join("\n", $options) . "\n";
 
-        return "\n\t<!--backfill\n{$fallback}\t-->\n";
+        return "\n\t<style type=\"app/backfill\">\n{$fallback}\t</style>\n";
     }
 }

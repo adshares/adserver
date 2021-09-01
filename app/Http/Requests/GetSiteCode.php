@@ -33,6 +33,7 @@ class GetSiteCode extends FormRequest
             'is_block' => 'boolean',
             'is_fallback' => 'boolean',
             'min_cpm' => 'numeric|nullable',
+            'fallback_rate' => 'numeric|nullable',
             'pop_count' => 'integer|required_with:pop_interval,pop_burst',
             'pop_interval' => 'integer|required_with:pop_count,pop_burst',
             'pop_burst' => 'integer|required_with:pop_count,pop_interval',
@@ -47,6 +48,7 @@ class GetSiteCode extends FormRequest
         $isBlock = $this->filterBoolean($values, 'is_block');
         $isFallback = $this->filterBoolean($values, 'is_fallback');
         $minCpm = $values['min_cpm'] ?? null;
+        $fallbackRate = $values['fallback_rate'] ?? null;
 
         if (isset($values['pop_count']) && isset($values['pop_interval']) && isset($values['pop_burst'])) {
             $popConfig = new SiteCodeConfigPops(
@@ -58,7 +60,7 @@ class GetSiteCode extends FormRequest
             $popConfig = null;
         }
 
-        return new SiteCodeConfig($isProxy, $isFallback, $isBlock, $minCpm, $popConfig);
+        return new SiteCodeConfig($isProxy, $isFallback, $isBlock, $minCpm, $fallbackRate, $popConfig);
     }
 
     private function filterBoolean(array $values, string $key): bool

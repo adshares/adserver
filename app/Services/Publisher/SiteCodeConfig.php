@@ -39,6 +39,9 @@ class SiteCodeConfig
     /** @var string|null */
     private $minCpm;
 
+    /** @var string|null */
+    private $fallbackRate;
+
     /** @var SiteCodeConfigPops|null */
     private $configPops;
 
@@ -47,6 +50,7 @@ class SiteCodeConfig
         bool $isCustomFallback,
         bool $isAdBlockOnly,
         ?string $minCpm = null,
+        ?string $fallbackRate = null,
         ?SiteCodeConfigPops $configPops = null
     ) {
         if (null !== $minCpm && !is_numeric($minCpm)) {
@@ -57,6 +61,7 @@ class SiteCodeConfig
         $this->isCustomFallback = $isCustomFallback;
         $this->isAdBlockOnly = $isAdBlockOnly;
         $this->minCpm = $minCpm;
+        $this->fallbackRate = $fallbackRate;
         $this->configPops = $configPops;
     }
 
@@ -83,6 +88,11 @@ class SiteCodeConfig
     public function getMinCpm(): ?string
     {
         return $this->minCpm;
+    }
+
+    public function getFallbackRate(): ?string
+    {
+        return $this->fallbackRate;
     }
 
     public function getConfigPops(): SiteCodeConfigPops

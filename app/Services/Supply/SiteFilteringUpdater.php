@@ -65,9 +65,20 @@ class SiteFilteringUpdater
             $siteExcludes = array_merge_recursive($siteExcludes, $baseExcludes);
         }
 
-        $site->site_excludes = $siteExcludes;
-        $site->site_requires = $siteRequires;
+        $site->site_excludes = array_map([__CLASS__, 'normalize'], $siteExcludes);
+        $site->site_requires = array_map([__CLASS__, 'normalize'], $siteRequires);
         $site->save();
+    }
+
+    private static function normalize($arr)
+    {
+        if (!is_array($arr) || empty($arr)) {
+            return $arr;
+        }
+        if (array_keys($arr) !== range(0, count($arr) - 1)) {
+            return $arr;
+        }
+        return array_unique($arr);
     }
 
     private function getClassificationForRejectedBanners(int $publisherId): Classification
