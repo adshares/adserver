@@ -102,9 +102,10 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             ->name('app.campaigns.change_banner_status');
         Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])
             ->name('app.campaigns.delete');
-
         Route::post('campaigns/banner', [CampaignsController::class, 'upload'])
             ->name('app.campaigns.upload');
+        Route::post('campaigns/{campaign_id}/clone', [CampaignsController::class, 'clone'])
+            ->name('app.campaigns.clone');
 
         Route::post('campaigns/{campaign_id}/classify', [CampaignsController::class, 'classify'])
             ->name('app.campaigns.classify');
