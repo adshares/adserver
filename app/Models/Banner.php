@@ -50,6 +50,7 @@ use function in_array;
  * @property Campaign campaign
  * @property BannerClassification[] classifications
  * @property int type
+ * @property string url
  * @property string|null cdn_url
  * @mixin Builder
  */
@@ -172,10 +173,14 @@ class Banner extends Model
         return $this->belongsTo(Campaign::class);
     }
 
+    protected function getUrlAttribute(): string
+    {
+        return (new SecureUrl(route('banner-preview', ['id' => $this->uuid])))->toString();
+    }
+
     protected function toArrayExtras($array)
     {
-        $array['url'] = (new SecureUrl(route('banner-preview', ['id' => $this->uuid])))->toString();
-
+        $array['url'] = $this->url;
         return $array;
     }
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.5] - 2021-09-02
+### Added
+- Campaign cloning
+
 ## [1.10.4] - 2021-09-01
 ### Added
 - Fallback script rate option
@@ -494,7 +498,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.4...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.5...develop
+[1.10.5]: https://github.com/adshares/adserver/compare/v1.10.4...v1.10.5
 [1.10.4]: https://github.com/adshares/adserver/compare/v1.10.3...v1.10.4
 [1.10.3]: https://github.com/adshares/adserver/compare/v1.10.2...v1.10.3
 [1.10.2]: https://github.com/adshares/adserver/compare/v1.10.1...v1.10.2

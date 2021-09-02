@@ -38,8 +38,6 @@ class GenerateUUID
      */
     public function __construct(Model $model)
     {
-        if (!$model->uuid) {
-            $model->uuid = UuidStringGenerator::v4();
-        }
+        $model->uuid = UuidStringGenerator::v4();
     }
 }

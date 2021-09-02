@@ -523,6 +523,38 @@ class CampaignsController extends Controller
         return self::json(['campaign' => $campaign->toArray()]);
     }
 
+    public function clone(int $campaignId): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+        if (!$campaign) {
+            throw new NotFoundHttpException(sprintf('Campaign %s does not exist.', $campaignId));
+        }
+
+        $clonedCampaign = $campaign->replicate();
+        $clonedCampaign->status = Campaign::STATUS_DRAFT;
+        $clonedCampaign->name = sprintf('%s (Cloned)', $campaign->name);
+        $clonedCampaign->saveOrFail();
+
+        foreach ($campaign->conversions as $conversion) {
+            $clonedConversion = $conversion->replicate();
+            $clonedConversion->campaign_id = $clonedCampaign->id;
+            $clonedConversion->cost = 0;
+            $clonedConversion->occurrences = 0;
+            $clonedConversion->saveOrFail();
+        }
+
+        foreach ($campaign->banners as $banner) {
+            $clonedBanner = $banner->replicate();
+            $clonedBanner->campaign_id = $clonedCampaign->id;
+            $clonedBanner->saveOrFail();
+        }
+
+        return self::json($clonedCampaign->toArray(), Response::HTTP_CREATED)->header(
+            'Location',
+            route('app.campaigns.read', ['campaign' => $clonedCampaign])
+        );
+    }
+
     public function classify(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);

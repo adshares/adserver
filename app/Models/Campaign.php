@@ -281,7 +281,7 @@ class Campaign extends Model
         $uuid = $this->bid_strategy_uuid;
 
         return [
-            'name' => BidStrategy::fetchByPublicId($uuid)->name,
+            'name' => optional(BidStrategy::fetchByPublicId($uuid))->name,
             'uuid' => $uuid,
         ];
     }

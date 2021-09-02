@@ -116,21 +116,21 @@ final class CampaignsControllerTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $campaignId = $this->createCampaignForUser($user);
-        $bannerId = $this->createBannerForCampaign($campaignId);
+        $campaign = $this->createCampaignForUser($user);
+        $banner = $this->createBannerForCampaign($campaign);
 
-        $this->assertCount(1, Campaign::where('id', $campaignId)->get());
-        $this->assertCount(1, Banner::where('id', $bannerId)->get());
+        $this->assertCount(1, Campaign::where('id', $campaign->id)->get());
+        $this->assertCount(1, Banner::where('id', $banner->id)->get());
 
-        $response = $this->deleteJson(self::URI . "/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaign->id}");
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
-        $this->assertCount(0, Campaign::where('id', $campaignId)->get());
-        $this->assertCount(0, Banner::where('id', $bannerId)->get());
-        $this->assertCount(1, Campaign::withTrashed()->where('id', $campaignId)->get());
-        $this->assertCount(1, Banner::withTrashed()->where('id', $bannerId)->get());
+        $this->assertCount(0, Campaign::where('id', $campaign->id)->get());
+        $this->assertCount(0, Banner::where('id', $banner->id)->get());
+        $this->assertCount(1, Campaign::withTrashed()->where('id', $campaign->id)->get());
+        $this->assertCount(1, Banner::withTrashed()->where('id', $banner->id)->get());
 
-        $response = $this->deleteJson(self::URI . "/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaign->id}");
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -240,14 +240,14 @@ final class CampaignsControllerTest extends TestCase
         return $user;
     }
 
-    private function createCampaignForUser(User $user): int
+    private function createCampaignForUser(User $user, array $attributes = []): Campaign
     {
-        return factory(Campaign::class)->create(['user_id' => $user->id])->id;
+        return factory(Campaign::class)->create(array_merge(['user_id' => $user->id], $attributes));
     }
 
-    private function createBannerForCampaign(int $campaignId): int
+    private function createBannerForCampaign(Campaign $campaign, array $attributes = []): Banner
     {
-        return factory(Banner::class)->create(['campaign_id' => $campaignId])->id;
+        return factory(Banner::class)->create(array_merge(['campaign_id' => $campaign->id], $attributes));
     }
 
     public function testFailDeleteNotOwnedCampaign(): void
@@ -255,10 +255,10 @@ final class CampaignsControllerTest extends TestCase
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $user = factory(User::class)->create();
-        $campaignId = $this->createCampaignForUser($user);
-        $this->createBannerForCampaign($campaignId);
+        $campaign = $this->createCampaignForUser($user);
+        $this->createBannerForCampaign($campaign);
 
-        $response = $this->deleteJson(self::URI . "/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaign->id}");
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -436,5 +436,150 @@ final class CampaignsControllerTest extends TestCase
 
         $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
         $response->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE);
+    }
+
+    public function testCloneNoneExistsCampaign(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $campaign1 = $this->createCampaignForUser($user);
+        $campaign2 = $this->createCampaignForUser(factory(User::class)->create());
+
+        $invalidId = $campaign1->id - 1;
+        $response = $this->postJson(self::URI . "/{$invalidId}/clone");
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+
+        $response = $this->postJson(self::URI . "/{$campaign2->id}/clone");
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testCloneEmptyCampaign(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $campaign = $this->createCampaignForUser(
+            $user,
+            [
+                'status' => Campaign::STATUS_ACTIVE,
+                'targeting_requires' => ['foo_tag_1'],
+                'targeting_excludes' => ['foo_tag_2'],
+            ]
+        );
+
+        $response = $this->postJson(self::URI . "/{$campaign->id}/clone");
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        $response = $this->getJson(self::URI . '/' . $id);
+        $response->assertStatus(Response::HTTP_OK);
+
+        $cloned = $response->json('campaign');
+
+        $this->assertNotEquals($campaign->id, $cloned['id']);
+        $this->assertNotEquals($campaign->uuid, $cloned['uuid']);
+        $this->assertNotEquals($campaign->secret, $cloned['secret']);
+
+        $this->assertEquals($campaign->conversion_click, $cloned['conversionClick']);
+        $this->assertEquals($campaign->targeting, $cloned['targeting']);
+        $this->assertEquals($campaign->bid_strategy_uuid, $cloned['bidStrategyUuid']);
+
+        $info = $cloned['basicInformation'];
+        $this->assertEquals(Campaign::STATUS_DRAFT, $info['status']);
+        $this->assertNotEquals($campaign->name, $info['name']);
+        $this->assertStringContainsString($campaign->name, $info['name']);
+        $this->assertEquals($campaign->landing_url, $info['targetUrl']);
+        $this->assertEquals($campaign->max_cpc, $info['maxCpc']);
+        $this->assertEquals($campaign->max_cpm, $info['maxCpm']);
+        $this->assertEquals($campaign->budget, $info['budget']);
+        $this->assertEquals($campaign->time_start, $info['dateStart']);
+        $this->assertEquals($campaign->time_end, $info['dateEnd']);
+
+//        $cloned['classificationStatus']
+//        $cloned['classificationTags']
+
+        $this->assertEmpty($cloned['conversions']);
+        $this->assertEmpty($cloned['classifications']);
+        $this->assertEmpty($cloned['ads']);
+    }
+
+    public function testCloneCampaignWithConversions(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $campaign = $this->createCampaignForUser($user);
+        $conversion = factory(ConversionDefinition::class)->create(
+            [
+                'campaign_id' => $campaign->id,
+                'cost' => 1000,
+                'occurrences' => 100,
+            ]
+        );
+
+        $response = $this->postJson(self::URI . "/{$campaign->id}/clone");
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        $response = $this->getJson(self::URI . '/' . $id);
+        $response->assertStatus(Response::HTTP_OK);
+
+        $cloned = $response->json('campaign');
+
+        $this->assertNotEmpty($cloned['conversions']);
+        $cloned = reset($cloned['conversions']);
+
+        $this->assertNotEquals($conversion->uuid, $cloned['uuid']);
+        $this->assertNotEquals($conversion->link, $cloned['link']);
+        $this->assertNotEquals($conversion->cost, $cloned['cost']);
+        $this->assertNotEquals($conversion->occurrences, $cloned['occurrences']);
+
+        $this->assertEquals($conversion->name, $cloned['name']);
+        $this->assertEquals($conversion->limit_type, $cloned['limitType']);
+        $this->assertEquals($conversion->event_type, $cloned['eventType']);
+        $this->assertEquals($conversion->type, $cloned['type']);
+        $this->assertEquals($conversion->value, $cloned['value']);
+        $this->assertEquals($conversion->is_value_mutable, $cloned['isValueMutable']);
+        $this->assertEquals($conversion->is_repeatable, $cloned['isRepeatable']);
+    }
+
+    public function testCloneCampaignWithAds(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $campaign = $this->createCampaignForUser($user);
+        $banner = $this->createBannerForCampaign(
+            $campaign,
+            [
+                'cdn_url' => 'http://foo.com'
+            ]
+        );
+
+        $response = $this->postJson(self::URI . "/{$campaign->id}/clone");
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        $response = $this->getJson(self::URI . '/' . $id);
+        $response->assertStatus(Response::HTTP_OK);
+
+        $cloned = $response->json('campaign');
+
+        $this->assertNotEmpty($cloned['ads']);
+        $cloned = reset($cloned['ads']);
+
+        $this->assertNotEquals($banner->uuid, $cloned['uuid']);
+        $this->assertNotEquals($banner->url, $cloned['url']);
+
+        $this->assertEquals($banner->creative_type, $cloned['creativeType']);
+        $this->assertEquals($banner->creative_size, $cloned['creativeSize']);
+        $this->assertEquals($banner->creative_sha1, $cloned['creativeSha1']);
+        $this->assertEquals($banner->name, $cloned['name']);
+        $this->assertEquals($banner->status, $cloned['status']);
+        $this->assertEquals($banner->cdn_url, $cloned['cdnUrl']);
     }
 }
