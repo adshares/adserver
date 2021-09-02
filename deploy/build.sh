@@ -27,6 +27,8 @@ function artisanCommand {
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
+mkdir -pm 777 storage/framework/cache
+mkdir -pm 777 storage/framework/sessions
 mkdir -pm 777 storage/framework/views
 
 echo 'user_id;network_banner_uuid' > storage/app/reported-ads.txt
