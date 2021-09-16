@@ -30,17 +30,20 @@ class UserRegistered extends Mailable
     use Queueable;
     use SerializesModels;
 
-    private $email;
+    private string $uuid;
 
-    private $registrationDate;
+    private string $email;
 
-    private $uuid;
+    private string $registrationDate;
 
-    public function __construct(string $uuid, string $email, string $registrationDate)
+    private ?string $refToken;
+
+    public function __construct(string $uuid, string $email, string $registrationDate, ?string $refToken = null)
     {
         $this->uuid = $uuid;
         $this->email = $email;
         $this->registrationDate = $registrationDate;
+        $this->refToken = $refToken;
     }
 
     public function build(): self
@@ -50,6 +53,7 @@ class UserRegistered extends Mailable
                 'uuid' => $this->uuid,
                 'email' => $this->email,
                 'registrationDate' => $this->registrationDate,
+                'refToken' => $this->refToken
             ]
         );
     }
