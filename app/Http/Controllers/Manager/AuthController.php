@@ -460,7 +460,12 @@ class AuthController extends Controller
     {
         if (config('app.crm_mail_address_on_user_registered')) {
             Mail::to(config('app.crm_mail_address_on_user_registered'))->queue(
-                new UserRegistered($user->uuid, $user->email, ($user->created_at ?: new DateTime())->format('d/m/Y'))
+                new UserRegistered(
+                    $user->uuid,
+                    $user->email,
+                    ($user->created_at ?: new DateTime())->format('d/m/Y'),
+                    optional($user->refLink)->token
+                )
             );
         }
     }
