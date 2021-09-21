@@ -179,7 +179,7 @@ class UsersController extends Controller
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.campaign_id
                 ) lp ON lp.campaign_id = c.uuid
-                WHERE c.deleted_at IS NULL AND c.status = %d AND (c.landing_url LIKE ? OR u.email LIKE ?)
+                WHERE c.deleted_at IS NULL AND (c.landing_url LIKE ? OR u.email LIKE ?)
                 GROUP BY %s
                 HAVING current_views >= ? OR last_views >= ?
                 ',
@@ -191,7 +191,6 @@ class UsersController extends Controller
                     $unit,
                     $interval,
                     $unit,
-                    Campaign::STATUS_ACTIVE,
                     $groupBy
                 ),
                 [
