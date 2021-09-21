@@ -62,9 +62,7 @@ class OptionsController extends Controller
         $exclusions = [];
         if ($request->get('e')) {
             $exclusions = [
-                '/site/category' => [
-                    'quality',
-                ]
+                '/site/quality' => true
             ];
         }
         return self::json(new OptionsSelector($this->optionsRepository->fetchTargetingOptions()->exclude($exclusions)));
@@ -88,9 +86,9 @@ class OptionsController extends Controller
         if ($request->get('e')) {
             $exclusions = [
                 sprintf(
-                    '/%s:category',
+                    '/%s:quality',
                     $this->classifierRepository->fetchDefaultClassifierName()
-                ) => ['adult']
+                ) => true
             ];
         }
         return self::json(new OptionsSelector($this->optionsRepository->fetchFilteringOptions()->exclude($exclusions)));
