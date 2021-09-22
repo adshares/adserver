@@ -28,6 +28,7 @@ use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Http\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\Site;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
@@ -47,20 +48,21 @@ class ClassifierController extends Controller
         $userId = Auth::user()->id;
 
         $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
-        $banners = NetworkBanner::fetchByFilter($networkBannerFilter, $limit, $offset);
+        $banners = NetworkBanner::fetchByFilter($networkBannerFilter);
 
-        $bannerIds = $this->getIdsFromBanners($banners);
+        $paginated = $banners->slice($offset, $limit);
+
+        $bannerIds = $this->getIdsFromBanners($paginated);
         $classifications = Classification::fetchByBannerIds($bannerIds);
 
-        $items = (new ClassifierResponse($banners, $classifications, $siteId))->toArray();
+        $items = (new ClassifierResponse($paginated, $classifications, $siteId))->toArray();
         $count = count($items);
-        $totalCount = NetworkBanner::fetchCountByFilter($networkBannerFilter);
 
         $response = [];
         $response['limit'] = $limit;
         $response['offset'] = $offset;
         $response['items_count'] = $count;
-        $response['items_count_all'] = $totalCount;
+        $response['items_count_all'] = count($banners);
         $response['items'] = $items;
 
         return self::json($response);
