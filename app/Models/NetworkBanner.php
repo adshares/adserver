@@ -73,6 +73,8 @@ class NetworkBanner extends Model
 
     private const NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID = 'network_banners.network_campaign_id';
 
+    private const NETWORK_BANNERS_COLUMN_CLASSIFICATION = 'network_banners.classification';
+
     private const CLASSIFICATIONS_COLUMN_BANNER_ID = 'classifications.banner_id';
 
     private const CLASSIFICATIONS_COLUMN_STATUS = 'classifications.status';
@@ -165,18 +167,26 @@ class NetworkBanner extends Model
         return self::queryPaging($query, $limit, $offset)->get();
     }
 
-    public static function fetchByFilter(NetworkBannerFilter $networkBannerFilter, int $limit, int $offset): Collection
-    {
-        $query = self::queryByFilter($networkBannerFilter);
+    public static function fetchByFilter(
+        NetworkBannerFilter $networkBannerFilter,
+        ?Collection $sites = null
+    ): Collection {
+        $banners = self::queryByFilter($networkBannerFilter)->get();
 
-        return self::queryPaging($query, $limit, $offset)->get();
-    }
+        if (null !== $sites) {
+            $banners = $banners->filter(
+                function (NetworkBanner $banner) use ($sites) {
+                    foreach ($sites as $site) {
+                        if ($site->matchFiltering($banner->classification ?? [])) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            );
+        }
 
-    public static function fetchCountByFilter(NetworkBannerFilter $networkBannerFilter): int
-    {
-        $query = self::queryByFilter($networkBannerFilter);
-
-        return $query->count();
+        return $banners;
     }
 
     private static function fetchAll(NetworkBannerFilter $networkBannerFilter): Builder
@@ -314,11 +324,12 @@ class NetworkBanner extends Model
             self::NETWORK_BANNERS_COLUMN_SERVE_URL,
             self::NETWORK_BANNERS_COLUMN_TYPE,
             self::NETWORK_BANNERS_COLUMN_SIZE,
+            self::NETWORK_BANNERS_COLUMN_CLASSIFICATION,
             self::NETWORK_CAMPAIGNS_COLUMN_LANDING_URL,
             self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST,
             self::NETWORK_CAMPAIGNS_COLUMN_BUDGET,
             self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPM,
-            self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPC
+            self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPC,
         );
 
         return $query;

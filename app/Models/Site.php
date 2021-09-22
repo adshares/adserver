@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
+use Adshares\Adserver\Services\Supply\SiteFilteringMatcher;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -182,6 +183,11 @@ class Site extends Model
             'requires' => $this->site_requires,
             'excludes' => $this->site_excludes,
         ];
+    }
+
+    public function matchFiltering(array $classification): bool
+    {
+        return SiteFilteringMatcher::checkClassification($this, $classification);
     }
 
     public function getCodeAttribute(): string
