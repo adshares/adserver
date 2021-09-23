@@ -27,11 +27,11 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 use function array_map;
@@ -169,24 +169,21 @@ class NetworkBanner extends Model
 
     public static function fetchByFilter(
         NetworkBannerFilter $networkBannerFilter,
-        ?Collection $sites = null
+        Collection $sites
     ): Collection {
-        $banners = self::queryByFilter($networkBannerFilter)->get();
-
-        if (null !== $sites) {
-            $banners = $banners->filter(
-                function (NetworkBanner $banner) use ($sites) {
-                    foreach ($sites as $site) {
-                        if ($site->matchFiltering($banner->classification ?? [])) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            );
+        if ($sites->isEmpty()) {
+            return new Collection();
         }
-
-        return $banners;
+        return self::queryByFilter($networkBannerFilter)->get()->filter(
+            function (NetworkBanner $banner) use ($sites) {
+                foreach ($sites as $site) {
+                    if ($site->matchFiltering($banner->classification ?? [])) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        );
     }
 
     private static function fetchAll(NetworkBannerFilter $networkBannerFilter): Builder
