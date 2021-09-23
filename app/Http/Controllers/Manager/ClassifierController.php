@@ -48,7 +48,7 @@ class ClassifierController extends Controller
         $userId = Auth::user()->id;
 
         $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
-        $banners = NetworkBanner::fetchByFilter($networkBannerFilter);
+        $banners = NetworkBanner::fetchByFilter($networkBannerFilter, Site::fetchAll());
 
         $paginated = $banners->slice($offset, $limit);
 
