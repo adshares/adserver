@@ -42,6 +42,7 @@ final class ClassifierControllerTest extends TestCase
     public function testGlobalWhenThereIsNoClassifications(): void
     {
         $user = factory(User::class)->create();
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -71,6 +72,7 @@ final class ClassifierControllerTest extends TestCase
     public function testGlobalWhenThereIsOnlyGlobalClassification(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -93,6 +95,7 @@ final class ClassifierControllerTest extends TestCase
     public function testSiteWhenThereIsOnlySiteClassification(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -116,6 +119,7 @@ final class ClassifierControllerTest extends TestCase
     public function testSiteWhenThereIsGlobalAndSiteClassification(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -138,6 +142,7 @@ final class ClassifierControllerTest extends TestCase
     public function testChangeGlobalStatusWhenDoesNotExistInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -163,6 +168,7 @@ final class ClassifierControllerTest extends TestCase
     public function testChangeGlobalStatusWhenExistsInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -189,6 +195,7 @@ final class ClassifierControllerTest extends TestCase
     public function testRejectGloballyWhenForSiteExistsInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         factory(User::class)->create(['id' => 2]);
         $this->actingAs($user, 'api');
 
@@ -219,6 +226,7 @@ final class ClassifierControllerTest extends TestCase
     public function testChangeSiteStatusWhenDoesNotExistInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -240,6 +248,7 @@ final class ClassifierControllerTest extends TestCase
     public function testChangeSiteStatusWhenExistsInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -272,6 +281,7 @@ final class ClassifierControllerTest extends TestCase
     public function testSiteWhenThereIsGlobalAndSiteClassificationFilteringByLandingUrl(string $url): void
     {
         $user = factory(User::class)->create(['id' => 1]);
+        factory(Site::class)->create(['user_id' => $user->id]);
         $this->actingAs($user, 'api');
 
         $site = factory(Site::class)->create(['id' => 1, 'user_id' => $user->id]);

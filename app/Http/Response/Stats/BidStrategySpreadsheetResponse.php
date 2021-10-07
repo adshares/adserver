@@ -35,18 +35,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class BidStrategySpreadsheetResponse
 {
     private const COLUMNS = [
-        'Id' => [
-            'comment' => 'Id should not be changed',
+        'Prefix' => [
+            'comment' => 'Prefix should not be changed',
             'fill' => 'E5F2FF',
             'color' => '003771',
         ],
-        'Category' => [
-            'comment' => 'Category should not be changed',
+        'ID' => [
+            'comment' => 'Category ID',
+            'fill' => 'E5F2FF',
+            'color' => '003771',
+        ],
+        'Description' => [
+            'comment' => 'Category description',
             'fill' => 'E5F2FF',
             'color' => '003771',
         ],
         'Value [%]' => [
-            'comment' => 'Set value in range <0,100>%',
+            'comment' => 'Set relative value for this category',
             'fill' => 'B8F4B5',
             'color' => '056100',
         ],
@@ -116,6 +121,7 @@ class BidStrategySpreadsheetResponse
         $sheet = $spreadsheet->getActiveSheet();
         $this->setupMainPage($sheet);
 
+//        die(print_r($this->data));
         foreach ($this->data as $page) {
             $sheet = $spreadsheet->createSheet();
             $sheet->setTitle($page['label']);
@@ -146,14 +152,36 @@ class BidStrategySpreadsheetResponse
             }
             ++$y;
 
+            $is_open_ended = false;
+
             foreach ($page['data'] as $row) {
                 $x = 1;
-                foreach ($row as $cell) {
-                    $sheet->setCellValueByColumnAndRow($x, $y, $cell);
+                $id_parts = explode(":", $row['key']);
+                $id = array_pop($id_parts);
+                $prefix = implode(":", $id_parts);
 
-                    ++$x;
+                if($id == '*') {
+                    $is_open_ended = true;
                 }
+
+                $sheet->setCellValueByColumnAndRow($x++, $y, $prefix);
+                $sheet->setCellValueByColumnAndRow($x++, $y, $id);
+
+                $sheet->setCellValueByColumnAndRow($x++, $y, $row['label']);
+                $sheet->setCellValueByColumnAndRow($x++, $y, $row['value']);
                 ++$y;
+            }
+
+            if ($is_open_ended) {
+                for ($i = 0; $i < 10; $i++) {
+                    $x = 1;
+                    $sheet->setCellValueByColumnAndRow($x++, $y, $prefix);
+                    $sheet->setCellValueByColumnAndRow($x++, $y, '');
+
+                    $sheet->setCellValueByColumnAndRow($x++, $y, '');
+                    $sheet->setCellValueByColumnAndRow($x++, $y, '');
+                    ++$y;
+                }
             }
 
             --$y;

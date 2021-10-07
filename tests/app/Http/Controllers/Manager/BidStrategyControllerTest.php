@@ -251,7 +251,7 @@ class BidStrategyControllerTest extends TestCase
                     'details' => [
                         [
                             'category' => 'user:country:us',
-                            'rank' => 2,
+                            'rank' => 10001,
                         ],
                     ],
                 ],
@@ -382,9 +382,9 @@ class BidStrategyControllerTest extends TestCase
             $sheet = $sheets[$i];
             $row = 2;
 
-            while (null !== ($value = $sheet->getCellByColumnAndRow(3, $row)->getValue())) {
+            while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
                 if (100 !== $value) {
-                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue();
+                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue() . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
                     $bidStrategyDetails[] = [
                         'category' => $category,
                         'rank' => (float)$value / 100,
@@ -518,11 +518,14 @@ class BidStrategyControllerTest extends TestCase
 
         $sheet = $spreadsheet->createSheet();
         $data = [
-            ['Id', 'Category', 'Value [%]'],
+            ['Prefix', 'ID', 'Description', 'Value [%]'],
         ];
 
         foreach ($bidStrategyData as $entry) {
-            $data[] = [$entry[0], '', $entry[1]];
+            $id_parts = explode(":", $entry[0]);
+            $id = array_pop($id_parts);
+            $prefix = implode(":", $id_parts);
+            $data[] = [$prefix, $id, '', $entry[1]];
         }
 
         $y = 1;

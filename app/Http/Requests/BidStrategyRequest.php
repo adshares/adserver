@@ -29,7 +29,7 @@ class BidStrategyRequest extends FormRequest
             'name' => 'required|string|max:255',
             'details' => 'present|array',
             'details.*.category' => 'required|string|max:267',
-            'details.*.rank' => 'required|numeric|min:0|max:1',
+            'details.*.rank' => 'required|numeric|min:0|max:10000',
         ];
     }
 
