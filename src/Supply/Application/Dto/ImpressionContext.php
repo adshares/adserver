@@ -61,6 +61,7 @@ final class ImpressionContext
         $domain = $refererList[0] ?? '';
 
         $ip = $context->device->ip;
+        $extensions = get_object_vars($context->device->extensions ?? new \stdClass());
 
         $ua = $headersArray['user-agent'][0] ?? '';
 
@@ -73,7 +74,7 @@ final class ImpressionContext
 
         return new self(
             ['domain' => $domain, 'page' => $domain],
-            ['ip' => $ip, 'ua' => $ua],
+            ['ip' => $ip, 'ua' => $ua, 'extensions' => $extensions],
             ['tid' => $trackingId]
         );
     }
@@ -101,11 +102,12 @@ final class ImpressionContext
     }
 
     public function adUserRequestBody(): array
-    {
+    {dump($this->device);
         return [
             'url' => $this->url(),
             'tags' => $this->site['keywords'] ?? [],
             'headers' => $this->flatHeaders(),
+            'extensions' => $this->device['extensions'] ?? [],
         ];
     }
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.8] - 2021-10-18
+### Added
+- Detecting metamask
+
 ## [1.10.7] - 2021-10-07
 ### Changed
 - Allow to set default rank for present and missing category
@@ -511,7 +515,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.7...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.8...develop
+[1.10.8]: https://github.com/adshares/adserver/compare/v1.10.7...v1.10.8
 [1.10.7]: https://github.com/adshares/adserver/compare/v1.10.6...v1.10.7
 [1.10.6]: https://github.com/adshares/adserver/compare/v1.10.5...v1.10.6
 [1.10.5]: https://github.com/adshares/adserver/compare/v1.10.4...v1.10.5

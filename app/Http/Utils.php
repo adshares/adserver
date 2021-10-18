@@ -90,6 +90,9 @@ class Utils
                     'referer' => [$request->header('referer')],
                     'user-agent' => [$request->header('user-agent')],
                 ],
+                'extensions' => [
+                    'metamask' => $context['page']['metamask'] ?? 0,
+                ]
             ],
         ];
     }

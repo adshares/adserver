@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Utils;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -56,6 +57,10 @@ class SupplyBlacklistedDomain extends Model
 
     public static function isDomainBlacklisted(string $domain): bool
     {
+        if ('' === $domain && config('app.env') === Utils::ENV_DEV) {
+            return false;
+        }
+
         if ('' === $domain || false === strpos($domain, '.') || false !== filter_var($domain, FILTER_VALIDATE_IP)) {
             return true;
         }
