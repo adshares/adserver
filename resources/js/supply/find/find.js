@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -483,6 +483,7 @@ var getPageKeywords = function (doc) {
 };
 
 var getBrowserContext = function () {
+    const metamask = (typeof window.ethereum !== 'undefined') || (typeof window.web3 !== 'undefined');
     return {
         iid: getImpressionId(),
         frame: (topwin == top ? 0 : 1),
@@ -490,6 +491,7 @@ var getBrowserContext = function () {
         height: topwin.screen.height,
         url: topwin.location.href,
         keywords: getPageKeywords(topdoc),
+        metamask: metamask ? 1 : 0,
         ref: topdoc.referrer,
         pop: topwin.opener !== null && topwin.opener !== undefined ? 1 : 0
         // agent: window.navigator.userAgent

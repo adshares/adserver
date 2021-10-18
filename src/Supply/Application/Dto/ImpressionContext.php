@@ -106,6 +106,7 @@ final class ImpressionContext
             'url' => $this->url(),
             'tags' => $this->site['keywords'] ?? [],
             'headers' => $this->flatHeaders(),
+            'extensions' => $this->device['extensions'] ?? [],
         ];
     }
 
