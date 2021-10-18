@@ -18,11 +18,13 @@
  */
 
 var getBrowserContext = function() {
-    return {
+  const metamask = (typeof window.ethereum !== 'undefined') || (typeof window.web3 !== 'undefined');
+  return {
         frame : (parent == top ? 0 : 1),
         width : window.screen.width,
         height : window.screen.height,
         url : (parent !== window) ? document.referrer : document.location.href,
+        metamask: metamask ? 1 : 0,
         pop: top.opener !== null ? 1 : 0
     }
 }
