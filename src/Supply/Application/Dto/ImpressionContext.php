@@ -102,7 +102,7 @@ final class ImpressionContext
     }
 
     public function adUserRequestBody(): array
-    {dump($this->device);
+    {
         return [
             'url' => $this->url(),
             'tags' => $this->site['keywords'] ?? [],
