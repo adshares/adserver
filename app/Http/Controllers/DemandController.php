@@ -369,18 +369,23 @@ SQL;
             $adUserUrl = null;
         }
 
-        $response->setContent(view(
-            'demand/view-event',
-            [
-                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(
-                    route('banner-context', ['id' => $eventId])
-                ))->toString()),
-                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(
-                    url('-/view.js')
-                ))->toString()),
-                'aduser_url' => $adUserUrl,
-            ]
-        ));
+        if ($request->query->get('simple')) {
+            $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
+            $response->headers->set(self::CONTENT_TYPE, 'image/gif');
+        } else {
+            $response->setContent(view(
+                'demand/view-event',
+                [
+                    'log_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        route('banner-context', ['id' => $eventId])
+                    ))->toString()),
+                    'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        url('-/view.js')
+                    ))->toString()),
+                    'aduser_url' => $adUserUrl,
+                ]
+            ));
+        }
 
         $response->send();
 

@@ -28,12 +28,16 @@ Route::get('/supply/find', [SupplyController::class, 'find']);
 Route::get('/supply/find/{data}', [SupplyController::class, 'find']);
 Route::post('/supply/find', [SupplyController::class, 'find']);
 
+Route::get('/supply/s/{zone_id}/{impression_id}', [SupplyController::class, 'findSimple']);
+
 Route::get('/main.js', [SupplyController::class, 'findScript']);
 Route::get('/supply/find.js', [SupplyController::class, 'findScript']);
 Route::get('/supply/register', [SupplyController::class, 'register']);
 
-Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView']);
-Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick']);
+Route::get('/l/n/view/{banner_id}', [SupplyController::class, 'logNetworkView']);
+Route::get('/l/n/click/{banner_id}', [SupplyController::class, 'logNetworkClick']);
+Route::get('/l/ns/view', [SupplyController::class, 'logNetworkSimpleView']);
+Route::get('/l/ns/click', [SupplyController::class, 'logNetworkSimpleClick']);
 
 Route::get('/supply/targeting-reach', [SupplyController::class, 'targetingReachList']);
 

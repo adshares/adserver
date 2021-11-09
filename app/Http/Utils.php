@@ -76,7 +76,7 @@ class Utils
             $context = null;
         }
 
-        if ($context['page']['frame']) {
+        if ($context['page']['frame'] ?? false) {
             $context['page']['frame_url'] = $context['page']['url'];
             $context['page']['url'] = $context['page']['ref'];
             $context['page']['ref'] = '';
@@ -95,6 +95,44 @@ class Utils
                 ]
             ],
         ];
+    }
+
+    public static function encodeZones(array $data): string
+    {
+        $VALUE_GLUE = "\t";
+        $PROP_GLUE = "\r";
+        $ZONE_GLUE = "\n";
+        $fields = [];
+        $fCount = 0;
+
+        $zone_data = [];
+        if (isset($data['page'])) {
+            $zone_data[] = $data['page'];
+        }
+        if (isset($data['zones'])) {
+            foreach ($data['zones'] as $zone) {
+                $zone_data[] = $zone;
+            }
+        }
+        $result = [null];
+        for ($i = 0; $i < count($zone_data); $i++) {
+            $zone = $zone_data[$i];
+            $entry = [];
+            foreach ($zone as $prop => $_) {
+                if (!isset($fields[$prop])) {
+                    $fields[$prop] = $fCount++;
+                }
+                array_push($entry, $fields[$prop] . $VALUE_GLUE . $zone[$prop]);
+            }
+            array_push($result, implode($PROP_GLUE, $entry));
+        }
+
+        $entry = [];
+        foreach ($fields as $prop => $_) {
+            array_push($entry, $prop);
+            $result[0] = implode($VALUE_GLUE, $entry);
+        }
+        return self::UrlSafeBase64Encode(implode($ZONE_GLUE, $result)); // url safe encoding
     }
 
     public static function decodeZones($zonesStr): array
