@@ -120,11 +120,12 @@ class SupplyController extends Controller
         string $zone_id,
         string $impression_id
     ) {
+        $zone = Zone::fetchByPublicId($zone_id);
         $response = new Response();
         $queryData = [
             'page' => [
                 "iid" => $impression_id,
-                "url" => "https://website.priv/test.htm",
+                "url" => $zone->site->url,
             ],
             'zones' => [
                 ['zone' => $zone_id, 'banner_type' => [$request->get('type')]],
