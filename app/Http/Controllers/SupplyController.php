@@ -48,7 +48,6 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use Illuminate\Support\Facades\Cache;
-use Intervention\Image\ImageManagerStatic as Image;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -139,10 +138,21 @@ class SupplyController extends Controller
         throw new NotFoundHttpException('Could not find banner');
     }
 
+    private function watermarkImage(\Imagick $im, \Imagick $watermark)
+    {
+        $w = $im->getImageWidth();
+        $h = $im->getImageHeight();
+
+        $box = new \ImagickDraw();
+        $box->setFillColor(new \ImagickPixel('white'));
+        $box->rectangle($w - 16, 0, $w, 16);
+        $im->drawImage($box);
+        $im->compositeImage($watermark, \Imagick::COMPOSITE_ATOP, $w-16, 0);
+    }
+
     private function sendForeignBrandedBanner($foundBanner): \Symfony\Component\HttpFoundation\Response
     {
         $response = new Response();
-
         $img = Cache::remember(
             'banner_cache.' . $foundBanner['serve_url'],
             (int)(60),
@@ -154,14 +164,27 @@ class SupplyController extends Controller
                     throw new NotFoundHttpException('Content hash mismatch');
                 }
 
-                $img = Image::make($bannerContent);
-                $watermark = Image::make(public_path('img/watermark.png'))->resize(16, 16);
+                $watermark = new \Imagick(public_path('img/watermark.png'));
+                $watermark->resizeImage(16, 16, \Imagick::FILTER_BOX, 0);
 
-                $img->insert(Image::canvas(16, 16, '#FFFFFF'), 'top-right');
-                $img->insert($watermark, 'top-right');
+                $im = new \Imagick();
+                $im->readImageBlob($bannerContent);
+
+                if ($im->getImageFormat() == 'GIF') {
+                    $parts = $im->coalesceImages();
+                    $i = 0;
+                    do {
+                        $this->watermarkImage($parts, $watermark);
+
+                    } while ($parts->nextImage());
+                    $im = $parts->deconstructImages();
+                } else {
+                    $this->watermarkImage($im, $watermark);
+                }
+
                 return [
-                    'data' => $img->encode(),
-                    'mime' => $img->mime()
+                    'data' => $im->getImagesBlob(),
+                    'mime' => $im->getImageMimeType()
                 ];
             }
         );
