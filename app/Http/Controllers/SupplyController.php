@@ -47,6 +47,8 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use Illuminate\Support\Facades\Cache;
+use Intervention\Image\ImageManagerStatic as Image;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -132,10 +134,44 @@ class SupplyController extends Controller
 
         $foundBanner = $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)->first();
         if ($foundBanner) {
-            return new RedirectResponse($foundBanner['serve_url']);
-            //TODO: act as proxy - download banner and check hash
+            return $this->sendForeignBrandedBanner($foundBanner);
         }
         throw new NotFoundHttpException('Could not find banner');
+    }
+
+    private function sendForeignBrandedBanner($foundBanner): \Symfony\Component\HttpFoundation\Response
+    {
+        $response = new Response();
+
+        $img = Cache::remember(
+            'banner_cache.' . $foundBanner['serve_url'],
+            (int)(60),
+            function () use ($foundBanner) {
+                $bannerContent = file_get_contents($foundBanner['serve_url']);
+                $hash = sha1($bannerContent);
+
+                if ($hash != $foundBanner['creative_sha1']) {
+                    throw new NotFoundHttpException('Content hash mismatch');
+                }
+
+                $img = Image::make($bannerContent);
+                $watermark = Image::make(public_path('img/watermark.png'))->resize(16, 16);
+
+                $img->insert(Image::canvas(16, 16, '#FFFFFF'), 'top-right');
+                $img->insert($watermark, 'top-right');
+                return [
+                    'data' => $img->encode(),
+                    'mime' => $img->mime()
+                ];
+            }
+        );
+
+
+        $response->setContent($img['data']);
+
+        $response->headers->set('Content-Type', $img['mime']);
+
+        return $response;
     }
 
     /**
