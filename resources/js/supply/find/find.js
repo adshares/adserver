@@ -867,16 +867,12 @@ var fetchBanner = function (banner, context, zone_options) {
         context.click_url = addUrlParam(banner.click_url,
             {
                 'cid': context.cid,
-                'pto': banner.pay_to,
-                'pfr': banner.pay_from,
                 'ctx': contextParam,
                 'iid': getImpressionId()
             });
         context.view_url = addUrlParam(banner.view_url,
             {
                 'cid': context.cid,
-                'pto': banner.pay_to,
-                'pfr': banner.pay_from,
                 'ctx': contextParam,
                 'iid': getImpressionId()
             });

@@ -123,12 +123,19 @@ class SupplyController extends Controller
         $zone = Zone::fetchByPublicId($zone_id);
         $response = new Response();
         $queryData = [
-            'page' => [
+            'page'  => [
                 "iid" => $impression_id,
                 "url" => $zone->site->url,
             ],
             'zones' => [
-                ['zone' => $zone_id, 'banner_type' => [$request->get('type')]],
+                [
+                    'zone'    => $zone_id,
+                    'options' => [
+                        'banner_type' => [
+                            $request->get('type')
+                        ]
+                    ]
+                ],
             ]
         ];
 
@@ -148,7 +155,7 @@ class SupplyController extends Controller
         $box->setFillColor(new \ImagickPixel('white'));
         $box->rectangle($w - 16, 0, $w, 16);
         $im->drawImage($box);
-        $im->compositeImage($watermark, \Imagick::COMPOSITE_ATOP, $w-16, 0);
+        $im->compositeImage($watermark, \Imagick::COMPOSITE_ATOP, $w - 16, 0);
     }
 
     private function sendForeignBrandedBanner($foundBanner): \Symfony\Component\HttpFoundation\Response
@@ -380,7 +387,6 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $eventId = Utils::createCaseIdContainingEventType($caseId, 'click');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         try {
             $zoneId = ($networkCase->zone_id ?? null) ?: Utils::getZoneIdFromContext($request->query->get('ctx'));
@@ -392,7 +398,6 @@ class SupplyController extends Controller
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
-        $url = Utils::addUrlParameter($url, 'eid', $eventId);
         $url = Utils::addUrlParameter($url, 'iid', $impressionId);
 
         $response = new RedirectResponse($url);
@@ -494,7 +499,6 @@ class SupplyController extends Controller
         }
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainingEventType($caseId, 'view');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         try {
@@ -507,13 +511,13 @@ class SupplyController extends Controller
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
-        $url = Utils::addUrlParameter($url, 'eid', $eventId);
-        $url = Utils::addUrlParameter($url, 'iid', $impressionId);
-        if ($request->query->has('simple')) {
-            $url = Utils::addUrlParameter($url, 'simple', 1);
-        }
 
         $response = new RedirectResponse($url);
+
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+
         $response->send();
 
         $networkCase = NetworkCase::create(
