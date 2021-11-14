@@ -183,7 +183,7 @@ class GuzzleAdSelectClient implements AdSelect
                         'uuid'         => $site->uuid,
                     ];
                     if (isset($zones[$i]['options']['banner_type'])) {
-                        $sitesMap[$siteId]['filters']['require']['type'] = $zones[$i]['options']['banner_type'];
+                        $sitesMap[$siteId]['filters']['require']['type'] = (array)$zones[$i]['options']['banner_type'];
                     }
                     // always include active pop zones
                     foreach ($site->zones as $popupZone) {
