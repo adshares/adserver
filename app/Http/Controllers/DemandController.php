@@ -378,21 +378,24 @@ SQL;
             $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
             $response->headers->set(self::CONTENT_TYPE, 'image/gif');
         } elseif ($request->query->get('json')) {
-            return new JsonResponse(
-                [
-                    'log_url'         => ServeDomain::changeUrlHost(
-                        (new SecureUrl(
-                            route('banner-context', ['id' => $eventId])
-                        ))->toString()
-                    ),
-                    'view_script_url' => ServeDomain::changeUrlHost(
-                        (new SecureUrl(
-                            url('-/view.js')
-                        ))->toString()
-                    ),
-                    'aduser_url'      => $adUserUrl,
-                ]
+            $response->setContent(
+                json_encode(
+                    [
+                        'log_url'         => ServeDomain::changeUrlHost(
+                            (new SecureUrl(
+                                route('banner-context', ['id' => $eventId])
+                            ))->toString()
+                        ),
+                        'view_script_url' => ServeDomain::changeUrlHost(
+                            (new SecureUrl(
+                                url('-/view.js')
+                            ))->toString()
+                        ),
+                        'aduser_url'      => $adUserUrl,
+                    ]
+                )
             );
+            $response->headers->set(self::CONTENT_TYPE, 'application/json');
         } else {
             $response->setContent(
                 view(
@@ -412,7 +415,7 @@ SQL;
                     ]
                 )
             );
-    }
+        }
 
         $response->send();
 
