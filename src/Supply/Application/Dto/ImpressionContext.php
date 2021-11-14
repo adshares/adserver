@@ -60,6 +60,10 @@ final class ImpressionContext
         $refererList = $headersArray['referer'] ?? [];
         $domain = $refererList[0] ?? '';
 
+        if (isset($context->site->page)) {
+            $domain = $context->site->page;
+        }
+
         $ip = $context->device->ip;
         $extensions = get_object_vars($context->device->extensions ?? new \stdClass());
 
