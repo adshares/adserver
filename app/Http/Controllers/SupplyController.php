@@ -299,7 +299,52 @@ class SupplyController extends Controller
         return $foundBanners;
     }
 
-    public function findScript(): StreamedResponse
+    public function findScript(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        if ($request->query->get('medium') == 'cryptovoxels') {
+            return $this->cryptovoxelsScript();
+        }
+        return $this->webScript();
+    }
+
+    public function cryptovoxelsScript(): StreamedResponse
+    {
+        $params = [
+            config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
+            '.' . CssUtils::normalizeClass(config('app.adserver_id')),
+        ];
+
+        $jsPath = public_path('-/cryptovoxels.js');
+
+        $response = new StreamedResponse();
+        $response->setCallback(
+            static function () use ($jsPath, $params) {
+                echo str_replace(
+                    [
+                        '{{ ORIGIN }}',
+                        '{{ SELECTOR }}',
+                    ],
+                    $params,
+                    file_get_contents($jsPath)
+                );
+            }
+        );
+
+        $response->headers->set('Content-Type', 'text/javascript');
+        $response->setCache(
+            [
+                'last_modified' => new DateTime(),
+                'max_age' => 3600 * 1 * 1,
+                's_maxage' => 3600 * 1 * 1,
+                'private' => false,
+                'public' => true,
+            ]
+        );
+
+        return $response;
+    }
+
+    public function webScript(): StreamedResponse
     {
         $params = [
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),

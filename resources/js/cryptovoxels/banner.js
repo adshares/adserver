@@ -1,6 +1,4 @@
-
-var zoneId = '14afc6bd84ea41cc8d8c47950ff500e4';
-var serverOrigin = 'app.adaround.net';
+var serverOrigin = '{{ ORIGIN }}';
 
 var getRandId = function(bytes) {
     var d = new Date().getTime();
@@ -96,6 +94,7 @@ var getContext = function (iid) {
     }
 };
 
+var refreshTime = 10000;
 var cid = getCid();
 var viewed = false;
 
@@ -107,19 +106,64 @@ var lastImpressionId = null;
 var adViewed = false;
 var banner;
 var context;
+var contextParam;
 
-let displayAd = function (banner) {
-    document.getElementById('test').src = banner.serve_url;
+let showWatermark = function() {
+    let watermark = parcel.getFeatureById(feature.uuid + '-mark');
+    if(!watermark) {
+        watermark  = parcel.createFeature('image', {
+            id:  feature.uuid + '-mark'
+        });
+    }
+
+    let size = Math.sqrt(feature.scale.x * feature.scale.y) / 10
+    let scale = {
+        x: size,
+        y: size
+    };
+
+    let pos = new Vector3((feature.scale.x - scale.x) / 2, (feature.scale.y - scale.y) / 2, -0.01);
+    let matrix = Matrix.RotationYawPitchRoll(feature.rotation.y, feature.rotation.x, feature.rotation.z);
+    pos = Vector3.TransformCoordinates(pos, matrix);
+
+    let url = addUrlParam(serverOrigin + '/supply/why', {
+        'bid': banner.id,
+        'cid': banner.cid,
+        'ctx': contextParam,
+        'iid': lastImpressionId,
+        'url': banner.serve_url,
+    });
+
+    watermark.set({
+        position: [feature.position.x+pos.x, feature.position.y+pos.y, feature.position.z+pos.z],
+        rotation: [feature.rotation.x, feature.rotation.y, feature.rotation.z],
+        scale:  [scale.x, scale.y, 0],
+        'stretched': true,
+        'url': 'https://app.adaround.net/img/watermark.png',
+        'link': url,
+        'blendMode': 'Combine'
+    });
 }
 
+let displayAd = function (banner) {
+    feature.set({
+        'url': banner.serve_url,
+        'link': banner.click_url
+    });
+    showWatermark();
+};
+
 let loadAd = function (e) {
-    if (lastImpressionTime && (new Date() * 1) - lastImpressionTime < 60000) {
-        console.log('waiting for refresh ' + (60000 - (new Date() * 1) + lastImpressionTime));
+    if (lastImpressionTime && (new Date() * 1) - lastImpressionTime < refreshTime) {
+        console.log('waiting for refresh ' + (refreshTime - (new Date() * 1) + lastImpressionTime));
     } else {
-        lastImpressionTime = (new Date() * 1) + Math.random() * 10000;
+        lastImpressionTime = (new Date() * 1);
         lastImpressionId = getImpressionId();
 
-
+        feature.set({
+            'lastImpTime': lastImpressionTime,
+            'lastImpId': lastImpressionId
+        });
         fetch(serverOrigin + '/supply/register?iid=' + lastImpressionId);
 
         var params = [];
@@ -139,7 +183,7 @@ let loadAd = function (e) {
                 banner.cid = getCid();
 
                 banner.context = {page: params[0], zone: params[1]};
-                var contextParam = encodeZones([banner.context.page]);
+                contextParam = encodeZones([banner.context.page]);
                 banner.click_url = addUrlParam(banner.click_url,
                     {
                         'cid': banner.cid,

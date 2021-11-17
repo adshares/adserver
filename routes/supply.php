@@ -30,8 +30,9 @@ Route::post('/supply/find', [SupplyController::class, 'find']);
 
 Route::get('/supply/s/{zone_id}/{impression_id}', [SupplyController::class, 'findSimple']);
 
-Route::get('/main.js', [SupplyController::class, 'findScript']);
-Route::get('/supply/find.js', [SupplyController::class, 'findScript']);
+Route::get('/main.js', [SupplyController::class, 'webScript']);
+Route::get('/supply/find.js', [SupplyController::class, 'webScript']);
+Route::get('/supply/cryptovoxels.js', [SupplyController::class, 'cryptovoxelsScript']);
 Route::get('/supply/register', [SupplyController::class, 'register']);
 
 Route::get('/l/n/view/{banner_id}', [SupplyController::class, 'logNetworkView']);
