@@ -529,13 +529,14 @@ var getActiveZones = function(call_func, retryNo) {
     var _tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = _tags.length;
 
-    var retryFn = function() {
-        if(retryNo < 20) {
+    var retryFn = function () {
+        retryNo = retryNo ? retryNo : 0;
+        if (retryNo < 20) {
             setTimeout(function () {
-                getActiveZones(call_func, retryNo ? (retryNo + 1) : 1);
+                getActiveZones(call_func, retryNo + 1);
             }, 100);
         }
-    }
+    };
 
     var tags = [];
     for(var i=0;i<n;i++) {
