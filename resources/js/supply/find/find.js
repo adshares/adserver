@@ -529,17 +529,21 @@ var getActiveZones = function(call_func, retryNo) {
     var _tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = _tags.length;
 
+    var retryFn = function() {
+        if(retryNo < 20) {
+            setTimeout(function () {
+                getActiveZones(call_func, retryNo ? (retryNo + 1) : 1);
+            }, 100);
+        }
+    }
+
     var tags = [];
     for(var i=0;i<n;i++) {
         tags[i] = _tags[i];
     }
 
     if (n == 0) {
-        if(retryNo < 5) {
-            setTimeout(function () {
-                getActiveZones(call_func, retryNo ? (retryNo + 1) : 1);
-            }, 100);
-        }
+        retryFn();
         return;
     }
 
@@ -618,6 +622,7 @@ var getActiveZones = function(call_func, retryNo) {
     });
 
     if(valid == 0) {
+        retryFn();
         return;
     }
 
