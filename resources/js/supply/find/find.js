@@ -424,11 +424,6 @@ var aduserPixel = function (impressionId, onload) {
     var url = serverOrigin + path + impressionId;
 
     if(dwmthURLS[url]) return false;
-    // adusers from other find.js
-    var tags = document.querySelectorAll('iframe[src*="' + path + '"]');
-    if(tags.length) {
-        return false;
-    }
 
     var iframe = createIframeFromUrl(url);
 
@@ -530,7 +525,7 @@ var parseZoneOptions = function(str) {
 
 var abd;
 
-var getActiveZones = function(call_func) {
+var getActiveZones = function(call_func, retryNo) {
     var _tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = _tags.length;
 
@@ -540,6 +535,11 @@ var getActiveZones = function(call_func) {
     }
 
     if (n == 0) {
+        if(retryNo < 5) {
+            setTimeout(function () {
+                getActiveZones(call_func, retryNo ? (retryNo + 1) : 1);
+            }, 100);
+        }
         return;
     }
 
