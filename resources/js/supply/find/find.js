@@ -435,7 +435,7 @@ var aduserPixel = function (impressionId, onload) {
             onload();
         };
         iframe.onerror = iframe.onabort = iframe.onload = loadFn;
-        setTimeout(loadFn, 500);
+        setTimeout(loadFn, 1);
     }
 
 
