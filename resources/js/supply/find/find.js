@@ -531,11 +531,9 @@ var getActiveZones = function(call_func, retryNo) {
 
     var retryFn = function () {
         retryNo = retryNo ? retryNo : 0;
-        if (retryNo < 20) {
-            setTimeout(function () {
-                getActiveZones(call_func, retryNo + 1);
-            }, 100);
-        }
+        setTimeout(function () {
+            getActiveZones(call_func, retryNo + 1);
+        }, retryNo < 20 ? 100 : 500);
     };
 
     var tags = [];
