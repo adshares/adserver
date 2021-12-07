@@ -424,11 +424,6 @@ var aduserPixel = function (impressionId, onload) {
     var url = serverOrigin + path + impressionId;
 
     if(dwmthURLS[url]) return false;
-    // adusers from other find.js
-    var tags = document.querySelectorAll('iframe[src*="' + path + '"]');
-    if(tags.length) {
-        return false;
-    }
 
     var iframe = createIframeFromUrl(url);
 
@@ -440,7 +435,7 @@ var aduserPixel = function (impressionId, onload) {
             onload();
         };
         iframe.onerror = iframe.onabort = iframe.onload = loadFn;
-        setTimeout(loadFn, 500);
+        setTimeout(loadFn, 1);
     }
 
 
@@ -530,9 +525,16 @@ var parseZoneOptions = function(str) {
 
 var abd;
 
-var getActiveZones = function(call_func) {
+var getActiveZones = function(call_func, retryNo) {
     var _tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = _tags.length;
+
+    var retryFn = function () {
+        retryNo = retryNo ? retryNo : 0;
+        setTimeout(function () {
+            getActiveZones(call_func, retryNo + 1);
+        }, retryNo < 20 ? 100 : 500);
+    };
 
     var tags = [];
     for(var i=0;i<n;i++) {
@@ -540,6 +542,7 @@ var getActiveZones = function(call_func) {
     }
 
     if (n == 0) {
+        retryFn();
         return;
     }
 
@@ -618,6 +621,7 @@ var getActiveZones = function(call_func) {
     });
 
     if(valid == 0) {
+        retryFn();
         return;
     }
 
@@ -861,16 +865,12 @@ var fetchBanner = function (banner, context, zone_options) {
         context.click_url = addUrlParam(banner.click_url,
             {
                 'cid': context.cid,
-                'pto': banner.pay_to,
-                'pfr': banner.pay_from,
                 'ctx': contextParam,
                 'iid': getImpressionId()
             });
         context.view_url = addUrlParam(banner.view_url,
             {
                 'cid': context.cid,
-                'pto': banner.pay_to,
-                'pfr': banner.pay_from,
                 'ctx': contextParam,
                 'iid': getImpressionId()
             });

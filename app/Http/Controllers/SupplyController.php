@@ -40,10 +40,14 @@ use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
+use BN\Red;
 use DateTime;
 use DateTimeInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -58,6 +62,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
+use function GuzzleHttp\Psr7\parse_query;
 use function urlencode;
 
 class SupplyController extends Controller
@@ -105,10 +110,121 @@ class SupplyController extends Controller
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
+        return self::json($this->findBanners($decodedQueryData, $request, $response, $contextProvider, $bannerFinder));
+    }
+
+    public function findSimple(
+        Request $request,
+        AdUser $contextProvider,
+        AdSelect $bannerFinder,
+        string $zone_id,
+        string $impression_id
+    ) {
+        $zone = Zone::fetchByPublicId($zone_id);
+        $response = new Response();
+        $queryData = [
+            'page'  => [
+                "iid" => $impression_id,
+                "url" => $zone->site->url,
+            ],
+            'zones' => [
+                [
+                    'zone'    => $zone_id,
+                    'options' => [
+                        'banner_type' => [
+                            $request->get('type')
+                        ]
+                    ]
+                ],
+            ]
+        ];
+
+        $foundBanner = $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)->first();
+        if ($foundBanner) {
+            return $this->sendForeignBrandedBanner($foundBanner);
+        }
+        throw new NotFoundHttpException('Could not find banner');
+    }
+
+    private function watermarkImage(\Imagick $im, \Imagick $watermark)
+    {
+        $w = $im->getImageWidth();
+        $h = $im->getImageHeight();
+
+        $box = new \ImagickDraw();
+        $box->setFillColor(new \ImagickPixel('white'));
+        $box->rectangle($w - 16, 0, $w, 16);
+        $im->drawImage($box);
+        $im->compositeImage($watermark, \Imagick::COMPOSITE_ATOP, $w - 16, 0);
+    }
+
+    private function sendForeignBrandedBanner($foundBanner): \Symfony\Component\HttpFoundation\Response
+    {
+        $response = new Response();
+        $img = Cache::remember(
+            'banner_cache.' . $foundBanner['serve_url'],
+            (int)(60),
+            function () use ($foundBanner) {
+                $bannerContent = file_get_contents($foundBanner['serve_url']);
+                $hash = sha1($bannerContent);
+
+                if ($hash != $foundBanner['creative_sha1']) {
+                    throw new NotFoundHttpException('Content hash mismatch');
+                }
+
+                $watermark = new \Imagick(public_path('img/watermark.png'));
+                $watermark->resizeImage(16, 16, \Imagick::FILTER_BOX, 0);
+
+                $im = new \Imagick();
+                $im->readImageBlob($bannerContent);
+
+                if ($im->getImageFormat() == 'GIF') {
+                    $parts = $im->coalesceImages();
+                    $i = 0;
+                    do {
+                        $this->watermarkImage($parts, $watermark);
+
+                    } while ($parts->nextImage());
+                    $im = $parts->deconstructImages();
+                } else {
+                    $this->watermarkImage($im, $watermark);
+                }
+
+                return [
+                    'data' => $im->getImagesBlob(),
+                    'mime' => $im->getImageMimeType()
+                ];
+            }
+        );
+
+
+        $response->setContent($img['data']);
+
+        $response->headers->set('Content-Type', $img['mime']);
+
+        return $response;
+    }
+
+    /**
+     * @param array    $decodedQueryData
+     * @param Request  $request
+     * @param Response $response
+     * @param AdUser   $contextProvider
+     * @param AdSelect $bannerFinder
+     *
+     * @return FoundBanners
+     */
+    private function findBanners(
+        array $decodedQueryData,
+        Request $request,
+        Response $response,
+        AdUser $contextProvider,
+        AdSelect $bannerFinder
+    ): FoundBanners {
         $zones = $decodedQueryData['zones'] ?? [];
 
         if (!$zones) {
-            return self::json([]);
+            return new FoundBanners();
         }
 
         $zones = array_slice($zones, 0, config('app.max_page_zones'));
@@ -142,11 +258,11 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
+        $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {
-            return self::json([]);
+            return new FoundBanners();
         }
 
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
@@ -155,26 +271,80 @@ class SupplyController extends Controller
                     $zone['options']['cpa_only'] = true;
                 }
             } elseif (config('app.env') != 'dev') {
-                return self::json([]);
+                return new FoundBanners();
             }
         }
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context);
 
-        NetworkImpression::register(
-            Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
-            Utils::hexUuidFromBase64UrlWithChecksum($tid),
-            $impressionContext,
-            $userContext,
-            $foundBanners,
-            $zones
-        );
+        if (
+            $foundBanners->exists(
+                function ($key, $element) {
+                    return $element != null;
+                }
+            )
+        ) {
+            NetworkImpression::register(
+                Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
+                Utils::hexUuidFromBase64UrlWithChecksum($tid),
+                $impressionContext,
+                $userContext,
+                $foundBanners,
+                $zones
+            );
+        }
 
-        return self::json($foundBanners);
+
+        return $foundBanners;
     }
 
-    public function findScript(): StreamedResponse
+    public function findScript(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        if ($request->query->get('medium') == 'cryptovoxels') {
+            return $this->cryptovoxelsScript();
+        }
+        return $this->webScript();
+    }
+
+    public function cryptovoxelsScript(): StreamedResponse
+    {
+        $params = [
+            config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
+            '.' . CssUtils::normalizeClass(config('app.adserver_id')),
+        ];
+
+        $jsPath = public_path('-/cryptovoxels.js');
+
+        $response = new StreamedResponse();
+        $response->setCallback(
+            static function () use ($jsPath, $params) {
+                echo str_replace(
+                    [
+                        '{{ ORIGIN }}',
+                        '{{ SELECTOR }}',
+                    ],
+                    $params,
+                    file_get_contents($jsPath)
+                );
+            }
+        );
+
+        $response->headers->set('Content-Type', 'text/javascript');
+        $response->setCache(
+            [
+                'last_modified' => new DateTime(),
+                'max_age' => 3600 * 1 * 1,
+                's_maxage' => 3600 * 1 * 1,
+                'private' => false,
+                'public' => true,
+            ]
+        );
+
+        return $response;
+    }
+
+    public function webScript(): StreamedResponse
     {
         $params = [
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
@@ -211,6 +381,37 @@ class SupplyController extends Controller
         return $response;
     }
 
+
+
+    public function logNetworkSimpleClick(Request $request): RedirectResponse
+    {
+        $impressionId = $request->query->get('iid');
+        $networkImpression = NetworkImpression::fetchByImpressionId(
+            Utils::hexUuidFromBase64UrlWithChecksum($impressionId)
+        );
+        if (null === $networkImpression || !$networkImpression->context->banner_id) {
+            throw new NotFoundHttpException();
+        }
+
+        $clickQuery = parse_query(parse_url($networkImpression->context->click_url, PHP_URL_QUERY));
+
+        $request->query->set('r', $clickQuery['r']);
+        $request->query->set(
+            'ctx',
+            Utils::encodeZones(
+                [
+                    'page' => [
+                        'zone' => $networkImpression->context->zone_id,
+                        'url' =>  $networkImpression->context->site->page,
+                        'frame' => $networkImpression->context->site->inframe,
+                    ]
+                ]
+            )
+        );
+        $request->query->set('simple', '1');
+        return $this->logNetworkClick($request, $networkImpression->context->banner_id);
+    }
+
     public function logNetworkClick(Request $request, string $bannerId): RedirectResponse
     {
         $this->validateEventRequest($request);
@@ -231,10 +432,9 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $eventId = Utils::createCaseIdContainingEventType($caseId, 'click');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         try {
-            $zoneId = Utils::getZoneIdFromContext($request->query->get('ctx'));
+            $zoneId = ($networkCase->zone_id ?? null) ?: Utils::getZoneIdFromContext($request->query->get('ctx'));
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
@@ -243,7 +443,6 @@ class SupplyController extends Controller
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
-        $url = Utils::addUrlParameter($url, 'eid', $eventId);
         $url = Utils::addUrlParameter($url, 'iid', $impressionId);
 
         $response = new RedirectResponse($url);
@@ -298,6 +497,35 @@ class SupplyController extends Controller
         return $url;
     }
 
+    public function logNetworkSimpleView(Request $request): RedirectResponse
+    {
+        $impressionId = $request->query->get('iid');
+        $networkImpression = NetworkImpression::fetchByImpressionId(
+            Utils::hexUuidFromBase64UrlWithChecksum($impressionId)
+        );
+        if (null === $networkImpression || !$networkImpression->context->banner_id) {
+            throw new NotFoundHttpException();
+        }
+
+        $viewQuery = parse_query(parse_url($networkImpression->context->view_url, PHP_URL_QUERY));
+
+        $request->query->set('r', $viewQuery['r']);
+        $request->query->set(
+            'ctx',
+            Utils::encodeZones(
+                [
+                    'page' => [
+                        'zone' => $networkImpression->context->zone_id,
+                        'url' =>  $networkImpression->context->site->page,
+                        'frame' => $networkImpression->context->site->inframe,
+                    ]
+                ]
+            )
+        );
+        $request->query->set('simple', '1');
+        return $this->logNetworkView($request, $networkImpression->context->banner_id);
+    }
+
     public function logNetworkView(Request $request, string $bannerId): RedirectResponse
     {
         $this->validateEventRequest($request);
@@ -316,10 +544,10 @@ class SupplyController extends Controller
         }
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainingEventType($caseId, 'view');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
+
         try {
-            $zoneId = Utils::getZoneIdFromContext($request->query->get('ctx'));
+            $zoneId = ($networkImpression->context->zone_id ?? null) ?: Utils::getZoneIdFromContext($request->query->get('ctx'));
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
@@ -328,10 +556,13 @@ class SupplyController extends Controller
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
-        $url = Utils::addUrlParameter($url, 'eid', $eventId);
-        $url = Utils::addUrlParameter($url, 'iid', $impressionId);
 
         $response = new RedirectResponse($url);
+
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+
         $response->send();
 
         $networkCase = NetworkCase::create(

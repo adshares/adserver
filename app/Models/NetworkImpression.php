@@ -90,8 +90,13 @@ class NetworkImpression extends Model
         $log->tracking_id = $trackingId;
 
         $context = $impressionContext->toArray();
-//        $context['banners'] = $foundBanners->toArray();
-//        $context['zones'] = $zones;
+        if ($foundBanners->count() === 1 && $foundBanners->first()) {
+            $context['banner_id'] = $foundBanners->first()['id'];
+            $context['zone_id'] = $foundBanners->first()['zone_id'];
+            $context['view_url'] = $foundBanners->first()['view_url'];
+            $context['click_url'] = $foundBanners->first()['click_url'];
+        }
+
         $log->context = $context;
 
         $log->setFieldsDependentOnUserContext($userContext);
