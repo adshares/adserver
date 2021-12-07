@@ -325,6 +325,11 @@ SQL;
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
         $response = new Response();
+
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+
         $impressionId = $request->query->get('iid');
 
         if ($impressionId) {
@@ -369,18 +374,48 @@ SQL;
             $adUserUrl = null;
         }
 
-        $response->setContent(view(
-            'demand/view-event',
-            [
-                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(
-                    route('banner-context', ['id' => $eventId])
-                ))->toString()),
-                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(
-                    url('-/view.js')
-                ))->toString()),
-                'aduser_url' => $adUserUrl,
-            ]
-        ));
+        if ($request->query->get('simple')) {
+            $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
+            $response->headers->set(self::CONTENT_TYPE, 'image/gif');
+        } elseif ($request->query->get('json')) {
+            $response->setContent(
+                json_encode(
+                    [
+                        'log_url'         => ServeDomain::changeUrlHost(
+                            (new SecureUrl(
+                                route('banner-context', ['id' => $eventId])
+                            ))->toString()
+                        ),
+                        'view_script_url' => ServeDomain::changeUrlHost(
+                            (new SecureUrl(
+                                url('-/view.js')
+                            ))->toString()
+                        ),
+                        'aduser_url'      => $adUserUrl,
+                    ]
+                )
+            );
+            $response->headers->set(self::CONTENT_TYPE, 'application/json');
+        } else {
+            $response->setContent(
+                view(
+                    'demand/view-event',
+                    [
+                        'log_url'         => ServeDomain::changeUrlHost(
+                            (new SecureUrl(
+                                route('banner-context', ['id' => $eventId])
+                            ))->toString()
+                        ),
+                        'view_script_url' => ServeDomain::changeUrlHost(
+                            (new SecureUrl(
+                                url('-/view.js')
+                            ))->toString()
+                        ),
+                        'aduser_url'      => $adUserUrl,
+                    ]
+                )
+            );
+        }
 
         $response->send();
 
