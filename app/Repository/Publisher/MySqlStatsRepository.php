@@ -554,10 +554,11 @@ class MySqlStatsRepository implements StatsRepository
     }
 
     public function fetchStatsToReport(
-        ?string $publisherId,
+        ?array $publisherIds,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $siteId = null
+        ?string $siteId = null,
+        bool $showPublishers = false
     ): DataCollection {
         $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
@@ -565,12 +566,12 @@ class MySqlStatsRepository implements StatsRepository
             ->appendSiteIdGroupBy()
             ->appendZoneIdGroupBy();
 
-        if (null !== $publisherId) {
-            $queryBuilder->setPublisherId($publisherId);
-        } else {
+        if (null !== $publisherIds) {
+            $queryBuilder->setPublisherIds($publisherIds);
+        }
+        if ($showPublishers) {
             $queryBuilder->appendPublisherIdGroupBy();
         }
-
         if ($siteId) {
             $queryBuilder->appendSiteIdWhereClause($siteId);
         }
@@ -602,7 +603,7 @@ class MySqlStatsRepository implements StatsRepository
                 $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
 
-            if (null === $publisherId) {
+            if ($showPublishers) {
                 $selectedPublisherId = $row->publisher_id;
                 $selectedPublisherEmail = $row->publisher_email;
             } else {
@@ -623,8 +624,8 @@ class MySqlStatsRepository implements StatsRepository
         $resultWithoutEvents =
             $this->getDataEntriesWithoutEvents(
                 $queryResult,
-                $this->fetchAllZonesWithSiteAndUser($publisherId, $siteId),
-                $publisherId
+                $this->fetchAllZonesWithSiteAndUser($publisherIds, $siteId),
+                $showPublishers
             );
 
         return new DataCollection(array_merge($result, $resultWithoutEvents));
@@ -689,7 +690,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $zoneId = null
     ): array {
         $queryBuilder = (new MySqlAggregatedStatsQueryBuilder($type))
-            ->setPublisherId($publisherId)
+            ->setPublisherIds([$publisherId])
             ->setDateRange($dateStart, $dateEnd)
             ->appendResolution($resolution);
 
@@ -961,7 +962,7 @@ class MySqlStatsRepository implements StatsRepository
         return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
     }
 
-    private function getDataEntriesWithoutEvents(array $queryResult, array $allZones, ?string $publisherId): array
+    private function getDataEntriesWithoutEvents(array $queryResult, array $allZones, bool $showPublishers): array
     {
         $result = [];
 
@@ -979,7 +980,7 @@ class MySqlStatsRepository implements StatsRepository
             if (!$isZonePresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                if (null === $publisherId) {
+                if ($showPublishers) {
                     $selectedPublisherId = $zone->user_id;
                     $selectedPublisherEmail = $zone->user_email;
                 } else {
@@ -1002,7 +1003,7 @@ class MySqlStatsRepository implements StatsRepository
         return $result;
     }
 
-    private function fetchAllZonesWithSiteAndUser(?string $publisherId, ?string $siteId): array
+    private function fetchAllZonesWithSiteAndUser(?array $publisherIds, ?string $siteId): array
     {
         $query = <<<SQL
 SELECT u.id    AS user_id,
@@ -1017,8 +1018,13 @@ FROM users u
 WHERE s.deleted_at IS NULL
 SQL;
 
-        if (null !== $publisherId) {
-            $query .= sprintf(' AND u.uuid = 0x%s', $publisherId);
+        if (null !== $publisherIds) {
+            $query .= empty($publisherIds) ?
+                ' AND 0=1' :
+                sprintf(
+                    ' AND u.uuid IN (%s)',
+                    implode(',', array_map(fn($id) => sprintf('0x%s', $id), $publisherIds))
+                );
         }
         if (null !== $siteId) {
             $query .= sprintf(' AND s.uuid = 0x%s', $siteId);
@@ -1039,7 +1045,7 @@ SQL;
                 ->appendSiteIdGroupBy();
 
         if (null !== $publisherId) {
-            $queryBuilder->setPublisherId($publisherId);
+            $queryBuilder->setPublisherIds([$publisherId]);
         } else {
             $queryBuilder->appendPublisherIdGroupBy();
         }
@@ -1092,7 +1098,7 @@ SQL;
                 ->setDateRange($dateStart, $dateEnd);
 
         if (null !== $publisherId) {
-            $queryBuilder->setPublisherId($publisherId);
+            $queryBuilder->setPublisherIds([$publisherId]);
         }
 
         if ($siteId) {

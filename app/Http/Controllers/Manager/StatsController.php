@@ -209,7 +209,7 @@ class StatsController extends Controller
 
         try {
             $input = new AdvertiserStatsInput(
-                $user->uuid,
+                [$user->uuid],
                 $from,
                 $to,
                 $campaignUuid
@@ -271,19 +271,26 @@ class StatsController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $isModerator = $user->isModerator();
+        $isAgency = $user->isAgency();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isModerator) {
+
+        $publisherIds = null;
+        if ($isAgency) {
+            $publisherIds = $user->getReferralUuids();
+            $publisherIds[] = $user->uuid;
+        } elseif (!$isModerator) {
             $this->validateUserAsPublisher($user);
+            $publisherIds = [$user->uuid];
         }
 
         try {
-            //TODO agency support
             $input = new PublisherStatsInput(
-                $isModerator ? null : $user->uuid,
+                $publisherIds,
                 $from,
                 $to,
-                $siteId
+                $siteId,
+                $isModerator || $isAgency
             );
         } catch (PublisherInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -294,7 +301,9 @@ class StatsController extends Controller
         $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
-        return (new PublisherReportResponse($data, $name, (string)config('app.name'), $isModerator))->responseStream();
+        return (new PublisherReportResponse(
+            $data, $name, (string)config('app.name'), $isModerator || $isAgency
+        ))->responseStream();
     }
 
     public function advertiserReport(
@@ -309,19 +318,26 @@ class StatsController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $isModerator = $user->isModerator();
+        $isAgency = $user->isAgency();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isModerator) {
+
+        $advertiserIds = null;
+        if ($isAgency) {
+            $advertiserIds = $user->getReferralUuids();
+            $advertiserIds[] = $user->uuid;
+        } elseif (!$isModerator) {
             $this->validateUserAsAdvertiser($user);
+            $advertiserIds = [$user->uuid];
         }
 
         try {
-            //TODO agency support
             $input = new AdvertiserStatsInput(
-                $isModerator ? null : $user->uuid,
+                $advertiserIds,
                 $from,
                 $to,
-                $campaignUuid
+                $campaignUuid,
+                $isModerator || $isAgency
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -332,7 +348,9 @@ class StatsController extends Controller
         $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
-        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isModerator))->responseStream();
+        return (new AdvertiserReportResponse(
+            $data, $name, (string)config('app.name'), $isModerator || $isAgency
+        ))->responseStream();
     }
 
     public function advertiserReportFileCreate(Request $request, string $dateStart, string $dateEnd): JsonResponse
@@ -345,19 +363,26 @@ class StatsController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $isModerator = $user->isModerator();
+        $isAgency = $user->isAgency();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isModerator) {
+
+        $advertiserIds = null;
+        if ($isAgency) {
+            $advertiserIds = $user->getReferralUuids();
+            $advertiserIds[] = $user->uuid;
+        } elseif (!$isModerator) {
             $this->validateUserAsAdvertiser($user);
+            $advertiserIds = [$user->uuid];
         }
 
         try {
-            //TODO agency support
             $input = new AdvertiserStatsInput(
-                $isModerator ? null : $user->uuid,
+                $advertiserIds,
                 $from,
                 $to,
-                $campaignUuid
+                $campaignUuid,
+                $isModerator || $isAgency
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -378,7 +403,7 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetchReportData($input);
         $data = $result->toArray();
-        (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isModerator))
+        (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isModerator || $isAgency))
             ->saveAsFile($reportMeta->uuid);
 
         $reportMeta->ready();
@@ -396,19 +421,26 @@ class StatsController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $isModerator = $user->isModerator();
+        $isAgency = $user->isAgency();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isModerator) {
+
+        $publisherIds = null;
+        if ($isAgency) {
+            $publisherIds = $user->getReferralUuids();
+            $publisherIds[] = $user->uuid;
+        } elseif (!$isModerator) {
             $this->validateUserAsPublisher($user);
+            $publisherIds = [$user->uuid];
         }
 
         try {
-            //TODO agency support
             $input = new PublisherStatsInput(
-                $isModerator ? null : $user->uuid,
+                $publisherIds,
                 $from,
                 $to,
-                $siteId
+                $siteId,
+                $isModerator || $isAgency
             );
         } catch (PublisherInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -430,7 +462,7 @@ class StatsController extends Controller
         $result = $this->publisherStatsDataProvider->fetchReportData($input);
         $data = $result->toArray();
 
-        (new PublisherReportResponse($data, $name, (string)config('app.name'), $isModerator))
+        (new PublisherReportResponse($data, $name, (string)config('app.name'), $isModerator || $isAgency))
             ->saveAsFile($reportMeta->uuid);
 
         $reportMeta->ready();
@@ -506,7 +538,7 @@ class StatsController extends Controller
 
         try {
             $input = new PublisherStatsInput(
-                $user->uuid,
+                [$user->uuid],
                 $from,
                 $to,
                 $siteId

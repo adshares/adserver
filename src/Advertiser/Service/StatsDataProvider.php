@@ -72,10 +72,11 @@ class StatsDataProvider
     public function fetchReportData(StatsInput $input): DataCollection
     {
         return $this->repository->fetchStatsToReport(
-            $input->getAdvertiserId(),
+            $input->getAdvertiserIds(),
             $input->getDateStart(),
             $input->getDateEnd(),
-            $input->getCampaignId()
+            $input->getCampaignId(),
+            $input->isShowAdvertisers()
         );
     }
 }

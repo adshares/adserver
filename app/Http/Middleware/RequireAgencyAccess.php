@@ -31,7 +31,7 @@ class RequireAgencyAccess
 {
     public function handle($request, Closure $next)
     {
-        if (!Auth::user()->isAgency()) {
+        if (!Auth::user()->isAgency() && !Auth::user()->isModerator()) {
             throw new AccessDeniedHttpException('Forbidden access.');
         }
 

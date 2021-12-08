@@ -118,10 +118,16 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->where('s.deleted_at IS NULL');
     }
 
-    public function setPublisherId(string $publisherId): self
+    public function setPublisherIds(array $publisherIds): self
     {
-        $this->where(sprintf('e.publisher_id = 0x%s', $publisherId));
-
+        $this->where(
+            empty($publisherIds) ?
+                '0=1' :
+                sprintf(
+                    'e.publisher_id IN (%s)',
+                    implode(',', array_map(fn($id) => sprintf('0x%s', $id), $publisherIds))
+                )
+        );
         return $this;
     }
 

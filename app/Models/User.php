@@ -298,6 +298,21 @@ class User extends Authenticatable
         return $this->belongsTo(RefLink::class);
     }
 
+    public function getReferrals(): Collection
+    {
+        return self::has('refLink')->get();
+    }
+
+    public function getReferralIds(): array
+    {
+        return $this->getReferrals()->pluck('id')->toArray();
+    }
+
+    public function getReferralUuids(): array
+    {
+        return $this->getReferrals()->pluck('uuid')->toArray();
+    }
+
     public static function createAdmin(Email $email, string $name, string $password): void
     {
         $user = new self();
