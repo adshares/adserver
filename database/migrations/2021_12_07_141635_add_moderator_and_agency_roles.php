@@ -19,28 +19,35 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
-
-/**
- * @method ownedBy(User $user): Builder
- */
-trait Ownership
+class AddModeratorAndAgencyRoles extends Migration
 {
-    public static function bootOwnership(): void
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
     {
-        static::addGlobalScope(new OwnershipScope(Auth::user()));
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('is_moderator')->default(false);
+            $table->boolean('is_agency')->default(false);
+        });
     }
 
-    public function scopeOwnedBy(Builder $query, ?User $user): Builder
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
     {
-        if (!$user || $user->isModerator()) {
-            return $query;
-        }
-
-        return $query->where('user_id', '=', $user->id);
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('is_moderator');
+            $table->dropColumn('is_agency');
+        });
     }
 }

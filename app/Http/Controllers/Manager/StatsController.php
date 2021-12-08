@@ -270,16 +270,17 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $isAdmin = $user->isAdmin();
+        $isModerator = $user->isModerator();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isAdmin) {
+        if (!$isModerator) {
             $this->validateUserAsPublisher($user);
         }
 
         try {
+            //TODO agency support
             $input = new PublisherStatsInput(
-                $isAdmin ? null : $user->uuid,
+                $isModerator ? null : $user->uuid,
                 $from,
                 $to,
                 $siteId
@@ -293,7 +294,7 @@ class StatsController extends Controller
         $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
-        return (new PublisherReportResponse($data, $name, (string)config('app.name'), $isAdmin))->responseStream();
+        return (new PublisherReportResponse($data, $name, (string)config('app.name'), $isModerator))->responseStream();
     }
 
     public function advertiserReport(
@@ -307,16 +308,17 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $isAdmin = $user->isAdmin();
+        $isModerator = $user->isModerator();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isAdmin) {
+        if (!$isModerator) {
             $this->validateUserAsAdvertiser($user);
         }
 
         try {
+            //TODO agency support
             $input = new AdvertiserStatsInput(
-                $isAdmin ? null : $user->uuid,
+                $isModerator ? null : $user->uuid,
                 $from,
                 $to,
                 $campaignUuid
@@ -330,7 +332,7 @@ class StatsController extends Controller
         $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
-        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->responseStream();
+        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isModerator))->responseStream();
     }
 
     public function advertiserReportFileCreate(Request $request, string $dateStart, string $dateEnd): JsonResponse
@@ -342,16 +344,17 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $isAdmin = $user->isAdmin();
+        $isModerator = $user->isModerator();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isAdmin) {
+        if (!$isModerator) {
             $this->validateUserAsAdvertiser($user);
         }
 
         try {
+            //TODO agency support
             $input = new AdvertiserStatsInput(
-                $isAdmin ? null : $user->uuid,
+                $isModerator ? null : $user->uuid,
                 $from,
                 $to,
                 $campaignUuid
@@ -375,7 +378,7 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetchReportData($input);
         $data = $result->toArray();
-        (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))
+        (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isModerator))
             ->saveAsFile($reportMeta->uuid);
 
         $reportMeta->ready();
@@ -392,16 +395,17 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $isAdmin = $user->isAdmin();
+        $isModerator = $user->isModerator();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$isAdmin) {
+        if (!$isModerator) {
             $this->validateUserAsPublisher($user);
         }
 
         try {
+            //TODO agency support
             $input = new PublisherStatsInput(
-                $isAdmin ? null : $user->uuid,
+                $isModerator ? null : $user->uuid,
                 $from,
                 $to,
                 $siteId
@@ -426,7 +430,7 @@ class StatsController extends Controller
         $result = $this->publisherStatsDataProvider->fetchReportData($input);
         $data = $result->toArray();
 
-        (new PublisherReportResponse($data, $name, (string)config('app.name'), $isAdmin))
+        (new PublisherReportResponse($data, $name, (string)config('app.name'), $isModerator))
             ->saveAsFile($reportMeta->uuid);
 
         $reportMeta->ready();

@@ -24,7 +24,9 @@ namespace Adshares\Adserver\Http;
 use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
 use Adshares\Adserver\Http\Middleware\Impersonation;
 use Adshares\Adserver\Http\Middleware\RequireAdminAccess;
+use Adshares\Adserver\Http\Middleware\RequireAgencyAccess;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
+use Adshares\Adserver\Http\Middleware\RequireModeratorAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
@@ -47,6 +49,10 @@ class Kernel extends HttpKernel
     public const ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION = 'only-authenticated-users-except-impersonation';
 
     public const ADMIN_ACCESS = 'only-admin-users';
+
+    public const MODERATOR_ACCESS = 'only-moderator-users';
+
+    public const AGENCY_ACCESS = 'only-agency-users';
 
     public const GUEST_ACCESS = 'only-guest-users';
 
@@ -72,6 +78,14 @@ class Kernel extends HttpKernel
         self::ADMIN_ACCESS => [
             self::AUTH . ':api',
             RequireAdminAccess::class,
+        ],
+        self::MODERATOR_ACCESS => [
+            self::AUTH . ':api',
+            RequireModeratorAccess::class,
+        ],
+        self::AGENCY_ACCESS => [
+            self::AUTH . ':api',
+            RequireAgencyAccess::class,
         ],
         self::JSON_API => [
             ValidatePostSize::class,

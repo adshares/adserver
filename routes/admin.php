@@ -39,18 +39,27 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
     Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
 
-    Route::patch('panel-placeholders', [AdminController::class, 'patchPanelPlaceholders']);
     Route::get('index/update-time', [AdminController::class, 'getIndexUpdateTime']);
-
-    Route::get('impersonation/{user}', [AuthController::class, 'impersonate']);
-    Route::post('users/{id}/confirm', [AuthController::class, 'confirm']);
-
-    Route::get('users', [UsersController::class, 'browse']);
-    Route::get('advertisers', [UsersController::class, 'advertisers']);
-    Route::get('publishers', [UsersController::class, 'publishers']);
-
+    Route::patch('panel-placeholders', [AdminController::class, 'patchPanelPlaceholders']);
     Route::put('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'putBidStrategyUuidDefault']);
 
     Route::get('rejected-domains', [AdminController::class, 'getRejectedDomains']);
     Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);
+});
+
+Route::middleware([Kernel::MODERATOR_ACCESS, Kernel::JSON_API])->group(function () {
+    Route::get('users', [UsersController::class, 'browse']);
+    Route::get('advertisers', [UsersController::class, 'advertisers']);
+    Route::get('publishers', [UsersController::class, 'publishers']);
+
+    Route::get('impersonation/{user}', [AuthController::class, 'impersonate']);
+    Route::post('users/{id}/confirm', [AuthController::class, 'confirm']);
+});
+
+Route::middleware([Kernel::AGENCY_ACCESS, Kernel::JSON_API])->group(function () {
+//    Route::get('users', [UsersController::class, 'browse']);
+//    Route::get('advertisers', [UsersController::class, 'advertisers']);
+//    Route::get('publishers', [UsersController::class, 'publishers']);
+//
+//    Route::get('impersonation/{user}', [AuthController::class, 'impersonate']);
 });

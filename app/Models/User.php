@@ -121,6 +121,8 @@ class User extends Authenticatable
         'is_advertiser',
         'is_publisher',
         'is_admin',
+        'is_moderator',
+        'is_agency',
         'api_token',
         'is_email_confirmed',
         'is_admin_confirmed',
@@ -254,6 +256,16 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return (bool)$this->is_admin;
+    }
+
+    public function isModerator(): bool
+    {
+        return $this->is_moderator || $this->is_admin;
+    }
+
+    public function isAgency(): bool
+    {
+        return (bool)$this->is_agency;
     }
 
     public function campaigns(): HasMany

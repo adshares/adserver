@@ -292,7 +292,7 @@ class AuthController extends Controller
 
     public function impersonate(User $user): JsonResponse
     {
-        if ($user->isAdmin()) {
+        if ($user->isModerator()) {
             return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
