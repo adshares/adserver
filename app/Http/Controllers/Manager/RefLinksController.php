@@ -62,7 +62,7 @@ class RefLinksController extends Controller
             $input = [];
         }
 
-        if (!$user->isAdmin() && !empty(array_diff(array_keys($input), ['token', 'comment', 'kept_refund']))) {
+        if (!$user->isModerator() && !empty(array_diff(array_keys($input), ['token', 'comment', 'kept_refund']))) {
             throw new UnprocessableEntityHttpException('Insufficient permissions');
         }
 

@@ -163,9 +163,10 @@ interface StatsRepository
     ): Total;
 
     public function fetchStatsToReport(
-        ?string $publisherId,
+        ?array $publisherIds,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $siteId = null
+        ?string $siteId = null,
+        bool $showPublishers = false
     ): DataCollection;
 }

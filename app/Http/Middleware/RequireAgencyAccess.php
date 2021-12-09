@@ -19,28 +19,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+declare(strict_types=1);
 
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Eloquent\Builder;
+namespace Adshares\Adserver\Http\Middleware;
+
+use Closure;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-/**
- * @method ownedBy(User $user): Builder
- */
-trait Ownership
+class RequireAgencyAccess
 {
-    public static function bootOwnership(): void
+    public function handle($request, Closure $next)
     {
-        static::addGlobalScope(new OwnershipScope(Auth::user()));
-    }
-
-    public function scopeOwnedBy(Builder $query, ?User $user): Builder
-    {
-        if (!$user || $user->isModerator()) {
-            return $query;
+        if (!Auth::user()->isAgency() && !Auth::user()->isModerator()) {
+            throw new AccessDeniedHttpException('Forbidden access.');
         }
 
-        return $query->where('user_id', '=', $user->id);
+        return $next($request);
     }
 }

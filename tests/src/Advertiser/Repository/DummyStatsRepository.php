@@ -297,10 +297,11 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStatsToReport(
-        ?string $advertiserId,
+        ?array $advertiserIds,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        bool $showAdvertisers = false
     ): DataCollection {
         // TODO: Implement fetchStatsToReport() method.
     }

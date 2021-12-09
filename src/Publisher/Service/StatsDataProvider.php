@@ -60,10 +60,11 @@ class StatsDataProvider
     public function fetchReportData(StatsInput $input): DataCollection
     {
         return $this->repository->fetchStatsToReport(
-            $input->getPublisherId(),
+            $input->getPublisherIds(),
             $input->getDateStart(),
             $input->getDateEnd(),
-            $input->getSiteId()
+            $input->getSiteId(),
+            $input->isShowPublishers()
         );
     }
 }

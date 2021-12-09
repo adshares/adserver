@@ -28,23 +28,18 @@ use DateTimeInterface;
 
 class StatsInput
 {
-    /** @var string|null */
-    private $advertiserId;
-
-    /** @var DateTime */
-    private $dateStart;
-
-    /** @var DateTime */
-    private $dateEnd;
-
-    /** @var string|null */
-    private $campaignId;
+    private ?array $advertiserIds;
+    private bool $showAdvertisers;
+    private DateTime $dateStart;
+    private DateTime $dateEnd;
+    private ?string $campaignId;
 
     public function __construct(
-        ?string $advertiserId,
+        ?array $advertiserIds,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        bool $showAdvertisers = false
     ) {
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
@@ -54,15 +49,26 @@ class StatsInput
             ));
         }
 
-        $this->advertiserId = $advertiserId;
+        $this->advertiserIds = $advertiserIds;
+        $this->showAdvertisers = $showAdvertisers;
         $this->campaignId = $campaignId;
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
     }
 
+    public function getAdvertiserIds(): ?array
+    {
+        return $this->advertiserIds;
+    }
+
     public function getAdvertiserId(): ?string
     {
-        return $this->advertiserId;
+        return null !== $this->advertiserIds ? reset($this->advertiserIds) : null;
+    }
+
+    public function isShowAdvertisers(): bool
+    {
+        return $this->showAdvertisers;
     }
 
     public function getDateStart(): DateTime

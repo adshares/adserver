@@ -51,6 +51,11 @@ use Illuminate\Support\Facades\Hash;
  * @property bool is_email_confirmed
  * @property bool is_admin_confirmed
  * @property bool is_confirmed
+ * @property bool is_admin
+ * @property bool is_moderator
+ * @property bool is_agency
+ * @property bool is_advertiser
+ * @property bool is_publisher
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -121,6 +126,8 @@ class User extends Authenticatable
         'is_advertiser',
         'is_publisher',
         'is_admin',
+        'is_moderator',
+        'is_agency',
         'api_token',
         'is_email_confirmed',
         'is_admin_confirmed',
@@ -256,6 +263,16 @@ class User extends Authenticatable
         return (bool)$this->is_admin;
     }
 
+    public function isModerator(): bool
+    {
+        return (bool)$this->is_moderator || (bool)$this->is_admin;
+    }
+
+    public function isAgency(): bool
+    {
+        return (bool)$this->is_agency;
+    }
+
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
@@ -284,6 +301,21 @@ class User extends Authenticatable
     public function refLink(): BelongsTo
     {
         return $this->belongsTo(RefLink::class);
+    }
+
+    public function getReferrals(): Collection
+    {
+        return self::has('refLink')->get();
+    }
+
+    public function getReferralIds(): array
+    {
+        return $this->getReferrals()->pluck('id')->toArray();
+    }
+
+    public function getReferralUuids(): array
+    {
+        return $this->getReferrals()->pluck('uuid')->toArray();
     }
 
     public static function createAdmin(Email $email, string $name, string $password): void

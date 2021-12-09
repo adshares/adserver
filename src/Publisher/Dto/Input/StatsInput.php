@@ -28,23 +28,18 @@ use DateTimeInterface;
 
 class StatsInput
 {
-    /** @var string|null */
-    private $publisherId;
-
-    /** @var DateTime */
-    private $dateStart;
-
-    /** @var DateTime */
-    private $dateEnd;
-
-    /** @var string|null */
-    private $siteId;
+    private ?array $publisherIds;
+    private bool $showPublishers;
+    private DateTime $dateStart;
+    private DateTime $dateEnd;
+    private ?string $siteId;
 
     public function __construct(
-        ?string $publisherId,
+        ?array $publisherIds,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $siteId = null
+        ?string $siteId = null,
+        bool $showPublishers = false
     ) {
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
@@ -54,15 +49,26 @@ class StatsInput
             ));
         }
 
-        $this->publisherId = $publisherId;
+        $this->publisherIds = $publisherIds;
+        $this->showPublishers = $showPublishers;
         $this->siteId = $siteId;
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
     }
 
+    public function getPublisherIds(): ?array
+    {
+        return $this->publisherIds;
+    }
+
     public function getPublisherId(): ?string
     {
-        return $this->publisherId;
+        return null !== $this->publisherIds ? reset($this->publisherIds) : null;
+    }
+
+    public function isShowPublishers(): bool
+    {
+        return $this->showPublishers;
     }
 
     public function getDateStart(): DateTime

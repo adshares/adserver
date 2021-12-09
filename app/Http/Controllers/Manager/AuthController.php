@@ -119,7 +119,6 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-
     public function confirm(int $userId): JsonResponse
     {
         /** @var User $user */
@@ -292,12 +291,15 @@ class AuthController extends Controller
 
     public function impersonate(User $user): JsonResponse
     {
-        if ($user->isAdmin()) {
+        /** @var User $logged */
+        $logged = Auth::user();
+        if ($logged->id === $user->id || $user->isModerator()) {
             return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        $token = Token::impersonate(Auth::user(), $user);
-
+        if ($logged->isAgency() && !in_array($user->id, $logged->getReferralIds())) {
+            return response()->json([], Response::HTTP_FORBIDDEN);
+        }
+        $token = Token::impersonate($logged, $user);
         return self::json($token->uuid);
     }
 
