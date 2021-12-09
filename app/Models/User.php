@@ -51,6 +51,11 @@ use Illuminate\Support\Facades\Hash;
  * @property bool is_email_confirmed
  * @property bool is_admin_confirmed
  * @property bool is_confirmed
+ * @property bool is_admin
+ * @property bool is_moderator
+ * @property bool is_agency
+ * @property bool is_advertiser
+ * @property bool is_publisher
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -260,7 +265,7 @@ class User extends Authenticatable
 
     public function isModerator(): bool
     {
-        return $this->is_moderator || $this->is_admin;
+        return (bool)$this->is_moderator || (bool)$this->is_admin;
     }
 
     public function isAgency(): bool

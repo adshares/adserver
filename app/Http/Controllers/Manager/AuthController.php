@@ -119,7 +119,6 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-
     public function confirm(int $userId): JsonResponse
     {
         /** @var User $user */
