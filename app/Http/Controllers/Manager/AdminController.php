@@ -30,7 +30,6 @@ use Adshares\Adserver\Http\Requests\UpdateRegulation;
 use Adshares\Adserver\Http\Response\LicenseResponse;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
-use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\SitesRejectedDomain;
