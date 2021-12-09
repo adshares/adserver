@@ -37,26 +37,23 @@ class Impersonation
     public function handle(Request $request, Closure $next)
     {
         $header = $request->header(self::HEADER_NAME);
-
+        /** @var User $logged */
         $logged = Auth::user();
         if ($header && $header !== 'null' && ($logged->isModerator() || $logged->isAgency())) {
             if (false !== ($token = Token::check($header))) {
                 $userId = (int)$token['payload'];
-
-                /** @var User|Authenticatable $user */
-                $user = User::where('id', $userId)
-                    ->where('is_admin', 0)
-                    ->where('is_moderator', 0)
-                    ->first();
-
-                //TODO check agency ref links
-
-                if ($user) {
-                    Auth::setUser($user);
+                if ($logged->isModerator() || in_array($userId, $logged->getReferralIds())) {
+                    /** @var User|Authenticatable $user */
+                    $user = User::where('id', $userId)
+                        ->where('is_admin', 0)
+                        ->where('is_moderator', 0)
+                        ->first();
+                    if ($user) {
+                        Auth::setUser($user);
+                    }
                 }
             }
         }
-
         return $next($request);
     }
 }

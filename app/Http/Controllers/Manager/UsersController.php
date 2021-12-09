@@ -48,7 +48,7 @@ class UsersController extends Controller
 
         if ($user->isAgency()) {
             $builder->where(function (Builder $sub) use ($user) {
-                $sub->whereIn('id', $user->getReferralIds());
+                $sub->whereIn('id', $user->getReferralIds())->orWhere('id', $user->id);
             });
         }
 
