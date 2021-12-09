@@ -118,10 +118,16 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->where('c.deleted_at IS NULL');
     }
 
-    public function setAdvertiserId(string $advertiserId): self
+    public function setAdvertiserIds(array $advertiserIds): self
     {
-        $this->where(sprintf('e.advertiser_id = 0x%s', $advertiserId));
-
+        $this->where(
+            empty($advertiserIds) ?
+                '0=1' :
+                sprintf(
+                    'e.advertiser_id IN (%s)',
+                    implode(',', array_map(fn($id) => sprintf('0x%s', $id), $advertiserIds))
+                )
+        );
         return $this;
     }
 

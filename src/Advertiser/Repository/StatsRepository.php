@@ -164,10 +164,11 @@ interface StatsRepository
     ): Total;
 
     public function fetchStatsToReport(
-        ?string $advertiserId,
+        ?array $advertiserIds,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        bool $showAdvertisers = false
     ): DataCollection;
 
     public function fetchStatsConversion(

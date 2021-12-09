@@ -799,10 +799,11 @@ SQL;
     }
 
     public function fetchStatsToReport(
-        ?string $advertiserId,
+        ?array $advertiserIds,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        bool $showAdvertisers = false
     ): DataCollection {
         $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
@@ -810,12 +811,12 @@ SQL;
             ->appendCampaignIdGroupBy()
             ->appendBannerIdGroupBy();
 
-        if (null !== $advertiserId) {
-            $queryBuilder->setAdvertiserId($advertiserId);
-        } else {
+        if (null !== $advertiserIds) {
+            $queryBuilder->setAdvertiserIds($advertiserIds);
+        }
+        if ($showAdvertisers) {
             $queryBuilder->appendAdvertiserIdGroupBy();
         }
-
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId);
         }
@@ -847,7 +848,7 @@ SQL;
                 $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
 
-            if (null === $advertiserId) {
+            if ($showAdvertisers) {
                 $selectedAdvertiserId = $row->advertiser_id;
                 $selectedAdvertiserEmail = $row->advertiser_email;
             } else {
@@ -868,8 +869,8 @@ SQL;
         $resultWithoutEvents =
             $this->getDataEntriesWithoutEvents(
                 $queryResult,
-                $this->fetchAllBannersWithCampaignAndUser($advertiserId, $campaignId),
-                $advertiserId
+                $this->fetchAllBannersWithCampaignAndUser($advertiserIds, $campaignId),
+                $showAdvertisers
             );
 
         return new DataCollection(array_merge($result, $resultWithoutEvents));
@@ -1007,7 +1008,7 @@ SQL;
         ?string $bannerId
     ): array {
         $queryBuilder = (new MySqlAggregatedStatsQueryBuilder($type))
-            ->setAdvertiserId($advertiserId)
+            ->setAdvertiserIds([$advertiserId])
             ->setDateRange($dateStart, $dateEnd)
             ->appendResolution($resolution);
 
@@ -1291,7 +1292,7 @@ SQL;
     private function getDataEntriesWithoutEvents(
         array $queryResult,
         array $allBanners,
-        ?string $advertiserId
+        bool $showAdvertisers
     ): array {
         $result = [];
 
@@ -1309,7 +1310,7 @@ SQL;
             if (!$isBannerPresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                if (null === $advertiserId) {
+                if ($showAdvertisers) {
                     $selectedAdvertiserId = $banner->user_id;
                     $selectedAdvertiserEmail = $banner->user_email;
                 } else {
@@ -1332,7 +1333,7 @@ SQL;
         return $result;
     }
 
-    private function fetchAllBannersWithCampaignAndUser(?string $advertiserId, ?string $campaignId): array
+    private function fetchAllBannersWithCampaignAndUser(?array $advertiserIds, ?string $campaignId): array
     {
         $query = <<<SQL
 SELECT u.id    AS user_id,
@@ -1347,8 +1348,13 @@ FROM users u
 WHERE c.deleted_at IS NULL
 SQL;
 
-        if (null !== $advertiserId) {
-            $query .= sprintf(' AND u.uuid = 0x%s', $advertiserId);
+        if (null !== $advertiserIds) {
+            $query .= empty($advertiserIds) ?
+                ' AND 0=1' :
+                sprintf(
+                    ' AND u.uuid IN (%s)',
+                    implode(',', array_map(fn($id) => sprintf('0x%s', $id), $advertiserIds))
+                );
         }
         if (null !== $campaignId) {
             $query .= sprintf(' AND c.uuid = 0x%s', $campaignId);
@@ -1369,7 +1375,7 @@ SQL;
                 ->appendCampaignIdGroupBy();
 
         if (null !== $advertiserId) {
-            $queryBuilder->setAdvertiserId($advertiserId);
+            $queryBuilder->setAdvertiserIds([$advertiserId]);
         } else {
             $queryBuilder->appendAdvertiserIdGroupBy();
         }
@@ -1422,7 +1428,7 @@ SQL;
                 ->setDateRange($dateStart, $dateEnd);
 
         if (null !== $advertiserId) {
-            $queryBuilder->setAdvertiserId($advertiserId);
+            $queryBuilder->setAdvertiserIds([$advertiserId]);
         }
 
         if ($campaignId) {

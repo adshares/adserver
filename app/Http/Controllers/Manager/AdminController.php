@@ -33,6 +33,7 @@ use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
@@ -42,6 +43,7 @@ use DateTimeInterface;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -234,5 +236,83 @@ class AdminController extends Controller
         }
 
         return self::json([], JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    public function switchUserToModerator(int $userId): JsonResponse
+    {
+        /** @var User $logged */
+        $logged = Auth::user();
+
+        if (!$logged->isAdmin()) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            return self::json([], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($user->isModerator()) {
+            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user->is_moderator = true;
+        $user->is_agency = false;
+        $user->save();
+
+        return self::json($user->toArray());
+    }
+
+    public function switchUserToAgency(int $userId): JsonResponse
+    {
+        /** @var User $logged */
+        $logged = Auth::user();
+
+        if (!$logged->isModerator()) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            return self::json([], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($user->isAgency()) {
+            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user->is_moderator = false;
+        $user->is_agency = true;
+        $user->save();
+
+        return self::json($user->toArray());
+    }
+
+    public function switchUserToRegular(int $userId): JsonResponse
+    {
+        /** @var User $logged */
+        $logged = Auth::user();
+
+        if (!$logged->isModerator()) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            return self::json([], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($user->isModerator() && !$logged->isAdmin()) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+
+        $user->is_moderator = false;
+        $user->is_agency = false;
+        $user->save();
+
+        return self::json($user->toArray());
     }
 }

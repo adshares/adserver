@@ -25,13 +25,14 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Utilities\DomainReader;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UsersController extends Controller
 {
@@ -41,8 +42,17 @@ class UsersController extends Controller
 
     public function browse(Request $request): LengthAwarePaginator
     {
-        $query = $request->get('q');
+        /** @var User $user */
+        $user = Auth::user();
+        $builder = User::query();
 
+        if ($user->isAgency()) {
+            $builder->where(function (Builder $sub) use ($user) {
+                $sub->whereIn('id', $user->getReferralIds())->orWhere('id', $user->id);
+            });
+        }
+
+        $query = $request->get('q');
         if ($query) {
             $domains =
                 DB::select(
@@ -71,10 +81,9 @@ class UsersController extends Controller
                     )
                 )
             );
-
-            $builder = User::where('email', 'LIKE', '%' . $query . '%')->orWhereIn('id', $ids);
-        } else {
-            $builder = User::query();
+            $builder->where(function (Builder $sub) use ($query, $ids) {
+                $sub->where('email', 'LIKE', '%' . $query . '%')->orWhereIn('id', $ids);
+            });
         }
 
         foreach ((array)$request->get('f', []) as $filter) {
@@ -107,6 +116,14 @@ class UsersController extends Controller
 
     public function advertisers(Request $request): JsonResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
+        $userIds = null;
+        if ($user->isAgency()) {
+            $userIds = $user->getReferralIds();
+            $userIds[] = $user->id;
+        }
+
         if (strtolower((string)$request->get('g')) === 'user') {
             $emailColumn = 'u.email';
             $landingUrlColumn = 'GROUP_CONCAT(DISTINCT c.landing_url SEPARATOR ", ")';
@@ -179,7 +196,7 @@ class UsersController extends Controller
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.campaign_id
                 ) lp ON lp.campaign_id = c.uuid
-                WHERE c.deleted_at IS NULL AND (c.landing_url LIKE ? OR u.email LIKE ?)
+                WHERE c.deleted_at IS NULL AND (c.landing_url LIKE ? OR u.email LIKE ?) %s
                 GROUP BY %s
                 HAVING current_views >= ? OR last_views >= ?
                 ',
@@ -191,6 +208,7 @@ class UsersController extends Controller
                     $unit,
                     $interval,
                     $unit,
+                    $userIds !== null ? ' AND c.user_id IN (' . implode(',', $userIds) . ')' : '',
                     $groupBy
                 ),
                 [
@@ -276,6 +294,14 @@ class UsersController extends Controller
 
     public function publishers(Request $request): JsonResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
+        $userIds = null;
+        if ($user->isAgency()) {
+            $userIds = $user->getReferralIds();
+            $userIds[] = $user->id;
+        }
+
         if (strtolower((string)$request->get('g')) === 'user') {
             $emailColumn = 'u.email';
             $domainColumn = 'GROUP_CONCAT(s.domain SEPARATOR ", ")';
@@ -348,7 +374,7 @@ class UsersController extends Controller
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lp ON lp.site_id = s.uuid
-                WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ?)
+                WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ?) %s
                 GROUP BY %s
                 HAVING current_views >= ? OR last_views >= ?
                 ',
@@ -361,6 +387,7 @@ class UsersController extends Controller
                     $interval,
                     $unit,
                     Site::STATUS_ACTIVE,
+                    $userIds !== null ? ' AND s.user_id IN (' . implode(',', $userIds) . ')' : '',
                     $groupBy
                 ),
                 [
