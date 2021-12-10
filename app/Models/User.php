@@ -25,7 +25,9 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\PayoutAddress;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,6 +58,7 @@ use Illuminate\Support\Facades\Hash;
  * @property bool is_agency
  * @property bool is_advertiser
  * @property bool is_publisher
+ * @property string|null payout_address
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -65,6 +68,7 @@ class User extends Authenticatable
 
     use AutomateMutators;
     use BinHex;
+    use AddressWithNetwork;
 
     public static $rules = [
         'email' => 'email|max:150|unique:users',
@@ -138,6 +142,7 @@ class User extends Authenticatable
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'payout_address' => 'AddressWithNetwork'
     ];
 
     protected $appends = [
@@ -248,6 +253,11 @@ class User extends Authenticatable
         return self::where('email', $email)->first();
     }
 
+    public static function fetchByPayoutAddress(PayoutAddress $address): ?self
+    {
+        return self::where('payout_address', $address)->first();
+    }
+
     public function isAdvertiser(): bool
     {
         return (bool)$this->is_advertiser;
@@ -316,6 +326,14 @@ class User extends Authenticatable
     public function getReferralUuids(): array
     {
         return $this->getReferrals()->pluck('uuid')->toArray();
+    }
+
+    public static function createAnonymous(PayoutAddress $payout_address): User
+    {
+        $user = new User();
+        $user->payout_address = $payout_address;
+        $user->saveOrFail();
+        return $user;
     }
 
     public static function createAdmin(Email $email, string $name, string $password): void
