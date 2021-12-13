@@ -3,7 +3,7 @@
 namespace Adshares\Adserver\Rules;
 
 use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\Domain\ValueObject\PayoutAddress;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Illuminate\Contracts\Validation\Rule;
 
 class PayoutAddressRule implements Rule
@@ -25,7 +25,7 @@ class PayoutAddressRule implements Rule
      */
     public function passes($attribute, $value): bool
     {
-        if (!PayoutAddress::isValid($value)) {
+        if (!WalletAddress::isValid($value)) {
             $this->message = 'The :attribute must be valid PayoutAddress.';
 
             return false;

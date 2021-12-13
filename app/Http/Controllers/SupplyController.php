@@ -39,7 +39,7 @@ use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Domain\ValueObject\PayoutAddress;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
@@ -77,7 +77,7 @@ class SupplyController extends Controller
         $validated = $request->validate([
                                             'address' => [new PayoutAddressRule()],
                                         ]);
-        $payoutAddress = PayoutAddress::fromString($validated['address']);
+        $payoutAddress = WalletAddress::fromString($validated['address']);
         print_r($validated);
 
         return $payoutAddress;

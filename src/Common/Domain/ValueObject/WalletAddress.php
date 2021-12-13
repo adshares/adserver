@@ -23,68 +23,55 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject;
 use Adshares\Common\Exception\InvalidArgumentException;
 
-use function dechex;
-use function ord;
-use function preg_match;
-use function random_int;
-use function sprintf;
-use function str_pad;
-use function strlen;
-
-final class PayoutAddress implements ValueObject
+final class WalletAddress implements ValueObject
 {
     private const SEPARATOR = ':';
+    private const NETWORK_ADS = 'ads';
+    private const NETWORK_BSC = 'bsc';
 
-    private const NETWORKS = [
-        'ads',
-        'bsc'
-    ];
-
-    /** @var string */
-    private $network;
-
-    private $address;
+    private string $network;
+    private string $address;
 
     public function __construct(string $network, string $address)
     {
         $this->network = strtolower($network);
         $this->address = self::normalizeAddress($this->network, $address);
         if (!self::isValid($this->toString())) {
-            throw new InvalidArgumentException("'{$this->toString()}' is NOT a"
-                . ' VALID payout address.');
+            throw new InvalidArgumentException(sprintf('"%s" is NOT a VALID payout address.', $this));
         }
-
     }
 
     private static function normalizeAddress($network, $address): string
     {
-        switch($network) {
-            case 'ads':
+        switch ($network) {
+            case self::NETWORK_ADS:
                 return strtoupper($address);
-            case 'bsc':
+            case self::NETWORK_BSC:
                 return strtolower($address);
             default:
                 return $address;
         }
     }
 
+    private static function parse(string $value): ?array
+    {
+        $parts = explode(self::SEPARATOR, $value, 3);
+        return count($parts) === 2 ? $parts : null;
+    }
+
     public static function isValid(string $value): bool
     {
-        $parts = explode(":", $value, 2);
-        if(count($parts) != 2) {
+        if (null === ($parts = self::parse($value))) {
             return false;
         }
-        [$network, $address] = $parts;
-
-        switch($network) {
-            case 'ads':
-                return AccountId::isValid($address, true);
-            case 'bsc':
-                return !!preg_match('/^0x[0-9a-f]{40}$/i', $address);
+        switch ($parts[0]) {
+            case self::NETWORK_ADS:
+                return AccountId::isValid($parts[1], true);
+            case self::NETWORK_BSC:
+                return !!preg_match('/^0x[0-9a-f]{40}$/i', $parts[1]);
             default:
                 return false;
         }
@@ -92,9 +79,8 @@ final class PayoutAddress implements ValueObject
 
     public static function fromString(string $value): self
     {
-        [$network, $address] = explode(":", $value);
-
-        return new self($network,  $address);
+        $parts = self::parse($value);
+        return new self($parts[0] ?? '', $parts[1] ?? '');
     }
 
     public function toString(): string
@@ -112,7 +98,6 @@ final class PayoutAddress implements ValueObject
         if (!($other instanceof self)) {
             return false;
         }
-
         return $this->toString() === $other->toString();
     }
 }

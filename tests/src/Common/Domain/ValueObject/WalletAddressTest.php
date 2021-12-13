@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -19,22 +18,35 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+namespace Adshares\Tests\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use PHPUnit\Framework\TestCase;
 
-/**
- * binhex columns.
- */
-trait AddressWithNetwork
+class WalletAddressTest extends TestCase
 {
-    public function payoutAddressMutator($key, WalletAddress $value)
+    public function testConstruct(): void
     {
-        $this->attributes[$key] = null !== $value ? $value->toString() : null;
+        $address = WalletAddress();
     }
 
-    public function payoutAddressAccessor($value): WalletAddress
+    public function walletAddresses(): array
     {
-        return null === $value ? null : WalletAddress::fromString($value);
+        return [
+            ['ads:0001-00000001-8B4E', true]
+        ];
+    }
+
+    /**
+     * @dataProvider walletAddresses
+     */
+    public function testIsValid(string $address, bool $valid): void
+    {
+        $this->assertEquals($valid, $address);
+    }
+
+    public function testFromSttring(): void
+    {
+        $address = WalletAddress::fromString('');
     }
 }

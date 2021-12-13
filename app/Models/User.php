@@ -27,7 +27,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Common\Domain\ValueObject\Email;
-use Adshares\Common\Domain\ValueObject\PayoutAddress;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -58,7 +58,7 @@ use Illuminate\Support\Facades\Hash;
  * @property bool is_agency
  * @property bool is_advertiser
  * @property bool is_publisher
- * @property string|null payout_address
+ * @property string|null wallet_address
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -253,9 +253,9 @@ class User extends Authenticatable
         return self::where('email', $email)->first();
     }
 
-    public static function fetchByPayoutAddress(PayoutAddress $address): ?self
+    public static function fetchByWalletAddress(WalletAddress $address): ?self
     {
-        return self::where('payout_address', $address)->first();
+        return self::where('wallet_address', $address)->first();
     }
 
     public function isAdvertiser(): bool
@@ -328,15 +328,15 @@ class User extends Authenticatable
         return $this->getReferrals()->pluck('uuid')->toArray();
     }
 
-    public static function createAnonymous(PayoutAddress $payout_address): User
+    public static function createAnonymous(WalletAddress $address): User
     {
-        $user = new User();
-        $user->payout_address = $payout_address;
+        $user = new self();
+        $user->wallet_address = $address;
         $user->saveOrFail();
         return $user;
     }
 
-    public static function createAdmin(Email $email, string $name, string $password): void
+    public static function createAdmin(Email $email, string $name, string $password): User
     {
         $user = new self();
         $user->name = $name;
@@ -344,8 +344,8 @@ class User extends Authenticatable
         $user->confirmEmail();
         $user->password = $password;
         $user->is_admin = 1;
-
-        $user->save();
+        $user->saveOrFail();
+        return $user;
     }
 
     public function awardBonus(int $amount, ?RefLink $refLink = null): void
