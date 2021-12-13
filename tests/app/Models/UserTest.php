@@ -36,7 +36,6 @@ class UserTest extends TestCase
 
         $dbUser = User::fetchByWalletAddress(WalletAddress::fromString('ADS:0001-00000001-8B4E'));
         $this->assertNotNull($dbUser);
-        $this->assertNotNull($dbUser->wallet_nonce);
         $this->assertEquals($user->id, $dbUser->id);
     }
 
@@ -46,7 +45,6 @@ class UserTest extends TestCase
         $user = User::createAnonymous($address);
 
         $this->assertNotNull($user->uuid);
-        $this->assertNotNull($user->wallet_nonce);
         $this->assertNull($user->email);
         $this->assertEquals($address, $user->wallet_address);
     }

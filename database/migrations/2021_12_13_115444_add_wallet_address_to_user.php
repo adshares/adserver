@@ -37,9 +37,7 @@ class AddWalletAddressToUser extends Migration
             $table->string('email', 191)->nullable()->change();
             $table->string('password')->nullable()->change();
             $table->string('wallet_address', 64)->nullable()->unique();
-            $table->string('wallet_nonce', 16);
         });
-        DB::statement('UPDATE users SET wallet_nonce = LEFT(MD5(RAND()), 16)');
     }
 
     /**
@@ -51,7 +49,6 @@ class AddWalletAddressToUser extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('wallet_address');
-            $table->dropColumn('wallet_nonce');
             $table->string('email', 191)->nullable(false)->change();
             $table->string('password')->nullable(false)->change();
         });
