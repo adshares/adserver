@@ -19,22 +19,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+declare(strict_types=1);
 
-use Adshares\Common\Domain\ValueObject\WalletAddress;
+namespace Adshares\Adserver\Events;
 
-/**
- * wallet address columns.
- */
-trait AddressWithNetwork
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Adserver\Utilities\UuidStringGenerator;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class UserCreating
 {
-    public function addressWithNetworkMutator(string $key, ?WalletAddress $value)
-    {
-        $this->attributes[$key] = null !== $value ? (string)$value : null;
-    }
+    use Dispatchable;
+    use SerializesModels;
 
-    public function addressWithNetworkAccessor(?string $value): ?WalletAddress
+    public function __construct(User $user)
     {
-        return null === $value ? null : WalletAddress::fromString($value);
+        $user->uuid = UuidStringGenerator::v4();
+        $user->wallet_nonce = NonceGenerator::get();
     }
 }

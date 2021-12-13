@@ -21,11 +21,11 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
+use Adshares\Adserver\Events\UserCreating;
+use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
@@ -58,7 +58,8 @@ use Illuminate\Support\Facades\Hash;
  * @property bool is_agency
  * @property bool is_advertiser
  * @property bool is_publisher
- * @property string|null wallet_address
+ * @property WalletAddress|null wallet_address
+ * @property string wallet_nonce
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -102,7 +103,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $dispatchesEvents = [
-        'creating' => GenerateUUID::class,
+        'creating' => UserCreating::class,
         'created' => UserCreated::class,
     ];
 
@@ -142,7 +143,7 @@ class User extends Authenticatable
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
-        'payout_address' => 'AddressWithNetwork'
+        'wallet_address' => 'AddressWithNetwork'
     ];
 
     protected $appends = [

@@ -19,22 +19,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+declare(strict_types=1);
 
-use Adshares\Common\Domain\ValueObject\WalletAddress;
+namespace Adshares\Adserver\Utilities;
 
-/**
- * wallet address columns.
- */
-trait AddressWithNetwork
+final class NonceGenerator
 {
-    public function addressWithNetworkMutator(string $key, ?WalletAddress $value)
+    public static function get(int $length = 16): string
     {
-        $this->attributes[$key] = null !== $value ? (string)$value : null;
-    }
-
-    public function addressWithNetworkAccessor(?string $value): ?WalletAddress
-    {
-        return null === $value ? null : WalletAddress::fromString($value);
+        return substr(md5(uniqid()), 0, $length);
     }
 }

@@ -29,19 +29,34 @@ use Adshares\Common\Exception\InvalidArgumentException;
 final class WalletAddress implements ValueObject
 {
     private const SEPARATOR = ':';
-    private const NETWORK_ADS = 'ads';
-    private const NETWORK_BSC = 'bsc';
+    public const NETWORK_ADS = 'ads';
+    public const NETWORK_BSC = 'bsc';
 
     private string $network;
     private string $address;
 
     public function __construct(string $network, string $address)
     {
-        $this->network = strtolower($network);
+        $this->network = self::normalizeNetwork($network);
         $this->address = self::normalizeAddress($this->network, $address);
         if (!self::isValid($this->toString())) {
             throw new InvalidArgumentException(sprintf('"%s" is NOT a VALID payout address.', $this));
         }
+    }
+
+    public function getNetwork(): string
+    {
+        return $this->network;
+    }
+
+    public function getAddress(): string
+    {
+        return $this->address;
+    }
+
+    private static function normalizeNetwork($network): string
+    {
+        return strtolower($network);
     }
 
     private static function normalizeAddress($network, $address): string
@@ -67,11 +82,13 @@ final class WalletAddress implements ValueObject
         if (null === ($parts = self::parse($value))) {
             return false;
         }
-        switch ($parts[0]) {
+        $network = self::normalizeNetwork($parts[0]);
+        $address = self::normalizeAddress($network, $parts[1]);
+        switch ($network) {
             case self::NETWORK_ADS:
-                return AccountId::isValid($parts[1], true);
+                return AccountId::isValid($address);
             case self::NETWORK_BSC:
-                return !!preg_match('/^0x[0-9a-f]{40}$/i', $parts[1]);
+                return !!preg_match('/^0x[0-9a-f]{40}$/i', $address);
             default:
                 return false;
         }
