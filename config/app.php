@@ -162,6 +162,7 @@ return [
     'site_filtering_exclude' => env('SITE_FILTERING_EXCLUDE'),
     'campaign_targeting_require' => env('CAMPAIGN_TARGETING_REQUIRE'),
     'campaign_targeting_exclude' => env('CAMPAIGN_TARGETING_EXCLUDE'),
+    'auto_withdrawal_default_limit' => env('AUTO_WITHDRAWAL_DEFAULT_LIMIT', 100000000000),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

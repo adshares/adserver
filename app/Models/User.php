@@ -59,6 +59,9 @@ use Illuminate\Support\Facades\Hash;
  * @property bool is_advertiser
  * @property bool is_publisher
  * @property WalletAddress|null wallet_address
+ * @property int|null auto_withdrawal
+ * @property bool is_auto_withdrawal
+ * @property int auto_withdrawal_limit
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -201,7 +204,20 @@ class User extends Authenticatable
             'total_funds_in_currency' => 0,
             'total_funds_change' => 0,
             'last_payment_at' => 0,
+            'wallet_address' => $this->wallet_address,
+            'is_auto_withdrawal' => $this->is_auto_withdrawal,
+            'auto_withdrawal_limit' => $this->auto_withdrawal_limit,
         ];
+    }
+
+    public function getIsAutoWithdrawalAttribute(): bool
+    {
+        return null !== $this->auto_withdrawal;
+    }
+
+    public function getAutoWithdrawalLimitAttribute(): bool
+    {
+        return (int)$this->auto_withdrawal;
     }
 
     public function setPasswordAttribute($value): void
@@ -332,6 +348,7 @@ class User extends Authenticatable
     {
         $user = new self();
         $user->wallet_address = $address;
+        $user->auto_withdrawal = config('app.auto_withdrawal_default_limit');
         $user->saveOrFail();
         return $user;
     }

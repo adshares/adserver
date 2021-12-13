@@ -47,5 +47,7 @@ class UserTest extends TestCase
         $this->assertNotNull($user->uuid);
         $this->assertNull($user->email);
         $this->assertEquals($address, $user->wallet_address);
+        $this->assertNotNull($user->auto_withdrawal);
+        $this->assertEquals(100000000000, $user->auto_withdrawal);
     }
 }

@@ -37,6 +37,7 @@ class AddWalletAddressToUser extends Migration
             $table->string('email', 191)->nullable()->change();
             $table->string('password')->nullable()->change();
             $table->string('wallet_address', 64)->nullable()->unique();
+            $table->bigInteger('auto_withdrawal')->nullable();
         });
     }
 
@@ -49,6 +50,7 @@ class AddWalletAddressToUser extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('wallet_address');
+            $table->dropColumn('auto_withdrawal');
             $table->string('email', 191)->nullable(false)->change();
             $table->string('password')->nullable(false)->change();
         });
