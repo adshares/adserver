@@ -25,5 +25,4 @@ use Adshares\Common\Exception\RuntimeException;
 
 class InvalidCampaignArgumentException extends RuntimeException
 {
-
 }

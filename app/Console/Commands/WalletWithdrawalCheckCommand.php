@@ -123,5 +123,4 @@ class WalletWithdrawalCheckCommand extends BaseCommand
             );
         }
     }
-
 }

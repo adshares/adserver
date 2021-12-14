@@ -25,5 +25,4 @@ namespace Adshares\Common\Exception;
 
 class RuntimeException extends \RuntimeException
 {
-
 }

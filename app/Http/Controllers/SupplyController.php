@@ -72,8 +72,8 @@ class SupplyController extends Controller
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
 
     public function findAnon(
-        Request $request)
-    {
+        Request $request
+    ) {
         $validated = $request->validate([
                                             'address' => [new PayoutAddressRule()],
                                         ]);
@@ -197,7 +197,6 @@ class SupplyController extends Controller
                     $i = 0;
                     do {
                         $this->watermarkImage($parts, $watermark);
-
                     } while ($parts->nextImage());
                     $im = $parts->deconstructImages();
                 } else {

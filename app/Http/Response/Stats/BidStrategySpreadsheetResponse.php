@@ -160,7 +160,7 @@ class BidStrategySpreadsheetResponse
                 $id = array_pop($id_parts);
                 $prefix = implode(":", $id_parts);
 
-                if($id == '*') {
+                if ($id == '*') {
                     $is_open_ended = true;
                 }
 

@@ -13,7 +13,6 @@ class PayoutAddressRule implements Rule
 
     public function __construct()
     {
-
     }
 
     /**

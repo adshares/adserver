@@ -25,5 +25,4 @@ use Adshares\Common\Exception\RuntimeException;
 
 final class InvalidUuidException extends RuntimeException
 {
-
 }

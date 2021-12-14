@@ -25,5 +25,4 @@ namespace Adshares\Supply\Domain\Repository\Exception;
 
 class CampaignRepositoryException extends \RuntimeException
 {
-
 }

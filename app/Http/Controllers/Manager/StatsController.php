@@ -302,7 +302,10 @@ class StatsController extends Controller
         $name = $this->formatReportName($from, $to);
 
         return (new PublisherReportResponse(
-            $data, $name, (string)config('app.name'), $isModerator || $isAgency
+            $data,
+            $name,
+            (string)config('app.name'),
+            $isModerator || $isAgency
         ))->responseStream();
     }
 
@@ -349,7 +352,10 @@ class StatsController extends Controller
         $name = $this->formatReportName($from, $to);
 
         return (new AdvertiserReportResponse(
-            $data, $name, (string)config('app.name'), $isModerator || $isAgency
+            $data,
+            $name,
+            (string)config('app.name'),
+            $isModerator || $isAgency
         ))->responseStream();
     }
 

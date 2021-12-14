@@ -27,5 +27,4 @@ use Adshares\Common\Exception\RuntimeException;
 
 class InvalidCampaignDateException extends RuntimeException
 {
-
 }

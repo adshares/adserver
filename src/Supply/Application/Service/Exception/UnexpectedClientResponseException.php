@@ -25,5 +25,4 @@ use RuntimeException;
 
 class UnexpectedClientResponseException extends RuntimeException
 {
-
 }
