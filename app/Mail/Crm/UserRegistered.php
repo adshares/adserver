@@ -32,13 +32,13 @@ class UserRegistered extends Mailable
 
     private string $uuid;
 
-    private string $email;
+    private ?string $email;
 
     private string $registrationDate;
 
     private ?string $refToken;
 
-    public function __construct(string $uuid, string $email, string $registrationDate, ?string $refToken = null)
+    public function __construct(string $uuid, ?string $email, string $registrationDate, ?string $refToken = null)
     {
         $this->uuid = $uuid;
         $this->email = $email;

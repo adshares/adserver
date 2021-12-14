@@ -580,7 +580,7 @@ class StatsController extends Controller
             throw new AccessDeniedHttpException(
                 sprintf(
                     'User %s is not authorized to access this resource.',
-                    $user->email
+                    $user->label
                 )
             );
         }
@@ -592,7 +592,7 @@ class StatsController extends Controller
             throw new AccessDeniedHttpException(
                 sprintf(
                     'User %s is not authorized to access this resource.',
-                    $user->email
+                    $user->label
                 )
             );
         }

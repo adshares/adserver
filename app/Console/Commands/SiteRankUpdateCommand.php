@@ -207,9 +207,9 @@ class SiteRankUpdateCommand extends BaseCommand
         $users = User::fetchByIds($userIds);
 
         foreach ($this->mails as $userId => $sites) {
-            $email = $users->get($userId)->email;
-
-            Mail::to($email)->send(new SiteVerified($sites));
+            if (null !== ($email = $users->get($userId)->email)) {
+                Mail::to($email)->send(new SiteVerified($sites));
+            }
         }
     }
 }

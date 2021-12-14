@@ -106,6 +106,7 @@ return [
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
     'ads_operator_server_url' => env('ADS_OPERATOR_SERVER_URL', 'https://ads-operator.adshares.net'),
+    'ads_rpc_url' => env('ADS_RPC_URL', 'https://rpc.adshares.net'),
     'aduser_base_url' => $aduserUrl,
     'aduser_internal_url' => env('ADUSER_INTERNAL_URL', $aduserUrl),
     'aduser_serve_subdomain' => env('ADUSER_SERVE_SUBDOMAIN'),

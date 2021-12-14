@@ -50,4 +50,19 @@ class UserTest extends TestCase
         $this->assertNotNull($user->auto_withdrawal);
         $this->assertEquals(100000000000, $user->auto_withdrawal);
     }
+
+    public function testAutoWithdrawal(): void
+    {
+        $user = new User();
+
+        $this->assertNull($user->auto_withdrawal);
+        $this->assertEquals(0, $user->auto_withdrawal_limit);
+        $this->assertFalse($user->is_auto_withdrawal);
+
+        $user->auto_withdrawal = 100;
+
+        $this->assertEquals(100, $user->auto_withdrawal);
+        $this->assertEquals(100, $user->auto_withdrawal_limit);
+        $this->assertTrue($user->is_auto_withdrawal);
+    }
 }

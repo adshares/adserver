@@ -33,15 +33,11 @@ class WithdrawalApproval extends Mailable
     use Queueable;
     use SerializesModels;
 
-    private $tokenId;
-
-    private $amount;
-
-    private $currency;
-
-    private $target;
-
-    private $fee;
+    private string $tokenId;
+    private int $amount;
+    private string $currency;
+    private string $target;
+    private int $fee;
 
     public function __construct(string $tokenId, int $amount, string $currency, int $fee, string $target)
     {
@@ -62,7 +58,6 @@ class WithdrawalApproval extends Mailable
             'total' => AdsConverter::clicksToAds($this->amount + $this->fee),
             'target' => $this->target,
         ];
-
         return $this->markdown('emails.withdrawal-approval')->with($variables);
     }
 }

@@ -19,42 +19,40 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Mail\Crm;
+namespace Adshares\Adserver\Mail;
 
-use Adshares\Adserver\Models\Site;
+use Adshares\Ads\Util\AdsConverter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class SiteAdded extends Mailable
+class WithdrawalSuccess extends Mailable
 {
     use Queueable;
     use SerializesModels;
 
-    private ?string $email;
+    private int $amount;
+    private string $currency;
+    private string $target;
+    private int $fee;
 
-    private Site $site;
-
-    private string $userUuid;
-
-    public function __construct(string $userUuid, ?string $email, Site $site)
+    public function __construct(int $amount, string $currency, int $fee, string $target)
     {
-        $this->userUuid = $userUuid;
-        $this->email = $email;
-        $this->site = $site;
+        $this->amount = $amount;
+        $this->currency = $currency;
+        $this->target = $target;
+        $this->fee = $fee;
     }
 
     public function build(): self
     {
-        $categories = (null !== $this->site->categories_by_user) ? join(', ', $this->site->categories_by_user) : '';
-
-        return $this->view('emails.crm.site-added')->with(
-            [
-                'userUuid' => $this->userUuid,
-                'email' => $this->email,
-                'site' => $this->site,
-                'categories' => $categories,
-            ]
-        );
+        $variables = [
+            'amount' => AdsConverter::clicksToAds($this->amount),
+            'currency' => strtoupper($this->currency),
+            'fee' => AdsConverter::clicksToAds($this->fee),
+            'total' => AdsConverter::clicksToAds($this->amount + $this->fee),
+            'target' => $this->target,
+        ];
+        return $this->markdown('emails.withdrawal-success')->with($variables);
     }
 }

@@ -28,6 +28,7 @@ use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleAdPayClient;
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
+use Adshares\Adserver\Client\GuzzleAdsRpcClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
@@ -41,6 +42,7 @@ use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
+use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseProvider;
@@ -197,6 +199,21 @@ final class ClientProvider extends ServiceProvider
                         [
                             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                             'timeout' => 30,
+                        ]
+                    )
+                );
+            }
+        );
+
+        $this->app->bind(
+            AdsRpcClient::class,
+            function () {
+                return new GuzzleAdsRpcClient(
+                    new Client(
+                        [
+                            'headers' => ['Content-Type' => 'application/json'],
+                            'base_uri' => config('app.ads_rpc_url'),
+                            'timeout' => 5,
                         ]
                     )
                 );

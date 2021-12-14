@@ -21,6 +21,7 @@
 
 namespace Adshares\Mock\Client;
 
+use Adshares\Adserver\Models\User;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
@@ -38,10 +39,14 @@ use function floor;
 
 final class DummyDemandClient implements DemandClient
 {
-    public $campaigns;
+    public User $user;
+    public User $user2;
+    public array $campaigns;
 
     public function __construct()
     {
+        $this->user = factory(User::class)->create();
+        $this->user2 = factory(User::class)->create();
         $this->campaigns = [
             CampaignFactory::createFromArray([
                 'demand_id' => Uuid::v4(),
@@ -167,7 +172,7 @@ final class DummyDemandClient implements DemandClient
                     'event_type' => 'view',
                     'banner_id' => 'b22e19a3874847f4a6287d26deacd208',
                     'zone_id' => 'a22e19a3874847f4a6287d26deacd208',
-                    'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
+                    'publisher_id' => $this->user2->uuid,
                     'event_value' => 10,
                 ];
                 $arr[] = [
@@ -176,7 +181,7 @@ final class DummyDemandClient implements DemandClient
                     'event_type' => 'click',
                     'banner_id' => '9c6edfaef7454af4a96cb434c85323ee',
                     'zone_id' => '2c6edfaef7454af4a96cb434c85323ee',
-                    'publisher_id' => 'd5f5deefd010449ab0ee0e5e6b884090',
+                    'publisher_id' => $this->user->uuid,
                     'event_value' => 100,
                 ];
             }

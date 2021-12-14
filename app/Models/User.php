@@ -38,11 +38,13 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 /**
  * @property Collection|Campaign[] campaigns
  * @property int id
  * @property string email
+ * @property string label
  * @property Carbon|null created_at
  * @property DateTime|null email_confirmed_at
  * @property DateTime|null admin_confirmed_at
@@ -175,6 +177,11 @@ class User extends Authenticatable
         return $user;
     }
 
+    public function getLabelAttribute(): string
+    {
+        return '#' . $this->id . (null !== $this->email ? ' (' . $this->email . ')' : '');
+    }
+
     public function getIsEmailConfirmedAttribute(): bool
     {
         return null !== $this->email_confirmed_at;
@@ -215,7 +222,7 @@ class User extends Authenticatable
         return null !== $this->auto_withdrawal;
     }
 
-    public function getAutoWithdrawalLimitAttribute(): bool
+    public function getAutoWithdrawalLimitAttribute(): int
     {
         return (int)$this->auto_withdrawal;
     }
@@ -272,6 +279,11 @@ class User extends Authenticatable
     public static function fetchByWalletAddress(WalletAddress $address): ?self
     {
         return self::where('wallet_address', $address)->first();
+    }
+
+    public static function findByAutoWithdrawal(): Collection
+    {
+        return self::whereNotNull('auto_withdrawal')->get();
     }
 
     public function isAdvertiser(): bool
