@@ -46,14 +46,14 @@ class AddSoftDeleteToBidStrategies extends Migration
         Schema::table(
             'sites',
             function (Blueprint $table) {
-                $table->dropColumn(['deleted_at']);
+                $table->dropColumn(['bid_strategy']);
             }
         );
 
         Schema::table(
             'sites',
             function (Blueprint $table) {
-                $table->dropColumn(['deleted_at']);
+                $table->dropColumn(['bid_strategy_details']);
             }
         );
     }
