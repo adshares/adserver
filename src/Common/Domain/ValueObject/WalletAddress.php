@@ -29,8 +29,10 @@ use Adshares\Common\Exception\InvalidArgumentException;
 final class WalletAddress implements ValueObject
 {
     private const SEPARATOR = ':';
-    public const NETWORK_ADS = 'ads';
-    public const NETWORK_BSC = 'bsc';
+    public const NETWORK_ADS = 'ADS';
+    public const NETWORK_BSC = 'BSC';
+    public const NETWORK_BTC = 'BTC';
+    public const NETWORK_ETH = 'ETH';
 
     private string $network;
     private string $address;
@@ -40,7 +42,7 @@ final class WalletAddress implements ValueObject
         $this->network = self::normalizeNetwork($network);
         $this->address = self::normalizeAddress($this->network, $address);
         if (!self::isValid($this->toString())) {
-            throw new InvalidArgumentException(sprintf('"%s" is NOT a VALID payout address.', $this));
+            throw new InvalidArgumentException(sprintf('"%s" is not a valid payout address', $this));
         }
     }
 
@@ -56,7 +58,7 @@ final class WalletAddress implements ValueObject
 
     private static function normalizeNetwork($network): string
     {
-        return strtolower($network);
+        return strtoupper($network);
     }
 
     private static function normalizeAddress($network, $address): string
@@ -65,6 +67,7 @@ final class WalletAddress implements ValueObject
             case self::NETWORK_ADS:
                 return strtoupper($address);
             case self::NETWORK_BSC:
+            case self::NETWORK_ETH:
                 return strtolower($address);
             default:
                 return $address;
@@ -88,7 +91,10 @@ final class WalletAddress implements ValueObject
             case self::NETWORK_ADS:
                 return AccountId::isValid($address);
             case self::NETWORK_BSC:
+            case self::NETWORK_ETH:
                 return !!preg_match('/^0x[0-9a-f]{40}$/i', $address);
+            case self::NETWORK_BTC:
+                return !!preg_match('/^[^0OIl]{25,34}$/', $address);
             default:
                 return false;
         }
@@ -96,13 +102,15 @@ final class WalletAddress implements ValueObject
 
     public static function fromString(string $value): self
     {
-        $parts = self::parse($value);
+        if (null === ($parts = self::parse($value))) {
+            throw new InvalidArgumentException(sprintf('Cannot parse payout address "%s"', $value));
+        }
         return new self($parts[0] ?? '', $parts[1] ?? '');
     }
 
     public function toString(): string
     {
-        return $this->network . self::SEPARATOR . $this->address;
+        return strtolower($this->network) . self::SEPARATOR . $this->address;
     }
 
     public function __toString(): string

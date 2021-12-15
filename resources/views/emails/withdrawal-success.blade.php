@@ -2,7 +2,8 @@
 # Withdrawal success
 
 Withdrawal order has been added.
-- Recipient Address: {{ $target }}
+- Recipient Address: {{ $address }}
+- Network: {{ $network }}
 - Currency: {{ $currency }}
 - Amount: {{ $amount }} ADS
 @if ($fee > 0)

@@ -60,7 +60,9 @@ class WalletWithdrawalCheckCommand extends BaseCommand
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->getValue();
 
         $count = 0;
-        foreach (User::findByAutoWithdrawal() as $user) {
+        $users = User::findByAutoWithdrawal();
+        $this->info(sprintf('[Wallet] %d users with auto withdrawal enabled', count($users)));
+        foreach ($users as $user) {
             /** @var User $user */
             $balance = $user->getWalletBalance();
             if ($balance * $exchangeRate >= $user->auto_withdrawal_limit) {
@@ -73,7 +75,7 @@ class WalletWithdrawalCheckCommand extends BaseCommand
                 }
             }
         }
-        $this->info(sprintf('[Wallet] %d withdrawals has been requested.', $count));
+        $this->info(sprintf('[Wallet] %d withdrawals has been requested', $count));
     }
 
     public function withdraw(User $user, int $amount): void
@@ -82,17 +84,24 @@ class WalletWithdrawalCheckCommand extends BaseCommand
 
         if (null === $user->wallet_address) {
             throw new RuntimeException(
-                sprintf('Cannot withdraw, user #%d does not have an wallet address set.', $user->id)
+                sprintf('Cannot withdraw, user #%d does not have an wallet address set', $user->id)
             );
         }
 
-        if (WalletAddress::NETWORK_BSC === $user->wallet_address->getNetwork()) {
-            $gateway = $this->rpcClient->getGateway(WalletAddress::NETWORK_BSC);
-            $addressTo = $gateway->getAddress();
-            $message = $gateway->getPrefix() . preg_replace('/^0x/', '', $user->wallet_address->getAddress());
-        } else {
-            $addressTo = new AccountId($user->wallet_address->getAddress());
-            $message = '';
+        switch ($user->wallet_address->getNetwork()) {
+            case WalletAddress::NETWORK_ADS:
+                $addressTo = new AccountId($user->wallet_address->getAddress());
+                $message = '';
+                break;
+            case WalletAddress::NETWORK_BSC:
+                $gateway = $this->rpcClient->getGateway(WalletAddress::NETWORK_BSC);
+                $addressTo = $gateway->getAddress();
+                $message = $gateway->getPrefix() . preg_replace('/^0x/', '', $user->wallet_address->getAddress());
+                break;
+            default:
+                throw new RuntimeException(
+                    sprintf('Cannot withdraw, unsupported network "%s"', $user->wallet_address->getNetwork())
+                );
         }
 
         $balance = $user->getWalletBalance();
@@ -118,7 +127,7 @@ class WalletWithdrawalCheckCommand extends BaseCommand
                     $amount,
                     'ADS',
                     $fee,
-                    $user->wallet_address->getAddress()
+                    $user->wallet_address
                 )
             );
         }

@@ -37,6 +37,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
@@ -316,7 +317,7 @@ class WalletController extends Controller
                 $amount,
                 'ADS',
                 $fee,
-                $addressTo->toString()
+                new WalletAddress(WalletAddress::NETWORK_ADS, (string)$addressTo)
             )
         );
 
@@ -378,7 +379,7 @@ class WalletController extends Controller
                 $amount,
                 'BTC',
                 0,
-                $addressTo
+                new WalletAddress(WalletAddress::NETWORK_BTC, (string)$addressTo)
             )
         );
 

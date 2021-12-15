@@ -33,21 +33,45 @@ class WalletAddressTest extends TestCase
         $address1 = new WalletAddress('ADS', '0001-00000001-8B4e');
         $this->assertEquals(WalletAddress::NETWORK_ADS, $address1->getNetwork());
         $this->assertEquals('0001-00000001-8B4E', $address1->getAddress());
+        $this->assertEquals('ads:0001-00000001-8B4E', (string)$address1);
 
         $address2 = new WalletAddress('BSC', '0xCFCECFE2BD2FED07A9145222E8A7AD9CF1CCD22A');
         $this->assertEquals(WalletAddress::NETWORK_BSC, $address2->getNetwork());
         $this->assertEquals('0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', $address2->getAddress());
+        $this->assertEquals('bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', (string)$address2);
+
+        $address3 = new WalletAddress('eth', '0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a');
+        $this->assertEquals(WalletAddress::NETWORK_ETH, $address3->getNetwork());
+        $this->assertEquals('0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', $address3->getAddress());
+        $this->assertEquals('eth:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', (string)$address3);
+
+        $address4 = new WalletAddress('btc', '3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg');
+        $this->assertEquals(WalletAddress::NETWORK_BTC, $address4->getNetwork());
+        $this->assertEquals('3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', $address4->getAddress());
+        $this->assertEquals('btc:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', (string)$address4);
     }
 
     public function testFromString(): void
     {
-        $address1 = WalletAddress::fromString('ads:0001-00000001-8B4E');
+        $address1 = WalletAddress::fromString('ADS:0001-00000001-8B4E');
         $this->assertEquals(WalletAddress::NETWORK_ADS, $address1->getNetwork());
         $this->assertEquals('0001-00000001-8B4E', $address1->getAddress());
+        $this->assertEquals('ads:0001-00000001-8B4E', (string)$address1);
 
         $address2 = WalletAddress::fromString('bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a');
         $this->assertEquals(WalletAddress::NETWORK_BSC, $address2->getNetwork());
         $this->assertEquals('0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', $address2->getAddress());
+        $this->assertEquals('bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', (string)$address2);
+
+        $address3 = WalletAddress::fromString('Eth:0xcfcecfe2bd2fed07A9145222E8A7AD9CF1CCD22A');
+        $this->assertEquals(WalletAddress::NETWORK_ETH, $address3->getNetwork());
+        $this->assertEquals('0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', $address3->getAddress());
+        $this->assertEquals('eth:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', (string)$address3);
+
+        $address4 = WalletAddress::fromString('btc:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg');
+        $this->assertEquals(WalletAddress::NETWORK_BTC, $address4->getNetwork());
+        $this->assertEquals('3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', $address4->getAddress());
+        $this->assertEquals('btc:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', (string)$address4);
     }
 
     public function testInvalidNetwork(): void
@@ -80,6 +104,17 @@ class WalletAddressTest extends TestCase
             ['bsc:cfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', false],
             ['bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9', false],
             ['bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a123123', false],
+            ['eth:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', true],
+            ['ETH:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', true],
+            ['eth:0xCFCECFE2BD2FED07A9145222E8A7AD9CF1CCD22A', true],
+            ['eth:cfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a', false],
+            ['eth:0xcfcecfe2bd2fed07a9145222e8a7ad9', false],
+            ['eth:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a123123', false],
+            ['btc:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', true],
+            ['BTC:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', true],
+            ['btc:30lP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', false],
+            ['btc:3ALP7JRzHAy', false],
+            ['btc:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg', false],
             ['foo:0001-00000001-8B4E', false],
         ];
     }
