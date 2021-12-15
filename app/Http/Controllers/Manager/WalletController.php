@@ -26,6 +26,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalApproval;
+use Adshares\Adserver\Mail\WithdrawalSuccess;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -205,7 +206,7 @@ class WalletController extends Controller
         $currency = $token['payload']['request']['currency'] ?? 'ADS';
         if ($currency === 'BTC') {
             if (
-                false === $exchange->transfer(
+                $exchange->transfer(
                     $token['payload']['request']['amount'],
                     $currency,
                     $token['payload']['request']['to'],
@@ -213,6 +214,15 @@ class WalletController extends Controller
                     $token['payload']['ledgerEntry']
                 )
             ) {
+                Mail::to($userLedgerEntry->user)->queue(
+                    new WithdrawalSuccess(
+                        $token['payload']['request']['amount'],
+                        $currency,
+                        0,
+                        new WalletAddress(WalletAddress::NETWORK_BTC, $token['payload']['request']['to'])
+                    )
+                );
+            } else {
                 $userLedgerEntry->status = UserLedgerEntry::STATUS_NET_ERROR;
                 $userLedgerEntry->save();
             }
@@ -223,9 +233,23 @@ class WalletController extends Controller
                 $token['payload']['request']['amount'],
                 $token['payload']['request']['memo'] ?? ''
             );
+            $fee = AdsUtils::calculateFee(
+                $this->getAdServerAdsAddress(),
+                $token['payload']['request']['to'],
+                $token['payload']['request']['amount']
+            );
+            Mail::to($userLedgerEntry->user)->queue(
+                new WithdrawalSuccess(
+                    $token['payload']['request']['amount'],
+                    $currency,
+                    $fee,
+                    new WalletAddress(WalletAddress::NETWORK_ADS, $token['payload']['request']['to'])
+                )
+            );
         }
 
         DB::commit();
+
 
         return self::json();
     }
