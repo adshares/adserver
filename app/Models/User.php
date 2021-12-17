@@ -158,6 +158,12 @@ class User extends Authenticatable
         'is_subscribed',
     ];
 
+    protected function toArrayExtras($array)
+    {
+        unset($array['wallet_address']);
+        return $array;
+    }
+
     public static function register(array $data, ?RefLink $refLink): User
     {
         $user = new User($data);
@@ -211,7 +217,8 @@ class User extends Authenticatable
             'total_funds_in_currency' => 0,
             'total_funds_change' => 0,
             'last_payment_at' => 0,
-            'wallet_address' => $this->wallet_address,
+            'wallet_address' => optional($this->wallet_address)->getAddress(),
+            'wallet_network' => optional($this->wallet_address)->getNetwork(),
             'is_auto_withdrawal' => $this->is_auto_withdrawal,
             'auto_withdrawal_limit' => $this->auto_withdrawal_limit,
         ];

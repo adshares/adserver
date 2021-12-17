@@ -46,6 +46,7 @@ class Token extends Model
         self::PASSWORD_RECOVERY => 24 * 3600,
         self::IMPERSONATION => 24 * 3600,
         self::EMAIL_APPROVE_WITHDRAWAL => 3600,
+        self::WALLET_CONNECT => 60,
     ];
 
     private const MINIMAL_AGE_LIMITS = [
@@ -66,6 +67,8 @@ class Token extends Model
     public const IMPERSONATION = 'impersonation';
 
     public const EMAIL_APPROVE_WITHDRAWAL = 'email-approve-withdrawal';
+
+    public const WALLET_CONNECT = 'wallet-connect';
 
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,

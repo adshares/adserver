@@ -29,8 +29,6 @@ use DateTime;
 use DateTimeInterface;
 use SodiumException;
 
-use function hex2bin;
-
 class SodiumCompatSignatureVerifier implements SignatureVerifier
 {
     public function create(
@@ -40,19 +38,17 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
         DateTime $date
     ): string {
         $message = $this->createMessageHash($transactionId, $accountAddress, $date);
-
         try {
-            $key_pair = sodium_crypto_sign_seed_keypair(hex2bin($privateKey));
-            $key_secret = sodium_crypto_sign_secretkey($key_pair);
-
-            return bin2hex(sodium_crypto_sign_detached($message, $key_secret));
+            return Sodium::sign($privateKey, $message);
         } catch (SodiumException $exception) {
-            throw new SignatureVerifierException(sprintf(
-                'Cannot create a signature (txid: %s, address: %s, date: %s).',
-                $transactionId,
-                $accountAddress,
-                $date->format(DateTimeInterface::ATOM)
-            ));
+            throw new SignatureVerifierException(
+                sprintf(
+                    'Cannot create a signature (txid: %s, address: %s, date: %s).',
+                    $transactionId,
+                    $accountAddress,
+                    $date->format(DateTimeInterface::ATOM)
+                )
+            );
         }
     }
 
@@ -65,13 +61,15 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
     ): bool {
         $message = $this->createMessageHash($transactionId, $accountAddress, $date);
         try {
-            return sodium_crypto_sign_verify_detached(hex2bin($signature), $message, hex2bin($publicKey));
+            return Sodium::verify($publicKey, $signature, $message);
         } catch (SodiumException $exception) {
-            throw new SignatureVerifierException(sprintf(
-                'Verification failed. Wrong signature (%s) or public key (%s).',
-                $signature,
-                $publicKey
-            ));
+            throw new SignatureVerifierException(
+                sprintf(
+                    'Verification failed. Wrong signature (%s) or public key (%s).',
+                    $signature,
+                    $publicKey
+                )
+            );
         }
     }
 

@@ -6,8 +6,8 @@
         "ext-dom": "*",
         "ext-fileinfo": "*",
         "ext-gd": "*",
-        "ext-intl": "*",
         "ext-imagick": "*",
+        "ext-intl": "*",
         "ext-json": "*",
         "ext-libxml": "*",
         "ext-openssl": "*",
@@ -30,7 +30,8 @@
         "ralouphie/mimey": "^2.1",
         "ramsey/uuid": "^3",
         "symfony/intl": "^5.3",
-        "symfony/lock": "^4.2"
+        "symfony/lock": "^4.2",
+        "wekisen/php-ecrecover": "dev-master"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",

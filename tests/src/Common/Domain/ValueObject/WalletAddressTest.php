@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
@@ -18,7 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 
 namespace Adshares\Tests\Common\Domain\ValueObject;
 

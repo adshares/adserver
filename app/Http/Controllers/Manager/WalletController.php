@@ -35,6 +35,8 @@ use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -457,19 +459,19 @@ class WalletController extends Controller
 
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
-            self::FIELD_ADDRESS      => $address->toString(),
-            self::FIELD_MESSAGE      => $message,
+            self::FIELD_ADDRESS => $address->toString(),
+            self::FIELD_MESSAGE => $message,
             self::FIELD_NOW_PAYMENTS => $nowPayments->info(),
-            self::FIELD_UNWRAPPERS   => [
+            self::FIELD_UNWRAPPERS => [
                 [
-                    'chain_id'    => 1,
-                    'network_name'    => 'Ethereum',
+                    'chain_id' => 1,
+                    'network_name' => 'Ethereum',
                     // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ],
                 [
-                    'chain_id'    => 56,
-                    'network_name'    => 'Binance Smart Chain',
+                    'chain_id' => 56,
+                    'network_name' => 'Binance Smart Chain',
                     // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ]
@@ -549,6 +551,38 @@ class WalletController extends Controller
         }
 
         return response()->noContent(Response::HTTP_NO_CONTENT);
+    }
+
+    public function connectInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $message = sprintf('Connect your wallet with %s adserver %s', config('app.name'), NonceGenerator::get());
+
+        $payload = [
+            'request' => $request->all(),
+            'message' => $message,
+        ];
+
+        return self::json([
+            'token' => Token::generate(Token::WALLET_CONNECT, $user, $payload)->uuid,
+            'message' => $message,
+            'gateways' => [
+                'bsc' => $rpcClient->getGateway(WalletAddress::NETWORK_BSC)->toArray()
+            ],
+        ]);
+    }
+
+    public function connect(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $token = Token::check($request->input('token'));
+        if (false === $token || $user->id !== (int)$token['user_id']) {
+            return self::json([], Response::HTTP_NOT_FOUND);
+        }
+
+        $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
     }
 
     public function history(Request $request): JsonResponse

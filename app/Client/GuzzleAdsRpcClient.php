@@ -28,6 +28,7 @@ use Adshares\Common\Application\Service\AdsRpcClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
 final class GuzzleAdsRpcClient implements AdsRpcClient
@@ -54,7 +55,14 @@ final class GuzzleAdsRpcClient implements AdsRpcClient
      */
     public function getGateways(): array
     {
-        return array_map(fn($data) => Gateway::fromArray($data), $this->request('get_gateways')['gateways']);
+        return array_map(
+            fn($data) => Gateway::fromArray($data),
+            Cache::remember(
+                'ads-rpc-client.gateways',
+                60,
+                fn() => $this->request('get_gateways')['gateways']
+            )
+        );
     }
 
     private function request(string $method, array $params = []): array

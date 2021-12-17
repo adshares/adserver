@@ -160,6 +160,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
             ->name('wallet.cancel-withdrawal');
         Route::get('now-payments/init', [WalletController::class, 'nowPaymentsInit']);
+        Route::get('wallet/connect/init', [WalletController::class, 'connectInit']);
+        Route::post('wallet/connect', [WalletController::class, 'connect']);
 
 // statistics
         Route::get(

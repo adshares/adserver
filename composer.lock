@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "87af27b264f029b595e53977274a4b98",
+    "content-hash": "29f9590b6e038d1440f3826b98a6de4f",
     "packages": [
         {
             "name": "adshares/ads-client",
@@ -1533,6 +1533,55 @@
                 }
             ],
             "time": "2021-10-05T13:56:00+00:00"
+        },
+        {
+            "name": "kornrunner/keccak",
+            "version": "1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kornrunner/php-keccak.git",
+                "reference": "433749d28e117fb97baf9f2631b92b5d9ab3c890"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kornrunner/php-keccak/zipball/433749d28e117fb97baf9f2631b92b5d9ab3c890",
+                "reference": "433749d28e117fb97baf9f2631b92b5d9ab3c890",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.3",
+                "symfony/polyfill-mbstring": "^1.8"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "kornrunner\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Boris Momcilovic",
+                    "homepage": "https://github.com/kornrunner/php-keccak"
+                }
+            ],
+            "description": "Pure PHP implementation of Keccak",
+            "keywords": [
+                "keccak",
+                "sha-3",
+                "sha3-256"
+            ],
+            "support": {
+                "issues": "https://github.com/kornrunner/php-keccak/issues",
+                "source": "https://github.com/kornrunner/php-keccak/tree/1.1.0"
+            },
+            "time": "2020-12-07T15:40:44+00:00"
         },
         {
             "name": "kylekatarnls/update-helper",
@@ -6506,6 +6555,47 @@
             "time": "2021-12-12T22:59:22+00:00"
         },
         {
+            "name": "wekisen/php-ecrecover",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Wekisen/php-ecrecover.git",
+                "reference": "5e784175fd241c110f9acde3ec0e2b4e33ec3142"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Wekisen/php-ecrecover/zipball/5e784175fd241c110f9acde3ec0e2b4e33ec3142",
+                "reference": "5e784175fd241c110f9acde3ec0e2b4e33ec3142",
+                "shasum": ""
+            },
+            "require": {
+                "ext-gmp": "*",
+                "kornrunner/keccak": "^1.0",
+                "php": ">=7.1.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Wekisen",
+                    "homepage": "https://github.com/Wekisen/php-ecrecover"
+                }
+            ],
+            "description": "PHP ECRecover Example",
+            "keywords": [
+                "ecrecover"
+            ],
+            "support": {
+                "issues": "https://github.com/Wekisen/php-ecrecover/issues",
+                "source": "https://github.com/Wekisen/php-ecrecover/tree/master"
+            },
+            "time": "2021-11-23T15:20:47+00:00"
+        },
+        {
             "name": "zendframework/zend-diactoros",
             "version": "2.2.1",
             "source": {
@@ -9865,7 +9955,8 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "adshares/fork": 20
+        "adshares/fork": 20,
+        "wekisen/php-ecrecover": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
@@ -9876,8 +9967,8 @@
         "ext-dom": "*",
         "ext-fileinfo": "*",
         "ext-gd": "*",
-        "ext-intl": "*",
         "ext-imagick": "*",
+        "ext-intl": "*",
         "ext-json": "*",
         "ext-libxml": "*",
         "ext-openssl": "*",

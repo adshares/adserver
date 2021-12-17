@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Response\Stats;
 
 use Adshares\Adserver\Services\Common\ReportsStorage;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -87,6 +88,7 @@ abstract class ReportResponse
 
     private function generateXLSXFile(string $uri = 'php://output'): void
     {
+        Log::error('Report URI: ' . $uri);
         $spreadsheet = new Spreadsheet();
 
         $spreadsheet->getProperties()
