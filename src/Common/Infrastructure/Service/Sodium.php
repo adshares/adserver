@@ -43,9 +43,9 @@ final class Sodium
      * @throws SodiumException
      */
     public static function verify(
-        string $publicKey,
         string $signature,
-        string $message
+        string $message,
+        string $publicKey
     ): bool {
         return sodium_crypto_sign_verify_detached(hex2bin($signature), $message, hex2bin($publicKey));
     }

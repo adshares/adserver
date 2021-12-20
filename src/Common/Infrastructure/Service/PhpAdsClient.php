@@ -31,10 +31,11 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
 use Illuminate\Support\Collection;
+use Throwable;
 
 class PhpAdsClient implements Ads
 {
-    private $adsClient;
+    private AdsClient $adsClient;
 
     public function __construct(AdsClient $adsClient)
     {
@@ -70,5 +71,18 @@ class PhpAdsClient implements Ads
         }
 
         return $response->getTx();
+    }
+
+    public function verifyMessage(string $signature, string $message, string $accountAddress): bool
+    {
+        try {
+            return Sodium::verify(
+                preg_replace('/^0x/', '', $signature),
+                sprintf('message:%s', $message),
+                $this->getPublicKeyByAccountAddress($accountAddress)
+            );
+        } catch (Throwable $exception) {
+            return false;
+        }
     }
 }

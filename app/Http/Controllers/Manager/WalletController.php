@@ -35,7 +35,9 @@ use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\EthUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -101,7 +103,7 @@ class WalletController extends Controller
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
-    public function withdrawalInfo(ExchangeRateReader $exchangeRateReader, AdsExchange $adsExchange): JsonResponse
+    public function withdrawalInfo(ExchangeRateReader $exchangeRateReader): JsonResponse
     {
         $btcInfo = null;
         if (config('app.btc_withdraw')) {
@@ -573,16 +575,48 @@ class WalletController extends Controller
         ]);
     }
 
-    public function connect(Request $request): JsonResponse
+    public function connect(Request $request, Ads $adsClient): JsonResponse
     {
         /** @var User $user */
         $user = Auth::user();
         $token = Token::check($request->input('token'));
         if (false === $token || $user->id !== (int)$token['user_id']) {
-            return self::json([], Response::HTTP_NOT_FOUND);
+            return self::json(['message' => 'Invalid token'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
+        try {
+            $address = new WalletAddress($request->input('network'), $request->input('address'));
+        } catch (InvalidArgumentException $exception) {
+            return self::json(['message' => 'Invalid wallet address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        switch ($address->getNetwork()) {
+            case WalletAddress::NETWORK_ADS:
+                $valid = $adsClient->verifyMessage(
+                    $request->input('sign'),
+                    $token['payload']['message'],
+                    $address->getAddress()
+                );
+                break;
+            case WalletAddress::NETWORK_BSC:
+                $valid = EthUtils::verifyMessage(
+                    $request->input('sign'),
+                    $token['payload']['message'],
+                    $address->getAddress()
+                );
+                break;
+            default:
+                return self::json(['message' => 'Unsupported wallet network'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (!$valid) {
+            return self::json(['message' => 'Invalid signature'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user->wallet_address = $address;
+        $user->saveOrFail();
+
+        return self::json($user->toArray());
     }
 
     public function history(Request $request): JsonResponse

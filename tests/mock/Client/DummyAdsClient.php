@@ -21,16 +21,17 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Mock\Client;
 
-use Adshares\Ads\Entity\Tx;
-use Illuminate\Support\Collection;
+use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 
-interface Ads
+class DummyAdsClient extends PhpAdsClient
 {
-    public function getPublicKeyByAccountAddress(string $accountAddress): string;
 
-    public function sendPayments(Collection $payments): Tx;
-
-    public function verifyMessage(string $signature, string $message, string $accountAddress): bool;
+    public function getPublicKeyByAccountAddress(string $accountAddress): string
+    {
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        return 'EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E';
+    }
 }

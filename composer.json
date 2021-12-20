@@ -51,6 +51,9 @@
             "database/seeds",
             "database/factories"
         ],
+        "files": [
+            "vendor/wekisen/php-ecrecover/ecrecover_helper.php"
+        ],
         "psr-4": {
             "Adshares\\Lib\\": "lib/",
             "Adshares\\Adserver\\": "app/",

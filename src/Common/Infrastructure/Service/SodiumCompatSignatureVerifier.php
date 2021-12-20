@@ -61,7 +61,7 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
     ): bool {
         $message = $this->createMessageHash($transactionId, $accountAddress, $date);
         try {
-            return Sodium::verify($publicKey, $signature, $message);
+            return Sodium::verify($signature, $message, $publicKey);
         } catch (SodiumException $exception) {
             throw new SignatureVerifierException(
                 sprintf(

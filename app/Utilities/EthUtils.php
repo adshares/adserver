@@ -19,18 +19,12 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Utilities;
 
-namespace Adshares\Common\Application\Service;
-
-use Adshares\Ads\Entity\Tx;
-use Illuminate\Support\Collection;
-
-interface Ads
+final class EthUtils
 {
-    public function getPublicKeyByAccountAddress(string $accountAddress): string;
-
-    public function sendPayments(Collection $payments): Tx;
-
-    public function verifyMessage(string $signature, string $message, string $accountAddress): bool;
+    public static function verifyMessage(string $signature, string $message, string $accountAddress): bool
+    {
+        return personal_ecRecover(bin2hex($message), $signature) === strtolower($accountAddress);
+    }
 }

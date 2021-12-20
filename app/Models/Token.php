@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\Serialize;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Throwable;
 
 /**
  * @mixin Builder
@@ -109,7 +110,12 @@ class Token extends Model
 
     public static function check($uuid, int $user_id = null, $tag = null)
     {
-        $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
+        try {
+            $uuid = hex2bin($uuid);
+        } catch (Throwable $exception) {
+            return false;
+        }
+        $q = self::where('uuid', $uuid)->where('valid_until', '>', date('Y-m-d H:i:s'));
 
         if (!empty($user_id)) {
             $q->where('user_id', $user_id);

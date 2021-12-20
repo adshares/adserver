@@ -42,7 +42,7 @@ class DemandSendPayments extends BaseCommand
 
     protected $description = 'Sends payments to supply adservers and license server';
 
-    public function handle(Ads $ads): int
+    public function handle(Ads $adsClient): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
@@ -75,7 +75,7 @@ class DemandSendPayments extends BaseCommand
         $this->info("Sending $paymentCount payments from " . config('app.adshares_address') . '.');
 
         try {
-            $tx = $ads->sendPayments($payments);
+            $tx = $adsClient->sendPayments($payments);
         } catch (AdsException $exception) {
             $this->error(
                 sprintf(
