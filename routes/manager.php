@@ -149,6 +149,10 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('options/sites/languages', [OptionsController::class, 'languages']);
         Route::get('options/sites/zones', [OptionsController::class, 'zones']);
 
+// settings
+        Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
+        Route::post('wallet/auto-withdraw', [SettingsController::class, 'autoWithdraw']);
+
 // Routes for Withdraw/Deposit
         Route::get('withdrawal-info', [WalletController::class, 'withdrawalInfo']);
         Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);

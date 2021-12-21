@@ -163,7 +163,10 @@ return [
     'site_filtering_exclude' => env('SITE_FILTERING_EXCLUDE'),
     'campaign_targeting_require' => env('CAMPAIGN_TARGETING_REQUIRE'),
     'campaign_targeting_exclude' => env('CAMPAIGN_TARGETING_EXCLUDE'),
-    'auto_withdrawal_default_limit' => env('AUTO_WITHDRAWAL_DEFAULT_LIMIT', 100000000000),
+    'auto_withdrawal_limit_ads' => env('AUTO_WITHDRAWAL_LIMIT_ADS', 1_000_000_00),
+    'auto_withdrawal_limit_bsc' => env('AUTO_WITHDRAWAL_LIMIT_BSC', 1_000_000_000_00),
+    'auto_withdrawal_limit_btc' => env('AUTO_WITHDRAWAL_LIMIT_BTC', 1_000_000_000_000_00),
+    'auto_withdrawal_limit_eth' => env('AUTO_WITHDRAWAL_LIMIT_ETH', 1_000_000_000_000_00),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

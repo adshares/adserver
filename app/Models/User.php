@@ -367,7 +367,7 @@ class User extends Authenticatable
     {
         $user = new self();
         $user->wallet_address = $address;
-        $user->auto_withdrawal = config('app.auto_withdrawal_default_limit');
+        $user->auto_withdrawal = config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()));
         $user->saveOrFail();
         return $user;
     }

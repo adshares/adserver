@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\Newsletter;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserSettings;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -71,6 +72,49 @@ class SettingsController extends Controller
         $user->save();
 
         return self::json(['is_subscribed' => $isSubscribed]);
+    }
+
+    public function autoWithdraw(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (null === $user->wallet_address) {
+            return self::json(
+                ['message' => 'Account is not connected with a wallet'],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+        if (!in_array($user->wallet_address->getNetwork(), [WalletAddress::NETWORK_ADS, WalletAddress::NETWORK_BSC])) {
+            return self::json(
+                ['message' => 'Unsupported wallet network'],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $autoWithdrawal = $request->get('auto_withdrawal');
+        if (null !== $autoWithdrawal && !ctype_digit((string)$autoWithdrawal)) {
+            return self::json(
+                ['message' => 'Auto withdrawal value must be numeric or null'],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        if (null !== $autoWithdrawal) {
+            $autoWithdrawal = (int)$autoWithdrawal;
+            $min = config('app.auto_withdrawal_limit_' . strtolower($user->wallet_address->getNetwork()));
+            if ($autoWithdrawal < $min) {
+                return self::json(
+                    ['message' => sprintf('Auto withdrawal value must be greater than or equal to %d', $min)],
+                    Response::HTTP_UNPROCESSABLE_ENTITY
+                );
+            }
+        }
+
+        $user->auto_withdrawal = $autoWithdrawal;
+        $user->saveOrFail();
+
+        return self::json($user->toArray());
     }
 
     public function newsletterUnsubscribe(Request $request): Response
