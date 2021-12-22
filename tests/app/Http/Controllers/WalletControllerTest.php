@@ -40,15 +40,11 @@ class WalletControllerTest extends TestCase
     {
         $this->login();
         $response = $this->get(self::CONNECT_INIT_URI);
-
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-        $data = $response->json();
-
-        $this->assertArrayHasKey('message', $data);
-        $this->assertArrayHasKey('token', $data);
-        $this->assertArrayHasKey('gateways', $data);
-        $this->assertArrayHasKey('bsc', $data['gateways']);
-        $this->assertNotEmpty($data['gateways']['bsc']);
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure([
+            'message',
+            'token',
+            'gateways' => ['bsc']
+        ]);
     }
 
     public function testAdsConnect(): void

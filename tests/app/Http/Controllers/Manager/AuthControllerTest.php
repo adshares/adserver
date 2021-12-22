@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
-use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserConfirmed;
+use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -35,12 +35,14 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Config\RegistrationMode;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthControllerTest extends TestCase
 {
-    private const URI_CHECK = '/auth/check';
+    private const CHECK_URI = '/auth/check';
+    private const WALLET_LOGIN_INIT_URI = '/auth/login/wallet/init';
+    private const WALLET_LOGIN_URI = '/auth/login/wallet';
 
     private const STRUCTURE_CHECK = [
         'uuid',
@@ -50,11 +52,15 @@ class AuthControllerTest extends TestCase
         'isAdmin',
         'adserverWallet' => [
             'totalFunds',
-            'walletBalance',
-            'bonusBalance',
             'totalFundsInCurrency',
             'totalFundsChange',
+            'bonusBalance',
+            'walletBalance',
+            'walletAddress',
+            'walletNetwork',
             'lastPaymentAt',
+            'isAutoWithdrawal',
+            'autoWithdrawalLimit',
         ],
         'isEmailConfirmed',
         'isConfirmed',
@@ -324,7 +330,7 @@ class AuthControllerTest extends TestCase
 
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI_CHECK);
+        $response = $this->getJson(self::CHECK_URI);
 
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::STRUCTURE_CHECK);
     }
@@ -345,7 +351,7 @@ class AuthControllerTest extends TestCase
 
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI_CHECK);
+        $response = $this->getJson(self::CHECK_URI);
 
         $structure = self::STRUCTURE_CHECK;
         unset($structure['exchangeRate']);
@@ -353,7 +359,18 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure($structure);
     }
 
-    public function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
+    public function testWalletLoginInit(): void
+    {
+        $this->login();
+        $response = $this->get(self::WALLET_LOGIN_INIT_URI);
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure([
+            'message',
+            'token',
+            'gateways' => ['bsc']
+        ]);
+    }
+
+    private function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
     {
         $email = $this->faker->unique()->email;
         $response = $this->postJson(
@@ -372,7 +389,7 @@ class AuthControllerTest extends TestCase
         return User::where('email', $email)->first();
     }
 
-    public function activateUser(User $user): void
+    private function activateUser(User $user): void
     {
         $activationToken = Token::where('user_id', $user->id)->where('tag', 'email-activate')->firstOrFail();
 
@@ -388,7 +405,7 @@ class AuthControllerTest extends TestCase
         $user->refresh();
     }
 
-    public function confirmUser(User $user): void
+    private function confirmUser(User $user): void
     {
         $response = $this->postJson('/admin/users/' . $user->id . '/confirm');
         $response->assertStatus(Response::HTTP_OK);

@@ -32,7 +32,10 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Config\RegistrationMode;
 use DateTime;
@@ -312,17 +315,38 @@ class AuthController extends Controller
             )
         ) {
             Auth::user()->generateApiKey();
-
             return $this->check();
         }
 
         return response()->json([], Response::HTTP_BAD_REQUEST);
     }
 
+    public function walletLoginInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
+    {
+        $message = sprintf('Log in to %s adserver %s', config('app.name'), NonceGenerator::get());
+
+        $payload = [
+            'request' => $request->all(),
+            'message' => $message,
+        ];
+
+        return self::json([
+            'token' => Token::generate(Token::WALLET_CONNECT, null, $payload)->uuid,
+            'message' => $message,
+            'gateways' => [
+                'bsc' => $rpcClient->getGateway(WalletAddress::NETWORK_BSC)->toArray()
+            ],
+        ]);
+    }
+
+    public function walletLogin(): JsonResponse
+    {
+        return response()->json([], Response::HTTP_BAD_REQUEST);
+    }
+
     public function logout(): JsonResponse
     {
         Auth::user()->clearApiKey();
-
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 

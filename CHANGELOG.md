@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Connecting your account with the cryptocurrency wallet
+- Log in to your account with the cryptocurrency wallet
 - Auto registration
 - Auto withdrawal
 

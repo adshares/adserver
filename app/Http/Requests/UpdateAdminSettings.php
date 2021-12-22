@@ -84,6 +84,7 @@ class UpdateAdminSettings extends FormRequest
                 'between:0,1',
                 'nullable',
             ],
+            'settings.auto_registration_enabled' => 'required|boolean',
             'settings.auto_confirmation_enabled' => 'required|boolean',
         ];
         $rules['settings.registration_mode'] = ['required', Rule::in(RegistrationMode::cases())];
