@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\Newsletter;
 use Adshares\Adserver\Models\User;
@@ -74,7 +75,7 @@ class SettingsController extends Controller
         return self::json(['is_subscribed' => $isSubscribed]);
     }
 
-    public function autoWithdraw(Request $request): JsonResponse
+    public function autoWithdrawal(Request $request): JsonResponse
     {
         /** @var User $user */
         $user = Auth::user();
@@ -95,7 +96,7 @@ class SettingsController extends Controller
         $autoWithdrawal = $request->get('auto_withdrawal');
         if (null !== $autoWithdrawal && !ctype_digit((string)$autoWithdrawal)) {
             return self::json(
-                ['message' => 'Auto withdrawal value must be numeric or null'],
+                ['message' => 'Auto withdrawal threshold must be numeric or null'],
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
         }
@@ -105,7 +106,12 @@ class SettingsController extends Controller
             $min = config('app.auto_withdrawal_limit_' . strtolower($user->wallet_address->getNetwork()));
             if ($autoWithdrawal < $min) {
                 return self::json(
-                    ['message' => sprintf('Auto withdrawal value must be greater than or equal to %d', $min)],
+                    [
+                        'message' => sprintf(
+                            'Auto withdrawal threshold must be greater than or equal to %.3f',
+                            AdsConverter::clicksToAds($min)
+                        )
+                    ],
                     Response::HTTP_UNPROCESSABLE_ENTITY
                 );
             }

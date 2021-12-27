@@ -151,7 +151,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
 
 // settings
         Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
-        Route::post('wallet/auto-withdraw', [SettingsController::class, 'autoWithdraw']);
+        Route::patch('wallet/auto-withdrawal', [SettingsController::class, 'autoWithdrawal']);
 
 // Routes for Withdraw/Deposit
         Route::get('withdrawal-info', [WalletController::class, 'withdrawalInfo']);
@@ -165,7 +165,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             ->name('wallet.cancel-withdrawal');
         Route::get('now-payments/init', [WalletController::class, 'nowPaymentsInit']);
         Route::get('wallet/connect/init', [WalletController::class, 'connectInit']);
-        Route::post('wallet/connect', [WalletController::class, 'connect']);
+        Route::patch('wallet/connect', [WalletController::class, 'connect']);
 
 // statistics
         Route::get(

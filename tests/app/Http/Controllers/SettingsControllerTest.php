@@ -31,9 +31,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SettingsControllerTest extends TestCase
 {
-    private const AUTO_WITHDRAW_URI = '/api/wallet/auto-withdraw';
+    private const AUTO_WITHDRAW_URI = '/api/wallet/auto-withdrawal';
 
-    public function testEnableAutoWithdraw(): void
+    public function testEnableAutoWithdrawal(): void
     {
         $user = $this->login();
         $user->wallet_address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E');
@@ -42,7 +42,7 @@ class SettingsControllerTest extends TestCase
         $this->assertFalse($user->is_auto_withdrawal);
         $this->assertEquals(0, $user->auto_withdrawal_limit);
 
-        $response = $this->post(self::AUTO_WITHDRAW_URI, [
+        $response = $this->patch(self::AUTO_WITHDRAW_URI, [
             'auto_withdrawal' => 100_000_000_000_00,
         ]);
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
@@ -57,7 +57,7 @@ class SettingsControllerTest extends TestCase
         $this->assertEquals(100_000_000_000_00, $userDb->auto_withdrawal_limit);
     }
 
-    public function testDisableAutoWithdraw(): void
+    public function testDisableAutoWithdrawal(): void
     {
         $user = $this->login();
         $user->wallet_address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E');
@@ -67,7 +67,7 @@ class SettingsControllerTest extends TestCase
         $this->assertTrue($user->is_auto_withdrawal);
         $this->assertEquals(100_000_000_000_00, $user->auto_withdrawal_limit);
 
-        $response = $this->post(self::AUTO_WITHDRAW_URI, [
+        $response = $this->patch(self::AUTO_WITHDRAW_URI, [
             'auto_withdrawal' => null,
         ]);
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
@@ -82,43 +82,43 @@ class SettingsControllerTest extends TestCase
         $this->assertEquals(0, $userDb->auto_withdrawal_limit);
     }
 
-    public function testInvalidAmountAutoWithdraw(): void
+    public function testInvalidAmountAutoWithdrawal(): void
     {
         $user = $this->login();
         $user->wallet_address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E');
         $user->saveOrFail();
 
-        $response = $this->post(self::AUTO_WITHDRAW_URI, [
+        $response = $this->patch(self::AUTO_WITHDRAW_URI, [
             'auto_withdrawal' => 'foo',
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
 
-    public function testTooLowAmountAutoWithdraw(): void
+    public function testTooLowAmountAutoWithdrawal(): void
     {
         $user = $this->login();
         $user->wallet_address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E');
         $user->saveOrFail();
 
-        $response = $this->post(self::AUTO_WITHDRAW_URI, [
+        $response = $this->patch(self::AUTO_WITHDRAW_URI, [
             'auto_withdrawal' => 100,
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
 
-    public function testNoWalletAddressAutoWithdraw(): void
+    public function testNoWalletAddressAutoWithdrawal(): void
     {
         $user = $this->login();
         $user->wallet_address = null;
         $user->saveOrFail();
 
-        $response = $this->post(self::AUTO_WITHDRAW_URI, [
+        $response = $this->patch(self::AUTO_WITHDRAW_URI, [
             'auto_withdrawal' => 100_000_000_000_00,
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
 
-    public function testUnsupportedWalletNetworkAutoWithdraw(): void
+    public function testUnsupportedWalletNetworkAutoWithdrawal(): void
     {
         $user = $this->login();
         $user->wallet_address = new WalletAddress(
@@ -127,7 +127,7 @@ class SettingsControllerTest extends TestCase
         );
         $user->saveOrFail();
 
-        $response = $this->post(self::AUTO_WITHDRAW_URI, [
+        $response = $this->patch(self::AUTO_WITHDRAW_URI, [
             'auto_withdrawal' => 1_000_000_000_000_00,
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());

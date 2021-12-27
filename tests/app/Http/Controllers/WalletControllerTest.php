@@ -60,7 +60,7 @@ class WalletControllerTest extends TestCase
         //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
         //message:123abc
         $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
-        $response = $this->post(self::CONNECT_URI, [
+        $response = $this->patch(self::CONNECT_URI, [
             'token' => $token,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
@@ -86,7 +86,7 @@ class WalletControllerTest extends TestCase
 
         //message:123abc
         $sign = '0xcfc6afca5c3e65b2f84dd8d3c5cd1272cf978794d338bdd5c025bc894e38aa024e0a287d96a67501417b6c10c25cb14f6c0e39927372a81bb6d50ccc83453e001b';
-        $response = $this->post(self::CONNECT_URI, [
+        $response = $this->patch(self::CONNECT_URI, [
             'token' => $token,
             'network' => 'bsc',
             'address' => '0xbbdfd8a8ce8b24ffdc9bc993b9d589d5442c019b',
@@ -110,7 +110,7 @@ class WalletControllerTest extends TestCase
             'message' => $message,
         ])->uuid;
 
-        $response = $this->post(self::CONNECT_URI, [
+        $response = $this->patch(self::CONNECT_URI, [
             'token' => $token,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
@@ -123,7 +123,7 @@ class WalletControllerTest extends TestCase
     {
         $this->login();
         $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
-        $response = $this->post(self::CONNECT_URI, [
+        $response = $this->patch(self::CONNECT_URI, [
             'token' => 'foo_token',
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
@@ -137,7 +137,7 @@ class WalletControllerTest extends TestCase
     {
         $this->login();
         $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
-        $response = $this->post(self::CONNECT_URI, [
+        $response = $this->patch(self::CONNECT_URI, [
             'token' => '1231231231',
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
@@ -159,7 +159,7 @@ class WalletControllerTest extends TestCase
         $token->saveOrFail();
 
         $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
-        $response = $this->post(self::CONNECT_URI, [
+        $response = $this->patch(self::CONNECT_URI, [
             'token' => $token->uuid,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
@@ -178,7 +178,7 @@ class WalletControllerTest extends TestCase
         ]);
 
         $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
-        $response = $this->post(self::CONNECT_URI, [
+        $response = $this->patch(self::CONNECT_URI, [
             'token' => $token->uuid,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
