@@ -85,11 +85,11 @@ class WalletControllerTest extends TestCase
         ])->uuid;
 
         //message:123abc
-        $sign = '0xcfc6afca5c3e65b2f84dd8d3c5cd1272cf978794d338bdd5c025bc894e38aa024e0a287d96a67501417b6c10c25cb14f6c0e39927372a81bb6d50ccc83453e001b';
+        $sign = '0xe649d27a045e5a9397a9a7572d93471e58f6ab8d024063b2ea5b6bcb4f65b5eb4aecf499197f71af91f57cd712799d2a559e3a3a40243db2c4e947aeb0a2c8181b';
         $response = $this->patch(self::CONNECT_URI, [
             'token' => $token,
             'network' => 'bsc',
-            'address' => '0xbbdfd8a8ce8b24ffdc9bc993b9d589d5442c019b',
+            'address' => '0x79e51bA0407bEc3f1246797462EaF46850294301',
             'sign' => $sign
         ]);
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
@@ -98,7 +98,7 @@ class WalletControllerTest extends TestCase
         $userDb = User::fetchById($user->id);
         $this->assertNotNull($userDb->wallet_address);
         $this->assertEquals(WalletAddress::NETWORK_BSC, $userDb->wallet_address->getNetwork());
-        $this->assertEquals('0xbbdfd8a8ce8b24ffdc9bc993b9d589d5442c019b', $userDb->wallet_address->getAddress());
+        $this->assertEquals('0x79e51ba0407bec3f1246797462eaf46850294301', $userDb->wallet_address->getAddress());
     }
 
     public function testInvalidConnectSign(): void

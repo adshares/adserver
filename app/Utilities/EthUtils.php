@@ -25,6 +25,6 @@ final class EthUtils
 {
     public static function verifyMessage(string $signature, string $message, string $accountAddress): bool
     {
-        return personal_ecRecover(bin2hex($message), $signature) === strtolower($accountAddress);
+        return personal_ecRecover($message, $signature) === strtolower($accountAddress);
     }
 }
