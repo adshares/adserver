@@ -64,7 +64,7 @@ class WalletControllerTest extends TestCase
             'token' => $token,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
-            'sign' => $sign
+            'signature' => $sign
         ]);
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
@@ -90,7 +90,7 @@ class WalletControllerTest extends TestCase
             'token' => $token,
             'network' => 'bsc',
             'address' => '0x79e51bA0407bEc3f1246797462EaF46850294301',
-            'sign' => $sign
+            'signature' => $sign
         ]);
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
@@ -101,7 +101,43 @@ class WalletControllerTest extends TestCase
         $this->assertEquals('0x79e51ba0407bec3f1246797462eaf46850294301', $userDb->wallet_address->getAddress());
     }
 
-    public function testInvalidConnectSign(): void
+    public function testConnectWithOverwrite(): void
+    {
+        $oldUser = factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
+        ]);
+
+        $user = $this->login();
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_CONNECT, $user, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        //message:123abc
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->patch(self::CONNECT_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+
+        /** @var User $userDb */
+        $oldUserDb = User::fetchById($oldUser->id);
+        $this->assertNull($oldUserDb->wallet_address);
+
+        /** @var User $userDb */
+        $userDb = User::fetchById($user->id);
+        $this->assertNotNull($userDb->wallet_address);
+        $this->assertEquals(WalletAddress::NETWORK_ADS, $userDb->wallet_address->getNetwork());
+        $this->assertEquals('0001-00000001-8B4E', $userDb->wallet_address->getAddress());
+    }
+
+    public function testInvalidConnectSignature(): void
     {
         $user = $this->login();
         $message = '123abc';
@@ -114,7 +150,7 @@ class WalletControllerTest extends TestCase
             'token' => $token,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
-            'sign' => '0x1231231231'
+            'signature' => '0x1231231231'
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
@@ -127,7 +163,7 @@ class WalletControllerTest extends TestCase
             'token' => 'foo_token',
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
-            'sign' => $sign
+            'signature' => $sign
         ]);
 
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
@@ -141,7 +177,7 @@ class WalletControllerTest extends TestCase
             'token' => '1231231231',
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
-            'sign' => $sign
+            'signature' => $sign
         ]);
 
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
@@ -163,7 +199,7 @@ class WalletControllerTest extends TestCase
             'token' => $token->uuid,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
-            'sign' => $sign
+            'signature' => $sign
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
@@ -182,7 +218,7 @@ class WalletControllerTest extends TestCase
             'token' => $token->uuid,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
-            'sign' => $sign
+            'signature' => $sign
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }

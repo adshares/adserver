@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
@@ -33,6 +34,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\RegistrationMode;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Support\Facades\Mail;
@@ -368,6 +370,172 @@ class AuthControllerTest extends TestCase
             'token',
             'gateways' => ['bsc']
         ]);
+    }
+
+    public function testWalletLoginAds(): void
+    {
+        $user = factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        //message:123abc
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function testWalletLoginBsc(): void
+    {
+        $user = factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('bsc:0x79e51bA0407bEc3f1246797462EaF46850294301')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //message:123abc
+        $sign = '0xe649d27a045e5a9397a9a7572d93471e58f6ab8d024063b2ea5b6bcb4f65b5eb4aecf499197f71af91f57cd712799d2a559e3a3a40243db2c4e947aeb0a2c8181b';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'bsc',
+            'address' => '0x79e51bA0407bEc3f1246797462EaF46850294301',
+            'signature' => $sign
+        ]);
+        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function testNonExistedWalletLoginUser(): void
+    {
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        //message:123abc
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $this->assertGuest();
+    }
+
+    public function testInvalidWalletLoginSignature(): void
+    {
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => '0x1231231231'
+        ]);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    public function testUnsupportedWalletLoginNetwork(): void
+    {
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('btc:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'btc',
+            'address' => '3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg',
+            'signature' => '0x1231231231'
+        ]);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    public function testInvalidWalletLoginToken(): void
+    {
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
+        ]);
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => 'foo_token',
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    public function testNonExistedWalletLoginToken(): void
+    {
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
+        ]);
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => '1231231231',
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    public function testExpiredWalletLoginToken(): void
+    {
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ]);
+        $token->valid_until = '2020-01-01 12:00:00';
+        $token->saveOrFail();
+
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token->uuid,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
 
     private function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User

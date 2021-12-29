@@ -24,10 +24,10 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\AuthRecovery;
 use Adshares\Adserver\Mail\Crm\UserRegistered;
+use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
-use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -318,7 +318,7 @@ class AuthController extends Controller
             return $this->check();
         }
 
-        return response()->json([], Response::HTTP_BAD_REQUEST);
+        return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function walletLoginInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
@@ -331,7 +331,7 @@ class AuthController extends Controller
         ];
 
         return self::json([
-            'token' => Token::generate(Token::WALLET_CONNECT, null, $payload)->uuid,
+            'token' => Token::generate(Token::WALLET_LOGIN, null, $payload)->uuid,
             'message' => $message,
             'gateways' => [
                 'bsc' => $rpcClient->getGateway(WalletAddress::NETWORK_BSC)->toArray()
@@ -339,9 +339,19 @@ class AuthController extends Controller
         ]);
     }
 
-    public function walletLogin(): JsonResponse
+    public function walletLogin(Request $request): JsonResponse
     {
-        return response()->json([], Response::HTTP_BAD_REQUEST);
+        if (
+            Auth::guard()->attempt(
+                $request->only('token', 'network', 'address', 'signature'),
+                $request->filled('remember')
+            )
+        ) {
+            Auth::user()->generateApiKey();
+            return $this->check();
+        }
+
+        return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function logout(): JsonResponse

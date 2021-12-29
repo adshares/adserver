@@ -38,7 +38,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
-use RuntimeException;
 
 /**
  * @property Collection|Campaign[] campaigns

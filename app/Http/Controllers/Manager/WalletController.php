@@ -61,6 +61,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
+use Throwable;
+
 use function config;
 
 class WalletController extends Controller
@@ -579,8 +581,8 @@ class WalletController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $token = Token::check($request->input('token'));
-        if (false === $token || $user->id !== (int)$token['user_id']) {
+
+        if (false === ($token = Token::check($request->input('token'), $user->id, Token::WALLET_CONNECT))) {
             return self::json(['message' => 'Invalid token'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -593,14 +595,14 @@ class WalletController extends Controller
         switch ($address->getNetwork()) {
             case WalletAddress::NETWORK_ADS:
                 $valid = $adsClient->verifyMessage(
-                    $request->input('sign'),
+                    $request->input('signature'),
                     $token['payload']['message'],
                     $address->getAddress()
                 );
                 break;
             case WalletAddress::NETWORK_BSC:
                 $valid = EthUtils::verifyMessage(
-                    $request->input('sign'),
+                    $request->input('signature'),
                     $token['payload']['message'],
                     $address->getAddress()
                 );
@@ -613,8 +615,19 @@ class WalletController extends Controller
             return self::json(['message' => 'Invalid signature'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $user->wallet_address = $address;
-        $user->saveOrFail();
+        DB::beginTransaction();
+        try {
+            if (null !== ($prev = User::fetchByWalletAddress($address))) {
+                $prev->wallet_address = null;
+                $prev->saveOrFail();
+            }
+            $user->wallet_address = $address;
+            $user->saveOrFail();
+        } catch (Throwable $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
+        DB::commit();
 
         return self::json($user->toArray());
     }
