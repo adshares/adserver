@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.11.0] - 2021-12-31
 ### Added
 - Connecting your account with the cryptocurrency wallet
 - Log in to your account with the cryptocurrency wallet
 - Auto registration
 - Auto withdrawal
+### Changed
+- Add parcel id to the event context
 
 ## [1.10.9] - 2021-12-09
 ### Added
@@ -525,7 +529,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.10.9...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.11.0...develop
+[1.11.0]: https://github.com/adshares/adserver/compare/v1.10.9...v1.11.0
 [1.10.9]: https://github.com/adshares/adserver/compare/v1.10.8...v1.10.9
 [1.10.8]: https://github.com/adshares/adserver/compare/v1.10.7...v1.10.8
 [1.10.7]: https://github.com/adshares/adserver/compare/v1.10.6...v1.10.7
