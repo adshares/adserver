@@ -27,5 +27,4 @@ use RuntimeException;
 
 class BannerNotVerifiedException extends RuntimeException
 {
-
 }

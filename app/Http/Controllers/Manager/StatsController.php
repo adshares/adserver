@@ -302,7 +302,10 @@ class StatsController extends Controller
         $name = $this->formatReportName($from, $to);
 
         return (new PublisherReportResponse(
-            $data, $name, (string)config('app.name'), $isModerator || $isAgency
+            $data,
+            $name,
+            (string)config('app.name'),
+            $isModerator || $isAgency
         ))->responseStream();
     }
 
@@ -349,7 +352,10 @@ class StatsController extends Controller
         $name = $this->formatReportName($from, $to);
 
         return (new AdvertiserReportResponse(
-            $data, $name, (string)config('app.name'), $isModerator || $isAgency
+            $data,
+            $name,
+            (string)config('app.name'),
+            $isModerator || $isAgency
         ))->responseStream();
     }
 
@@ -580,7 +586,7 @@ class StatsController extends Controller
             throw new AccessDeniedHttpException(
                 sprintf(
                     'User %s is not authorized to access this resource.',
-                    $user->email
+                    $user->label
                 )
             );
         }
@@ -592,7 +598,7 @@ class StatsController extends Controller
             throw new AccessDeniedHttpException(
                 sprintf(
                     'User %s is not authorized to access this resource.',
-                    $user->email
+                    $user->label
                 )
             );
         }

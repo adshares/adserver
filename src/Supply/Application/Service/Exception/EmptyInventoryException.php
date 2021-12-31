@@ -23,5 +23,4 @@ namespace Adshares\Supply\Application\Service\Exception;
 
 class EmptyInventoryException extends \RuntimeException
 {
-
 }

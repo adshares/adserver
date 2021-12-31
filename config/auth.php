@@ -89,7 +89,7 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'eloquent',
+            'driver' => 'wallet',
             'model' => Adshares\Adserver\Models\User::class,
         ],
     ],

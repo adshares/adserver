@@ -139,9 +139,10 @@ class PaymentDetailsProcessor
                 continue;
             }
 
+            $amount = (int)$splitPayment->paid_amount;
             UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
-                (int)$splitPayment->paid_amount,
+                $amount,
                 UserLedgerEntry::STATUS_ACCEPTED,
                 UserLedgerEntry::TYPE_AD_INCOME,
                 $adsPayment->address,

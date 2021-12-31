@@ -27,5 +27,4 @@ use Adshares\Common\Exception\RuntimeException;
 
 class InvalidBudgetValueException extends RuntimeException
 {
-
 }

@@ -35,6 +35,7 @@ phpunit.xml
 *_in_progress
 
 /storage/
+/.phpunit.result.cache
 
 ###> squizlabs/php_codesniffer ###
 /.phpcs-cache

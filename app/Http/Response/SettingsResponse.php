@@ -57,6 +57,8 @@ class SettingsResponse implements Arrayable
 
     private string $registrationMode;
 
+    private int $autoRegistrationEnabled;
+
     private int $autoConfirmationEnabled;
 
     private string $aduserInfoUrl;
@@ -74,6 +76,7 @@ class SettingsResponse implements Arrayable
         Commission $advertiserCommission,
         Commission $publisherCommission,
         string $registrationMode,
+        int $autoRegistrationEnabled,
         int $autoConfirmationEnabled,
         string $aduserInfoUrl
     ) {
@@ -89,6 +92,7 @@ class SettingsResponse implements Arrayable
         $this->advertiserCommission = $advertiserCommission;
         $this->publisherCommission = $publisherCommission;
         $this->registrationMode = $registrationMode;
+        $this->autoRegistrationEnabled = $autoRegistrationEnabled;
         $this->autoConfirmationEnabled = $autoConfirmationEnabled;
         $this->aduserInfoUrl = $aduserInfoUrl;
     }
@@ -107,6 +111,7 @@ class SettingsResponse implements Arrayable
         $referralRefundEnabled = $data[Config::REFERRAL_REFUND_ENABLED];
         $referralRefundCommission = $data[Config::REFERRAL_REFUND_COMMISSION];
         $registrationMode = $data[Config::REGISTRATION_MODE];
+        $autoRegistrationEnabled = $data[Config::AUTO_REGISTRATION_ENABLED];
         $autoConfirmationEnabled = $data[Config::AUTO_CONFIRMATION_ENABLED];
         $aduserInfoUrl = config('app.aduser_info_url');
 
@@ -123,6 +128,7 @@ class SettingsResponse implements Arrayable
             new Commission((float)$advertiserCommission),
             new Commission((float)$publisherCommission),
             $registrationMode,
+            (int)$autoRegistrationEnabled,
             (int)$autoConfirmationEnabled,
             $aduserInfoUrl
         );
@@ -143,6 +149,7 @@ class SettingsResponse implements Arrayable
             'advertiser_commission' => $this->advertiserCommission->getValue(),
             'publisher_commission' => $this->publisherCommission->getValue(),
             'registration_mode' => $this->registrationMode,
+            'auto_registration_enabled' => $this->autoRegistrationEnabled,
             'auto_confirmation_enabled' => $this->autoConfirmationEnabled,
             'aduser_info_url' => $this->aduserInfoUrl,
         ];

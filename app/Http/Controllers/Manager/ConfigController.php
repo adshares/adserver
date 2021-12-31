@@ -28,7 +28,6 @@ use Symfony\Component\Intl\Countries;
 
 class ConfigController extends Controller
 {
-
     public function adsharesAddress(): JsonResponse
     {
         return self::json(['adsharesAddress' => config('app.adshares_address')], 200);

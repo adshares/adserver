@@ -28,7 +28,6 @@ use PHPUnit\Framework\TestCase;
 
 final class DomainReaderTest extends TestCase
 {
-
     public function testDomainRead(): void
     {
         $this->assertEquals('example.com', DomainReader::domain('http://example.com'));

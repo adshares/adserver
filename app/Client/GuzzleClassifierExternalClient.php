@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Exception\RuntimeException;
@@ -104,7 +105,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
         $apiKeyName = $classifier->getApiKeyName();
         $apiKeySecret = $classifier->getApiKeySecret();
 
-        $nonce = base64_encode(substr(md5(uniqid()), 0, 16));
+        $nonce = base64_encode(NonceGenerator::get());
         $created = date('c');
         $digest = base64_encode(hash('sha256', base64_decode($nonce) . $created . $apiKeySecret, true));
 

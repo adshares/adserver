@@ -27,5 +27,4 @@ use RuntimeException;
 
 class TransferMoneyException extends RuntimeException
 {
-
 }

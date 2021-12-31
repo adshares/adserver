@@ -171,15 +171,14 @@ class BidStrategyController extends Controller
 
             $row = 2;
             while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
-                if($sheet->getCellByColumnAndRow(2, $row)->getValue() == '*') {
-                   $removeDefaults = false;
+                if ($sheet->getCellByColumnAndRow(2, $row)->getValue() == '*') {
+                    $removeDefaults = false;
                 }
                 ++$row;
             }
 
             $row = 2;
             while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
-
                 if (!$removeDefaults || 100 !== $value) {
                     $category = $sheet->getCellByColumnAndRow(1, $row)->getValue() . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
                     if (!isset($duplicates[$category])) {
@@ -253,19 +252,18 @@ class BidStrategyController extends Controller
                         'value' => '*',
                     ]
                 ];
-            foreach ($bidStrategyDetails as $key => $value) {
-                $id_parts = explode(":", $key);
-                $id = array_pop($id_parts);
-                $prefix = implode(":", $id_parts);
+                foreach ($bidStrategyDetails as $key => $value) {
+                    $id_parts = explode(":", $key);
+                    $id = array_pop($id_parts);
+                    $prefix = implode(":", $id_parts);
 
-                if ($parentKey == $prefix) {
-                    $optionValues[] = [
+                    if ($parentKey == $prefix) {
+                        $optionValues[] = [
                         'label' => '',
                         'value' => $id,
-                    ];
+                        ];
+                    }
                 }
-            }
-
         }
 
         foreach ($optionValues as $optionValue) {
@@ -346,7 +344,7 @@ class BidStrategyController extends Controller
             $bidStrategyDetailsArray[$detail['category']] = $detail['rank'];
         }
 
-        foreach($bidStrategyDetailsArray as $category => $rank) {
+        foreach ($bidStrategyDetailsArray as $category => $rank) {
             $bidStrategyDetails[] = BidStrategyDetail::create($category, (float)$rank);
         }
 

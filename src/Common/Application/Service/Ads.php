@@ -31,4 +31,6 @@ interface Ads
     public function getPublicKeyByAccountAddress(string $accountAddress): string;
 
     public function sendPayments(Collection $payments): Tx;
+
+    public function verifyMessage(string $signature, string $message, string $accountAddress): bool;
 }

@@ -2,7 +2,8 @@
 # Confirm withdrawal
 
 Please confirm your withdrawal request.
-- Recipient Address: {{ $target }}
+- Recipient Address: {{ $address }}
+- Network: {{ $network }}
 - Currency: {{ $currency }}
 - Amount: {{ $amount }} ADS
 @if ($fee > 0)

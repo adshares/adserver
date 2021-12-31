@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
@@ -32,15 +33,18 @@ use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyDemandClient;
+use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Queue;
 
 class SupplyProcessPaymentsTest extends ConsoleTestCase
 {
@@ -120,15 +124,17 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessEventPayment(): void
     {
         $demandClient = new DummyDemandClient();
+        $this->assertEquals(0, $demandClient->user->getWalletBalance());
+
         $info = $demandClient->fetchInfo(new NullUrl());
         $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
         $networkImpression = factory(NetworkImpression::class)->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
 
-        $publisherIds = [];
         $totalAmount = 0;
         $licenseFee = 0;
+        $userAmount = 0;
 
         /** @var LicenseReader $licenseReader */
         $licenseReader = app()->make(LicenseReader::class);
@@ -145,17 +151,13 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 ]
             );
 
-            if (!in_array($publisherId, $publisherIds)) {
-                $publisherIds[] = $publisherId;
-            }
-
             $eventValue = (int)$paymentDetail['event_value'];
             $totalAmount += $eventValue;
-            $licenseFee += (int)floor($eventValue * $licenseFeeCoefficient);
-        }
-
-        foreach ($publisherIds as $publisherId) {
-            factory(User::class)->create(['uuid' => $publisherId]);
+            $eventFee = (int)floor($eventValue * $licenseFeeCoefficient);
+            $licenseFee += $eventFee;
+            if ($demandClient->user->uuid === $publisherId) {
+                $userAmount += $eventValue - $eventFee;
+            }
         }
 
         $adsPayment = new AdsPayment();
@@ -186,6 +188,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        $this->assertEquals($userAmount, $demandClient->user->getWalletBalance());
     }
 
     public function testAdsProcessEventPaymentWithServerError(): void

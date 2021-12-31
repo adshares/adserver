@@ -31,13 +31,13 @@ class SiteAdded extends Mailable
     use Queueable;
     use SerializesModels;
 
-    private $email;
+    private ?string $email;
 
-    private $site;
+    private Site $site;
 
-    private $userUuid;
+    private string $userUuid;
 
-    public function __construct(string $userUuid, string $email, Site $site)
+    public function __construct(string $userUuid, ?string $email, Site $site)
     {
         $this->userUuid = $userUuid;
         $this->email = $email;

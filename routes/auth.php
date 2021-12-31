@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::JSON_API])->group(function () {
     Route::post('login', [AuthController::class, 'login']);
+    Route::get('login/wallet/init', [AuthController::class, 'walletLoginInit']);
+    Route::post('login/wallet', [AuthController::class, 'walletLogin']);
     Route::post('email/activate', [AuthController::class, 'emailActivate']);
 });
 
@@ -39,7 +41,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
 
     Route::patch('self', [AuthController::class, 'updateSelf']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
-    Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
 });
 
 Route::middleware([Kernel::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION, Kernel::JSON_API])->group(function () {

@@ -106,6 +106,7 @@ return [
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
     'ads_operator_server_url' => env('ADS_OPERATOR_SERVER_URL', 'https://ads-operator.adshares.net'),
+    'ads_rpc_url' => env('ADS_RPC_URL', 'https://rpc.adshares.net'),
     'aduser_base_url' => $aduserUrl,
     'aduser_internal_url' => env('ADUSER_INTERNAL_URL', $aduserUrl),
     'aduser_serve_subdomain' => env('ADUSER_SERVE_SUBDOMAIN'),
@@ -162,6 +163,10 @@ return [
     'site_filtering_exclude' => env('SITE_FILTERING_EXCLUDE'),
     'campaign_targeting_require' => env('CAMPAIGN_TARGETING_REQUIRE'),
     'campaign_targeting_exclude' => env('CAMPAIGN_TARGETING_EXCLUDE'),
+    'auto_withdrawal_limit_ads' => env('AUTO_WITHDRAWAL_LIMIT_ADS', 1_000_000_00),
+    'auto_withdrawal_limit_bsc' => env('AUTO_WITHDRAWAL_LIMIT_BSC', 1_000_000_000_00),
+    'auto_withdrawal_limit_btc' => env('AUTO_WITHDRAWAL_LIMIT_BTC', 1_000_000_000_000_00),
+    'auto_withdrawal_limit_eth' => env('AUTO_WITHDRAWAL_LIMIT_ETH', 1_000_000_000_000_00),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
