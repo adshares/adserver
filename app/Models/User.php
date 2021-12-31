@@ -23,9 +23,11 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
+use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +43,7 @@ use Illuminate\Support\Facades\Hash;
  * @property Collection|Campaign[] campaigns
  * @property int id
  * @property string email
+ * @property string label
  * @property Carbon|null created_at
  * @property DateTime|null email_confirmed_at
  * @property DateTime|null admin_confirmed_at
@@ -56,6 +59,10 @@ use Illuminate\Support\Facades\Hash;
  * @property bool is_agency
  * @property bool is_advertiser
  * @property bool is_publisher
+ * @property WalletAddress|null wallet_address
+ * @property int|null auto_withdrawal
+ * @property bool is_auto_withdrawal
+ * @property int auto_withdrawal_limit
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -65,6 +72,7 @@ class User extends Authenticatable
 
     use AutomateMutators;
     use BinHex;
+    use AddressWithNetwork;
 
     public static $rules = [
         'email' => 'email|max:150|unique:users',
@@ -138,6 +146,7 @@ class User extends Authenticatable
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'wallet_address' => 'AddressWithNetwork'
     ];
 
     protected $appends = [
@@ -147,6 +156,12 @@ class User extends Authenticatable
         'is_confirmed',
         'is_subscribed',
     ];
+
+    protected function toArrayExtras($array)
+    {
+        unset($array['wallet_address']);
+        return $array;
+    }
 
     public static function register(array $data, ?RefLink $refLink): User
     {
@@ -165,6 +180,11 @@ class User extends Authenticatable
         $user->saveOrFail();
 
         return $user;
+    }
+
+    public function getLabelAttribute(): string
+    {
+        return '#' . $this->id . (null !== $this->email ? ' (' . $this->email . ')' : '');
     }
 
     public function getIsEmailConfirmedAttribute(): bool
@@ -196,7 +216,21 @@ class User extends Authenticatable
             'total_funds_in_currency' => 0,
             'total_funds_change' => 0,
             'last_payment_at' => 0,
+            'wallet_address' => optional($this->wallet_address)->getAddress(),
+            'wallet_network' => optional($this->wallet_address)->getNetwork(),
+            'is_auto_withdrawal' => $this->is_auto_withdrawal,
+            'auto_withdrawal_limit' => $this->auto_withdrawal_limit,
         ];
+    }
+
+    public function getIsAutoWithdrawalAttribute(): bool
+    {
+        return null !== $this->auto_withdrawal;
+    }
+
+    public function getAutoWithdrawalLimitAttribute(): int
+    {
+        return (int)$this->auto_withdrawal;
     }
 
     public function setPasswordAttribute($value): void
@@ -246,6 +280,16 @@ class User extends Authenticatable
     public static function fetchByEmail(string $email): ?self
     {
         return self::where('email', $email)->first();
+    }
+
+    public static function fetchByWalletAddress(WalletAddress $address): ?self
+    {
+        return self::where('wallet_address', $address)->first();
+    }
+
+    public static function findByAutoWithdrawal(): Collection
+    {
+        return self::whereNotNull('auto_withdrawal')->get();
     }
 
     public function isAdvertiser(): bool
@@ -318,7 +362,16 @@ class User extends Authenticatable
         return $this->getReferrals()->pluck('uuid')->toArray();
     }
 
-    public static function createAdmin(Email $email, string $name, string $password): void
+    public static function createAnonymous(WalletAddress $address): User
+    {
+        $user = new self();
+        $user->wallet_address = $address;
+        $user->auto_withdrawal = config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()));
+        $user->saveOrFail();
+        return $user;
+    }
+
+    public static function createAdmin(Email $email, string $name, string $password): User
     {
         $user = new self();
         $user->name = $name;
@@ -326,8 +379,8 @@ class User extends Authenticatable
         $user->confirmEmail();
         $user->password = $password;
         $user->is_admin = 1;
-
-        $user->save();
+        $user->saveOrFail();
+        return $user;
     }
 
     public function awardBonus(int $amount, ?RefLink $refLink = null): void

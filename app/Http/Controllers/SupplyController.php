@@ -33,11 +33,13 @@ use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Rules\PayoutAddressRule;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
@@ -68,6 +70,18 @@ use function urlencode;
 class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
+
+    public function findAnon(
+        Request $request
+    ) {
+        $validated = $request->validate([
+                                            'address' => [new PayoutAddressRule()],
+                                        ]);
+        $payoutAddress = WalletAddress::fromString($validated['address']);
+        print_r($validated);
+
+        return $payoutAddress;
+    }
 
     public function find(
         Request $request,
@@ -183,7 +197,6 @@ class SupplyController extends Controller
                     $i = 0;
                     do {
                         $this->watermarkImage($parts, $watermark);
-
                     } while ($parts->nextImage());
                     $im = $parts->deconstructImages();
                 } else {

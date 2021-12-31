@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use Adshares\Adserver\Http\Controllers\InfoController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
@@ -51,10 +52,14 @@ Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
 Route::get('/panel/placeholders', [InfoController::class, 'getPanelPlaceholders']);
 
-Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name('newsletter-unsubscribe');
+Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name(
+    'newsletter-unsubscribe'
+);
 
 Route::post('/now-payments/notify/{uuid}', [WalletController::class, 'nowPaymentsNotify'])->name('now-payments.notify');
-Route::post('/now-payments/exchange/{uuid}', [WalletController::class, 'nowPaymentsExchange'])->name('now-payments.exchange');
+Route::post('/now-payments/exchange/{uuid}', [WalletController::class, 'nowPaymentsExchange'])->name(
+    'now-payments.exchange'
+);
 
 Route::post('/withdraw/exchange', [WalletController::class, 'withdrawExchange'])->name('withdraw.exchange');
 Route::get('/invoices/{invoice_uuid}.pdf', [InvoicesController::class, 'download'])->name('invoices.download');

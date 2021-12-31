@@ -26,6 +26,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalApproval;
+use Adshares\Adserver\Mail\WithdrawalSuccess;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -34,9 +35,14 @@ use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\EthUtils;
+use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Common\Application\Service\Ads;
+use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
@@ -54,6 +60,8 @@ use stdClass;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
+use Throwable;
 
 use function config;
 
@@ -97,7 +105,7 @@ class WalletController extends Controller
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
-    public function withdrawalInfo(ExchangeRateReader $exchangeRateReader, AdsExchange $adsExchange): JsonResponse
+    public function withdrawalInfo(ExchangeRateReader $exchangeRateReader): JsonResponse
     {
         $btcInfo = null;
         if (config('app.btc_withdraw')) {
@@ -204,7 +212,7 @@ class WalletController extends Controller
         $currency = $token['payload']['request']['currency'] ?? 'ADS';
         if ($currency === 'BTC') {
             if (
-                false === $exchange->transfer(
+                $exchange->transfer(
                     $token['payload']['request']['amount'],
                     $currency,
                     $token['payload']['request']['to'],
@@ -212,6 +220,15 @@ class WalletController extends Controller
                     $token['payload']['ledgerEntry']
                 )
             ) {
+                Mail::to($userLedgerEntry->user)->queue(
+                    new WithdrawalSuccess(
+                        $token['payload']['request']['amount'],
+                        $currency,
+                        0,
+                        new WalletAddress(WalletAddress::NETWORK_BTC, $token['payload']['request']['to'])
+                    )
+                );
+            } else {
                 $userLedgerEntry->status = UserLedgerEntry::STATUS_NET_ERROR;
                 $userLedgerEntry->save();
             }
@@ -222,9 +239,23 @@ class WalletController extends Controller
                 $token['payload']['request']['amount'],
                 $token['payload']['request']['memo'] ?? ''
             );
+            $fee = AdsUtils::calculateFee(
+                $this->getAdServerAdsAddress(),
+                $token['payload']['request']['to'],
+                $token['payload']['request']['amount']
+            );
+            Mail::to($userLedgerEntry->user)->queue(
+                new WithdrawalSuccess(
+                    $token['payload']['request']['amount'],
+                    $currency,
+                    $fee,
+                    new WalletAddress(WalletAddress::NETWORK_ADS, $token['payload']['request']['to'])
+                )
+            );
         }
 
         DB::commit();
+
 
         return self::json();
     }
@@ -316,7 +347,7 @@ class WalletController extends Controller
                 $amount,
                 'ADS',
                 $fee,
-                $addressTo->toString()
+                new WalletAddress(WalletAddress::NETWORK_ADS, (string)$addressTo)
             )
         );
 
@@ -378,7 +409,7 @@ class WalletController extends Controller
                 $amount,
                 'BTC',
                 0,
-                $addressTo
+                new WalletAddress(WalletAddress::NETWORK_BTC, (string)$addressTo)
             )
         );
 
@@ -432,19 +463,19 @@ class WalletController extends Controller
 
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
-            self::FIELD_ADDRESS      => $address->toString(),
-            self::FIELD_MESSAGE      => $message,
+            self::FIELD_ADDRESS => $address->toString(),
+            self::FIELD_MESSAGE => $message,
             self::FIELD_NOW_PAYMENTS => $nowPayments->info(),
-            self::FIELD_UNWRAPPERS   => [
+            self::FIELD_UNWRAPPERS => [
                 [
-                    'chain_id'    => 1,
-                    'network_name'    => 'Ethereum',
+                    'chain_id' => 1,
+                    'network_name' => 'Ethereum',
                     // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ],
                 [
-                    'chain_id'    => 56,
-                    'network_name'    => 'Binance Smart Chain',
+                    'chain_id' => 56,
+                    'network_name' => 'Binance Smart Chain',
                     // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ]
@@ -524,6 +555,81 @@ class WalletController extends Controller
         }
 
         return response()->noContent(Response::HTTP_NO_CONTENT);
+    }
+
+    public function connectInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $message = sprintf('Connect your wallet with %s adserver %s', config('app.name'), NonceGenerator::get());
+
+        $payload = [
+            'request' => $request->all(),
+            'message' => $message,
+        ];
+
+        return self::json([
+            'token' => Token::generate(Token::WALLET_CONNECT, $user, $payload)->uuid,
+            'message' => $message,
+            'gateways' => [
+                'bsc' => $rpcClient->getGateway(WalletAddress::NETWORK_BSC)->toArray()
+            ],
+        ]);
+    }
+
+    public function connect(Request $request, Ads $adsClient): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (false === ($token = Token::check($request->input('token'), $user->id, Token::WALLET_CONNECT))) {
+            return self::json(['message' => 'Invalid token'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            $address = new WalletAddress($request->input('network'), $request->input('address'));
+        } catch (InvalidArgumentException $exception) {
+            return self::json(['message' => 'Invalid wallet address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        switch ($address->getNetwork()) {
+            case WalletAddress::NETWORK_ADS:
+                $valid = $adsClient->verifyMessage(
+                    $request->input('signature'),
+                    $token['payload']['message'],
+                    $address->getAddress()
+                );
+                break;
+            case WalletAddress::NETWORK_BSC:
+                $valid = EthUtils::verifyMessage(
+                    $request->input('signature'),
+                    $token['payload']['message'],
+                    $address->getAddress()
+                );
+                break;
+            default:
+                return self::json(['message' => 'Unsupported wallet network'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (!$valid) {
+            return self::json(['message' => 'Invalid signature'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        DB::beginTransaction();
+        try {
+            if (null !== ($prev = User::fetchByWalletAddress($address))) {
+                $prev->wallet_address = null;
+                $prev->saveOrFail();
+            }
+            $user->wallet_address = $address;
+            $user->saveOrFail();
+        } catch (Throwable $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
+        DB::commit();
+
+        return self::json($user->toArray());
     }
 
     public function history(Request $request): JsonResponse

@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\Serialize;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Throwable;
 
 /**
  * @mixin Builder
@@ -46,6 +47,8 @@ class Token extends Model
         self::PASSWORD_RECOVERY => 24 * 3600,
         self::IMPERSONATION => 24 * 3600,
         self::EMAIL_APPROVE_WITHDRAWAL => 3600,
+        self::WALLET_CONNECT => 60,
+        self::WALLET_LOGIN => 60,
     ];
 
     private const MINIMAL_AGE_LIMITS = [
@@ -66,6 +69,10 @@ class Token extends Model
     public const IMPERSONATION = 'impersonation';
 
     public const EMAIL_APPROVE_WITHDRAWAL = 'email-approve-withdrawal';
+
+    public const WALLET_CONNECT = 'wallet-connect';
+
+    public const WALLET_LOGIN = 'wallet-login';
 
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
@@ -106,7 +113,12 @@ class Token extends Model
 
     public static function check($uuid, int $user_id = null, $tag = null)
     {
-        $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
+        try {
+            $uuid = hex2bin($uuid);
+        } catch (Throwable $exception) {
+            return false;
+        }
+        $q = self::where('uuid', $uuid)->where('valid_until', '>', date('Y-m-d H:i:s'));
 
         if (!empty($user_id)) {
             $q->where('user_id', $user_id);
@@ -150,20 +162,19 @@ class Token extends Model
         return true;
     }
 
-    public static function generate(string $tag, User $user, array $payload = null): self
+    public static function generate(string $tag, ?User $user, array $payload = null): self
     {
-        return self::generateToken($tag, self::VALIDITY_PERIODS[$tag], $user->id, $payload);
+        return self::generateToken($tag, self::VALIDITY_PERIODS[$tag], optional($user)->id, $payload);
     }
 
     private static function generateToken(
         string $tag,
         int $valid_until_seconds,
-        int $user_id = null,
+        ?int $user_id = null,
         $payload = null,
         bool $multi_usage = false
     ): self {
         $valid_until = date('Y-m-d H:i:s', time() + $valid_until_seconds);
-
         return self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
     }
 

@@ -27,5 +27,4 @@ use RuntimeException;
 
 class InvalidUrlException extends RuntimeException
 {
-
 }

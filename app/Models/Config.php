@@ -64,6 +64,7 @@ class Config extends Model
     public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
     public const REGISTRATION_MODE = 'registration-mode';
+    public const AUTO_REGISTRATION_ENABLED = 'auto-registration-enabled';
     public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
     public const INVOICE_ENABLED = 'invoice-enabled';
     public const INVOICE_CURRENCIES = 'invoice-currencies';
@@ -90,6 +91,7 @@ class Config extends Model
         self::REFERRAL_REFUND_ENABLED => '',
         self::REFERRAL_REFUND_COMMISSION => '',
         self::REGISTRATION_MODE => '',
+        self::AUTO_REGISTRATION_ENABLED => '',
         self::AUTO_CONFIRMATION_ENABLED => '',
         self::INVOICE_ENABLED => '',
         self::INVOICE_CURRENCIES => '',

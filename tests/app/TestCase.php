@@ -21,7 +21,13 @@
 
 namespace Adshares\Adserver\Tests;
 
+use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Models\User;
+use Adshares\Common\Application\Service\Ads;
+use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Mock\Client\DummyAdsClient;
+use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Faker\Factory;
 use Faker\Generator;
@@ -40,6 +46,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         Mail::fake();
         $this->faker = Factory::create();
+        $adsClient = $this->app->make(AdsClient::class);
 
         $this->app->bind(
             ExchangeRateRepository::class,
@@ -47,5 +54,26 @@ abstract class TestCase extends BaseTestCase
                 return new DummyExchangeRateRepository();
             }
         );
+        $this->app->bind(
+            Ads::class,
+            static function () use ($adsClient) {
+                return new DummyAdsClient($adsClient);
+            }
+        );
+        $this->app->bind(
+            AdsRpcClient::class,
+            static function () {
+                return new DummyAdsRpcClient();
+            }
+        );
+    }
+
+    protected function login(User $user = null): User
+    {
+        if (null === $user) {
+            $user = factory(User::class)->create();
+        }
+        $this->actingAs($user, 'api');
+        return $user;
     }
 }

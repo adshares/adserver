@@ -25,5 +25,4 @@ use RuntimeException;
 
 class UnsupportedBannerTypeException extends RuntimeException
 {
-
 }

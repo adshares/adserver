@@ -26,7 +26,6 @@ use Adshares\Adserver\Facades\DB;
 
 class EloquentTransactionManager implements TransactionManager
 {
-
     public function begin(): void
     {
         DB::beginTransaction();

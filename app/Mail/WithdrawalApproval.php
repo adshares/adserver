@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Mail;
 
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -33,22 +34,18 @@ class WithdrawalApproval extends Mailable
     use Queueable;
     use SerializesModels;
 
-    private $tokenId;
+    private string $tokenId;
+    private int $amount;
+    private string $currency;
+    private WalletAddress $address;
+    private int $fee;
 
-    private $amount;
-
-    private $currency;
-
-    private $target;
-
-    private $fee;
-
-    public function __construct(string $tokenId, int $amount, string $currency, int $fee, string $target)
+    public function __construct(string $tokenId, int $amount, string $currency, int $fee, WalletAddress $address)
     {
         $this->tokenId = $tokenId;
         $this->amount = $amount;
         $this->currency = $currency;
-        $this->target = $target;
+        $this->address = $address;
         $this->fee = $fee;
     }
 
@@ -60,9 +57,9 @@ class WithdrawalApproval extends Mailable
             'currency' => strtoupper($this->currency),
             'fee' => AdsConverter::clicksToAds($this->fee),
             'total' => AdsConverter::clicksToAds($this->amount + $this->fee),
-            'target' => $this->target,
+            'address' => $this->address->getAddress(),
+            'network' => $this->address->getNetwork(),
         ];
-
         return $this->markdown('emails.withdrawal-approval')->with($variables);
     }
 }

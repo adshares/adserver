@@ -89,7 +89,7 @@ var getImpressionId = function () {
 var getContext = function (iid) {
     return {
         iid: iid,
-        url: "https://adshares.cryptovoxels.com/",
+        url: "https://" + parcel.id + ".adshares.cryptovoxels.com/",
         keywords: 'cryptovoxels,metaverse'
     }
 };

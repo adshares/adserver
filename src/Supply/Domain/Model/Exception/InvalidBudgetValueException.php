@@ -25,5 +25,4 @@ use RuntimeException;
 
 class InvalidBudgetValueException extends RuntimeException
 {
-
 }

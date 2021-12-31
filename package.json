@@ -14,7 +14,7 @@
     "watch-poll": "yarn run watch -- --watch-poll"
   },
   "devDependencies": {
-    "axios": "^0.18",
+    "axios": "^0.21",
     "bootstrap": "^4.3",
     "cross-env": "^7.0.3",
     "jquery": "^3.4",

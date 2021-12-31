@@ -28,6 +28,7 @@ Route::get('/supply/find', [SupplyController::class, 'find']);
 Route::get('/supply/find/{data}', [SupplyController::class, 'find']);
 Route::post('/supply/find', [SupplyController::class, 'find']);
 
+Route::get('/supply/anon', [SupplyController::class, 'findAnon']);
 Route::get('/supply/s/{zone_id}/{impression_id}', [SupplyController::class, 'findSimple']);
 
 Route::get('/main.js', [SupplyController::class, 'webScript']);

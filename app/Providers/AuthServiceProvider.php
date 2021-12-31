@@ -19,9 +19,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Adserver\Providers;
 
+use Adshares\Common\Application\Service\Ads;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -42,5 +46,8 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
+        Auth::provider('wallet', function ($app, array $config) {
+            return new WalletUserProvider($app[Ads::class], $app['hash'], $config['model']);
+        });
     }
 }

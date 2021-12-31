@@ -33,13 +33,13 @@ class CampaignCreated extends Mailable
     use Queueable;
     use SerializesModels;
 
-    private $campaign;
+    private Campaign $campaign;
 
-    private $email;
+    private ?string $email;
 
-    private $userUuid;
+    private string $userUuid;
 
-    public function __construct(string $userUuid, string $email, Campaign $campaign)
+    public function __construct(string $userUuid, ?string $email, Campaign $campaign)
     {
         $this->userUuid = $userUuid;
         $this->email = $email;

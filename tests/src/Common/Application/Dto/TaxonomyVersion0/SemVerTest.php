@@ -29,7 +29,6 @@ use PHPUnit\Framework\TestCase;
 
 class SemVerTest extends TestCase
 {
-
     /**
      * @dataProvider successProvider
      *
