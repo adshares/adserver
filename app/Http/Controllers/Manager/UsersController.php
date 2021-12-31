@@ -45,6 +45,7 @@ class UsersController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $builder = User::query();
+        $builder->select(['*', DB::raw('IFNULL(email, wallet_address) AS email')]);
 
         if ($user->isAgency()) {
             $builder->where(function (Builder $sub) use ($user) {
@@ -82,7 +83,10 @@ class UsersController extends Controller
                 )
             );
             $builder->where(function (Builder $sub) use ($query, $ids) {
-                $sub->where('email', 'LIKE', '%' . $query . '%')->orWhereIn('id', $ids);
+                $sub->where('email', 'LIKE', '%' . $query . '%')
+                    ->orWhere('wallet_address', 'LIKE', '%' . $query . '%')
+                    ->orWhereIn('id', $ids)
+                ;
             });
         }
 
@@ -125,11 +129,11 @@ class UsersController extends Controller
         }
 
         if (strtolower((string)$request->get('g')) === 'user') {
-            $emailColumn = 'u.email';
+            $emailColumn = 'IFNULL(u.email, u.wallet_address)';
             $landingUrlColumn = 'GROUP_CONCAT(DISTINCT c.landing_url SEPARATOR ", ")';
             $groupBy = $emailColumn;
         } else {
-            $emailColumn = 'GROUP_CONCAT(DISTINCT u.email SEPARATOR ", ")';
+            $emailColumn = 'GROUP_CONCAT(DISTINCT IFNULL(u.email, u.wallet_address) SEPARATOR ", ")';
             $landingUrlColumn = 'c.landing_url';
             $groupBy = $landingUrlColumn;
         }
@@ -196,7 +200,7 @@ class UsersController extends Controller
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.campaign_id
                 ) lp ON lp.campaign_id = c.uuid
-                WHERE c.deleted_at IS NULL AND (c.landing_url LIKE ? OR u.email LIKE ?) %s
+                WHERE c.deleted_at IS NULL AND (c.landing_url LIKE ? OR u.email LIKE ? OR u.wallet_address LIKE ?) %s
                 GROUP BY %s
                 HAVING current_views >= ? OR last_views >= ?
                 ',
@@ -212,6 +216,7 @@ class UsersController extends Controller
                     $groupBy
                 ),
                 [
+                    $query,
                     $query,
                     $query,
                     $viewsLimit * $interval,
@@ -303,13 +308,13 @@ class UsersController extends Controller
         }
 
         if (strtolower((string)$request->get('g')) === 'user') {
-            $emailColumn = 'u.email';
+            $emailColumn = 'IFNULL(u.email, u.wallet_address)';
             $domainColumn = 'GROUP_CONCAT(s.domain SEPARATOR ", ")';
-            $groupBy = 'u.email';
+            $groupBy = $emailColumn;
         } else {
-            $emailColumn = 'GROUP_CONCAT(DISTINCT u.email SEPARATOR ", ")';
+            $emailColumn = 'GROUP_CONCAT(DISTINCT IFNULL(u.email, u.wallet_address) SEPARATOR ", ")';
             $domainColumn = 's.domain';
-            $groupBy = 's.domain';
+            $groupBy = $domainColumn;
         }
 
         $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
@@ -374,7 +379,7 @@ class UsersController extends Controller
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lp ON lp.site_id = s.uuid
-                WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ?) %s
+                WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ? OR u.wallet_address LIKE ?) %s
                 GROUP BY %s
                 HAVING current_views >= ? OR last_views >= ?
                 ',
@@ -391,6 +396,7 @@ class UsersController extends Controller
                     $groupBy
                 ),
                 [
+                    $query,
                     $query,
                     $query,
                     $viewsLimit,
