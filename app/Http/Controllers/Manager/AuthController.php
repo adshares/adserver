@@ -59,22 +59,29 @@ class AuthController extends Controller
         $this->exchangeRateReader = $exchangeRateReader;
     }
 
-    public function register(Request $request): JsonResponse
+    private function checkRegisterMode(?string $referralToken = null): ?RefLink
     {
         $registrationMode = Config::fetchStringOrFail(Config::REGISTRATION_MODE);
         if (RegistrationMode::PRIVATE === $registrationMode) {
             throw new AccessDeniedHttpException('Private registration enabled');
         }
 
-        $data = $request->input('user');
         $refLink = null;
-        if (isset($data['referral_token'])) {
-            $refLink = RefLink::fetchByToken($data['referral_token']);
+        if (null !== $referralToken) {
+            $refLink = RefLink::fetchByToken($referralToken);
         }
 
         if (RegistrationMode::RESTRICTED === $registrationMode && null === $refLink) {
             throw new AccessDeniedHttpException('Restricted registration enabled');
         }
+
+        return $refLink;
+    }
+
+    public function register(Request $request): JsonResponse
+    {
+        $data = $request->input('user');
+        $refLink = $this->checkRegisterMode($data['referral_token'] ?? null);
 
         $this->validateRequestObject($request, 'user', User::$rules_add);
         Validator::make($request->all(), ['uri' => 'required'])->validate();
@@ -90,6 +97,42 @@ class AuthController extends Controller
         DB::commit();
 
         return self::json([], Response::HTTP_CREATED);
+    }
+
+    public function walletRegisterInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
+    {
+        $message = sprintf('Register on %s adserver %s', config('app.name'), NonceGenerator::get());
+
+        $payload = [
+            'request' => $request->all(),
+            'message' => $message,
+        ];
+
+        return self::json([
+            'token' => Token::generate(Token::WALLET_REGISTER, null, $payload)->uuid,
+            'message' => $message,
+            'gateways' => [
+                'bsc' => $rpcClient->getGateway(WalletAddress::NETWORK_BSC)->toArray()
+            ],
+        ]);
+    }
+
+    public function walletRegister(Request $request): JsonResponse
+    {
+        $refLink = $this->checkRegisterMode($request->input('referral_token'));
+        $address = $this->checkWalletAddress($request->input('token'), Token::WALLET_REGISTER, $request->all());
+
+        $data = ['wallet_address' => $address];
+        Validator::make($data, ['wallet_address' => 'required|unique:users'])->validate();
+
+        DB::beginTransaction();
+        $user = User::register($data, $refLink);
+        DB::commit();
+
+        Auth::login($user);
+        Auth::user()->generateApiKey();
+
+        return $this->check(Response::HTTP_CREATED);
     }
 
     public function emailActivate(Request $request): JsonResponse
@@ -268,7 +311,7 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function check(): JsonResponse
+    public function check(int $code = Response::HTTP_OK): JsonResponse
     {
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->toArray();
@@ -288,7 +331,8 @@ class AuthController extends Controller
                     'referral_refund_enabled' => Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED),
                     'referral_refund_commission' => Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION),
                 ]
-            )
+            ),
+            $code
         );
     }
 

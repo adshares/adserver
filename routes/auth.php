@@ -52,5 +52,7 @@ Route::middleware([Kernel::GUEST_ACCESS, Kernel::JSON_API])->group(function () {
     Route::post('recovery', [AuthController::class, 'recovery']);
 
     Route::post('register', [AuthController::class, 'register']);
+    Route::get('register/wallet/init', [AuthController::class, 'walletRegisterInit']);
+    Route::post('register/wallet', [AuthController::class, 'walletRegister']);
     Route::patch('password', [AuthController::class, 'updateSelf']);
 });

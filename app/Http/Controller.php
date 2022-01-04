@@ -21,12 +21,18 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Utilities\EthUtils;
+use Adshares\Common\Application\Service\Ads;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -60,5 +66,44 @@ abstract class Controller extends BaseController
         $validator = Validator::make($request->input($name), $rules);
 
         return $validator->validate();
+    }
+
+    protected function checkWalletAddress(?string $token, string $type, array $data, ?int $userId = null): WalletAddress
+    {
+        if (false === ($walletToken = Token::check($token, $userId, $type))) {
+            throw new UnprocessableEntityHttpException('Invalid token');
+        }
+
+        try {
+            $address = new WalletAddress($data['network'] ?? '', $data['address'] ?? '');
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException('Invalid wallet address');
+        }
+
+        switch ($address->getNetwork()) {
+            case WalletAddress::NETWORK_ADS:
+                $adsClient = resolve(Ads::class);
+                $valid = $adsClient->verifyMessage(
+                    $data['signature'] ?? '',
+                    $walletToken['payload']['message'],
+                    $address->getAddress()
+                );
+                break;
+            case WalletAddress::NETWORK_BSC:
+                $valid = EthUtils::verifyMessage(
+                    $data['signature'] ?? '',
+                    $walletToken['payload']['message'],
+                    $address->getAddress()
+                );
+                break;
+            default:
+                throw new UnprocessableEntityHttpException('Unsupported wallet network');
+        }
+
+        if (!$valid) {
+            throw new UnprocessableEntityHttpException('Invalid signature');
+        }
+
+        return $address;
     }
 }

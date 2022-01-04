@@ -48,6 +48,7 @@ class Token extends Model
         self::IMPERSONATION => 24 * 3600,
         self::EMAIL_APPROVE_WITHDRAWAL => 3600,
         self::WALLET_CONNECT => 60,
+        self::WALLET_REGISTER => 60,
         self::WALLET_LOGIN => 60,
     ];
 
@@ -71,6 +72,8 @@ class Token extends Model
     public const EMAIL_APPROVE_WITHDRAWAL = 'email-approve-withdrawal';
 
     public const WALLET_CONNECT = 'wallet-connect';
+
+    public const WALLET_REGISTER = 'wallet-register';
 
     public const WALLET_LOGIN = 'wallet-login';
 

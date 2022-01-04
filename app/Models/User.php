@@ -163,25 +163,6 @@ class User extends Authenticatable
         return $array;
     }
 
-    public static function register(array $data, ?RefLink $refLink): User
-    {
-        $user = new User($data);
-        $user->password = $data['password'];
-        $user->email = $data['email'];
-        $user->is_advertiser = true;
-        $user->is_publisher = true;
-
-        if (null !== $refLink) {
-            $user->ref_link_id = $refLink->id;
-            $refLink->used = true;
-            $refLink->saveOrFail();
-        }
-
-        $user->saveOrFail();
-
-        return $user;
-    }
-
     public function getLabelAttribute(): string
     {
         return '#' . $this->id . (null !== $this->email ? ' (' . $this->email . ')' : '');
@@ -362,11 +343,38 @@ class User extends Authenticatable
         return $this->getReferrals()->pluck('uuid')->toArray();
     }
 
-    public static function createAnonymous(WalletAddress $address): User
+    public static function register(array $data, ?RefLink $refLink): User
+    {
+        $user = new User($data);
+        $user->password = $data['password'] ?? null;
+        $user->email = $data['email'] ?? null;
+        $user->wallet_address = $data['wallet_address'] ?? null;
+        $user->is_advertiser = true;
+        $user->is_publisher = true;
+
+        if (null !== $refLink) {
+            $user->ref_link_id = $refLink->id;
+            $refLink->used = true;
+            $refLink->saveOrFail();
+        }
+
+        $user->saveOrFail();
+
+        return $user;
+    }
+
+    public static function createAnonymous(WalletAddress $address, ?RefLink $refLink): User
     {
         $user = new self();
         $user->wallet_address = $address;
         $user->auto_withdrawal = config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()));
+
+        if (null !== $refLink) {
+            $user->ref_link_id = $refLink->id;
+            $refLink->used = true;
+            $refLink->saveOrFail();
+        }
+
         $user->saveOrFail();
         return $user;
     }
