@@ -35,10 +35,13 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Config\RegistrationMode;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -48,6 +51,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AuthController extends Controller
 {
@@ -88,7 +92,7 @@ class AuthController extends Controller
 
         DB::beginTransaction();
 
-        $user = User::register($data, $refLink);
+        $user = User::registerWithEmail($data['email'], $data['password'], $refLink);
         $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
         $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
 
@@ -97,42 +101,6 @@ class AuthController extends Controller
         DB::commit();
 
         return self::json([], Response::HTTP_CREATED);
-    }
-
-    public function walletRegisterInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
-    {
-        $message = sprintf('Register on %s adserver %s', config('app.name'), NonceGenerator::get());
-
-        $payload = [
-            'request' => $request->all(),
-            'message' => $message,
-        ];
-
-        return self::json([
-            'token' => Token::generate(Token::WALLET_REGISTER, null, $payload)->uuid,
-            'message' => $message,
-            'gateways' => [
-                'bsc' => $rpcClient->getGateway(WalletAddress::NETWORK_BSC)->toArray()
-            ],
-        ]);
-    }
-
-    public function walletRegister(Request $request): JsonResponse
-    {
-        $refLink = $this->checkRegisterMode($request->input('referral_token'));
-        $address = $this->checkWalletAddress($request->input('token'), Token::WALLET_REGISTER, $request->all());
-
-        $data = ['wallet_address' => $address];
-        Validator::make($data, ['wallet_address' => 'required|unique:users'])->validate();
-
-        DB::beginTransaction();
-        $user = User::register($data, $refLink);
-        DB::commit();
-
-        Auth::login($user);
-        Auth::user()->generateApiKey();
-
-        return $this->check(Response::HTTP_CREATED);
     }
 
     public function emailActivate(Request $request): JsonResponse
@@ -367,7 +335,25 @@ class AuthController extends Controller
 
     public function walletLoginInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
     {
-        $message = sprintf('Log in to %s adserver %s', config('app.name'), NonceGenerator::get());
+        $message = <<<MSG
+Log in to %s adserver.
+
+I agree to the Terms of Service:
+%s
+
+and Privacy Policy:
+%s
+
+Date: %s
+MSG;
+
+        $message = sprintf(
+            $message,
+            config('app.name'),
+            new SecureUrl((string)config('app.privacy_url')),
+            new SecureUrl((string)config('app.terms_url')),
+            date(DateTimeInterface::RFC2822)
+        );
 
         $payload = [
             'request' => $request->all(),
@@ -385,12 +371,20 @@ class AuthController extends Controller
 
     public function walletLogin(Request $request): JsonResponse
     {
-        if (
-            Auth::guard()->attempt(
-                $request->only('token', 'network', 'address', 'signature'),
-                $request->filled('remember')
-            )
-        ) {
+        try {
+            $address = new WalletAddress($request->input('network'), $request->input('address'));
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException('Invalid wallet address');
+        }
+
+        if (null === User::fetchByWalletAddress($address)) {
+            $refLink = $this->checkRegisterMode();
+            User::registerWithWallet($address, false, $refLink);
+        }
+
+        $credentials = $request->only('token', 'signature');
+        $credentials['wallet_address'] = $address;
+        if (Auth::guard()->attempt($credentials, $request->filled('remember'))) {
             Auth::user()->generateApiKey();
             return $this->check();
         }

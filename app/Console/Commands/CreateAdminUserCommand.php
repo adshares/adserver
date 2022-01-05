@@ -76,7 +76,7 @@ class CreateAdminUserCommand extends BaseCommand
         }
 
         try {
-            User::createAdmin($email, $name, $password);
+            User::registerAdmin((string)$email, $name, $password);
         } catch (QueryException $exception) {
             if (SqlUtils::isDuplicatedEntry($exception)) {
                 $this->error(sprintf('User %s already exists', $email->toString()));

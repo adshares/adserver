@@ -26,7 +26,6 @@ use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -117,6 +116,9 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'email',
+        'wallet_address',
+        'auto_withdrawal',
         'is_advertiser',
         'is_publisher',
     ];
@@ -343,50 +345,53 @@ class User extends Authenticatable
         return $this->getReferrals()->pluck('uuid')->toArray();
     }
 
-    public static function register(array $data, ?RefLink $refLink): User
+    public static function registerWithEmail(string $email, string $password, ?RefLink $refLink = null): User
     {
-        $user = new User($data);
-        $user->password = $data['password'] ?? null;
-        $user->email = $data['email'] ?? null;
-        $user->wallet_address = $data['wallet_address'] ?? null;
-        $user->is_advertiser = true;
-        $user->is_publisher = true;
-
-        if (null !== $refLink) {
-            $user->ref_link_id = $refLink->id;
-            $refLink->used = true;
-            $refLink->saveOrFail();
-        }
-
-        $user->saveOrFail();
-
-        return $user;
+        return self::register([
+            'email' => $email,
+            'password' => $password,
+            'is_advertiser' => true,
+            'is_publisher' => true,
+        ], $refLink);
     }
 
-    public static function createAnonymous(WalletAddress $address, ?RefLink $refLink): User
-    {
-        $user = new self();
-        $user->wallet_address = $address;
-        $user->auto_withdrawal = config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()));
-
-        if (null !== $refLink) {
-            $user->ref_link_id = $refLink->id;
-            $refLink->used = true;
-            $refLink->saveOrFail();
-        }
-
-        $user->saveOrFail();
-        return $user;
+    public static function registerWithWallet(
+        WalletAddress $address,
+        bool $autoWithdrawal = false,
+        ?RefLink $refLink = null
+    ): User {
+        return self::register([
+            'wallet_address' => $address,
+            'auto_withdrawal' => $autoWithdrawal
+                ? config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()))
+                : null,
+            'is_advertiser' => true,
+            'is_publisher' => true,
+        ], $refLink);
     }
 
-    public static function createAdmin(Email $email, string $name, string $password): User
+    public static function registerAdmin(string $email, string $name, string $password): User
     {
-        $user = new self();
-        $user->name = $name;
-        $user->email = $email->toString();
+        $user = self::register([
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
+        ]);
+        $user->is_admin = true;
         $user->confirmEmail();
-        $user->password = $password;
-        $user->is_admin = 1;
+        $user->saveOrFail();
+        return $user;
+    }
+
+    protected static function register(array $data, ?RefLink $refLink = null): User
+    {
+        $user = User::create($data);
+        $user->password = $data['password'] ?? null;
+        if (null !== $refLink) {
+            $user->ref_link_id = $refLink->id;
+            $refLink->used = true;
+            $refLink->saveOrFail();
+        }
         $user->saveOrFail();
         return $user;
     }
