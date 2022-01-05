@@ -162,7 +162,7 @@ class Config extends Model
         $object = DateTime::createFromFormat(DateTimeInterface::ATOM, $dateString);
 
         if ($object === false) {
-            throw new RuntimeException(sprintf('Failed converting "%s" to DateTime', (string)$object));
+            throw new RuntimeException(sprintf('Failed converting "%s" to DateTime', $dateString));
         }
 
         return $object;
