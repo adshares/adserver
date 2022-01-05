@@ -174,6 +174,7 @@ final class AdminControllerTest extends TestCase
                     'referralRefundCommission' => 0.5,
                     'registrationMode' => 'private',
                     'autoConfirmationEnabled' => 0,
+                    'autoRegistrationEnabled' => 0,
                 ],
         ];
 
