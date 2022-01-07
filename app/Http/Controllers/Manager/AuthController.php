@@ -91,13 +91,18 @@ class AuthController extends Controller
         Validator::make($request->all(), ['uri' => 'required'])->validate();
 
         DB::beginTransaction();
-
         $user = User::registerWithEmail($data['email'], $data['password'], $refLink);
-        $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
-        $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
-
-        Mail::to($user)->queue($mailable);
-
+        if (Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+            $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
+            $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
+            Mail::to($user)->queue($mailable);
+        } else {
+            $this->confirmEmail($user);
+            if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+                $this->confirmAdmin($user);
+            }
+            $user->saveOrFail();
+        }
         DB::commit();
 
         return self::json([], Response::HTTP_CREATED);
@@ -378,8 +383,14 @@ MSG;
         }
 
         if (null === User::fetchByWalletAddress($address)) {
+            DB::beginTransaction();
             $refLink = $this->checkRegisterMode();
-            User::registerWithWallet($address, false, $refLink);
+            $user = User::registerWithWallet($address, false, $refLink);
+            if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+                $this->confirmAdmin($user);
+            }
+            $user->saveOrFail();
+            DB::commit();
         }
 
         $credentials = $request->only('token', 'signature');

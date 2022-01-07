@@ -182,7 +182,7 @@ class User extends Authenticatable
 
     public function getIsConfirmedAttribute(): bool
     {
-        return $this->is_email_confirmed && $this->is_admin_confirmed;
+        return (null === $this->email || $this->is_email_confirmed) && $this->is_admin_confirmed;
     }
 
     public function getIsSubscribedAttribute(): bool

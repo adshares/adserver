@@ -175,6 +175,7 @@ final class AdminControllerTest extends TestCase
                     'registrationMode' => 'private',
                     'autoConfirmationEnabled' => 0,
                     'autoRegistrationEnabled' => 0,
+                    'emailVerificationRequired' => 0,
                 ],
         ];
 

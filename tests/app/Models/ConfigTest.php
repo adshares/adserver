@@ -191,6 +191,7 @@ class ConfigTest extends TestCase
             'registration-mode' => 'public',
             'auto-registration-enabled' => '1',
             'auto-confirmation-enabled' => '1',
+            'email-verification-required' => '0',
             'invoice-enabled' => '0',
             'invoice-currencies' => 'EUR,USD',
             'invoice-number-format' => 'INV NNNN/MM/YYYY',

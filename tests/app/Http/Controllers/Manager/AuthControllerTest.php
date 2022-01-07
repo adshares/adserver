@@ -73,6 +73,14 @@ class AuthControllerTest extends TestCase
         ],
     ];
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::PUBLIC]);
+    }
+
     public function testPublicRegister(): void
     {
         $user = $this->registerUser();
@@ -93,8 +101,9 @@ class AuthControllerTest extends TestCase
         Mail::assertNotQueued(UserConfirmed::class);
     }
 
-    public function testManualConfirmationRegister(): void
+    public function testManualActivationManualConfirmationRegister(): void
     {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
         $user = $this->registerUser();
@@ -103,6 +112,35 @@ class AuthControllerTest extends TestCase
         $this->assertFalse($user->is_confirmed);
 
         $this->activateUser($user);
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
+        $this->assertFalse($user->is_confirmed);
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->confirmUser($user);
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
+        Mail::assertQueued(UserConfirmed::class);
+    }
+
+    public function testAutoActivationAutoConfirmationRegister(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+
+        $user = $this->registerUser();
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
+    }
+
+    public function testAutoActivationManualConfirmationRegister(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
+
+        $user = $this->registerUser();
         $this->assertTrue($user->is_email_confirmed);
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
@@ -445,6 +483,10 @@ class AuthControllerTest extends TestCase
         $user = User::fetchByWalletAddress(new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'));
         $this->assertNotNull($user);
         $this->assertAuthenticatedAs($user);
+
+        $this->assertFalse($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
     }
 
     public function testNonExistedWalletLoginUserWithRestrictedMode(): void
