@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
@@ -44,16 +45,16 @@ class AddSoftDeleteToBidStrategies extends Migration
     public function down(): void
     {
         Schema::table(
-            'sites',
+            'bid_strategy',
             function (Blueprint $table) {
-                $table->dropColumn(['bid_strategy']);
+                $table->dropColumn(['deleted_at']);
             }
         );
 
         Schema::table(
-            'sites',
+            'bid_strategy_details',
             function (Blueprint $table) {
-                $table->dropColumn(['bid_strategy_details']);
+                $table->dropColumn(['deleted_at']);
             }
         );
     }
