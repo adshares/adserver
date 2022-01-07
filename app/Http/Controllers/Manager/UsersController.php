@@ -379,7 +379,8 @@ class UsersController extends Controller
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lp ON lp.site_id = s.uuid
-                WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ? OR u.wallet_address LIKE ?) %s
+                WHERE s.deleted_at IS NULL AND s.status = %d
+                    AND (s.domain LIKE ? OR u.email LIKE ? OR u.wallet_address LIKE ?) %s
                 GROUP BY %s
                 HAVING current_views >= ? OR last_views >= ?
                 ',

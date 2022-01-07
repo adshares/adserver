@@ -35,7 +35,6 @@ use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\EthUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
@@ -60,7 +59,6 @@ use stdClass;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
-
 use Throwable;
 
 use function config;
