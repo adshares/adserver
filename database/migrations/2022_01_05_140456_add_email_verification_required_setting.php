@@ -15,7 +15,7 @@ class AddEmailVerificationRequiredSetting extends Migration
         DB::table('configs')->insert(
             [
                 'key' => 'email-verification-required',
-                'value' => 1,
+                'value' => 0,
                 'created_at' => new DateTime(),
             ]
         );
