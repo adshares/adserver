@@ -384,7 +384,7 @@ MSG;
 
         if (null === User::fetchByWalletAddress($address)) {
             DB::beginTransaction();
-            $refLink = $this->checkRegisterMode();
+            $refLink = $this->checkRegisterMode($request->input('referral_token') ?? null);
             $user = User::registerWithWallet($address, false, $refLink);
             if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
                 $this->confirmAdmin($user);
@@ -496,7 +496,10 @@ MSG;
             return self::json($user->toArray());
         }
 
-        if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
+        if (
+            null !== $user->password &&
+            (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old')))
+        ) {
             DB::rollBack();
 
             return self::json(

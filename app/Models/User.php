@@ -133,6 +133,7 @@ class User extends Authenticatable
         'uuid',
         'email',
         'name',
+        'has_password',
         'is_advertiser',
         'is_publisher',
         'is_admin',
@@ -152,6 +153,7 @@ class User extends Authenticatable
     ];
 
     protected $appends = [
+        'has_password',
         'adserver_wallet',
         'is_email_confirmed',
         'is_admin_confirmed',
@@ -168,6 +170,11 @@ class User extends Authenticatable
     public function getLabelAttribute(): string
     {
         return '#' . $this->id . (null !== $this->email ? ' (' . $this->email . ')' : '');
+    }
+
+    public function getHasPasswordAttribute(): bool
+    {
+        return null !== $this->password;
     }
 
     public function getIsEmailConfirmedAttribute(): bool

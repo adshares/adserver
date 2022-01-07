@@ -43,6 +43,7 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthControllerTest extends TestCase
 {
     private const CHECK_URI = '/auth/check';
+    private const SELF_URI = '/auth/self';
     private const WALLET_LOGIN_INIT_URI = '/auth/login/wallet/init';
     private const WALLET_LOGIN_URI = '/auth/login/wallet';
 
@@ -411,27 +412,19 @@ class AuthControllerTest extends TestCase
 
     public function testWalletLoginAds(): void
     {
-        $user = factory(User::class)->create([
-            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
-        ]);
-        $message = '123abc';
-        $token = Token::generate(Token::WALLET_LOGIN, null, [
-            'request' => [],
-            'message' => $message,
-        ])->uuid;
-
-        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
-        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
-        //message:123abc
-        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
-        $response = $this->post(self::WALLET_LOGIN_URI, [
-            'token' => $token,
-            'network' => 'ads',
-            'address' => '0001-00000001-8B4E',
-            'signature' => $sign
-        ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $user = $this->walletRegisterUser();
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function testWalletLoginWithReferral(): void
+    {
+        $refLink = factory(RefLink::class)->create();
+        $this->assertFalse($refLink->used);
+
+        $user = $this->walletRegisterUser($refLink->token);
+        $this->assertNotNull($user->refLink);
+        $this->assertEquals($refLink->token, $user->refLink->token);
+        $this->assertTrue($user->refLink->used);
     }
 
     public function testWalletLoginBsc(): void
@@ -453,7 +446,7 @@ class AuthControllerTest extends TestCase
             'address' => '0x79e51bA0407bEc3f1246797462EaF46850294301',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_OK);
         $this->assertAuthenticatedAs($user);
     }
 
@@ -478,7 +471,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_OK);
 
         $user = User::fetchByWalletAddress(new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'));
         $this->assertNotNull($user);
@@ -512,7 +505,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testNonExistedWalletLoginUserWithPrivateMode(): void
@@ -538,7 +531,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testInvalidWalletLoginSignature(): void
@@ -558,7 +551,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => '0x1231231231'
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUnsupportedWalletLoginNetwork(): void
@@ -578,7 +571,7 @@ class AuthControllerTest extends TestCase
             'address' => '3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg',
             'signature' => '0x1231231231'
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testInvalidWalletLoginToken(): void
@@ -593,7 +586,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testNonExistedWalletLoginToken(): void
@@ -608,7 +601,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testExpiredWalletLoginToken(): void
@@ -631,7 +624,75 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testSetPassword(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testSetInvalidPassword(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_new' => '123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangePassword(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_old' => '87654321',
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testChangeInvalidOldPassword(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_old' => 'foopass123',
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeInvalidNewPassword(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_old' => '87654321',
+                'password_new' => '123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
@@ -651,6 +712,30 @@ class AuthControllerTest extends TestCase
         $response->assertStatus($status);
 
         return User::where('email', $email)->first();
+    }
+
+    private function walletRegisterUser(?string $referralToken = null, int $status = Response::HTTP_OK): ?User
+    {
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        //message:123abc
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign,
+            'referral_token' => $referralToken
+        ]);
+        $response->assertStatus($status);
+
+        return User::fetchByWalletAddress(new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'));
     }
 
     private function activateUser(User $user): void
