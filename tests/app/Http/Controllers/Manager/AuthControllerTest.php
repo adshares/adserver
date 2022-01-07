@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
+use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -44,6 +45,7 @@ class AuthControllerTest extends TestCase
 {
     private const CHECK_URI = '/auth/check';
     private const SELF_URI = '/auth/self';
+    private const EMAIL_URI = '/auth/email';
     private const WALLET_LOGIN_INIT_URI = '/auth/login/wallet/init';
     private const WALLET_LOGIN_URI = '/auth/login/wallet';
 
@@ -689,8 +691,97 @@ class AuthControllerTest extends TestCase
         $response = $this->patch(self::SELF_URI, [
             'user' => [
                 'password_old' => '87654321',
-                'password_new' => '123',
+                'password_new' => 'foo',
             ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testSetEmail(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testSetEmailStep1(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Mail::assertQueued(UserEmailActivate::class);
+
+    }
+
+    public function testSetInvalidEmail(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => 'foo',
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeEmail(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testChangeEmailStep1(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Mail::assertQueued(UserEmailChangeConfirm1Old::class);
+    }
+
+    public function testChangeInvalidEmail(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => 'foo',
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }

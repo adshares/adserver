@@ -32,7 +32,6 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -172,8 +171,8 @@ class AuthController extends Controller
                 [],
                 Response::HTTP_TOO_MANY_REQUESTS,
                 [
-                    'message' => 'You can request to resend email activation every 15 minutes.'
-                        . ' Please wait 15 minutes or less.',
+                    'message' => 'You can request to resend email activation every 5 minutes.'
+                        . ' Please wait 5 minutes or less.',
                 ]
             );
         }
@@ -204,10 +203,22 @@ class AuthController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        $userHasEmail = null !== $user->email;
 
         DB::beginTransaction();
+        if (!$userHasEmail || !Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+            $user->email = $request->input('email');
+            $user->saveOrFail();
+        }
+        if (!Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+            $this->confirmEmail($user);
+            $user->saveOrFail();
+            DB::commit();
+            return self::json($user->toArray());
+        }
 
-        if (!Token::canGenerateToken($user, Token::EMAIL_CHANGE_STEP_1)) {
+        $tag = $userHasEmail ? Token::EMAIL_CHANGE_STEP_1 : Token::EMAIL_ACTIVATE;
+        if (!Token::canGenerateToken($user, $tag)) {
             return self::json(
                 [],
                 Response::HTTP_TOO_MANY_REQUESTS,
@@ -218,12 +229,12 @@ class AuthController extends Controller
                 ]
             );
         }
-
-        $token = Token::generate(Token::EMAIL_CHANGE_STEP_1, $user, $request->all());
-        $mailable = new UserEmailChangeConfirm1Old($token->uuid, $request->input('uri_step1'));
+        $token = Token::generate($tag, $user, $request->all());
+        $mailable = $userHasEmail ?
+            new UserEmailChangeConfirm1Old($token->uuid, $request->input('uri_step1')) :
+            new UserEmailActivate($token->uuid, $request->input('uri'));
 
         Mail::to($user)->queue($mailable);
-
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);
