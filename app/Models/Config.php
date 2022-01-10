@@ -66,6 +66,7 @@ class Config extends Model
     public const REGISTRATION_MODE = 'registration-mode';
     public const AUTO_REGISTRATION_ENABLED = 'auto-registration-enabled';
     public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
+    public const EMAIL_VERIFICATION_REQUIRED = 'email-verification-required';
     public const INVOICE_ENABLED = 'invoice-enabled';
     public const INVOICE_CURRENCIES = 'invoice-currencies';
     public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
@@ -93,6 +94,7 @@ class Config extends Model
         self::REGISTRATION_MODE => '',
         self::AUTO_REGISTRATION_ENABLED => '',
         self::AUTO_CONFIRMATION_ENABLED => '',
+        self::EMAIL_VERIFICATION_REQUIRED => '',
         self::INVOICE_ENABLED => '',
         self::INVOICE_CURRENCIES => '',
         self::INVOICE_NUMBER_FORMAT => '',

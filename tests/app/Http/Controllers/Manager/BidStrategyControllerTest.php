@@ -384,7 +384,8 @@ class BidStrategyControllerTest extends TestCase
 
             while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
                 if (100 !== $value) {
-                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue() . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
+                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue()
+                        . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
                     $bidStrategyDetails[] = [
                         'category' => $category,
                         'rank' => (float)$value / 100,

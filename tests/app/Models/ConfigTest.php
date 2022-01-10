@@ -29,8 +29,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
 use DateTimeInterface;
-
-use function factory;
+use Illuminate\Support\Facades\Cache;
 
 class ConfigTest extends TestCase
 {
@@ -191,6 +190,7 @@ class ConfigTest extends TestCase
             'registration-mode' => 'public',
             'auto-registration-enabled' => '1',
             'auto-confirmation-enabled' => '1',
+            'email-verification-required' => '0',
             'invoice-enabled' => '0',
             'invoice-currencies' => 'EUR,USD',
             'invoice-number-format' => 'INV NNNN/MM/YYYY',
@@ -203,6 +203,7 @@ class ConfigTest extends TestCase
             'invoice-company-bank-accounts' => '',
         ];
 
+        Cache::forget('config.admin');
         self::assertEquals($adminSettings, Config::fetchAdminSettings());
     }
 
@@ -225,6 +226,7 @@ class ConfigTest extends TestCase
             'registration-mode' => 'private',
             'auto-registration-enabled' => '0',
             'auto-confirmation-enabled' => '0',
+            'email-verification-required' => '1',
             'invoice-enabled' => '1',
             'invoice-currencies' => 'PLN',
             'invoice-number-format' => 'AAAA/YYYY',
@@ -238,7 +240,7 @@ class ConfigTest extends TestCase
         ];
 
         Config::updateAdminSettings($adminSettings);
-
+        Cache::forget('config.admin');
         self::assertEquals($adminSettings, Config::fetchAdminSettings());
     }
 

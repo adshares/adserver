@@ -180,7 +180,8 @@ class BidStrategyController extends Controller
             $row = 2;
             while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
                 if (!$removeDefaults || 100 !== $value) {
-                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue() . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
+                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue()
+                        . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
                     if (!isset($duplicates[$category])) {
                         $bidStrategyDetails[] = BidStrategyDetail::create($category, (float)$value / 100);
                     }

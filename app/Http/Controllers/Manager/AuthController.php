@@ -32,13 +32,15 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Config\RegistrationMode;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -48,6 +50,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AuthController extends Controller
 {
@@ -59,34 +62,46 @@ class AuthController extends Controller
         $this->exchangeRateReader = $exchangeRateReader;
     }
 
-    public function register(Request $request): JsonResponse
+    private function checkRegisterMode(?string $referralToken = null): ?RefLink
     {
         $registrationMode = Config::fetchStringOrFail(Config::REGISTRATION_MODE);
         if (RegistrationMode::PRIVATE === $registrationMode) {
             throw new AccessDeniedHttpException('Private registration enabled');
         }
 
-        $data = $request->input('user');
         $refLink = null;
-        if (isset($data['referral_token'])) {
-            $refLink = RefLink::fetchByToken($data['referral_token']);
+        if (null !== $referralToken) {
+            $refLink = RefLink::fetchByToken($referralToken);
         }
 
         if (RegistrationMode::RESTRICTED === $registrationMode && null === $refLink) {
             throw new AccessDeniedHttpException('Restricted registration enabled');
         }
 
+        return $refLink;
+    }
+
+    public function register(Request $request): JsonResponse
+    {
+        $data = $request->input('user');
+        $refLink = $this->checkRegisterMode($data['referral_token'] ?? null);
+
         $this->validateRequestObject($request, 'user', User::$rules_add);
         Validator::make($request->all(), ['uri' => 'required'])->validate();
 
         DB::beginTransaction();
-
-        $user = User::register($data, $refLink);
-        $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
-        $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
-
-        Mail::to($user)->queue($mailable);
-
+        $user = User::registerWithEmail($data['email'], $data['password'], $refLink);
+        if (Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+            $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
+            $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
+            Mail::to($user)->queue($mailable);
+        } else {
+            $this->confirmEmail($user);
+            if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+                $this->confirmAdmin($user);
+            }
+            $user->saveOrFail();
+        }
         DB::commit();
 
         return self::json([], Response::HTTP_CREATED);
@@ -156,8 +171,8 @@ class AuthController extends Controller
                 [],
                 Response::HTTP_TOO_MANY_REQUESTS,
                 [
-                    'message' => 'You can request to resend email activation every 15 minutes.'
-                        . ' Please wait 15 minutes or less.',
+                    'message' => 'You can request to resend email activation every 5 minutes.'
+                        . ' Please wait 5 minutes or less.',
                 ]
             );
         }
@@ -188,10 +203,22 @@ class AuthController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        $userHasEmail = null !== $user->email;
 
         DB::beginTransaction();
+        if (!$userHasEmail || !Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+            $user->email = $request->input('email');
+            $user->saveOrFail();
+        }
+        if (!Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+            $this->confirmEmail($user);
+            $user->saveOrFail();
+            DB::commit();
+            return self::json($user->toArray());
+        }
 
-        if (!Token::canGenerateToken($user, Token::EMAIL_CHANGE_STEP_1)) {
+        $tag = $userHasEmail ? Token::EMAIL_CHANGE_STEP_1 : Token::EMAIL_ACTIVATE;
+        if (!Token::canGenerateToken($user, $tag)) {
             return self::json(
                 [],
                 Response::HTTP_TOO_MANY_REQUESTS,
@@ -202,12 +229,12 @@ class AuthController extends Controller
                 ]
             );
         }
-
-        $token = Token::generate(Token::EMAIL_CHANGE_STEP_1, $user, $request->all());
-        $mailable = new UserEmailChangeConfirm1Old($token->uuid, $request->input('uri_step1'));
+        $token = Token::generate($tag, $user, $request->all());
+        $mailable = $userHasEmail ?
+            new UserEmailChangeConfirm1Old($token->uuid, $request->input('uri_step1')) :
+            new UserEmailActivate($token->uuid, $request->input('uri'));
 
         Mail::to($user)->queue($mailable);
-
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);
@@ -268,7 +295,7 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function check(): JsonResponse
+    public function check(int $code = Response::HTTP_OK): JsonResponse
     {
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->toArray();
@@ -288,7 +315,8 @@ class AuthController extends Controller
                     'referral_refund_enabled' => Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED),
                     'referral_refund_commission' => Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION),
                 ]
-            )
+            ),
+            $code
         );
     }
 
@@ -323,7 +351,25 @@ class AuthController extends Controller
 
     public function walletLoginInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
     {
-        $message = sprintf('Log in to %s adserver %s', config('app.name'), NonceGenerator::get());
+        $message = <<<MSG
+Log in to %s adserver.
+
+I agree to the Terms of Service:
+%s
+
+and Privacy Policy:
+%s
+
+Date: %s
+MSG;
+
+        $message = sprintf(
+            $message,
+            config('app.name'),
+            new SecureUrl((string)config('app.terms_url')),
+            new SecureUrl((string)config('app.privacy_url')),
+            date(DateTimeInterface::RFC2822)
+        );
 
         $payload = [
             'request' => $request->all(),
@@ -341,12 +387,26 @@ class AuthController extends Controller
 
     public function walletLogin(Request $request): JsonResponse
     {
-        if (
-            Auth::guard()->attempt(
-                $request->only('token', 'network', 'address', 'signature'),
-                $request->filled('remember')
-            )
-        ) {
+        try {
+            $address = new WalletAddress($request->input('network'), $request->input('address'));
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException('Invalid wallet address');
+        }
+
+        if (null === User::fetchByWalletAddress($address)) {
+            DB::beginTransaction();
+            $refLink = $this->checkRegisterMode($request->input('referral_token') ?? null);
+            $user = User::registerWithWallet($address, false, $refLink);
+            if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+                $this->confirmAdmin($user);
+            }
+            $user->saveOrFail();
+            DB::commit();
+        }
+
+        $credentials = $request->only('token', 'signature');
+        $credentials['wallet_address'] = $address;
+        if (Auth::guard()->attempt($credentials, $request->filled('remember'))) {
             Auth::user()->generateApiKey();
             return $this->check();
         }
@@ -447,7 +507,10 @@ class AuthController extends Controller
             return self::json($user->toArray());
         }
 
-        if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
+        if (
+            null !== $user->password &&
+            (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old')))
+        ) {
             DB::rollBack();
 
             return self::json(

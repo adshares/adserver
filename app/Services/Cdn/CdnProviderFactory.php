@@ -36,7 +36,11 @@ final class CdnProviderFactory
 
         switch ($name) {
             case self::SKYNET_PROVIDER:
-                return new SkynetCdn(config('app.skynet_api_url'), config('app.skynet_api_key'), config('app.skynet_cdn_url'));
+                return new SkynetCdn(
+                    config('app.skynet_api_url'),
+                    config('app.skynet_api_key'),
+                    config('app.skynet_cdn_url')
+                );
             default:
                 throw new RuntimeException(sprintf('Unknown CDN provider "%s"', $name));
         }

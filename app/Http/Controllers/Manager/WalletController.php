@@ -35,7 +35,6 @@ use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\EthUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
@@ -60,7 +59,6 @@ use stdClass;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
-
 use Throwable;
 
 use function config;
@@ -581,39 +579,12 @@ class WalletController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-
-        if (false === ($token = Token::check($request->input('token'), $user->id, Token::WALLET_CONNECT))) {
-            return self::json(['message' => 'Invalid token'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        try {
-            $address = new WalletAddress($request->input('network'), $request->input('address'));
-        } catch (InvalidArgumentException $exception) {
-            return self::json(['message' => 'Invalid wallet address'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        switch ($address->getNetwork()) {
-            case WalletAddress::NETWORK_ADS:
-                $valid = $adsClient->verifyMessage(
-                    $request->input('signature'),
-                    $token['payload']['message'],
-                    $address->getAddress()
-                );
-                break;
-            case WalletAddress::NETWORK_BSC:
-                $valid = EthUtils::verifyMessage(
-                    $request->input('signature'),
-                    $token['payload']['message'],
-                    $address->getAddress()
-                );
-                break;
-            default:
-                return self::json(['message' => 'Unsupported wallet network'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        if (!$valid) {
-            return self::json(['message' => 'Invalid signature'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+        $address = $this->checkWalletAddress(
+            $request->input('token'),
+            Token::WALLET_CONNECT,
+            $request->all(),
+            $user->id
+        );
 
         DB::beginTransaction();
         try {

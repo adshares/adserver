@@ -560,7 +560,8 @@ class SupplyController extends Controller
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         try {
-            $zoneId = ($networkImpression->context->zone_id ?? null) ?: Utils::getZoneIdFromContext($request->query->get('ctx'));
+            $zoneId = ($networkImpression->context->zone_id ?? null) ?:
+                Utils::getZoneIdFromContext($request->query->get('ctx'));
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }

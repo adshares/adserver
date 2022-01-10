@@ -52,7 +52,7 @@ class Token extends Model
     ];
 
     private const MINIMAL_AGE_LIMITS = [
-        self::EMAIL_ACTIVATE => 24 * 3600,
+        self::EMAIL_ACTIVATE => 5 * 60,
         self::EMAIL_CHANGE_STEP_1 => 5 * 60,
         self::EMAIL_CHANGE_STEP_2 => 5 * 60,
         self::PASSWORD_RECOVERY => 2 * 60,

@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
+use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -43,6 +44,8 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthControllerTest extends TestCase
 {
     private const CHECK_URI = '/auth/check';
+    private const SELF_URI = '/auth/self';
+    private const EMAIL_URI = '/auth/email';
     private const WALLET_LOGIN_INIT_URI = '/auth/login/wallet/init';
     private const WALLET_LOGIN_URI = '/auth/login/wallet';
 
@@ -73,6 +76,14 @@ class AuthControllerTest extends TestCase
         ],
     ];
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::PUBLIC]);
+    }
+
     public function testPublicRegister(): void
     {
         $user = $this->registerUser();
@@ -93,8 +104,9 @@ class AuthControllerTest extends TestCase
         Mail::assertNotQueued(UserConfirmed::class);
     }
 
-    public function testManualConfirmationRegister(): void
+    public function testManualActivationManualConfirmationRegister(): void
     {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
         $user = $this->registerUser();
@@ -103,6 +115,35 @@ class AuthControllerTest extends TestCase
         $this->assertFalse($user->is_confirmed);
 
         $this->activateUser($user);
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertFalse($user->is_admin_confirmed);
+        $this->assertFalse($user->is_confirmed);
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->confirmUser($user);
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
+        Mail::assertQueued(UserConfirmed::class);
+    }
+
+    public function testAutoActivationAutoConfirmationRegister(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+
+        $user = $this->registerUser();
+        $this->assertTrue($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
+    }
+
+    public function testAutoActivationManualConfirmationRegister(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
+
+        $user = $this->registerUser();
         $this->assertTrue($user->is_email_confirmed);
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
@@ -363,7 +404,6 @@ class AuthControllerTest extends TestCase
 
     public function testWalletLoginInit(): void
     {
-        $this->login();
         $response = $this->get(self::WALLET_LOGIN_INIT_URI);
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure([
             'message',
@@ -374,27 +414,19 @@ class AuthControllerTest extends TestCase
 
     public function testWalletLoginAds(): void
     {
-        $user = factory(User::class)->create([
-            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
-        ]);
-        $message = '123abc';
-        $token = Token::generate(Token::WALLET_LOGIN, null, [
-            'request' => [],
-            'message' => $message,
-        ])->uuid;
-
-        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
-        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
-        //message:123abc
-        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
-        $response = $this->post(self::WALLET_LOGIN_URI, [
-            'token' => $token,
-            'network' => 'ads',
-            'address' => '0001-00000001-8B4E',
-            'signature' => $sign
-        ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $user = $this->walletRegisterUser();
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function testWalletLoginWithReferral(): void
+    {
+        $refLink = factory(RefLink::class)->create();
+        $this->assertFalse($refLink->used);
+
+        $user = $this->walletRegisterUser($refLink->token);
+        $this->assertNotNull($user->refLink);
+        $this->assertEquals($refLink->token, $user->refLink->token);
+        $this->assertTrue($user->refLink->used);
     }
 
     public function testWalletLoginBsc(): void
@@ -416,7 +448,7 @@ class AuthControllerTest extends TestCase
             'address' => '0x79e51bA0407bEc3f1246797462EaF46850294301',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_OK);
         $this->assertAuthenticatedAs($user);
     }
 
@@ -441,8 +473,67 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
-        $this->assertGuest();
+        $response->assertStatus(Response::HTTP_OK);
+
+        $user = User::fetchByWalletAddress(new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'));
+        $this->assertNotNull($user);
+        $this->assertAuthenticatedAs($user);
+
+        $this->assertFalse($user->is_email_confirmed);
+        $this->assertTrue($user->is_admin_confirmed);
+        $this->assertTrue($user->is_confirmed);
+    }
+
+    public function testNonExistedWalletLoginUserWithRestrictedMode(): void
+    {
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::RESTRICTED]);
+
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        //message:123abc
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testNonExistedWalletLoginUserWithPrivateMode(): void
+    {
+        Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::PRIVATE]);
+
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
+        ]);
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        //message:123abc
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign
+        ]);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testInvalidWalletLoginSignature(): void
@@ -462,7 +553,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => '0x1231231231'
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUnsupportedWalletLoginNetwork(): void
@@ -482,7 +573,7 @@ class AuthControllerTest extends TestCase
             'address' => '3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg',
             'signature' => '0x1231231231'
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testInvalidWalletLoginToken(): void
@@ -497,7 +588,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testNonExistedWalletLoginToken(): void
@@ -512,7 +603,7 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testExpiredWalletLoginToken(): void
@@ -535,7 +626,164 @@ class AuthControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testSetPassword(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testSetInvalidPassword(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_new' => '123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangePassword(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_old' => '87654321',
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testChangeInvalidOldPassword(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_old' => 'foopass123',
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeInvalidNewPassword(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_old' => '87654321',
+                'password_new' => 'foo',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testSetEmail(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testSetEmailStep1(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Mail::assertQueued(UserEmailActivate::class);
+
+    }
+
+    public function testSetInvalidEmail(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => 'foo',
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeEmail(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testChangeEmailStep1(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => $this->faker->unique()->email,
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Mail::assertQueued(UserEmailChangeConfirm1Old::class);
+    }
+
+    public function testChangeInvalidEmail(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_URI, [
+            'email' => 'foo',
+            'uri_step1' => '/auth/email-activation/',
+            'uri_step2' => '/auth/email-activation/'
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
@@ -555,6 +803,30 @@ class AuthControllerTest extends TestCase
         $response->assertStatus($status);
 
         return User::where('email', $email)->first();
+    }
+
+    private function walletRegisterUser(?string $referralToken = null, int $status = Response::HTTP_OK): ?User
+    {
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_LOGIN, null, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
+        //PK: EAE1C8793B5597C4B3F490E76AC31172C439690F8EE14142BB851A61F9A49F0E
+        //message:123abc
+        $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'token' => $token,
+            'network' => 'ads',
+            'address' => '0001-00000001-8B4E',
+            'signature' => $sign,
+            'referral_token' => $referralToken
+        ]);
+        $response->assertStatus($status);
+
+        return User::fetchByWalletAddress(new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'));
     }
 
     private function activateUser(User $user): void

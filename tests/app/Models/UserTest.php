@@ -39,16 +39,59 @@ class UserTest extends TestCase
         $this->assertEquals($user->id, $dbUser->id);
     }
 
-    public function testCreateAnonymous(): void
+    public function testRegisterWithEmail(): void
+    {
+        $user = User::registerWithEmail('test@test.pl', '123123');
+        $this->assertNotNull($user->uuid);
+        $this->assertNull($user->wallet_address);
+        $this->assertNull($user->auto_withdrawal);
+        $this->assertEquals('test@test.pl', $user->email);
+        $this->assertFalse($user->isAdmin());
+        $this->assertTrue($user->isPublisher());
+        $this->assertTrue($user->isAdvertiser());
+        $this->assertNotNull($user->password);
+    }
+
+    public function testRegisterWithWallet(): void
     {
         $address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E');
-        $user = User::createAnonymous($address);
+        $user = User::registerWithWallet($address);
+
+        $this->assertNotNull($user->uuid);
+        $this->assertNull($user->email);
+        $this->assertEquals($address, $user->wallet_address);
+        $this->assertNull($user->auto_withdrawal);
+        $this->assertFalse($user->isAdmin());
+        $this->assertTrue($user->isPublisher());
+        $this->assertTrue($user->isAdvertiser());
+        $this->assertNull($user->password);
+
+        $address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000002-BB2D');
+        $user = User::registerWithWallet($address, true);
 
         $this->assertNotNull($user->uuid);
         $this->assertNull($user->email);
         $this->assertEquals($address, $user->wallet_address);
         $this->assertNotNull($user->auto_withdrawal);
-        $this->assertEquals(100000000000, $user->auto_withdrawal);
+        $this->assertEquals(100000000, $user->auto_withdrawal);
+        $this->assertFalse($user->isAdmin());
+        $this->assertTrue($user->isPublisher());
+        $this->assertTrue($user->isAdvertiser());
+        $this->assertNull($user->password);
+    }
+
+    public function testRegisteradmin(): void
+    {
+        $user = User::registerAdmin('test@test.pl', 'admin2', '123123');
+        $this->assertNotNull($user->uuid);
+        $this->assertNull($user->wallet_address);
+        $this->assertNull($user->auto_withdrawal);
+        $this->assertEquals('test@test.pl', $user->email);
+        $this->assertEquals('admin2', $user->name);
+        $this->assertTrue($user->isAdmin());
+        $this->assertFalse($user->isPublisher());
+        $this->assertFalse($user->isAdvertiser());
+        $this->assertNotNull($user->password);
     }
 
     public function testAutoWithdrawal(): void

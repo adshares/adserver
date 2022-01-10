@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.1] - 2022-01-10
+### Added
+- Create an account with the cryptocurrency wallet
+### Changed
+- Upgrade to Composer 2.2.3
+### Fixed
+- Rollback of DB migration (deletion of bid strategies)
+
 ## [1.11.0] - 2021-12-31
 ### Added
 - Connecting your account with the cryptocurrency wallet
@@ -529,7 +537,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.11.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.11.1...develop
+[1.11.1]: https://github.com/adshares/adserver/compare/v1.11.0...v1.11.1
 [1.11.0]: https://github.com/adshares/adserver/compare/v1.10.9...v1.11.0
 [1.10.9]: https://github.com/adshares/adserver/compare/v1.10.8...v1.10.9
 [1.10.8]: https://github.com/adshares/adserver/compare/v1.10.7...v1.10.8

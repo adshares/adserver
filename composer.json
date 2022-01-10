@@ -101,7 +101,8 @@
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": true
     },
     "repositories": {
         "ads-php-client": {
