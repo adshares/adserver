@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Providers;
 
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Utilities\EthUtils;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
@@ -44,19 +45,13 @@ class WalletUserProvider extends EloquentUserProvider
 
     public function retrieveByCredentials(array $credentials): ?Authenticatable
     {
-        if (!array_key_exists('network', $credentials) || !array_key_exists('address', $credentials)) {
+        if (!array_key_exists('wallet_address', $credentials)) {
             return parent::retrieveByCredentials($credentials);
-        }
-
-        try {
-            $address = new WalletAddress($credentials['network'], $credentials['address']);
-        } catch (InvalidArgumentException $exception) {
-            return null;
         }
 
         return $this->createModel()
             ->newQuery()
-            ->where('wallet_address', $address)
+            ->where('wallet_address', $credentials['wallet_address'])
             ->first();
     }
 

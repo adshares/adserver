@@ -35,42 +35,66 @@ use Illuminate\Support\Facades\Queue;
 class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
 {
     private const SIGNATURE = 'ops:wallet:withdrawal:check';
+
     public function testAutoWithdrawal(): void
     {
         Queue::fake();
         Mail::fake();
         $dummyExchangeRateRepository = new DummyExchangeRateRepository();
         $this->app->bind(ExchangeRateRepository::class, static function () use ($dummyExchangeRateRepository) {
-
-                return $dummyExchangeRateRepository;
+            return $dummyExchangeRateRepository;
         });
-    /** @var User $user1 */
+        /** @var User $user1 */
         $user1 = factory(User::class)->create([
             'auto_withdrawal' => null,
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
-    /** @var User $user2 */
+        /** @var User $user2 */
         $user2 = factory(User::class)->create([
             'auto_withdrawal' => 150,
             'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
         ]);
-    /** @var User $user3 */
+        /** @var User $user3 */
         $user3 = factory(User::class)->create([
             'auto_withdrawal' => 50,
             'wallet_address' => WalletAddress::fromString('ads:0001-00000003-AB0C')
         ]);
-    /** @var User $user4 */
+        /** @var User $user4 */
         $user4 = factory(User::class)->create([
             'auto_withdrawal' => 50,
             'wallet_address' => WalletAddress::fromString('bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a'),
             'email' => null,
         ]);
-        factory(UserLedgerEntry::class)->create(['user_id' => $user1->id, 'type' => UserLedgerEntry::TYPE_AD_INCOME, 'amount' => 1000]);
-        factory(UserLedgerEntry::class)->create(['user_id' => $user2->id, 'type' => UserLedgerEntry::TYPE_AD_INCOME, 'amount' => 1000]);
-        factory(UserLedgerEntry::class)->create(['user_id' => $user2->id, 'type' => UserLedgerEntry::TYPE_BONUS_INCOME, 'amount' => 100]);
-        factory(UserLedgerEntry::class)->create(['user_id' => $user3->id, 'type' => UserLedgerEntry::TYPE_AD_INCOME, 'amount' => 100]);
-        factory(UserLedgerEntry::class)->create(['user_id' => $user3->id, 'type' => UserLedgerEntry::TYPE_BONUS_INCOME, 'amount' => 100]);
-        factory(UserLedgerEntry::class)->create(['user_id' => $user4->id, 'type' => UserLedgerEntry::TYPE_AD_INCOME, 'amount' => 500]);
+        factory(UserLedgerEntry::class)->create([
+            'user_id' => $user1->id,
+            'type' => UserLedgerEntry::TYPE_AD_INCOME,
+            'amount' => 1000
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'user_id' => $user2->id,
+            'type' => UserLedgerEntry::TYPE_AD_INCOME,
+            'amount' => 1000
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'user_id' => $user2->id,
+            'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
+            'amount' => 100
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'user_id' => $user3->id,
+            'type' => UserLedgerEntry::TYPE_AD_INCOME,
+            'amount' => 100
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'user_id' => $user3->id,
+            'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
+            'amount' => 100
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'user_id' => $user4->id,
+            'type' => UserLedgerEntry::TYPE_AD_INCOME,
+            'amount' => 500
+        ]);
         $this->assertEquals(1000, $user1->getBalance());
         $this->assertEquals(1000, $user1->getWalletBalance());
         $this->assertEquals(1100, $user2->getBalance());

@@ -61,6 +61,8 @@ class SettingsResponse implements Arrayable
 
     private int $autoConfirmationEnabled;
 
+    private int $emailVerificationRequired;
+
     private string $aduserInfoUrl;
 
     public function __construct(
@@ -78,6 +80,7 @@ class SettingsResponse implements Arrayable
         string $registrationMode,
         int $autoRegistrationEnabled,
         int $autoConfirmationEnabled,
+        int $emailVerificationRequired,
         string $aduserInfoUrl
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
@@ -94,6 +97,7 @@ class SettingsResponse implements Arrayable
         $this->registrationMode = $registrationMode;
         $this->autoRegistrationEnabled = $autoRegistrationEnabled;
         $this->autoConfirmationEnabled = $autoConfirmationEnabled;
+        $this->emailVerificationRequired = $emailVerificationRequired;
         $this->aduserInfoUrl = $aduserInfoUrl;
     }
 
@@ -113,6 +117,7 @@ class SettingsResponse implements Arrayable
         $registrationMode = $data[Config::REGISTRATION_MODE];
         $autoRegistrationEnabled = $data[Config::AUTO_REGISTRATION_ENABLED];
         $autoConfirmationEnabled = $data[Config::AUTO_CONFIRMATION_ENABLED];
+        $emailVerificationRequired = $data[Config::EMAIL_VERIFICATION_REQUIRED];
         $aduserInfoUrl = config('app.aduser_info_url');
 
         return new self(
@@ -130,6 +135,7 @@ class SettingsResponse implements Arrayable
             $registrationMode,
             (int)$autoRegistrationEnabled,
             (int)$autoConfirmationEnabled,
+            (int)$emailVerificationRequired,
             $aduserInfoUrl
         );
     }
@@ -151,6 +157,7 @@ class SettingsResponse implements Arrayable
             'registration_mode' => $this->registrationMode,
             'auto_registration_enabled' => $this->autoRegistrationEnabled,
             'auto_confirmation_enabled' => $this->autoConfirmationEnabled,
+            'email_verification_required' => $this->emailVerificationRequired,
             'aduser_info_url' => $this->aduserInfoUrl,
         ];
 

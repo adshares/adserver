@@ -86,6 +86,7 @@ class UpdateAdminSettings extends FormRequest
             ],
             'settings.auto_registration_enabled' => 'required|boolean',
             'settings.auto_confirmation_enabled' => 'required|boolean',
+            'settings.email_verification_required' => 'required|boolean',
         ];
         $rules['settings.registration_mode'] = ['required', Rule::in(RegistrationMode::cases())];
 
@@ -105,6 +106,7 @@ class UpdateAdminSettings extends FormRequest
             Config::REGISTRATION_MODE => (string)$values['registration_mode'],
             Config::AUTO_REGISTRATION_ENABLED => (int)$values['auto_registration_enabled'],
             Config::AUTO_CONFIRMATION_ENABLED => (int)$values['auto_confirmation_enabled'],
+            Config::EMAIL_VERIFICATION_REQUIRED  => (int)$values['email_verification_required'],
         ];
 
         if (isset($values['hotwallet_min_value'])) {

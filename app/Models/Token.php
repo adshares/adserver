@@ -48,12 +48,11 @@ class Token extends Model
         self::IMPERSONATION => 24 * 3600,
         self::EMAIL_APPROVE_WITHDRAWAL => 3600,
         self::WALLET_CONNECT => 60,
-        self::WALLET_REGISTER => 60,
         self::WALLET_LOGIN => 60,
     ];
 
     private const MINIMAL_AGE_LIMITS = [
-        self::EMAIL_ACTIVATE => 24 * 3600,
+        self::EMAIL_ACTIVATE => 5 * 60,
         self::EMAIL_CHANGE_STEP_1 => 5 * 60,
         self::EMAIL_CHANGE_STEP_2 => 5 * 60,
         self::PASSWORD_RECOVERY => 2 * 60,
@@ -72,8 +71,6 @@ class Token extends Model
     public const EMAIL_APPROVE_WITHDRAWAL = 'email-approve-withdrawal';
 
     public const WALLET_CONNECT = 'wallet-connect';
-
-    public const WALLET_REGISTER = 'wallet-register';
 
     public const WALLET_LOGIN = 'wallet-login';
 

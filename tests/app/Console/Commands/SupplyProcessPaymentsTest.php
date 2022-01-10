@@ -124,7 +124,6 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessEventPayment(): void
     {
         $demandClient = new DummyDemandClient();
-        $this->assertEquals(0, $demandClient->user->getWalletBalance());
 
         $info = $demandClient->fetchInfo(new NullUrl());
         $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
@@ -155,7 +154,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             $totalAmount += $eventValue;
             $eventFee = (int)floor($eventValue * $licenseFeeCoefficient);
             $licenseFee += $eventFee;
-            if ($demandClient->user->uuid === $publisherId) {
+            if ('fa9611d2d2f74e3f89c0e18b7c401891' === $publisherId) {
                 $userAmount += $eventValue - $eventFee;
             }
         }
@@ -188,7 +187,6 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
-        $this->assertEquals($userAmount, $demandClient->user->getWalletBalance());
     }
 
     public function testAdsProcessEventPaymentWithServerError(): void

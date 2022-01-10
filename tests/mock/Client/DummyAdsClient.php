@@ -27,7 +27,6 @@ use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 
 class DummyAdsClient extends PhpAdsClient
 {
-
     public function getPublicKeyByAccountAddress(string $accountAddress): string
     {
         //SK: CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB
