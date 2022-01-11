@@ -16,6 +16,7 @@
         "ext-zip": "*",
         "adshares/ads-client": "^1",
         "adshares/fork": "dev-master",
+        "adshares/php-ecrecover": "dev-master",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",
         "doctrine/collections": " v1.5",
@@ -30,8 +31,7 @@
         "ralouphie/mimey": "^2.1",
         "ramsey/uuid": "^3",
         "symfony/intl": "^5.3",
-        "symfony/lock": "^4.2",
-        "wekisen/php-ecrecover": "dev-master"
+        "symfony/lock": "^4.2"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
@@ -52,7 +52,7 @@
             "database/factories"
         ],
         "files": [
-            "vendor/wekisen/php-ecrecover/ecrecover_helper.php"
+            "vendor/adshares/php-ecrecover/ecrecover_helper.php"
         ],
         "psr-4": {
             "Adshares\\Lib\\": "lib/",
@@ -105,13 +105,17 @@
         "allow-plugins": true
     },
     "repositories": {
-        "ads-php-client": {
+        "adshares-ads-php-client": {
             "type":"git",
             "url": "https://github.com/adshares/ads-php-client.git"
         },
         "adshares-fork": {
             "type":"git",
             "url": "https://github.com/adshares/fork.git"
+        },
+        "adshares-php-ecrecover": {
+            "type":"git",
+            "url": "https://github.com/adshares/php-ecrecover.git"
         }
     },
     "minimum-stability": "dev",
