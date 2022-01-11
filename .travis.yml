@@ -24,7 +24,7 @@ before_install:
   - sudo add-apt-repository ppa:ondrej/php -y
   - sudo add-apt-repository ppa:adshares/releases -y
   - sudo apt-get update -q
-  - sudo apt-get install libsodium-dev php-imagick ads -y
+  - sudo apt-get install libsodium-dev ads -y
   - yes | pecl install imagick
   - mkdir -p /tmp/ads/cache
   - chmod 777 -R /tmp/ads
@@ -35,8 +35,6 @@ before_install:
   - mkdir -p storage/framework/{sessions,views,cache}
   - chmod 777 -R storage
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2>/dev/null | mysql mysql
-  - php -v
-  - php -m
 
 install:
   - yarn install && yarn run prod
