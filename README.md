@@ -12,8 +12,8 @@
     <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
 </p>
 <p align="center">
-    <a href="https://travis-ci.org/adshares/adserver" title="Build Status" target="_blank">
-        <img src="https://travis-ci.org/adshares/adserver.svg?branch=master" alt="Build Status">
+    <a href="https://travis-ci.com/adshares/adserver" title="Build Status" target="_blank">
+        <img src="https://travis-ci.com/adshares/adserver.svg?branch=master" alt="Build Status">
     </a>
     <a href="https://sonarcloud.io/dashboard?id=adshares-adserver" title="Code Quality" target="_blank">
         <img src="https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=alert_status" alt="Code Quality">
