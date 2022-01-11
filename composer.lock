@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "29f9590b6e038d1440f3826b98a6de4f",
+    "content-hash": "611e763011f678d63e6c766bf66c71da",
     "packages": [
         {
             "name": "adshares/ads-client",
@@ -148,6 +148,36 @@
                 "spatie"
             ],
             "time": "2021-07-16T12:20:07+00:00"
+        },
+        {
+            "name": "adshares/php-ecrecover",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/adshares/php-ecrecover.git",
+                "reference": "fc33582fd5e641a2c88878e209069922349a329a"
+            },
+            "require": {
+                "ext-gmp": "*",
+                "kornrunner/keccak": "^1.0",
+                "php": ">=7.1.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Wekisen",
+                    "homepage": "https://github.com/Wekisen/php-ecrecover"
+                }
+            ],
+            "description": "PHP ECRecover Example",
+            "keywords": [
+                "ecrecover"
+            ],
+            "time": "2022-01-11T10:41:43+00:00"
         },
         {
             "name": "asm89/stack-cors",
@@ -6555,47 +6585,6 @@
             "time": "2021-12-12T22:59:22+00:00"
         },
         {
-            "name": "wekisen/php-ecrecover",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Wekisen/php-ecrecover.git",
-                "reference": "5e784175fd241c110f9acde3ec0e2b4e33ec3142"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Wekisen/php-ecrecover/zipball/5e784175fd241c110f9acde3ec0e2b4e33ec3142",
-                "reference": "5e784175fd241c110f9acde3ec0e2b4e33ec3142",
-                "shasum": ""
-            },
-            "require": {
-                "ext-gmp": "*",
-                "kornrunner/keccak": "^1.0",
-                "php": ">=7.1.0"
-            },
-            "default-branch": true,
-            "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Wekisen",
-                    "homepage": "https://github.com/Wekisen/php-ecrecover"
-                }
-            ],
-            "description": "PHP ECRecover Example",
-            "keywords": [
-                "ecrecover"
-            ],
-            "support": {
-                "issues": "https://github.com/Wekisen/php-ecrecover/issues",
-                "source": "https://github.com/Wekisen/php-ecrecover/tree/master"
-            },
-            "time": "2021-11-23T15:20:47+00:00"
-        },
-        {
             "name": "zendframework/zend-diactoros",
             "version": "2.2.1",
             "source": {
@@ -9956,7 +9945,7 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "adshares/fork": 20,
-        "wekisen/php-ecrecover": 20
+        "adshares/php-ecrecover": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
@@ -9977,5 +9966,5 @@
         "ext-zip": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.2.0"
 }
