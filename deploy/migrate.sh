@@ -38,35 +38,44 @@ elif [[ ${SKIP_DB_MIGRATE:-0} -eq 0 ]]
 then
     artisanCommand migrate
 fi
+if [ $? -ne 0 ]; then exit 1; fi
 
 if [[ ${_DB_SEED:-0} -eq 1 ]]
 then
     artisanCommand db:seed
+    if [ $? -ne 0 ]; then exit 1; fi
 fi
+
 
 if [[ ${_UPDATE_TARGETING:-0} -eq 1 ]]
 then
     artisanCommand ops:targeting-options:update
+    if [ $? -ne 0 ]; then exit 1; fi
 fi
 
 if [[ ${_UPDATE_FILTERING:-0} -eq 1 ]]
 then
     artisanCommand ops:filtering-options:update
+    if [ $? -ne 0 ]; then exit 1; fi
 fi
 
 if [[ ${_UPDATE_NETWORK_HOSTS:-0} -eq 1 ]]
 then
     artisanCommand ads:fetch-hosts --quiet
+    if [ $? -ne 0 ]; then exit 1; fi
 fi
 
 if [[ ${_BROADCAST_SERVER:-0} -eq 1 ]]
 then
     artisanCommand ads:broadcast-host
+    if [ $? -ne 0 ]; then exit 1; fi
 fi
 
 if [[ ${_CREATE_ADMIN:-0} -eq 1 ]]
 then
     artisanCommand ops:admin:create --password
+    if [ $? -ne 0 ]; then exit 1; fi
 fi
 
 artisanCommand ops:exchange-rate:fetch
+if [ $? -ne 0 ]; then exit 1; fi
