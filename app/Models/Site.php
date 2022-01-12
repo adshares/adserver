@@ -212,6 +212,16 @@ class Site extends Model
         return self::where('uuid', hex2bin($publicId))->first();
     }
 
+    public static function fetchByUserId(int $userId, string $name = null): ?self
+    {
+        $x = self::where('user_id', $userId);
+        if ($name) {
+            $x = $x->where('name', $name);
+        }
+        return $x->first();
+    }
+
+
     public static function fetchAll(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
     {
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)->get();

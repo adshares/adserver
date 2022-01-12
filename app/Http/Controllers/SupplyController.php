@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
@@ -30,6 +31,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\ServeDomain;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -44,11 +46,13 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Domain\ValueObject\Size;
 use BN\Red;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -57,6 +61,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -71,16 +77,71 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
 
-    public function findAnon(
+    public function findJson(
         Request $request
     ) {
-        $validated = $request->validate([
-                                            'address' => [new PayoutAddressRule()],
-                                        ]);
-        $payoutAddress = WalletAddress::fromString($validated['address']);
-        print_r($validated);
 
-        return $payoutAddress;
+        $validated = $request->validate(
+            [
+                'pay_to' => ['required', new PayoutAddressRule()],
+                'view_id' => ['required', 'regex:#^[A-Za-z0-9+/_-]+[=]{0,3}$#'],
+                'zone_name' => ['sometimes', 'regex:/^[0-9a-z -_]+$/i'],
+                'width' => ['required', 'numeric' , 'gt:0'],
+                'height' => ['required', 'numeric' , 'gt:0'],
+                'min_dpi' => ['sometimes', 'numeric' , 'gt:0'],
+                'type' => Rule::in(Banner::types()),
+                'exclude' => ['sometimes','array:quality,category'],
+                'exclude.*' => ['sometimes', 'array'],
+                'context' => ['required','array:user,device,site'],
+                'context.*' => ['required', 'array'],
+                'context.site.url' => ['required', 'url'],
+            ]
+        );
+
+        $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
+        $validated['zone_name'] = $validated['zone_name'] ?? 'default';
+
+        $payoutAddress = WalletAddress::fromString($validated['pay_to']);
+        $user = User::fetchByWalletAddress($payoutAddress);
+
+        if(!$user) {
+            if("allow anon register" > 0) { // TODO
+                $user = new User();
+                $user->id = 1;
+            } else {
+                return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
+            }
+        }
+
+        $site = Site::fetchByUserId($user->id, 'Default Site');
+
+        if (!$site) {
+            $site = new Site();
+            $site->name = 'Default Site';
+            $site->user_id = $user->id;
+            $site->url = $validated['context']['site']['url'];
+            $site->domain = DomainReader::domain($site->url);
+            $site->save();
+
+            die('x');
+        }
+
+        $zoneSize = Size::findBestFit($validated['width'], $validated['height'], $validated['min_dpi']);
+        $validated['zoneSize'] = $zoneSize;
+
+
+
+        return new JsonResponse(['data' => $validated]);
+    }
+
+    private function sendError($type, $message)
+    {
+        return new JsonResponse([
+            'message' => 'The given data was invalid.',
+            'errors' => [
+                $type => $message
+            ]
+        ], 422);
     }
 
     public function find(

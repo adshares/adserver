@@ -206,6 +206,45 @@ final class Size
         ],
     ];
 
+    public static function findBestFit($width, $height, $min_dpi)
+    {
+        $sizes =  array_map(function ($info, $size) use ($width, $height, $min_dpi) {
+            if ($info['type'] !== self::TYPE_DISPLAY) {
+                return false;
+            }
+
+            [$x, $y] = explode("x", $size);
+
+            $dpi = min($x / $width, $y / $height);
+            if ($dpi < $min_dpi) {
+                return false;
+            }
+
+            $score = abs($width / $height - $x / $y) / sqrt(1*max($x, $y));
+
+            return [
+                'size' => $size,
+                'score' => $score,
+                'dpi' => $dpi,
+            ];
+        }, self::SIZE_INFOS, array_keys(self::SIZE_INFOS));
+
+        $sizes = array_filter($sizes);
+
+        usort($sizes, function($a, $b) {
+            if($a['score'] == $b['score']) {
+                return $a['dpi'] > $b['dpi'] ? -1 : 1;
+            }
+           return ($a['score'] < $b['score']) ? -1 : 1;
+        });
+
+        if(isset($sizes[0])) {
+            return $sizes[0]['size'];
+        } else {
+            return null;
+        }
+    }
+
     public static function isValid(string $size): bool
     {
         return array_key_exists($size, self::SIZE_INFOS);
