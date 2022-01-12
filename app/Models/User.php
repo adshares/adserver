@@ -426,6 +426,6 @@ class User extends Authenticatable
 
     public static function fetchEmails(): Collection
     {
-        return self::where('subscribe', 1)->get()->pluck('email');
+        return self::where('subscribe', 1)->whereNotNull('email')->get()->pluck('email');
     }
 }

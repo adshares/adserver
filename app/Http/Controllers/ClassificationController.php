@@ -259,7 +259,7 @@ class ClassificationController extends Controller
 
         foreach ($users as $user) {
             if (null !== $user->email) {
-                Mail::to($user->email)->queue(new BannerClassified());
+                Mail::to($user)->queue(new BannerClassified());
             }
         }
     }

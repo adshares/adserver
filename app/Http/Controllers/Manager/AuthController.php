@@ -150,7 +150,7 @@ class AuthController extends Controller
         $user->save();
         DB::commit();
 
-        if ($user->is_confirmed) {
+        if ($user->is_confirmed && null !== $user->email) {
             Mail::to($user)->queue(new UserConfirmed());
         }
 

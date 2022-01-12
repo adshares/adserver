@@ -257,13 +257,17 @@ class AdsProcessTx extends BaseCommand
                 $ledgerEntry->save();
                 $adsPayment->save();
 
-                Mail::to($user)->queue(new DepositProcessed($amount));
+                if (null !== $user->email) {
+                    Mail::to($user)->queue(new DepositProcessed($amount));
+                }
 
                 try {
                     $reactivatedCount = $this->reactivateSuspendedCampaigns($user);
                     if ($reactivatedCount > 0) {
                         Log::debug("We restarted all suspended campaigns owned by user [{$user->id}].");
-                        Mail::to($user)->queue(new CampaignResume());
+                        if (null !== $user->email) {
+                            Mail::to($user)->queue(new CampaignResume());
+                        }
                     }
                 } catch (InvalidArgumentException $exception) {
                     Log::debug("Notify user [{$user->id}] that we cannot restart campaigns.");
