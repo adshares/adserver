@@ -33,11 +33,11 @@ class SiteAdded extends Mailable
 
     private ?string $email;
 
-    private Site $site;
+    private $site;
 
     private string $userUuid;
 
-    public function __construct(string $userUuid, ?string $email, Site $site)
+    public function __construct(string $userUuid, ?string $email, $site)
     {
         $this->userUuid = $userUuid;
         $this->email = $email;
