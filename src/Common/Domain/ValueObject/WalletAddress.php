@@ -93,9 +93,9 @@ final class WalletAddress implements ValueObject
                 return AdsValidator::isAccountAddressValid($address);
             case self::NETWORK_BSC:
             case self::NETWORK_ETH:
-                return !!preg_match('/^0x[0-9a-f]{40}$/i', $address);
+                return (bool)preg_match('/^0x[0-9a-f]{40}$/i', $address);
             case self::NETWORK_BTC:
-                return !!preg_match('/^[^0OIl]{25,34}$/', $address);
+                return (bool)preg_match('/^[^0OIl]{25,34}$/', $address);
             default:
                 return false;
         }

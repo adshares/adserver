@@ -104,11 +104,10 @@ class WalletWithdrawalCheckCommand extends BaseCommand
                 );
         }
 
-        $balance = $user->getWalletBalance();
-        $amount = AdsUtils::calculateAmount((string)$addressFrom, $addressTo, $balance);
+        $baseAmount = AdsUtils::calculateAmount((string)$addressFrom, $addressTo, $amount);
         $ledgerEntry = UserLedgerEntry::construct(
             $user->id,
-            -$balance,
+            -$amount,
             UserLedgerEntry::STATUS_PENDING,
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed((string)$addressFrom, $addressTo);
@@ -117,14 +116,14 @@ class WalletWithdrawalCheckCommand extends BaseCommand
         AdsSendOne::dispatch(
             $ledgerEntry,
             $addressTo,
-            $amount,
+            $baseAmount,
             $message
         );
         if (null !== $user->email) {
-            $fee = AdsUtils::calculateFee((string)$addressFrom, $addressTo, $amount);
+            $fee = AdsUtils::calculateFee((string)$addressFrom, $addressTo, $baseAmount);
             Mail::to($user)->queue(
                 new WithdrawalSuccess(
-                    $amount,
+                    $baseAmount,
                     'ADS',
                     $fee,
                     $user->wallet_address

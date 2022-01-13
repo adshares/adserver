@@ -21,7 +21,6 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
-use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
@@ -197,24 +196,24 @@ class WalletController extends Controller
 
     private function getWalletAdsAddress(AdsRpcClient $rpcClient, WalletAddress $address): string
     {
-        switch ($address->getNetwork()) {
-            case WalletAddress::NETWORK_ADS:
-                return $address->getAddress();
-            case WalletAddress::NETWORK_BSC:
-                $gateway = $rpcClient->getGateway(WalletAddress::NETWORK_BSC);
-                return $gateway->getAddress();
+        if (WalletAddress::NETWORK_ADS === $address->getNetwork()) {
+            return $address->getAddress();
+        }
+        if (WalletAddress::NETWORK_BSC === $address->getNetwork()) {
+            $gateway = $rpcClient->getGateway(WalletAddress::NETWORK_BSC);
+            return $gateway->getAddress();
         }
         throw new UnprocessableEntityHttpException('Unsupported network');
     }
 
     private function getWalletAdsMessage(AdsRpcClient $rpcClient, WalletAddress $address): string
     {
-        switch ($address->getNetwork()) {
-            case WalletAddress::NETWORK_ADS:
-                return '';
-            case WalletAddress::NETWORK_BSC:
-                $gateway = $rpcClient->getGateway(WalletAddress::NETWORK_BSC);
-                return $gateway->getPrefix() . preg_replace('/^0x/', '', $address->getAddress());
+        if (WalletAddress::NETWORK_ADS === $address->getNetwork()) {
+            return '';
+        }
+        if (WalletAddress::NETWORK_BSC === $address->getNetwork()) {
+            $gateway = $rpcClient->getGateway(WalletAddress::NETWORK_BSC);
+            return $gateway->getPrefix() . preg_replace('/^0x/', '', $address->getAddress());
         }
         throw new UnprocessableEntityHttpException('Unsupported network');
     }
