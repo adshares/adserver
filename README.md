@@ -11,16 +11,13 @@
     ·
     <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
 </p>
-<p align="center">
-    <a href="https://app.travis-ci.com/github/adshares/adserver" title="Build Status" target="_blank">
-        <img src="https://app.travis-ci.com/adshares/adserver.svg?branch=master" alt="Build Status">
-    </a>
-    <a href="https://sonarcloud.io/dashboard?id=adshares-adserver" title="Code Quality" target="_blank">
-        <img src="https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=alert_status" alt="Code Quality">
-    </a>
-</p>
 
 AdServer is the core software behind the ecosystem.
+
+[![Quality Status](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=alert_status)](https://sonarcloud.io/dashboard?id=adshares-adserver)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=adshares-adserver)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=security_rating)](https://sonarcloud.io/dashboard?id=adshares-adserver)
+[![Build Status](https://app.travis-ci.com/adshares/adserver.svg?branch=master)](https://app.travis-ci.com/github/adshares/adserver)
 
 For **Quick Start** see [INSTALLER](https://github.com/adshares/installer) Project.
 

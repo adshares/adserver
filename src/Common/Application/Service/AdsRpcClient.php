@@ -29,6 +29,8 @@ interface AdsRpcClient
 {
     public function getGateway(string $code): Gateway;
 
+    public function getGatewayFee(string $code, int $amount, string $address): int;
+
     /**
      * @return Gateway[]
      */

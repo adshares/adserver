@@ -76,7 +76,10 @@ class InvoicesController extends Controller
 
         $mail = new InvoiceCreated($invoice);
         $mail->attach($invoice->pdf_file);
-        Mail::to($user)->bcc(config('app.adshares_operator_email'))->queue($mail);
+
+        if (null !== $user->email) {
+            Mail::to($user)->bcc(config('app.adshares_operator_email'))->queue($mail);
+        }
 
         return self::json($invoice, Response::HTTP_CREATED);
     }

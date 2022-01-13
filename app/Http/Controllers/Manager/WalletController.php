@@ -21,7 +21,6 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
-use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
@@ -77,6 +76,8 @@ class WalletController extends Controller
 
     private const FIELD_FEE = 'fee';
 
+    private const FIELD_RECEIVE = 'receive';
+
     private const FIELD_LIMIT = 'limit';
 
     private const FIELD_MEMO = 'memo';
@@ -130,42 +131,54 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    public function calculateWithdrawal(Request $request): JsonResponse
+    public function calculateWithdrawal(Request $request, AdsRpcClient $rpcClient): JsonResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
         $addressFrom = $this->getAdServerAdsAddress();
+        $fromAccountWallet = null === $user->email;
 
-        if (!AdsValidator::isAccountAddressValid($addressFrom)) {
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
+        $rules = [self::FIELD_AMOUNT => ['integer', 'min:1']];
+        if (!$fromAccountWallet) {
+            $rules[self::FIELD_TO] = self::VALIDATOR_RULE_REQUIRED;
+        }
+        Validator::make($request->all(), $rules)->validate();
+
+        if ($fromAccountWallet) {
+            $address = $user->wallet_address;
+        } else {
+            try {
+                $address = new WalletAddress(WalletAddress::NETWORK_ADS, $request->input(self::FIELD_TO));
+            } catch (InvalidArgumentException $exception) {
+                // invalid input for calculating fee
+                return self::json([self::FIELD_ERROR => 'Invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
         }
 
-        Validator::make(
-            $request->all(),
-            [
-                self::FIELD_AMOUNT => ['integer', 'min:1'],
-                self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
-            ]
-        )->validate();
+        $addressTo = $this->getWalletAdsAddress($rpcClient, $address);
         $amount = $request->input(self::FIELD_AMOUNT);
-        $addressTo = $request->input(self::FIELD_TO);
-
-        if (!AdsValidator::isAccountAddressValid($addressTo)) {
-            // invalid input for calculating fee
-            return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
+        $balance = $user->getWalletBalance();
+        $maxAmount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         if (null === $amount) {
-            //calculate max available amount
-            $balance = Auth::user()->getWalletBalance();
-            $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
+            $amount = $maxAmount;
         }
 
-        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+        $adsFee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+        if ($amount + $adsFee > $balance) {
+            $amount = $maxAmount;
+            $adsFee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+        }
 
-        $total = $amount + $fee;
+        $gatewayFee = 0;
+        if (WalletAddress::NETWORK_ADS !== $address->getNetwork()) {
+            $gatewayFee = $rpcClient->getGatewayFee($address->getNetwork(), $amount, $address->getAddress());
+        }
+
         $resp = [
             self::FIELD_AMOUNT => $amount,
-            self::FIELD_FEE => $fee,
-            self::FIELD_TOTAL => $total,
+            self::FIELD_FEE => $adsFee,
+            self::FIELD_TOTAL => $amount + $adsFee,
+            self::FIELD_RECEIVE => max(0, $amount - $gatewayFee),
         ];
 
         return self::json($resp);
@@ -177,9 +190,32 @@ class WalletController extends Controller
             return new AccountId(config('app.adshares_address'));
         } catch (InvalidArgumentException $e) {
             Log::error(sprintf('Invalid ADS address is set: %s', $e->getMessage()));
-
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private function getWalletAdsAddress(AdsRpcClient $rpcClient, WalletAddress $address): string
+    {
+        if (WalletAddress::NETWORK_ADS === $address->getNetwork()) {
+            return $address->getAddress();
+        }
+        if (WalletAddress::NETWORK_BSC === $address->getNetwork()) {
+            $gateway = $rpcClient->getGateway(WalletAddress::NETWORK_BSC);
+            return $gateway->getAddress();
+        }
+        throw new UnprocessableEntityHttpException('Unsupported network');
+    }
+
+    private function getWalletAdsMessage(AdsRpcClient $rpcClient, WalletAddress $address): string
+    {
+        if (WalletAddress::NETWORK_ADS === $address->getNetwork()) {
+            return '';
+        }
+        if (WalletAddress::NETWORK_BSC === $address->getNetwork()) {
+            $gateway = $rpcClient->getGateway(WalletAddress::NETWORK_BSC);
+            return $gateway->getPrefix() . preg_replace('/^0x/', '', $address->getAddress());
+        }
+        throw new UnprocessableEntityHttpException('Unsupported network');
     }
 
     public function confirmWithdrawal(Request $request, AdsExchange $exchange): JsonResponse
@@ -274,7 +310,7 @@ class WalletController extends Controller
         return self::json();
     }
 
-    public function withdraw(Request $request): JsonResponse
+    public function withdraw(Request $request, AdsRpcClient $rpcClient): JsonResponse
     {
         /** @var User $user */
         $user = Auth::user();
@@ -287,35 +323,38 @@ class WalletController extends Controller
             return $this->withdrawBtc($request);
         }
 
-        return $this->withdrawAds($request);
+        return $this->withdrawAds($request, $rpcClient);
     }
 
-    private function withdrawAds(Request $request): JsonResponse
+    private function withdrawAds(Request $request, AdsRpcClient $rpcClient): JsonResponse
     {
-        $addressFrom = $this->getAdServerAdsAddress();
-
-        Validator::make(
-            $request->all(),
-            [
-                self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
-                self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
-                self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
-            ]
-        )->validate();
-
-        try {
-            $addressTo = new AccountId($request->input(self::FIELD_TO));
-        } catch (InvalidArgumentException $e) {
-            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
-        }
-
-        $amount = (int)$request->input(self::FIELD_AMOUNT);
-        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
-
-        $total = $amount + $fee;
-
         /** @var User $user */
         $user = Auth::user();
+        $addressFrom = $this->getAdServerAdsAddress();
+        $fromAccountWallet = null === $user->email;
+
+        $rules = [self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1']];
+        if (!$fromAccountWallet) {
+            $rules[self::FIELD_MEMO] = ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'];
+            $rules[self::FIELD_TO] = self::VALIDATOR_RULE_REQUIRED;
+        }
+        Validator::make($request->all(), $rules)->validate();
+
+        if ($fromAccountWallet) {
+            $address = $user->wallet_address;
+        } else {
+            try {
+                $address = new WalletAddress(WalletAddress::NETWORK_ADS, $request->input(self::FIELD_TO));
+            } catch (InvalidArgumentException $exception) {
+                // invalid input for calculating fee
+                return self::json([self::FIELD_ERROR => 'Invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        }
+
+        $addressTo = $this->getWalletAdsAddress($rpcClient, $address);
+        $amount = $request->input(self::FIELD_AMOUNT);
+        $adsFee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+        $total = $amount + $adsFee;
 
         if ($user->getWalletBalance() < $total) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -324,31 +363,39 @@ class WalletController extends Controller
         $ledgerEntry = UserLedgerEntry::construct(
             $user->id,
             -$total,
-            UserLedgerEntry::STATUS_AWAITING_APPROVAL,
+            $fromAccountWallet ? UserLedgerEntry::STATUS_PENDING : UserLedgerEntry::STATUS_AWAITING_APPROVAL,
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed($addressFrom, $addressTo);
 
         DB::beginTransaction();
 
         if (!$ledgerEntry->save()) {
+            DB::rollBack();
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        $payload = [
-            'request' => $request->all(),
-            'ledgerEntry' => $ledgerEntry->id,
-        ];
-
-        Mail::to($user)->queue(
-            new WithdrawalApproval(
-                Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
+        if (!$fromAccountWallet) {
+            $payload = [
+                'request' => $request->all(),
+                'ledgerEntry' => $ledgerEntry->id,
+            ];
+            Mail::to($user)->queue(
+                new WithdrawalApproval(
+                    Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
+                    $amount,
+                    'ADS',
+                    $adsFee,
+                    new WalletAddress(WalletAddress::NETWORK_ADS, (string)$addressTo)
+                )
+            );
+        } else {
+            AdsSendOne::dispatch(
+                $ledgerEntry,
+                $addressTo,
                 $amount,
-                'ADS',
-                $fee,
-                new WalletAddress(WalletAddress::NETWORK_ADS, (string)$addressTo)
-            )
-        );
-
+                $this->getWalletAdsMessage($rpcClient, $address)
+            );
+        }
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);

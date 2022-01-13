@@ -90,7 +90,7 @@ class WalletWithdrawalCheckCommand extends BaseCommand
 
         switch ($user->wallet_address->getNetwork()) {
             case WalletAddress::NETWORK_ADS:
-                $addressTo = new AccountId($user->wallet_address->getAddress());
+                $addressTo = $user->wallet_address->getAddress();
                 $message = '';
                 break;
             case WalletAddress::NETWORK_BSC:
@@ -104,27 +104,26 @@ class WalletWithdrawalCheckCommand extends BaseCommand
                 );
         }
 
-        $balance = $user->getWalletBalance();
-        $amount = AdsUtils::calculateAmount((string)$addressFrom, (string)$addressTo, $balance);
+        $baseAmount = AdsUtils::calculateAmount((string)$addressFrom, $addressTo, $amount);
         $ledgerEntry = UserLedgerEntry::construct(
             $user->id,
-            -$balance,
+            -$amount,
             UserLedgerEntry::STATUS_PENDING,
             UserLedgerEntry::TYPE_WITHDRAWAL
-        )->addressed((string)$addressFrom, (string)$addressTo);
+        )->addressed((string)$addressFrom, $addressTo);
         $ledgerEntry->saveOrFail();
 
         AdsSendOne::dispatch(
             $ledgerEntry,
             $addressTo,
-            $amount,
+            $baseAmount,
             $message
         );
         if (null !== $user->email) {
-            $fee = AdsUtils::calculateFee((string)$addressFrom, (string)$addressTo, $amount);
+            $fee = AdsUtils::calculateFee((string)$addressFrom, $addressTo, $baseAmount);
             Mail::to($user)->queue(
                 new WithdrawalSuccess(
-                    $amount,
+                    $baseAmount,
                     'ADS',
                     $fee,
                     $user->wallet_address

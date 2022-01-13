@@ -37,10 +37,15 @@ chmod 664 storage/app/reported-ads.txt
 ln -sf ${SERVICE_DIR}/storage/app/public public/storage
 
 composer install --no-dev --optimize-autoloader
+if [ $? -ne 0 ]; then exit 1; fi
 
 yarn global add cross-env
 yarn install
+if [ $? -ne 0 ]; then exit 1; fi
+
 yarn run prod
+if [ $? -ne 0 ]; then exit 1; fi
 
 rm -f bootstrap/cache/config.php
 artisanCommand optimize
+if [ $? -ne 0 ]; then exit 1; fi

@@ -334,8 +334,9 @@ final class NowPayments
         }
 
         if ($this->saveDeposit(true, $user, $amount, $orderId, $paymentId)) {
-            Mail::to($user)->queue(new DepositProcessed(AdsConverter::adsToClicks($amount)));
-
+            if (null !== $user->email) {
+                Mail::to($user)->queue(new DepositProcessed(AdsConverter::adsToClicks($amount)));
+            }
             return true;
         }
 

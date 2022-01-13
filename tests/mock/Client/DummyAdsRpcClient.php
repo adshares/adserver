@@ -63,6 +63,11 @@ class DummyAdsRpcClient implements AdsRpcClient
         throw new RuntimeException(sprintf('Cannot find gateway "%s"', $code));
     }
 
+    public function getGatewayFee(string $code, int $amount, string $address): int
+    {
+        return 100000;
+    }
+
     public function getGateways(): array
     {
         return array_map(fn($data) => Gateway::fromArray($data), self::GATEWAYS);

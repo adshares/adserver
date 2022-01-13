@@ -50,6 +50,15 @@ final class GuzzleAdsRpcClient implements AdsRpcClient
         throw new RuntimeException(sprintf('Cannot find gateway "%s"', $code));
     }
 
+    public function getGatewayFee(string $code, int $amount, string $address): int
+    {
+        return $this->request('get_gateway_fee', [
+            'code' => $code,
+            'amount' => $amount,
+            'address' => $address
+        ])['fee'];
+    }
+
     /**
      * @return Gateway[]
      */

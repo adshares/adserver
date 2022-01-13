@@ -140,6 +140,6 @@ final class UserContext
 
     public function isCrawler(): bool
     {
-        return !!($this->keywords['device']['crawler'] ?? false);
+        return (bool)($this->keywords['device']['crawler'] ?? false);
     }
 }
