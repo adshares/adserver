@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
+use Adshares\Ads\Util\AdsValidator;
 use Adshares\Common\Domain\ValueObject;
 use Adshares\Common\Exception\InvalidArgumentException;
 
@@ -89,7 +90,7 @@ final class WalletAddress implements ValueObject
         $address = self::normalizeAddress($network, $parts[1]);
         switch ($network) {
             case self::NETWORK_ADS:
-                return AccountId::isValid($address);
+                return AdsValidator::isAccountAddressValid($address);
             case self::NETWORK_BSC:
             case self::NETWORK_ETH:
                 return !!preg_match('/^0x[0-9a-f]{40}$/i', $address);

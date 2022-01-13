@@ -21,7 +21,6 @@
 
 namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Contracts\Support\Arrayable;
 
 class Gateway implements Arrayable
@@ -30,7 +29,7 @@ class Gateway implements Arrayable
     private string $name;
     private ?string $description;
     private int $chainId;
-    private AccountId $address;
+    private string $address;
     private string $contractAddress;
     private string $format;
     private string $prefix;
@@ -40,7 +39,7 @@ class Gateway implements Arrayable
         string $name,
         ?string $description,
         int $chainId,
-        AccountId $address,
+        string $address,
         string $contractAddress,
         string $format,
         string $prefix
@@ -76,7 +75,7 @@ class Gateway implements Arrayable
         return $this->chainId;
     }
 
-    public function getAddress(): AccountId
+    public function getAddress(): string
     {
         return $this->address;
     }
@@ -103,7 +102,7 @@ class Gateway implements Arrayable
             'name' => $this->name,
             'description' => $this->description,
             'chain_id' => $this->chainId,
-            'address' => (string)$this->address,
+            'address' => $this->address,
             'contract_address' => $this->contractAddress,
             'format' => $this->format,
             'prefix' => $this->prefix,
@@ -117,7 +116,7 @@ class Gateway implements Arrayable
             $data['name'],
             $data['description'],
             (int)$data['chain_id'],
-            new AccountId($data['address']),
+            $data['address'],
             $data['contract_address'],
             $data['format'],
             $data['prefix'],
