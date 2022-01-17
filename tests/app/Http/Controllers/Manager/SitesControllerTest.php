@@ -49,6 +49,7 @@ class SitesControllerTest extends TestCase
         'domain',
         'url',
         'filtering',
+        'onlyAcceptedBanners',
         'adUnits' => [
             '*' => [
                 'code',
@@ -187,8 +188,7 @@ class SitesControllerTest extends TestCase
       },
       "excludes": {}
     },
-    "requireClassified": false,
-    "excludeUnclassified": false,
+    "onlyAcceptedBanners": false,
     "adUnits": [
       {
         "name": "ssss",
@@ -298,8 +298,7 @@ JSON
                 'name' => 'example.com',
                 'url' => 'https://example.com',
                 'primaryLanguage' => 'en',
-                'requireClassified' => false,
-                'excludeUnclassified' => true,
+                'onlyAcceptedBanners' => true,
                 'filtering' => [
                     'requires' => [],
                     'excludes' => [
@@ -593,6 +592,9 @@ JSON
             2,
             'filtering'
         );
+
+        $content = json_decode($response->content(), true);
+        $this->assertEquals($preset['onlyAcceptedBanners'] ?? false, $content['onlyAcceptedBanners']);
     }
 
     public function filteringDataProvider(): array
@@ -600,20 +602,10 @@ JSON
         $presets = [
             [],
             [
-                "requireClassified" => false,
-                "excludeUnclassified" => false,
+                "onlyAcceptedBanners" => false,
             ],
             [
-                "requireClassified" => true,
-                "excludeUnclassified" => false,
-            ],
-            [
-                "requireClassified" => false,
-                "excludeUnclassified" => true,
-            ],
-            [
-                "requireClassified" => true,
-                "excludeUnclassified" => true,
+                "onlyAcceptedBanners" => true,
             ],
         ];
 

@@ -51,9 +51,17 @@ class SiteFilteringUpdater
                 self::KEYWORD_CLASSIFIED_VALUE;
         }
 
-        $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE] = [
-            $this->getClassificationForRejectedBanners($site->user_id)->keyword(),
-        ];
+        if ($site->only_accepted_banners) {
+            $requireKeywords = $this->getClassificationForAcceptedBanners($site->user_id, $site->id);
+            foreach ($requireKeywords as $requireKeyword) {
+                $siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $requireKeyword->keyword();
+            }
+        }
+
+        $excludeKeywords = $this->getClassificationForRejectedBanners($site->user_id, $site->id);
+        foreach ($excludeKeywords as $excludeKeyword) {
+            $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $excludeKeyword->keyword();
+        }
 
         $baseRequires = json_decode(config('app.site_filtering_require') ?? '', true);
         if (is_array($baseRequires)) {
@@ -81,9 +89,26 @@ class SiteFilteringUpdater
         return array_unique($arr);
     }
 
-    private function getClassificationForRejectedBanners(int $publisherId): Classification
+    /**
+     * @return Classification[]
+     */
+    private function getClassificationForAcceptedBanners(int $publisherId, int $siteId): array
     {
-        return new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false);
+        return [
+            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, true),
+            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, true, $siteId),
+        ];
+    }
+
+    /**
+     * @return Classification[]
+     */
+    private function getClassificationForRejectedBanners(int $publisherId, int $siteId): array
+    {
+        return [
+            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false),
+            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false, $siteId),
+        ];
     }
 
     private function extractClassifiers(array $siteExcludes, array $siteRequires): array
