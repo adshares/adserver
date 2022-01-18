@@ -56,8 +56,7 @@ use function in_array;
  * @property array|null|string site_excludes
  * @property array|null categories
  * @property array|null categories_by_user
- * @property bool $require_classified deprecated
- * @property bool $exclude_unclassified deprecated
+ * @property bool $only_accepted_banners
  * @property Zone[]|Collection zones
  * @property User user
  * @method static Site create($input = null)
@@ -101,8 +100,7 @@ class Site extends Model
         'status' => 'integer',
         'site_requires' => 'json',
         'site_excludes' => 'json',
-        'require_classified' => 'boolean',
-        'exclude_unclassified' => 'boolean',
+        'only_accepted_banners' => 'boolean',
         'rank' => 'float',
         'categories' => 'json',
         'categories_by_user' => 'json',
@@ -115,6 +113,7 @@ class Site extends Model
         'status',
         'primary_language',
         'filtering',
+        'only_accepted_banners',
         'categories_by_user',
     ];
 
@@ -123,8 +122,6 @@ class Site extends Model
         'site_requires',
         'site_excludes',
         'zones',
-        'require_classified',
-        'exclude_unclassified',
         'rank',
         'info',
         'reassess_available_at',
