@@ -95,7 +95,6 @@ class SiteFilteringUpdater
     private function getClassificationForAcceptedBanners(int $publisherId, int $siteId): array
     {
         return [
-            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, true),
             new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, true, $siteId),
         ];
     }
