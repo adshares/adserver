@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Filtering for only accepted banners
 - Auto CPM setting
+- Search by campaign & site UUID
 
 ## [1.11.2] - 2022-01-13
 ### Added
