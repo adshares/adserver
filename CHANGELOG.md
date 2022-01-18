@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Filtering for only accepted banners
+- Auto CPM setting
 
 ## [1.11.2] - 2022-01-13
 ### Added
