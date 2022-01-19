@@ -148,7 +148,7 @@ class CampaignTest extends TestCase
                     factory(UserLedgerEntry::class)->create(
                         [
                             'user_id' => $userId,
-                            'amount' => 1000 * 10e11,
+                            'amount' => 1000 * 1e11,
                         ]
                     );
 
@@ -169,7 +169,7 @@ class CampaignTest extends TestCase
                     factory(UserLedgerEntry::class)->create(
                         [
                             'user_id' => $userId,
-                            'amount' => 1000 * 10e11,
+                            'amount' => 1000 * 1e11,
                         ]
                     );
 
@@ -190,7 +190,7 @@ class CampaignTest extends TestCase
                     factory(UserLedgerEntry::class)->create(
                         [
                             'user_id' => $userId,
-                            'amount' => 1000 * 10e11,
+                            'amount' => 1000 * 1e11,
                         ]
                     );
                     $campaign = factory(Campaign::class)->create(
