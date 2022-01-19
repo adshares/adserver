@@ -392,7 +392,7 @@ class Campaign extends Model
             return false;
         }
 
-        if ($this->max_cpm >= config('app.campaign_min_cpm')) {
+        if ($this->isAutoCpm() || $this->max_cpm >= config('app.campaign_min_cpm')) {
             return true;
         }
 
@@ -457,6 +457,11 @@ class Campaign extends Model
     public function advertiserBudget(): AdvertiserBudget
     {
         return new AdvertiserBudget($this->budget, $this->isDirectDeal() ? 0 : $this->budget);
+    }
+
+    private function isAutoCpm(): bool
+    {
+        return $this->max_cpm === null;
     }
 
     public function isDirectDeal(): bool
