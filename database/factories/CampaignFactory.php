@@ -30,7 +30,7 @@ $factory->define(Campaign::class, function (Faker $faker) {
         'name' => $faker->word,
         'max_cpc' => '200000000000',
         'max_cpm' => '100000000000',
-        'budget' => 100 * 10e11,
+        'budget' => 100 * 1e11,
         'targeting_excludes' => [],
         'targeting_requires' => [],
         'classification_status' => 0,
