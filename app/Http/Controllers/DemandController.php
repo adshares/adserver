@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -88,14 +88,11 @@ SQL;
 
     private const PLACEHOLDER_ZONE_ID = '{zid}';
 
-    /** @var PaymentDetailsVerify */
-    private $paymentDetailsVerify;
+    private PaymentDetailsVerify $paymentDetailsVerify;
 
-    /** @var CampaignRepository */
-    private $campaignRepository;
+    private CampaignRepository $campaignRepository;
 
-    /** @var LicenseReader */
-    private $licenseReader;
+    private LicenseReader $licenseReader;
 
     public function __construct(
         PaymentDetailsVerify $paymentDetailsVerify,
@@ -126,14 +123,7 @@ SQL;
         }
 
         $isIECompat = $request->query->has('xdr');
-
-        if (Banner::TEXT_TYPE_HTML === $banner->creative_type) {
-            $mime = 'text/html';
-        } elseif (Banner::TEXT_TYPE_IMAGE === $banner->creative_type) {
-            $mime = 'image/png';
-        } else {
-            $mime = 'text/plain';
-        }
+        $mime = $banner->creative_mime_type;
 
         $response->setCallback(
             function () use ($response, $banner, $isIECompat) {

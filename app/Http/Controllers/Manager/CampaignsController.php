@@ -119,10 +119,7 @@ class CampaignsController extends Controller
         }
 
         $response = ResponseFacade::make($banner->creative_contents, Response::HTTP_OK);
-
-        if ($banner->creative_type === Banner::TYPE_IMAGE) {
-            $response->header('Content-Type', 'image/png');
-        }
+        $response->header('Content-Type', $banner->creative_mime_type);
 
         return $response;
     }
