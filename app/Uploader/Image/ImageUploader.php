@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,7 +30,7 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 
 use function mime_content_type;
 
@@ -39,8 +39,7 @@ class ImageUploader implements Uploader
     public const IMAGE_FILE = 'image';
     private const IMAGE_DISK = 'banners';
 
-    /** @var Request */
-    private $request;
+    private Request $request;
 
     public function __construct(Request $request)
     {
@@ -83,5 +82,12 @@ class ImageUploader implements Uploader
     public static function content(string $fileName): string
     {
         return Storage::disk(self::IMAGE_DISK)->get($fileName);
+    }
+
+    public static function contentMimeType(string $fileName): string
+    {
+        $path = Storage::disk(self::IMAGE_DISK)->path($fileName);
+
+        return mime_content_type($path);
     }
 }

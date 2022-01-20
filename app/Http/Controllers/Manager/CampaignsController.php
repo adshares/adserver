@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -68,20 +68,15 @@ use function strrpos;
 
 class CampaignsController extends Controller
 {
-    /** @var CampaignRepository */
-    private $campaignRepository;
+    private CampaignRepository $campaignRepository;
 
-    /** @var ConfigurationRepository */
-    private $configurationRepository;
+    private ConfigurationRepository $configurationRepository;
 
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
+    private ExchangeRateReader $exchangeRateReader;
 
-    /** @var BannerClassificationCreator */
-    private $bannerClassificationCreator;
+    private BannerClassificationCreator $bannerClassificationCreator;
 
-    /** @var ClassifierExternalRepository */
-    private $classifierExternalRepository;
+    private ClassifierExternalRepository $classifierExternalRepository;
 
     public function __construct(
         CampaignRepository $campaignRepository,
@@ -216,10 +211,13 @@ class CampaignsController extends Controller
             try {
                 switch ($banner['type']) {
                     case Banner::TYPE_IMAGE:
-                        $content = ImageUploader::content($this->filename($banner['url']));
+                        $fileName = $this->filename($banner['url']);
+                        $content = ImageUploader::content($fileName);
+                        $mimeType = ImageUploader::contentMimeType($fileName);
                         break;
                     case Banner::TYPE_HTML:
                         $content = ZipUploader::content($this->filename($banner['url']));
+                        $mimeType = 'text/html';
                         break;
                     case Banner::TYPE_DIRECT_LINK:
                     default:
@@ -227,6 +225,7 @@ class CampaignsController extends Controller
                             empty($banner['creative_contents']) ? $campaignLandingUrl : $banner['creative_contents'],
                             $size
                         );
+                        $mimeType = 'text/plain';
                         break;
                 }
             } catch (RuntimeException $exception) {
@@ -243,6 +242,7 @@ class CampaignsController extends Controller
             }
 
             $bannerModel->creative_contents = $content;
+            $bannerModel->creative_mime_type = $mimeType;
 
             $banners[] = $bannerModel;
         }

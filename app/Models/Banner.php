@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,6 +43,7 @@ use function in_array;
  * @property string uuid
  * @property string creative_contents
  * @property string creative_type
+ * @property string creative_mime_type
  * @property string creative_sha1
  * @property string creative_size
  * @property string name
@@ -96,6 +97,7 @@ class Banner extends Model
         'campaign_id',
         'creative_contents',
         'creative_type',
+        'creative_mime_type',
         'creative_sha1',
         'creative_size',
         'name',
