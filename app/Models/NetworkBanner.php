@@ -38,10 +38,16 @@ use function array_map;
 use function hex2bin;
 
 /**
+ * @property string uuid
+ * @property string demand_banner_id
  * @property string click_url
  * @property string serve_url
+ * @property string view_url
  * @property string type
- * @property string mime_type
+ * @property ?string mime_type
+ * @property string size
+ * @property int status
+ * @property array classification
  * @property NetworkCampaign campaign
  * @mixin Builder
  */
@@ -297,6 +303,7 @@ class NetworkBanner extends Model
             }
         }
 
+        /** @var Builder $query */
         $query = self::where($whereClause)->orderBy(
             self::NETWORK_BANNERS_COLUMN_ID,
             'desc'

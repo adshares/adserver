@@ -49,7 +49,7 @@ final class Banner
 
     private string $type;
 
-    private string $mimeType;
+    private ?string $mimeType;
 
     private string $size;
 
@@ -68,7 +68,7 @@ final class Banner
         Id $demandBannerId,
         BannerUrl $bannerUrl,
         string $type,
-        string $mimeType,
+        ?string $mimeType,
         string $size,
         string $checksum,
         Status $status,
@@ -161,7 +161,7 @@ final class Banner
         return $this->type;
     }
 
-    public function getMimeType(): string
+    public function getMimeType(): ?string
     {
         return $this->mimeType;
     }

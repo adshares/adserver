@@ -46,6 +46,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
+                        'mime_type' => ['image/png'],
                     ],
                 ],
                 [
@@ -87,6 +88,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
+                        'mime_type' => ['image/png'],
                         'test_classifier:category' => [
                             'crypto',
                             'gambling',
@@ -141,7 +143,7 @@ final class CampaignMapperTest extends TestCase
             ],
             'banners' => [
                 self::getBannerData(),
-                self::getBannerData(),
+                self::getBannerData(['mime_type' => null]),
             ],
             'max_cpc' => 100000000001,
             'max_cpm' => 100000000002,
@@ -152,20 +154,23 @@ final class CampaignMapperTest extends TestCase
         ];
     }
 
-    private static function getBannerData(): array
+    private static function getBannerData(array $arr = []): array
     {
         $uuid = Uuid::v4();
 
-        return  [
-            'id' => Uuid::v4(),
-            'demand_banner_id' => $uuid,
-            'serve_url' => 'http://localhost:8101/serve/x' . $uuid . '.doc',
-            'click_url' => 'http://localhost:8101/click/' . $uuid,
-            'view_url' => 'http://localhost:8101/view/' . $uuid,
-            'type' => 'image',
-            'mime_type' => 'image/png',
-            'size' => '728x90',
-        ];
+        return array_merge(
+            [
+                'id' => Uuid::v4(),
+                'demand_banner_id' => $uuid,
+                'serve_url' => 'http://localhost:8101/serve/x' . $uuid . '.doc',
+                'click_url' => 'http://localhost:8101/click/' . $uuid,
+                'view_url' => 'http://localhost:8101/view/' . $uuid,
+                'type' => 'image',
+                'mime_type' => 'image/png',
+                'size' => '728x90',
+            ],
+            $arr
+        );
     }
 
     private function getCampaignDataWithClassification(): array

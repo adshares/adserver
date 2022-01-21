@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,6 +45,9 @@ class CampaignMapper
                     'type' => [$banner->getType()],
                 ],
             ];
+            if ($banner->getMimeType() !== null) {
+                $mappedBanner['keywords']['mime_type'] = [$banner->getMimeType()];
+            }
 
             /** @var Classification $classification */
             foreach ($banner->getClassification() as $classification) {
