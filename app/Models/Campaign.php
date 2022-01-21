@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -61,6 +61,7 @@ use function hex2bin;
  * @property int max_cpm
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
+ * @property Collection ads
  * @property Banner[]|Collection banners
  * @property Collection conversions
  * @property User user

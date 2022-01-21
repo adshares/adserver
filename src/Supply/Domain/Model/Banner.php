@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -41,32 +41,26 @@ final class Banner
         self::TYPE_DIRECT_LINK,
     ];
 
-    /** @var Id */
-    private $id;
+    private Id $id;
 
-    /** @var Campaign */
-    private $campaign;
+    private Campaign $campaign;
 
-    /** @var BannerUrl */
-    private $bannerUrl;
+    private BannerUrl $bannerUrl;
 
-    /** @var string */
-    private $type;
+    private string $type;
 
-    /** @var string */
-    private $size;
+    private string $mimeType;
 
-    /** @var Status */
-    private $status;
+    private string $size;
 
-    /** @var string */
-    private $checksum;
+    private Status $status;
+
+    private string $checksum;
 
     /** @var Classification[] */
-    private $classification;
+    private array $classification;
 
-    /** @var Id */
-    private $demandBannerId;
+    private Id $demandBannerId;
 
     public function __construct(
         Campaign $campaign,
@@ -74,10 +68,11 @@ final class Banner
         Id $demandBannerId,
         BannerUrl $bannerUrl,
         string $type,
+        string $mimeType,
         string $size,
         string $checksum,
         Status $status,
-        ?array $classification = []
+        array $classification = []
     ) {
         if (!in_array($type, self::SUPPORTED_TYPES, true)) {
             throw new UnsupportedBannerTypeException(sprintf(
@@ -91,6 +86,7 @@ final class Banner
         $this->campaign = $campaign;
         $this->bannerUrl = $bannerUrl;
         $this->type = $type;
+        $this->mimeType = $mimeType;
         $this->size = $size;
         $this->status = $status;
         $this->checksum = $checksum;
@@ -139,6 +135,7 @@ final class Banner
             'id' => $this->getId(),
             'demand_banner_id' => $this->getDemandBannerId(),
             'type' => $this->getType(),
+            'mime_type' => $this->getMimeType(),
             'size' => $this->size,
             'checksum' => $this->checksum,
             'serve_url' => $this->bannerUrl->getServeUrl(),
@@ -162,6 +159,11 @@ final class Banner
     public function getType(): string
     {
         return $this->type;
+    }
+
+    public function getMimeType(): string
+    {
+        return $this->mimeType;
     }
 
     public function getCampaignId(): string
