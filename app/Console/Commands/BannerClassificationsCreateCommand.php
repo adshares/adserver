@@ -73,7 +73,6 @@ class BannerClassificationsCreateCommand extends BaseCommand
         $campaignRepository = new CampaignRepository();
 
         $bannerIds = [];
-        /** @var Campaign $campaign */
         foreach ($campaignRepository->fetchActiveCampaigns() as $campaign) {
             foreach ($campaign->ads as $banner) {
                 if (Banner::STATUS_ACTIVE === $banner->status) {

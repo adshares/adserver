@@ -539,11 +539,9 @@ SQL;
         $bannerClassifications = $this->fetchBannerClassifications($activeCampaigns);
         $cdnEnabled = !empty(config('app.cdn_provider'));
 
-        /** @var Campaign $campaign */
         foreach ($activeCampaigns as $campaign) {
             $banners = [];
 
-            /** @var Banner $banner */
             foreach ($campaign->ads as $banner) {
                 $bannerArray = $banner->toArray();
 
@@ -596,12 +594,14 @@ SQL;
         return self::json($campaigns, Response::HTTP_OK);
     }
 
+    /**
+     * @param Collection|Campaign[] $activeCampaigns
+     * @return Collection
+     */
     private function fetchBannerClassifications(Collection $activeCampaigns): Collection
     {
         $bannerIds = [];
-        /** @var Campaign $campaign */
         foreach ($activeCampaigns as $campaign) {
-            /** @var Banner $banner */
             foreach ($campaign->ads as $banner) {
                 if (Banner::STATUS_ACTIVE === $banner->status) {
                     $bannerIds[] = $banner->id;

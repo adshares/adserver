@@ -66,7 +66,6 @@ class DemandCampaignMapper
     {
         $banners = [];
 
-        /** @var Banner $ad */
         foreach ($campaign->ads as $ad) {
             $banners[] = [
                 'id' => $ad->uuid,
