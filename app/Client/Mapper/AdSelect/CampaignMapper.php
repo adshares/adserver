@@ -45,8 +45,8 @@ class CampaignMapper
                     'type' => [$banner->getType()],
                 ],
             ];
-            if ($banner->getMimeType() !== null) {
-                $mappedBanner['keywords']['mime_type'] = [$banner->getMimeType()];
+            if ($banner->getMime() !== null) {
+                $mappedBanner['keywords']['mime'] = [$banner->getMime()];
             }
 
             /** @var Classification $classification */

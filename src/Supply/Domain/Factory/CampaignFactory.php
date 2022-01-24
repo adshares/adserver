@@ -92,7 +92,7 @@ class CampaignFactory
                 $demandBannerId,
                 $bannerUrl,
                 $banner['type'],
-                $banner['mime_type'],
+                $banner['mime'],
                 $size,
                 $hash,
                 $status,
@@ -159,7 +159,7 @@ class CampaignFactory
             'view_url',
             'size',
             'type',
-            'mime_type',
+            'mime',
         ];
 
         foreach ($requiredFields as $requiredField) {

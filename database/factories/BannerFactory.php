@@ -47,7 +47,7 @@ $factory->define(
         return [
             'creative_contents' => $faker->sha1,
             'creative_type' => $type,
-            'creative_mime_type' => $mime,
+            'creative_mime' => $mime,
             'creative_size' => $size,
             'name' => $faker->word,
             'status' => Banner::STATUS_ACTIVE,

@@ -105,7 +105,7 @@ final class BannerTest extends TestCase
         $bannerId = Uuid::v4();
         $demandBannerId = Uuid::v4();
         $type = 'html';
-        $mimeType = 'text/html';
+        $mime = 'text/html';
         $size = '728x90';
         $checksum = uniqid('', true);
         $bannerUrl = new BannerUrl(
@@ -120,7 +120,7 @@ final class BannerTest extends TestCase
             $demandBannerId,
             $bannerUrl,
             $type,
-            $mimeType,
+            $mime,
             $size,
             $checksum,
             Status::active()
@@ -130,7 +130,7 @@ final class BannerTest extends TestCase
             'id' => $bannerId,
             'demand_banner_id' => $demandBannerId,
             'type' => 'html',
-            'mime_type' => 'text/html',
+            'mime' => 'text/html',
             'size' => '728x90',
             'checksum' => $checksum,
             'serve_url' => 'http://example.com/serve',
@@ -142,7 +142,7 @@ final class BannerTest extends TestCase
 
         $this->assertEquals($expected, $banner->toArray());
         $this->assertEquals('html', $banner->getType());
-        $this->assertEquals('text/html', $banner->getMimeType());
+        $this->assertEquals('text/html', $banner->getMime());
         $this->assertEquals($bannerId, $banner->getId());
         $this->assertEquals($demandBannerId, $banner->getDemandBannerId());
         $this->assertEquals('728x90', $banner->getSize());

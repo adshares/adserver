@@ -51,7 +51,7 @@ final class SkynetCdn extends CdnProvider
                     [
                         'name' => 'file',
                         'filename' => sprintf('x%s.doc', $banner->uuid),
-                        'headers' => ['Content-Type' => $banner->creative_mime_type],
+                        'headers' => ['Content-Type' => $banner->creative_mime],
                         'contents' => $banner->creative_contents,
                     ],
                 ],

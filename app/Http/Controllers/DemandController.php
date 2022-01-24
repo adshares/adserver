@@ -124,7 +124,7 @@ SQL;
         }
 
         $isIECompat = $request->query->has('xdr');
-        $mime = $banner->creative_mime_type;
+        $mime = $banner->creative_mime;
 
         $response->setCallback(
             function () use ($response, $banner, $isIECompat) {
@@ -203,10 +203,7 @@ SQL;
                 'public' => true,
             ]
         );
-
-        if (!$response->isNotModified($request)) {
-            // TODO: ask Jacek
-        }
+        $response->isNotModified($request);
 
         return $response;
     }
@@ -571,7 +568,7 @@ SQL;
                     'id' => $bannerArray['uuid'],
                     'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
-                    'mime_type' => $bannerArray['creative_mime_type'],
+                    'mime' => $bannerArray['creative_mime'],
                     'checksum' => $checksum,
                     'serve_url' => $serveUrl,
                     'click_url' => $clickUrl,

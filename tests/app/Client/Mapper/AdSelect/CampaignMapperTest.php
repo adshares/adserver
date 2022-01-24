@@ -46,7 +46,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
-                        'mime_type' => ['image/png'],
+                        'mime' => ['image/png'],
                     ],
                 ],
                 [
@@ -88,7 +88,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
-                        'mime_type' => ['image/png'],
+                        'mime' => ['image/png'],
                         'test_classifier:category' => [
                             'crypto',
                             'gambling',
@@ -143,7 +143,7 @@ final class CampaignMapperTest extends TestCase
             ],
             'banners' => [
                 self::getBannerData(),
-                self::getBannerData(['mime_type' => null]),
+                self::getBannerData(['mime' => null]),
             ],
             'max_cpc' => 100000000001,
             'max_cpm' => 100000000002,
@@ -166,7 +166,7 @@ final class CampaignMapperTest extends TestCase
                 'click_url' => 'http://localhost:8101/click/' . $uuid,
                 'view_url' => 'http://localhost:8101/view/' . $uuid,
                 'type' => 'image',
-                'mime_type' => 'image/png',
+                'mime' => 'image/png',
                 'size' => '728x90',
             ],
             $arr
@@ -198,7 +198,7 @@ final class CampaignMapperTest extends TestCase
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
                     'type' => 'image',
-                    'mime_type' => 'image/png',
+                    'mime' => 'image/png',
                     'checksum' => 'feca8167499895B0c30bbbc3c668550161f64235',
                     'size' => '728x90',
                     'classification' => [

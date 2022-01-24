@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddMimeTypeToBanners extends Migration
+class AddMimeToBanners extends Migration
 {
     /**
      * Maximal mime-type length based on RFC 4288
@@ -35,38 +35,38 @@ class AddMimeTypeToBanners extends Migration
     public function up(): void
     {
         Schema::table('banners', function (Blueprint $table) {
-            $table->string('creative_mime_type', self::MAXIMAL_MIME_TYPE_LENGTH)->after('creative_type')->nullable();
+            $table->string('creative_mime', self::MAXIMAL_MIME_TYPE_LENGTH)->after('creative_type')->nullable();
         });
 
         DB::table('banners')->where('creative_type', Banner::TEXT_TYPE_DIRECT_LINK)->update(
-            ['creative_mime_type' => 'text/plain']
+            ['creative_mime' => 'text/plain']
         );
         DB::table('banners')->where('creative_type', Banner::TEXT_TYPE_HTML)->update(
-            ['creative_mime_type' => 'text/html']
+            ['creative_mime' => 'text/html']
         );
         DB::update(
-            "UPDATE banners SET creative_mime_type='image/png' WHERE creative_contents LIKE 0x89504E470D0A1A0A25;"
+            "UPDATE banners SET creative_mime='image/png' WHERE creative_contents LIKE 0x89504E470D0A1A0A25;"
         );
-        DB::update("UPDATE banners SET creative_mime_type='image/jpeg' WHERE creative_contents LIKE 0xFFD8FF25;");
-        DB::update("UPDATE banners SET creative_mime_type='image/gif' WHERE creative_contents LIKE 0x4749463825;");
+        DB::update("UPDATE banners SET creative_mime='image/jpeg' WHERE creative_contents LIKE 0xFFD8FF25;");
+        DB::update("UPDATE banners SET creative_mime='image/gif' WHERE creative_contents LIKE 0x4749463825;");
 
         Schema::table('banners', function (Blueprint $table) {
-            $table->string('creative_mime_type', self::MAXIMAL_MIME_TYPE_LENGTH)->nullable(false)->change();
+            $table->string('creative_mime', self::MAXIMAL_MIME_TYPE_LENGTH)->nullable(false)->change();
         });
 
         Schema::table('network_banners', function (Blueprint $table) {
-            $table->string('mime_type', self::MAXIMAL_MIME_TYPE_LENGTH)->after('type')->nullable();
+            $table->string('mime', self::MAXIMAL_MIME_TYPE_LENGTH)->after('type')->nullable();
         });
     }
 
     public function down(): void
     {
         Schema::table('network_banners', function (Blueprint $table) {
-            $table->dropColumn('mime_type');
+            $table->dropColumn('mime');
         });
 
         Schema::table('banners', function (Blueprint $table) {
-            $table->dropColumn('creative_mime_type');
+            $table->dropColumn('creative_mime');
         });
     }
 }

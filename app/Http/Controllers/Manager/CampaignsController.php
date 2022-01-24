@@ -119,7 +119,7 @@ class CampaignsController extends Controller
         }
 
         $response = ResponseFacade::make($banner->creative_contents, Response::HTTP_OK);
-        $response->header('Content-Type', $banner->creative_mime_type);
+        $response->header('Content-Type', $banner->creative_mime);
 
         return $response;
     }
@@ -239,7 +239,7 @@ class CampaignsController extends Controller
             }
 
             $bannerModel->creative_contents = $content;
-            $bannerModel->creative_mime_type = $mimeType;
+            $bannerModel->creative_mime = $mimeType;
 
             $banners[] = $bannerModel;
         }

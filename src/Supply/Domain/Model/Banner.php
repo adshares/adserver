@@ -49,7 +49,7 @@ final class Banner
 
     private string $type;
 
-    private ?string $mimeType;
+    private ?string $mime;
 
     private string $size;
 
@@ -68,7 +68,7 @@ final class Banner
         Id $demandBannerId,
         BannerUrl $bannerUrl,
         string $type,
-        ?string $mimeType,
+        ?string $mime,
         string $size,
         string $checksum,
         Status $status,
@@ -86,7 +86,7 @@ final class Banner
         $this->campaign = $campaign;
         $this->bannerUrl = $bannerUrl;
         $this->type = $type;
-        $this->mimeType = $mimeType;
+        $this->mime = $mime;
         $this->size = $size;
         $this->status = $status;
         $this->checksum = $checksum;
@@ -135,7 +135,7 @@ final class Banner
             'id' => $this->getId(),
             'demand_banner_id' => $this->getDemandBannerId(),
             'type' => $this->getType(),
-            'mime_type' => $this->getMimeType(),
+            'mime' => $this->getMime(),
             'size' => $this->size,
             'checksum' => $this->checksum,
             'serve_url' => $this->bannerUrl->getServeUrl(),
@@ -161,9 +161,9 @@ final class Banner
         return $this->type;
     }
 
-    public function getMimeType(): ?string
+    public function getMime(): ?string
     {
-        return $this->mimeType;
+        return $this->mime;
     }
 
     public function getCampaignId(): string

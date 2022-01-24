@@ -59,7 +59,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     private const BANNER_TYPE_FIELD = 'type';
 
-    private const BANNER_MIME_TYPE_FIELD = 'mime_type';
+    private const BANNER_MIME_FIELD = 'mime';
 
     private const BANNER_SIZE_FIELD = 'size';
 
@@ -187,7 +187,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 self::BANNER_CLICK_URL_FIELD => $networkBanner->click_url,
                 self::BANNER_VIEW_URL_FIELD => $networkBanner->view_url,
                 self::BANNER_TYPE_FIELD => $networkBanner->type,
-                self::BANNER_MIME_TYPE_FIELD => $networkBanner->mime_type,
+                self::BANNER_MIME_FIELD => $networkBanner->mime,
                 self::BANNER_SIZE_FIELD => $networkBanner->size,
                 self::STATUS_FIELD => $networkBanner->status,
                 self::BANNER_CLASSIFICATION_FIELD => $networkBanner->classification,

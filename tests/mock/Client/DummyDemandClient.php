@@ -114,7 +114,7 @@ final class DummyDemandClient implements DemandClient
             'click_url' => 'http://localhost:8101/click/' . $uuid,
             'view_url' => 'http://localhost:8101/view/' . $uuid,
             'type' => 'image',
-            'mime_type' => 'image/png',
+            'mime' => 'image/png',
             'size' => '728x90',
         ];
     }

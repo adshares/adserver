@@ -33,7 +33,7 @@ $factory->define(NetworkBanner::class, function (Faker $faker) {
         'view_url' => $faker->url,
         'click_url' => $faker->url,
         'type' => 'image',
-        'mime_type' => 'image/png',
+        'mime' => 'image/png',
         'size' => $faker->randomKey(Size::SIZE_INFOS),
         'checksum' => $faker->uuid,
     ];
