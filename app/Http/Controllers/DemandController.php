@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,6 +43,7 @@ use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use stdClass;
@@ -88,14 +89,11 @@ SQL;
 
     private const PLACEHOLDER_ZONE_ID = '{zid}';
 
-    /** @var PaymentDetailsVerify */
-    private $paymentDetailsVerify;
+    private PaymentDetailsVerify $paymentDetailsVerify;
 
-    /** @var CampaignRepository */
-    private $campaignRepository;
+    private CampaignRepository $campaignRepository;
 
-    /** @var LicenseReader */
-    private $licenseReader;
+    private LicenseReader $licenseReader;
 
     public function __construct(
         PaymentDetailsVerify $paymentDetailsVerify,
@@ -126,14 +124,7 @@ SQL;
         }
 
         $isIECompat = $request->query->has('xdr');
-
-        if (Banner::TEXT_TYPE_HTML === $banner->creative_type) {
-            $mime = 'text/html';
-        } elseif (Banner::TEXT_TYPE_IMAGE === $banner->creative_type) {
-            $mime = 'image/png';
-        } else {
-            $mime = 'text/plain';
-        }
+        $mime = $banner->creative_mime;
 
         $response->setCallback(
             function () use ($response, $banner, $isIECompat) {
@@ -212,10 +203,7 @@ SQL;
                 'public' => true,
             ]
         );
-
-        if (!$response->isNotModified($request)) {
-            // TODO: ask Jacek
-        }
+        $response->isNotModified($request);
 
         return $response;
     }
@@ -539,7 +527,7 @@ SQL;
         return DB::select($query, array_merge($paymentIds, $paymentIds, [$limit, $offset]));
     }
 
-    public function inventoryList(Request $request): JsonResponse
+    public function inventoryList(): JsonResponse
     {
         $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
@@ -548,22 +536,12 @@ SQL;
 
         $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
 
-        $bannerIds = [];
-        foreach ($activeCampaigns as $campaign) {
-            foreach ($campaign->ads as $banner) {
-                if (Banner::STATUS_ACTIVE === $banner->status) {
-                    $bannerIds[] = $banner->id;
-                }
-            }
-        }
-        $bannerClassifications = BannerClassification::fetchClassifiedByBannerIds($bannerIds);
+        $bannerClassifications = $this->fetchBannerClassifications($activeCampaigns);
         $cdnEnabled = !empty(config('app.cdn_provider'));
 
-        /** @var Campaign $campaign */
         foreach ($activeCampaigns as $campaign) {
             $banners = [];
 
-            /** @var Banner $banner */
             foreach ($campaign->ads as $banner) {
                 $bannerArray = $banner->toArray();
 
@@ -588,6 +566,7 @@ SQL;
                     'id' => $bannerArray['uuid'],
                     'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
+                    'mime' => $bannerArray['creative_mime'],
                     'checksum' => $checksum,
                     'serve_url' => $serveUrl,
                     'click_url' => $clickUrl,
@@ -613,6 +592,24 @@ SQL;
         }
 
         return self::json($campaigns, Response::HTTP_OK);
+    }
+
+    /**
+     * @param Collection|Campaign[] $activeCampaigns
+     * @return Collection
+     */
+    private function fetchBannerClassifications(Collection $activeCampaigns): Collection
+    {
+        $bannerIds = [];
+        foreach ($activeCampaigns as $campaign) {
+            foreach ($campaign->ads as $banner) {
+                if (Banner::STATUS_ACTIVE === $banner->status) {
+                    $bannerIds[] = $banner->id;
+                }
+            }
+        }
+
+        return BannerClassification::fetchClassifiedByBannerIds($bannerIds);
     }
 
     private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -37,6 +37,7 @@ class Factory
         'application/x-compressed',
         'multipart/x-zip',
         'application/octet-stream',
+        'application/x-zip',
         'application/x-zip-compressed',
     ];
 

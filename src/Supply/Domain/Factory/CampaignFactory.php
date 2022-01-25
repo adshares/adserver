@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -92,6 +92,7 @@ class CampaignFactory
                 $demandBannerId,
                 $bannerUrl,
                 $banner['type'],
+                $banner['mime'],
                 $size,
                 $hash,
                 $status,
@@ -157,7 +158,8 @@ class CampaignFactory
             'click_url',
             'view_url',
             'size',
-            'type'
+            'type',
+            'mime',
         ];
 
         foreach ($requiredFields as $requiredField) {
