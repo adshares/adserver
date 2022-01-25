@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,10 +35,9 @@ class AdSelectInventoryExporterCommand extends BaseCommand
 
     protected $description = 'Export campaigns inventory to AdSelect';
 
-    private $inventoryExporterService;
+    private AdSelectInventoryExporter $inventoryExporterService;
 
-    /** @var NetworkCampaignRepository */
-    private $campaignRepository;
+    private NetworkCampaignRepository $campaignRepository;
 
     public function __construct(
         Locker $locker,

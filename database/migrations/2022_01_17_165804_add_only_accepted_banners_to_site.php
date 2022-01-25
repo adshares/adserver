@@ -19,10 +19,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class AddAutoRegistrationSetting extends Migration
+class AddOnlyAcceptedBannersToSite extends Migration
 {
     /**
      * Run the migrations.
@@ -31,13 +32,11 @@ class AddAutoRegistrationSetting extends Migration
      */
     public function up()
     {
-        DB::table('configs')->insert(
-            [
-                'key' => 'auto-registration-enabled',
-                'value' => 1,
-                'created_at' => new DateTime(),
-            ]
-        );
+        Schema::table('sites', function (Blueprint $table) {
+            $table->dropColumn('require_classified');
+            $table->dropColumn('exclude_unclassified');
+            $table->boolean('only_accepted_banners')->default('0');
+        });
     }
 
     /**
@@ -47,6 +46,10 @@ class AddAutoRegistrationSetting extends Migration
      */
     public function down()
     {
-        DB::table('configs')->where('key', 'auto-registration-enabled')->delete();
+        Schema::table('sites', function (Blueprint $table) {
+            $table->dropColumn('only_accepted_banners');
+            $table->boolean('require_classified')->default('0');
+            $table->boolean('exclude_unclassified')->default('0');
+        });
     }
 }

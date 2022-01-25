@@ -59,30 +59,9 @@ final class DummyDemandClient implements DemandClient
                     'updated_at' => new DateTime(),
                 ],
                 'banners' => [
-                    [
-                        'demand_banner_id' => Uuid::v4(),
-                        'serve_url' => 'http://localhost:8101/serve/1',
-                        'click_url' => 'http://localhost:8101/click/1',
-                        'view_url' => 'http://localhost:8101/view/1',
-                        'type' => 'image',
-                        'size' => '728x90',
-                    ],
-                    [
-                        'demand_banner_id' => Uuid::v4(),
-                        'serve_url' => 'http://localhost:8101/serve/1',
-                        'click_url' => 'http://localhost:8101/click/1',
-                        'view_url' => 'http://localhost:8101/view/1',
-                        'type' => 'image',
-                        'size' => '728x90',
-                    ],
-                    [
-                        'demand_banner_id' => Uuid::v4(),
-                        'serve_url' => 'http://localhost:8101/serve/1',
-                        'click_url' => 'http://localhost:8101/click/1',
-                        'view_url' => 'http://localhost:8101/view/1',
-                        'type' => 'image',
-                        'size' => '728x90',
-                    ],
+                    self::banner(),
+                    self::banner(),
+                    self::banner(),
                 ],
                 'max_cpc' => 100000000000,
                 'max_cpm' => 100000000000,
@@ -111,30 +90,9 @@ final class DummyDemandClient implements DemandClient
                     'updated_at' => (new DateTime()),
                 ],
                 'banners' => [
-                    [
-                        'demand_banner_id' => Uuid::v4(),
-                        'serve_url' => 'http://localhost:8101/serve/1',
-                        'click_url' => 'http://localhost:8101/click/1',
-                        'view_url' => 'http://localhost:8101/view/1',
-                        'type' => 'image',
-                        'size' => '728x90',
-                    ],
-                    [
-                        'demand_banner_id' => Uuid::v4(),
-                        'serve_url' => 'http://localhost:8101/serve/1',
-                        'click_url' => 'http://localhost:8101/click/1',
-                        'view_url' => 'http://localhost:8101/view/1',
-                        'type' => 'image',
-                        'size' => '728x90',
-                    ],
-                    [
-                        'demand_banner_id' => Uuid::v4(),
-                        'serve_url' => 'http://localhost:8101/serve/1',
-                        'click_url' => 'http://localhost:8101/click/1',
-                        'view_url' => 'http://localhost:8101/view/1',
-                        'type' => 'image',
-                        'size' => '728x90',
-                    ],
+                    self::banner(),
+                    self::banner(),
+                    self::banner(),
                 ],
                 'max_cpc' => 1000000000000,
                 'max_cpm' => 1000000000000,
@@ -143,6 +101,21 @@ final class DummyDemandClient implements DemandClient
                 'targeting_excludes' => [],
                 'targeting_requires' => [],
             ]),
+        ];
+    }
+
+    private static function banner(): array
+    {
+        $uuid = Uuid::v4();
+
+        return  [
+            'demand_banner_id' => $uuid,
+            'serve_url' => 'http://localhost:8101/serve/x' . $uuid . '.doc',
+            'click_url' => 'http://localhost:8101/click/' . $uuid,
+            'view_url' => 'http://localhost:8101/view/' . $uuid,
+            'type' => 'image',
+            'mime' => 'image/png',
+            'size' => '728x90',
         ];
     }
 

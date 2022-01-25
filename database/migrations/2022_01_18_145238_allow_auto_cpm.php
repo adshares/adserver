@@ -19,10 +19,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class AddAutoRegistrationSetting extends Migration
+class AllowAutoCpm extends Migration
 {
     /**
      * Run the migrations.
@@ -31,13 +32,10 @@ class AddAutoRegistrationSetting extends Migration
      */
     public function up()
     {
-        DB::table('configs')->insert(
-            [
-                'key' => 'auto-registration-enabled',
-                'value' => 1,
-                'created_at' => new DateTime(),
-            ]
-        );
+        Schema::table('campaigns', function (Blueprint $table) {
+            $table->bigInteger('max_cpm')->nullable()->default(null)->change();
+            $table->bigInteger('max_cpc')->nullable()->default(null)->change();
+        });
     }
 
     /**
@@ -47,6 +45,9 @@ class AddAutoRegistrationSetting extends Migration
      */
     public function down()
     {
-        DB::table('configs')->where('key', 'auto-registration-enabled')->delete();
+        Schema::table('campaigns', function (Blueprint $table) {
+            $table->bigInteger('max_cpm')->nullable(false)->default(0)->change();
+            $table->bigInteger('max_cpc')->nullable(false)->default(0)->change();
+        });
     }
 }

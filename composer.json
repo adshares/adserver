@@ -79,13 +79,13 @@
             "phpcs"
         ],
         "test": [
-            "phpunit --testsuite Application,Unit"
+            "phpunit"
         ],
         "test-coverage": [
-            "phpunit --testsuite Application,Unit --coverage-text"
+            "XDEBUG_MODE=coverage phpunit --coverage-text"
         ],
         "test-ci": [
-            "phpunit --configuration phpunit-ci.xml"
+            "@test-coverage --coverage-clover ./storage/phpunit/coverage.xml --log-junit ./storage/phpunit/logfile.xml"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

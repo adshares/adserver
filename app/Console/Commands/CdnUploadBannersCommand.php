@@ -87,7 +87,6 @@ class CdnUploadBannersCommand extends BaseCommand
             : $campaignRepository->fetchActiveCampaigns();
 
         $banners = [];
-        /** @var Campaign $campaign */
         foreach ($campaigns as $campaign) {
             $builder = $campaign->banners();
             if (!$this->option('force')) {
