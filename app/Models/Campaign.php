@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -37,6 +37,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
@@ -45,9 +46,9 @@ use function hex2bin;
 /**
  * @property int id
  * @property string uuid
- * @property int created_at
- * @property int updated_at
- * @property int deleted_at
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
  * @property int user_id
  * @property string landing_url
  * @property string time_start
@@ -61,6 +62,7 @@ use function hex2bin;
  * @property int max_cpm
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
+ * @property Banner[]|Collection ads
  * @property Banner[]|Collection banners
  * @property Collection conversions
  * @property User user

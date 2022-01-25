@@ -46,6 +46,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
+                        'mime' => ['image/png'],
                     ],
                 ],
                 [
@@ -87,6 +88,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
+                        'mime' => ['image/png'],
                         'test_classifier:category' => [
                             'crypto',
                             'gambling',
@@ -140,24 +142,8 @@ final class CampaignMapperTest extends TestCase
                 'updated_at' => new DateTime(),
             ],
             'banners' => [
-                [
-                    'id' => Uuid::v4(),
-                    'demand_banner_id' => Uuid::v4(),
-                    'serve_url' => 'http://localhost:8101/serve/1',
-                    'click_url' => 'http://localhost:8101/click/1',
-                    'view_url' => 'http://localhost:8101/view/1',
-                    'type' => 'image',
-                    'size' => '728x90',
-                ],
-                [
-                    'id' => Uuid::v4(),
-                    'demand_banner_id' => Uuid::v4(),
-                    'serve_url' => 'http://localhost:8101/serve/1',
-                    'click_url' => 'http://localhost:8101/click/1',
-                    'view_url' => 'http://localhost:8101/view/1',
-                    'type' => 'image',
-                    'size' => '728x90',
-                ],
+                self::getBannerData(),
+                self::getBannerData(['mime' => null]),
             ],
             'max_cpc' => 100000000001,
             'max_cpm' => 100000000002,
@@ -166,6 +152,25 @@ final class CampaignMapperTest extends TestCase
             'targeting_excludes' => [],
             'targeting_requires' => [],
         ];
+    }
+
+    private static function getBannerData(array $arr = []): array
+    {
+        $uuid = Uuid::v4();
+
+        return array_merge(
+            [
+                'id' => Uuid::v4(),
+                'demand_banner_id' => $uuid,
+                'serve_url' => 'http://localhost:8101/serve/x' . $uuid . '.doc',
+                'click_url' => 'http://localhost:8101/click/' . $uuid,
+                'view_url' => 'http://localhost:8101/view/' . $uuid,
+                'type' => 'image',
+                'mime' => 'image/png',
+                'size' => '728x90',
+            ],
+            $arr
+        );
     }
 
     private function getCampaignDataWithClassification(): array
@@ -193,6 +198,7 @@ final class CampaignMapperTest extends TestCase
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
                     'type' => 'image',
+                    'mime' => 'image/png',
                     'checksum' => 'feca8167499895B0c30bbbc3c668550161f64235',
                     'size' => '728x90',
                     'classification' => [

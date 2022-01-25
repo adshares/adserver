@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,14 +43,6 @@ final class SkynetCdn extends CdnProvider
 
     public function uploadBanner(Banner $banner): string
     {
-        if (Banner::TEXT_TYPE_HTML === $banner->creative_type) {
-            $mime = 'text/html';
-        } elseif (Banner::TEXT_TYPE_IMAGE === $banner->creative_type) {
-            $mime = 'image/png';
-        } else {
-            $mime = 'text/plain';
-        }
-
         $client = $this->getClient();
         $response = $client->post(
             '/skynet/skyfile',
@@ -59,7 +51,7 @@ final class SkynetCdn extends CdnProvider
                     [
                         'name' => 'file',
                         'filename' => sprintf('x%s.doc', $banner->uuid),
-                        'headers' => ['Content-Type' => $mime],
+                        'headers' => ['Content-Type' => $banner->creative_mime],
                         'contents' => $banner->creative_contents,
                     ],
                 ],

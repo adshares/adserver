@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Supply\Domain\Factory;
+namespace Adshares\Tests\Supply\Domain\Factory;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
@@ -29,7 +29,7 @@ use PHPUnit\Framework\TestCase;
 
 final class CampaignFactoryTest extends TestCase
 {
-    private $data;
+    private array $data;
 
     public function setUp()
     {
@@ -50,30 +50,9 @@ final class CampaignFactoryTest extends TestCase
                 'updated_at' => new DateTime(),
             ],
             'banners' => [
-                [
-                    'demand_banner_id' => Uuid::v4(),
-                    'serve_url' => 'http://localhost:8101/serve/1',
-                    'click_url' => 'http://localhost:8101/click/1',
-                    'view_url' => 'http://localhost:8101/view/1',
-                    'type' => 'image',
-                    'size' => '728x90',
-                ],
-                [
-                    'demand_banner_id' => Uuid::v4(),
-                    'serve_url' => 'http://localhost:8101/serve/1',
-                    'click_url' => 'http://localhost:8101/click/1',
-                    'view_url' => 'http://localhost:8101/view/1',
-                    'type' => 'image',
-                    'size' => '728x90',
-                ],
-                [
-                    'demand_banner_id' => Uuid::v4(),
-                    'serve_url' => 'http://localhost:8101/serve/1',
-                    'click_url' => 'http://localhost:8101/click/1',
-                    'view_url' => 'http://localhost:8101/view/1',
-                    'type' => 'image',
-                    'size' => '728x90',
-                ],
+                self::banner(),
+                self::banner(),
+                self::banner(),
             ],
             'max_cpc' => 100000000000,
             'max_cpm' => 100000000000,
@@ -81,6 +60,21 @@ final class CampaignFactoryTest extends TestCase
             'demand_host' => 'localhost:8101',
             'targeting_excludes' => [],
             'targeting_requires' => [],
+        ];
+    }
+
+    private static function banner(): array
+    {
+        $uuid = Uuid::v4();
+
+        return  [
+            'demand_banner_id' => $uuid,
+            'serve_url' => 'http://localhost:8101/serve/x' . $uuid . '.doc',
+            'click_url' => 'http://localhost:8101/click/' . $uuid,
+            'view_url' => 'http://localhost:8101/view/' . $uuid,
+            'type' => 'image',
+            'mime' => 'image/png',
+            'size' => '728x90',
         ];
     }
 
