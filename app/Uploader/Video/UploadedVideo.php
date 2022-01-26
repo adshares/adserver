@@ -21,13 +21,13 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Uploader\Image;
+namespace Adshares\Adserver\Uploader\Video;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class UploadedImage implements UploadedFile
+class UploadedVideo implements UploadedFile
 {
     private string $name;
     private string $previewUrl;
@@ -37,7 +37,7 @@ class UploadedImage implements UploadedFile
     {
         $formattedSize = $this->getFormattedSize($size);
         if (!Size::isValid($formattedSize)) {
-            throw new BadRequestHttpException('Unsupported image size: ' . $formattedSize);
+            throw new BadRequestHttpException('Unsupported video size: ' . $formattedSize);
         }
 
         $this->name = $name;

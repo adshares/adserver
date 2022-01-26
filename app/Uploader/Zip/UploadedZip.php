@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,10 +27,8 @@ use Adshares\Adserver\Uploader\UploadedFile;
 
 class UploadedZip implements UploadedFile
 {
-    /** @var string */
-    private $name;
-    /** @var string */
-    private $previewUrl;
+    private string $name;
+    private string $previewUrl;
 
     public function __construct(string $name, string $previewUrl)
     {

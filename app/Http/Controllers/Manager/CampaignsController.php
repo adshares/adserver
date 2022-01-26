@@ -43,6 +43,7 @@ use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
+use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -211,6 +212,11 @@ class CampaignsController extends Controller
                         $fileName = $this->filename($banner['url']);
                         $content = ImageUploader::content($fileName);
                         $mimeType = ImageUploader::contentMimeType($fileName);
+                        break;
+                    case Banner::TYPE_VIDEO:
+                        $fileName = $this->filename($banner['url']);
+                        $content = VideoUploader::content($fileName);
+                        $mimeType = VideoUploader::contentMimeType($fileName);
                         break;
                     case Banner::TYPE_HTML:
                         $content = ZipUploader::content($this->filename($banner['url']));

@@ -24,14 +24,24 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Uploader;
 
 use Adshares\Adserver\Uploader\Image\ImageUploader;
+use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Illuminate\Http\Request;
 
+use function in_array;
 use function strrpos;
 use function substr;
 
 class Factory
 {
+    private const EXTENSION_VIDEO_LIST = [
+        'mp4',
+    ];
+
+    private const MIME_VIDEO_LIST = [
+        'video/mp4',
+    ];
+
     private const MIME_ZIP_LIST = [
         'application/zip',
         'application/x-compressed',
@@ -44,8 +54,13 @@ class Factory
     public static function create(Request $request): Uploader
     {
         $file = $request->file('file');
+        $mimeType = $file->getMimeType();
 
-        if (in_array($file->getMimeType(), self::MIME_ZIP_LIST, true)) {
+        if (in_array($mimeType, self::MIME_VIDEO_LIST, true)) {
+            return new VideoUploader($request);
+        }
+
+        if (in_array($mimeType, self::MIME_ZIP_LIST, true)) {
             return new ZipUploader($request);
         }
 
@@ -58,20 +73,30 @@ class Factory
             return new ZipUploader($request);
         }
 
-        return new ImageUploader($request);
-    }
-
-    public static function createFromExtension(string $fileName, Request $request)
-    {
-        if (self::isZipFile($fileName)) {
-            return new ZipUploader($request);
+        if ($type === VideoUploader::VIDEO_FILE) {
+            return new VideoUploader($request);
         }
 
         return new ImageUploader($request);
     }
 
-    private static function isZipFile(string $name): bool
+    public static function createFromExtension(string $fileName, Request $request)
     {
-        return substr($name, strrpos($name, '.') + 1) === ZipUploader::ZIP_FILE;
+        $extension = self::getFileExtension($fileName);
+
+        if ($extension === ZipUploader::ZIP_FILE) {
+            return new ZipUploader($request);
+        }
+
+        if (in_array($extension, self::EXTENSION_VIDEO_LIST, true)) {
+            return new VideoUploader($request);
+        }
+
+        return new ImageUploader($request);
+    }
+
+    private static function getFileExtension(string $name): string
+    {
+        return substr($name, strrpos($name, '.') + 1);
     }
 }

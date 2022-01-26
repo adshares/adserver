@@ -23,6 +23,7 @@
         "doctrine/dbal": "2.9.*",
         "fideloper/proxy": "^4.0",
         "guzzlehttp/guzzle": "^6.3",
+        "james-heinrich/getid3": "^1.9",
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "mikehaertl/phpwkhtmltopdf": "^2.5",

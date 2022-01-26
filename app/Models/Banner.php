@@ -62,25 +62,19 @@ class Banner extends Model
     use SoftDeletes;
 
     public const TYPE_IMAGE = 0;
-
     public const TYPE_HTML = 1;
-
     public const TYPE_DIRECT_LINK = 2;
+    public const TYPE_VIDEO = 3;
 
     public const TEXT_TYPE_IMAGE = 'image';
-
     public const TEXT_TYPE_HTML = 'html';
-
     public const TEXT_TYPE_DIRECT_LINK = 'direct';
+    public const TEXT_TYPE_VIDEO = 'video';
 
     public const STATUS_DRAFT = 0;
-
     public const STATUS_INACTIVE = 1;
-
     public const STATUS_ACTIVE = 2;
-
     public const STATUS_REJECTED = 3;
-
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
 
     protected $dates = [
@@ -140,6 +134,8 @@ class Banner extends Model
         switch ($type) {
             case self::TYPE_IMAGE:
                 return self::TEXT_TYPE_IMAGE;
+            case self::TYPE_VIDEO:
+                return self::TEXT_TYPE_VIDEO;
             case self::TYPE_HTML:
                 return self::TEXT_TYPE_HTML;
             case self::TYPE_DIRECT_LINK:
@@ -153,6 +149,8 @@ class Banner extends Model
         switch ($type) {
             case self::TEXT_TYPE_IMAGE:
                 return self::TYPE_IMAGE;
+            case self::TEXT_TYPE_VIDEO:
+                return self::TYPE_VIDEO;
             case self::TEXT_TYPE_HTML:
                 return self::TYPE_HTML;
             case self::TEXT_TYPE_DIRECT_LINK:
