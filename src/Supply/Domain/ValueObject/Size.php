@@ -206,43 +206,50 @@ final class Size
         ],
     ];
 
-    public static function findBestFit($width, $height, $min_dpi)
+    public static function findBestFit($width, $height, $min_dpi, $count = 5): array
     {
-        $sizes =  array_map(function ($info, $size) use ($width, $height, $min_dpi) {
-            if ($info['type'] !== self::TYPE_DISPLAY) {
-                return false;
-            }
+        $sizes = array_map(
+            function ($info, $size) use ($width, $height, $min_dpi) {
+                if ($info['type'] !== self::TYPE_DISPLAY) {
+                    return false;
+                }
 
-            [$x, $y] = explode("x", $size);
+                [$x, $y] = explode("x", $size);
 
-            $dpi = min($x / $width, $y / $height);
-            if ($dpi < $min_dpi) {
-                return false;
-            }
+                $dpi = min($x / $width, $y / $height);
+                if ($dpi < $min_dpi) {
+                    return false;
+                }
 
-            $score = abs($width / $height - $x / $y) / sqrt(1*max($x, $y));
+                $score = 1 - min($x / $width, $y / $height) / max($x / $width, $y / $height);
 
-            return [
-                'size' => $size,
-                'score' => $score,
-                'dpi' => $dpi,
-            ];
-        }, self::SIZE_INFOS, array_keys(self::SIZE_INFOS));
+                return [
+                    'size'  => $size,
+                    'score' => $score,
+                    'dpi'   => $dpi,
+                ];
+            },
+            self::SIZE_INFOS,
+            array_keys(self::SIZE_INFOS)
+        );
 
         $sizes = array_filter($sizes);
 
-        usort($sizes, function($a, $b) {
-            if($a['score'] == $b['score']) {
-                return $a['dpi'] > $b['dpi'] ? -1 : 1;
+        usort(
+            $sizes,
+            function ($a, $b) {
+                if ($a['score'] == $b['score']) {
+                    return $a['dpi'] > $b['dpi'] ? -1 : 1;
+                }
+                return ($a['score'] < $b['score']) ? -1 : 1;
             }
-           return ($a['score'] < $b['score']) ? -1 : 1;
-        });
-
-        if(isset($sizes[0])) {
-            return $sizes[0]['size'];
-        } else {
-            return null;
-        }
+        );
+        return array_map(
+            function ($item) {
+                return $item['size'];
+            },
+            array_slice($sizes, 0, $count)
+        );
     }
 
     public static function isValid(string $size): bool

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Http\Controllers;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
@@ -44,6 +45,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Size;
@@ -78,7 +80,9 @@ class SupplyController extends Controller
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
 
     public function findJson(
-        Request $request
+        Request $request,
+        AdUser $contextProvider,
+        AdSelect $bannerFinder
     ) {
 
         $validated = $request->validate(
@@ -105,36 +109,60 @@ class SupplyController extends Controller
         $user = User::fetchByWalletAddress($payoutAddress);
 
         if(!$user) {
-            if("allow anon register" > 0) { // TODO
-                $user = new User();
-                $user->id = 1;
+            if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
+                $user = User::registerWithWallet($payoutAddress, true);
             } else {
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
             }
         }
 
-        $site = Site::fetchByUserId($user->id, 'Default Site');
+        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], 'Default Site');
+        if($site->status != Site::STATUS_ACTIVE) {
+            return $this->sendError("site", "Site 'Default Site' is not active");
+        }
+        $validated['$site'] = $site;
 
-        if (!$site) {
-            $site = new Site();
-            $site->name = 'Default Site';
-            $site->user_id = $user->id;
-            $site->url = $validated['context']['site']['url'];
-            $site->domain = DomainReader::domain($site->url);
-            $site->save();
+        $zones = [];
 
-            die('x');
+        $zoneSizes = Size::findBestFit($validated['width'], $validated['height'], $validated['min_dpi']);
+
+
+        foreach($zoneSizes as $zoneSize) {
+            $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
+            $zones[] = [
+                'zone'    => $zone->uuid,
+                'options' => [
+                    'banner_type' => [
+                        $validated['type']
+                    ]
+                ]
+            ];
+            $validated['zones'][] = $zone;
         }
 
-        $zoneSize = Size::findBestFit($validated['width'], $validated['height'], $validated['min_dpi']);
-        $validated['zoneSize'] = $zoneSize;
+        $queryData = [
+            'page'  => [
+                "iid" => $validated['view_id'],
+                "url" => $validated['context']['site']['url'],
+            ],
+            'zones' => $zones,
+            'zone_mode' => 'best_match'
+        ];
 
 
+        $response = new Response();
 
-        return new JsonResponse(['data' => $validated]);
+        return self::json(
+            [
+                'banners' => $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)->toArray(),
+                'zones' => $queryData['zones'],
+                'zoneSizes' => $zoneSizes,
+                'success' => true,
+            ]
+        );
     }
 
-    private function sendError($type, $message)
+    private function sendError($type, $message): JsonResponse
     {
         return new JsonResponse([
             'message' => 'The given data was invalid.',
@@ -333,6 +361,7 @@ class SupplyController extends Controller
         }
 
         $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $tid);
+
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {
@@ -352,6 +381,12 @@ class SupplyController extends Controller
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context);
 
+        if($decodedQueryData['zone_mode'] === 'best_match') {
+            $foundBanners = new FoundBanners($foundBanners->filter( function ($element) {
+                return $element != null;
+            })->slice(0, 1));
+        }
+
         if (
             $foundBanners->exists(
                 function ($key, $element) {
@@ -368,7 +403,6 @@ class SupplyController extends Controller
                 $zones
             );
         }
-
 
         return $foundBanners;
     }

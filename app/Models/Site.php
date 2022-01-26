@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringMatcher;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -212,13 +213,24 @@ class Site extends Model
         return self::where('uuid', hex2bin($publicId))->first();
     }
 
-    public static function fetchByUserId(int $userId, string $name = null): ?self
+    public static function fetchOrCreate(int $userId, string $url, string $name): ?self
     {
-        $x = self::where('user_id', $userId);
-        if ($name) {
-            $x = $x->where('name', $name);
+        $domain = DomainReader::domain($url);
+        $site = self::where('user_id', $userId)
+            ->where('domain', $domain)
+            ->where('name', $name)
+            ->first();
+
+        if (!$site) {
+            $site = new Site();
+            $site->name = $name;
+            $site->user_id = $userId;
+            $site->url = $url;
+            $site->domain = $domain;
+            $site->status = self::STATUS_ACTIVE;
+            $site->save();
         }
-        return $x->first();
+        return $site;
     }
 
 

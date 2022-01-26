@@ -206,9 +206,6 @@ let loadAd = function (e) {
                         }
                     });
                 });
-                setTimeout(function () {
-                    fetch(banner.view_url);
-                }, 2000);
             });
         });
 

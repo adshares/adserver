@@ -139,6 +139,11 @@ class Utils
     {
         $zonesStr = self::urlSafeBase64Decode($zonesStr);
 
+        $result = json_decode($zonesStr, true);
+        if($result !== null) {
+            return $result;
+        }
+
         $zones = explode(self::ZONE_GLUE, $zonesStr);
         $fields = explode(self::VALUE_GLUE, array_shift($zones));
 
