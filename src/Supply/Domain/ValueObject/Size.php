@@ -33,9 +33,12 @@ final class Size
 
     public const TYPE_POP = 'pop';
 
+    public const TYPE_VIDEO = 'video';
+
     public const TYPES = [
         self::TYPE_DISPLAY,
         self::TYPE_POP,
+        self::TYPE_VIDEO,
     ];
 
     public const SIZE_INFOS = [
@@ -203,6 +206,41 @@ final class Size
             'label' => 'Pop-under',
             'tags' => ['Desktop', 'Mobile'],
             'type' => self::TYPE_POP,
+        ],
+        '16:9' => [
+            'label' => 'Widescreen',
+            'tags' => ['Desktop', 'Mobile', 'Video'],
+            'type' => self::TYPE_VIDEO,
+        ],
+        '4:3' => [
+            'label' => 'Classic',
+            'tags' => ['Desktop', 'Mobile', 'Video'],
+            'type' => self::TYPE_VIDEO,
+        ],
+        '6:5' => [
+            'label' => 'Medium Rectangle',
+            'tags' => ['Desktop', 'Mobile', 'Video'],
+            'type' => self::TYPE_VIDEO,
+        ],
+        '1:1' => [
+            'label' => 'Square',
+            'tags' => ['Desktop', 'Mobile', 'Video'],
+            'type' => self::TYPE_VIDEO,
+        ],
+        '3:4' => [
+            'label' => 'Vertical Classic',
+            'tags' => ['Desktop', 'Mobile', 'Video'],
+            'type' => self::TYPE_VIDEO,
+        ],
+        '9:16' => [
+            'label' => 'Vertical Widescreen',
+            'tags' => ['Desktop', 'Mobile', 'Video'],
+            'type' => self::TYPE_VIDEO,
+        ],
+        '1:2' => [
+            'label' => 'Vertical high',
+            'tags' => ['Desktop', 'Mobile', 'Video'],
+            'type' => self::TYPE_VIDEO,
         ],
     ];
 
