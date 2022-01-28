@@ -147,6 +147,9 @@ final class BannerTest extends TestCase
         $this->assertEquals($demandBannerId, $banner->getDemandBannerId());
         $this->assertEquals('728x90', $banner->getSize());
         $this->assertEquals($campaignId, $banner->getCampaignId());
+        $this->assertEquals(Status::STATUS_ACTIVE, $banner->getStatus());
+        $this->assertEquals($checksum, $banner->getChecksum());
+        $this->assertEmpty($banner->getClassification());
     }
 
     public function testClassifications(): void
@@ -189,6 +192,18 @@ final class BannerTest extends TestCase
         $banner->unclassified();
 
         $this->assertCount(0, $banner->toArray()['classification']);
+    }
+
+    public function testStatusChange(): void
+    {
+        $banner = $this->createBanner($this->createCampaign());
+        $this->assertEquals(Status::STATUS_ACTIVE, $banner->getStatus());
+
+        $banner->delete();
+        $this->assertEquals(Status::STATUS_DELETED, $banner->getStatus());
+
+        $banner->activate();
+        $this->assertEquals(Status::STATUS_ACTIVE, $banner->getStatus());
     }
 
     private function createCampaign(): Campaign

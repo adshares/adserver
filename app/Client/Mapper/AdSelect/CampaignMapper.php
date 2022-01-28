@@ -36,7 +36,6 @@ class CampaignMapper
         $banners = [];
         $campaignArray = $campaign->toArray();
 
-        /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
             $mappedBanner = [
                 'banner_id' => $banner->getId(),
