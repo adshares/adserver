@@ -107,6 +107,25 @@ class Zone extends Model
         'creating' => GenerateUUID::class,
     ];
 
+
+    public static function fetchOrCreate(int $siteId, string $size, string $name): ?self
+    {
+        $zone = self::where('site_id', $siteId)
+            ->where('size', $size)
+            ->where('name', $name)
+            ->first();
+
+        if (!$zone) {
+            $zone = new Zone();
+            $zone->name = $name;
+            $zone->site_id = $siteId;
+            $zone->size = $size;
+            $zone->status = Zone::STATUS_ACTIVE;
+            $zone->save();
+        }
+        return $zone;
+    }
+
     public static function fetchByPublicId(string $uuid): ?self
     {
         if (false === ($binId = @hex2bin($uuid))) {
