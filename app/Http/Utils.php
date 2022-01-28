@@ -140,7 +140,7 @@ class Utils
         $zonesStr = self::urlSafeBase64Decode($zonesStr);
 
         $result = json_decode($zonesStr, true);
-        if($result !== null) {
+        if ($result !== null) {
             return $result;
         }
 
