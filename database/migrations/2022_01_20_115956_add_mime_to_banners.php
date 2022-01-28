@@ -20,10 +20,10 @@
  */
 
 use Adshares\Adserver\Models\Banner;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Migrations\Migration;
 
 class AddMimeToBanners extends Migration
 {
@@ -49,6 +49,17 @@ class AddMimeToBanners extends Migration
         );
         DB::update("UPDATE banners SET creative_mime='image/jpeg' WHERE creative_contents LIKE 0xFFD8FF25;");
         DB::update("UPDATE banners SET creative_mime='image/gif' WHERE creative_contents LIKE 0x4749463825;");
+
+        $rows = DB::select('SELECT id FROM banners WHERE creative_mime IS NULL;');
+        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        foreach ($rows as $row) {
+            $content = DB::selectOne('SELECT creative_contents FROM banners WHERE id=?;', [$row->id]);
+            $mimeType = $fileInfo->buffer($content->creative_contents);
+            DB::update(
+                "UPDATE banners SET creative_mime=:mime WHERE id=:id;",
+                ['mime' => $mimeType, 'id' => $row->id]
+            );
+        }
 
         Schema::table('banners', function (Blueprint $table) {
             $table->string('creative_mime', self::MAXIMAL_MIME_TYPE_LENGTH)->nullable(false)->change();
