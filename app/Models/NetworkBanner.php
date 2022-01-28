@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -38,9 +38,16 @@ use function array_map;
 use function hex2bin;
 
 /**
+ * @property string uuid
+ * @property string demand_banner_id
  * @property string click_url
  * @property string serve_url
+ * @property string view_url
  * @property string type
+ * @property ?string mime
+ * @property string size
+ * @property int status
+ * @property array classification
  * @property NetworkCampaign campaign
  * @mixin Builder
  */
@@ -66,6 +73,8 @@ class NetworkBanner extends Model
     private const NETWORK_BANNERS_COLUMN_SERVE_URL = 'network_banners.serve_url';
 
     private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
+
+    private const NETWORK_BANNERS_COLUMN_MIME = 'network_banners.mime';
 
     private const NETWORK_BANNERS_COLUMN_SIZE = 'network_banners.size';
 
@@ -110,6 +119,7 @@ class NetworkBanner extends Model
         'click_url',
         'view_url',
         'type',
+        'mime',
         'checksum',
         'size',
         'status',
@@ -293,6 +303,7 @@ class NetworkBanner extends Model
             }
         }
 
+        /** @var Builder $query */
         $query = self::where($whereClause)->orderBy(
             self::NETWORK_BANNERS_COLUMN_ID,
             'desc'
@@ -320,6 +331,7 @@ class NetworkBanner extends Model
             self::NETWORK_BANNERS_COLUMN_ID,
             self::NETWORK_BANNERS_COLUMN_SERVE_URL,
             self::NETWORK_BANNERS_COLUMN_TYPE,
+            self::NETWORK_BANNERS_COLUMN_MIME,
             self::NETWORK_BANNERS_COLUMN_SIZE,
             self::NETWORK_BANNERS_COLUMN_CLASSIFICATION,
             self::NETWORK_CAMPAIGNS_COLUMN_LANDING_URL,

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.0] - 2022-01-28
+### Added
+- Ad's MIME type
+- Decentraland support
+
 ## [1.12.0] - 2022-01-19
 ### Added
 - Filtering for only accepted banners
@@ -550,7 +555,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.12.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.13.0...develop
+[1.13.0]: https://github.com/adshares/adserver/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/adshares/adserver/compare/v1.11.2...v1.12.0
 [1.11.2]: https://github.com/adshares/adserver/compare/v1.11.1...v1.11.2
 [1.11.1]: https://github.com/adshares/adserver/compare/v1.11.0...v1.11.1

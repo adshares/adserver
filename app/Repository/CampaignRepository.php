@@ -25,7 +25,6 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 
 class CampaignRepository
 {
@@ -34,6 +33,9 @@ class CampaignRepository
         return (new Campaign())->with('conversions')->get();
     }
 
+    /**
+     * @return Collection|Campaign[]
+     */
     public function fetchActiveCampaigns(): Collection
     {
         $query = Campaign::where('campaigns.status', Campaign::STATUS_ACTIVE);
@@ -48,6 +50,10 @@ class CampaignRepository
         return $query->with('banners')->get();
     }
 
+    /**
+     * @param array $campaignIds
+     * @return Collection|Campaign[]
+     */
     public function fetchCampaignByIds(array $campaignIds): Collection
     {
         return Campaign::whereIn('id', $campaignIds)->with('banners')->get();

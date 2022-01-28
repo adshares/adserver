@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Supply\Domain\Model;
+namespace Adshares\Tests\Supply\Domain\Model;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Model\Banner;
@@ -48,7 +48,7 @@ final class BannerTest extends TestCase
      *
      * @throws Exception
      *
-     * @dataProvider dataProvider
+     * @dataProvider bannerTypeProvider
      */
     public function testWhenTypeIsInvalid(string $type, bool $valid): void
     {
@@ -77,6 +77,7 @@ final class BannerTest extends TestCase
             Uuid::v4(),
             $bannerUrl,
             $type,
+            'application/octet-stream',
             '728x90',
             $checksum,
             Status::active()
@@ -104,6 +105,8 @@ final class BannerTest extends TestCase
         $bannerId = Uuid::v4();
         $demandBannerId = Uuid::v4();
         $type = 'html';
+        $mime = 'text/html';
+        $size = '728x90';
         $checksum = uniqid('', true);
         $bannerUrl = new BannerUrl(
             'http://example.com/serve',
@@ -117,7 +120,8 @@ final class BannerTest extends TestCase
             $demandBannerId,
             $bannerUrl,
             $type,
-            '728x90',
+            $mime,
+            $size,
             $checksum,
             Status::active()
         );
@@ -126,6 +130,7 @@ final class BannerTest extends TestCase
             'id' => $bannerId,
             'demand_banner_id' => $demandBannerId,
             'type' => 'html',
+            'mime' => 'text/html',
             'size' => '728x90',
             'checksum' => $checksum,
             'serve_url' => 'http://example.com/serve',
@@ -137,6 +142,7 @@ final class BannerTest extends TestCase
 
         $this->assertEquals($expected, $banner->toArray());
         $this->assertEquals('html', $banner->getType());
+        $this->assertEquals('text/html', $banner->getMime());
         $this->assertEquals($bannerId, $banner->getId());
         $this->assertEquals($demandBannerId, $banner->getDemandBannerId());
         $this->assertEquals('728x90', $banner->getSize());
@@ -213,6 +219,7 @@ final class BannerTest extends TestCase
             Uuid::v4(),
             $url,
             'image',
+            'image/png',
             $size,
             '',
             Status::active()
@@ -221,7 +228,7 @@ final class BannerTest extends TestCase
         return $banner;
     }
 
-    public function dataProvider(): array
+    public function bannerTypeProvider(): array
     {
         return [
             ['unsupported_type', self::INVALID_TYPE],

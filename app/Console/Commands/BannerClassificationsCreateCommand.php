@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 
@@ -36,8 +37,7 @@ class BannerClassificationsCreateCommand extends BaseCommand
 
     protected $description = 'Creates banner classification entries for specified classifier';
 
-    /** @var BannerClassificationCreator */
-    private $creator;
+    private BannerClassificationCreator $creator;
 
     public function __construct(
         BannerClassificationCreator $creator,
