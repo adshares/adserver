@@ -21,5 +21,5 @@
 # Usage: migrate.sh [<work-dir>]
 cd ${1:-"."}
 
-./artisan migrate --no-interaction
+./artisan migrate --no-interaction --force
 if [ $? -ne 0 ]; then exit 1; fi
