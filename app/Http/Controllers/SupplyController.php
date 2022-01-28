@@ -382,9 +382,9 @@ class SupplyController extends Controller
         $foundBanners = $bannerFinder->findBanners($zones, $context);
 
         if($decodedQueryData['zone_mode'] === 'best_match') {
-            $foundBanners = new FoundBanners($foundBanners->filter( function ($element) {
+            $foundBanners = new FoundBanners(array_values($foundBanners->filter( function ($element) {
                 return $element != null;
-            })->slice(0, 1));
+            })->slice(0, 1)));
         }
 
         if (
