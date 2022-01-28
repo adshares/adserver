@@ -92,6 +92,7 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 'checksum' => $checksum,
                 'type' => $banner->creative_type,
                 'size' => $banner->creative_size,
+                'mime' => $banner->creative_mime,
                 'serve_url' => route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
                 'campaign_id' => $campaign->uuid,
                 'landing_url' => $campaign->landing_url,
