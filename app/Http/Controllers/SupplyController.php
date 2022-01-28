@@ -45,14 +45,11 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Size;
-use BN\Red;
 use DateTime;
 use DateTimeInterface;
-use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -64,7 +61,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -73,7 +69,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 use function GuzzleHttp\Psr7\parse_query;
-use function urlencode;
 
 class SupplyController extends Controller
 {
@@ -243,7 +238,7 @@ class SupplyController extends Controller
                         ]
                     ]
                 ],
-            ]
+            ],
         ];
 
         $foundBanner = $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)->first();
@@ -385,7 +380,7 @@ class SupplyController extends Controller
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context);
 
-        if ($decodedQueryData['zone_mode'] === 'best_match') {
+        if (($decodedQueryData['zone_mode'] ?? '') === 'best_match') {
             $foundBanners = new FoundBanners(
                 array_values(
                     $foundBanners->filter(
