@@ -162,8 +162,13 @@ class Utils
             $opts = [];
             if (isset($zone['options'])) {
                 foreach (explode(',', $zone['options']) as $entry) {
-                    list($key, $value) = explode('=', trim($entry), 2);
-                    $opts[trim($key)] = trim($value);
+                    $parts = explode('=', trim($entry), 2);
+                    if (count($parts) != 2) {
+                        continue;
+                    }
+                    list($key, $value) = $parts;
+                    $parts = explode(' ', trim($value));
+                    $opts[trim($key)] = count($parts) == 1 ? $parts[0] : $parts;
                 }
             }
             $zone['options'] = $opts;
