@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
@@ -30,6 +32,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\ServeDomain;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -44,11 +47,11 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
-use BN\Red;
+use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use DateTimeInterface;
-use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -57,6 +60,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -65,22 +69,106 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 use function GuzzleHttp\Psr7\parse_query;
-use function urlencode;
 
 class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
 
-    public function findAnon(
-        Request $request
+    public function findJson(
+        Request $request,
+        AdUser $contextProvider,
+        AdSelect $bannerFinder
     ) {
-        $validated = $request->validate([
-                                            'address' => [new PayoutAddressRule()],
-                                        ]);
-        $payoutAddress = WalletAddress::fromString($validated['address']);
-        print_r($validated);
 
-        return $payoutAddress;
+        $validated = $request->validate(
+            [
+                'pay_to'           => ['required', new PayoutAddressRule()],
+                'view_id'          => ['required', 'regex:#^[A-Za-z0-9+/_-]+[=]{0,3}$#'],
+                'zone_name'        => ['sometimes', 'regex:/^[0-9a-z -_]+$/i'],
+                'width'            => ['required', 'numeric', 'gt:0'],
+                'height'           => ['required', 'numeric', 'gt:0'],
+                'min_dpi'          => ['sometimes', 'numeric', 'gt:0'],
+                'type'             => Rule::in(Banner::types()),
+                'exclude'          => ['sometimes', 'array:quality,category'],
+                'exclude.*'        => ['sometimes', 'array'],
+                'context'          => ['required', 'array:user,device,site'],
+                'context.*'        => ['required', 'array'],
+                'context.site.url' => ['required', 'url'],
+            ]
+        );
+
+        $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
+        $validated['zone_name'] = $validated['zone_name'] ?? 'default';
+
+        $payoutAddress = WalletAddress::fromString($validated['pay_to']);
+        $user = User::fetchByWalletAddress($payoutAddress);
+
+        if (!$user) {
+            if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
+                $user = User::registerWithWallet($payoutAddress, true);
+            } else {
+                return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
+            }
+        }
+
+        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], 'Default Site');
+        if ($site->status != Site::STATUS_ACTIVE) {
+            return $this->sendError("site", "Site 'Default Site' is not active");
+        }
+        $validated['$site'] = $site;
+
+        $zones = [];
+
+        $zoneSizes = Size::findBestFit($validated['width'], $validated['height'], $validated['min_dpi']);
+
+
+        foreach ($zoneSizes as $zoneSize) {
+            $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
+            $zones[] = [
+                'zone'    => $zone->uuid,
+                'options' => [
+                    'banner_type' => [
+                        $validated['type']
+                    ]
+                ]
+            ];
+            $validated['zones'][] = $zone;
+        }
+
+        $queryData = [
+            'page'      => [
+                "iid" => $validated['view_id'],
+                "url" => $validated['context']['site']['url'],
+            ],
+            'zones'     => $zones,
+            'zone_mode' => 'best_match'
+        ];
+
+
+        $response = new Response();
+
+        return self::json(
+            [
+                'banners'   => $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)
+                    ->toArray(),
+                'zones'     => $queryData['zones'],
+                'zoneSizes' => $zoneSizes,
+                'success'   => true,
+            ]
+        );
+    }
+
+    private function sendError($type, $message): JsonResponse
+    {
+        return new JsonResponse(
+            [
+                'message' => 'The given data was invalid.',
+                'errors'  => [
+                    $type => $message
+                ]
+            ],
+            422
+        );
     }
 
     public function find(
@@ -150,7 +238,7 @@ class SupplyController extends Controller
                         ]
                     ]
                 ],
-            ]
+            ],
         ];
 
         $foundBanner = $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)->first();
@@ -272,6 +360,7 @@ class SupplyController extends Controller
         }
 
         $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $tid);
+
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {
@@ -291,6 +380,18 @@ class SupplyController extends Controller
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context);
 
+        if (($decodedQueryData['zone_mode'] ?? '') === 'best_match') {
+            $foundBanners = new FoundBanners(
+                array_values(
+                    $foundBanners->filter(
+                        function ($element) {
+                            return $element != null;
+                        }
+                    )->slice(0, 1)
+                )
+            );
+        }
+
         if (
             $foundBanners->exists(
                 function ($key, $element) {
@@ -307,7 +408,6 @@ class SupplyController extends Controller
                 $zones
             );
         }
-
 
         return $foundBanners;
     }
@@ -347,10 +447,10 @@ class SupplyController extends Controller
         $response->setCache(
             [
                 'last_modified' => new DateTime(),
-                'max_age' => 3600 * 1 * 1,
-                's_maxage' => 3600 * 1 * 1,
-                'private' => false,
-                'public' => true,
+                'max_age'       => 3600 * 1 * 1,
+                's_maxage'      => 3600 * 1 * 1,
+                'private'       => false,
+                'public'        => true,
             ]
         );
 
@@ -384,16 +484,15 @@ class SupplyController extends Controller
         $response->setCache(
             [
                 'last_modified' => new DateTime(),
-                'max_age' => 3600 * 24 * 1,
-                's_maxage' => 3600 * 24 * 1,
-                'private' => false,
-                'public' => true,
+                'max_age'       => 3600 * 24 * 1,
+                's_maxage'      => 3600 * 24 * 1,
+                'private'       => false,
+                'public'        => true,
             ]
         );
 
         return $response;
     }
-
 
 
     public function logNetworkSimpleClick(Request $request): RedirectResponse
@@ -414,8 +513,8 @@ class SupplyController extends Controller
             Utils::encodeZones(
                 [
                     'page' => [
-                        'zone' => $networkImpression->context->zone_id,
-                        'url' =>  $networkImpression->context->site->page,
+                        'zone'  => $networkImpression->context->zone_id,
+                        'url'   => $networkImpression->context->site->page,
                         'frame' => $networkImpression->context->site->inframe,
                     ]
                 ]
@@ -528,8 +627,8 @@ class SupplyController extends Controller
             Utils::encodeZones(
                 [
                     'page' => [
-                        'zone' => $networkImpression->context->zone_id,
-                        'url' =>  $networkImpression->context->site->page,
+                        'zone'  => $networkImpression->context->zone_id,
+                        'url'   => $networkImpression->context->site->page,
                         'frame' => $networkImpression->context->site->inframe,
                     ]
                 ]
@@ -560,7 +659,8 @@ class SupplyController extends Controller
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         try {
-            $zoneId = ($networkImpression->context->zone_id ?? null) ?:
+            $zoneId = ($networkImpression->context->zone_id ?? null)
+                ?:
                 Utils::getZoneIdFromContext($request->query->get('ctx'));
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
@@ -626,8 +726,10 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $adUserEndpoint = config('app.aduser_serve_subdomain') ?
-            ServeDomain::current(config('app.aduser_serve_subdomain')) :
+        $adUserEndpoint = config('app.aduser_serve_subdomain')
+            ?
+            ServeDomain::current(config('app.aduser_serve_subdomain'))
+            :
             config('app.aduser_base_url');
 
         if ($adUserEndpoint) {
@@ -668,34 +770,34 @@ class SupplyController extends Controller
         $info = $networkHost->info ?? null;
 
         $data = [
-            'url' => $banner->serve_url,
-            'supplyName' => config('app.name'),
-            'supplyTermsUrl' => config('app.terms_url'),
-            'supplyPrivacyUrl' => config('app.privacy_url'),
-            'supplyPanelUrl' => config('app.adpanel_url'),
+            'url'                   => $banner->serve_url,
+            'supplyName'            => config('app.name'),
+            'supplyTermsUrl'        => config('app.terms_url'),
+            'supplyPrivacyUrl'      => config('app.privacy_url'),
+            'supplyPanelUrl'        => config('app.adpanel_url'),
             'supplyBannerReportUrl' => new SecureUrl(
                 route(
                     'report-ad',
                     [
                         'banner_id' => $bannerId,
-                        'case_id' => $caseId,
+                        'case_id'   => $caseId,
                     ]
                 )
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
-            'demand' => false,
-            'bannerType' => $banner->type,
+            'demand'                => false,
+            'bannerType'            => $banner->type,
         ];
 
         if ($info) {
             $data = array_merge(
                 $data,
                 [
-                    'demand' => true,
-                    'demandName' => $info->getName(),
-                    'demandTermsUrl' => $info->getTermsUrl() ?? null,
+                    'demand'           => true,
+                    'demandName'       => $info->getName(),
+                    'demandTermsUrl'   => $info->getTermsUrl() ?? null,
                     'demandPrivacyUrl' => $info->getPrivacyUrl() ?? null,
-                    'demandPanelUrl' => $info->getPanelUrl(),
+                    'demandPanelUrl'   => $info->getPanelUrl(),
                 ]
             );
         }
@@ -770,23 +872,23 @@ class SupplyController extends Controller
         $result = [];
         foreach ($rows as $row) {
             $result[] = [
-                'key' => $row->key,
-                'occurrences' => $row->occurrences,
-                'cpm_25' => $row->cpm_25,
-                'cpm_50' => $row->cpm_50,
-                'cpm_75' => $row->cpm_75,
+                'key'             => $row->key,
+                'occurrences'     => $row->occurrences,
+                'cpm_25'          => $row->cpm_25,
+                'cpm_50'          => $row->cpm_50,
+                'cpm_75'          => $row->cpm_75,
                 'negation_cpm_25' => $row->negation_cpm_25,
                 'negation_cpm_50' => $row->negation_cpm_50,
                 'negation_cpm_75' => $row->negation_cpm_75,
-                'data' => Utils::urlSafeBase64Encode($row->data),
+                'data'            => Utils::urlSafeBase64Encode($row->data),
             ];
         }
 
         return response(
             [
-                'meta' => [
+                'meta'       => [
                     'total_events_count' => $meta->total_events_count,
-                    'updated_at' => $meta->updated_at->format(DateTimeInterface::ATOM),
+                    'updated_at'         => $meta->updated_at->format(DateTimeInterface::ATOM),
                 ],
                 'categories' => $result,
             ]

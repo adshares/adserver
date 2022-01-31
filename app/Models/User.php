@@ -362,6 +362,19 @@ class User extends Authenticatable
         ], $refLink);
     }
 
+    protected static function register(array $data, ?RefLink $refLink = null): User
+    {
+        $user = User::create($data);
+        $user->password = $data['password'] ?? null;
+        if (null !== $refLink) {
+            $user->ref_link_id = $refLink->id;
+            $refLink->used = true;
+            $refLink->saveOrFail();
+        }
+        $user->saveOrFail();
+        return $user;
+    }
+
     public static function registerWithWallet(
         WalletAddress $address,
         bool $autoWithdrawal = false,
@@ -386,19 +399,6 @@ class User extends Authenticatable
         ]);
         $user->is_admin = true;
         $user->confirmEmail();
-        $user->saveOrFail();
-        return $user;
-    }
-
-    protected static function register(array $data, ?RefLink $refLink = null): User
-    {
-        $user = User::create($data);
-        $user->password = $data['password'] ?? null;
-        if (null !== $refLink) {
-            $user->ref_link_id = $refLink->id;
-            $refLink->used = true;
-            $refLink->saveOrFail();
-        }
         $user->saveOrFail();
         return $user;
     }

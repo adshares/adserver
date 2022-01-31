@@ -134,6 +134,11 @@ class Banner extends Model
         return in_array($status, self::STATUSES);
     }
 
+    public static function types(): array
+    {
+        return [self::TEXT_TYPE_DIRECT_LINK, self::TEXT_TYPE_HTML, self::TEXT_TYPE_IMAGE];
+    }
+
     public static function type(int $type): string
     {
         switch ($type) {

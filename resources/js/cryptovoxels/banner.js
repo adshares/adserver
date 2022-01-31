@@ -171,7 +171,7 @@ let loadAd = function (e) {
         params.push(context);
         params.push({
             zone: zoneId,
-            options: "banner_type=image"
+            options: "banner_type=image,banner_mime=image/png,image/jpeg"
         });
         var data = encodeZones(params);
         var url = serverOrigin + '/supply/find?' + data;
@@ -206,9 +206,6 @@ let loadAd = function (e) {
                         }
                     });
                 });
-                setTimeout(function () {
-                    fetch(banner.view_url);
-                }, 2000);
             });
         });
 
