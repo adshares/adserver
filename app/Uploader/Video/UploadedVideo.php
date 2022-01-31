@@ -63,7 +63,7 @@ class UploadedVideo implements UploadedFile
         return '';
     }
 
-    private static function getAspect(array $size): string
+    public static function getAspect(array $size): string
     {
         if (!isset($size[0], $size[1]) || !is_int($size[0]) || !is_int($size[1])) {
             return '';

@@ -26,6 +26,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -33,6 +34,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 use function hex2bin;
@@ -41,6 +43,9 @@ use function in_array;
 /**
  * @property int id
  * @property string uuid
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
  * @property string creative_contents
  * @property string creative_type
  * @property string creative_mime
@@ -162,7 +167,7 @@ class Banner extends Model
     public static function size(string $size): string
     {
         if (!Size::isValid($size)) {
-            throw new \RuntimeException(sprintf('Wrong image size %s.', $size));
+            throw new RuntimeException(sprintf('Wrong banner size: %s.', $size));
         }
 
         return $size;

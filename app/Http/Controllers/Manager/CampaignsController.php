@@ -43,10 +43,13 @@ use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
+use Adshares\Adserver\Uploader\Video\UploadedVideo;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -58,13 +61,15 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
-use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
+use function array_map;
+use function explode;
+use function preg_match;
 use function response;
+use function sprintf;
 use function strrpos;
 
 class CampaignsController extends Controller
@@ -199,10 +204,11 @@ class CampaignsController extends Controller
         $banners = [];
 
         foreach ($input as $banner) {
+            self::validateSize($banner);
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
-            $size = Banner::size($banner['creative_size']);
+            $size = $banner['creative_size'];
             $bannerModel->creative_size = $size;
             $bannerModel->creative_type = Banner::type($banner['type']);
 
@@ -654,5 +660,18 @@ class CampaignsController extends Controller
                 new CampaignCreated($user->uuid, $user->email, $campaign)
             );
         }
+    }
+
+    private static function validateSize($banner): void
+    {
+        $size = $banner['creative_size'];
+        if ($banner['type'] === Banner::TYPE_VIDEO) {
+            if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
+                throw new RuntimeException(sprintf('Wrong size: %s.', $size));
+            }
+            $size = UploadedVideo::getAspect(array_map('intval', explode('x', $size)));
+        }
+
+        Banner::size($size);
     }
 }
