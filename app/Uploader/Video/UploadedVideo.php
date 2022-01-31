@@ -31,18 +31,20 @@ class UploadedVideo implements UploadedFile
 {
     private string $name;
     private string $previewUrl;
-    private array $size;
+    private int $width;
+    private int $height;
 
-    public function __construct(string $name, string $previewUrl, array $size)
+    public function __construct(string $name, string $previewUrl, int $width, int $height)
     {
-        $aspect = self::getAspect($size);
+        $aspect = Size::getAspect($width, $height);
         if (!Size::isValid($aspect)) {
             throw new BadRequestHttpException('Unsupported video aspect: ' . $aspect);
         }
 
         $this->name = $name;
         $this->previewUrl = $previewUrl;
-        $this->size = $size;
+        $this->width = $width;
+        $this->height = $height;
     }
 
     public function toArray(): array
@@ -50,33 +52,7 @@ class UploadedVideo implements UploadedFile
         return [
             'name' => $this->name,
             'url' => $this->previewUrl,
-            'size' => $this->getFormattedSize($this->size),
+            'size' => Size::fromDimensions($this->width, $this->height),
         ];
-    }
-
-    private function getFormattedSize(array $size): string
-    {
-        if (isset($size[0], $size[1])) {
-            return Size::fromDimensions((int)$size[0], (int)$size[1]);
-        }
-
-        return '';
-    }
-
-    public static function getAspect(array $size): string
-    {
-        if (!isset($size[0], $size[1]) || !is_int($size[0]) || !is_int($size[1])) {
-            return '';
-        }
-
-        $a = $size[0];
-        $b = $size[1];
-        while ($b !== 0) {
-            $c = $a % $b;
-            $a = $b;
-            $b = $c;
-        }
-
-        return $size[0] / $a . ':' . $size[1] / $a;
     }
 }

@@ -52,7 +52,7 @@ final class CampaignFactoryTest extends TestCase
             'banners' => [
                 self::banner(),
                 self::banner(),
-                self::banner(),
+                self::bannerVideo(),
             ],
             'max_cpc' => 100000000000,
             'max_cpm' => 100000000000,
@@ -67,7 +67,7 @@ final class CampaignFactoryTest extends TestCase
     {
         $uuid = Uuid::v4();
 
-        return  [
+        return [
             'demand_banner_id' => $uuid,
             'serve_url' => 'http://localhost:8101/serve/x' . $uuid . '.doc',
             'click_url' => 'http://localhost:8101/click/' . $uuid,
@@ -76,6 +76,28 @@ final class CampaignFactoryTest extends TestCase
             'mime' => 'image/png',
             'size' => '728x90',
         ];
+    }
+
+    private static function bannerVideo(): array
+    {
+        return array_merge(
+            self::banner(),
+            [
+                'type' => 'video',
+                'mime' => 'video/mp4',
+                'size' => '320x240',
+                'classification' => [
+                    'keywords' => [
+                        'category' => [
+                            'safe',
+                        ],
+                        'classified' => [
+                            '1',
+                        ],
+                    ],
+                ],
+            ]
+        );
     }
 
     public function testCreateFromArrayWhenInvalid(): void
@@ -94,6 +116,57 @@ final class CampaignFactoryTest extends TestCase
 
         $data = $this->data;
         unset($data['source_campaign']['host'], $data['source_campaign']['version']);
+
+        CampaignFactory::createFromArray($data);
+    }
+
+    public function testCreateFromArrayWhenBannerIdMissing(): void
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        unset($data['banners'][0]['demand_banner_id']);
+        unset($data['banners'][0]['id']);
+
+        CampaignFactory::createFromArray($data);
+    }
+
+    public function testCreateFromArrayWhenBannerTypeMissing(): void
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        unset($data['banners'][0]['type']);
+
+        CampaignFactory::createFromArray($data);
+    }
+
+    public function testCreateFromArrayWhenBannerTypeInvalid(): void
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        $data['banners'][0]['type'] = 'invalid';
+
+        CampaignFactory::createFromArray($data);
+    }
+
+    public function testCreateFromArrayWhenVideoBannerSizeFormatInvalid(): void
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        $data['banners'][2]['size'] = '10:9';
+
+        CampaignFactory::createFromArray($data);
+    }
+
+    public function testCreateFromArrayWhenVideoBannerSizeInvalid(): void
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        $data['banners'][2]['size'] = '970x90';
 
         CampaignFactory::createFromArray($data);
     }

@@ -58,9 +58,8 @@ class VideoUploader implements Uploader
         $fileInfo = (new getID3())->analyze($file->getRealPath());
         $width = $fileInfo['video']['resolution_x'];
         $height = $fileInfo['video']['resolution_y'];
-        $videoSize = [$width, $height];
 
-        return new UploadedVideo($name, $previewUrl->toString(), $videoSize);
+        return new UploadedVideo($name, $previewUrl->toString(), $width, $height);
     }
 
     public function removeTemporaryFile(string $fileName): void

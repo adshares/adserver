@@ -56,16 +56,16 @@ class NetworkBanner extends Model
     use AutomateMutators;
     use BinHex;
 
-    private const TYPE_HTML = 'html';
-
-    private const TYPE_IMAGE = 'image';
-
-    private const TYPE_DIRECT_LINK = 'direct';
+    public const TYPE_HTML = 'html';
+    public const TYPE_IMAGE = 'image';
+    public const TYPE_DIRECT_LINK = 'direct';
+    public const TYPE_VIDEO = 'video';
 
     public const ALLOWED_TYPES = [
         self::TYPE_HTML,
         self::TYPE_IMAGE,
         self::TYPE_DIRECT_LINK,
+        self::TYPE_VIDEO,
     ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';

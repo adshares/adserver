@@ -43,4 +43,12 @@ final class SizeTest extends TestCase
         $this->assertEquals([728, 0], Size::toDimensions('728'));
         $this->assertEquals([0, 0], Size::toDimensions(''));
     }
+
+    public function testAspect(): void
+    {
+        $this->assertEquals('4:3', Size::getAspect(320, 240));
+        $this->assertEquals('6:5', Size::getAspect(300, 250));
+        $this->assertEquals('', Size::getAspect(320, 0));
+        $this->assertEquals('', Size::getAspect(0, 240));
+    }
 }

@@ -51,6 +51,7 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -667,9 +668,10 @@ class CampaignsController extends Controller
         $size = $banner['creative_size'];
         if ($banner['type'] === Banner::TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
-                throw new RuntimeException(sprintf('Wrong size: %s.', $size));
+                throw new RuntimeException(sprintf('Invalid video size: %s.', $size));
             }
-            $size = UploadedVideo::getAspect(array_map('intval', explode('x', $size)));
+            $dimensions = explode('x', $size);
+            $size = Size::getAspect((int)$dimensions[0], (int)$dimensions[1]);
         }
 
         Banner::size($size);

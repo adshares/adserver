@@ -263,4 +263,21 @@ final class Size
             (int)($parts[1] ?? 0),
         ];
     }
+
+    public static function getAspect(int $width, int $height): string
+    {
+        if ($width === 0 || $height === 0) {
+            return '';
+        }
+
+        $a = $width;
+        $b = $height;
+        while ($b !== 0) {
+            $c = $a % $b;
+            $a = $b;
+            $b = $c;
+        }
+
+        return $width / $a . ':' . $height / $a;
+    }
 }
