@@ -136,7 +136,7 @@ class Banner extends Model
 
     public static function types(): array
     {
-        return [self::TEXT_TYPE_DIRECT_LINK, self::TEXT_TYPE_HTML, self::TEXT_TYPE_IMAGE];
+        return [self::TEXT_TYPE_DIRECT_LINK, self::TEXT_TYPE_HTML, self::TEXT_TYPE_IMAGE, self::TEXT_TYPE_VIDEO];
     }
 
     public static function type(int $type): string
