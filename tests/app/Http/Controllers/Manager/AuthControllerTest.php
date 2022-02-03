@@ -741,22 +741,7 @@ class AuthControllerTest extends TestCase
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
-
-    public function testChangeEmail(): void
-    {
-        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
-
-        $user = $this->registerUser();
-        $this->actingAs($user, 'api');
-
-        $response = $this->post(self::EMAIL_URI, [
-            'email' => $this->faker->unique()->email,
-            'uri_step1' => '/auth/email-activation/',
-            'uri_step2' => '/auth/email-activation/'
-        ]);
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
-    }
-
+    
     public function testChangeEmailStep1(): void
     {
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
