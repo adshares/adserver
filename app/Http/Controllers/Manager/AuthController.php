@@ -112,7 +112,7 @@ class AuthController extends Controller
         Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
 
         DB::beginTransaction();
-        $token = Token::check($request->input('user.email_confirm_token'));
+        $token = Token::check($request->input('user.email_confirm_token'), null, Token::EMAIL_ACTIVATE);
         if (false === $token) {
             DB::rollBack();
             return self::json([], Response::HTTP_FORBIDDEN);
@@ -203,18 +203,12 @@ class AuthController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $userHasEmail = null !== $user->email;
+        $userHasEmail = null !== $user->email && null !== $user->email_confirmed_at;
 
         DB::beginTransaction();
-        if (!$userHasEmail || !Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+        if (!$userHasEmail) {
             $user->email = $request->input('email');
             $user->saveOrFail();
-        }
-        if (!Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
-            $this->confirmEmail($user);
-            $user->saveOrFail();
-            DB::commit();
-            return self::json($user->toArray());
         }
 
         $tag = $userHasEmail ? Token::EMAIL_CHANGE_STEP_1 : Token::EMAIL_ACTIVATE;
@@ -229,7 +223,7 @@ class AuthController extends Controller
                 ]
             );
         }
-        $token = Token::generate($tag, $user, $request->all());
+        $token = Token::generate($tag, $user, $request->only('email', 'uri_step1', 'uri_step2', 'uri'));
         $mailable = $userHasEmail ?
             new UserEmailChangeConfirm1Old($token->uuid, $request->input('uri_step1')) :
             new UserEmailActivate($token->uuid, $request->input('uri'));
@@ -243,7 +237,7 @@ class AuthController extends Controller
     public function emailChangeStep2($token): JsonResponse
     {
         DB::beginTransaction();
-        if (false === $token = Token::check($token)) {
+        if (false === $token = Token::check($token, null, Token::EMAIL_CHANGE_STEP_1)) {
             DB::commit();
 
             return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
@@ -272,7 +266,7 @@ class AuthController extends Controller
     public function emailChangeStep3($token): JsonResponse
     {
         DB::beginTransaction();
-        if (false === $token = Token::check($token)) {
+        if (false === $token = Token::check($token, null, Token::EMAIL_CHANGE_STEP_2)) {
             DB::commit();
 
             return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
@@ -476,7 +470,7 @@ MSG;
             $user = Auth::user();
             $token_authorization = false;
         } else {
-            if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
+            if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
                 DB::rollBack();
 
                 return self::json(
