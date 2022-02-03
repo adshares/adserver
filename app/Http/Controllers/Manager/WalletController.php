@@ -224,7 +224,7 @@ class WalletController extends Controller
 
         DB::beginTransaction();
 
-        $token = Token::check($request->input('token'));
+        $token = Token::check($request->input('token'), null, Token::EMAIL_APPROVE_WITHDRAWAL);
         if (false === $token || Auth::user()->id !== (int)$token['user_id']) {
             DB::rollBack();
 
