@@ -484,17 +484,16 @@ MSG;
         }
 
         $this->validateRequestObject($request, 'user', User::$rules);
-        $user->fill($request->input('user'));
 
         if (!$request->has('user.password_new')) {
-            $user->save();
-            DB::commit();
+            DB::rollBack();
 
-            return self::json($user->toArray());
+            return self::json([], Response::HTTP_BAD_REQUEST);
         }
 
         if ($token_authorization) {
             $user->password = $request->input('user.password_new');
+            $user->api_token = null;
             $user->save();
             DB::commit();
 
@@ -515,6 +514,7 @@ MSG;
         }
 
         $user->password = $request->input('user.password_new');
+        $user->api_token = null;
         $user->save();
         DB::commit();
 

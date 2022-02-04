@@ -45,7 +45,9 @@ class AuthControllerTest extends TestCase
 {
     private const CHECK_URI = '/auth/check';
     private const SELF_URI = '/auth/self';
+    private const PASSWORD_URI = '/auth/password';
     private const EMAIL_URI = '/auth/email';
+    private const LOGIN_URI = '/auth/login';
     private const WALLET_LOGIN_INIT_URI = '/auth/login/wallet/init';
     private const WALLET_LOGIN_URI = '/auth/login/wallet';
 
@@ -658,15 +660,29 @@ class AuthControllerTest extends TestCase
     public function testChangePassword(): void
     {
         $user = $this->registerUser();
-        $this->actingAs($user, 'api');
 
-        $response = $this->patch(self::SELF_URI, [
-            'user' => [
-                'password_old' => '87654321',
-                'password_new' => 'qwerty123',
-            ]
+        $response = $this->post(self::LOGIN_URI, [
+            'email' => $user->email,
+            'password' => '87654321',
         ]);
         $response->assertStatus(Response::HTTP_OK);
+        $apiToken = User::fetchById($user->id)->api_token;
+        self::assertNotNull($apiToken, 'Token is null');
+
+        $response = $this->patch(
+            self::SELF_URI,
+            [
+                'user' => [
+                    'password_old' => '87654321',
+                    'password_new' => 'qwerty123',
+                ]
+            ],
+            [
+                'Authorization' => 'Bearer ' . $apiToken
+            ]
+        );
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertNull(User::fetchById($user->id)->api_token, 'Token is not null');
     }
 
     public function testChangeInvalidOldPassword(): void
@@ -695,6 +711,55 @@ class AuthControllerTest extends TestCase
             ]
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangePasswordNoPassword(): void
+    {
+        $user = $this->registerUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'email' => $this->faker->email(),
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testChangePasswordNoUser(): void
+    {
+        $user = factory(User::class)->create();
+        $token = Token::generate(Token::PASSWORD_RECOVERY, $user);
+
+        $response = $this->patch(self::PASSWORD_URI, [
+            'user' => [
+                'password_new' => '1234567890',
+                'token' => $token->uuid,
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertNotEquals($user->password, User::fetchById($user->id)->password);
+    }
+
+    public function testChangePasswordNoToken(): void
+    {
+        $response = $this->patch(self::PASSWORD_URI, [
+            'user' => [
+                'password_new' => '1234567890',
+                'token' => '0123456789ABCDEF0123456789ABCDEF',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangePasswordUnauthorized(): void
+    {
+        $response = $this->patch(self::PASSWORD_URI, [
+            'user' => [
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
 
     public function testSetEmail(): void
@@ -726,7 +791,6 @@ class AuthControllerTest extends TestCase
         ]);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         Mail::assertQueued(UserEmailActivate::class);
-
     }
 
     public function testSetInvalidEmail(): void
@@ -741,10 +805,10 @@ class AuthControllerTest extends TestCase
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
-    
-    public function testChangeEmailStep1(): void
+
+    public function testChangeEmail(): void
     {
-        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
 
         $user = $this->registerUser();
         $this->actingAs($user, 'api');

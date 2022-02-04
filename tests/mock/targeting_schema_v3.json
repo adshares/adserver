@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "simple",
-    "version": "3.0.0"
+    "version": "3.1.0"
   },
   "data": {
     "user": [
@@ -1762,6 +1762,25 @@
     ],
     "site": [
       {
+        "label": "Quality",
+        "key": "quality",
+        "type": "dict",
+        "data": [
+          {
+            "label": "Premium",
+            "value": "high"
+          },
+          {
+            "label": "Regular",
+            "value": "medium"
+          },
+          {
+            "label": "Low quality",
+            "value": "low"
+          }
+        ]
+      },
+      {
         "label": "Category",
         "key": "category",
         "type": "dict",
@@ -1785,6 +1804,10 @@
             ]
           },
           {
+            "label": "Games",
+            "value": "games"
+          },
+          {
             "label": "Health",
             "value": "health",
             "values": [
@@ -1799,12 +1822,28 @@
             ]
           },
           {
+            "label": "Lifestyle",
+            "value": "lifestyle"
+          },
+          {
             "label": "Movies",
             "value": "movies"
           },
           {
+            "label": "Music",
+            "value": "music"
+          },
+          {
+            "label": "News",
+            "value": "news"
+          },
+          {
             "label": "Pay to Click",
             "value": "paytoclick"
+          },
+          {
+            "label": "Technology",
+            "value": "technology"
           },
           {
             "label": "Unknown",
@@ -1905,6 +1944,17 @@
           {
             "value": "other",
             "label": "Other"
+          }
+        ]
+      },
+      {
+        "label": "Extensions",
+        "key": "extensions",
+        "type": "dict",
+        "data": [
+          {
+            "value": "metamask",
+            "label": "MetaMask"
           }
         ]
       }
