@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -50,12 +50,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AuthController extends Controller
 {
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
+    private ExchangeRateReader $exchangeRateReader;
 
     public function __construct(ExchangeRateReader $exchangeRateReader)
     {
@@ -455,15 +456,16 @@ MSG;
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function updateSelf(Request $request): JsonResponse
+    public function changePassword(Request $request): JsonResponse
     {
         if (!Auth::check() && !$request->has('user.token')) {
-            return self::json(
-                [],
-                Response::HTTP_UNAUTHORIZED,
-                ['message' => 'Required authenticated access or token authentication']
-            );
+            throw new UnauthorizedHttpException('', 'Required authenticated access or token authentication');
         }
+
+        if (!$request->has('user.password_new')) {
+            throw new BadRequestHttpException('Field `user.password_new` is required.');
+        }
+        $this->validateRequestObject($request, 'user', User::$rules);
 
         DB::beginTransaction();
         if (Auth::check()) {
@@ -473,35 +475,14 @@ MSG;
             if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
                 DB::rollBack();
 
-                return self::json(
-                    [],
-                    Response::HTTP_UNPROCESSABLE_ENTITY,
-                    ['message' => 'Authentication token is invalid']
-                );
+                throw new UnprocessableEntityHttpException('Authentication token is invalid');
             }
             $user = User::findOrFail($token['user_id']);
             $token_authorization = true;
         }
 
-        $this->validateRequestObject($request, 'user', User::$rules);
-        $user->fill($request->input('user'));
-
-        if (!$request->has('user.password_new')) {
-            $user->save();
-            DB::commit();
-
-            return self::json($user->toArray());
-        }
-
-        if ($token_authorization) {
-            $user->password = $request->input('user.password_new');
-            $user->save();
-            DB::commit();
-
-            return self::json($user->toArray());
-        }
-
         if (
+            !$token_authorization &&
             null !== $user->password &&
             (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old')))
         ) {
@@ -515,6 +496,7 @@ MSG;
         }
 
         $user->password = $request->input('user.password_new');
+        $user->api_token = null;
         $user->save();
         DB::commit();
 
