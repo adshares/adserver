@@ -50,6 +50,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AuthController extends Controller
@@ -457,15 +459,11 @@ MSG;
     public function changePassword(Request $request): JsonResponse
     {
         if (!Auth::check() && !$request->has('user.token')) {
-            return self::json(
-                [],
-                Response::HTTP_UNAUTHORIZED,
-                ['message' => 'Required authenticated access or token authentication']
-            );
+            throw new UnauthorizedHttpException('', 'Required authenticated access or token authentication');
         }
 
         if (!$request->has('user.password_new')) {
-            return self::json([], Response::HTTP_BAD_REQUEST);
+            throw new BadRequestHttpException('Field `user.password_new` is required.');
         }
         $this->validateRequestObject($request, 'user', User::$rules);
 
@@ -477,11 +475,7 @@ MSG;
             if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
                 DB::rollBack();
 
-                return self::json(
-                    [],
-                    Response::HTTP_UNPROCESSABLE_ENTITY,
-                    ['message' => 'Authentication token is invalid']
-                );
+                throw new UnprocessableEntityHttpException('Authentication token is invalid');
             }
             $user = User::findOrFail($token['user_id']);
             $token_authorization = true;
