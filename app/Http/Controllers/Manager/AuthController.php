@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -54,8 +54,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AuthController extends Controller
 {
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
+    private ExchangeRateReader $exchangeRateReader;
 
     public function __construct(ExchangeRateReader $exchangeRateReader)
     {
@@ -455,7 +454,7 @@ MSG;
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function updateSelf(Request $request): JsonResponse
+    public function changePassword(Request $request): JsonResponse
     {
         if (!Auth::check() && !$request->has('user.token')) {
             return self::json(
@@ -465,14 +464,16 @@ MSG;
             );
         }
 
-        DB::beginTransaction();
+        if (!$request->has('user.password_new')) {
+            return self::json([], Response::HTTP_BAD_REQUEST);
+        }
+        $this->validateRequestObject($request, 'user', User::$rules);
+
         if (Auth::check()) {
             $user = Auth::user();
             $token_authorization = false;
         } else {
             if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
-                DB::rollBack();
-
                 return self::json(
                     [],
                     Response::HTTP_UNPROCESSABLE_ENTITY,
@@ -483,29 +484,11 @@ MSG;
             $token_authorization = true;
         }
 
-        $this->validateRequestObject($request, 'user', User::$rules);
-
-        if (!$request->has('user.password_new')) {
-            DB::rollBack();
-
-            return self::json([], Response::HTTP_BAD_REQUEST);
-        }
-
-        if ($token_authorization) {
-            $user->password = $request->input('user.password_new');
-            $user->api_token = null;
-            $user->save();
-            DB::commit();
-
-            return self::json($user->toArray());
-        }
-
         if (
+            !$token_authorization &&
             null !== $user->password &&
             (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old')))
         ) {
-            DB::rollBack();
-
             return self::json(
                 $user->toArray(),
                 Response::HTTP_UNPROCESSABLE_ENTITY,
@@ -513,6 +496,7 @@ MSG;
             );
         }
 
+        DB::beginTransaction();
         $user->password = $request->input('user.password_new');
         $user->api_token = null;
         $user->save();
