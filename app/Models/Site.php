@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -53,6 +53,7 @@ use function in_array;
  * @property string info
  * @property Carbon reassess_available_at
  * @property int status
+ * @property string primary_language
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
  * @property array|null categories

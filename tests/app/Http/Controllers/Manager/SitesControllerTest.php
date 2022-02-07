@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,15 +25,17 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
+use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
+use DateTime;
 use DateTimeImmutable;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 use function GuzzleHttp\json_decode;
 
@@ -65,15 +67,6 @@ class SitesControllerTest extends TestCase
         'primaryLanguage',
     ];
 
-    private const BASIC_SITE_STRUCTURE = [
-        'id',
-        'name',
-        'status',
-        'primaryLanguage',
-        'filtering',
-        'adUnits',
-    ];
-
     private const DOMAIN_VERIFY_STRUCTURE = [
         'code',
         'message',
@@ -87,6 +80,11 @@ class SitesControllerTest extends TestCase
     private const SIZES_STRUCTURE = [
         'sizes' => [],
     ];
+
+    private static function getSiteUri(int $siteId): string
+    {
+        return self::URI . '/' . $siteId;
+    }
 
     public function testEmptyDb(): void
     {
@@ -114,7 +112,7 @@ class SitesControllerTest extends TestCase
 
         $id = $this->getIdFromLocation($response->headers->get('Location'));
 
-        $response = $this->getJson(self::URI . '/' . $id);
+        $response = $this->getJson(self::getSiteUri($id));
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::SITE_STRUCTURE)
             ->assertJsonFragment(
@@ -140,6 +138,7 @@ class SitesControllerTest extends TestCase
 
     public function testCreateMultipleSites(): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
@@ -214,10 +213,10 @@ JSON
 
     public function testCreateSiteError(): void
     {
-        $siteClassificationUpdater = $this->createMock(SiteFilteringUpdater::class);
-        $siteClassificationUpdater->method('addClassificationToFiltering')
+        $validator = $this->createMock(SiteCategoriesValidator::class);
+        $validator->method('processCategories')
             ->willThrowException(new RuntimeException('test-exception'));
-        $this->instance(SiteFilteringUpdater::class, $siteClassificationUpdater);
+        $this->instance(SiteCategoriesValidator::class, $validator);
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
@@ -349,19 +348,39 @@ JSON
         return $adUnit;
     }
 
+    public function testCreateSiteWithDuplicatedPopUp(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $siteData = self::simpleSiteData();
+        $siteData['adUnits'] = [
+            self::simpleAdUnit(['size' => 'pop-up']),
+            self::simpleAdUnit(['size' => 'pop-up']),
+        ];
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $siteId = $this->getIdFromLocation($response->headers->get('Location'));
+        self::assertCount(1, (new Zone())->where('site_id', $siteId)->get());
+    }
+
     /**
      * @dataProvider updateDataProvider
      */
     public function testUpdateSite($data): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
+        /** @var  Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => $data]);
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => $data]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $this->getJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_OK)->assertJsonFragment(
+        $this->getJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_OK)->assertJsonFragment(
             [
                 'name' => $data['name'] ?? $site->name,
                 'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
@@ -370,24 +389,192 @@ JSON
         );
     }
 
-    public function testDeleteSite(): void
+    public function testUpdateSiteUrl(): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $url = 'https://example2.com';
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => $url]]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $this->getJson(self::getSiteUri($site->id))
+            ->assertStatus(Response::HTTP_OK)
+            ->assertJsonFragment(['url' => $url]);
+
+        $site->refresh();
+        self::assertEquals(0, $site->rank);
+        self::assertEquals('unknown', $site->info);
+    }
+
+    public function testUpdateSiteInvalidUrl(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var  Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $this->deleteJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_OK);
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => 'ftp://example']]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
 
-        $this->getJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+    public function testUpdateSiteRestorePopUp(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = factory(Zone::class)->create(
+            [
+                'site_id' => $site->id,
+                'type' => 'pop',
+                'size' => 'pop-up',
+                'deleted_at' => new DateTime(),
+            ]
+        );
+
+        $response = $this->patchJson(
+            self::getSiteUri($site->id),
+            ['site' => ['adUnits' => [self::simpleAdUnit(['size' => 'pop-up'])]]]
+        );
+        $response->assertStatus(Response::HTTP_OK);
+
+        $zone->refresh();
+        self::assertFalse($zone->trashed(), 'Zone was not restored.');
+    }
+
+    public function testUpdateSiteDeletePopUp(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = factory(Zone::class)->create(
+            [
+                'site_id' => $site->id,
+                'type' => 'pop',
+                'size' => 'pop-up',
+            ]
+        );
+
+        $response = $this->patchJson(
+            self::getSiteUri($site->id),
+            ['site' => ['adUnits' => [self::simpleAdUnit()]]]
+        );
+        $response->assertStatus(Response::HTTP_OK);
+
+        $zone->refresh();
+        self::assertTrue($zone->trashed(), 'Zone was not deleted.');
+    }
+
+    public function testUpdateSiteAdZone(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = factory(Zone::class)->create(
+            [
+                'name' => 'a',
+                'site_id' => $site->id,
+                'size' => '300x250',
+                'type' => 'display',
+            ]
+        );
+
+        $response = $this->patchJson(
+            self::getSiteUri($site->id),
+            [
+                'site' => [
+                    'adUnits' => [
+                        [
+                            'id' => $zone->id,
+                            'name' => 'b',
+                            'size' => '300x250',
+                            'type' => 'display',
+                        ]]
+                ]
+            ]
+        );
+        $response->assertStatus(Response::HTTP_OK);
+
+        $zone->refresh();
+        self::assertEquals('b', $zone->name, 'Zone name was not changed');
+    }
+
+    public function testUpdateSiteAdZoneDeleted(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = factory(Zone::class)->create(
+            [
+                'name' => 'a',
+                'site_id' => $site->id,
+                'size' => '300x250',
+                'type' => 'display',
+                'deleted_at' => new DateTime(),
+            ]
+        );
+
+        $response = $this->patchJson(
+            self::getSiteUri($site->id),
+            [
+                'site' => [
+                    'adUnits' => [
+                        [
+                            'id' => $zone->id,
+                            'name' => 'b',
+                            'size' => '300x250',
+                            'type' => 'display',
+                        ]]
+                ]
+            ]
+        );
+        $response->assertStatus(Response::HTTP_OK);
+
+        $zone->refresh();
+        self::assertEquals('a', $zone->name, 'Deleted zone name was changed');
+        $zones = (new Zone())->where('site_id', $site->id)->get();
+        self::assertCount(1, $zones);
+        self::assertNotEquals($zone->id, $zones->first()->id);
+    }
+
+    public function testDeleteSite(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $this->deleteJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_OK);
+
+        $this->getJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testDeleteSiteWithZones(): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
+        /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
-        $site->zones(factory(Zone::class, 3)->create(['site_id' => $site->id]));
+        factory(Zone::class, 3)->create(['site_id' => $site->id]);
 
         $this->assertDatabaseHas(
             'zones',
@@ -396,7 +583,7 @@ JSON
             ]
         );
 
-        $this->deleteJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_OK);
+        $this->deleteJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_OK);
 
         $this->assertDatabaseMissing(
             'sites',
@@ -430,18 +617,20 @@ JSON
             ]
         );
 
-        $this->getJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+        $this->getJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testFailDeleteNotOwnedSite(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
+        /** @var User $user */
         $user = factory(User::class)->create();
+        /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
         $this->actingAs(factory(User::class)->create(), 'api');
-        $this->deleteJson(self::URI . "/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+        $this->deleteJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function updateDataProvider(): array
@@ -478,20 +667,20 @@ JSON
      */
     public function updateZonesInSite($data): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
+        /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
-        $site->zones(
-            factory(Zone::class, 3)->create(['site_id' => $site->id])
-        );
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        factory(Zone::class, 3)->create(['site_id' => $site->id]);
+        $response = $this->getJson(self::getSiteUri($site->id));
         $response->assertJsonCount(3, 'adUnits');
 
-        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['adUnits' => $data]]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response = $this->getJson(self::getSiteUri($site->id));
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::SITE_STRUCTURE);
         $response->assertJsonCount(2, 'adUnits');
@@ -555,20 +744,20 @@ JSON
      */
     public function failZoneUpdatesInSite($data): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
+        /** @var Site $site */
         $site = factory(Site::class)->create(['user_id' => $user->id]);
-        $site->zones(
-            factory(Zone::class, 3)->create(['site_id' => $site->id])
-        );
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        factory(Zone::class, 3)->create(['site_id' => $site->id]);
+        $response = $this->getJson(self::getSiteUri($site->id));
         $response->assertJsonCount(3, 'adUnits');
 
-        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['adUnits' => $data]]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response = $this->getJson(self::getSiteUri($site->id));
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::SITE_STRUCTURE);
         $response->assertJsonCount(2, 'adUnits');
@@ -675,6 +864,10 @@ JSON
         ];
     }
 
+    /**
+     * @return void
+     * @throws Throwable
+     */
     public function testSiteCodesConfirm(): void
     {
         /** @var User $user */
@@ -746,6 +939,44 @@ JSON
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::RANK_STRUCTURE);
         self::assertEquals(0.2, $response->json('rank'));
         self::assertEquals(AdUser::PAGE_INFO_LOW_CTR, $response->json('info'));
+    }
+
+    public function testChangeStatus(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
+
+        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => Site::STATUS_INACTIVE]])
+            ->assertStatus(Response::HTTP_OK);
+        $site->refresh();
+        self::assertEquals(Site::STATUS_INACTIVE, $site->status);
+    }
+
+    public function testChangeStatusInvalid(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => -1]])
+            ->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testChangeStatusMissing(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['stat' => -1]])
+            ->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
     protected function setUp(): void

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
-use Adshares\Adserver\Jobs\AdUserRegisterUrl;
 use Adshares\Adserver\Mail\Crm\SiteAdded;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -51,18 +50,16 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
-    /** @var SiteCategoriesValidator */
-    private $siteCategoriesValidator;
+    private SiteCategoriesValidator $siteCategoriesValidator;
 
-    /** @var SiteFilteringUpdater */
-    private $siteClassificationUpdater;
+    private SiteFilteringUpdater $siteFilteringUpdater;
 
     public function __construct(
         SiteCategoriesValidator $siteCategoriesValidator,
-        SiteFilteringUpdater $siteClassificationUpdater
+        SiteFilteringUpdater $siteFilteringUpdater
     ) {
         $this->siteCategoriesValidator = $siteCategoriesValidator;
-        $this->siteClassificationUpdater = $siteClassificationUpdater;
+        $this->siteFilteringUpdater = $siteFilteringUpdater;
     }
 
     public function create(Request $request): JsonResponse
@@ -95,7 +92,7 @@ class SitesController extends Controller
             $user = Auth::user();
             $site->user_id = $user->id;
             $site->save();
-            $this->siteClassificationUpdater->addClassificationToFiltering($site);
+            $this->siteFilteringUpdater->addClassificationToFiltering($site);
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
@@ -170,7 +167,7 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
-            $this->siteClassificationUpdater->addClassificationToFiltering($site);
+            $this->siteFilteringUpdater->addClassificationToFiltering($site);
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
