@@ -469,11 +469,14 @@ MSG;
         }
         $this->validateRequestObject($request, 'user', User::$rules);
 
+        DB::beginTransaction();
         if (Auth::check()) {
             $user = Auth::user();
             $token_authorization = false;
         } else {
             if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
+                DB::rollBack();
+
                 return self::json(
                     [],
                     Response::HTTP_UNPROCESSABLE_ENTITY,
@@ -489,6 +492,8 @@ MSG;
             null !== $user->password &&
             (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old')))
         ) {
+            DB::rollBack();
+
             return self::json(
                 $user->toArray(),
                 Response::HTTP_UNPROCESSABLE_ENTITY,
@@ -496,7 +501,6 @@ MSG;
             );
         }
 
-        DB::beginTransaction();
         $user->password = $request->input('user.password_new');
         $user->api_token = null;
         $user->save();
