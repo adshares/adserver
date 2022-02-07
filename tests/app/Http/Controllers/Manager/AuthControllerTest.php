@@ -643,7 +643,8 @@ class AuthControllerTest extends TestCase
 
     public function testLogInAndLogOut(): void
     {
-        $user = $this->registerUser();
+        /** @var User $user */
+        $user = factory(User::class)->create(['password' => '87654321']);
 
         $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321'])
             ->assertStatus(Response::HTTP_OK);
@@ -683,15 +684,13 @@ class AuthControllerTest extends TestCase
 
     public function testChangePassword(): void
     {
-        $user = $this->registerUser();
-
-        $response = $this->post(self::LOG_IN_URI, [
-            'email' => $user->email,
+        /** @var User $user */
+        $user = factory(User::class)->create([
+            'api_token' => '1234',
             'password' => '87654321',
         ]);
-        $response->assertStatus(Response::HTTP_OK);
-        $apiToken = User::fetchById($user->id)->api_token;
-        self::assertNotNull($apiToken, 'Token is null');
+        $this->actingAs($user, 'api');
+        self::assertNotNull($user->api_token, 'Token is null');
 
         $response = $this->patch(
             self::SELF_URI,
@@ -700,13 +699,10 @@ class AuthControllerTest extends TestCase
                     'password_old' => '87654321',
                     'password_new' => 'qwerty123',
                 ]
-            ],
-            [
-                'Authorization' => 'Bearer ' . $apiToken
             ]
         );
         $response->assertStatus(Response::HTTP_OK);
-        self::assertNull(User::fetchById($user->id)->api_token, 'Token is not null');
+        self::assertNull($user->api_token, 'Token is not null');
     }
 
     public function testChangeInvalidOldPassword(): void
@@ -739,8 +735,7 @@ class AuthControllerTest extends TestCase
 
     public function testChangePasswordNoPassword(): void
     {
-        $user = $this->registerUser();
-        $this->actingAs($user, 'api');
+        $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->patch(self::SELF_URI, [
             'user' => [
@@ -752,6 +747,7 @@ class AuthControllerTest extends TestCase
 
     public function testChangePasswordNoUser(): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $token = Token::generate(Token::PASSWORD_RECOVERY, $user);
 
