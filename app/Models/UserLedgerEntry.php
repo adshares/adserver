@@ -168,7 +168,7 @@ class UserLedgerEntry extends Model
             ->where('amount', '<', 0);
     }
 
-    private static function queryForEntriesRelevantForBalance($check_user_deleted = false)
+    private static function queryForEntriesRelevantForBalance($withTrashed = true)
     {
         $r = self::where(
             function (Builder $query) {
