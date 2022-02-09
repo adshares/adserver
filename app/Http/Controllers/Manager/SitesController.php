@@ -52,47 +52,60 @@ class SitesController extends Controller
 {
     private SiteCategoriesValidator $siteCategoriesValidator;
 
-    private SiteFilteringUpdater $siteFilteringUpdater;
-
     public function __construct(
-        SiteCategoriesValidator $siteCategoriesValidator,
-        SiteFilteringUpdater $siteFilteringUpdater
+        SiteCategoriesValidator $siteCategoriesValidator
     ) {
         $this->siteCategoriesValidator = $siteCategoriesValidator;
-        $this->siteFilteringUpdater = $siteFilteringUpdater;
     }
 
     public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-        if (!SiteValidator::isUrlValid($request->input('site.url'))) {
+
+        $input = $request->input('site');
+
+        if (!in_array($input['status'], Site::ALLOWED_STATUSES, true)) {
+            throw new UnprocessableEntityHttpException('Invalid status');
+        }
+
+        if (!SiteValidator::isUrlValid($input['url'] ?? null)) {
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
+        $url = (string)$input['url'];
+        self::validateDomain(DomainReader::domain($url));
+
         try {
-            $categories = $this->siteCategoriesValidator->processCategories($request->input('site.categories'));
+            $categoriesByUser = $this->siteCategoriesValidator->processCategories($input['categories'] ?? null);
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-        $url = (string)$request->input('site.url');
-        $domain = DomainReader::domain($url);
-        self::validateDomain($domain);
 
-        $inputZones = $request->input('site.ad_units');
+        $onlyAcceptedBanners = $input['only_accepted_banners'] ?? false;
+        if (!is_bool($onlyAcceptedBanners)) {
+            throw new UnprocessableEntityHttpException('Invalid only_accepted_banners');
+        }
+
+        $inputZones = $input['ad_units'] ?? null;
         $this->validateInputZones($inputZones);
+        $filtering = $input['filtering'] ?? null;
+        $this->validateFiltering($filtering);
 
-        $input = $request->input('site');
-        unset($input['categories']);
-        $input['categories_by_user'] = $categories;
-        $input['domain'] = $domain;
+        /** @var User $user */
+        $user = Auth::user();
 
         DB::beginTransaction();
 
         try {
-            $site = Site::create($input);
-            $user = Auth::user();
-            $site->user_id = $user->id;
-            $site->save();
-            $this->siteFilteringUpdater->addClassificationToFiltering($site);
+            $site = Site::create(
+                $user->id,
+                $url,
+                $input['name'],
+                $input['status'],
+                $input['primary_language'],
+                $onlyAcceptedBanners,
+                $categoriesByUser,
+                $filtering,
+            );
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
@@ -167,7 +180,7 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
-            $this->siteFilteringUpdater->addClassificationToFiltering($site);
+            (new SiteFilteringUpdater())->addClassificationToFiltering($site);
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
@@ -344,6 +357,31 @@ class SitesController extends Controller
             }
             if (!isset($inputZone['size']) || !is_string($inputZone['size']) || !Size::isValid($inputZone['size'])) {
                 throw new UnprocessableEntityHttpException('Invalid size.');
+            }
+        }
+    }
+
+    private function validateFiltering($filtering): void
+    {
+        if (!is_array($filtering)) {
+            throw new UnprocessableEntityHttpException('Invalid filtering');
+        }
+        foreach (['requires', 'excludes'] as $rootKey) {
+            if (!is_array($filtering[$rootKey] ?? null)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s', $rootKey));
+            }
+            foreach ($filtering[$rootKey] as $key => $values) {
+                if (!is_string($key)) {
+                    throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s class', $rootKey));
+                }
+                if (!is_array($values)) {
+                    throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s class value', $rootKey));
+                }
+                foreach ($values as $value) {
+                    if (!is_string($value)) {
+                        throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s value', $rootKey));
+                    }
+                }
             }
         }
     }

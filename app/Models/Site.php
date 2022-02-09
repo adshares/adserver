@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringMatcher;
+use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
@@ -54,6 +55,7 @@ use function in_array;
  * @property Carbon reassess_available_at
  * @property int status
  * @property string primary_language
+ * @property array filtering
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
  * @property array|null categories
@@ -61,7 +63,6 @@ use function in_array;
  * @property bool $only_accepted_banners
  * @property Zone[]|Collection zones
  * @property User user
- * @method static Site create($input = null)
  * @method static get()
  * @mixin Builder
  */
@@ -214,6 +215,43 @@ class Site extends Model
         return self::where('uuid', hex2bin($publicId))->first();
     }
 
+    public static function create(
+        int $userId,
+        string $url,
+        string $name,
+        int $status = Site::STATUS_ACTIVE,
+        string $primaryLanguage = 'en',
+        bool $onlyAcceptedBanners = false,
+        array $categoriesByUser = null,
+        array $filtering = null
+    ): Site {
+        if ($categoriesByUser === null) {
+            $categoriesByUser = ['unknown'];
+        }
+        if ($filtering === null) {
+            $filtering = [
+                'requires' => [],
+                'excludes' => [],
+            ];
+        }
+
+        $site = new Site();
+        $site->categories_by_user = $categoriesByUser;
+        $site->domain = DomainReader::domain($url);
+        $site->filtering = $filtering;
+        $site->name = $name;
+        $site->only_accepted_banners = $onlyAcceptedBanners;
+        $site->primary_language = $primaryLanguage;
+        $site->status = $status;
+        $site->url = $url;
+        $site->user_id = $userId;
+        $site->save();
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+
+        return $site;
+    }
+
     public static function fetchOrCreate(int $userId, string $url, string $name): ?self
     {
         $domain = DomainReader::domain($url);
@@ -223,17 +261,11 @@ class Site extends Model
             ->first();
 
         if (!$site) {
-            $site = new Site();
-            $site->name = $name;
-            $site->user_id = $userId;
-            $site->url = $url;
-            $site->domain = $domain;
-            $site->status = self::STATUS_ACTIVE;
-            $site->save();
+            $site = Site::create($userId, $url, $name);
         }
+
         return $site;
     }
-
 
     public static function fetchAll(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
     {

@@ -25,7 +25,6 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -33,7 +32,6 @@ use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTime;
 use DateTimeImmutable;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -211,19 +209,6 @@ JSON
         );
     }
 
-    public function testCreateSiteError(): void
-    {
-        $validator = $this->createMock(SiteCategoriesValidator::class);
-        $validator->method('processCategories')
-            ->willThrowException(new RuntimeException('test-exception'));
-        $this->instance(SiteCategoriesValidator::class, $validator);
-        $this->actingAs(factory(User::class)->create(), 'api');
-
-        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
-
-        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
-    }
-
     /**
      * @dataProvider createSiteUnprocessableProvider
      *
@@ -251,6 +236,9 @@ JSON
                 Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'missing status' => [self::simpleSiteData([], 'status'), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'invalid status' => [self::simpleSiteData(['status' => -1]), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'invalid only_accepted_banners' =>
+                [self::simpleSiteData(['only_accepted_banners' => 1]), Response::HTTP_UNPROCESSABLE_ENTITY],
             'missing url' => [self::simpleSiteData([], 'url'), Response::HTTP_UNPROCESSABLE_ENTITY],
             'invalid url' => [self::simpleSiteData(['url' => 'example']), Response::HTTP_UNPROCESSABLE_ENTITY],
             'invalid ad units type' => [
@@ -286,6 +274,32 @@ JSON
                 self::simpleSiteData(['categories' => ['good']]),
                 Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
+            'missing filtering' => [self::simpleSiteData([], 'filtering'), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'invalid filtering' => [self::simpleSiteData(['filtering' => true]), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'missing filtering.requires' => [
+                self::simpleSiteData(['filtering' => self::filtering([], 'requires')]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid filtering.requires' => [
+                self::simpleSiteData(['filtering' => self::filtering(['requires' => 1])]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'missing filtering.excludes' => [
+                self::simpleSiteData(['filtering' => self::filtering([], 'excludes')]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid filtering.excludes 1' => [
+                self::simpleSiteData(['filtering' => self::filtering(['excludes' => [1]])]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid filtering.excludes 2' => [
+                self::simpleSiteData(['filtering' => self::filtering(['excludes' => ['category' => 'unknown']])]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid filtering.excludes 3' => [
+                self::simpleSiteData(['filtering' => self::filtering(['excludes' => ['category' => [1]]])]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
         ];
     }
 
@@ -298,14 +312,7 @@ JSON
                 'url' => 'https://example.com',
                 'primaryLanguage' => 'en',
                 'onlyAcceptedBanners' => true,
-                'filtering' => [
-                    'requires' => [],
-                    'excludes' => [
-                        'test_classifier:category' => [
-                            'annoying',
-                        ],
-                    ],
-                ],
+                'filtering' => self::filtering(),
                 'adUnits' => [
                     self::simpleAdUnit(),
                 ],
@@ -321,6 +328,27 @@ JSON
         }
 
         return $siteData;
+    }
+
+    private static function filtering(array $mergeData = [], string $remove = null): array
+    {
+        $data = array_merge(
+            [
+                'requires' => [],
+                'excludes' => [
+                    'test_classifier:category' => [
+                        'annoying',
+                    ],
+                ],
+            ],
+            $mergeData
+        );
+
+        if ($remove !== null) {
+            unset($data[$remove]);
+        }
+
+        return $data;
     }
 
     private static function simpleAdUnit(array $mergeData = [], string $remove = null): array
