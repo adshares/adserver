@@ -2,7 +2,7 @@
 // phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,7 +45,11 @@ class AuthControllerTest extends TestCase
 {
     private const CHECK_URI = '/auth/check';
     private const SELF_URI = '/auth/self';
+    private const PASSWORD_URI = '/auth/password';
+    private const EMAIL_ACTIVATE_URI = '/auth/email/activate';
     private const EMAIL_URI = '/auth/email';
+    private const LOG_IN_URI = '/auth/login';
+    private const LOG_OUT_URI = '/auth/logout';
     private const WALLET_LOGIN_INIT_URI = '/auth/login/wallet/init';
     private const WALLET_LOGIN_URI = '/auth/login/wallet';
 
@@ -629,6 +633,29 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testLogInMissingEmail(): void
+    {
+        $response = $this->post(self::LOG_IN_URI, [
+            'password' => '87654321',
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testLogInAndLogOut(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['password' => '87654321']);
+
+        $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321'])
+            ->assertStatus(Response::HTTP_OK);
+        $apiToken = User::fetchById($user->id)->api_token;
+        self::assertNotNull($apiToken, 'Token is null');
+
+        $this->get(self::LOG_OUT_URI, ['Authorization' => 'Bearer ' . $apiToken])
+            ->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertNull(User::fetchById($user->id)->api_token, 'Token is not null');
+    }
+
     public function testSetPassword(): void
     {
         $user = $this->walletRegisterUser();
@@ -657,16 +684,25 @@ class AuthControllerTest extends TestCase
 
     public function testChangePassword(): void
     {
-        $user = $this->registerUser();
-        $this->actingAs($user, 'api');
-
-        $response = $this->patch(self::SELF_URI, [
-            'user' => [
-                'password_old' => '87654321',
-                'password_new' => 'qwerty123',
-            ]
+        /** @var User $user */
+        $user = factory(User::class)->create([
+            'api_token' => '1234',
+            'password' => '87654321',
         ]);
+        $this->actingAs($user, 'api');
+        self::assertNotNull($user->api_token, 'Token is null');
+
+        $response = $this->patch(
+            self::SELF_URI,
+            [
+                'user' => [
+                    'password_old' => '87654321',
+                    'password_new' => 'qwerty123',
+                ]
+            ]
+        );
         $response->assertStatus(Response::HTTP_OK);
+        self::assertNull($user->api_token, 'Token is not null');
     }
 
     public function testChangeInvalidOldPassword(): void
@@ -697,6 +733,55 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testChangePasswordNoPassword(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'email' => $this->faker->email(),
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testChangePasswordNoUser(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $token = Token::generate(Token::PASSWORD_RECOVERY, $user);
+
+        $response = $this->patch(self::PASSWORD_URI, [
+            'user' => [
+                'password_new' => '1234567890',
+                'token' => $token->uuid,
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertNotEquals($user->password, User::fetchById($user->id)->password);
+    }
+
+    public function testChangePasswordNoToken(): void
+    {
+        $response = $this->patch(self::PASSWORD_URI, [
+            'user' => [
+                'password_new' => '1234567890',
+                'token' => '0123456789ABCDEF0123456789ABCDEF',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangePasswordUnauthorized(): void
+    {
+        $response = $this->patch(self::PASSWORD_URI, [
+            'user' => [
+                'password_new' => 'qwerty123',
+            ]
+        ]);
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
     public function testSetEmail(): void
     {
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
@@ -709,7 +794,7 @@ class AuthControllerTest extends TestCase
             'uri_step1' => '/auth/email-activation/',
             'uri_step2' => '/auth/email-activation/'
         ]);
-        $response->assertStatus(Response::HTTP_OK);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
     public function testSetEmailStep1(): void
@@ -726,7 +811,6 @@ class AuthControllerTest extends TestCase
         ]);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         Mail::assertQueued(UserEmailActivate::class);
-
     }
 
     public function testSetInvalidEmail(): void
@@ -754,21 +838,6 @@ class AuthControllerTest extends TestCase
             'uri_step1' => '/auth/email-activation/',
             'uri_step2' => '/auth/email-activation/'
         ]);
-        $response->assertStatus(Response::HTTP_OK);
-    }
-
-    public function testChangeEmailStep1(): void
-    {
-        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
-
-        $user = $this->registerUser();
-        $this->actingAs($user, 'api');
-
-        $response = $this->post(self::EMAIL_URI, [
-            'email' => $this->faker->unique()->email,
-            'uri_step1' => '/auth/email-activation/',
-            'uri_step2' => '/auth/email-activation/'
-        ]);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         Mail::assertQueued(UserEmailChangeConfirm1Old::class);
     }
@@ -784,6 +853,19 @@ class AuthControllerTest extends TestCase
             'uri_step2' => '/auth/email-activation/'
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testEmailActivationNoToken(): void
+    {
+        $response = $this->postJson(
+            self::EMAIL_ACTIVATE_URI,
+            [
+                'user' => [
+                    'emailConfirmToken' => '00',
+                ],
+            ]
+        );
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     private function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
@@ -834,7 +916,7 @@ class AuthControllerTest extends TestCase
         $activationToken = Token::where('user_id', $user->id)->where('tag', 'email-activate')->firstOrFail();
 
         $response = $this->postJson(
-            '/auth/email/activate',
+            self::EMAIL_ACTIVATE_URI,
             [
                 'user' => [
                     'emailConfirmToken' => $activationToken->uuid,

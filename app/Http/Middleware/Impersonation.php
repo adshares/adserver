@@ -40,7 +40,7 @@ class Impersonation
         /** @var User $logged */
         $logged = Auth::user();
         if ($header && $header !== 'null' && ($logged->isModerator() || $logged->isAgency())) {
-            if (false !== ($token = Token::check($header))) {
+            if (false !== ($token = Token::check($header, null, Token::IMPERSONATION))) {
                 $userId = (int)$token['payload'];
                 if ($logged->isModerator() || in_array($userId, $logged->getReferralIds())) {
                     /** @var User|Authenticatable $user */
