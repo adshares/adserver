@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -42,7 +42,7 @@ class SiteClassificationUpdateCommand extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
-        $siteClassificationUpdater = new SiteFilteringUpdater();
+        $siteClassificationUpdater = resolve(SiteFilteringUpdater::class);
         foreach (Site::all() as $site) {
             $siteClassificationUpdater->addClassificationToFiltering($site);
         }
