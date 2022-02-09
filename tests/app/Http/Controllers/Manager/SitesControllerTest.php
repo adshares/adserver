@@ -92,7 +92,7 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
 
-        $response = $this->getJson(self::URI . '/1');
+        $response = $this->getJson(self::getSiteUri(1));
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -530,7 +530,8 @@ JSON
                             'name' => 'b',
                             'size' => '300x250',
                             'type' => 'display',
-                        ]]
+                        ]
+                    ]
                 ]
             ]
         );
@@ -568,7 +569,8 @@ JSON
                             'name' => 'b',
                             'size' => '300x250',
                             'type' => 'display',
-                        ]]
+                        ]
+                    ]
                 ]
             ]
         );
@@ -804,7 +806,7 @@ JSON
 
         $id = $this->getIdFromLocation($postResponse->headers->get('Location'));
 
-        $response = $this->getJson(self::URI . '/' . $id);
+        $response = $this->getJson(self::getSiteUri($id));
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonCount(
             2,
             'filtering'
