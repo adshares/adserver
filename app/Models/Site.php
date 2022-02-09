@@ -263,7 +263,7 @@ class Site extends Model
         $site = $builder->first();
 
         if (!$site) {
-            $site = Site::create($userId, $url, $name);
+            $site = Site::create($userId, $url, $name ?? $domain);
         }
 
         return $site;
