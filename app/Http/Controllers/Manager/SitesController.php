@@ -180,7 +180,7 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
-            (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+            resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
