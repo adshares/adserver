@@ -180,7 +180,7 @@ class UserLedgerEntry extends Model
                     );
             }
         )->whereIn('type', array_merge(self::CREDIT_TYPES, self::DEBIT_TYPES));
-        if ($check_user_deleted) {
+        if (!$withTrashed ) {
             $r = $r->join('users', 'users.id', 'user_ledger_entries.user_id')->whereNull('users.deleted_at');
         }
         return $r;
