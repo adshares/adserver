@@ -247,7 +247,7 @@ class Site extends Model
         $site->user_id = $userId;
         $site->save();
 
-        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+        resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
 
         return $site;
     }

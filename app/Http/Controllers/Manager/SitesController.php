@@ -180,7 +180,7 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
-            (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+            resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
@@ -370,17 +370,22 @@ class SitesController extends Controller
             if (!is_array($filtering[$rootKey] ?? null)) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s', $rootKey));
             }
-            foreach ($filtering[$rootKey] as $key => $values) {
-                if (!is_string($key)) {
-                    throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s class', $rootKey));
-                }
-                if (!is_array($values)) {
-                    throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s class value', $rootKey));
-                }
-                foreach ($values as $value) {
-                    if (!is_string($value)) {
-                        throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s value', $rootKey));
-                    }
+            $this->validateFilteringConditions($filtering[$rootKey], $rootKey);
+        }
+    }
+
+    private function validateFilteringConditions(array $filteringConditions, string $rootKey): void
+    {
+        foreach ($filteringConditions as $key => $values) {
+            if (!is_string($key)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s class', $rootKey));
+            }
+            if (!is_array($values)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s class value', $rootKey));
+            }
+            foreach ($values as $value) {
+                if (!is_string($value)) {
+                    throw new UnprocessableEntityHttpException(sprintf('Invalid filtering %s value', $rootKey));
                 }
             }
         }
