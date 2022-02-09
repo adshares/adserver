@@ -111,9 +111,9 @@ class SupplyController extends Controller
             }
         }
 
-        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], 'Default Site');
+        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url']);
         if ($site->status != Site::STATUS_ACTIVE) {
-            return $this->sendError("site", "Site 'Default Site' is not active");
+            return $this->sendError("site", "Site '". $site->name ."' is not active");
         }
         $validated['$site'] = $site;
 
@@ -328,7 +328,9 @@ class SupplyController extends Controller
             return new FoundBanners();
         }
 
-        $zones = array_slice($zones, 0, config('app.max_page_zones'));
+        if (($decodedQueryData['zone_mode'] ?? '') !== 'best_match') {
+            $zones = array_slice($zones, 0, config('app.max_page_zones'));
+        }
 
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
@@ -381,15 +383,18 @@ class SupplyController extends Controller
         $foundBanners = $bannerFinder->findBanners($zones, $context);
 
         if (($decodedQueryData['zone_mode'] ?? '') === 'best_match') {
-            $foundBanners = new FoundBanners(
+            $foundBanners =
                 array_values(
                     $foundBanners->filter(
                         function ($element) {
                             return $element != null;
                         }
-                    )->slice(0, 1)
-                )
-            );
+                    )->slice(0));
+                usort($foundBanners, function($a, $b) {
+                   return ($a['rpm'] ?? 9999) - ($b['rpm'] ?? 9999);
+                });
+
+                $foundBanners = new FoundBanners(array_slice($foundBanners, 0, 1));
         }
 
         if (
