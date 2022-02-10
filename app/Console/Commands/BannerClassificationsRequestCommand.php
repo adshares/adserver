@@ -33,15 +33,13 @@ use Illuminate\Support\Collection;
 
 class BannerClassificationsRequestCommand extends BaseCommand
 {
-    protected $signature = 'ops:demand:classification:request';
+    private const DATA_BATCH = 500;
 
+    protected $signature = 'ops:demand:classification:request';
     protected $description = 'Requests banner classification from classifiers';
 
-    /** @var ClassifierExternalClient */
-    private $client;
-
-    /** @var ClassifierExternalRepository */
-    private $classifierRepository;
+    private ClassifierExternalClient $client;
+    private ClassifierExternalRepository $classifierRepository;
 
     public function __construct(
         ClassifierExternalClient $client,
@@ -50,7 +48,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
     ) {
         $this->client = $client;
         $this->classifierRepository = $classifierRepository;
-
         parent::__construct($locker);
     }
 
@@ -58,18 +55,19 @@ class BannerClassificationsRequestCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
         $this->info('Start command ' . $this->signature);
 
-        $classifications = BannerClassification::fetchPendingForClassification();
-
-        $this->info('[BannerClassificationRequest] number of requests to process: ' . $classifications->count());
-
-        $dataSet = $this->prepareData($classifications);
-        $this->processData($dataSet);
+        $offset = 0;
+        do {
+            $classifications = BannerClassification::fetchPendingForClassification(self::DATA_BATCH, $offset);
+            $this->info('[BannerClassificationRequest] number of requests to process: ' . $classifications->count());
+            $dataSet = $this->prepareData($classifications);
+            $this->processData($dataSet);
+            $offset += $classifications->count();
+        } while (!$classifications->isEmpty());
 
         $this->info('Finish command ' . $this->signature);
     }
@@ -77,11 +75,16 @@ class BannerClassificationsRequestCommand extends BaseCommand
     private function prepareData(Collection $classifications): array
     {
         $dataSet = [];
-
         /** @var BannerClassification $classification */
         foreach ($classifications as $classification) {
             $classifierName = $classification->classifier;
             $banner = $classification->banner;
+
+            if (null === $banner || null === $banner->campaign) {
+                $classification->failed();
+                continue;
+            }
+
             $bannerPublicId = $banner->uuid;
             $campaign = $banner->campaign;
             $checksum = $banner->creative_sha1;
@@ -98,7 +101,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 'landing_url' => $campaign->landing_url,
             ];
         }
-
         return $dataSet;
     }
 
@@ -112,7 +114,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
                         $classifierName
                     )
                 );
-
                 continue;
             }
 
@@ -133,7 +134,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
     {
         try {
             $this->client->requestClassification($classifier, $data);
-
             return true;
         } catch (RuntimeException $exception) {
             $this->info(
@@ -144,7 +144,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 )
             );
         }
-
         return false;
     }
 }
