@@ -33,7 +33,7 @@ use Illuminate\Support\Collection;
 
 class BannerClassificationsRequestCommand extends BaseCommand
 {
-    private const DATA_BATCH = 5;
+    private const DATA_BATCH = 500;
 
     protected $signature = 'ops:demand:classification:request';
     protected $description = 'Requests banner classification from classifiers';
