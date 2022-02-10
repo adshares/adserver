@@ -144,12 +144,12 @@ class BannerClassification extends Model
         );
     }
 
-    public static function fetchPendingForClassification(): Collection
+    public static function fetchPendingForClassification(int $limit = 10000, int $offset = 0): Collection
     {
         return BannerClassification::whereIn(
             'status',
             [BannerClassification::STATUS_NEW, BannerClassification::STATUS_ERROR]
-        )->get();
+        )->limit($limit)->offset($offset)->get();
     }
 
     public static function fetchCampaignClassifications(int $campaignId): array

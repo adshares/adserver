@@ -354,19 +354,22 @@ class UserLedgerEntry extends Model
             self::insertAdExpense($status, $userId, $payableAmount, self::TYPE_AD_EXPENSE),
         ];
 
-        if (self::STATUS_ACCEPTED === $status && Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED)) {
-            if (null !== ($refLink = User::find($userId)->refLink) && $refLink->refund_active) {
-                $entries[] = self::insertUserRefund(
-                    $refLink->user_id,
-                    $refLink->calculateRefund($payableAmount),
-                    $refLink
-                );
-                $entries[] = self::insertUserBonus(
-                    $userId,
-                    $refLink->calculateBonus($payableAmount),
-                    $refLink
-                );
-            }
+        if (
+            self::STATUS_ACCEPTED === $status
+            && Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED)
+            && null !== ($refLink = User::find($userId)->refLink)
+            && $refLink->refund_active
+        ) {
+            $entries[] = self::insertUserRefund(
+                $refLink->user_id,
+                $refLink->calculateRefund($payableAmount),
+                $refLink
+            );
+            $entries[] = self::insertUserBonus(
+                $userId,
+                $refLink->calculateBonus($payableAmount),
+                $refLink
+            );
         }
 
         return array_filter($entries);
