@@ -180,7 +180,7 @@ class UserLedgerEntry extends Model
                     );
             }
         )->whereIn('type', array_merge(self::CREDIT_TYPES, self::DEBIT_TYPES));
-        if (!$withTrashed ) {
+        if (!$withTrashed) {
             $r = $r->join('users', 'users.id', 'user_ledger_entries.user_id')->whereNull('users.deleted_at');
         }
         return $r;
@@ -206,8 +206,12 @@ class UserLedgerEntry extends Model
 
     public static function getUnusedBonusesForAllUsers(): int
     {
-        return (int)self::queryForEntriesRelevantForBalance(true)->where('type', self::TYPE_BONUS_INCOME)->sum('amount')
-            - (int)self::queryForEntriesRelevantForBalance(true)->where('type', self::TYPE_BONUS_EXPENSE)->sum('amount');
+        return (int)self::queryForEntriesRelevantForBalance(true)
+                ->where('type', self::TYPE_BONUS_INCOME)
+                ->sum('amount')
+            - (int)self::queryForEntriesRelevantForBalance(true)
+                ->where('type', self::TYPE_BONUS_EXPENSE)
+                ->sum('amount');
     }
 
     public static function getWalletBalanceForAllUsers(): int
