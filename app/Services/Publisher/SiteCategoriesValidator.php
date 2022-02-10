@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,11 +29,9 @@ use Adshares\Common\Exception\InvalidArgumentException;
 
 class SiteCategoriesValidator
 {
-    /** @var ConfigurationRepository */
-    private $configurationRepository;
+    private ConfigurationRepository $configurationRepository;
 
-    /** @var TargetingProcessor */
-    private $targetingProcessor;
+    private TargetingProcessor $targetingProcessor;
 
     public function __construct(ConfigurationRepository $configurationRepository)
     {
@@ -49,7 +47,7 @@ class SiteCategoriesValidator
             throw new InvalidArgumentException('Field `categories` must be an array.');
         }
 
-        if (!$this->targetingProcessor) {
+        if (!isset($this->targetingProcessor)) {
             $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
         }
         $targeting = $this->targetingProcessor->processTargeting(['site' => ['category' => $categories]]);

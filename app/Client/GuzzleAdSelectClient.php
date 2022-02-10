@@ -232,7 +232,6 @@ class GuzzleAdSelectClient implements AdSelect
             foreach ($existingZones as $zone) {
                 $zoneInput[] = $zoneInputByUuid[$zone->uuid] ?? [];
             }
-
             try {
                 $result = $this->client->post(
                     self::URI_FIND_BANNERS,

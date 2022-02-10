@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -50,12 +50,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AuthController extends Controller
 {
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
+    private ExchangeRateReader $exchangeRateReader;
 
     public function __construct(ExchangeRateReader $exchangeRateReader)
     {
@@ -112,7 +113,7 @@ class AuthController extends Controller
         Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
 
         DB::beginTransaction();
-        $token = Token::check($request->input('user.email_confirm_token'));
+        $token = Token::check($request->input('user.email_confirm_token'), null, Token::EMAIL_ACTIVATE);
         if (false === $token) {
             DB::rollBack();
             return self::json([], Response::HTTP_FORBIDDEN);
@@ -203,18 +204,12 @@ class AuthController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $userHasEmail = null !== $user->email;
+        $userHasEmail = null !== $user->email && null !== $user->email_confirmed_at;
 
         DB::beginTransaction();
-        if (!$userHasEmail || !Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+        if (!$userHasEmail) {
             $user->email = $request->input('email');
             $user->saveOrFail();
-        }
-        if (!Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
-            $this->confirmEmail($user);
-            $user->saveOrFail();
-            DB::commit();
-            return self::json($user->toArray());
         }
 
         $tag = $userHasEmail ? Token::EMAIL_CHANGE_STEP_1 : Token::EMAIL_ACTIVATE;
@@ -229,7 +224,7 @@ class AuthController extends Controller
                 ]
             );
         }
-        $token = Token::generate($tag, $user, $request->all());
+        $token = Token::generate($tag, $user, $request->only('email', 'uri_step1', 'uri_step2', 'uri'));
         $mailable = $userHasEmail ?
             new UserEmailChangeConfirm1Old($token->uuid, $request->input('uri_step1')) :
             new UserEmailActivate($token->uuid, $request->input('uri'));
@@ -243,7 +238,7 @@ class AuthController extends Controller
     public function emailChangeStep2($token): JsonResponse
     {
         DB::beginTransaction();
-        if (false === $token = Token::check($token)) {
+        if (false === $token = Token::check($token, null, Token::EMAIL_CHANGE_STEP_1)) {
             DB::commit();
 
             return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
@@ -272,7 +267,7 @@ class AuthController extends Controller
     public function emailChangeStep3($token): JsonResponse
     {
         DB::beginTransaction();
-        if (false === $token = Token::check($token)) {
+        if (false === $token = Token::check($token, null, Token::EMAIL_CHANGE_STEP_2)) {
             DB::commit();
 
             return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
@@ -461,53 +456,33 @@ MSG;
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function updateSelf(Request $request): JsonResponse
+    public function changePassword(Request $request): JsonResponse
     {
         if (!Auth::check() && !$request->has('user.token')) {
-            return self::json(
-                [],
-                Response::HTTP_UNAUTHORIZED,
-                ['message' => 'Required authenticated access or token authentication']
-            );
+            throw new UnauthorizedHttpException('', 'Required authenticated access or token authentication');
         }
+
+        if (!$request->has('user.password_new')) {
+            throw new BadRequestHttpException('Field `user.password_new` is required.');
+        }
+        $this->validateRequestObject($request, 'user', User::$rules);
 
         DB::beginTransaction();
         if (Auth::check()) {
             $user = Auth::user();
             $token_authorization = false;
         } else {
-            if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
+            if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
                 DB::rollBack();
 
-                return self::json(
-                    [],
-                    Response::HTTP_UNPROCESSABLE_ENTITY,
-                    ['message' => 'Authentication token is invalid']
-                );
+                throw new UnprocessableEntityHttpException('Authentication token is invalid');
             }
             $user = User::findOrFail($token['user_id']);
             $token_authorization = true;
         }
 
-        $this->validateRequestObject($request, 'user', User::$rules);
-        $user->fill($request->input('user'));
-
-        if (!$request->has('user.password_new')) {
-            $user->save();
-            DB::commit();
-
-            return self::json($user->toArray());
-        }
-
-        if ($token_authorization) {
-            $user->password = $request->input('user.password_new');
-            $user->save();
-            DB::commit();
-
-            return self::json($user->toArray());
-        }
-
         if (
+            !$token_authorization &&
             null !== $user->password &&
             (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old')))
         ) {
@@ -521,6 +496,7 @@ MSG;
         }
 
         $user->password = $request->input('user.password_new');
+        $user->api_token = null;
         $user->save();
         DB::commit();
 

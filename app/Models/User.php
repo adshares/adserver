@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -49,6 +49,9 @@ use Illuminate\Support\Facades\Hash;
  * @property string uuid
  * @property int|null ref_link_id
  * @property RefLink|null refLink
+ * @property string|null name
+ * @property string|null password
+ * @property string|null api_token
  * @property int subscribe
  * @property bool is_email_confirmed
  * @property bool is_admin_confirmed
@@ -329,7 +332,7 @@ class User extends Authenticatable
 
     public function getRefundBalance(): int
     {
-        return UserLedgerEntry::getBonusBalanceByUserId($this->id);
+        return $this->getBonusBalance();
     }
 
     public function refLink(): BelongsTo

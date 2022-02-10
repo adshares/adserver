@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,10 +19,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use Adshares\Adserver\Http\Controllers\Manager\AuthController;
-use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
@@ -39,7 +39,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
 
     Route::get('check', [AuthController::class, 'check']);
 
-    Route::patch('self', [AuthController::class, 'updateSelf']);
+    Route::patch('self', [AuthController::class, 'changePassword']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
 });
 
@@ -52,5 +52,5 @@ Route::middleware([Kernel::GUEST_ACCESS, Kernel::JSON_API])->group(function () {
     Route::post('recovery', [AuthController::class, 'recovery']);
 
     Route::post('register', [AuthController::class, 'register']);
-    Route::patch('password', [AuthController::class, 'updateSelf']);
+    Route::patch('password', [AuthController::class, 'changePassword']);
 });

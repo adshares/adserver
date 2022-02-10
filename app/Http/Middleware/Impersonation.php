@@ -39,18 +39,21 @@ class Impersonation
         $header = $request->header(self::HEADER_NAME);
         /** @var User $logged */
         $logged = Auth::user();
-        if ($header && $header !== 'null' && ($logged->isModerator() || $logged->isAgency())) {
-            if (false !== ($token = Token::check($header))) {
-                $userId = (int)$token['payload'];
-                if ($logged->isModerator() || in_array($userId, $logged->getReferralIds())) {
-                    /** @var User|Authenticatable $user */
-                    $user = User::where('id', $userId)
-                        ->where('is_admin', 0)
-                        ->where('is_moderator', 0)
-                        ->first();
-                    if ($user) {
-                        Auth::setUser($user);
-                    }
+        if (
+            $header
+            && $header !== 'null'
+            && ($logged->isModerator() || $logged->isAgency())
+            && false !== ($token = Token::check($header, null, Token::IMPERSONATION))
+        ) {
+            $userId = (int)$token['payload'];
+            if ($logged->isModerator() || in_array($userId, $logged->getReferralIds())) {
+                /** @var User|Authenticatable $user */
+                $user = User::where('id', $userId)
+                    ->where('is_admin', 0)
+                    ->where('is_moderator', 0)
+                    ->first();
+                if ($user) {
+                    Auth::setUser($user);
                 }
             }
         }
