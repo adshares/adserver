@@ -27,6 +27,7 @@ use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\Classification;
+use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 
 class CampaignMapper
@@ -39,11 +40,15 @@ class CampaignMapper
         foreach ($campaign->getBanners() as $banner) {
             $mappedBanner = [
                 'banner_id' => $banner->getId(),
-                'banner_size' => $banner->getSize(),
                 'keywords' => [
                     'type' => [$banner->getType()],
                 ],
             ];
+            if ($banner->getType() === Banner::TYPE_VIDEO) {
+                $mappedBanner['banner_size'] = Size::findMatching(...Size::toDimensions($banner->getSize()));
+            } else {
+                $mappedBanner['banner_size'] = $banner->getSize();
+            }
             if ($banner->getMime() !== null) {
                 $mappedBanner['keywords']['mime'] = [$banner->getMime()];
             }

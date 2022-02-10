@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,8 +36,7 @@ class InventoryImporterCommand extends BaseCommand
 
     protected $description = 'Import data from all defined inventories';
 
-    /** @var InventoryImporter  */
-    private $inventoryImporterService;
+    private InventoryImporter $inventoryImporterService;
 
     public function __construct(Locker $locker, InventoryImporter $inventoryImporterService)
     {
@@ -54,7 +53,6 @@ class InventoryImporterCommand extends BaseCommand
                 . $this->signature
                 . ' cannot be started while import from demand or export to adselect is in progress'
             );
-
             return;
         }
 
@@ -67,7 +65,6 @@ class InventoryImporterCommand extends BaseCommand
         $networkHostCount = $networkHosts->count();
         if ($networkHostCount === 0) {
             $this->info('[Inventory Importer] Stopped importing. No hosts found.');
-
             return;
         }
 

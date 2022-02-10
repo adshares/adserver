@@ -171,6 +171,16 @@ final class CampaignFactoryTest extends TestCase
         CampaignFactory::createFromArray($data);
     }
 
+    public function testCreateFromArrayWhenImageBannerSizeInvalid(): void
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        $data['banners'][0]['size'] = '5x5';
+
+        CampaignFactory::createFromArray($data);
+    }
+
     public function testCreateFromArrayWhenAllRequiredFieldsAreFilled(): void
     {
         $instance = CampaignFactory::createFromArray($this->data);

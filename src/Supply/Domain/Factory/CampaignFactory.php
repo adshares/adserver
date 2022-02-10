@@ -189,8 +189,7 @@ class CampaignFactory
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new InvalidCampaignArgumentException('Unsupported video size.');
             }
-            $dimensions = Size::toDimensions($size);
-            if (empty(Size::findMatching($dimensions[0], $dimensions[1]))) {
+            if (empty(Size::findMatching(...Size::toDimensions($size)))) {
                 throw new InvalidCampaignArgumentException('Unsupported video size. No match');
             }
             return;

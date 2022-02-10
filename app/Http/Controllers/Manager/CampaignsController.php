@@ -669,8 +669,7 @@ class CampaignsController extends Controller
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new RuntimeException(sprintf('Invalid video size: %s.', $size));
             }
-            $dimensions = Size::toDimensions($size);
-            if (empty(Size::findMatching($dimensions[0], $dimensions[1]))) {
+            if (empty(Size::findMatching(...Size::toDimensions($size)))) {
                 throw new RuntimeException(sprintf('Invalid video size: %s. No match', $size));
             }
             return;
