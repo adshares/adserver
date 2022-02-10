@@ -43,7 +43,6 @@ use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
-use Adshares\Adserver\Uploader\Video\UploadedVideo;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -663,15 +662,18 @@ class CampaignsController extends Controller
         }
     }
 
-    private static function validateSize($banner): void
+    private static function validateSize(array $banner): void
     {
         $size = $banner['creative_size'];
         if ($banner['type'] === Banner::TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new RuntimeException(sprintf('Invalid video size: %s.', $size));
             }
-            $dimensions = explode('x', $size);
-            $size = Size::getAspect((int)$dimensions[0], (int)$dimensions[1]);
+            $dimensions = Size::toDimensions($size);
+            if (empty(Size::findMatching($dimensions[0], $dimensions[1]))) {
+                throw new RuntimeException(sprintf('Invalid video size: %s. No match', $size));
+            }
+            return;
         }
 
         Banner::size($size);

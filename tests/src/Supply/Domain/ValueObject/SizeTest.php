@@ -51,4 +51,23 @@ final class SizeTest extends TestCase
         $this->assertEquals('', Size::getAspect(320, 0));
         $this->assertEquals('', Size::getAspect(0, 240));
     }
+
+    public function testFindBestFit(): void
+    {
+        $this->assertContains('300x250', Size::findBestFit(300, 250, 1));
+        $this->assertContains('336x280', Size::findBestFit(330, 270, 1));
+    }
+
+    public function testFindMatching(): void
+    {
+        $this->assertEmpty(Size::findMatching(1, 1));
+        $this->assertEmpty(Size::findMatching(300, 0));
+        $this->assertEmpty(Size::findMatching(300, 10));
+        $this->assertNotEmpty(Size::findMatching(300, 250));
+        $this->assertNotEmpty(Size::findMatching(320, 240));
+        $this->assertNotEmpty(Size::findMatching(1920, 1080));
+        $this->assertNotEmpty(Size::findMatching(1080, 1920));
+        $this->assertNotEmpty(Size::findMatching(4000, 3000));
+        $this->assertNotEmpty(Size::findMatching(3000, 4000));
+    }
 }

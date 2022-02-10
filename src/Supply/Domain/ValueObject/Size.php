@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -207,42 +207,9 @@ final class Size
             'tags' => ['Desktop', 'Mobile'],
             'type' => self::TYPE_POP,
         ],
-        '16:9' => [
-            'label' => 'Widescreen',
-            'tags' => ['Desktop', 'Mobile', 'Video'],
-            'type' => self::TYPE_VIDEO,
-        ],
-        '4:3' => [
-            'label' => 'Classic',
-            'tags' => ['Desktop', 'Mobile', 'Video'],
-            'type' => self::TYPE_VIDEO,
-        ],
-        '6:5' => [
-            'label' => 'Medium Rectangle',
-            'tags' => ['Desktop', 'Mobile', 'Video'],
-            'type' => self::TYPE_VIDEO,
-        ],
-        '1:1' => [
-            'label' => 'Square',
-            'tags' => ['Desktop', 'Mobile', 'Video'],
-            'type' => self::TYPE_VIDEO,
-        ],
-        '3:4' => [
-            'label' => 'Vertical Classic',
-            'tags' => ['Desktop', 'Mobile', 'Video'],
-            'type' => self::TYPE_VIDEO,
-        ],
-        '9:16' => [
-            'label' => 'Vertical Widescreen',
-            'tags' => ['Desktop', 'Mobile', 'Video'],
-            'type' => self::TYPE_VIDEO,
-        ],
-        '1:2' => [
-            'label' => 'Vertical high',
-            'tags' => ['Desktop', 'Mobile', 'Video'],
-            'type' => self::TYPE_VIDEO,
-        ],
     ];
+
+    private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
 
     public static function findBestFit($width, $height, $min_dpi, $count = 5): array
     {
@@ -308,6 +275,34 @@ final class Size
             (int)($parts[0] ?? 0),
             (int)($parts[1] ?? 0),
         ];
+    }
+
+    public static function findMatching(int $width, int $height, float $maxZoom = 4.0): array
+    {
+        if ($width <= 0 || $height <= 0) {
+            return [];
+        }
+
+        return array_filter(
+            self::SIZE_INFOS,
+            function ($info, $size) use ($width, $height, $maxZoom) {
+                if ($info['type'] !== self::TYPE_DISPLAY) {
+                    return false;
+                }
+
+                [$x, $y] = explode("x", $size);
+
+                $zoom = min($x / $width, $y / $height);
+                if ($zoom > $maxZoom) {
+                    return false;
+                }
+
+                $occupiedField = $zoom * min($width / $x, $height / $y);
+
+                return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
+            },
+            ARRAY_FILTER_USE_BOTH
+        );
     }
 
     public static function getAspect(int $width, int $height): string

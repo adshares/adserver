@@ -36,9 +36,8 @@ class UploadedVideo implements UploadedFile
 
     public function __construct(string $name, string $previewUrl, int $width, int $height)
     {
-        $aspect = Size::getAspect($width, $height);
-        if (!Size::isValid($aspect)) {
-            throw new BadRequestHttpException('Unsupported video aspect: ' . $aspect);
+        if (empty(Size::findMatching($width, $height))) {
+            throw new BadRequestHttpException('Unsupported video size');
         }
 
         $this->name = $name;

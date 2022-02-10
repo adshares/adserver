@@ -179,14 +179,23 @@ class CampaignFactory
             throw new InvalidCampaignArgumentException('Banner id field is missing. The field is required.');
         }
 
+        self::validateBannerSize($data);
+    }
+
+    private static function validateBannerSize(array $data): void
+    {
         $size = $data['size'];
         if ($data['type'] === NetworkBanner::TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new InvalidCampaignArgumentException('Unsupported video size.');
             }
-            $dimensions = explode('x', $size);
-            $size = Size::getAspect((int)$dimensions[0], (int)$dimensions[1]);
+            $dimensions = Size::toDimensions($size);
+            if (empty(Size::findMatching($dimensions[0], $dimensions[1]))) {
+                throw new InvalidCampaignArgumentException('Unsupported video size. No match');
+            }
+            return;
         }
+
         if (!Size::isValid($size)) {
             throw new InvalidCampaignArgumentException('Unsupported banner size.');
         }

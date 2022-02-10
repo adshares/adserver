@@ -166,7 +166,7 @@ final class CampaignFactoryTest extends TestCase
         $this->expectException(InvalidCampaignArgumentException::class);
 
         $data = $this->data;
-        $data['banners'][2]['size'] = '970x90';
+        $data['banners'][2]['size'] = '5x5';
 
         CampaignFactory::createFromArray($data);
     }
