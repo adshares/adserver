@@ -33,15 +33,13 @@ use Illuminate\Support\Collection;
 
 class BannerClassificationsRequestCommand extends BaseCommand
 {
-    protected $signature = 'ops:demand:classification:request';
+    private const DATA_BATCH = 5;
 
+    protected $signature = 'ops:demand:classification:request';
     protected $description = 'Requests banner classification from classifiers';
 
-    /** @var ClassifierExternalClient */
-    private $client;
-
-    /** @var ClassifierExternalRepository */
-    private $classifierRepository;
+    private ClassifierExternalClient $client;
+    private ClassifierExternalRepository $classifierRepository;
 
     public function __construct(
         ClassifierExternalClient $client,
@@ -64,12 +62,14 @@ class BannerClassificationsRequestCommand extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
-        $classifications = BannerClassification::fetchPendingForClassification();
-
-        $this->info('[BannerClassificationRequest] number of requests to process: ' . $classifications->count());
-
-        $dataSet = $this->prepareData($classifications);
-        $this->processData($dataSet);
+        $offset = 0;
+        do {
+            $classifications = BannerClassification::fetchPendingForClassification(self::DATA_BATCH, $offset);
+            $this->info('[BannerClassificationRequest] number of requests to process: ' . $classifications->count());
+            $dataSet = $this->prepareData($classifications);
+            $this->processData($dataSet);
+            $offset += $classifications->count();
+        } while (!$classifications->isEmpty());
 
         $this->info('Finish command ' . $this->signature);
     }
