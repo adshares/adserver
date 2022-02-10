@@ -55,6 +55,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use stdClass;
+use Symfony\Component\CssSelector\Exception\InternalErrorException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -347,7 +348,7 @@ class WalletController extends Controller
                 $address = new WalletAddress(WalletAddress::NETWORK_ADS, $request->input(self::FIELD_TO));
             } catch (InvalidArgumentException $exception) {
                 // invalid input for calculating fee
-                return self::json([self::FIELD_ERROR => 'Invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+                throw new UnprocessableEntityHttpException('Invalid address');
             }
         }
 
@@ -357,7 +358,7 @@ class WalletController extends Controller
         $total = $amount + $adsFee;
 
         if ($user->getWalletBalance() < $total) {
-            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+            throw new UnprocessableEntityHttpException();
         }
 
         $ledgerEntry = UserLedgerEntry::construct(
@@ -371,7 +372,7 @@ class WalletController extends Controller
 
         if (!$ledgerEntry->save()) {
             DB::rollBack();
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
+            throw new InternalErrorException();
         }
 
         if (!$fromAccountWallet) {

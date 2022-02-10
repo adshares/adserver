@@ -332,7 +332,7 @@ class User extends Authenticatable
 
     public function getRefundBalance(): int
     {
-        return UserLedgerEntry::getBonusBalanceByUserId($this->id);
+        return $this->getBonusBalance();
     }
 
     public function refLink(): BelongsTo

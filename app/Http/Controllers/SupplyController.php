@@ -74,6 +74,13 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
 
+    private static $adserverId;
+
+    public function __construct()
+    {
+        self::$adserverId = config('app.adserver_id');
+    }
+
     public function findJson(
         Request $request,
         AdUser $contextProvider,
@@ -250,8 +257,6 @@ class SupplyController extends Controller
     private function watermarkImage(\Imagick $im, \Imagick $watermark)
     {
         $w = $im->getImageWidth();
-        $h = $im->getImageHeight();
-
         $box = new \ImagickDraw();
         $box->setFillColor(new \ImagickPixel('white'));
         $box->rectangle($w - 16, 0, $w, 16);
@@ -281,7 +286,6 @@ class SupplyController extends Controller
 
                 if ($im->getImageFormat() == 'GIF') {
                     $parts = $im->coalesceImages();
-                    $i = 0;
                     do {
                         $this->watermarkImage($parts, $watermark);
                     } while ($parts->nextImage());
@@ -305,6 +309,35 @@ class SupplyController extends Controller
         return $response;
     }
 
+    private function checkDecodedQueryData(array $decodedQueryData): void
+    {
+        if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
+            throw new BadRequestHttpException('Site not accepted');
+        }
+        if (!config('app.allow_zone_in_iframe') && ($decodedQueryData['page']['frame'] ?? false)) {
+            throw new BadRequestHttpException('Cannot run in iframe');
+        }
+        if (
+            ($decodedQueryData['page']['pop'] ?? false)
+            && DomainReader::domain($decodedQueryData['page']['ref'] ?? '')
+            != DomainReader::domain($decodedQueryData['page']['url'] ?? '')
+        ) {
+            throw new BadRequestHttpException('Bad request.');
+        }
+    }
+
+    private function decodeZones(array $decodedQueryData): array
+    {
+        $zones = $decodedQueryData['zones'] ?? [];
+        if (!$zones) {
+            throw new BadRequestHttpException('Site not accepted');
+        }
+        if (($decodedQueryData['zone_mode'] ?? '') !== 'best_match') {
+            $zones = array_slice($zones, 0, config('app.max_page_zones'));
+        }
+        return $zones;
+    }
+
     /**
      * @param array $decodedQueryData
      * @param Request $request
@@ -321,31 +354,7 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         AdSelect $bannerFinder
     ): FoundBanners {
-        $zones = $decodedQueryData['zones'] ?? [];
-
-        if (!$zones) {
-            return new FoundBanners();
-        }
-
-        if (($decodedQueryData['zone_mode'] ?? '') !== 'best_match') {
-            $zones = array_slice($zones, 0, config('app.max_page_zones'));
-        }
-
-        if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
-            throw new BadRequestHttpException('Site not accepted');
-        }
-        if (!config('app.allow_zone_in_iframe') && ($decodedQueryData['page']['frame'] ?? false)) {
-            throw new BadRequestHttpException('Cannot run in iframe');
-        }
-        if ($decodedQueryData['page']['pop'] ?? false) {
-            if (
-                DomainReader::domain($decodedQueryData['page']['ref'] ?? '')
-                != DomainReader::domain($decodedQueryData['page']['url'] ?? '')
-            ) {
-                throw new BadRequestHttpException('Bad request.');
-            }
-        }
-
+        $this->checkDecodedQueryData($decodedQueryData);
         $impressionId = $decodedQueryData['page']['iid'];
 
         $tid = Utils::attachOrProlongTrackingCookie(
@@ -361,13 +370,13 @@ class SupplyController extends Controller
         }
 
         $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $tid);
-
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {
             return new FoundBanners();
         }
 
+        $zones = $this->decodeZones($decodedQueryData);
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
             if ($userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK) {
                 foreach ($zones as &$zone) {
@@ -382,28 +391,12 @@ class SupplyController extends Controller
         $foundBanners = $bannerFinder->findBanners($zones, $context);
 
         if (($decodedQueryData['zone_mode'] ?? '') === 'best_match') {
-            $foundBanners =
-                array_values(
-                    $foundBanners->filter(
-                        function ($element) {
-                            return $element != null;
-                        }
-                    )->slice(0)
-                );
-            usort($foundBanners, function ($a, $b) {
-                return ($a['rpm'] ?? 9999) - ($b['rpm'] ?? 9999);
-            });
-
-            $foundBanners = new FoundBanners(array_slice($foundBanners, 0, 1));
+            $values = $foundBanners->filter(fn($element) => $element != null)->getValues();
+            usort($values, fn($a, $b) => ($a['rpm'] ?? 9999) - ($b['rpm'] ?? 9999));
+            $foundBanners = new FoundBanners(array_slice($values, 0, 1));
         }
 
-        if (
-            $foundBanners->exists(
-                function ($key, $element) {
-                    return $element != null;
-                }
-            )
-        ) {
+        if ($foundBanners->exists(fn($key, $element) => $element != null)) {
             NetworkImpression::register(
                 Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
                 Utils::hexUuidFromBase64UrlWithChecksum($tid),
@@ -429,7 +422,7 @@ class SupplyController extends Controller
     {
         $params = [
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
-            '.' . CssUtils::normalizeClass(config('app.adserver_id')),
+            '.' . CssUtils::normalizeClass(self::$adserverId),
         ];
 
         $jsPath = public_path('-/cryptovoxels.js');
@@ -466,7 +459,7 @@ class SupplyController extends Controller
     {
         $params = [
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
-            '.' . CssUtils::normalizeClass(config('app.adserver_id')),
+            '.' . CssUtils::normalizeClass(self::$adserverId),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -741,7 +734,7 @@ class SupplyController extends Controller
             $adUserUrl = sprintf(
                 '%s/register/%s/%s/%s.html',
                 $adUserEndpoint,
-                urlencode(config('app.adserver_id')),
+                urlencode(self::$adserverId),
                 $trackingId,
                 $impressionId
             );
