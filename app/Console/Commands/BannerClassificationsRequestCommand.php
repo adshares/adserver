@@ -48,7 +48,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
     ) {
         $this->client = $client;
         $this->classifierRepository = $classifierRepository;
-
         parent::__construct($locker);
     }
 
@@ -56,7 +55,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
@@ -77,11 +75,16 @@ class BannerClassificationsRequestCommand extends BaseCommand
     private function prepareData(Collection $classifications): array
     {
         $dataSet = [];
-
         /** @var BannerClassification $classification */
         foreach ($classifications as $classification) {
             $classifierName = $classification->classifier;
             $banner = $classification->banner;
+
+            if (null === $banner || null === $banner->campaign) {
+                $classification->failed();
+                continue;
+            }
+
             $bannerPublicId = $banner->uuid;
             $campaign = $banner->campaign;
             $checksum = $banner->creative_sha1;
@@ -98,7 +101,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 'landing_url' => $campaign->landing_url,
             ];
         }
-
         return $dataSet;
     }
 
@@ -112,7 +114,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
                         $classifierName
                     )
                 );
-
                 continue;
             }
 
@@ -133,7 +134,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
     {
         try {
             $this->client->requestClassification($classifier, $data);
-
             return true;
         } catch (RuntimeException $exception) {
             $this->info(
@@ -144,7 +144,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 )
             );
         }
-
         return false;
     }
 }
