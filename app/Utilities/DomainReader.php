@@ -35,11 +35,12 @@ class DomainReader
     {
         $host = parse_url($url, PHP_URL_HOST);
 
-        return $host && strpos($host, 'www.') === 0 ? substr($host, 4) : (string)$host;
+        return strtolower($host && strpos($host, 'www.') === 0 ? substr($host, 4) : (string)$host);
     }
 
     public static function checkDomain(string $url, string $domain): bool
     {
+        $domain = strtolower($domain);
         $urlDomain = self::domain($url);
         if ($urlDomain === $domain) {
             return true;
