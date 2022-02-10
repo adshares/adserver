@@ -252,16 +252,18 @@ class Site extends Model
         return $site;
     }
 
-    public static function fetchOrCreate(int $userId, string $url, string $name): ?self
+    public static function fetchOrCreate(int $userId, string $url, ?string $name = null): ?self
     {
         $domain = DomainReader::domain($url);
-        $site = self::where('user_id', $userId)
-            ->where('domain', $domain)
-            ->where('name', $name)
-            ->first();
+
+        $builder = self::where('user_id', $userId)->where('domain', $domain);
+        if ($name !== null) {
+            $builder = $builder->where('name', $name);
+        }
+        $site = $builder->first();
 
         if (!$site) {
-            $site = Site::create($userId, $url, $name);
+            $site = Site::create($userId, $url, $name ?? $domain);
         }
 
         return $site;
