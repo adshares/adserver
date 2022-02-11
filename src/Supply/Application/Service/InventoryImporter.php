@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,7 +26,6 @@ namespace Adshares\Supply\Application\Service;
 use Adshares\Common\Application\TransactionManager;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Supply\Application\Dto\Classification\Collection;
-use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
@@ -35,20 +34,15 @@ use Adshares\Supply\Domain\ValueObject\Classification;
 
 class InventoryImporter
 {
-    /** @var MarkedCampaignsAsDeleted */
-    private $markedCampaignsAsDeletedService;
+    private MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService;
 
-    /** @var CampaignRepository */
-    private $campaignRepository;
+    private CampaignRepository $campaignRepository;
 
-    /** @var DemandClient */
-    private $client;
+    private DemandClient $client;
 
-    /** @var TransactionManager */
-    private $transactionManager;
+    private TransactionManager $transactionManager;
 
-    /** @var BannerClassifier */
-    private $classifyClient;
+    private BannerClassifier $classifyClient;
 
     public function __construct(
         MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
@@ -95,7 +89,6 @@ class InventoryImporter
 
         /** @var Campaign $campaign */
         foreach ($campaigns as $campaign) {
-            /** @var Banner $banner */
             foreach ($campaign->getBanners() as $banner) {
                 $ids[] = $banner->getId();
             }
@@ -108,7 +101,6 @@ class InventoryImporter
         Campaign $campaign,
         Collection $classificationCollection
     ): void {
-        /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
             $classifications = $classificationCollection->findByBannerId($banner->getId()) ?? [];
 

@@ -26,6 +26,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -33,14 +34,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-
-use function hex2bin;
-use function in_array;
 
 /**
  * @property int id
  * @property string uuid
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
  * @property string creative_contents
  * @property string creative_type
  * @property string creative_mime
@@ -62,25 +64,19 @@ class Banner extends Model
     use SoftDeletes;
 
     public const TYPE_IMAGE = 0;
-
     public const TYPE_HTML = 1;
-
     public const TYPE_DIRECT_LINK = 2;
+    public const TYPE_VIDEO = 3;
 
     public const TEXT_TYPE_IMAGE = 'image';
-
     public const TEXT_TYPE_HTML = 'html';
-
     public const TEXT_TYPE_DIRECT_LINK = 'direct';
+    public const TEXT_TYPE_VIDEO = 'video';
 
     public const STATUS_DRAFT = 0;
-
     public const STATUS_INACTIVE = 1;
-
     public const STATUS_ACTIVE = 2;
-
     public const STATUS_REJECTED = 3;
-
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
 
     protected $dates = [
@@ -137,7 +133,7 @@ class Banner extends Model
 
     public static function types(): array
     {
-        return [self::TEXT_TYPE_DIRECT_LINK, self::TEXT_TYPE_HTML, self::TEXT_TYPE_IMAGE];
+        return [self::TEXT_TYPE_DIRECT_LINK, self::TEXT_TYPE_HTML, self::TEXT_TYPE_IMAGE, self::TEXT_TYPE_VIDEO];
     }
 
     public static function type(int $type): string
@@ -145,6 +141,8 @@ class Banner extends Model
         switch ($type) {
             case self::TYPE_IMAGE:
                 return self::TEXT_TYPE_IMAGE;
+            case self::TYPE_VIDEO:
+                return self::TEXT_TYPE_VIDEO;
             case self::TYPE_HTML:
                 return self::TEXT_TYPE_HTML;
             case self::TYPE_DIRECT_LINK:
@@ -158,6 +156,8 @@ class Banner extends Model
         switch ($type) {
             case self::TEXT_TYPE_IMAGE:
                 return self::TYPE_IMAGE;
+            case self::TEXT_TYPE_VIDEO:
+                return self::TYPE_VIDEO;
             case self::TEXT_TYPE_HTML:
                 return self::TYPE_HTML;
             case self::TEXT_TYPE_DIRECT_LINK:
@@ -169,7 +169,7 @@ class Banner extends Model
     public static function size(string $size): string
     {
         if (!Size::isValid($size)) {
-            throw new \RuntimeException(sprintf('Wrong image size %s.', $size));
+            throw new RuntimeException(sprintf('Wrong banner size: %s.', $size));
         }
 
         return $size;

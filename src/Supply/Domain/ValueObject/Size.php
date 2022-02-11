@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,9 +33,12 @@ final class Size
 
     public const TYPE_POP = 'pop';
 
+    public const TYPE_VIDEO = 'video';
+
     public const TYPES = [
         self::TYPE_DISPLAY,
         self::TYPE_POP,
+        self::TYPE_VIDEO,
     ];
 
     public const SIZE_INFOS = [
@@ -206,6 +209,8 @@ final class Size
         ],
     ];
 
+    private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
+
     public static function findBestFit($width, $height, $min_dpi, $count = 5): array
     {
         $sizes = array_map(
@@ -270,5 +275,52 @@ final class Size
             (int)($parts[0] ?? 0),
             (int)($parts[1] ?? 0),
         ];
+    }
+
+    public static function findMatching(int $width, int $height, float $maxZoom = 4.0): array
+    {
+        if ($width <= 0 || $height <= 0) {
+            return [];
+        }
+
+        return array_keys(
+            array_filter(
+                self::SIZE_INFOS,
+                function ($info, $size) use ($width, $height, $maxZoom) {
+                    if ($info['type'] !== self::TYPE_DISPLAY) {
+                        return false;
+                    }
+
+                    [$x, $y] = explode("x", $size);
+
+                    $zoom = min($x / $width, $y / $height);
+                    if ($zoom > $maxZoom) {
+                        return false;
+                    }
+
+                    $occupiedField = $zoom * min($width / $x, $height / $y);
+
+                    return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
+                },
+                ARRAY_FILTER_USE_BOTH
+            )
+        );
+    }
+
+    public static function getAspect(int $width, int $height): string
+    {
+        if ($width === 0 || $height === 0) {
+            return '';
+        }
+
+        $a = $width;
+        $b = $height;
+        while ($b !== 0) {
+            $c = $a % $b;
+            $a = $b;
+            $b = $c;
+        }
+
+        return $width / $a . ':' . $height / $a;
     }
 }

@@ -225,7 +225,7 @@ function createLinkFromData(data, callback)
 
 function createImageFromData(data, domInsertCallback) {
     var image = new Image();
-    getDataURI(data, function (dataUri) {   
+    getDataURI(data, function (dataUri) {
         if (data.originalUrl && dataUri.length > 32000) {
             image.onerror = function () {
                 image = new Image();
@@ -240,6 +240,17 @@ function createImageFromData(data, domInsertCallback) {
             image.src = dataUri;
             domInsertCallback(image);
         }
+    });
+}
+
+function createVideoFromData(data, domInsertCallback) {
+    var video = document.createElement('video');
+    video.autoplay = true
+    // video.loop = true
+    video.muted = true;
+    getDataURI(data, function (dataUri) {
+        video.src = dataUri;
+        domInsertCallback(video);
     });
 }
 
@@ -264,7 +275,7 @@ function fetchURL(url, options) {
             var orgUrl = url;
             var qPos = url.indexOf('?');
             url += qPos == -1 ? '?xdr' : (qPos == url.length - 1 ? 'xdr' : '&xdr');
-            
+
             xhr.__parseHeaders = function(headers) {
                 this.__responseHeaders = {};
                 var headers = headers.split('\n');
@@ -333,7 +344,7 @@ function fetchURL(url, options) {
                     data.bytes = atob(data.bytes);
                 }
                 data.originalUrl = orgUrl;
-                
+
             }
             if (options.json) {
                 data = JSON.parse(data.bytes);

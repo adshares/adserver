@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Test\Common\Domain\ValueObject;
+namespace Adshares\Tests\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
@@ -61,7 +61,7 @@ class UrlTest extends TestCase
         ];
     }
 
-    public function failureProvider()
+    public function failureProvider(): array
     {
         return [
             ['AdServer.https%3A%2F%2Fadshares.net'],

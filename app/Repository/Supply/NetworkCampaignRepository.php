@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -116,7 +116,6 @@ class NetworkCampaignRepository implements CampaignRepository
         $banners = $campaign->getBanners();
         $networkBanners = [];
 
-        /** @var Banner $domainBanner */
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
             $banner[self::BANNER_UUID_FIELD] = $banner[self::BANNER_ID_FIELD];
@@ -178,7 +177,6 @@ class NetworkCampaignRepository implements CampaignRepository
     {
         $banners = [];
 
-        /** @var NetworkBanner $networkBanner */
         foreach ($networkCampaign->fetchActiveBanners() as $networkBanner) {
             $banners[] = [
                 self::BANNER_ID_FIELD => Uuid::fromString($networkBanner->uuid),

@@ -87,7 +87,7 @@ var logInsertedElement = function(el) {
 var dwmthACL = [];
 var dwmthURLS = [];
 
-var replaceTag = function (oldTag, newTag) {
+var replaceTag = function (oldTag, newTag, banner) {
     for (var i = 0; i < oldTag.attributes.length; i++) {
         var name = oldTag.attributes[i].name;
         if (name.indexOf('data-') != 0) {
@@ -96,11 +96,12 @@ var replaceTag = function (oldTag, newTag) {
     }
     newTag.style.overflow = 'hidden';
     newTag.style.position = 'relative';
-
     // ios 12 fix
     var el = [];
-    while(newTag.firstChild){
-        el.push(newTag.removeChild(newTag.firstChild));
+    if (!banner || banner.type != 'video') {
+        while (newTag.firstChild) {
+            el.push(newTag.removeChild(newTag.firstChild));
+        }
     }
     // ios 12 fix
 
@@ -194,7 +195,7 @@ var prepareInfoBox = function (context, banner, contextParam) {
 
 
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important');
+    div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important;z-index:1');
 
     var link = document.createElement('a');
     link.target = '_blank';
@@ -890,6 +891,8 @@ var fetchBanner = function (banner, context, zone_options) {
 
             if (banner.type == 'image') {
                 caller = createImageFromData;
+            } else if (banner.type == 'video') {
+                caller = createVideoFromData;
             } else if (banner.type == 'html') {
                 caller = createIframeFromData;
             } else if (banner.type == 'direct') {
@@ -923,7 +926,7 @@ var fetchBanner = function (banner, context, zone_options) {
                     return;
                 }
                 element = prepareElement(context, banner, element);
-                replaceTag(banner.destElement, element);
+                replaceTag(banner.destElement, element, banner);
                 sendViewEvent(element);
             });
         };
