@@ -97,8 +97,8 @@ var replaceTag = function (oldTag, newTag, banner) {
     newTag.style.overflow = 'hidden';
     newTag.style.position = 'relative';
     // ios 12 fix
+    var el = [];
     if (!banner || banner.type != 'video') {
-        var el = [];
         while (newTag.firstChild) {
             el.push(newTag.removeChild(newTag.firstChild));
         }
