@@ -37,9 +37,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
-use function hex2bin;
-use function in_array;
-
 /**
  * @property int id
  * @property string uuid

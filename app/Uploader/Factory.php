@@ -28,10 +28,6 @@ use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Illuminate\Http\Request;
 
-use function in_array;
-use function strrpos;
-use function substr;
-
 class Factory
 {
     private const EXTENSION_VIDEO_LIST = [

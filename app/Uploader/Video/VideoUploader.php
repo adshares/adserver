@@ -33,8 +33,6 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-use function mime_content_type;
-
 class VideoUploader implements Uploader
 {
     public const VIDEO_FILE = 'video';

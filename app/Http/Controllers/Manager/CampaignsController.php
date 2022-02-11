@@ -65,13 +65,6 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
-use function array_map;
-use function explode;
-use function preg_match;
-use function response;
-use function sprintf;
-use function strrpos;
-
 class CampaignsController extends Controller
 {
     private CampaignRepository $campaignRepository;
