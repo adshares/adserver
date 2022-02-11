@@ -141,10 +141,11 @@ final class CampaignMapperTest extends TestCase
             ]
         );
         $campaign = CampaignFactory::createFromArray($campaignData);
-
         $mapped = CampaignMapper::map($campaign);
 
-        self::assertIsArray($mapped['banners'][0]['banner_size']);
+        $bannerSizes = $mapped['banners'][0]['banner_size'];
+        self::assertIsArray($bannerSizes);
+        self::assertContains('300x250', $bannerSizes);
     }
 
     private function getCampaignData(): array

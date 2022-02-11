@@ -283,25 +283,27 @@ final class Size
             return [];
         }
 
-        return array_filter(
-            self::SIZE_INFOS,
-            function ($info, $size) use ($width, $height, $maxZoom) {
-                if ($info['type'] !== self::TYPE_DISPLAY) {
-                    return false;
-                }
+        return array_keys(
+            array_filter(
+                self::SIZE_INFOS,
+                function ($info, $size) use ($width, $height, $maxZoom) {
+                    if ($info['type'] !== self::TYPE_DISPLAY) {
+                        return false;
+                    }
 
-                [$x, $y] = explode("x", $size);
+                    [$x, $y] = explode("x", $size);
 
-                $zoom = min($x / $width, $y / $height);
-                if ($zoom > $maxZoom) {
-                    return false;
-                }
+                    $zoom = min($x / $width, $y / $height);
+                    if ($zoom > $maxZoom) {
+                        return false;
+                    }
 
-                $occupiedField = $zoom * min($width / $x, $height / $y);
+                    $occupiedField = $zoom * min($width / $x, $height / $y);
 
-                return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
-            },
-            ARRAY_FILTER_USE_BOTH
+                    return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
+                },
+                ARRAY_FILTER_USE_BOTH
+            )
         );
     }
 
