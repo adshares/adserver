@@ -29,6 +29,7 @@ use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Mail\UserPasswordChange;
+use Adshares\Adserver\Mail\UserPasswordConfirmSet;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -47,11 +48,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -463,10 +464,7 @@ MSG;
             throw new UnauthorizedHttpException('', 'Required authenticated access or token authentication');
         }
 
-        if (!$request->has('user.password_new')) {
-            throw new BadRequestHttpException('Field `user.password_new` is required.');
-        }
-        $this->validateRequestObject($request, 'user', User::$rules);
+        $this->validateRequestObject($request, 'user', ['password_new' => 'required|min:8']);
 
         DB::beginTransaction();
         if (Auth::check()) {
@@ -480,6 +478,23 @@ MSG;
             }
             $user = User::findOrFail($token['user_id']);
             $token_authorization = true;
+        }
+
+        if (!$token_authorization && null === $user->password) {
+            DB::rollBack();
+            if (null === $user->email || !$user->is_email_confirmed) {
+                throw new AccessDeniedHttpException('Email is not set');
+            }
+            if (!is_string($request->input('uri'))) {
+                throw new UnprocessableEntityHttpException('Field `uri` is required');
+            }
+            $confirmToken = Token::generate(
+                Token::PASSWORD_CONFIRM_SET,
+                $user,
+                ['password' => Hash::make($request->input('user.password_new'))]
+            );
+            Mail::to($user)->queue(new UserPasswordConfirmSet($confirmToken->uuid, $request->input('uri')));
+            return self::json([]);
         }
 
         if (
@@ -504,6 +519,28 @@ MSG;
             Mail::to($user)->queue(new UserPasswordChange());
         }
 
+        DB::commit();
+
+        return self::json($user->toArray());
+    }
+
+    public function confirmPasswordSet(string $token): JsonResponse
+    {
+        DB::beginTransaction();
+        if (false === $tokenData = Token::check($token, null, Token::PASSWORD_CONFIRM_SET)) {
+            DB::commit();
+            return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
+        }
+
+        $user = User::findOrFail($tokenData['user_id']);
+
+        if (null === $user->email || !$user->is_email_confirmed) {
+            DB::rollBack();
+            throw new AccessDeniedHttpException('Email is not set');
+        }
+
+        $user->setHashedPasswordAttribute($tokenData['payload']['password']);
+        $user->save();
         DB::commit();
 
         return self::json($user->toArray());

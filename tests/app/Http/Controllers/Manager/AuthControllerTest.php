@@ -28,6 +28,7 @@ use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserPasswordChange;
+use Adshares\Adserver\Mail\UserPasswordConfirmSet;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -39,6 +40,7 @@ use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\RegistrationMode;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use DateTime;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -46,6 +48,7 @@ class AuthControllerTest extends TestCase
 {
     private const CHECK_URI = '/auth/check';
     private const SELF_URI = '/auth/self';
+    private const PASSWORD_CONFIRM = '/auth/password/confirm-set';
     private const PASSWORD_URI = '/auth/password';
     private const EMAIL_ACTIVATE_URI = '/auth/email/activate';
     private const EMAIL_URI = '/auth/email';
@@ -171,6 +174,7 @@ class AuthControllerTest extends TestCase
         $user = $this->registerUser('dummy-token', Response::HTTP_FORBIDDEN);
         $this->assertNull($user);
 
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create(['single_use' => true]);
         $user = $this->registerUser($refLink->token);
         $this->assertNotNull($user);
@@ -186,6 +190,7 @@ class AuthControllerTest extends TestCase
         $user = $this->registerUser(null, Response::HTTP_FORBIDDEN);
         $this->assertNull($user);
 
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create();
         $user = $this->registerUser($refLink->token, Response::HTTP_FORBIDDEN);
         $this->assertNull($user);
@@ -193,6 +198,7 @@ class AuthControllerTest extends TestCase
 
     public function testRegisterWithReferral(): void
     {
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create();
         $this->assertFalse($refLink->used);
 
@@ -215,6 +221,7 @@ class AuthControllerTest extends TestCase
 
     public function testEmailActivateWithBonus(): void
     {
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
 
@@ -249,6 +256,7 @@ class AuthControllerTest extends TestCase
 
     public function testEmailActivateNoBonus(): void
     {
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create(['bonus' => 0, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
         self::assertSame(
@@ -275,6 +283,7 @@ class AuthControllerTest extends TestCase
     {
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
 
@@ -323,6 +332,7 @@ class AuthControllerTest extends TestCase
     {
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
 
@@ -425,6 +435,7 @@ class AuthControllerTest extends TestCase
 
     public function testWalletLoginWithReferral(): void
     {
+        /** @var RefLink $refLink */
         $refLink = factory(RefLink::class)->create();
         $this->assertFalse($refLink->used);
 
@@ -660,14 +671,54 @@ class AuthControllerTest extends TestCase
     public function testSetPassword(): void
     {
         $user = $this->walletRegisterUser();
+        $user->email = $this->faker->email();
+        $user->email_confirmed_at = new DateTime();
+        $user->save();
         $this->actingAs($user, 'api');
 
         $response = $this->patch(self::SELF_URI, [
             'user' => [
                 'password_new' => 'qwerty123',
-            ]
+            ],
+            'uri' => '/confirm',
         ]);
         $response->assertStatus(Response::HTTP_OK);
+        Mail::assertQueued(UserPasswordConfirmSet::class);
+    }
+
+    public function testSetPasswordWhileUserHasNoEmailSet(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->patch(self::SELF_URI, [
+            'user' => [
+                'password_new' => 'qwerty123',
+            ],
+            'uri' => '/confirm',
+        ]);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testSetPasswordConfirm(): void
+    {
+        $user = $this->walletRegisterUser();
+        $user->email = $this->faker->email();
+        $user->email_confirmed_at = new DateTime();
+        $user->save();
+        $this->actingAs($user, 'api');
+        $token = Token::generate(Token::PASSWORD_CONFIRM_SET, $user, ['password' => 'qwerty123']);
+
+        $response = $this->get(self::buildConfirmPasswordUri($token->uuid));
+        $response->assertStatus(Response::HTTP_OK);
+
+        $user->refresh();
+        self::assertEquals('qwerty123', $user->password);
+    }
+
+    private static function buildConfirmPasswordUri(string $token): string
+    {
+        return self::PASSWORD_CONFIRM . '/' . $token;
     }
 
     public function testSetInvalidPassword(): void
@@ -744,7 +795,7 @@ class AuthControllerTest extends TestCase
                 'email' => $this->faker->email(),
             ]
         ]);
-        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testChangePasswordNoUser(): void

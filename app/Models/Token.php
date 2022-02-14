@@ -44,6 +44,7 @@ class Token extends Model
         self::EMAIL_ACTIVATE => 24 * 3600,
         self::EMAIL_CHANGE_STEP_1 => 24 * 3600,
         self::EMAIL_CHANGE_STEP_2 => 24 * 3600,
+        self::PASSWORD_CONFIRM_SET => 24 * 3600,
         self::PASSWORD_RECOVERY => 24 * 3600,
         self::IMPERSONATION => 24 * 3600,
         self::EMAIL_APPROVE_WITHDRAWAL => 3600,
@@ -55,6 +56,7 @@ class Token extends Model
         self::EMAIL_ACTIVATE => 5 * 60,
         self::EMAIL_CHANGE_STEP_1 => 5 * 60,
         self::EMAIL_CHANGE_STEP_2 => 5 * 60,
+        self::PASSWORD_CONFIRM_SET => 2 * 60,
         self::PASSWORD_RECOVERY => 2 * 60,
     ];
 
@@ -63,6 +65,8 @@ class Token extends Model
     public const EMAIL_CHANGE_STEP_1 = 'email-change-step1';
 
     public const EMAIL_CHANGE_STEP_2 = 'email-change-step2';
+
+    public const PASSWORD_CONFIRM_SET = 'password-confirm-set';
 
     public const PASSWORD_RECOVERY = 'password-recovery';
 
