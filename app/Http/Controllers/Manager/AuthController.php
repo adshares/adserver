@@ -28,6 +28,7 @@ use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
+use Adshares\Adserver\Mail\UserPasswordChange;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -498,6 +499,11 @@ MSG;
         $user->password = $request->input('user.password_new');
         $user->api_token = null;
         $user->save();
+
+        if (null !== $user->email) {
+            Mail::to($user)->queue(new UserPasswordChange());
+        }
+
         DB::commit();
 
         return self::json($user->toArray());

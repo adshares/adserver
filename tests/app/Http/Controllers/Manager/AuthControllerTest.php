@@ -27,6 +27,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
+use Adshares\Adserver\Mail\UserPasswordChange;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -703,6 +704,7 @@ class AuthControllerTest extends TestCase
         );
         $response->assertStatus(Response::HTTP_OK);
         self::assertNull($user->api_token, 'Token is not null');
+        Mail::assertQueued(UserPasswordChange::class);
     }
 
     public function testChangeInvalidOldPassword(): void
