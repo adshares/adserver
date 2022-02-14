@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Jobs\AdsSendOne;
+use Adshares\Adserver\Mail\WalletConnectConfirm;
+use Adshares\Adserver\Mail\WalletConnected;
 use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -40,6 +42,7 @@ class WalletControllerTest extends TestCase
 {
     private const CONNECT_INIT_URI = '/api/wallet/connect/init';
     private const CONNECT_URI = '/api/wallet/connect';
+    private const CONNECT_CONFIRM_URI = '/api/wallet/connect/confirm';
 
     public function testCalculateWithdrawSameNode(): void
     {
@@ -801,15 +804,13 @@ class WalletControllerTest extends TestCase
             'token' => $token,
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
-            'signature' => $sign
+            'signature' => $sign,
+            'uri' => '/auth/wallet-confirm/',
         ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
 
-        /** @var User $userDb */
-        $userDb = User::fetchById($user->id);
-        $this->assertNotNull($userDb->wallet_address);
-        $this->assertEquals(WalletAddress::NETWORK_ADS, $userDb->wallet_address->getNetwork());
-        $this->assertEquals('0001-00000001-8B4E', $userDb->wallet_address->getAddress());
+        Mail::assertQueued(WalletConnectConfirm::class);
+        self::assertCount(1, Token::all());
     }
 
     public function testBscConnect(): void
@@ -827,9 +828,42 @@ class WalletControllerTest extends TestCase
             'token' => $token,
             'network' => 'bsc',
             'address' => '0x79e51bA0407bEc3f1246797462EaF46850294301',
+            'signature' => $sign,
+            'uri' => '/auth/wallet-confirm/',
+        ]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+
+        Mail::assertQueued(WalletConnectConfirm::class);
+        self::assertCount(1, Token::all());
+    }
+
+    public function testConnectChangeAddress(): void
+    {
+        $user = $this->login(factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+            'email' => null,
+        ]));
+        $message = '123abc';
+        $token = Token::generate(Token::WALLET_CONNECT, $user, [
+            'request' => [],
+            'message' => $message,
+        ])->uuid;
+
+        //message:123abc
+        $sign = '0xe649d27a045e5a9397a9a7572d93471e58f6ab8d024063b2ea5b6bcb4f65b5eb4aecf499197f71af91f57cd712799d2a559e3a3a40243db2c4e947aeb0a2c8181b';
+        $response = $this->patch(self::CONNECT_URI, [
+            'token' => $token,
+            'network' => 'bsc',
+            'address' => '0x79e51bA0407bEc3f1246797462EaF46850294301',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure([
+            'id',
+            'email',
+            'adserverWallet' => ['walletAddress', 'walletNetwork']
+        ]);
+
+        Mail::assertNotQueued(WalletConnected::class);
 
         /** @var User $userDb */
         $userDb = User::fetchById($user->id);
@@ -948,6 +982,94 @@ class WalletControllerTest extends TestCase
             'signature' => $sign
         ]);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    public function testConnectConfirm(): void
+    {
+        $user = $this->login();
+        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, $user, [
+            'wallet_address' => 'ads:0001-00000001-8B4E',
+        ]);
+
+        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure([
+            'id',
+            'email',
+            'adserverWallet' => ['walletAddress', 'walletNetwork']
+        ]);
+
+        Mail::assertQueued(WalletConnected::class);
+        self::assertEmpty(Token::all());
+
+        /** @var User $userDb */
+        $userDb = User::fetchById($user->id);
+        $this->assertNotNull($userDb->wallet_address);
+        $this->assertEquals(WalletAddress::NETWORK_ADS, $userDb->wallet_address->getNetwork());
+        $this->assertEquals('0001-00000001-8B4E', $userDb->wallet_address->getAddress());
+    }
+
+    public function testConnectConfirmWithOverwrite(): void
+    {
+        factory(User::class)->create([
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
+        ]);
+
+        $user = $this->login();
+        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, $user, [
+            'wallet_address' => 'ads:0001-00000001-8B4E',
+        ]);
+
+        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    public function testInvalidConnectConfirmToken(): void
+    {
+        $this->login();
+        $response = $this->get(self::CONNECT_CONFIRM_URI . '/foo');
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testNonExistedConnectConfirmToken(): void
+    {
+        $this->login();
+        $response = $this->get(self::CONNECT_CONFIRM_URI . '/1231231231');
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testExpiredConnectConfirmToken(): void
+    {
+        $user = $this->login();
+        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, $user, [
+            'wallet_address' => 'ads:0001-00000001-8B4E',
+        ]);
+        $token->valid_until = '2020-01-01 12:00:00';
+        $token->saveOrFail();
+
+        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testInvalidConnectConfirmUser(): void
+    {
+        $this->login();
+        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, factory(User::class)->create(), [
+            'wallet_address' => 'ads:0001-00000001-8B4E',
+        ]);
+
+        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    public function testInvalidConnectConfirmAddress(): void
+    {
+        $user = $this->login();
+        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, $user, [
+            'wallet_address' => 'foo:xyz',
+        ]);
+
+        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function generateUserIncome(int $userId, int $amount): void

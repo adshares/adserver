@@ -24,6 +24,8 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
+use Adshares\Adserver\Mail\WalletConnectConfirm;
+use Adshares\Adserver\Mail\WalletConnected;
 use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Mail\WithdrawalSuccess;
 use Adshares\Adserver\Models\Config;
@@ -626,6 +628,7 @@ class WalletController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        $onlyWallet = null === $user->email;
         $address = $this->checkWalletAddress(
             $request->input('token'),
             Token::WALLET_CONNECT,
@@ -633,15 +636,53 @@ class WalletController extends Controller
             $user->id
         );
 
-        Validator::make(
-            ['wallet_address' => $address],
-            ['wallet_address' => 'required|unique:users']
-        )->validate();
+        Validator::make(['wallet_address' => $address], ['wallet_address' => 'required|unique:users'])->validate();
+
+        if ($onlyWallet) {
+            DB::beginTransaction();
+            try {
+                $user->wallet_address = $address;
+                $user->saveOrFail();
+            } catch (Throwable $exception) {
+                DB::rollBack();
+                throw $exception;
+            }
+            DB::commit();
+
+            return self::json($user->toArray());
+        }
+
+        Validator::make($request->all(), ['uri' => 'required'])->validate();
+
+        DB::beginTransaction();
+        $payload = ['wallet_address' => $address->toString()];
+        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, $user, $payload)->uuid;
+        Mail::to($user)->queue(new WalletConnectConfirm($address, $token, $request->input('uri')));
+        DB::commit();
+
+        return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function connectConfirm(string $token): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (false === ($walletToken = Token::check($token, $user->id, Token::WALLET_CONNECT_CONFIRM))) {
+            throw new UnprocessableEntityHttpException('Invalid token');
+        }
+        try {
+            $address = WalletAddress::fromString($walletToken['payload']['wallet_address']);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException('Invalid wallet address');
+        }
+
+        Validator::make(['wallet_address' => $address], ['wallet_address' => 'required|unique:users'])->validate();
 
         DB::beginTransaction();
         try {
             $user->wallet_address = $address;
             $user->saveOrFail();
+            Mail::to($user)->queue(new WalletConnected($address));
         } catch (Throwable $exception) {
             DB::rollBack();
             throw $exception;
