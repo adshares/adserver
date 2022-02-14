@@ -781,6 +781,7 @@ class WalletControllerTest extends TestCase
             'token',
             'gateways' => ['bsc']
         ]);
+        self::assertCount(1, Token::all());
     }
 
     public function testAdsConnect(): void
@@ -839,7 +840,7 @@ class WalletControllerTest extends TestCase
 
     public function testConnectWithOverwrite(): void
     {
-        $oldUser = factory(User::class)->create([
+        factory(User::class)->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
 
@@ -860,17 +861,7 @@ class WalletControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'signature' => $sign
         ]);
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-
-        /** @var User $userDb */
-        $oldUserDb = User::fetchById($oldUser->id);
-        $this->assertNull($oldUserDb->wallet_address);
-
-        /** @var User $userDb */
-        $userDb = User::fetchById($user->id);
-        $this->assertNotNull($userDb->wallet_address);
-        $this->assertEquals(WalletAddress::NETWORK_ADS, $userDb->wallet_address->getNetwork());
-        $this->assertEquals('0001-00000001-8B4E', $userDb->wallet_address->getAddress());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testInvalidConnectSignature(): void

@@ -35,7 +35,6 @@ use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
-use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -623,7 +622,7 @@ class WalletController extends Controller
         ]);
     }
 
-    public function connect(Request $request, Ads $adsClient): JsonResponse
+    public function connect(Request $request): JsonResponse
     {
         /** @var User $user */
         $user = Auth::user();
@@ -634,12 +633,13 @@ class WalletController extends Controller
             $user->id
         );
 
+        Validator::make(
+            ['wallet_address' => $address],
+            ['wallet_address' => 'required|unique:users']
+        )->validate();
+
         DB::beginTransaction();
         try {
-            if (null !== ($prev = User::fetchByWalletAddress($address))) {
-                $prev->wallet_address = null;
-                $prev->saveOrFail();
-            }
             $user->wallet_address = $address;
             $user->saveOrFail();
         } catch (Throwable $exception) {
