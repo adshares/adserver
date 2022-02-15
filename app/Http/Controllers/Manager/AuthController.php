@@ -527,7 +527,7 @@ MSG;
         DB::beginTransaction();
         if (false === $tokenData = Token::check($token, null, Token::PASSWORD_CHANGE)) {
             DB::commit();
-            throw new AccessDeniedHttpException('Invalid or outdated token');
+            throw new UnprocessableEntityHttpException('Invalid or outdated token');
         }
 
         $user = User::findOrFail($tokenData['user_id']);

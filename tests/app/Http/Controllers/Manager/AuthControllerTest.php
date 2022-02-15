@@ -716,6 +716,28 @@ class AuthControllerTest extends TestCase
         self::assertEquals('qwerty123', $user->password);
     }
 
+    public function testSetPasswordConfirmInvalidToken(): void
+    {
+        $user = $this->walletRegisterUser();
+        $user->email = $this->faker->email();
+        $user->email_confirmed_at = new DateTime();
+        $user->save();
+        $this->actingAs($user, 'api');
+
+        $response = $this->get(self::buildConfirmPasswordUri('foo'));
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testSetPasswordConfirmInvalidEmail(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+        $token = Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
+
+        $response = $this->get(self::buildConfirmPasswordUri($token->uuid));
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     private static function buildConfirmPasswordUri(string $token): string
     {
         return self::PASSWORD_CONFIRM . '/' . $token;
