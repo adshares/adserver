@@ -471,17 +471,17 @@ MSG;
         DB::beginTransaction();
         if (Auth::check()) {
             $user = Auth::user();
-            $token_authorization = false;
+            $tokenAuthorization = false;
         } else {
             if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
                 DB::rollBack();
                 throw new UnprocessableEntityHttpException('Authentication token is invalid');
             }
             $user = User::findOrFail($token['user_id']);
-            $token_authorization = true;
+            $tokenAuthorization = true;
         }
 
-        if (!$token_authorization && null === $user->password) {
+        if (!$tokenAuthorization && null === $user->password) {
             DB::rollBack();
             if (null === $user->email || !$user->is_email_confirmed) {
                 throw new UnprocessableEntityHttpException('Email is not set');
@@ -497,7 +497,7 @@ MSG;
         }
 
         if (
-            !$token_authorization &&
+            !$tokenAuthorization &&
             null !== $user->password &&
             (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old')))
         ) {

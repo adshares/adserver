@@ -44,7 +44,7 @@ class Token extends Model
         self::EMAIL_ACTIVATE => 24 * 3600,
         self::EMAIL_CHANGE_STEP_1 => 24 * 3600,
         self::EMAIL_CHANGE_STEP_2 => 24 * 3600,
-        self::PASSWORD_CHANGE => 24 * 3600,
+        self::PASSWORD_CHANGE => 3600,
         self::PASSWORD_RECOVERY => 24 * 3600,
         self::IMPERSONATION => 24 * 3600,
         self::EMAIL_APPROVE_WITHDRAWAL => 3600,
