@@ -88,10 +88,8 @@ class DemandBlockRequiredAmount extends BaseCommand
             } catch (InvalidArgumentException $e) {
                 Log::warning($e->getMessage());
 
-                if (Campaign::suspendAllForUserId($userId) > 0) {
-                    if (null !== ($email = User::fetchById($userId)->email)) {
-                        Mail::to($email)->queue(new CampaignSuspension());
-                    }
+                if (Campaign::suspendAllForUserId($userId) > 0 && null !== ($email = User::fetchById($userId)->email)) {
+                    Mail::to($email)->queue(new CampaignSuspension());
                 }
             }
         });
