@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Mail\CampaignSuspension;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
@@ -35,20 +37,28 @@ use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\Mail;
 
-use function array_merge;
-use function factory;
-use function json_decode;
-
-class DemandBlockPaymentsTest extends ConsoleTestCase
+class DemandBlockRequiredAmountTest extends ConsoleTestCase
 {
-    /** @var array */
-    private $calculations = [];
+    private const SIGNATURE = 'ops:demand:payments:block';
+
+    private array $calculations = [];
 
     public function testZero(): void
     {
-        $this->artisan('ops:demand:payments:block')
+        $this->artisan(self::SIGNATURE)
             ->expectsOutput('Attempt to create 0 blockades.')
+            ->assertExitCode(0);
+    }
+
+    public function testLock(): void
+    {
+        $locker = $this->createMock(Locker::class);
+        $locker->expects(self::once())->method('lock')->willReturn(false);
+        $this->instance(Locker::class, $locker);
+
+        $this->artisan(self::SIGNATURE)
             ->assertExitCode(0);
     }
 
@@ -66,7 +76,7 @@ class DemandBlockPaymentsTest extends ConsoleTestCase
         self::assertEquals(500 * 10 ** 11, $user->getWalletBalance());
         self::assertEquals(500 * 10 ** 11, $user->getBonusBalance());
 
-        $this->artisan('ops:demand:payments:block')
+        $this->artisan(self::SIGNATURE)
             ->expectsOutput('Attempt to create 1 blockades.')
             ->assertExitCode(0);
 
@@ -217,5 +227,27 @@ class DemandBlockPaymentsTest extends ConsoleTestCase
                 return $mock;
             }
         );
+    }
+
+    public function testHandleError(): void
+    {
+        Mail::fake();
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        factory(Campaign::class)->create([
+            'user_id' => $user->id,
+            'budget' => 1e4 * 1e11,
+            'status' => Campaign::STATUS_ACTIVE,
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+            'amount' => 100 * 1e11,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'user_id' => $user->id,
+        ]);
+
+        $this->artisan(self::SIGNATURE)
+            ->assertExitCode(0);
+        Mail::assertQueued(CampaignSuspension::class);
     }
 }
