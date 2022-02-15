@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Video ads support
 ### Changed
 - 2FA requirement when setting password
+- 2FA requirement when connecting the wallet
 
 ## [1.13.3] - 2022-02-10
 ### Fixed

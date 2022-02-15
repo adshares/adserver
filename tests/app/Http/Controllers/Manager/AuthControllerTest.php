@@ -988,7 +988,7 @@ class AuthControllerTest extends TestCase
 
     private function activateUser(User $user): void
     {
-        $activationToken = Token::where('user_id', $user->id)->where('tag', 'email-activate')->firstOrFail();
+        $activationToken = Token::where('user_id', $user->id)->where('tag', Token::EMAIL_ACTIVATE)->firstOrFail();
 
         $response = $this->postJson(
             self::EMAIL_ACTIVATE_URI,
