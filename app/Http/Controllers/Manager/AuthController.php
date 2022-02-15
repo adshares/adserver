@@ -58,6 +58,8 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AuthController extends Controller
 {
+    private const ERROR_MESSAGE_INVALID_TOKEN = 'Invalid or outdated token';
+
     private ExchangeRateReader $exchangeRateReader;
 
     public function __construct(ExchangeRateReader $exchangeRateReader)
@@ -243,7 +245,7 @@ class AuthController extends Controller
         if (false === $token = Token::check($token, null, Token::EMAIL_CHANGE_STEP_1)) {
             DB::commit();
 
-            return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
+            return self::json([], Response::HTTP_FORBIDDEN, ['message' => self::ERROR_MESSAGE_INVALID_TOKEN]);
         }
         $user = User::findOrFail($token['user_id']);
         if (User::withTrashed()->where('email', $token['payload']['email'])->count()) {
@@ -272,7 +274,7 @@ class AuthController extends Controller
         if (false === $token = Token::check($token, null, Token::EMAIL_CHANGE_STEP_2)) {
             DB::commit();
 
-            return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
+            return self::json([], Response::HTTP_FORBIDDEN, ['message' => self::ERROR_MESSAGE_INVALID_TOKEN]);
         }
         $user = User::findOrFail($token['user_id']);
         if (User::withTrashed()->where('email', $token['payload']['email'])->count()) {
@@ -473,7 +475,6 @@ MSG;
         } else {
             if (false === $token = Token::check($request->input('user.token'), null, Token::PASSWORD_RECOVERY)) {
                 DB::rollBack();
-
                 throw new UnprocessableEntityHttpException('Authentication token is invalid');
             }
             $user = User::findOrFail($token['user_id']);
@@ -483,7 +484,7 @@ MSG;
         if (!$token_authorization && null === $user->password) {
             DB::rollBack();
             if (null === $user->email || !$user->is_email_confirmed) {
-                throw new AccessDeniedHttpException('Email is not set');
+                throw new UnprocessableEntityHttpException('Email is not set');
             }
             Validator::make($request->all(), ['uri' => 'required'])->validate();
             $confirmToken = Token::generate(
@@ -526,15 +527,15 @@ MSG;
     {
         DB::beginTransaction();
         if (false === $tokenData = Token::check($token, null, Token::PASSWORD_CHANGE)) {
-            DB::commit();
-            throw new UnprocessableEntityHttpException('Invalid or outdated token');
+            DB::rollBack();
+            throw new UnprocessableEntityHttpException(self::ERROR_MESSAGE_INVALID_TOKEN);
         }
 
         $user = User::findOrFail($tokenData['user_id']);
 
         if (null === $user->email || !$user->is_email_confirmed) {
             DB::rollBack();
-            throw new AccessDeniedHttpException('Email is not set');
+            throw new UnprocessableEntityHttpException('Email is not set');
         }
 
         $user->setHashedPasswordAttribute($tokenData['payload']['password']);

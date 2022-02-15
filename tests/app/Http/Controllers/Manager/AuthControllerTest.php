@@ -697,7 +697,7 @@ class AuthControllerTest extends TestCase
             ],
             'uri' => '/confirm',
         ]);
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testSetPasswordConfirm(): void
@@ -709,7 +709,7 @@ class AuthControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $token = Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
 
-        $response = $this->get(self::buildConfirmPasswordUri($token->uuid));
+        $response = $this->post(self::buildConfirmPasswordUri($token->uuid));
         $response->assertStatus(Response::HTTP_OK);
 
         $user->refresh();
@@ -724,7 +724,7 @@ class AuthControllerTest extends TestCase
         $user->save();
         $this->actingAs($user, 'api');
 
-        $response = $this->get(self::buildConfirmPasswordUri('foo'));
+        $response = $this->post(self::buildConfirmPasswordUri('foo'));
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -734,8 +734,8 @@ class AuthControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $token = Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
 
-        $response = $this->get(self::buildConfirmPasswordUri($token->uuid));
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $response = $this->post(self::buildConfirmPasswordUri($token->uuid));
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private static function buildConfirmPasswordUri(string $token): string
