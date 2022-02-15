@@ -29,16 +29,18 @@ use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerTypeException;
 use Adshares\Supply\Domain\ValueObject\Status;
 
-final class Banner
+class Banner
 {
-    private const TYPE_HTML = 'html';
-    private const TYPE_IMAGE = 'image';
-    private const TYPE_DIRECT_LINK = 'direct';
+    public const TYPE_HTML = 'html';
+    public const TYPE_IMAGE = 'image';
+    public const TYPE_DIRECT_LINK = 'direct';
+    public const TYPE_VIDEO = 'video';
 
     private const SUPPORTED_TYPES = [
         self::TYPE_HTML,
         self::TYPE_IMAGE,
         self::TYPE_DIRECT_LINK,
+        self::TYPE_VIDEO,
     ];
 
     private Id $id;
@@ -126,7 +128,6 @@ final class Banner
     public function toArray(): array
     {
         $classification = [];
-        /** @var Classification $classification */
         foreach ($this->classification as $classificationItem) {
             $classification[$classificationItem->getClassifier()] = $classificationItem->getKeywords();
         }

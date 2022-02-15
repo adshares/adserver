@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,18 +19,18 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Supply\Application\Service;
+namespace Adshares\Tests\Supply\Application\Service;
 
 use Adshares\Common\Application\TransactionManager;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Application\Service\BannerClassifier;
-use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
-use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
@@ -66,15 +66,11 @@ final class InventoryImporterTest extends TestCase
             'localhost:8101',
             'http://localhost:8101/inventory/list'
         );
-
-        $this->doesNotPerformAssertions();
     }
 
     private function repositoryMock()
     {
-        $repository = $this->createMock(CampaignRepository::class);
-
-        return $repository;
+        return self::createMock(CampaignRepository::class);
     }
 
     private function clientMock(?CampaignCollection $campaigns = null, bool $badResponse = false)
@@ -107,9 +103,7 @@ final class InventoryImporterTest extends TestCase
 
     private function transactionManagerMock()
     {
-        $transactionManager = $this->createMock(TransactionManager::class);
-
-        return $transactionManager;
+        return self::createMock(TransactionManager::class);
     }
 
     public function testImportWhenMarkedCampaignsServiceThrowsAnException(): void
@@ -195,13 +189,49 @@ final class InventoryImporterTest extends TestCase
         $this->assertEquals(Status::STATUS_ACTIVE, $statuses[1]);
     }
 
+    public function testClassification(): void
+    {
+        $inMemoryDemandClient = new DummyDemandClient();
+        $campaigns = new CampaignCollection(...$inMemoryDemandClient->campaigns);
+
+        $repository = $this->repositoryMock();
+        $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
+        $demandClient = $this->clientMock($campaigns);
+        $classifiedBannerId = $campaigns[0]->getBanners()[0]->getId();
+        $classifierClient = $this->classifierClientMock([$classifiedBannerId]);
+        $transactionManager = $this->transactionManagerMock();
+
+        $inventoryImporter = new InventoryImporter(
+            $markCampaignAsDeletedService,
+            $repository,
+            $demandClient,
+            $classifierClient,
+            $transactionManager
+        );
+        $inventoryImporter->import(
+            new AccountId('0001-00000001-8B4E'),
+            'localhost:8101',
+            'http://localhost:8101/inventory/list'
+        );
+
+        $classification1 = $inMemoryDemandClient->campaigns[0]->getBanners()[0]->getClassification();
+        $this->assertNotEmpty($classification1);
+
+        $classification2 = $inMemoryDemandClient->campaigns[0]->getBanners()[1]->getClassification();
+        $this->assertEmpty($classification2);
+    }
+
     public function classifierClientMock(array $bannerIds = [])
     {
         $client = $this->createMock(BannerClassifier::class);
 
+        $collection = new Collection();
+        foreach ($bannerIds as $bannerId) {
+            $collection->addClassification($bannerId, 'test_classify', ['1:1']);
+        }
         $client
             ->method('fetchBannersClassification')
-            ->willReturn(new Collection([]));
+            ->willReturn($collection);
 
             return $client;
     }

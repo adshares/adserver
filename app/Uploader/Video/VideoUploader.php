@@ -21,22 +21,23 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Uploader\Zip;
+namespace Adshares\Adserver\Uploader\Video;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Lib\ZipToHtml;
+use getID3;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class ZipUploader implements Uploader
+class VideoUploader implements Uploader
 {
-    public const ZIP_FILE = 'zip';
-    private const ZIP_DISK = 'banners';
+    public const VIDEO_FILE = 'video';
+    private const VIDEO_DISK = 'banners';
+
     private Request $request;
 
     public function __construct(Request $request)
@@ -47,46 +48,47 @@ class ZipUploader implements Uploader
     public function upload(): UploadedFile
     {
         $file = $this->request->file('file');
-        $name = $file->store('', self::ZIP_DISK);
+        $name = $file->store('', self::VIDEO_DISK);
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'name' => $name])
         );
 
-        $this->validateContent($name);
+        $fileInfo = (new getID3())->analyze($file->getRealPath());
+        $width = $fileInfo['video']['resolution_x'];
+        $height = $fileInfo['video']['resolution_y'];
 
-        return new UploadedZip($name, $previewUrl->toString());
-    }
-
-    private function validateContent(string $name): void
-    {
-        $path = Storage::disk(self::ZIP_DISK)->path($name);
-        $zip = new ZipToHtml($path);
-        $zip->getHtml();
+        return new UploadedVideo($name, $previewUrl->toString(), $width, $height);
     }
 
     public function removeTemporaryFile(string $fileName): void
     {
         try {
-            Storage::disk(self::ZIP_DISK)->delete($fileName);
+            Storage::disk(self::VIDEO_DISK)->delete($fileName);
         } catch (FileNotFoundException $exception) {
-            Log::warning(sprintf('Removing ZIP file (%s) does not exist.', $fileName));
+            Log::warning(sprintf('Removing VIDEO file (%s) does not exist.', $fileName));
         }
     }
 
     public function preview(string $fileName): Response
     {
-        $path = Storage::disk(self::ZIP_DISK)->path($fileName);
+        $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
+        $mime = mime_content_type($path);
 
-        $zip = new ZipToHtml($path);
-        $html = $zip->getHtml();
+        $response = new Response(file_get_contents($path), 200);
+        $response->header('Content-Type', $mime);
 
-        return new Response($html);
+        return $response;
     }
 
     public static function content(string $fileName): string
     {
-        $zip = new ZipToHtml(Storage::disk(self::ZIP_DISK)->path($fileName));
+        return Storage::disk(self::VIDEO_DISK)->get($fileName);
+    }
 
-        return $zip->getHtml();
+    public static function contentMimeType(string $fileName): string
+    {
+        $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
+
+        return mime_content_type($path);
     }
 }

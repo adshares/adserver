@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\TargetingMapper;
-use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use DateTime;

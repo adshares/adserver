@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,18 +22,15 @@
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Psr\Log\LoggerInterface;
 
 class AdSelectInventoryExporter
 {
-    private $client;
-    /** @var CampaignRepository */
-    private $repository;
-    /** @var LoggerInterface */
-    private $logger;
+    private AdSelect $client;
+    private CampaignRepository $repository;
+    private LoggerInterface $logger;
 
     public function __construct(AdSelect $client, CampaignRepository $repository, LoggerInterface $logger)
     {

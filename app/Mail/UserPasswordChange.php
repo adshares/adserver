@@ -19,28 +19,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Mail;
 
-namespace Adshares\Adserver\Uploader\Zip;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-use Adshares\Adserver\Uploader\UploadedFile;
-
-class UploadedZip implements UploadedFile
+class UserPasswordChange extends Mailable
 {
-    private string $name;
-    private string $previewUrl;
+    use Queueable;
+    use SerializesModels;
 
-    public function __construct(string $name, string $previewUrl)
+    public function __construct()
     {
-        $this->name = $name;
-        $this->previewUrl = $previewUrl;
+        $this->subject('The password was changed');
     }
 
-    public function toArray(): array
+    public function build()
     {
-        return [
-            'name' => $this->name,
-            'url' => $this->previewUrl,
-        ];
+        return $this->markdown('emails.user-password-change');
     }
 }

@@ -19,28 +19,34 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Mail;
 
-namespace Adshares\Adserver\Uploader\Zip;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-use Adshares\Adserver\Uploader\UploadedFile;
-
-class UploadedZip implements UploadedFile
+class WalletConnected extends Mailable
 {
-    private string $name;
-    private string $previewUrl;
+    use Queueable;
+    use SerializesModels;
 
-    public function __construct(string $name, string $previewUrl)
+    protected WalletAddress $address;
+
+    public function __construct(WalletAddress $address)
     {
-        $this->name = $name;
-        $this->previewUrl = $previewUrl;
+        $this->address = $address;
     }
 
-    public function toArray(): array
+    public function build(): self
     {
-        return [
-            'name' => $this->name,
-            'url' => $this->previewUrl,
-        ];
+        return $this->subject('Your wallet has been successfully connected')
+            ->markdown('emails.wallet-connected')
+            ->with(
+                [
+                    'address' => $this->address->getAddress(),
+                    'network' => $this->address->getNetwork(),
+                ]
+            );
     }
 }
