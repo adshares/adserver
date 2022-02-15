@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,8 +43,7 @@ class DemandBlockRequiredAmount extends BaseCommand
 
     protected $description = 'Reserves user funds for payment for campaign events';
 
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
+    private ExchangeRateReader $exchangeRateReader;
 
     public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader)
     {
@@ -57,7 +56,6 @@ class DemandBlockRequiredAmount extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
