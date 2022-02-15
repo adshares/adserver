@@ -25,7 +25,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class UserPasswordConfirmSet extends Mailable
+class UserPasswordChangeConfirm extends Mailable
 {
     use Queueable;
     use SerializesModels;
@@ -35,14 +35,14 @@ class UserPasswordConfirmSet extends Mailable
 
     public function __construct(string $token, string $uri)
     {
-        $this->subject('Confirm password set');
+        $this->subject('Confirm password change');
         $this->token = $token;
         $this->uri = $uri;
     }
 
     public function build()
     {
-        return $this->markdown('emails.user-password-confirm-set')->with(
+        return $this->markdown('emails.user-password-change-confirm')->with(
             [
                 'token' => $this->token,
                 'uri' => $this->uri,

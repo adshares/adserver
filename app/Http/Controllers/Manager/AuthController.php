@@ -29,7 +29,7 @@ use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Mail\UserPasswordChange;
-use Adshares\Adserver\Mail\UserPasswordConfirmSet;
+use Adshares\Adserver\Mail\UserPasswordChangeConfirm;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -485,15 +485,13 @@ MSG;
             if (null === $user->email || !$user->is_email_confirmed) {
                 throw new AccessDeniedHttpException('Email is not set');
             }
-            if (!is_string($request->input('uri'))) {
-                throw new UnprocessableEntityHttpException('Field `uri` is required');
-            }
+            Validator::make($request->all(), ['uri' => 'required'])->validate();
             $confirmToken = Token::generate(
-                Token::PASSWORD_CONFIRM_SET,
+                Token::PASSWORD_CHANGE,
                 $user,
                 ['password' => Hash::make($request->input('user.password_new'))]
             );
-            Mail::to($user)->queue(new UserPasswordConfirmSet($confirmToken->uuid, $request->input('uri')));
+            Mail::to($user)->queue(new UserPasswordChangeConfirm($confirmToken->uuid, $request->input('uri')));
             return self::json([]);
         }
 
@@ -524,12 +522,12 @@ MSG;
         return self::json($user->toArray());
     }
 
-    public function confirmPasswordSet(string $token): JsonResponse
+    public function confirmPasswordChange(string $token): JsonResponse
     {
         DB::beginTransaction();
-        if (false === $tokenData = Token::check($token, null, Token::PASSWORD_CONFIRM_SET)) {
+        if (false === $tokenData = Token::check($token, null, Token::PASSWORD_CHANGE)) {
             DB::commit();
-            return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
+            throw new AccessDeniedHttpException('Invalid or outdated token');
         }
 
         $user = User::findOrFail($tokenData['user_id']);
@@ -540,6 +538,7 @@ MSG;
         }
 
         $user->setHashedPasswordAttribute($tokenData['payload']['password']);
+        $user->api_token = null;
         $user->save();
         DB::commit();
 

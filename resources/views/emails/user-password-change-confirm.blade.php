@@ -1,10 +1,10 @@
 @component('mail::message')
-# Confirm password set request
+# Confirm password change request
 
-Please confirm your password set request
+Please confirm your password change request
 
 @component('mail::button', ['url' => config('app.adpanel_url').$uri.$token])
-Confirm password set request
+Confirm password change
 @endcomponent
 
 Thanks,

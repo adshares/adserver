@@ -28,7 +28,7 @@ use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserPasswordChange;
-use Adshares\Adserver\Mail\UserPasswordConfirmSet;
+use Adshares\Adserver\Mail\UserPasswordChangeConfirm;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
@@ -48,7 +48,7 @@ class AuthControllerTest extends TestCase
 {
     private const CHECK_URI = '/auth/check';
     private const SELF_URI = '/auth/self';
-    private const PASSWORD_CONFIRM = '/auth/password/confirm-set';
+    private const PASSWORD_CONFIRM = '/auth/password/confirm';
     private const PASSWORD_URI = '/auth/password';
     private const EMAIL_ACTIVATE_URI = '/auth/email/activate';
     private const EMAIL_URI = '/auth/email';
@@ -683,7 +683,7 @@ class AuthControllerTest extends TestCase
             'uri' => '/confirm',
         ]);
         $response->assertStatus(Response::HTTP_OK);
-        Mail::assertQueued(UserPasswordConfirmSet::class);
+        Mail::assertQueued(UserPasswordChangeConfirm::class);
     }
 
     public function testSetPasswordWhileUserHasNoEmailSet(): void
@@ -707,7 +707,7 @@ class AuthControllerTest extends TestCase
         $user->email_confirmed_at = new DateTime();
         $user->save();
         $this->actingAs($user, 'api');
-        $token = Token::generate(Token::PASSWORD_CONFIRM_SET, $user, ['password' => 'qwerty123']);
+        $token = Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
 
         $response = $this->get(self::buildConfirmPasswordUri($token->uuid));
         $response->assertStatus(Response::HTTP_OK);

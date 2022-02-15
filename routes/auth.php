@@ -40,7 +40,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('check', [AuthController::class, 'check']);
 
     Route::patch('self', [AuthController::class, 'changePassword']);
-    Route::get('password/confirm-set/{token}', [AuthController::class, 'confirmPasswordSet']);
+    Route::get('password/confirm/{token}', [AuthController::class, 'confirmPasswordChange']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
 });
 
