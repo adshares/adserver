@@ -1,5 +1,5 @@
 @component('mail::message')
-# Confirm cryptocurrency wallet connect request
+# Confirm cryptocurrency wallet connection request
 
 Please confirm you want to connect your Adshares account to this cryptocurrency wallet:
 
@@ -7,7 +7,7 @@ Please confirm you want to connect your Adshares account to this cryptocurrency 
 - Wallet network: {{ $network }}
 
 @component('mail::button', ['url' => config('app.adpanel_url').$uri.$token])
-    Confirm wallet connect request
+    Confirm wallet connection
 @endcomponent
 
 Thanks,

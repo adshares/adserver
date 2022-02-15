@@ -44,13 +44,14 @@ class WalletConnectConfirm extends Mailable
 
     public function build(): self
     {
-        return $this->markdown('emails.wallet-connect-confirm')->with(
-            [
-                'address' => $this->address->getAddress(),
-                'network' => $this->address->getNetwork(),
-                'token' => $this->token,
-                'uri' => $this->uri,
-            ]
-        );
+        return $this->subject('Confirm wallet connection request')
+            ->markdown('emails.wallet-connect-confirm')->with(
+                [
+                    'address' => $this->address->getAddress(),
+                    'network' => $this->address->getNetwork(),
+                    'token' => $this->token,
+                    'uri' => $this->uri,
+                ]
+            );
     }
 }

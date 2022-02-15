@@ -40,11 +40,13 @@ class WalletConnected extends Mailable
 
     public function build(): self
     {
-        return $this->markdown('emails.wallet-connected')->with(
-            [
-                'address' => $this->address->getAddress(),
-                'network' => $this->address->getNetwork(),
-            ]
-        );
+        return $this->subject('Your wallet has been successfully connected')
+            ->markdown('emails.wallet-connected')
+            ->with(
+                [
+                    'address' => $this->address->getAddress(),
+                    'network' => $this->address->getNetwork(),
+                ]
+            );
     }
 }

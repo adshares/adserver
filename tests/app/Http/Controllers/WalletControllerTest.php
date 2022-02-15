@@ -991,7 +991,7 @@ class WalletControllerTest extends TestCase
             'wallet_address' => 'ads:0001-00000001-8B4E',
         ]);
 
-        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response = $this->post(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure([
             'id',
             'email',
@@ -1019,21 +1019,21 @@ class WalletControllerTest extends TestCase
             'wallet_address' => 'ads:0001-00000001-8B4E',
         ]);
 
-        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response = $this->post(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
 
     public function testInvalidConnectConfirmToken(): void
     {
         $this->login();
-        $response = $this->get(self::CONNECT_CONFIRM_URI . '/foo');
+        $response = $this->post(self::CONNECT_CONFIRM_URI . '/foo');
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testNonExistedConnectConfirmToken(): void
     {
         $this->login();
-        $response = $this->get(self::CONNECT_CONFIRM_URI . '/1231231231');
+        $response = $this->post(self::CONNECT_CONFIRM_URI . '/1231231231');
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -1046,7 +1046,7 @@ class WalletControllerTest extends TestCase
         $token->valid_until = '2020-01-01 12:00:00';
         $token->saveOrFail();
 
-        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response = $this->post(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -1057,7 +1057,7 @@ class WalletControllerTest extends TestCase
             'wallet_address' => 'ads:0001-00000001-8B4E',
         ]);
 
-        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response = $this->post(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
     }
 
@@ -1068,7 +1068,7 @@ class WalletControllerTest extends TestCase
             'wallet_address' => 'foo:xyz',
         ]);
 
-        $response = $this->get(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
+        $response = $this->post(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 

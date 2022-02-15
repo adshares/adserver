@@ -166,7 +166,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('now-payments/init', [WalletController::class, 'nowPaymentsInit']);
         Route::get('wallet/connect/init', [WalletController::class, 'connectInit']);
         Route::patch('wallet/connect', [WalletController::class, 'connect']);
-        Route::get('wallet/connect/confirm/{token}', [WalletController::class, 'connectConfirm']);
+        Route::post('wallet/connect/confirm/{token}', [WalletController::class, 'connectConfirm']);
 
 // statistics
         Route::get(
