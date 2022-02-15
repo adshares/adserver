@@ -76,14 +76,6 @@ class User extends Authenticatable
     use BinHex;
     use AddressWithNetwork;
 
-    public static $rules = [
-        'email' => 'email|max:150|unique:users',
-        'password' => 'min:8',
-        'password_new' => 'min:8',
-        'is_advertiser' => 'boolean',
-        'is_publisher' => 'boolean',
-    ];
-
     public static $rules_add = [
         'email' => 'required|email|max:150|unique:users',
         'password' => 'required|min:8',
@@ -229,6 +221,11 @@ class User extends Authenticatable
     public function setPasswordAttribute($value): void
     {
         $this->attributes['password'] = null !== $value ? Hash::make($value) : null;
+    }
+
+    public function setHashedPasswordAttribute(string $value): void
+    {
+        $this->attributes['password'] = $value;
     }
 
     public function validPassword($value): bool
