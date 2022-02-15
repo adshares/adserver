@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Common\Domain\ValueObject;
+namespace Adshares\Tests\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -73,7 +73,7 @@ final class UuidTest extends TestCase
         $this->assertEquals('00', substr(Uuid::caseId(), -2));
     }
 
-    public function dataProviderForCreateString()
+    public function dataProviderForCreateString(): array
     {
         return [
             [uniqid(), self::INVALID],

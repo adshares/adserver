@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\Factory;
 
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\Exception\InvalidCampaignArgumentException;
@@ -76,7 +77,6 @@ class CampaignFactory
             self::validateBanner($banner);
 
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
-            $size = $banner['size'];
             $demandBannerId = $banner['demand_banner_id'] ?? $banner['id'];
             $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
             $hash = $banner['checksum'] ?? '';
@@ -93,7 +93,7 @@ class CampaignFactory
                 $bannerUrl,
                 $banner['type'],
                 $banner['mime'],
-                $size,
+                $banner['size'],
                 $hash,
                 $status,
                 $classification
@@ -171,12 +171,32 @@ class CampaignFactory
             }
         }
 
+        if (!in_array($data['type'], NetworkBanner::ALLOWED_TYPES, true)) {
+            throw new InvalidCampaignArgumentException('Unsupported banner type.');
+        }
+
         if (!array_key_exists('demand_banner_id', $data) && !array_key_exists('id', $data)) {
             throw new InvalidCampaignArgumentException('Banner id field is missing. The field is required.');
         }
 
-        if (!Size::isValid($data['size'])) {
-            throw new InvalidCampaignArgumentException('Unsupported image size.');
+        self::validateBannerSize($data);
+    }
+
+    private static function validateBannerSize(array $data): void
+    {
+        $size = $data['size'];
+        if ($data['type'] === NetworkBanner::TYPE_VIDEO) {
+            if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
+                throw new InvalidCampaignArgumentException('Unsupported video size.');
+            }
+            if (empty(Size::findMatching(...Size::toDimensions($size)))) {
+                throw new InvalidCampaignArgumentException('Unsupported video size. No match');
+            }
+            return;
+        }
+
+        if (!Size::isValid($size)) {
+            throw new InvalidCampaignArgumentException('Unsupported banner size.');
         }
     }
 }

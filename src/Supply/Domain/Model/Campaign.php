@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,35 +33,26 @@ use Datetime;
 
 final class Campaign
 {
-    /** @var Id */
-    private $id;
+    private Id $id;
 
-    /** @var string */
-    private $landingUrl;
+    private string $landingUrl;
 
-    /** @var ArrayCollection */
-    private $banners;
+    /** @var ArrayCollection|Banner[] */
+    private ArrayCollection $banners;
 
-    /** @var SourceCampaign */
-    private $sourceCampaign;
+    private SourceCampaign $sourceCampaign;
 
-    /** @var Budget */
-    private $budget;
+    private Budget $budget;
 
-    /** @var array */
-    private $targetingExcludes = [];
+    private array $targetingExcludes;
 
-    /** @var array */
-    private $targetingRequires = [];
+    private array $targetingRequires;
 
-    /** @var Status */
-    private $status;
+    private Status $status;
 
-    /** @var Id */
-    private $demandCampaignId;
+    private Id $demandCampaignId;
 
-    /** @var CampaignDate */
-    private $campaignDate;
+    private CampaignDate $campaignDate;
 
     public function __construct(
         Id $id,
@@ -91,7 +82,6 @@ final class Campaign
     {
         $this->status = Status::deleted();
 
-        /** @var Banner $banner */
         foreach ($this->banners as $banner) {
             $banner->delete();
         }
@@ -101,7 +91,6 @@ final class Campaign
     {
         $this->status = Status::active();
 
-        /** @var Banner $banner */
         foreach ($this->banners as $banner) {
             $banner->activate();
         }
@@ -136,6 +125,9 @@ final class Campaign
         return $this->status->getStatus();
     }
 
+    /**
+     * @return ArrayCollection|Banner[]
+     */
     public function getBanners(): ArrayCollection
     {
         return $this->banners;

@@ -25,6 +25,7 @@ namespace Adshares\Tests\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
@@ -37,22 +38,17 @@ final class CampaignTest extends TestCase
 {
     public function testCampaignActivate(): void
     {
-        $sourceHost = new SourceCampaign(
-            'example.com',
-            '0001-00000001-0001',
-            '0.1',
-            new DateTime(),
-            new DateTime()
-        );
+        $banner = $this->createMock(Banner::class);
+        $banner->expects(self::once())->method('activate');
 
         $campaign = new Campaign(
             Uuid::v4(),
-            UUid::v4(),
+            Uuid::v4(),
             'http://example.com',
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
-            [],
+            [$banner],
             new Budget(1000000000000, 100000000000, null),
-            $sourceHost,
+            self::sourceCampaign(),
             Status::toDelete(),
             [],
             []
@@ -67,13 +63,8 @@ final class CampaignTest extends TestCase
 
     public function testCampaignDeactivated(): void
     {
-        $sourceHost = new SourceCampaign(
-            'example.com',
-            '0001-00000001-0001',
-            '0.1',
-            new DateTime(),
-            new DateTime()
-        );
+        $banner = $this->createMock(Banner::class);
+        $banner->expects(self::once())->method('delete');
 
         $campaign = new Campaign(
             Uuid::v4(),
@@ -82,11 +73,12 @@ final class CampaignTest extends TestCase
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
             new Budget(1000000000000, 100000000000, null),
-            $sourceHost,
+            self::sourceCampaign(),
             Status::active(),
             [],
             []
         );
+        $campaign->setBanners(new ArrayCollection([$banner]));
 
         $this->assertEquals(Status::STATUS_ACTIVE, $campaign->getStatus());
 
@@ -97,6 +89,7 @@ final class CampaignTest extends TestCase
 
     public function testToArray(): void
     {
+        $sourceAddress = '0001-00000001-0001';
         $sourceCreatedAt = (new DateTime())->modify('-1 day');
         $sourceUpdatedAt = (new DateTime())->modify('-5 hours');
         $createdAt = (new DateTime())->modify('-2 hours');
@@ -106,7 +99,7 @@ final class CampaignTest extends TestCase
 
         $sourceHost = new SourceCampaign(
             'example.com',
-            '0001-00000001-0001',
+            $sourceAddress,
             '0.1',
             $sourceCreatedAt,
             $sourceUpdatedAt
@@ -114,6 +107,8 @@ final class CampaignTest extends TestCase
 
         $id = Uuid::v4();
         $demandCampaignId = Uuid::v4();
+        $budget = 1000000000000;
+        $maxCpc = 100000000000;
 
         $campaign = new Campaign(
             $id,
@@ -121,7 +116,7 @@ final class CampaignTest extends TestCase
             'http://example.com',
             new CampaignDate($dateStart, $dateEnd, $createdAt, $updatedAt),
             [],
-            new Budget(1000000000000, 100000000000, null),
+            new Budget($budget, $maxCpc, null),
             $sourceHost,
             Status::active(),
             [],
@@ -132,12 +127,12 @@ final class CampaignTest extends TestCase
             'id' => $id,
             'demand_campaign_id' => $demandCampaignId,
             'landing_url' => 'http://example.com',
-            'max_cpc' => 100000000000,
+            'max_cpc' => $maxCpc,
             'max_cpm' => null,
-            'budget' => 1000000000000,
+            'budget' => $budget,
             'source_host' => 'example.com',
             'source_version' => '0.1',
-            'source_address' => '0001-00000001-0001',
+            'source_address' => $sourceAddress,
             'source_created_at' => $sourceCreatedAt,
             'source_updated_at' => $sourceUpdatedAt,
             'created_at' => $createdAt,
@@ -158,5 +153,20 @@ final class CampaignTest extends TestCase
         $this->assertEquals($id, $campaign->getId());
         $this->assertEquals(Status::STATUS_ACTIVE, $campaign->getStatus());
         $this->assertEquals(new ArrayCollection(), $campaign->getBanners());
+        $this->assertEquals($sourceAddress, $campaign->getSourceAddress());
+        $this->assertEquals($budget, $campaign->getBudget());
+        $this->assertEquals($maxCpc, $campaign->getMaxCpc());
+        $this->assertNull($campaign->getMaxCpm());
+    }
+
+    private static function sourceCampaign(): SourceCampaign
+    {
+        return new SourceCampaign(
+            'example.com',
+            '0001-00000001-0001',
+            '0.1',
+            new DateTime(),
+            new DateTime()
+        );
     }
 }

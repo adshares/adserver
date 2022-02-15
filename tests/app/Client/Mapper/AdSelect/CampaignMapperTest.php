@@ -124,6 +124,30 @@ final class CampaignMapperTest extends TestCase
         $this->assertLessThanOrEqual((new DateTime('+1 year'))->getTimestamp(), $mappedTimeEnd);
     }
 
+    public function testMappingCampaignWithBannerVideo(): void
+    {
+        $campaignData = array_merge(
+            $this->getCampaignData(),
+            [
+                'banners' => [
+                    self::getBannerData(
+                        [
+                            'type' => 'video',
+                            'mime' => 'video/mp4',
+                            'size' => '300x250',
+                        ]
+                    ),
+                ],
+            ]
+        );
+        $campaign = CampaignFactory::createFromArray($campaignData);
+        $mapped = CampaignMapper::map($campaign);
+
+        $bannerSizes = $mapped['banners'][0]['banner_size'];
+        self::assertIsArray($bannerSizes);
+        self::assertContains('300x250', $bannerSizes);
+    }
+
     private function getCampaignData(): array
     {
         return [
