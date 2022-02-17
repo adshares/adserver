@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Uploader;
 
 use Adshares\Adserver\Uploader\Image\ImageUploader;
+use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Illuminate\Http\Request;
@@ -32,6 +33,11 @@ class Factory
 {
     private const EXTENSION_VIDEO_LIST = [
         'mp4',
+    ];
+
+    private const EXTENSION_MODEL_LIST = [
+        'glb',
+        'vox',
     ];
 
     private const MIME_VIDEO_LIST = [
@@ -56,6 +62,13 @@ class Factory
             return new VideoUploader($request);
         }
 
+        if ('application/octet-stream' === $mimeType) {
+            $filePrefix = substr($file->get(), 0, 4);
+            if ('glTF' === $filePrefix || 'VOX ' === $filePrefix) {
+                return new ModelUploader($request);
+            }
+        }
+
         if (in_array($mimeType, self::MIME_ZIP_LIST, true)) {
             return new ZipUploader($request);
         }
@@ -73,6 +86,10 @@ class Factory
             return new VideoUploader($request);
         }
 
+        if ($type === ModelUploader::MODEL_FILE) {
+            return new ModelUploader($request);
+        }
+
         return new ImageUploader($request);
     }
 
@@ -86,6 +103,10 @@ class Factory
 
         if (in_array($extension, self::EXTENSION_VIDEO_LIST, true)) {
             return new VideoUploader($request);
+        }
+
+        if (in_array($extension, self::EXTENSION_MODEL_LIST, true)) {
+            return new ModelUploader($request);
         }
 
         return new ImageUploader($request);

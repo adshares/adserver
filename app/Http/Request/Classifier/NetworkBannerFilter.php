@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,10 +29,6 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\ValueObject\Size;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
-
-use function json_decode;
-use function sprintf;
-use function urldecode;
 
 class NetworkBannerFilter
 {

@@ -42,6 +42,7 @@ use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
+use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
@@ -216,6 +217,11 @@ class CampaignsController extends Controller
                         $fileName = $this->filename($banner['url']);
                         $content = VideoUploader::content($fileName);
                         $mimeType = VideoUploader::contentMimeType($fileName);
+                        break;
+                    case Banner::TYPE_MODEL:
+                        $fileName = $this->filename($banner['url']);
+                        $content = ModelUploader::content($fileName);
+                        $mimeType = ModelUploader::contentMimeType($fileName);
                         break;
                     case Banner::TYPE_HTML:
                         $content = ZipUploader::content($this->filename($banner['url']));
@@ -658,6 +664,12 @@ class CampaignsController extends Controller
     private static function validateSize(array $banner): void
     {
         $size = $banner['creative_size'];
+        if ($banner['type'] === Banner::TYPE_MODEL) {
+            if ($size !== 'cube') {
+                throw new RuntimeException(sprintf('Invalid model size: %s.', $size));
+            }
+            return;
+        }
         if ($banner['type'] === Banner::TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new RuntimeException(sprintf('Invalid video size: %s.', $size));
