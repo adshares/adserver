@@ -274,6 +274,43 @@ final class ClassifierControllerTest extends TestCase
         $this->assertTrue($classification->status);
     }
 
+    public function testChangeSiteStatusWithoutBannerId(): void
+    {
+        $user = factory(User::class)->create(['id' => 1]);
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $this->actingAs($user, 'api');
+
+        factory(NetworkCampaign::class)->create(['id' => 1]);
+
+        $data = [
+            'classification' => [
+                'status' => true,
+            ],
+        ];
+
+        $response = $this->patchJson(self::CLASSIFICATION_LIST . '/' . $site->id, $data);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeSiteStatusWhenBannerNotExistsInDb(): void
+    {
+        $user = factory(User::class)->create(['id' => 1]);
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $this->actingAs($user, 'api');
+
+        factory(NetworkCampaign::class)->create(['id' => 1]);
+
+        $data = [
+            'classification' => [
+                'banner_id' => 1,
+                'status' => true,
+            ],
+        ];
+
+        $response = $this->patchJson(self::CLASSIFICATION_LIST . '/' . $site->id, $data);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     /**
      * @dataProvider provideLandingUrl
      *

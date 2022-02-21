@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,9 +29,9 @@ use DateTime;
 
 class PaymentDetailsVerify
 {
-    private $signatureVerifier;
+    private SignatureVerifier $signatureVerifier;
 
-    private $adsClient;
+    private Ads $adsClient;
 
     public function __construct(SignatureVerifier $signatureVerifier, Ads $adsClient)
     {

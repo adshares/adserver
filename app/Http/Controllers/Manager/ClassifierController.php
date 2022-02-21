@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,8 +36,8 @@ use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ClassifierController extends Controller
 {
@@ -84,7 +84,7 @@ class ClassifierController extends Controller
         $userId = (int)Auth::user()->id;
 
         if (!isset($input['classification'], $classification['banner_id'], $classification['status'])) {
-            throw new BadRequestHttpException('Wrong input parameters.');
+            throw new UnprocessableEntityHttpException('Wrong input parameters.');
         }
 
         $bannerId = (int)$classification['banner_id'];
