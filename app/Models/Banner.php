@@ -140,7 +140,7 @@ class Banner extends Model
             self::TEXT_TYPE_HTML,
             self::TEXT_TYPE_IMAGE,
             self::TEXT_TYPE_VIDEO,
-            self::TEXT_TYPE_MODEL
+            self::TEXT_TYPE_MODEL,
         ];
     }
 
