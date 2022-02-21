@@ -26,10 +26,9 @@ namespace Adshares\Adserver\Uploader\Model;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -58,17 +57,13 @@ class ModelUploader implements Uploader
 
     public function removeTemporaryFile(string $fileName): void
     {
-        try {
-            Storage::disk(self::DISK)->delete($fileName);
-        } catch (FileNotFoundException $exception) {
-            Log::warning(sprintf('Removing MODEL file (%s) does not exist.', $fileName));
-        }
+        Storage::disk(self::DISK)->delete($fileName);
     }
 
     public function preview(string $fileName): Response
     {
         $content = self::content($fileName);
-        $mime = self::contentMimeType($fileName);
+        $mime = self::contentMimeType($content);
 
         $response = new Response($content, 200);
         $response->header('Content-Type', $mime);
@@ -81,9 +76,9 @@ class ModelUploader implements Uploader
         return Storage::disk(self::DISK)->get($fileName);
     }
 
-    public static function contentMimeType(string $fileName): string
+    public static function contentMimeType(string $content): string
     {
-        $fileHeader = substr(self::content($fileName), 0, 4);
+        $fileHeader = substr($content, 0, 4);
         switch ($fileHeader) {
             case 'glTF':
                 $mime = 'model/gltf-binary';
@@ -92,7 +87,7 @@ class ModelUploader implements Uploader
                 $mime = 'model/voxel';
                 break;
             default:
-                $mime = 'application/octet-stream';
+                throw new RuntimeException('Unsupported model file.');
         }
         return $mime;
     }

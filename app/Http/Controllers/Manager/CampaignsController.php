@@ -221,7 +221,7 @@ class CampaignsController extends Controller
                     case Banner::TYPE_MODEL:
                         $fileName = $this->filename($banner['url']);
                         $content = ModelUploader::content($fileName);
-                        $mimeType = ModelUploader::contentMimeType($fileName);
+                        $mimeType = ModelUploader::contentMimeType($content);
                         break;
                     case Banner::TYPE_HTML:
                         $content = ZipUploader::content($this->filename($banner['url']));

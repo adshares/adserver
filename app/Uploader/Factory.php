@@ -27,6 +27,7 @@ use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Http\Request;
 
 class Factory
@@ -56,6 +57,9 @@ class Factory
     public static function create(Request $request): Uploader
     {
         $file = $request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('File is required');
+        }
         $mimeType = $file->getMimeType();
 
         if (in_array($mimeType, self::MIME_VIDEO_LIST, true)) {
