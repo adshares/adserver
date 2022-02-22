@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,10 +29,8 @@ use Adshares\Common\Application\Service\ConfigurationRepository;
 
 class TargetingOptionsImporter
 {
-    /** @var AdUser */
-    private $client;
-    /** @var ConfigurationRepository */
-    private $repository;
+    private AdUser $client;
+    private ConfigurationRepository $repository;
 
     public function __construct(AdUser $client, ConfigurationRepository $repository)
     {

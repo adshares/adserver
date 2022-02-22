@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,11 +26,6 @@ namespace Adshares\Adserver\Repository;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 
-use function file_get_contents;
-use function file_put_contents;
-use function serialize;
-use function unserialize;
-
 use const DIRECTORY_SEPARATOR;
 
 final class FileConfigurationRepository implements ConfigurationRepository
@@ -38,9 +33,9 @@ final class FileConfigurationRepository implements ConfigurationRepository
     private const TARGETING_CACHE_FILENAME = 'targeting.cache';
     private const FILTERING_CACHE_FILENAME = 'filtering.cache';
 
-    private $targetingFilePath;
+    private string $targetingFilePath;
 
-    private $filteringFilePath;
+    private string $filteringFilePath;
 
     public function __construct(string $cachePath)
     {

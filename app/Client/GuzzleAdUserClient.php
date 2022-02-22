@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,8 +45,7 @@ use function sprintf;
 
 final class GuzzleAdUserClient implements AdUser
 {
-    /** @var Client */
-    private $client;
+    private Client $client;
 
     private const API_PATH = '/api/v1';
 
