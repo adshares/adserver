@@ -6,7 +6,7 @@
   "parameters": {
     "@countries": {
       "af": "Afghanistan",
-      "ax": "Ålandland Islands",
+      "ax": "Åland Islands",
       "al": "Albania",
       "dz": "Algeria",
       "as": "American Samoa",
@@ -472,346 +472,399 @@
       "other": "Other"
     }
   },
-  "media": [{
-    "name": "web",
-    "label": "Website",
-    "formats": [{
-      "type": "image",
-      "mimes": ["image\/gif", "image\/jpeg", "image\/png", "image\/webp"],
-      "scopes": {
-        "300x250": "Medium Rectangle",
-        "336x280": "Large Rectangle",
-        "728x90": "Leaderboard",
-        "300x600": "Half Page",
-        "320x100": "Large Mobile Banner",
-        "320x50": "Mobile Banner",
-        "468x60": "Full Banner",
-        "234x60": "Half Banner",
-        "120x600": "Skyscraper",
-        "120x240": "Vertical Banner",
-        "160x600": "Wide Skyscraper",
-        "300x1050": "Portrait",
-        "970x90": "Large Leaderboard",
-        "970x250": "Billboard",
-        "250x250": "Square",
-        "200x200": "Small Square",
-        "180x150": "Small Rectangle",
-        "125x125": "Button",
-        "240x400": "Vertical Rectangle",
-        "980x120": "Panorama",
-        "250x360": "Triple Widescreen",
-        "930x180": "Top Banner",
-        "580x400": "Netboard",
-        "750x100": "Single Billboard",
-        "750x200": "Double Billboard",
-        "750x300": "Triple Billboard",
-        "300x100": "3 to 1 Rectangle",
-        "120x90": "Button One",
-        "120x60": "Button Two",
-        "88x31": "Micro Banner"
-      }
-    }, {
-      "type": "html",
-      "mimes": ["text\/html"],
-      "scopes": {
-        "300x250": "Medium Rectangle",
-        "336x280": "Large Rectangle",
-        "728x90": "Leaderboard",
-        "300x600": "Half Page",
-        "320x100": "Large Mobile Banner",
-        "320x50": "Mobile Banner",
-        "468x60": "Full Banner",
-        "234x60": "Half Banner",
-        "120x600": "Skyscraper",
-        "120x240": "Vertical Banner",
-        "160x600": "Wide Skyscraper",
-        "300x1050": "Portrait",
-        "970x90": "Large Leaderboard",
-        "970x250": "Billboard",
-        "250x250": "Square",
-        "200x200": "Small Square",
-        "180x150": "Small Rectangle",
-        "125x125": "Button",
-        "240x400": "Vertical Rectangle",
-        "980x120": "Panorama",
-        "250x360": "Triple Widescreen",
-        "930x180": "Top Banner",
-        "580x400": "Netboard",
-        "750x100": "Single Billboard",
-        "750x200": "Double Billboard",
-        "750x300": "Triple Billboard",
-        "300x100": "3 to 1 Rectangle",
-        "120x90": "Button One",
-        "120x60": "Button Two",
-        "88x31": "Micro Banner"
-      }
-    }, {
-      "type": "video",
-      "mimes": ["video\/mp4"],
-      "scopes": {
-        "300x250": "Medium Rectangle",
-        "336x280": "Large Rectangle",
-        "728x90": "Leaderboard",
-        "300x600": "Half Page",
-        "320x100": "Large Mobile Banner",
-        "320x50": "Mobile Banner",
-        "468x60": "Full Banner",
-        "234x60": "Half Banner",
-        "120x600": "Skyscraper",
-        "120x240": "Vertical Banner",
-        "160x600": "Wide Skyscraper",
-        "300x1050": "Portrait",
-        "970x90": "Large Leaderboard",
-        "970x250": "Billboard",
-        "250x250": "Square",
-        "200x200": "Small Square",
-        "180x150": "Small Rectangle",
-        "125x125": "Button",
-        "240x400": "Vertical Rectangle",
-        "980x120": "Panorama",
-        "250x360": "Triple Widescreen",
-        "930x180": "Top Banner",
-        "580x400": "Netboard",
-        "750x100": "Single Billboard",
-        "750x200": "Double Billboard",
-        "750x300": "Triple Billboard",
-        "300x100": "3 to 1 Rectangle",
-        "120x90": "Button One",
-        "120x60": "Button Two",
-        "88x31": "Micro Banner"
-      }
-    }, {
-      "type": "direct",
-      "mimes": ["text\/plain"],
-      "scopes": ["pop-up", "pop-under"]
-    }
-    ],
-    "targeting": {
-      "user": [{
-        "type": "dict",
-        "name": "country",
-        "label": "Country",
-        "items": "@countries"
-      }, {
-        "type": "dict",
-        "name": "language",
-        "label": "Language",
-        "items": "@languages"
-      }
+  "media": [
+    {
+      "name": "web",
+      "label": "Website",
+      "formats": [
+        {
+          "type": "image",
+          "mimes": [
+            "image/gif",
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle",
+            "336x280": "Large Rectangle",
+            "728x90": "Leaderboard",
+            "300x600": "Half Page",
+            "320x100": "Large Mobile Banner",
+            "320x50": "Mobile Banner",
+            "468x60": "Full Banner",
+            "234x60": "Half Banner",
+            "120x600": "Skyscraper",
+            "120x240": "Vertical Banner",
+            "160x600": "Wide Skyscraper",
+            "300x1050": "Portrait",
+            "970x90": "Large Leaderboard",
+            "970x250": "Billboard",
+            "250x250": "Square",
+            "200x200": "Small Square",
+            "180x150": "Small Rectangle",
+            "125x125": "Button",
+            "240x400": "Vertical Rectangle",
+            "980x120": "Panorama",
+            "250x360": "Triple Widescreen",
+            "930x180": "Top Banner",
+            "580x400": "Netboard",
+            "750x100": "Single Billboard",
+            "750x200": "Double Billboard",
+            "750x300": "Triple Billboard",
+            "300x100": "3 to 1 Rectangle",
+            "120x90": "Button One",
+            "120x60": "Button Two",
+            "88x31": "Micro Banner"
+          }
+        },
+        {
+          "type": "html",
+          "mimes": [
+            "text/html"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle",
+            "336x280": "Large Rectangle",
+            "728x90": "Leaderboard",
+            "300x600": "Half Page",
+            "320x100": "Large Mobile Banner",
+            "320x50": "Mobile Banner",
+            "468x60": "Full Banner",
+            "234x60": "Half Banner",
+            "120x600": "Skyscraper",
+            "120x240": "Vertical Banner",
+            "160x600": "Wide Skyscraper",
+            "300x1050": "Portrait",
+            "970x90": "Large Leaderboard",
+            "970x250": "Billboard",
+            "250x250": "Square",
+            "200x200": "Small Square",
+            "180x150": "Small Rectangle",
+            "125x125": "Button",
+            "240x400": "Vertical Rectangle",
+            "980x120": "Panorama",
+            "250x360": "Triple Widescreen",
+            "930x180": "Top Banner",
+            "580x400": "Netboard",
+            "750x100": "Single Billboard",
+            "750x200": "Double Billboard",
+            "750x300": "Triple Billboard",
+            "300x100": "3 to 1 Rectangle",
+            "120x90": "Button One",
+            "120x60": "Button Two",
+            "88x31": "Micro Banner"
+          }
+        },
+        {
+          "type": "video",
+          "mimes": [
+            "video/mp4"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle",
+            "336x280": "Large Rectangle",
+            "728x90": "Leaderboard",
+            "300x600": "Half Page",
+            "320x100": "Large Mobile Banner",
+            "320x50": "Mobile Banner",
+            "468x60": "Full Banner",
+            "234x60": "Half Banner",
+            "120x600": "Skyscraper",
+            "120x240": "Vertical Banner",
+            "160x600": "Wide Skyscraper",
+            "300x1050": "Portrait",
+            "970x90": "Large Leaderboard",
+            "970x250": "Billboard",
+            "250x250": "Square",
+            "200x200": "Small Square",
+            "180x150": "Small Rectangle",
+            "125x125": "Button",
+            "240x400": "Vertical Rectangle",
+            "980x120": "Panorama",
+            "250x360": "Triple Widescreen",
+            "930x180": "Top Banner",
+            "580x400": "Netboard",
+            "750x100": "Single Billboard",
+            "750x200": "Double Billboard",
+            "750x300": "Triple Billboard",
+            "300x100": "3 to 1 Rectangle",
+            "120x90": "Button One",
+            "120x60": "Button Two",
+            "88x31": "Micro Banner"
+          }
+        },
+        {
+          "type": "direct",
+          "mimes": [
+            "text/plain"
+          ],
+          "scopes": {
+            "pop-up": "Pop Up",
+            "pop-under": "Pop Under"
+          }
+        }
       ],
-      "site": [{
-        "type": "dict",
-        "name": "quality",
-        "label": "Quality",
-        "items": "@qualityLevels"
-      }, {
-        "type": "dict",
-        "name": "category",
-        "label": "Category",
-        "items": {
-          "adult": "Adult",
-          "crypto": "Crypto",
-          "faucets": "Faucets",
-          "games": "Games",
-          "health": {
-            "label": "Health",
-            "values": {
-              "supplements": "Supplements",
-              "diets": "Diets"
+      "targeting": {
+        "user": [
+          {
+            "type": "dict",
+            "name": "country",
+            "label": "Country",
+            "items": "@countries"
+          },
+          {
+            "type": "dict",
+            "name": "language",
+            "label": "Language",
+            "items": "@languages"
+          }
+        ],
+        "site": [
+          {
+            "type": "dict",
+            "name": "quality",
+            "label": "Quality",
+            "items": "@qualityLevels"
+          },
+          {
+            "type": "dict",
+            "name": "category",
+            "label": "Category",
+            "items": {
+              "adult": "Adult",
+              "crypto": "Crypto",
+              "faucets": "Faucets",
+              "games": "Games",
+              "health": {
+                "label": "Health",
+                "values": {
+                  "supplements": "Supplements",
+                  "diets": "Diets"
+                }
+              },
+              "lifestyle": "Lifestyle",
+              "movies": "Movies",
+              "music": "Music",
+              "news": "News",
+              "paytoclick": "Pay to Click",
+              "technology": "Technology",
+              "unknown": "Unknown"
             }
           },
-          "lifestyle": "Lifestyle",
-          "movies": "Movies",
-          "music": "Music",
-          "news": "News",
-          "paytoclick": "Pay to Click",
-          "technology": "Technology",
-          "unknown": "Unknown"
+          {
+            "type": "input",
+            "name": "domain",
+            "label": "Domain"
+          }
+        ],
+        "device": [
+          {
+            "type": "dict",
+            "name": "type",
+            "label": "Device type",
+            "items": "@devices"
+          },
+          {
+            "type": "dict",
+            "name": "os",
+            "label": "Operating System",
+            "items": "@operatingSystems"
+          },
+          {
+            "type": "dict",
+            "name": "browser",
+            "label": "Browser",
+            "items": "@browsers"
+          },
+          {
+            "type": "dict",
+            "name": "extensions",
+            "label": "Extensions",
+            "items": {
+              "metamask": "MetaMask"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "metaverse",
+      "label": "Metaverse",
+      "formats": [
+        {
+          "type": "image",
+          "mimes": [
+            "image/gif",
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle",
+            "336x280": "Large Rectangle",
+            "728x90": "Leaderboard",
+            "300x600": "Half Page",
+            "320x100": "Large Mobile Banner",
+            "320x50": "Mobile Banner",
+            "468x60": "Full Banner",
+            "234x60": "Half Banner",
+            "120x600": "Skyscraper",
+            "120x240": "Vertical Banner",
+            "160x600": "Wide Skyscraper",
+            "300x1050": "Portrait",
+            "970x90": "Large Leaderboard",
+            "970x250": "Billboard",
+            "250x250": "Square",
+            "200x200": "Small Square",
+            "180x150": "Small Rectangle",
+            "125x125": "Button",
+            "240x400": "Vertical Rectangle",
+            "980x120": "Panorama",
+            "250x360": "Triple Widescreen",
+            "930x180": "Top Banner",
+            "580x400": "Netboard",
+            "750x100": "Single Billboard",
+            "750x200": "Double Billboard",
+            "750x300": "Triple Billboard",
+            "300x100": "3 to 1 Rectangle",
+            "120x90": "Button One",
+            "120x60": "Button Two",
+            "88x31": "Micro Banner"
+          }
+        },
+        {
+          "type": "video",
+          "mimes": [
+            "video/mp4"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle",
+            "336x280": "Large Rectangle",
+            "728x90": "Leaderboard",
+            "300x600": "Half Page",
+            "320x100": "Large Mobile Banner",
+            "320x50": "Mobile Banner",
+            "468x60": "Full Banner",
+            "234x60": "Half Banner",
+            "120x600": "Skyscraper",
+            "120x240": "Vertical Banner",
+            "160x600": "Wide Skyscraper",
+            "300x1050": "Portrait",
+            "970x90": "Large Leaderboard",
+            "970x250": "Billboard",
+            "250x250": "Square",
+            "200x200": "Small Square",
+            "180x150": "Small Rectangle",
+            "125x125": "Button",
+            "240x400": "Vertical Rectangle",
+            "980x120": "Panorama",
+            "250x360": "Triple Widescreen",
+            "930x180": "Top Banner",
+            "580x400": "Netboard",
+            "750x100": "Single Billboard",
+            "750x200": "Double Billboard",
+            "750x300": "Triple Billboard",
+            "300x100": "3 to 1 Rectangle",
+            "120x90": "Button One",
+            "120x60": "Button Two",
+            "88x31": "Micro Banner"
+          }
+        },
+        {
+          "type": "model",
+          "mimes": [
+            "model/voxel",
+            "model/gltf-binary"
+          ],
+          "scopes": {
+            "cube": "Cube"
+          }
         }
-      }, {
-        "type": "input",
-        "name": "domain",
-        "label": "Domain"
-      }
       ],
-      "device": [{
-        "type": "dict",
-        "name": "type",
-        "label": "Device type",
-        "items": "@devices"
-      }, {
-        "type": "dict",
-        "name": "os",
-        "label": "Operating System",
-        "items": "@operatingSystems"
-      }, {
-        "type": "dict",
-        "name": "browser",
-        "label": "Browser",
-        "items": "@browsers"
-      }, {
-        "type": "dict",
-        "name": "extensions",
-        "label": "Extensions",
-        "items": {
-          "metamask": "MetaMask"
-        }
-      }
-      ]
-    }
-  }, {
-    "name": "metaverse",
-    "label": "Metaverse",
-    "formats": [{
-      "type": "image",
-      "mimes": ["image\/gif", "image\/jpeg", "image\/png", "image\/webp"],
-      "scopes": {
-        "300x250": "Medium Rectangle",
-        "336x280": "Large Rectangle",
-        "728x90": "Leaderboard",
-        "300x600": "Half Page",
-        "320x100": "Large Mobile Banner",
-        "320x50": "Mobile Banner",
-        "468x60": "Full Banner",
-        "234x60": "Half Banner",
-        "120x600": "Skyscraper",
-        "120x240": "Vertical Banner",
-        "160x600": "Wide Skyscraper",
-        "300x1050": "Portrait",
-        "970x90": "Large Leaderboard",
-        "970x250": "Billboard",
-        "250x250": "Square",
-        "200x200": "Small Square",
-        "180x150": "Small Rectangle",
-        "125x125": "Button",
-        "240x400": "Vertical Rectangle",
-        "980x120": "Panorama",
-        "250x360": "Triple Widescreen",
-        "930x180": "Top Banner",
-        "580x400": "Netboard",
-        "750x100": "Single Billboard",
-        "750x200": "Double Billboard",
-        "750x300": "Triple Billboard",
-        "300x100": "3 to 1 Rectangle",
-        "120x90": "Button One",
-        "120x60": "Button Two",
-        "88x31": "Micro Banner"
-      }
-    }, {
-      "type": "video",
-      "mimes": ["video\/mp4"],
-      "scopes": {
-        "300x250": "Medium Rectangle",
-        "336x280": "Large Rectangle",
-        "728x90": "Leaderboard",
-        "300x600": "Half Page",
-        "320x100": "Large Mobile Banner",
-        "320x50": "Mobile Banner",
-        "468x60": "Full Banner",
-        "234x60": "Half Banner",
-        "120x600": "Skyscraper",
-        "120x240": "Vertical Banner",
-        "160x600": "Wide Skyscraper",
-        "300x1050": "Portrait",
-        "970x90": "Large Leaderboard",
-        "970x250": "Billboard",
-        "250x250": "Square",
-        "200x200": "Small Square",
-        "180x150": "Small Rectangle",
-        "125x125": "Button",
-        "240x400": "Vertical Rectangle",
-        "980x120": "Panorama",
-        "250x360": "Triple Widescreen",
-        "930x180": "Top Banner",
-        "580x400": "Netboard",
-        "750x100": "Single Billboard",
-        "750x200": "Double Billboard",
-        "750x300": "Triple Billboard",
-        "300x100": "3 to 1 Rectangle",
-        "120x90": "Button One",
-        "120x60": "Button Two",
-        "88x31": "Micro Banner"
-      }
-    }, {
-      "type": "model",
-      "mimes": ["model\/voxel", "model\/gltf-binary"],
-      "scopes": ["cube"]
-    }
-    ],
-    "targeting": {
-      "user": [{
-        "type": "dict",
-        "name": "country",
-        "label": "Country",
-        "items": "@countries"
-      }, {
-        "type": "dict",
-        "name": "language",
-        "label": "Language",
-        "items": "@languages"
-      }
-      ],
-      "site": [{
-        "type": "dict",
-        "name": "quality",
-        "label": "Quality",
-        "items": "@qualityLevels"
-      }, {
-        "type": "dict",
-        "name": "category",
-        "label": "Category",
-        "items": {
-          "adult": "Adult",
-          "crypto": "Crypto",
-          "faucets": "Faucets",
-          "games": "Games",
-          "health": {
-            "label": "Health",
-            "values": {
-              "supplements": "Supplements",
-              "diets": "Diets"
+      "targeting": {
+        "user": [
+          {
+            "type": "dict",
+            "name": "country",
+            "label": "Country",
+            "items": "@countries"
+          },
+          {
+            "type": "dict",
+            "name": "language",
+            "label": "Language",
+            "items": "@languages"
+          }
+        ],
+        "site": [
+          {
+            "type": "dict",
+            "name": "quality",
+            "label": "Quality",
+            "items": "@qualityLevels"
+          },
+          {
+            "type": "dict",
+            "name": "category",
+            "label": "Category",
+            "items": {
+              "adult": "Adult",
+              "crypto": "Crypto",
+              "faucets": "Faucets",
+              "games": "Games",
+              "health": {
+                "label": "Health",
+                "values": {
+                  "supplements": "Supplements",
+                  "diets": "Diets"
+                }
+              },
+              "lifestyle": "Lifestyle",
+              "movies": "Movies",
+              "music": "Music",
+              "news": "News",
+              "paytoclick": "Pay to Click",
+              "technology": "Technology",
+              "unknown": "Unknown"
             }
           },
-          "lifestyle": "Lifestyle",
-          "movies": "Movies",
-          "music": "Music",
-          "news": "News",
-          "paytoclick": "Pay to Click",
-          "technology": "Technology",
-          "unknown": "Unknown"
-        }
-      }, {
-        "type": "input",
-        "name": "domain",
-        "label": "Domain"
+          {
+            "type": "input",
+            "name": "domain",
+            "label": "Domain"
+          }
+        ],
+        "device": [
+          {
+            "type": "dict",
+            "name": "type",
+            "label": "Device type",
+            "items": "@devices"
+          },
+          {
+            "type": "dict",
+            "name": "os",
+            "label": "Operating System",
+            "items": "@operatingSystems"
+          },
+          {
+            "type": "dict",
+            "name": "browser",
+            "label": "Browser",
+            "items": "@browsers"
+          },
+          {
+            "type": "dict",
+            "name": "extensions",
+            "label": "Extensions",
+            "items": {
+              "metamask": "MetaMask"
+            }
+          }
+        ]
       }
-      ],
-      "device": [{
-        "type": "dict",
-        "name": "type",
-        "label": "Device type",
-        "items": "@devices"
-      }, {
-        "type": "dict",
-        "name": "os",
-        "label": "Operating System",
-        "items": "@operatingSystems"
-      }, {
-        "type": "dict",
-        "name": "browser",
-        "label": "Browser",
-        "items": "@browsers"
-      }, {
-        "type": "dict",
-        "name": "extensions",
-        "label": "Extensions",
-        "items": {
-          "metamask": "MetaMask"
-        }
-      }
-      ]
     }
-  }
   ],
   "integrations": []
 }
