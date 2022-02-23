@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -46,12 +46,13 @@ class MySqlServerStatisticsRepository
           AND (time_end IS NULL OR time_end > NOW())
        ) AS campaigns,
        (SELECT COUNT(*) FROM (
-          SELECT SUBSTRING_INDEX(e.domain, "www.", -1) AS count, SUM(e.views) AS views
-          FROM event_logs_hourly e
-          WHERE e.hour_timestamp < DATE(NOW()) - INTERVAL 0 DAY
-            AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 1 DAY
-            AND e.domain != '' GROUP BY 1
-          ) d WHERE d.views > 100
+          SELECT SUBSTRING_INDEX(s.domain, "www.", -1) AS count, SUM(l.views) AS views
+          FROM network_case_logs_hourly l
+          JOIN sites s ON l.site_id = s.uuid
+          WHERE l.hour_timestamp < DATE(NOW()) - INTERVAL 0 DAY
+            AND l.hour_timestamp >= DATE(NOW()) - INTERVAL 1 DAY
+          GROUP BY 1
+          ) d WHERE d.views > 10
        ) AS sites;
 SQL
         );
