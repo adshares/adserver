@@ -51,6 +51,7 @@ class MySqlServerStatisticsRepository
           JOIN sites s ON l.site_id = s.uuid
           WHERE l.hour_timestamp < DATE(NOW()) - INTERVAL 0 DAY
             AND l.hour_timestamp >= DATE(NOW()) - INTERVAL 1 DAY
+            AND s.deleted_at IS NULL
           GROUP BY 1
           ) d WHERE d.views > 10
        ) AS sites;
