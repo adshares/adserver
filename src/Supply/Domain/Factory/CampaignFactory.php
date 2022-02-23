@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\Factory;
 
-use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\Exception\InvalidCampaignArgumentException;
@@ -36,9 +35,6 @@ use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
-
-use function array_key_exists;
-use function sprintf;
 
 class CampaignFactory
 {
@@ -171,7 +167,7 @@ class CampaignFactory
             }
         }
 
-        if (!in_array($data['type'], NetworkBanner::ALLOWED_TYPES, true)) {
+        if (!in_array($data['type'], Banner::SUPPORTED_TYPES, true)) {
             throw new InvalidCampaignArgumentException('Unsupported banner type.');
         }
 
@@ -185,7 +181,13 @@ class CampaignFactory
     private static function validateBannerSize(array $data): void
     {
         $size = $data['size'];
-        if ($data['type'] === NetworkBanner::TYPE_VIDEO) {
+        if ($data['type'] === Banner::TYPE_MODEL) {
+            if ($size !== 'cube') {
+                throw new InvalidCampaignArgumentException('Unsupported model size.');
+            }
+            return;
+        }
+        if ($data['type'] === Banner::TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new InvalidCampaignArgumentException('Unsupported video size.');
             }

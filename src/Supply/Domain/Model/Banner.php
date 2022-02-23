@@ -35,12 +35,14 @@ class Banner
     public const TYPE_IMAGE = 'image';
     public const TYPE_DIRECT_LINK = 'direct';
     public const TYPE_VIDEO = 'video';
+    public const TYPE_MODEL = 'model';
 
-    private const SUPPORTED_TYPES = [
+    public const SUPPORTED_TYPES = [
         self::TYPE_HTML,
         self::TYPE_IMAGE,
         self::TYPE_DIRECT_LINK,
         self::TYPE_VIDEO,
+        self::TYPE_MODEL,
     ];
 
     private Id $id;

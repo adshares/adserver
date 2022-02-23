@@ -51,7 +51,7 @@ final class CampaignFactoryTest extends TestCase
             ],
             'banners' => [
                 self::banner(),
-                self::banner(),
+                self::bannerModel(),
                 self::bannerVideo(),
             ],
             'max_cpc' => 100000000000,
@@ -96,6 +96,18 @@ final class CampaignFactoryTest extends TestCase
                         ],
                     ],
                 ],
+            ]
+        );
+    }
+
+    private static function bannerModel(): array
+    {
+        return array_merge(
+            self::banner(),
+            [
+                'type' => 'model',
+                'mime' => 'model/gltf-binary',
+                'size' => 'cube',
             ]
         );
     }
@@ -177,6 +189,17 @@ final class CampaignFactoryTest extends TestCase
 
         $data = $this->data;
         $data['banners'][0]['size'] = '5x5';
+
+        CampaignFactory::createFromArray($data);
+    }
+
+    public function testCreateFromArrayWhenModelBannerSizeInvalid(): void
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        $data['banners'][1]['size'] = '5x5';
+
 
         CampaignFactory::createFromArray($data);
     }
