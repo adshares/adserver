@@ -21,11 +21,22 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Tests\Common\Application\Factory;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Factory\TaxonomyV4Factory;
+use PHPUnit\Framework\TestCase;
 
-interface AdClassify
+class TaxonomyV4FactoryTest extends TestCase
 {
-    public function fetchFilteringOptions(): TaxonomyV3;
+    public function testTaxonomyFromJson(): void
+    {
+        $taxonomy = TaxonomyV4Factory::fromJson(self::jsonTaxonomy());
+        self::assertInstanceOf(TaxonomyV4::class, $taxonomy);
+    }
+
+    private static function jsonTaxonomy(): string
+    {
+        return file_get_contents('tests/mock/targeting_schema_v4.json');
+    }
 }

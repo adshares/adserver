@@ -21,11 +21,12 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Common\Application\Dto\TaxonomyV4;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
-
-interface AdClassify
+class InputTargetingItem extends TargetingItem
 {
-    public function fetchFilteringOptions(): TaxonomyV3;
+    public function __construct(string $key, string $label)
+    {
+        parent::__construct('input', $key, $label);
+    }
 }

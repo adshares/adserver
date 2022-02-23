@@ -21,11 +21,29 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Common\Application\Dto\TaxonomyV4;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
+use Illuminate\Contracts\Support\Arrayable;
 
-interface AdClassify
+abstract class TargetingItem implements Arrayable
 {
-    public function fetchFilteringOptions(): TaxonomyV3;
+    protected string $type;
+    protected string $name;
+    protected string $label;
+
+    public function __construct(string $type, string $name, string $label)
+    {
+        $this->type = $type;
+        $this->name = $name;
+        $this->label = $label;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'type' => $this->type,
+            'name' => $this->name,
+            'label' => $this->label,
+        ];
+    }
 }

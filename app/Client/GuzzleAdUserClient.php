@@ -25,8 +25,8 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Common\Application\Dto\PageRank;
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Factory\TaxonomyV3Factory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
@@ -121,14 +121,14 @@ final class GuzzleAdUserClient implements AdUser
         return $body;
     }
 
-    public function fetchTargetingOptions(): Taxonomy
+    public function fetchTargetingOptions(): TaxonomyV3
     {
         $path = self::API_PATH . '/taxonomy';
         try {
             $response = $this->client->get($path);
             $taxonomy = json_decode((string)$response->getBody(), true);
 
-            return TaxonomyFactory::fromArray($taxonomy);
+            return TaxonomyV3Factory::fromArray($taxonomy);
         } catch (RequestException $exception) {
             throw new RuntimeException(sprintf(
                 '{"url": "%s", "path": "%s",  "message": "%s"}',

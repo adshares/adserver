@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,17 +23,17 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Factory\TaxonomyV3Factory;
 use Adshares\Common\Application\Service\AdClassify;
 
 use function GuzzleHttp\json_decode;
 
 final class DummyAdClassifyClient implements AdClassify
 {
-    public function fetchFilteringOptions(): Taxonomy
+    public function fetchFilteringOptions(): TaxonomyV3
     {
-        return TaxonomyFactory::fromArray(json_decode($this->getData(), true));
+        return TaxonomyV3Factory::fromArray(json_decode($this->getData(), true));
     }
 
     public function getData(): string

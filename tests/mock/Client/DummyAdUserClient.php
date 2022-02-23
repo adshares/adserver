@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,8 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Mock\Client;
 
 use Adshares\Common\Application\Dto\PageRank;
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Factory\TaxonomyV3Factory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -56,13 +56,13 @@ final class DummyAdUserClient implements AdUser
         return $result;
     }
 
-    public function fetchTargetingOptions(): Taxonomy
+    public function fetchTargetingOptions(): TaxonomyV3
     {
         $path = base_path('tests/mock/targeting_schema.json');
         $var = file_get_contents($path);
         $taxonomy = json_decode($var, true);
 
-        return TaxonomyFactory::fromArray($taxonomy);
+        return TaxonomyV3Factory::fromArray($taxonomy);
     }
 
     public function getUserContext(ImpressionContext $context): UserContext

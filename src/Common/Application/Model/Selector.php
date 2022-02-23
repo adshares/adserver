@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Model;
 
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Dto\Taxonomy\Item;
+use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Dto\TaxonomyV3\Item;
 use Adshares\Common\Application\Model\Selector\Option;
 
 use function array_filter;
@@ -50,7 +50,7 @@ final class Selector
         return $this;
     }
 
-    public static function fromTaxonomy(Taxonomy $taxonomy): Selector
+    public static function fromTaxonomy(TaxonomyV3 $taxonomy): Selector
     {
         return new self(...array_map(
             static function (Item $item) {

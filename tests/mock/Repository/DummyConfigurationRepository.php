@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Mock\Repository;
 
-use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Factory\TaxonomyV3Factory;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 
@@ -54,7 +54,7 @@ class DummyConfigurationRepository implements ConfigurationRepository
         $path = base_path($fileName);
         $var = file_get_contents($path);
         $decodedTaxonomy = json_decode($var, true);
-        $taxonomy = TaxonomyFactory::fromArray($decodedTaxonomy);
+        $taxonomy = TaxonomyV3Factory::fromArray($decodedTaxonomy);
 
         return Selector::fromTaxonomy($taxonomy);
     }

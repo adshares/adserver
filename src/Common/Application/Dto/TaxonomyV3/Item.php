@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,10 +21,10 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto\Taxonomy;
+namespace Adshares\Common\Application\Dto\TaxonomyV3;
 
-use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
-use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
+use Adshares\Common\Application\Dto\TaxonomyV3\Item\Type;
+use Adshares\Common\Application\Dto\TaxonomyV3\Item\Value;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Model\Selector\Option;
 use Adshares\Common\Application\Model\Selector\OptionValue;

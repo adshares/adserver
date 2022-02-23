@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
-use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Dto\TaxonomyV3;
 
 interface ClassifierExternalClient
 {
@@ -34,5 +34,5 @@ interface ClassifierExternalClient
 
     public function requestClassification(ClassifierExternal $classifier, array $data): void;
 
-    public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy;
+    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV3;
 }

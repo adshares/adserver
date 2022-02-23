@@ -21,11 +21,20 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Tests\Common\Application\Dto\TaxonomyV4;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Dto\TaxonomyV4\InputTargetingItem;
+use PHPUnit\Framework\TestCase;
 
-interface AdClassify
+class InputTargetingItemTest extends TestCase
 {
-    public function fetchFilteringOptions(): TaxonomyV3;
+    public function testInputTargeting(): void
+    {
+        $item = new InputTargetingItem('domain', 'Domain');
+
+        $arr = $item->toArray();
+        self::assertEquals('input', $arr['type']);
+        self::assertEquals('domain', $arr['name']);
+        self::assertEquals('Domain', $arr['label']);
+    }
 }
