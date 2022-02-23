@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,9 +35,8 @@ use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-
-use function factory;
 
 final class CampaignsControllerTest extends TestCase
 {
@@ -581,5 +580,26 @@ final class CampaignsControllerTest extends TestCase
         $this->assertEquals($banner->name, $cloned['name']);
         $this->assertEquals($banner->status, $cloned['status']);
         $this->assertEquals($banner->cdn_url, $cloned['cdnUrl']);
+    }
+
+    public function testUploadBannerNoFile(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $response = $this->postJson('/api/campaigns/banner');
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testUploadBanner(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $response = $this->postJson(
+            '/api/campaigns/banner',
+            ['file' => UploadedFile::fake()->image('photo.jpg', 300, 250)]
+        );
+        $response->assertStatus(Response::HTTP_OK);
     }
 }

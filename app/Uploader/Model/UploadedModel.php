@@ -21,28 +21,26 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Demand\Application\Service;
+namespace Adshares\Adserver\Uploader\Model;
 
-use Adshares\Common\Application\Service\Ads;
-use Adshares\Common\Application\Service\SignatureVerifier;
-use DateTime;
+use Adshares\Adserver\Uploader\UploadedFile;
 
-class PaymentDetailsVerify
+class UploadedModel implements UploadedFile
 {
-    private SignatureVerifier $signatureVerifier;
+    private string $name;
+    private string $previewUrl;
 
-    private Ads $adsClient;
-
-    public function __construct(SignatureVerifier $signatureVerifier, Ads $adsClient)
+    public function __construct(string $name, string $previewUrl)
     {
-        $this->signatureVerifier = $signatureVerifier;
-        $this->adsClient = $adsClient;
+        $this->name = $name;
+        $this->previewUrl = $previewUrl;
     }
 
-    public function verify(string $signature, string $transactionId, string $accountAddress, DateTime $date): bool
+    public function toArray(): array
     {
-        $publicKey = $this->adsClient->getPublicKeyByAccountAddress($accountAddress);
-
-        return $this->signatureVerifier->verify($publicKey, $signature, $transactionId, $accountAddress, $date);
+        return [
+            'name' => $this->name,
+            'url' => $this->previewUrl,
+        ];
     }
 }
