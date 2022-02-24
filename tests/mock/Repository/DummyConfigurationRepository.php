@@ -84,7 +84,7 @@ class DummyConfigurationRepository implements ConfigurationRepository
     public function fetchMedium(string $mediumName = 'web'): Medium
     {
         foreach (self::getTaxonomyV4FromFile()->getMedia() as $medium) {
-            if ($medium->gName() === $mediumName) {
+            if ($medium->getName() === $mediumName) {
                 return $medium;
             }
         }

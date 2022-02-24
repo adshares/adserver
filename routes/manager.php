@@ -143,8 +143,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::post('invoices', [InvoicesController::class, 'add']);
 
         Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
-        Route::get('options/campaigns/media', [OptionsController::class, 'media']);
-        Route::get('options/campaigns/media/{mediumName}', [OptionsController::class, 'medium']);
         Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
         Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
         Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
@@ -202,5 +200,12 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
 
         Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
         Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);
+    }
+);
+
+Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(
+    function () {
+        Route::get('options/campaigns/media', [OptionsController::class, 'media']);
+        Route::get('options/campaigns/media/{mediumName}', [OptionsController::class, 'medium']);
     }
 );

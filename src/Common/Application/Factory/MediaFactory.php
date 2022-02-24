@@ -32,7 +32,7 @@ class MediaFactory
     {
         $media = new Media();
         foreach ($taxonomy->getMedia() as $medium) {
-            $media->add($medium['name'], $medium['label']);
+            $media->add($medium->getName(), $medium->getLabel());
         }
 
         return $media;

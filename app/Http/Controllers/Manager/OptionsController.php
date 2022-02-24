@@ -62,9 +62,21 @@ class OptionsController extends Controller
         return self::json($this->optionsRepository->fetchMedia()->toArray());
     }
 
-    public function medium(string $mediumName): JsonResponse
+    public function medium(string $mediumName, Request $request): JsonResponse
     {
-        return self::json($this->optionsRepository->fetchMedium($mediumName)->toArray());
+        $data = $this->optionsRepository->fetchMedium($mediumName)->toArray();
+
+        if ($request->get('e')) {
+            foreach ($data['targeting']['site'] ?? [] as $key => $value) {
+                if ($value['name'] === 'quality') {
+                    unset($data['targeting']['site'][$key]);
+                    $data['targeting']['site'] = array_values($data['targeting']['site']);
+                    break;
+                }
+            }
+        }
+
+        return self::json($data);
     }
 
     public function targeting(Request $request): JsonResponse
