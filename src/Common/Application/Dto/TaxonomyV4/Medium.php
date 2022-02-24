@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Dto\TaxonomyV4;
 
-use Adshares\Common\Application\Factory\TaxonomyV4\TargetingItemFactory;
 use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Contracts\Support\Arrayable;
@@ -90,6 +89,16 @@ class Medium implements Arrayable
         if (!is_array($data['targeting'])) {
             throw new InvalidArgumentException('The field `targeting` must be an array.');
         }
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label;
     }
 
     public function toArray(): array

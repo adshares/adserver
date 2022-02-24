@@ -21,25 +21,26 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Demand\Application\Service;
+namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
+use Illuminate\Contracts\Support\Arrayable;
 
-class TargetingOptionsImporter
+class Media implements Arrayable
 {
-    private AdUser $client;
-    private ConfigurationRepository $repository;
+    private array $data;
 
-    public function __construct(AdUser $client, ConfigurationRepository $repository)
+    public function __construct()
     {
-        $this->client = $client;
-        $this->repository = $repository;
+        $this->data = [];
     }
 
-    public function import(): void
+    public function add(string $name, string $label): void
     {
-        $taxonomy = $this->client->fetchTargetingOptions();
-        $this->repository->storeTaxonomyV4($taxonomy);
+        $this->data[$name] = $label;
+    }
+
+    public function toArray(): array
+    {
+        return $this->data;
     }
 }

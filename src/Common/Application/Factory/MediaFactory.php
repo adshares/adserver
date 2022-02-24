@@ -21,25 +21,20 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Demand\Application\Service;
+namespace Adshares\Common\Application\Factory;
 
-use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Application\Dto\Media;
+use Adshares\Common\Application\Dto\TaxonomyV4;
 
-class TargetingOptionsImporter
+class MediaFactory
 {
-    private AdUser $client;
-    private ConfigurationRepository $repository;
-
-    public function __construct(AdUser $client, ConfigurationRepository $repository)
+    public static function fromTaxonomy(TaxonomyV4 $taxonomy): Media
     {
-        $this->client = $client;
-        $this->repository = $repository;
-    }
+        $media = new Media();
+        foreach ($taxonomy->getMedia() as $medium) {
+            $media->add($medium['name'], $medium['label']);
+        }
 
-    public function import(): void
-    {
-        $taxonomy = $this->client->fetchTargetingOptions();
-        $this->repository->storeTaxonomyV4($taxonomy);
+        return $media;
     }
 }

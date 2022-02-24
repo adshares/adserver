@@ -23,24 +23,30 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository;
 
+use Adshares\Common\Application\Dto\Media;
+use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV4\Medium;
+use Adshares\Common\Application\Factory\MediaFactory;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-
-use const DIRECTORY_SEPARATOR;
+use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\RuntimeException;
 
 final class FileConfigurationRepository implements ConfigurationRepository
 {
     private const TARGETING_CACHE_FILENAME = 'targeting.cache';
     private const FILTERING_CACHE_FILENAME = 'filtering.cache';
+    private const TAXONOMY_CACHE_FILENAME = 'taxonomy.cache';
 
     private string $targetingFilePath;
-
     private string $filteringFilePath;
+    private string $taxonomyFilePath;
 
     public function __construct(string $cachePath)
     {
         $this->targetingFilePath = $cachePath . DIRECTORY_SEPARATOR . self::TARGETING_CACHE_FILENAME;
         $this->filteringFilePath = $cachePath . DIRECTORY_SEPARATOR . self::FILTERING_CACHE_FILENAME;
+        $this->taxonomyFilePath = $cachePath . DIRECTORY_SEPARATOR . self::TAXONOMY_CACHE_FILENAME;
     }
 
     public function storeTargetingOptions(Selector $options): void
@@ -53,7 +59,7 @@ final class FileConfigurationRepository implements ConfigurationRepository
         $data = file_get_contents($this->targetingFilePath);
 
         if (!$data) {
-            throw new \RuntimeException('No targeting data.');
+            throw new RuntimeException('No targeting data.');
         }
 
         return unserialize($data, [Selector::class]);
@@ -64,7 +70,7 @@ final class FileConfigurationRepository implements ConfigurationRepository
         $data = file_get_contents($this->filteringFilePath);
 
         if (!$data) {
-            throw new \RuntimeException('No filtering data.');
+            throw new RuntimeException('No filtering data.');
         }
 
         return unserialize($data, [Selector::class]);
@@ -73,5 +79,36 @@ final class FileConfigurationRepository implements ConfigurationRepository
     public function storeFilteringOptions(Selector $options): void
     {
         file_put_contents($this->filteringFilePath, serialize($options));
+    }
+
+    public function storeTaxonomyV4(TaxonomyV4 $taxonomy): void
+    {
+        file_put_contents($this->taxonomyFilePath, serialize($taxonomy));
+    }
+
+    public function fetchMedia(): Media
+    {
+        return MediaFactory::fromTaxonomy($this->getTaxonomyV4FromFile());
+    }
+
+    public function fetchMedium(string $mediumName = 'web'): Medium
+    {
+        foreach ($this->getTaxonomyV4FromFile()->getMedia() as $medium) {
+            if ($medium->getName() === $mediumName) {
+                return $medium;
+            }
+        }
+        throw new InvalidArgumentException('Unsupported medium');
+    }
+
+    private function getTaxonomyV4FromFile(): TaxonomyV4
+    {
+        $data = file_get_contents($this->taxonomyFilePath);
+
+        if (!$data) {
+            throw new RuntimeException('No taxonomy data.');
+        }
+
+        return unserialize($data, [TaxonomyV4::class]);
     }
 }

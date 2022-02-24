@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -55,6 +55,16 @@ class OptionsController extends Controller
                 'min_cpa' => config('app.campaign_min_cpa'),
             ]
         );
+    }
+
+    public function media(): JsonResponse
+    {
+        return self::json($this->optionsRepository->fetchMedia()->toArray());
+    }
+
+    public function medium(string $mediumName): JsonResponse
+    {
+        return self::json($this->optionsRepository->fetchMedium($mediumName)->toArray());
     }
 
     public function targeting(Request $request): JsonResponse

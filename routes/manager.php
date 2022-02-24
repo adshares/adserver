@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -143,6 +143,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::post('invoices', [InvoicesController::class, 'add']);
 
         Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
+        Route::get('options/campaigns/media', [OptionsController::class, 'media']);
+        Route::get('options/campaigns/media/{mediumName}', [OptionsController::class, 'medium']);
         Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
         Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
         Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);

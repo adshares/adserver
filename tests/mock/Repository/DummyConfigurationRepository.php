@@ -23,9 +23,15 @@ declare(strict_types=1);
 
 namespace Adshares\Mock\Repository;
 
+use Adshares\Common\Application\Dto\Media;
+use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV4\Medium;
+use Adshares\Common\Application\Factory\MediaFactory;
 use Adshares\Common\Application\Factory\TaxonomyV3Factory;
+use Adshares\Common\Application\Factory\TaxonomyV4Factory;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Exception\InvalidArgumentException;
 
 use function GuzzleHttp\json_decode;
 
@@ -36,6 +42,10 @@ class DummyConfigurationRepository implements ConfigurationRepository
     }
 
     public function storeFilteringOptions(Selector $options): void
+    {
+    }
+
+    public function storeTaxonomyV4(TaxonomyV4 $taxonomy): void
     {
     }
 
@@ -57,5 +67,27 @@ class DummyConfigurationRepository implements ConfigurationRepository
         $taxonomy = TaxonomyV3Factory::fromArray($decodedTaxonomy);
 
         return Selector::fromTaxonomy($taxonomy);
+    }
+
+    private static function getTaxonomyV4FromFile(): TaxonomyV4
+    {
+        $path = base_path('tests/mock/targeting_schema_v4.json');
+        $json = file_get_contents($path);
+        return TaxonomyV4Factory::fromJson($json);
+    }
+
+    public function fetchMedia(): Media
+    {
+        return MediaFactory::fromTaxonomy(self::getTaxonomyV4FromFile());
+    }
+
+    public function fetchMedium(string $mediumName = 'web'): Medium
+    {
+        foreach (self::getTaxonomyV4FromFile()->getMedia() as $medium) {
+            if ($medium->gName() === $mediumName) {
+                return $medium;
+            }
+        }
+        throw new InvalidArgumentException('Unsupported medium');
     }
 }

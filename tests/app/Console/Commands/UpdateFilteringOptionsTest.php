@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,26 +24,12 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\AdClassify;
-use Adshares\Common\Application\Service\AdUser;
-use Adshares\Mock\Client\DummyAdUserClient;
 
-class UpdateOptionsTest extends ConsoleTestCase
+class UpdateFilteringOptionsTest extends ConsoleTestCase
 {
-    public function testTargetingOptionsUpdate(): void
-    {
-        $this->app->bind(
-            AdUser::class,
-            function () {
-                return new DummyAdUserClient();
-            }
-        );
-
-        $this->artisan('ops:targeting-options:update')
-            ->assertExitCode(0);
-    }
-
     public function testFilteringOptionsUpdate(): void
     {
         $this->app->bind(
@@ -54,6 +40,17 @@ class UpdateOptionsTest extends ConsoleTestCase
         );
 
         $this->artisan('ops:filtering-options:update')
+            ->assertExitCode(0);
+    }
+
+    public function testLock(): void
+    {
+        $lockerMock = $this->createMock(Locker::class);
+        $lockerMock->expects(self::once())->method('lock')->willReturn(false);
+        $this->instance(Locker::class, $lockerMock);
+
+        $this->artisan('ops:filtering-options:update')
+            ->expectsOutput('Command ops:filtering-options:update already running')
             ->assertExitCode(0);
     }
 }

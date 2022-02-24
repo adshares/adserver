@@ -31,10 +31,13 @@ class MediumTest extends TestCase
 {
     public function testMediumFromArray(): void
     {
-        $targeting = Medium::fromArray(self::data());
+        $medium = Medium::fromArray(self::data());
 
-        $arr = $targeting->toArray();
+        $arr = $medium->toArray();
+        self::assertEquals('web', $medium->getName());
+        self::assertEquals('Website', $medium->getLabel());
         self::assertEquals('web', $arr['name'] ?? null);
+        self::assertEquals('Website', $arr['label'] ?? null);
         self::assertEquals('Medium Rectangle', $arr['formats'][0]['scopes']['300x250'] ?? null);
         self::assertEquals('MetaMask', $arr['targeting']['device'][0]['items']['metamask'] ?? null);
     }

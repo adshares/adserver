@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Service;
 
+use Adshares\Common\Application\Dto\Media;
+use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV4\Medium;
 use Adshares\Common\Application\Model\Selector;
 
 interface ConfigurationRepository
@@ -31,7 +34,13 @@ interface ConfigurationRepository
 
     public function storeFilteringOptions(Selector $options): void;
 
+    public function storeTaxonomyV4(TaxonomyV4 $taxonomy): void;
+
     public function fetchTargetingOptions(): Selector;
 
     public function fetchFilteringOptions(): Selector;
+
+    public function fetchMedia(): Media;
+
+    public function fetchMedium(string $mediumName = 'web'): Medium;
 }

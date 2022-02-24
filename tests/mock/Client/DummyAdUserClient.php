@@ -24,16 +24,12 @@ declare(strict_types=1);
 namespace Adshares\Mock\Client;
 
 use Adshares\Common\Application\Dto\PageRank;
-use Adshares\Common\Application\Dto\TaxonomyV3;
-use Adshares\Common\Application\Factory\TaxonomyV3Factory;
+use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Factory\TaxonomyV4Factory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 use RuntimeException;
-
-use function base_path;
-use function file_get_contents;
-use function GuzzleHttp\json_decode;
 
 final class DummyAdUserClient implements AdUser
 {
@@ -56,13 +52,12 @@ final class DummyAdUserClient implements AdUser
         return $result;
     }
 
-    public function fetchTargetingOptions(): TaxonomyV3
+    public function fetchTargetingOptions(): TaxonomyV4
     {
-        $path = base_path('tests/mock/targeting_schema.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
+        $path = base_path('tests/mock/targeting_schema_v4.json');
+        $json = file_get_contents($path);
 
-        return TaxonomyV3Factory::fromArray($taxonomy);
+        return TaxonomyV4Factory::fromJson($json);
     }
 
     public function getUserContext(ImpressionContext $context): UserContext

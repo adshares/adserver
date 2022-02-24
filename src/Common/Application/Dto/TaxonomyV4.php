@@ -26,6 +26,7 @@ namespace Adshares\Common\Application\Dto;
 use Adshares\Common\Application\Dto\TaxonomyV4\Medium;
 use Adshares\Common\Application\Dto\TaxonomyV4\Meta;
 use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Contracts\Support\Arrayable;
 
 class TaxonomyV4 implements Arrayable
@@ -41,6 +42,26 @@ class TaxonomyV4 implements Arrayable
 
     public static function fromArray(array $data): self
     {
+        $fields = [
+            'meta',
+            'media',
+        ];
+
+        foreach ($fields as $field) {
+            if (!array_key_exists($field, $data)) {
+                throw new InvalidArgumentException(sprintf('The field `%s` is required.', $field));
+            }
+            if (!is_array($data[$field])) {
+                throw new InvalidArgumentException(sprintf('The field `%s` must be an array.', $field));
+            }
+        }
+
+        foreach ($data['media'] as $mediaData) {
+            if (!is_array($mediaData)) {
+                throw new InvalidArgumentException('The field `media[]` must be an array.');
+            }
+        }
+
         $meta = Meta::fromArray($data['meta']);
         $media = new ArrayableItemCollection();
         foreach ($data['media'] as $mediumData) {
@@ -48,6 +69,14 @@ class TaxonomyV4 implements Arrayable
         }
 
         return new self($meta, $media);
+    }
+
+    /**
+     * @return Medium[]|ArrayableItemCollection
+     */
+    public function getMedia(): ArrayableItemCollection
+    {
+        return $this->media;
     }
 
     public function toArray(): array

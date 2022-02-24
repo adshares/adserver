@@ -34,9 +34,13 @@ class TaxonomyV4Test extends TestCase
         $targeting = TaxonomyV4::fromArray(self::data());
 
         $arr = $targeting->toArray();
-        self::assertEquals('web', $arr['name'] ?? null);
-        self::assertEquals('Medium Rectangle', $arr['formats'][0]['scopes']['300x250'] ?? null);
-        self::assertEquals('MetaMask', $arr['targeting']['device'][0]['items']['metamask'] ?? null);
+        self::assertEquals('simple', $arr['meta']['name'] ?? null);
+        self::assertEquals(
+            'Medium Rectangle',
+            $targeting->getMedia()->first()->toArray()['formats'][0]['scopes']['300x250'] ?? null
+        );
+        self::assertEquals('Medium Rectangle', $arr['media'][0]['formats'][0]['scopes']['300x250'] ?? null);
+        self::assertEquals('MetaMask', $arr['media'][0]['targeting']['device'][0]['items']['metamask'] ?? null);
     }
 
     /**
@@ -57,35 +61,52 @@ class TaxonomyV4Test extends TestCase
         TaxonomyV4::fromArray(self::data([$field => 0]));
     }
 
+    public function testTaxonomyFromArrayInvalidMediaType(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        TaxonomyV4::fromArray(self::data(['media' => [0]]));
+    }
+
     private static function data(array $mergeData = [], string $remove = null): array
     {
-        $data = array_merge([
-            'name' => 'web',
-            'label' => 'Website',
-            'formats' => [
-                [
-                    'type' => 'image',
-                    'mimes' => ['image/png'],
-                    'scopes' => [
-                        '300x250' => 'Medium Rectangle',
-                    ],
+        $data = array_merge(
+            [
+                'meta' => [
+                    'name' => 'simple',
+                    'version' => '4.0.0'
                 ],
-            ],
-            'targeting' => [
-                'user' => [],
-                'site' => [],
-                'device' => [
+                'media' => [
                     [
-                        'type' => 'dict',
-                        'name' => 'extensions',
-                        'label' => 'Extensions',
-                        'items' => [
-                            'metamask' => 'MetaMask'
+                        'name' => 'web',
+                        'label' => 'Website',
+                        'formats' => [
+                            [
+                                'type' => 'image',
+                                'mimes' => ['image/png'],
+                                'scopes' => [
+                                    '300x250' => 'Medium Rectangle',
+                                ],
+                            ],
+                        ],
+                        'targeting' => [
+                            'user' => [],
+                            'site' => [],
+                            'device' => [
+                                [
+                                    'type' => 'dict',
+                                    'name' => 'extensions',
+                                    'label' => 'Extensions',
+                                    'items' => [
+                                        'metamask' => 'MetaMask',
+                                    ],
+                                ]
+                            ],
                         ],
                     ],
                 ],
             ],
-        ], $mergeData);
+            $mergeData
+        );
 
         if ($remove !== null) {
             unset($data[$remove]);

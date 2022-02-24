@@ -27,7 +27,7 @@ use Adshares\Common\Application\Dto\TaxonomyV4;
 
 use function GuzzleHttp\json_decode;
 
-final class TaxonomyV4Factory
+class TaxonomyV4Factory
 {
     public static function fromJson(string $json): TaxonomyV4
     {
