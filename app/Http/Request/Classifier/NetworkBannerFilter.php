@@ -32,32 +32,26 @@ use Symfony\Component\HttpFoundation\Request;
 
 class NetworkBannerFilter
 {
-    /** @var bool */
-    private $approved;
+    private bool $approved;
 
-    /** @var bool */
-    private $rejected;
+    private bool $rejected;
 
-    /** @var bool */
-    private $unclassified;
+    private bool $unclassified;
 
-    /** @var array */
-    private $sizes;
+    /**
+     * @var string[]
+     */
+    private array $sizes;
 
-    /** @var string */
-    private $type;
+    private ?string $type;
 
-    /** @var int */
-    private $userId;
+    private int $userId;
 
-    /** @var int|null */
-    private $siteId;
+    private ?int $siteId;
 
-    /** @var Uuid|null */
-    private $networkBannerPublicId;
+    private ?Uuid $networkBannerPublicId;
 
-    /** @var string */
-    private $landingUrl;
+    private ?string $landingUrl;
 
     public function __construct(Request $request, int $userId, ?int $siteId)
     {
@@ -151,7 +145,7 @@ class NetworkBannerFilter
         }
 
         foreach ($this->sizes as $size) {
-            if (!Size::isValid($size)) {
+            if (!(Size::isValid($size) || $size === Size::CUBE)) {
                 throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] Invalid size (%s)', $size));
             }
         }

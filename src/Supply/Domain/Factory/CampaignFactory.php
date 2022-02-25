@@ -182,7 +182,7 @@ class CampaignFactory
     {
         $size = $data['size'];
         if ($data['type'] === Banner::TYPE_MODEL) {
-            if ($size !== 'cube') {
+            if ($size !== Size::CUBE) {
                 throw new InvalidCampaignArgumentException('Unsupported model size.');
             }
             return;

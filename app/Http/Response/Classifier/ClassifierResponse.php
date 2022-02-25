@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,7 +30,7 @@ use Illuminate\Support\Collection;
 class ClassifierResponse implements Arrayable
 {
     /** @var Item[] */
-    private $items = [];
+    private array $items = [];
 
     public function __construct(Collection $banners, Collection $classifications, ?int $siteId = null)
     {
@@ -79,11 +79,6 @@ class ClassifierResponse implements Arrayable
         return isset($item->status) ? (bool)$item->status : null;
     }
 
-    /**
-     * Get the instance as an array.
-     *
-     * @return array
-     */
     public function toArray(): array
     {
         return array_map(
