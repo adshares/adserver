@@ -392,7 +392,7 @@ class SupplyController extends Controller
 
         if (($decodedQueryData['zone_mode'] ?? '') === 'best_match') {
             $values = $foundBanners->filter(fn($element) => $element != null)->getValues();
-            usort($values, fn($a, $b) => ($a['rpm'] ?? 9999) - ($b['rpm'] ?? 9999));
+            shuffle($values);
             $foundBanners = new FoundBanners(array_slice($values, 0, 1));
         }
 
