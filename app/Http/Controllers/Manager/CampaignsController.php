@@ -333,6 +333,9 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
+        if ($input['basic_information']['medium_name'] !== $campaign->medium_name) {
+            throw new UnprocessableEntityHttpException('Medium name cannot be changed');
+        }
         $campaign->fill($input);
 
         $campaign->status = Campaign::STATUS_INACTIVE;
