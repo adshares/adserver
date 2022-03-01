@@ -101,6 +101,11 @@ class Medium implements Arrayable
         return $this->label;
     }
 
+    public function getTargeting(): Targeting
+    {
+        return $this->targeting;
+    }
+
     public function toArray(): array
     {
         return [

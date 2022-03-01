@@ -40,6 +40,8 @@ interface ConfigurationRepository
 
     public function fetchFilteringOptions(): Selector;
 
+    public function fetchTaxonomy(): TaxonomyV4;
+
     public function fetchMedia(): Media;
 
     public function fetchMedium(string $mediumName = 'web'): Medium;

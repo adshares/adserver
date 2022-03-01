@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,16 +23,19 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Dto\TaxonomyV4;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
 use Adshares\Mock\Client\DummyAdUserClient;
 
 final class TargetingProcessorTest extends TestCase
 {
     public function testWhileNoAvailableOptions(): void
     {
-        $targetingProcessor = new TargetingProcessor(new Selector());
+        $taxonomy = self::createMock(TaxonomyV4::class);
+        $taxonomy->method('getMedia')->willReturn(new ArrayableItemCollection());
+        $targetingProcessor = new TargetingProcessor($taxonomy);
 
         $result = $targetingProcessor->processTargeting($this->getTargetingValid());
 
@@ -177,8 +180,8 @@ final class TargetingProcessorTest extends TestCase
         );
     }
 
-    private function getTargetingSchema(): Selector
+    private function getTargetingSchema(): TaxonomyV4
     {
-        return $this->app->make(ConfigurationRepository::class)->fetchTargetingOptions();
+        return $this->app->make(ConfigurationRepository::class)->fetchTaxonomy();
     }
 }

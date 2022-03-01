@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -41,7 +41,7 @@ final class SiteCategoriesValidatorTest extends TestCase
 
         $result = $siteCategoriesValidator->processCategories($categories);
 
-        self::assertTrue(is_array($result));
+        self::assertEquals($categories, $result);
     }
 
     public function validCategoriesProvider(): array

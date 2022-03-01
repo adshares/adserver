@@ -48,7 +48,7 @@ class SiteCategoriesValidator
         }
 
         if (!isset($this->targetingProcessor)) {
-            $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
+            $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
         }
         $targeting = $this->targetingProcessor->processTargeting(['site' => ['category' => $categories]]);
 

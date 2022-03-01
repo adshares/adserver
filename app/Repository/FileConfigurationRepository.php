@@ -91,6 +91,11 @@ final class FileConfigurationRepository implements ConfigurationRepository
         return MediaFactory::fromTaxonomy($this->getTaxonomyV4FromFile());
     }
 
+    public function fetchTaxonomy(): TaxonomyV4
+    {
+        return $this->getTaxonomyV4FromFile();
+    }
+
     public function fetchMedium(string $mediumName = 'web'): Medium
     {
         foreach ($this->getTaxonomyV4FromFile()->getMedia() as $medium) {

@@ -599,7 +599,7 @@ class CampaignsController extends Controller
 
     private function processTargeting(array $input): array
     {
-        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
+        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
 
         $requires = $input['targeting']['requires'] ?? [];
         $baseRequires = json_decode(config('app.campaign_targeting_require') ?? '', true);

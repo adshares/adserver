@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,40 +23,39 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
-use Adshares\Adserver\ViewModel\OptionsSelector;
-use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Dto\TaxonomyV4;
 
 class TargetingProcessor
 {
-    /** @var array */
-    private $targetingSchema;
+    private array $targetingSchema;
 
-    public function __construct(Selector $targetingSchema)
+    public function __construct(TaxonomyV4 $taxonomy)
     {
-        $this->targetingSchema = (new OptionsSelector($targetingSchema))->toArray();
+        $this->targetingSchema = [];
+        foreach ($taxonomy->getMedia() as $medium) {
+            $this->targetingSchema[$medium->getName()] = $medium->getTargeting()->toArray();
+        }
     }
 
-    public function processTargeting(?array $targeting): array
+    public function processTargeting(array $targeting, string $mediumName = 'web'): array
     {
-        if (!$targeting) {
+        if (!$targeting || !isset($this->targetingSchema[$mediumName])) {
             return [];
         }
 
-        return $this->processGroups($targeting, $this->targetingSchema);
+        return $this->processGroups($targeting, $this->targetingSchema[$mediumName]);
     }
 
     private function processGroups(array $groups, array $schema): array
     {
         $groupsProcessed = [];
 
-        $groupSchemaByKey = $this->createGroupSchemaByKey($schema);
-
         foreach ($groups as $key => $group) {
-            if (!is_array($group) || !isset($groupSchemaByKey[$key])) {
+            if (!is_array($group) || !isset($schema[$key])) {
                 continue;
             }
 
-            $processed = $this->processRegardlessType($group, $groupSchemaByKey[$key]);
+            $processed = $this->processRegardlessType($group, $schema[$key]);
 
             if (count($processed) > 0) {
                 $groupsProcessed[$key] = $processed;
@@ -66,12 +65,12 @@ class TargetingProcessor
         return $groupsProcessed;
     }
 
-    private function createGroupSchemaByKey(array $schema): array
+    private static function createGroupSchemaByKey(array $schema): array
     {
         $schemaByKey = [];
 
         foreach ($schema as $availableGroup) {
-            $schemaByKey[$availableGroup['key']] = $availableGroup;
+            $schemaByKey[$availableGroup['name']] = $availableGroup;
         }
 
         return $schemaByKey;
@@ -81,7 +80,7 @@ class TargetingProcessor
     {
         $valuesProcessed = [];
 
-        $availableValuesByValue = $this->extractAvailableValuesByValue($schema);
+        $availableValuesByValue = self::extractAvailableValuesByValue($schema);
 
         foreach (array_unique($values) as $value) {
             if (!is_string($value) || !isset($availableValuesByValue[$value])) {
@@ -94,17 +93,16 @@ class TargetingProcessor
         return $valuesProcessed;
     }
 
-    private function extractAvailableValuesByValue(array $schema): array
+    private static function extractAvailableValuesByValue(array $schema): array
     {
         $availableValues = [];
 
-        foreach ($schema as $availableValue) {
-            $value = $availableValue['value'];
-            $availableValues[$value] = $value;
+        foreach ($schema as $key => $value) {
+            $availableValues[$key] = $key;
 
-            if (isset($availableValue['values'])) {
+            if (isset($value['values'])) {
                 $availableValues =
-                    array_merge($availableValues, $this->extractAvailableValuesByValue($availableValue['values']));
+                    array_merge($availableValues, self::extractAvailableValuesByValue($value['values']));
             }
         }
 
@@ -126,18 +124,25 @@ class TargetingProcessor
 
     private function processRegardlessType(array $group, array $availableGroup): array
     {
-        $type = $availableGroup['value_type'];
-
-        if ('group' === $type) {
-            return $this->processGroups($group, $availableGroup['children']);
+        if (self::arrayHasDefaultNumericKeys($availableGroup)) {
+            return $this->processGroups($group, self::createGroupSchemaByKey($availableGroup));
         }
 
-        if ('string' === $type) {
-            return $availableGroup['allow_input']
-                ? $this->processInputs($group)
-                : $this->processValues($group, $availableGroup['values']);
+        $type = $availableGroup['type'];
+
+        if ('dict' === $type) {
+            return $this->processValues($group, $availableGroup['items']);
+        }
+
+        if ('input' === $type) {
+            return $this->processInputs($group);
         }
 
         return [];
+    }
+
+    private static function arrayHasDefaultNumericKeys(array $array): bool
+    {
+        return array_keys($array) === range(0, count($array) - 1);
     }
 }

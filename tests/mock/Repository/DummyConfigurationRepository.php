@@ -76,6 +76,11 @@ class DummyConfigurationRepository implements ConfigurationRepository
         return TaxonomyV4Factory::fromJson($json);
     }
 
+    public function fetchTaxonomy(): TaxonomyV4
+    {
+        return self::getTaxonomyV4FromFile();
+    }
+
     public function fetchMedia(): Media
     {
         return MediaFactory::fromTaxonomy(self::getTaxonomyV4FromFile());
