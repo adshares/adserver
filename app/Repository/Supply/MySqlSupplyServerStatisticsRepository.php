@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -49,6 +49,7 @@ SELECT
 FROM network_case_logs_hourly l JOIN sites s ON l.site_id = s.uuid
 WHERE l.hour_timestamp < DATE(NOW()) - INTERVAL #offset DAY
   AND l.hour_timestamp >= DATE(NOW()) - INTERVAL #offset+#days DAY
+  AND s.deleted_at IS NULL
 GROUP BY 1
 HAVING impressions > 0;
 SQL;

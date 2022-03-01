@@ -34,10 +34,8 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
-use function array_map;
-use function hex2bin;
-
 /**
+ * @property int id
  * @property string uuid
  * @property string demand_banner_id
  * @property string click_url
@@ -56,16 +54,18 @@ class NetworkBanner extends Model
     use AutomateMutators;
     use BinHex;
 
-    public const TYPE_HTML = 'html';
-    public const TYPE_IMAGE = 'image';
-    public const TYPE_DIRECT_LINK = 'direct';
-    public const TYPE_VIDEO = 'video';
+    private const TYPE_HTML = 'html';
+    private const TYPE_IMAGE = 'image';
+    private const TYPE_DIRECT_LINK = 'direct';
+    private const TYPE_VIDEO = 'video';
+    private const TYPE_MODEL = 'model';
 
     public const ALLOWED_TYPES = [
         self::TYPE_HTML,
         self::TYPE_IMAGE,
         self::TYPE_DIRECT_LINK,
         self::TYPE_VIDEO,
+        self::TYPE_MODEL,
     ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';

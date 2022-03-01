@@ -67,11 +67,13 @@ class Banner extends Model
     public const TYPE_HTML = 1;
     public const TYPE_DIRECT_LINK = 2;
     public const TYPE_VIDEO = 3;
+    public const TYPE_MODEL = 4;
 
     public const TEXT_TYPE_IMAGE = 'image';
     public const TEXT_TYPE_HTML = 'html';
     public const TEXT_TYPE_DIRECT_LINK = 'direct';
     public const TEXT_TYPE_VIDEO = 'video';
+    public const TEXT_TYPE_MODEL = 'model';
 
     public const STATUS_DRAFT = 0;
     public const STATUS_INACTIVE = 1;
@@ -133,7 +135,13 @@ class Banner extends Model
 
     public static function types(): array
     {
-        return [self::TEXT_TYPE_DIRECT_LINK, self::TEXT_TYPE_HTML, self::TEXT_TYPE_IMAGE, self::TEXT_TYPE_VIDEO];
+        return [
+            self::TEXT_TYPE_DIRECT_LINK,
+            self::TEXT_TYPE_HTML,
+            self::TEXT_TYPE_IMAGE,
+            self::TEXT_TYPE_VIDEO,
+            self::TEXT_TYPE_MODEL,
+        ];
     }
 
     public static function type(int $type): string
@@ -143,6 +151,8 @@ class Banner extends Model
                 return self::TEXT_TYPE_IMAGE;
             case self::TYPE_VIDEO:
                 return self::TEXT_TYPE_VIDEO;
+            case self::TYPE_MODEL:
+                return self::TEXT_TYPE_MODEL;
             case self::TYPE_HTML:
                 return self::TEXT_TYPE_HTML;
             case self::TYPE_DIRECT_LINK:
@@ -158,6 +168,8 @@ class Banner extends Model
                 return self::TYPE_IMAGE;
             case self::TEXT_TYPE_VIDEO:
                 return self::TYPE_VIDEO;
+            case self::TEXT_TYPE_MODEL:
+                return self::TYPE_MODEL;
             case self::TEXT_TYPE_HTML:
                 return self::TYPE_HTML;
             case self::TEXT_TYPE_DIRECT_LINK:
