@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -86,6 +86,12 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         AdSelect $bannerFinder
     ) {
+
+        $type = $request->get('type');
+        if (isset($type) && !is_array($type)) {
+            $request->offsetSet('type', array($type));
+        }
+
         $validated = $request->validate(
             [
                 'pay_to' => ['required', new PayoutAddressRule()],
@@ -94,7 +100,10 @@ class SupplyController extends Controller
                 'width' => ['required', 'numeric', 'gt:0'],
                 'height' => ['required', 'numeric', 'gt:0'],
                 'min_dpi' => ['sometimes', 'numeric', 'gt:0'],
-                'type' => Rule::in(Banner::types()),
+                'type' => ['sometimes', 'array'],
+                'type.*' => ['string'],
+                'mime_type' => ['sometimes', 'array'],
+                'mime_type.*' => ['string'],
                 'exclude' => ['sometimes', 'array:quality,category'],
                 'exclude.*' => ['sometimes', 'array'],
                 'context' => ['required', 'array:user,device,site'],
@@ -133,9 +142,8 @@ class SupplyController extends Controller
             $zones[] = [
                 'zone' => $zone->uuid,
                 'options' => [
-                    'banner_type' => [
-                        $validated['type']
-                    ]
+                    'banner_type' => isset($validated['type']) ? ((array)$validated['type']) : null,
+                    'banner_mime' => $validated['mime_type'] ?? null
                 ]
             ];
             $validated['zones'][] = $zone;
@@ -392,7 +400,7 @@ class SupplyController extends Controller
 
         if (($decodedQueryData['zone_mode'] ?? '') === 'best_match') {
             $values = $foundBanners->filter(fn($element) => $element != null)->getValues();
-            usort($values, fn($a, $b) => ($a['rpm'] ?? 9999) - ($b['rpm'] ?? 9999));
+            shuffle($values);
             $foundBanners = new FoundBanners(array_slice($values, 0, 1));
         }
 

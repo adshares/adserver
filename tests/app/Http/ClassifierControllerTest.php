@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,9 +32,6 @@ use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Database\Eloquent\Collection;
 use Symfony\Component\HttpFoundation\Response;
 
-use function factory;
-use function urlencode;
-
 final class ClassifierControllerTest extends TestCase
 {
     private const CLASSIFICATION_LIST = '/api/classifications';
@@ -52,6 +49,7 @@ final class ClassifierControllerTest extends TestCase
         factory(NetworkBanner::class)->create(['network_campaign_id' => 2]);
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
+        $response->assertStatus(Response::HTTP_OK);
         $content = json_decode($response->getContent(), true);
 
         $items = $content['items'];
@@ -83,6 +81,7 @@ final class ClassifierControllerTest extends TestCase
         );
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
+        $response->assertStatus(Response::HTTP_OK);
         $content = json_decode($response->getContent(), true);
         $items = $content['items'];
 
@@ -107,6 +106,7 @@ final class ClassifierControllerTest extends TestCase
         );
 
         $response = $this->getJson(self::CLASSIFICATION_LIST . '/' . $site->id);
+        $response->assertStatus(Response::HTTP_OK);
         $content = json_decode($response->getContent(), true);
         $items = $content['items'];
 
@@ -130,6 +130,7 @@ final class ClassifierControllerTest extends TestCase
         factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => null, 'user_id' => 1]);
 
         $response = $this->getJson(self::CLASSIFICATION_LIST . '/3');
+        $response->assertStatus(Response::HTTP_OK);
         $content = json_decode($response->getContent(), true);
         $items = $content['items'];
 
@@ -156,13 +157,13 @@ final class ClassifierControllerTest extends TestCase
         ];
 
         $response = $this->patchJson(self::CLASSIFICATION_LIST, $data);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $classification = Classification::where('banner_id', 1)
             ->where('site_id', null)
             ->first();
 
         $this->assertFalse($classification->status);
-        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
     public function testChangeGlobalStatusWhenExistsInDb(): void
@@ -183,13 +184,13 @@ final class ClassifierControllerTest extends TestCase
         ];
 
         $response = $this->patchJson(self::CLASSIFICATION_LIST, $data);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $classification = Classification::where('banner_id', 1)
             ->where('site_id', null)
             ->first();
 
         $this->assertTrue($classification->status);
-        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
     public function testRejectGloballyWhenForSiteExistsInDb(): void
@@ -212,7 +213,7 @@ final class ClassifierControllerTest extends TestCase
         ];
 
         $response = $this->patchJson(self::CLASSIFICATION_LIST, $data);
-        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         /** @var Collection $classification */
         $classification = Classification::where('banner_id', 1)
@@ -240,9 +241,9 @@ final class ClassifierControllerTest extends TestCase
         ];
 
         $response = $this->patchJson(self::CLASSIFICATION_LIST . '/1', $data);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
 
         $this->assertNull(Classification::first());
-        $this->assertEquals(Response::HTTP_FORBIDDEN, $response->getStatusCode());
     }
 
     public function testChangeSiteStatusWhenExistsInDb(): void
@@ -264,13 +265,50 @@ final class ClassifierControllerTest extends TestCase
         ];
 
         $response = $this->patchJson(self::CLASSIFICATION_LIST . '/5', $data);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $classification = Classification::where('banner_id', 1)
             ->where('site_id', 5)
             ->first();
 
         $this->assertTrue($classification->status);
-        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
+    }
+
+    public function testChangeSiteStatusWithoutBannerId(): void
+    {
+        $user = factory(User::class)->create(['id' => 1]);
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $this->actingAs($user, 'api');
+
+        factory(NetworkCampaign::class)->create(['id' => 1]);
+
+        $data = [
+            'classification' => [
+                'status' => true,
+            ],
+        ];
+
+        $response = $this->patchJson(self::CLASSIFICATION_LIST . '/' . $site->id, $data);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeSiteStatusWhenBannerNotExistsInDb(): void
+    {
+        $user = factory(User::class)->create(['id' => 1]);
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $this->actingAs($user, 'api');
+
+        factory(NetworkCampaign::class)->create(['id' => 1]);
+
+        $data = [
+            'classification' => [
+                'banner_id' => 1,
+                'status' => true,
+            ],
+        ];
+
+        $response = $this->patchJson(self::CLASSIFICATION_LIST . '/' . $site->id, $data);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     /**
@@ -304,6 +342,7 @@ final class ClassifierControllerTest extends TestCase
         $url = urlencode($url);
 
         $response = $this->getJson(self::CLASSIFICATION_LIST . '/3?landingUrl=' . $url);
+        $response->assertStatus(Response::HTTP_OK);
         $content = json_decode($response->getContent(), true);
         $items = $content['items'];
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,11 +33,14 @@ use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
     use RefreshDatabase;
+
+    private const DISK = 'banners';
 
     protected Generator $faker;
 
@@ -45,6 +48,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         Mail::fake();
+        Storage::fake(self::DISK);
         $this->faker = Factory::create();
         $adsClient = $this->app->make(AdsClient::class);
 
