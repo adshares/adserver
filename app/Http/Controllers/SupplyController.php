@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -88,7 +88,7 @@ class SupplyController extends Controller
     ) {
 
         $type = $request->get('type');
-        if(isset($type) && !is_array($type)) {
+        if (isset($type) && !is_array($type)) {
             $request->offsetSet('type', array($type));
         }
 
