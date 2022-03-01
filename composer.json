@@ -32,7 +32,8 @@
         "ralouphie/mimey": "^2.1",
         "ramsey/uuid": "^3",
         "symfony/intl": "^5.3",
-        "symfony/lock": "^4.2"
+        "symfony/lock": "^4.2",
+        "symfony/polyfill-php80": "^1.24"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",

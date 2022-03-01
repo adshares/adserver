@@ -112,7 +112,11 @@ SQL;
         if ('OPTIONS' === $request->getRealMethod()) {
             $response = new Response('', Response::HTTP_NO_CONTENT);
         } else {
-            $response = new GzippedStreamedResponse();
+            if (str_starts_with($banner->creative_mime, 'text')) {
+                $response = new GzippedStreamedResponse();
+            } else {
+                $response = new StreamedResponse();
+            }
         }
 
         $response->headers->set('Access-Control-Allow-Origin', '*');
