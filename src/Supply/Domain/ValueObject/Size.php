@@ -277,7 +277,7 @@ final class Size
         ];
     }
 
-    public static function findMatching(int $width, int $height, float $maxZoom = 4.0): array
+    public static function findMatching(int $width, int $height, float $minZoom = 0.25, float $maxZoom = 4.0): array
     {
         if ($width <= 0 || $height <= 0) {
             return [];
@@ -286,7 +286,7 @@ final class Size
         return array_keys(
             array_filter(
                 self::SIZE_INFOS,
-                function ($info, $size) use ($width, $height, $maxZoom) {
+                function ($info, $size) use ($width, $height, $minZoom, $maxZoom) {
                     if ($info['type'] !== self::TYPE_DISPLAY) {
                         return false;
                     }
@@ -294,7 +294,7 @@ final class Size
                     [$x, $y] = explode("x", $size);
 
                     $zoom = min($x / $width, $y / $height);
-                    if ($zoom > $maxZoom) {
+                    if ($zoom < $minZoom || $zoom > $maxZoom) {
                         return false;
                     }
 
