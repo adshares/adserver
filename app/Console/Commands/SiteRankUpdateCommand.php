@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -181,7 +181,10 @@ class SiteRankUpdateCommand extends BaseCommand
             }
             if (isset($result['categories'])) {
                 try {
-                    $categories = $this->siteCategoriesValidator->processCategories($result['categories']);
+                    $categories = $this->siteCategoriesValidator->processCategories(
+                        $result['categories'],
+                        $site->medium_name
+                    );
                     $site->updateCategories($categories);
                 } catch (InvalidArgumentException $exception) {
                     $this->warn(

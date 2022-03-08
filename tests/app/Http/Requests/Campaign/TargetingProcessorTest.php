@@ -26,22 +26,11 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\TaxonomyV4;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Mock\Client\DummyAdUserClient;
 
 final class TargetingProcessorTest extends TestCase
 {
-    public function testWhileNoAvailableOptions(): void
-    {
-        $taxonomy = self::createMock(TaxonomyV4::class);
-        $taxonomy->method('getMedia')->willReturn(new ArrayableItemCollection());
-        $targetingProcessor = new TargetingProcessor($taxonomy);
-
-        $result = $targetingProcessor->processTargeting($this->getTargetingValid());
-
-        $this->assertEquals([], $result);
-    }
-
     public function testWhileTargetingEmpty(): void
     {
         $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
@@ -59,6 +48,14 @@ final class TargetingProcessorTest extends TestCase
         $result = $targetingProcessor->processTargeting($targetingValid);
 
         $this->assertEquals($targetingValid, $result);
+    }
+
+    public function testWhileMediumNameInvalid(): void
+    {
+        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
+
+        $this->expectException(InvalidArgumentException::class);
+        $targetingProcessor->processTargeting($this->getTargetingValid(), 'invalid');
     }
 
     /**

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -102,6 +102,7 @@ class SupplyController extends Controller
                 'context.site.url' => ['required', 'url'],
             ]
         );
+        $mediumName = 'metaverse';
 
         $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
         $validated['zone_name'] = $validated['zone_name'] ?? 'default';
@@ -116,8 +117,7 @@ class SupplyController extends Controller
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
             }
         }
-
-        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url']);
+        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], $mediumName);
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }

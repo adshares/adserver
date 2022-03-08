@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
 use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Exception\InvalidArgumentException;
 
 class TargetingProcessor
 {
@@ -39,11 +40,33 @@ class TargetingProcessor
 
     public function processTargeting(array $targeting, string $mediumName = 'web'): array
     {
-        if (!$targeting || !isset($this->targetingSchema[$mediumName])) {
+        if (!isset($this->targetingSchema[$mediumName])) {
+            throw new InvalidArgumentException('Invalid medium name');
+        }
+        if (!$targeting) {
             return [];
         }
 
         return $this->processGroups($targeting, $this->targetingSchema[$mediumName]);
+    }
+
+    public function checkIfPathExist(array $path, string $mediumName = 'web'): bool
+    {
+        if (!isset($this->targetingSchema[$mediumName])) {
+            throw new InvalidArgumentException('Invalid medium name');
+        }
+        $schema = $this->targetingSchema[$mediumName];
+        foreach ($path as $entry) {
+            if (!isset($schema[$entry])) {
+                return false;
+            }
+
+            $schema = $schema[$entry];
+            if (self::arrayHasDefaultNumericKeys($schema)) {
+                $schema = self::createGroupSchemaByKey($schema);
+            }
+        }
+        return true;
     }
 
     private function processGroups(array $groups, array $schema): array

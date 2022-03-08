@@ -135,7 +135,11 @@ class CampaignsController extends Controller
 
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
-        $input = $this->processTargeting($input);
+        try {
+            $input = $this->processTargeting($input);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
         $status = $input['basic_information']['status'];
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
@@ -302,7 +306,11 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
-        $input = $this->processTargeting($input);
+        try {
+            $input = $this->processTargeting($input);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         unset($input['status']); // Client cannot change status in EDIT action
 
@@ -599,6 +607,7 @@ class CampaignsController extends Controller
 
     private function processTargeting(array $input): array
     {
+        $mediumName = $input['basic_information']['medium_name'] ?? '';
         $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
 
         $requires = $input['targeting']['requires'] ?? [];
@@ -613,8 +622,8 @@ class CampaignsController extends Controller
             $excludes = array_map([__CLASS__, 'normalize'], array_merge_recursive($excludes, $baseExcludes));
         }
 
-        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires);
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes);
+        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires, $mediumName);
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes, $mediumName);
 
         return $input;
     }

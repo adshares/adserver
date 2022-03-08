@@ -161,16 +161,18 @@ class SitesControllerTest extends TestCase
     {
         $presets = [
             [
-                "status" => 0,
-                "name" => "nameA",
-                "url" => "https://example.com",
-                "primaryLanguage" => "pl",
+                'status' => 0,
+                'name' => 'nameA',
+                'url' => 'https://example.com',
+                'primaryLanguage' => 'pl',
+                'mediumName' => 'web',
             ],
             [
                 'status' => 1,
-                "name" => "nameB",
-                "url" => "https://example.com",
-                "primaryLanguage" => "en",
+                'name' => 'nameB',
+                "url" => 'https://example.com',
+                'primaryLanguage' => 'en',
+                'mediumName' => 'web',
             ],
         ];
 
@@ -311,6 +313,7 @@ JSON
                 'name' => 'example.com',
                 'url' => 'https://example.com',
                 'primaryLanguage' => 'en',
+                'mediumName' => 'web',
                 'onlyAcceptedBanners' => true,
                 'filtering' => self::filtering(),
                 'adUnits' => [
@@ -839,6 +842,7 @@ JSON
     "name": "nameA",
     "url": "https://example.com",
     "primaryLanguage": "pl",
+    "mediumName": "web",
     "adUnits": [
       {
         "name": "name",

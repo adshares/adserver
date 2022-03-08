@@ -77,6 +77,16 @@ final class CampaignsControllerTest extends TestCase
         }
     }
 
+    public function testCreateCampaignWithInvalidMedium(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $campaignInputData = $this->campaignInputData();
+        $campaignInputData['basicInformation']['medium_name'] = 'invalid';
+        $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     private function campaignInputData(): array
     {
         return [

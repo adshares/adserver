@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "simple",
-    "version": "4.0.0"
+    "version": "4.1.0"
   },
   "parameters": {
     "@countries": {
@@ -470,6 +470,9 @@
       "opera": "Opera",
       "safari": "Safari",
       "other": "Other"
+    },
+    "@extensions": {
+      "metamask": "MetaMask"
     }
   },
   "media": [
@@ -681,9 +684,7 @@
             "type": "dict",
             "name": "extensions",
             "label": "Extensions",
-            "items": {
-              "metamask": "MetaMask"
-            }
+            "items": "@extensions"
           }
         ]
       }
@@ -795,6 +796,55 @@
             "name": "language",
             "label": "Language",
             "items": "@languages"
+          },
+          {
+            "type": "dict",
+            "name": "cookie3-tag",
+            "label": "Tags",
+            "items": {
+              "token": {
+                "label": "Tokens",
+                "values": {
+                  "token-analytics": "Analytics",
+                  "token-cex-token": "CEX Tokens",
+                  "token-defi": "DeFi",
+                  "token-fan-token": "Fan Tokens",
+                  "token-gamefi": "GameFi",
+                  "token-gambling": "Gambling",
+                  "token-governance-token": "Governance Tokens",
+                  "token-infrastructure": "Infrastructure",
+                  "token-iot": "IOT",
+                  "token-layer-2": "Layer 2",
+                  "token-meme-tokens": "Meme Tokens",
+                  "token-metaverse": "Metaverse",
+                  "token-music": "Music",
+                  "token-p2e": "P2E",
+                  "token-privacy-coins": "Privacy Tokens",
+                  "token-socialmedia-content": "SocialMedia Content",
+                  "token-sports": "Sports",
+                  "token-stablecoin": "Stablecoin",
+                  "token-storage": "Storage",
+                  "token-tourism": "Tourism",
+                  "token-wrapped-tokens": "Wrapped Tokens"
+                }
+              },
+              "nft": {
+                "label": "NFTs",
+                "values": {
+                  "nft-anime-asian": "Anime Asian",
+                  "nft-community": "Community",
+                  "nft-defi": "DeFi",
+                  "nft-fashion": "Fashion",
+                  "nft-metaverse": "Metaverse",
+                  "nft-p2e": "P2E",
+                  "nft-pfp": "PFP",
+                  "nft-realestate": "RealEstate",
+                  "nft-serum-utility": "Serum Utility",
+                  "nft-sports": "Sports",
+                  "nft-tickets": "Tickets"
+                }
+              }
+            }
           }
         ],
         "site": [
@@ -803,31 +853,6 @@
             "name": "quality",
             "label": "Quality",
             "items": "@qualityLevels"
-          },
-          {
-            "type": "dict",
-            "name": "category",
-            "label": "Category",
-            "items": {
-              "adult": "Adult",
-              "crypto": "Crypto",
-              "faucets": "Faucets",
-              "games": "Games",
-              "health": {
-                "label": "Health",
-                "values": {
-                  "supplements": "Supplements",
-                  "diets": "Diets"
-                }
-              },
-              "lifestyle": "Lifestyle",
-              "movies": "Movies",
-              "music": "Music",
-              "news": "News",
-              "paytoclick": "Pay to Click",
-              "technology": "Technology",
-              "unknown": "Unknown"
-            }
           },
           {
             "type": "input",
@@ -858,9 +883,7 @@
             "type": "dict",
             "name": "extensions",
             "label": "Extensions",
-            "items": {
-              "metamask": "MetaMask"
-            }
+            "items": "@extensions"
           }
         ]
       }
