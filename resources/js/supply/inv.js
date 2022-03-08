@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -248,6 +248,8 @@ function createVideoFromData(data, domInsertCallback) {
     video.autoplay = true
     // video.loop = true
     video.muted = true;
+    video.style.width = '100%';
+    video.style.height = '100%';
     getDataURI(data, function (dataUri) {
         video.src = dataUri;
         domInsertCallback(video);

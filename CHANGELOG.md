@@ -6,8 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.14.2] - 2022-03-08
+### Fixed
+- Video ads scaling
+
+## [1.14.1] - 2022-03-01
 ### Added
 - Model ads support
+### Fixed
+- Server statistics
+- Video ads streaming
 
 ## [1.14.0] - 2022-02-15
 ### Added
@@ -578,7 +587,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.14.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.14.2...develop
+[1.14.2]: https://github.com/adshares/adserver/compare/v1.14.1...v1.14.2
+[1.14.1]: https://github.com/adshares/adserver/compare/v1.14.0...v1.14.1
 [1.14.0]: https://github.com/adshares/adserver/compare/v1.13.3...v1.14.0
 [1.13.3]: https://github.com/adshares/adserver/compare/v1.13.2...v1.13.3
 [1.13.2]: https://github.com/adshares/adserver/compare/v1.13.1...v1.13.2
