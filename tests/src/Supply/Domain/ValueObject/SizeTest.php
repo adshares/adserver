@@ -63,11 +63,11 @@ final class SizeTest extends TestCase
         $this->assertEmpty(Size::findMatching(1, 1));
         $this->assertEmpty(Size::findMatching(300, 0));
         $this->assertEmpty(Size::findMatching(300, 10));
+        $this->assertEmpty(Size::findMatching(3000, 4000));
+        $this->assertEmpty(Size::findMatching(4000, 3000));
         $this->assertContains('300x250', Size::findMatching(300, 250));
         $this->assertContains('300x250', Size::findMatching(320, 240));
-        $this->assertContains('300x250', Size::findMatching(1920, 1080));
+        $this->assertContains('580x400', Size::findMatching(1920, 1080));
         $this->assertContains('300x600', Size::findMatching(1080, 1920));
-        $this->assertContains('300x250', Size::findMatching(4000, 3000));
-        $this->assertContains('300x600', Size::findMatching(3000, 4000));
     }
 }
