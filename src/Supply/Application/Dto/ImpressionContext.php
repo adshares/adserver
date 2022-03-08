@@ -76,10 +76,13 @@ final class ImpressionContext
             $trackingId = '';
         }
 
+        $user = $context->user ?? [];
+        $user['tid'] = $trackingId;
+
         return new self(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua, 'extensions' => $extensions],
-            ['tid' => $trackingId]
+            $user
         );
     }
 

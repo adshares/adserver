@@ -154,6 +154,7 @@ class SupplyController extends Controller
                 "iid" => $validated['view_id'],
                 "url" => $validated['context']['site']['url'],
             ],
+            'user' => $validated['context']['user'],
             'zones' => $zones,
             'zone_mode' => 'best_match'
         ];
@@ -377,7 +378,13 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $tid);
+        if (isset($decodedQueryData['user'])) {
+            $decodedQueryData['user']['tid'] = $tid;
+        } else {
+            $decodedQueryData['user'] = ['tid' => $tid];
+        }
+
+        $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $decodedQueryData['user']);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {
