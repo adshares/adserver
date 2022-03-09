@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Mock\Client;
 
 use Adshares\Common\Application\Dto\TaxonomyV3;
 use Adshares\Common\Application\Factory\TaxonomyV3Factory;

@@ -23,10 +23,10 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\AdClassify;
+use Adshares\Mock\Client\DummyAdClassifyClient;
 
 class UpdateFilteringOptionsTest extends ConsoleTestCase
 {

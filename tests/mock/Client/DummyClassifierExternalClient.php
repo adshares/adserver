@@ -21,8 +21,9 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Mock\Client;
 
+use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
 use Adshares\Common\Application\Dto\TaxonomyV3;
@@ -30,8 +31,6 @@ use Illuminate\Http\Request;
 use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-
-use function time;
 
 final class DummyClassifierExternalClient implements ClassifierExternalClient
 {
