@@ -273,10 +273,6 @@ class Campaign extends Model
 
     public function getAdsAttribute()
     {
-        foreach ($this->banners as &$banner) {
-            $banner['type'] = Banner::typeAsInteger($banner->creative_type);
-        }
-
         return $this->banners;
     }
 

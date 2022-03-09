@@ -202,36 +202,37 @@ class CampaignsController extends Controller
         $banners = [];
 
         foreach ($input as $banner) {
-            self::validateSize($banner);
+            self::validateTypeAndSize($banner);
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
             $size = $banner['creative_size'];
+            $type = $banner['creative_type'];
             $bannerModel->creative_size = $size;
-            $bannerModel->creative_type = Banner::type($banner['type']);
+            $bannerModel->creative_type = $type;
 
             try {
-                switch ($banner['type']) {
-                    case Banner::TYPE_IMAGE:
+                switch ($type) {
+                    case Banner::TEXT_TYPE_IMAGE:
                         $fileName = $this->filename($banner['url']);
                         $content = ImageUploader::content($fileName);
                         $mimeType = ImageUploader::contentMimeType($fileName);
                         break;
-                    case Banner::TYPE_VIDEO:
+                    case Banner::TEXT_TYPE_VIDEO:
                         $fileName = $this->filename($banner['url']);
                         $content = VideoUploader::content($fileName);
                         $mimeType = VideoUploader::contentMimeType($fileName);
                         break;
-                    case Banner::TYPE_MODEL:
+                    case Banner::TEXT_TYPE_MODEL:
                         $fileName = $this->filename($banner['url']);
                         $content = ModelUploader::content($fileName);
                         $mimeType = ModelUploader::contentMimeType($content);
                         break;
-                    case Banner::TYPE_HTML:
+                    case Banner::TEXT_TYPE_HTML:
                         $content = ZipUploader::content($this->filename($banner['url']));
                         $mimeType = 'text/html';
                         break;
-                    case Banner::TYPE_DIRECT_LINK:
+                    case Banner::TEXT_TYPE_DIRECT_LINK:
                     default:
                         $content = self::decorateUrlWithSize(
                             empty($banner['creative_contents']) ? $campaignLandingUrl : $banner['creative_contents'],
@@ -245,7 +246,7 @@ class CampaignsController extends Controller
                     sprintf(
                         'Banner (name: %s, type: %s) could not be added (%s).',
                         $banner['name'],
-                        $banner['type'],
+                        $type,
                         $exception->getMessage()
                     )
                 );
@@ -673,25 +674,33 @@ class CampaignsController extends Controller
         }
     }
 
-    private static function validateSize(array $banner): void
+    private static function validateTypeAndSize(array $banner): void
     {
+        $type = $banner['creative_type'] ?? null;
+        if (!in_array($type, Banner::types())) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid type: %s.', $type));
+        }
         $size = $banner['creative_size'];
-        if ($banner['type'] === Banner::TYPE_MODEL) {
+        if ($type === Banner::TEXT_TYPE_MODEL) {
             if ($size !== 'cube') {
-                throw new RuntimeException(sprintf('Invalid model size: %s.', $size));
+                throw new UnprocessableEntityHttpException(sprintf('Invalid model size: %s.', $size));
             }
             return;
         }
-        if ($banner['type'] === Banner::TYPE_VIDEO) {
+        if ($type === Banner::TEXT_TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
-                throw new RuntimeException(sprintf('Invalid video size: %s.', $size));
+                throw new UnprocessableEntityHttpException(sprintf('Invalid video size: %s.', $size));
             }
             if (empty(Size::findMatching(...Size::toDimensions($size)))) {
-                throw new RuntimeException(sprintf('Invalid video size: %s. No match', $size));
+                throw new UnprocessableEntityHttpException(sprintf('Invalid video size: %s. No match', $size));
             }
             return;
         }
 
-        Banner::size($size);
+        try {
+            Banner::size($size);
+        } catch (RuntimeException $runtimeException) {
+            throw new UnprocessableEntityHttpException($runtimeException->getMessage());
+        }
     }
 }
