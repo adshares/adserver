@@ -31,6 +31,7 @@ use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
+use ErrorException;
 
 final class FileConfigurationRepository implements ConfigurationRepository
 {
@@ -56,23 +57,21 @@ final class FileConfigurationRepository implements ConfigurationRepository
 
     public function fetchTargetingOptions(): Selector
     {
-        $data = file_get_contents($this->targetingFilePath);
-
-        if (!$data) {
+        try {
+            $data = file_get_contents($this->targetingFilePath);
+        } catch (ErrorException $exception) {
             throw new RuntimeException('No targeting data.');
         }
-
         return unserialize($data, [Selector::class]);
     }
 
     public function fetchFilteringOptions(): Selector
     {
-        $data = file_get_contents($this->filteringFilePath);
-
-        if (!$data) {
+        try {
+            $data = file_get_contents($this->filteringFilePath);
+        } catch (ErrorException $exception) {
             throw new RuntimeException('No filtering data.');
         }
-
         return unserialize($data, [Selector::class]);
     }
 
@@ -108,12 +107,11 @@ final class FileConfigurationRepository implements ConfigurationRepository
 
     private function getTaxonomyV4FromFile(): TaxonomyV4
     {
-        $data = file_get_contents($this->taxonomyFilePath);
-
-        if (!$data) {
+        try {
+            $data = file_get_contents($this->taxonomyFilePath);
+        } catch (ErrorException $exception) {
             throw new RuntimeException('No taxonomy data.');
         }
-
         return unserialize($data, [TaxonomyV4::class]);
     }
 }
