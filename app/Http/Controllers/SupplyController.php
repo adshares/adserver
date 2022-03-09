@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
@@ -60,7 +59,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -154,6 +152,7 @@ class SupplyController extends Controller
                 "iid" => $validated['view_id'],
                 "url" => $validated['context']['site']['url'],
             ],
+            'user' => $validated['context']['user'],
             'zones' => $zones,
             'zone_mode' => 'best_match'
         ];
@@ -373,11 +372,16 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        if ($tid === null) {
-            throw new NotFoundHttpException('User not found');
+        if (isset($decodedQueryData['user'])) {
+            $decodedQueryData['user']['tid'] = $tid;
+        } else {
+            $decodedQueryData['user'] = ['tid' => $tid];
         }
-
-        $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $tid);
+        $impressionContext = Utils::getPartialImpressionContext(
+            $request,
+            $decodedQueryData['page'],
+            $decodedQueryData['user']
+        );
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {
