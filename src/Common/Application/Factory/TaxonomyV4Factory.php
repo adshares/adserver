@@ -46,10 +46,8 @@ class TaxonomyV4Factory
             array_walk_recursive(
                 $data,
                 function (&$value, $key, $parameters) {
-                    if (is_string($value) && substr($value, 0, 1) === '@') {
-                        if (array_key_exists($value, $parameters)) {
-                            $value = $parameters[$value];
-                        }
+                    if (is_string($value) && substr($value, 0, 1) === '@' && array_key_exists($value, $parameters)) {
+                        $value = $parameters[$value];
                     }
                 },
                 $parameters

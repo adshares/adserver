@@ -93,28 +93,38 @@ class TargetingItemFactory
             throw new InvalidArgumentException('Each key must be a string.');
         }
         if (is_array($itemValue)) {
-            if (!array_key_exists('label', $itemValue)) {
-                throw new InvalidArgumentException('The field `label` is required in nested item.');
-            }
-            if (!array_key_exists('values', $itemValue)) {
-                throw new InvalidArgumentException('The field `values` is required in nested item.');
-            }
-            if (!is_string($itemValue['label'])) {
-                throw new InvalidArgumentException('The field `label` must be a string.');
-            }
-            if (!is_array($itemValue['values'])) {
-                throw new InvalidArgumentException('The field `value` must be an array.');
-            }
-            if (empty($itemValue['values'])) {
-                throw new InvalidArgumentException('The field `value` must be a non-empty array.');
-            }
-            foreach ($itemValue['values'] as $key => $value) {
-                self::validateItem($key, $value);
-            }
+            self::validateItemLabel($itemValue);
+            self::validateItemValues($itemValue);
         } else {
             if (!is_string($itemValue)) {
                 throw new InvalidArgumentException('Each value in the `items` field must be a string.');
             }
+        }
+    }
+
+    private static function validateItemLabel(array $itemValue): void
+    {
+        if (!array_key_exists('label', $itemValue)) {
+            throw new InvalidArgumentException('The field `label` is required in nested item.');
+        }
+        if (!is_string($itemValue['label'])) {
+            throw new InvalidArgumentException('The field `label` must be a string.');
+        }
+    }
+
+    private static function validateItemValues(array $itemValue): void
+    {
+        if (!array_key_exists('values', $itemValue)) {
+            throw new InvalidArgumentException('The field `values` is required in nested item.');
+        }
+        if (!is_array($itemValue['values'])) {
+            throw new InvalidArgumentException('The field `value` must be an array.');
+        }
+        if (empty($itemValue['values'])) {
+            throw new InvalidArgumentException('The field `value` must be a non-empty array.');
+        }
+        foreach ($itemValue['values'] as $key => $value) {
+            self::validateItem($key, $value);
         }
     }
 }
