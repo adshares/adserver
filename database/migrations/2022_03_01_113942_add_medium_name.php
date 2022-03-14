@@ -29,19 +29,21 @@ class AddMediumName extends Migration
     {
         Schema::table('campaigns', function (Blueprint $table) {
             $table->string('medium_name', 30)->after('budget')->default('web');
+            $table->string('integration_name', 30)->after('medium_name')->nullable();
         });
         Schema::table('sites', function (Blueprint $table) {
             $table->string('medium_name', 30)->after('reassess_available_at')->default('web');
+            $table->string('integration_name', 30)->after('medium_name')->nullable();
         });
     }
 
     public function down(): void
     {
         Schema::table('sites', function (Blueprint $table) {
-            $table->dropColumn('medium_name');
+            $table->dropColumn(['medium_name', 'integration_name']);
         });
         Schema::table('campaigns', function (Blueprint $table) {
-            $table->dropColumn('medium_name');
+            $table->dropColumn(['medium_name', 'integration_name']);
         });
     }
 }

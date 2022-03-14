@@ -39,7 +39,7 @@ final class SiteCategoriesValidatorTest extends TestCase
     {
         $siteCategoriesValidator = new SiteCategoriesValidator(new DummyConfigurationRepository());
 
-        $result = $siteCategoriesValidator->processCategories($categories, 'web');
+        $result = $siteCategoriesValidator->processCategories($categories, 'web', null);
 
         self::assertEquals($categories, $result);
     }
@@ -63,7 +63,7 @@ final class SiteCategoriesValidatorTest extends TestCase
 
         self::expectException(InvalidArgumentException::class);
 
-        $siteCategoriesValidator->processCategories($categories, 'web');
+        $siteCategoriesValidator->processCategories($categories, 'web', null);
     }
 
     public function invalidCategoriesProvider(): array
@@ -85,7 +85,7 @@ final class SiteCategoriesValidatorTest extends TestCase
 
         self::expectException(InvalidArgumentException::class);
 
-        $siteCategoriesValidator->processCategories(['unknown'], $mediumName);
+        $siteCategoriesValidator->processCategories(['unknown'], $mediumName, null);
     }
 
     public function invalidMediumNameProvider(): array
@@ -102,7 +102,7 @@ final class SiteCategoriesValidatorTest extends TestCase
     {
         $siteCategoriesValidator = new SiteCategoriesValidator(new DummyConfigurationRepository());
 
-        $result = $siteCategoriesValidator->processCategories([], 'metaverse');
+        $result = $siteCategoriesValidator->processCategories([], 'metaverse', 'decentraland');
 
         self::assertEquals(['unknown'], $result);
     }

@@ -98,6 +98,7 @@ final class CampaignsControllerTest extends TestCase
                 'max_cpm' => 100000000000,
                 'budget' => 10000000000000,
                 'medium_name' => 'web',
+                'integration_name' => null,
                 'dateStart' => '2018-12-03T18:42:00+01:00',
                 'dateEnd' => '2018-12-30T18:42:00+01:00',
             ],

@@ -183,7 +183,8 @@ class SiteRankUpdateCommand extends BaseCommand
                 try {
                     $categories = $this->siteCategoriesValidator->processCategories(
                         $result['categories'],
-                        $site->medium_name
+                        $site->medium_name,
+                        $site->integration_name
                     );
                     $site->updateCategories($categories);
                 } catch (InvalidArgumentException $exception) {

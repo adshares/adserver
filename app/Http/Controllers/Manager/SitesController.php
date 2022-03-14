@@ -75,10 +75,12 @@ class SitesController extends Controller
         self::validateDomain(DomainReader::domain($url));
 
         $mediumName = $input['medium_name'] ?? null;
+        $integrationName = $input['integration_name'] ?? null;
         try {
             $categoriesByUser = $this->siteCategoriesValidator->processCategories(
                 $input['categories'] ?? null,
-                $mediumName
+                $mediumName,
+                $integrationName
             );
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
@@ -105,6 +107,7 @@ class SitesController extends Controller
                 $url,
                 $input['name'],
                 $mediumName,
+                $integrationName,
                 $input['status'],
                 $input['primary_language'],
                 $onlyAcceptedBanners,

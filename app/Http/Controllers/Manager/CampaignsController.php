@@ -345,6 +345,9 @@ class CampaignsController extends Controller
         if ($input['basic_information']['medium_name'] !== $campaign->medium_name) {
             throw new UnprocessableEntityHttpException('Medium name cannot be changed');
         }
+        if ($input['basic_information']['integration_name'] !== $campaign->integration_name) {
+            throw new UnprocessableEntityHttpException('Integration name cannot be changed');
+        }
         $campaign->fill($input);
 
         $campaign->status = Campaign::STATUS_INACTIVE;
@@ -609,6 +612,7 @@ class CampaignsController extends Controller
     private function processTargeting(array $input): array
     {
         $mediumName = $input['basic_information']['medium_name'] ?? '';
+        $integrationName = $input['basic_information']['medium_name'] ?? null;
         $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
 
         $requires = $input['targeting']['requires'] ?? [];
@@ -623,8 +627,8 @@ class CampaignsController extends Controller
             $excludes = array_map([__CLASS__, 'normalize'], array_merge_recursive($excludes, $baseExcludes));
         }
 
-        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires, $mediumName);
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes, $mediumName);
+        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires, $mediumName, $integrationName);
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes, $mediumName, $integrationName);
 
         return $input;
     }

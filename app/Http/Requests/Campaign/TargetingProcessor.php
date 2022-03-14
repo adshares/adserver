@@ -38,8 +38,11 @@ class TargetingProcessor
         }
     }
 
-    public function processTargeting(array $targeting, string $mediumName = 'web'): array
-    {
+    public function processTargeting(
+        array $targeting,
+        string $mediumName = 'web',
+        ?string $integrationName = null
+    ): array {
         if (!isset($this->targetingSchema[$mediumName])) {
             throw new InvalidArgumentException('Invalid medium name');
         }
@@ -50,7 +53,7 @@ class TargetingProcessor
         return $this->processGroups($targeting, $this->targetingSchema[$mediumName]);
     }
 
-    public function checkIfPathExist(array $path, string $mediumName = 'web'): bool
+    public function checkIfPathExist(array $path, string $mediumName = 'web', ?string $integrationName = null): bool
     {
         if (!isset($this->targetingSchema[$mediumName])) {
             throw new InvalidArgumentException('Invalid medium name');

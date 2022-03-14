@@ -38,8 +38,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
-use function in_array;
-
 /**
  * @property int id
  * @property string uuid
@@ -56,6 +54,7 @@ use function in_array;
  * @property int status
  * @property string primary_language
  * @property string medium_name
+ * @property string|null integration_name
  * @property array filtering
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
@@ -220,6 +219,7 @@ class Site extends Model
         string $url,
         string $name,
         string $mediumName,
+        ?string $integrationName,
         int $status = Site::STATUS_ACTIVE,
         string $primaryLanguage = 'en',
         bool $onlyAcceptedBanners = false,
@@ -241,6 +241,7 @@ class Site extends Model
         $site->domain = DomainReader::domain($url);
         $site->filtering = $filtering;
         $site->medium_name = $mediumName;
+        $site->integration_name = $integrationName;
         $site->name = $name;
         $site->only_accepted_banners = $onlyAcceptedBanners;
         $site->primary_language = $primaryLanguage;
@@ -254,8 +255,13 @@ class Site extends Model
         return $site;
     }
 
-    public static function fetchOrCreate(int $userId, string $url, string $mediumName, ?string $name = null): ?self
-    {
+    public static function fetchOrCreate(
+        int $userId,
+        string $url,
+        string $mediumName,
+        ?string $integrationName,
+        ?string $name = null
+    ): ?self {
         $domain = DomainReader::domain($url);
 
         $builder = self::where('user_id', $userId)->where('domain', $domain);
@@ -265,7 +271,7 @@ class Site extends Model
         $site = $builder->first();
 
         if (!$site) {
-            $site = Site::create($userId, $url, $name ?? $domain, $mediumName);
+            $site = Site::create($userId, $url, $name ?? $domain, $mediumName, $integrationName);
         }
 
         return $site;

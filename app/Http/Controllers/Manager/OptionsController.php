@@ -79,6 +79,20 @@ class OptionsController extends Controller
         return self::json($data);
     }
 
+    public function integrations(string $mediumName): JsonResponse
+    {
+        $data = [];
+
+        if ($mediumName === 'metaverse') {
+            $data = [
+                'cryptovoxels' => 'Cryptovoxels',
+                'decentraland' => 'Decentraland',
+            ];
+        }
+
+        return self::json($data);
+    }
+
     public function targeting(Request $request): JsonResponse
     {
         $exclusions = [];

@@ -207,5 +207,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(
     function () {
         Route::get('options/campaigns/media', [OptionsController::class, 'media']);
         Route::get('options/campaigns/media/{mediumName}', [OptionsController::class, 'medium']);
+        Route::get('options/campaigns/media/{mediumName}/integrations', [OptionsController::class, 'integrations']);
     }
 );

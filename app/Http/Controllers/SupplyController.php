@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
@@ -60,7 +59,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -112,6 +110,7 @@ class SupplyController extends Controller
             ]
         );
         $mediumName = 'metaverse';
+        $integrationName = 'decentraland';
 
         $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
         $validated['zone_name'] = $validated['zone_name'] ?? 'default';
@@ -126,7 +125,7 @@ class SupplyController extends Controller
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
             }
         }
-        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], $mediumName);
+        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], $mediumName, $integrationName);
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }

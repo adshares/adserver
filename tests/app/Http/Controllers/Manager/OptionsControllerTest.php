@@ -139,4 +139,22 @@ final class OptionsControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonMissing(['label' => 'Quality', 'name' => 'quality']);
     }
+
+    public function testMetaverseIntegrations(): void
+    {
+        self::actingAs(factory(User::class)->create(), 'api');
+
+        $response = self::get('/api/options/campaigns/media/metaverse/integrations');
+        $response->assertStatus(200);
+        $response->assertJsonFragment(['decentraland' => 'Decentraland']);
+    }
+
+    public function testWebIntegrations(): void
+    {
+        self::actingAs(factory(User::class)->create(), 'api');
+
+        $response = self::get('/api/options/campaigns/media/web/integrations');
+        $response->assertStatus(200);
+        $response->assertExactJson([]);
+    }
 }

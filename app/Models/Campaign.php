@@ -41,8 +41,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
-use function hex2bin;
-
 /**
  * @property int id
  * @property string uuid
@@ -59,6 +57,7 @@ use function hex2bin;
  * @property float bid
  * @property int budget
  * @property string medium_name
+ * @property string integration_name
  * @property int max_cpc
  * @property int max_cpm
  * @property array|null|string targeting_requires
@@ -131,6 +130,7 @@ class Campaign extends Model
         'status',
         'budget',
         'medium_name',
+        'integration_name',
         'max_cpc',
         'max_cpm',
         'basic_information',
@@ -331,6 +331,7 @@ class Campaign extends Model
         }
         $this->budget = $value["budget"];
         $this->medium_name = $value["medium_name"];
+        $this->integration_name = $value["integration_name"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
     }
@@ -345,6 +346,7 @@ class Campaign extends Model
             "max_cpm" => $this->max_cpm,
             "budget" => $this->budget,
             "medium_name" => $this->medium_name,
+            "integration_name" => $this->integration_name,
             "date_start" => $this->time_start,
             "date_end" => $this->time_end,
         ];
