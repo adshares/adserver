@@ -86,7 +86,7 @@ class DummyConfigurationRepository implements ConfigurationRepository
         return MediaFactory::fromTaxonomy(self::getTaxonomyV4FromFile());
     }
 
-    public function fetchMedium(string $mediumName = 'web'): Medium
+    public function fetchMedium(string $mediumName = 'web', ?string $vendor = null): Medium
     {
         foreach (self::getTaxonomyV4FromFile()->getMedia() as $medium) {
             if ($medium->getName() === $mediumName) {

@@ -38,27 +38,20 @@ class TargetingProcessor
         }
     }
 
-    public function processTargeting(
-        array $targeting,
-        string $mediumName = 'web',
-        ?string $integrationName = null
-    ): array {
-        if (!isset($this->targetingSchema[$mediumName])) {
-            throw new InvalidArgumentException('Invalid medium name');
-        }
+    public function processTargeting(array $targeting, string $medium = 'web', ?string $vendor = null): array
+    {
+        $this->validateMedium($medium);
         if (!$targeting) {
             return [];
         }
 
-        return $this->processGroups($targeting, $this->targetingSchema[$mediumName]);
+        return $this->processGroups($targeting, $this->targetingSchema[$medium]);
     }
 
-    public function checkIfPathExist(array $path, string $mediumName = 'web', ?string $integrationName = null): bool
+    public function checkIfPathExist(array $path, string $medium = 'web', ?string $vendor = null): bool
     {
-        if (!isset($this->targetingSchema[$mediumName])) {
-            throw new InvalidArgumentException('Invalid medium name');
-        }
-        $schema = $this->targetingSchema[$mediumName];
+        $this->validateMedium($medium);
+        $schema = $this->targetingSchema[$medium];
         foreach ($path as $entry) {
             if (!isset($schema[$entry])) {
                 return false;
@@ -170,5 +163,12 @@ class TargetingProcessor
     private static function arrayHasDefaultNumericKeys(array $array): bool
     {
         return array_keys($array) === range(0, count($array) - 1);
+    }
+
+    private function validateMedium(string $medium): void
+    {
+        if (!isset($this->targetingSchema[$medium])) {
+            throw new InvalidArgumentException('Invalid medium');
+        }
     }
 }

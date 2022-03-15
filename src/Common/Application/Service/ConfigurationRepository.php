@@ -44,5 +44,5 @@ interface ConfigurationRepository
 
     public function fetchMedia(): Media;
 
-    public function fetchMedium(string $mediumName = 'web'): Medium;
+    public function fetchMedium(string $mediumName = 'web', ?string $vendor = null): Medium;
 }

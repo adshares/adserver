@@ -56,8 +56,8 @@ use InvalidArgumentException;
  * @property array|null|string strategy_name
  * @property float bid
  * @property int budget
- * @property string medium_name
- * @property string integration_name
+ * @property string medium
+ * @property string $vendor
  * @property int max_cpc
  * @property int max_cpm
  * @property array|null|string targeting_requires
@@ -129,8 +129,8 @@ class Campaign extends Model
         'name',
         'status',
         'budget',
-        'medium_name',
-        'integration_name',
+        'medium',
+        'integration',
         'max_cpc',
         'max_cpm',
         'basic_information',
@@ -330,8 +330,8 @@ class Campaign extends Model
             throw new InvalidArgumentException('Budget needs to be non-negative');
         }
         $this->budget = $value["budget"];
-        $this->medium_name = $value["medium_name"];
-        $this->integration_name = $value["integration_name"];
+        $this->medium = $value["medium"];
+        $this->vendor = $value["vendor"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
     }
@@ -345,8 +345,8 @@ class Campaign extends Model
             "max_cpc" => $this->max_cpc,
             "max_cpm" => $this->max_cpm,
             "budget" => $this->budget,
-            "medium_name" => $this->medium_name,
-            "integration_name" => $this->integration_name,
+            "medium" => $this->medium,
+            "vendor" => $this->vendor,
             "date_start" => $this->time_start,
             "date_end" => $this->time_end,
         ];

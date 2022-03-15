@@ -109,8 +109,8 @@ class SupplyController extends Controller
                 'context.site.url' => ['required', 'url'],
             ]
         );
-        $mediumName = 'metaverse';
-        $integrationName = 'decentraland';
+        $medium = 'metaverse';
+        $vendor = 'decentraland';
 
         $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
         $validated['zone_name'] = $validated['zone_name'] ?? 'default';
@@ -125,7 +125,7 @@ class SupplyController extends Controller
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
             }
         }
-        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], $mediumName, $integrationName);
+        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], $medium, $vendor);
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }

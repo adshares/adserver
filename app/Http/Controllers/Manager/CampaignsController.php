@@ -342,11 +342,11 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
-        if ($input['basic_information']['medium_name'] !== $campaign->medium_name) {
-            throw new UnprocessableEntityHttpException('Medium name cannot be changed');
+        if ($input['basic_information']['medium'] !== $campaign->medium) {
+            throw new UnprocessableEntityHttpException('Medium cannot be changed');
         }
-        if ($input['basic_information']['integration_name'] !== $campaign->integration_name) {
-            throw new UnprocessableEntityHttpException('Integration name cannot be changed');
+        if ($input['basic_information']['vendor'] !== $campaign->vendor) {
+            throw new UnprocessableEntityHttpException('Vendor cannot be changed');
         }
         $campaign->fill($input);
 
@@ -611,8 +611,8 @@ class CampaignsController extends Controller
 
     private function processTargeting(array $input): array
     {
-        $mediumName = $input['basic_information']['medium_name'] ?? '';
-        $integrationName = $input['basic_information']['medium_name'] ?? null;
+        $medium = $input['basic_information']['medium'] ?? '';
+        $vendor = $input['basic_information']['vendor'] ?? null;
         $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
 
         $requires = $input['targeting']['requires'] ?? [];
@@ -627,8 +627,8 @@ class CampaignsController extends Controller
             $excludes = array_map([__CLASS__, 'normalize'], array_merge_recursive($excludes, $baseExcludes));
         }
 
-        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires, $mediumName, $integrationName);
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes, $mediumName, $integrationName);
+        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires, $medium, $vendor);
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes, $medium, $vendor);
 
         return $input;
     }

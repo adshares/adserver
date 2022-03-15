@@ -38,23 +38,23 @@ class SiteCategoriesValidator
         $this->configurationRepository = $configurationRepository;
     }
 
-    public function processCategories($categories, $mediumName, $integrationName): array
+    public function processCategories($categories, $medium, $vendor): array
     {
-        if (!$mediumName) {
-            throw new InvalidArgumentException('Field `medium_name` is required.');
+        if (!$medium) {
+            throw new InvalidArgumentException('Field `medium` is required.');
         }
-        if (!is_string($mediumName)) {
-            throw new InvalidArgumentException('Field `medium_name` must be a string.');
+        if (!is_string($medium)) {
+            throw new InvalidArgumentException('Field `medium` must be a string.');
         }
-        if ($integrationName !== null && !is_string($integrationName)) {
-            throw new InvalidArgumentException('Field `integration_name` must be a string or null.');
+        if ($vendor !== null && !is_string($vendor)) {
+            throw new InvalidArgumentException('Field `vendor` must be a string or null.');
         }
 
         if (!isset($this->targetingProcessor)) {
             $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
         }
 
-        if (!$this->targetingProcessor->checkIfPathExist(['site', 'category'], $mediumName, $integrationName)) {
+        if (!$this->targetingProcessor->checkIfPathExist(['site', 'category'], $medium, $vendor)) {
             return ['unknown'];
         }
 
@@ -66,8 +66,8 @@ class SiteCategoriesValidator
         }
         $targeting = $this->targetingProcessor->processTargeting(
             ['site' => ['category' => $categories]],
-            $mediumName,
-            $integrationName
+            $medium,
+            $vendor
         );
 
         if (!$targeting) {

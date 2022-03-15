@@ -62,9 +62,10 @@ class OptionsController extends Controller
         return self::json($this->optionsRepository->fetchMedia()->toArray());
     }
 
-    public function medium(string $mediumName, Request $request): JsonResponse
+    public function medium(string $medium, Request $request): JsonResponse
     {
-        $data = $this->optionsRepository->fetchMedium($mediumName)->toArray();
+        $vendor = $request->get('vendor');
+        $data = $this->optionsRepository->fetchMedium($medium, $vendor)->toArray();
 
         if ($request->get('e')) {
             foreach ($data['targeting']['site'] ?? [] as $key => $value) {
@@ -79,11 +80,11 @@ class OptionsController extends Controller
         return self::json($data);
     }
 
-    public function integrations(string $mediumName): JsonResponse
+    public function vendors(string $medium): JsonResponse
     {
         $data = [];
 
-        if ($mediumName === 'metaverse') {
+        if ($medium === 'metaverse') {
             $data = [
                 'cryptovoxels' => 'Cryptovoxels',
                 'decentraland' => 'Decentraland',

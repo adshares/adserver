@@ -60,6 +60,12 @@ class MediumTest extends TestCase
         Medium::fromArray(self::data([$field => 0]));
     }
 
+    public function testMediumFromArrayInvalidVendorType(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        Medium::fromArray(self::data(['vendor' => 0]));
+    }
+
     public function testMediumFromArrayEmptyFormatsArray(): void
     {
         self::expectException(InvalidArgumentException::class);

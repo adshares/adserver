@@ -82,7 +82,7 @@ final class CampaignsControllerTest extends TestCase
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $campaignInputData = $this->campaignInputData();
-        $campaignInputData['basicInformation']['medium_name'] = 'invalid';
+        $campaignInputData['basicInformation']['medium'] = 'invalid';
         $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -97,8 +97,8 @@ final class CampaignsControllerTest extends TestCase
                 'max_cpc' => 200000000000,
                 'max_cpm' => 100000000000,
                 'budget' => 10000000000000,
-                'medium_name' => 'web',
-                'integration_name' => null,
+                'medium' => 'web',
+                'vendor' => null,
                 'dateStart' => '2018-12-03T18:42:00+01:00',
                 'dateEnd' => '2018-12-30T18:42:00+01:00',
             ],
@@ -505,7 +505,8 @@ final class CampaignsControllerTest extends TestCase
         $this->assertEquals($campaign->max_cpc, $info['maxCpc']);
         $this->assertEquals($campaign->max_cpm, $info['maxCpm']);
         $this->assertEquals($campaign->budget, $info['budget']);
-        $this->assertEquals($campaign->medium_name, $info['mediumName']);
+        $this->assertEquals($campaign->medium, $info['medium']);
+        $this->assertEquals($campaign->vendor, $info['vendor']);
         $this->assertEquals($campaign->time_start, $info['dateStart']);
         $this->assertEquals($campaign->time_end, $info['dateEnd']);
 
@@ -616,14 +617,14 @@ final class CampaignsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
-    public function testCampaignEditMediumName(): void
+    public function testCampaignEditMedium(): void
     {
         /** @var User $user */
         $user = factory(User::class)->create();
         /** @var Campaign $campaign */
         $campaign = factory(Campaign::class)->create(
             [
-                'medium_name' => 'web',
+                'medium' => 'web',
                 'user_id' => $user->id,
             ]
         );
@@ -631,7 +632,7 @@ final class CampaignsControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::URI . '/' . $campaign->id,
-            ['campaign' => ['basic_information' => ['medium_name' => 'invalid']]]
+            ['campaign' => ['basic_information' => ['medium' => 'invalid']]]
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }

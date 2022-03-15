@@ -95,7 +95,7 @@ final class FileConfigurationRepository implements ConfigurationRepository
         return $this->getTaxonomyV4FromFile();
     }
 
-    public function fetchMedium(string $mediumName = 'web'): Medium
+    public function fetchMedium(string $mediumName = 'web', ?string $vendor = null): Medium
     {
         foreach ($this->getTaxonomyV4FromFile()->getMedia() as $medium) {
             if ($medium->getName() === $mediumName) {

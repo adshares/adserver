@@ -165,14 +165,16 @@ class SitesControllerTest extends TestCase
                 'name' => 'nameA',
                 'url' => 'https://example.com',
                 'primaryLanguage' => 'pl',
-                'mediumName' => 'web',
+                'medium' => 'web',
+                'vendor' => null,
             ],
             [
                 'status' => 1,
                 'name' => 'nameB',
                 "url" => 'https://example.com',
                 'primaryLanguage' => 'en',
-                'mediumName' => 'web',
+                'medium' => 'web',
+                'vendor' => null,
             ],
         ];
 
@@ -313,7 +315,8 @@ JSON
                 'name' => 'example.com',
                 'url' => 'https://example.com',
                 'primaryLanguage' => 'en',
-                'mediumName' => 'web',
+                'medium' => 'web',
+                'vendor' => null,
                 'onlyAcceptedBanners' => true,
                 'filtering' => self::filtering(),
                 'adUnits' => [
@@ -842,7 +845,8 @@ JSON
     "name": "nameA",
     "url": "https://example.com",
     "primaryLanguage": "pl",
-    "mediumName": "web",
+    "medium": "web",
+    "vendor": null,
     "adUnits": [
       {
         "name": "name",

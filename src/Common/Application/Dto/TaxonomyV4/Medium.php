@@ -31,13 +31,20 @@ class Medium implements Arrayable
 {
     private string $name;
     private string $label;
+    private ?string $vendor;
     private ArrayableItemCollection $formats;
     private Targeting $targeting;
 
-    public function __construct(string $name, string $label, ArrayableItemCollection $formats, Targeting $targeting)
-    {
+    public function __construct(
+        string $name,
+        string $label,
+        ?string $vendor,
+        ArrayableItemCollection $formats,
+        Targeting $targeting
+    ) {
         $this->name = $name;
         $this->label = $label;
+        $this->vendor = $vendor;
         $this->formats = $formats;
         $this->targeting = $targeting;
     }
@@ -55,6 +62,7 @@ class Medium implements Arrayable
         return new self(
             $data['name'],
             $data['label'],
+            $data['vendor'] ?? null,
             $formats,
             $targeting,
         );
@@ -89,6 +97,9 @@ class Medium implements Arrayable
         if (!is_array($data['targeting'])) {
             throw new InvalidArgumentException('The field `targeting` must be an array.');
         }
+        if (isset($data['vendor']) && !is_string($data['vendor'])) {
+            throw new InvalidArgumentException('The field `vendor` must be string or null.');
+        }
     }
 
     public function getName(): string
@@ -101,6 +112,11 @@ class Medium implements Arrayable
         return $this->label;
     }
 
+    public function getVendor(): ?string
+    {
+        return $this->vendor;
+    }
+
     public function getTargeting(): Targeting
     {
         return $this->targeting;
@@ -111,6 +127,7 @@ class Medium implements Arrayable
         return [
             'name' => $this->name,
             'label' => $this->label,
+            'vendor' => $this->vendor,
             'formats' => $this->formats->toArray(),
             'targeting' => $this->targeting->toArray(),
         ];
