@@ -456,6 +456,20 @@ JSON
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testUpdateSiteChangeUrlForMetaverse(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var  Site $site */
+        $site = factory(Site::class)->create(
+            ['user_id' => $user->id, 'medium' => 'metaverse', 'vendor' => 'decentraland']
+        );
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => 'http://example']]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testUpdateSiteRestorePopUp(): void
     {
         /** @var User $user */
