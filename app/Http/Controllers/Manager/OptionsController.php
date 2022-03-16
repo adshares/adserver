@@ -66,6 +66,7 @@ class OptionsController extends Controller
     {
         $vendor = $request->get('vendor');
         $data = $this->optionsRepository->fetchMedium($medium, $vendor)->toArray();
+        $data['vendor'] = $vendor;//TODO vendor should be in returned medium array
 
         if ($request->get('e')) {
             foreach ($data['targeting']['site'] ?? [] as $key => $value) {

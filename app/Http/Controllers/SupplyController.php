@@ -107,10 +107,10 @@ class SupplyController extends Controller
                 'context' => ['required', 'array:user,device,site'],
                 'context.*' => ['required', 'array'],
                 'context.site.url' => ['required', 'url'],
+                'medium' => ['required', 'string'],
+                'vendor' => ['nullable', 'string'],
             ]
         );
-        $medium = 'metaverse';
-        $vendor = 'decentraland';
 
         $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
         $validated['zone_name'] = $validated['zone_name'] ?? 'default';
@@ -125,7 +125,12 @@ class SupplyController extends Controller
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
             }
         }
-        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url'], $medium, $vendor);
+        $site = Site::fetchOrCreate(
+            $user->id,
+            $validated['context']['site']['url'],
+            $validated['medium'],
+            $validated['vendor'] ?? null
+        );
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
