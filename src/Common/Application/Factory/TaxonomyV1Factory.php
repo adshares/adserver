@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Factory;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Dto\TaxonomyV1;
 use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 use ErrorException;
@@ -31,14 +31,14 @@ use Illuminate\Support\Facades\Log;
 
 use function GuzzleHttp\json_decode;
 
-final class TaxonomyV3Factory
+final class TaxonomyV1Factory
 {
-    public static function fromJson(string $json): TaxonomyV3
+    public static function fromJson(string $json): TaxonomyV1
     {
         return self::fromArray(json_decode($json, true));
     }
 
-    public static function fromArray(array $taxonomy): TaxonomyV3
+    public static function fromArray(array $taxonomy): TaxonomyV1
     {
         $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
 
@@ -49,7 +49,7 @@ final class TaxonomyV3Factory
             try {
                 $items = array_map(
                     function (array $item) {
-                        return TaxonomyV3ItemFactory::fromArray($item);
+                        return TaxonomyV1ItemFactory::fromArray($item);
                     },
                     $taxonomy['data']
                 );
@@ -63,32 +63,32 @@ final class TaxonomyV3Factory
 
         $itemsUser = array_map(
             function (array $item) {
-                return TaxonomyV3ItemFactory::fromArray($item);
+                return TaxonomyV1ItemFactory::fromArray($item);
             },
             $taxonomy['data']['user'] ?? []
         );
 
         $itemsSite = array_map(
             function (array $item) {
-                return TaxonomyV3ItemFactory::fromArray($item);
+                return TaxonomyV1ItemFactory::fromArray($item);
             },
             $taxonomy['data']['site'] ?? []
         );
 
         $itemsDevice = array_map(
             function (array $item) {
-                return TaxonomyV3ItemFactory::fromArray($item);
+                return TaxonomyV1ItemFactory::fromArray($item);
             },
             $taxonomy['data']['device'] ?? []
         );
 
-        return new TaxonomyV3(
+        return new TaxonomyV1(
             $taxonomy,
             $schema,
             $version,
-            TaxonomyV3ItemFactory::groupingItem('user', 'User', ...$itemsUser),
-            TaxonomyV3ItemFactory::groupingItem('site', 'Site', ...$itemsSite),
-            TaxonomyV3ItemFactory::groupingItem('device', 'Device', ...$itemsDevice),
+            TaxonomyV1ItemFactory::groupingItem('user', 'User', ...$itemsUser),
+            TaxonomyV1ItemFactory::groupingItem('site', 'Site', ...$itemsSite),
+            TaxonomyV1ItemFactory::groupingItem('device', 'Device', ...$itemsDevice),
             ...$items
         );
     }

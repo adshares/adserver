@@ -24,8 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Mock\Client;
 
 use Adshares\Common\Application\Dto\PageRank;
-use Adshares\Common\Application\Dto\TaxonomyV4;
-use Adshares\Common\Application\Factory\TaxonomyV4Factory;
+use Adshares\Common\Application\Dto\TaxonomyV2;
+use Adshares\Common\Application\Factory\TaxonomyV2Factory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -52,12 +52,12 @@ final class DummyAdUserClient implements AdUser
         return $result;
     }
 
-    public function fetchTargetingOptions(): TaxonomyV4
+    public function fetchTargetingOptions(): TaxonomyV2
     {
-        $path = base_path('tests/mock/targeting_schema_v4.json');
+        $path = base_path('tests/mock/targeting_schema_v2.json');
         $json = file_get_contents($path);
 
-        return TaxonomyV4Factory::fromJson($json);
+        return TaxonomyV2Factory::fromJson($json);
     }
 
     public function getUserContext(ImpressionContext $context): UserContext

@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\PageRank;
-use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 
@@ -76,7 +76,7 @@ interface AdUser
 
     public function fetchPageRankBatch(array $urls): array;
 
-    public function fetchTargetingOptions(): TaxonomyV4;
+    public function fetchTargetingOptions(): TaxonomyV2;
 
     public function getUserContext(ImpressionContext $context): UserContext;
 

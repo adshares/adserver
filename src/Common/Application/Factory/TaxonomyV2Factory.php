@@ -23,18 +23,18 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Factory;
 
-use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 
 use function GuzzleHttp\json_decode;
 
-class TaxonomyV4Factory
+class TaxonomyV2Factory
 {
-    public static function fromJson(string $json): TaxonomyV4
+    public static function fromJson(string $json): TaxonomyV2
     {
         $data = json_decode($json, true);
         $data = self::replaceParameters($data);
 
-        return TaxonomyV4::fromArray($data);
+        return TaxonomyV2::fromArray($data);
     }
 
     private static function replaceParameters($data): array

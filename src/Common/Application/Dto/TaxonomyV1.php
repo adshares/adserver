@@ -21,22 +21,33 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Tests\Common\Application\Factory;
+namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Application\Dto\TaxonomyV4;
-use Adshares\Common\Application\Factory\TaxonomyV4Factory;
-use PHPUnit\Framework\TestCase;
+use Adshares\Common\Application\Dto\TaxonomyV1\Item;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
-class TaxonomyV4FactoryTest extends TestCase
+final class TaxonomyV1 extends ArrayCollection
 {
-    public function testTaxonomyFromJson(): void
+    /** @var array */
+    private $rawData;
+    /** @var Schema */
+    private $schema;
+    /** @var SemVer */
+    private $version;
+
+    public function __construct(array $rawData, Schema $schema, SemVer $version, Item ...$items)
     {
-        $taxonomy = TaxonomyV4Factory::fromJson(self::jsonTaxonomy());
-        self::assertInstanceOf(TaxonomyV4::class, $taxonomy);
+        $this->rawData = $rawData;
+        $this->schema = $schema;
+        $this->version = $version;
+
+        parent::__construct($items);
     }
 
-    private static function jsonTaxonomy(): string
+    public function getRawData(): array
     {
-        return file_get_contents('tests/mock/targeting_schema_v4.json');
+        return $this->rawData;
     }
 }

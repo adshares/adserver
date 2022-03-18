@@ -21,11 +21,11 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Factory\TaxonomyV4;
+namespace Adshares\Common\Application\Factory\TaxonomyV2;
 
-use Adshares\Common\Application\Dto\TaxonomyV4\DictionaryTargetingItem;
-use Adshares\Common\Application\Dto\TaxonomyV4\InputTargetingItem;
-use Adshares\Common\Application\Dto\TaxonomyV4\TargetingItem;
+use Adshares\Common\Application\Dto\TaxonomyV2\DictionaryTargetingItem;
+use Adshares\Common\Application\Dto\TaxonomyV2\InputTargetingItem;
+use Adshares\Common\Application\Dto\TaxonomyV2\TargetingItem;
 use Adshares\Common\Exception\InvalidArgumentException;
 
 class TargetingItemFactory

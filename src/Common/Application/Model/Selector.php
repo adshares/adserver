@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Model;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
-use Adshares\Common\Application\Dto\TaxonomyV3\Item;
+use Adshares\Common\Application\Dto\TaxonomyV1;
+use Adshares\Common\Application\Dto\TaxonomyV1\Item;
 use Adshares\Common\Application\Model\Selector\Option;
 
 use function array_filter;
@@ -50,7 +50,7 @@ final class Selector
         return $this;
     }
 
-    public static function fromTaxonomy(TaxonomyV3 $taxonomy): Selector
+    public static function fromTaxonomy(TaxonomyV1 $taxonomy): Selector
     {
         return new self(...array_map(
             static function (Item $item) {

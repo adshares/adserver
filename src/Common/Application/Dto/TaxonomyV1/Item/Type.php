@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyV3\Item;
+namespace Adshares\Common\Application\Dto\TaxonomyV1\Item;
 
 use InvalidArgumentException;
 

@@ -24,8 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\Media;
-use Adshares\Common\Application\Dto\TaxonomyV4;
-use Adshares\Common\Application\Dto\TaxonomyV4\Medium;
+use Adshares\Common\Application\Dto\TaxonomyV2;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Model\Selector;
 
 interface ConfigurationRepository
@@ -34,13 +34,13 @@ interface ConfigurationRepository
 
     public function storeFilteringOptions(Selector $options): void;
 
-    public function storeTaxonomyV4(TaxonomyV4 $taxonomy): void;
+    public function storeTaxonomyV2(TaxonomyV2 $taxonomy): void;
 
     public function fetchTargetingOptions(): Selector;
 
     public function fetchFilteringOptions(): Selector;
 
-    public function fetchTaxonomy(): TaxonomyV4;
+    public function fetchTaxonomy(): TaxonomyV2;
 
     public function fetchMedia(): Media;
 

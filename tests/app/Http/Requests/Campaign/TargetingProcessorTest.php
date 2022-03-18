@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -177,7 +177,7 @@ final class TargetingProcessorTest extends TestCase
         );
     }
 
-    private function getTargetingSchema(): TaxonomyV4
+    private function getTargetingSchema(): TaxonomyV2
     {
         return $this->app->make(ConfigurationRepository::class)->fetchTaxonomy();
     }

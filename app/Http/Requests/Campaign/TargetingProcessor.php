@@ -23,14 +23,14 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
-use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Exception\InvalidArgumentException;
 
 class TargetingProcessor
 {
     private array $targetingSchema;
 
-    public function __construct(TaxonomyV4 $taxonomy)
+    public function __construct(TaxonomyV2 $taxonomy)
     {
         $this->targetingSchema = [];
         foreach ($taxonomy->getMedia() as $medium) {

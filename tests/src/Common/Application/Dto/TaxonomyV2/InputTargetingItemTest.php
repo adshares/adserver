@@ -21,9 +21,9 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Tests\Common\Application\Dto\TaxonomyV4;
+namespace Adshares\Tests\Common\Application\Dto\TaxonomyV2;
 
-use Adshares\Common\Application\Dto\TaxonomyV4\InputTargetingItem;
+use Adshares\Common\Application\Dto\TaxonomyV2\InputTargetingItem;
 use PHPUnit\Framework\TestCase;
 
 class InputTargetingItemTest extends TestCase

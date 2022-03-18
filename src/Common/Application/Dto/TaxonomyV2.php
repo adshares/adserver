@@ -21,35 +21,30 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyV4;
+namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Application\Factory\TaxonomyV4\TargetingItemFactory;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Common\Application\Dto\TaxonomyV2\Meta;
 use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Contracts\Support\Arrayable;
 
-class Targeting implements Arrayable
+class TaxonomyV2 implements Arrayable
 {
-    private ArrayableItemCollection $user;
-    private ArrayableItemCollection $site;
-    private ArrayableItemCollection $device;
+    private Meta $meta;
+    private ArrayableItemCollection $media;
 
-    public function __construct(
-        ArrayableItemCollection $user,
-        ArrayableItemCollection $site,
-        ArrayableItemCollection $device
-    ) {
-        $this->user = $user;
-        $this->site = $site;
-        $this->device = $device;
+    public function __construct(Meta $meta, ArrayableItemCollection $media)
+    {
+        $this->meta = $meta;
+        $this->media = $media;
     }
 
-    public static function fromArray(array $data): Targeting
+    public static function fromArray(array $data): self
     {
         $fields = [
-            'user',
-            'site',
-            'device',
+            'meta',
+            'media',
         ];
 
         foreach ($fields as $field) {
@@ -59,26 +54,36 @@ class Targeting implements Arrayable
             if (!is_array($data[$field])) {
                 throw new InvalidArgumentException(sprintf('The field `%s` must be an array.', $field));
             }
-            $targetingItems = new ArrayableItemCollection();
-            foreach ($data[$field] as $itemData) {
-                $targetingItems->add(TargetingItemFactory::fromArray($itemData));
-            }
-            $items[$field] = $targetingItems;
         }
 
-        return new self(
-            $items['user'],
-            $items['site'],
-            $items['device']
-        );
+        foreach ($data['media'] as $mediaData) {
+            if (!is_array($mediaData)) {
+                throw new InvalidArgumentException('The field `media[]` must be an array.');
+            }
+        }
+
+        $meta = Meta::fromArray($data['meta']);
+        $media = new ArrayableItemCollection();
+        foreach ($data['media'] as $mediumData) {
+            $media->add(Medium::fromArray($mediumData));
+        }
+
+        return new self($meta, $media);
+    }
+
+    /**
+     * @return Medium[]|ArrayableItemCollection
+     */
+    public function getMedia(): ArrayableItemCollection
+    {
+        return $this->media;
     }
 
     public function toArray(): array
     {
         return [
-            'user' => $this->user->toArray(),
-            'site' => $this->site->toArray(),
-            'device' => $this->device->toArray(),
+            'meta' => $this->meta->toArray(),
+            'media' => $this->media->toArray(),
         ];
     }
 }

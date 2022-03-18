@@ -21,10 +21,10 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyV3;
+namespace Adshares\Common\Application\Dto\TaxonomyV1;
 
-use Adshares\Common\Application\Dto\TaxonomyV3\Item\Type;
-use Adshares\Common\Application\Dto\TaxonomyV3\Item\Value;
+use Adshares\Common\Application\Dto\TaxonomyV1\Item\Type;
+use Adshares\Common\Application\Dto\TaxonomyV1\Item\Value;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Model\Selector\Option;
 use Adshares\Common\Application\Model\Selector\OptionValue;

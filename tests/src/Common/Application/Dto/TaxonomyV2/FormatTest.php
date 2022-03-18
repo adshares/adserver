@@ -21,9 +21,9 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Tests\Common\Application\Dto\TaxonomyV4;
+namespace Adshares\Tests\Common\Application\Dto\TaxonomyV2;
 
-use Adshares\Common\Application\Dto\TaxonomyV4\Format;
+use Adshares\Common\Application\Dto\TaxonomyV2\Format;
 use Adshares\Common\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

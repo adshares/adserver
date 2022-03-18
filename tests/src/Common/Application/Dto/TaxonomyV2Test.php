@@ -23,15 +23,15 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Common\Application\Dto;
 
-use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-class TaxonomyV4Test extends TestCase
+class TaxonomyV2Test extends TestCase
 {
     public function testTaxonomyFromArray(): void
     {
-        $targeting = TaxonomyV4::fromArray(self::data());
+        $targeting = TaxonomyV2::fromArray(self::data());
 
         $arr = $targeting->toArray();
         self::assertEquals('simple', $arr['meta']['name'] ?? null);
@@ -49,7 +49,7 @@ class TaxonomyV4Test extends TestCase
     public function testTaxonomyFromArrayMissingField($remove): void
     {
         self::expectException(InvalidArgumentException::class);
-        TaxonomyV4::fromArray(self::data([], $remove));
+        TaxonomyV2::fromArray(self::data([], $remove));
     }
 
     /**
@@ -58,13 +58,13 @@ class TaxonomyV4Test extends TestCase
     public function testTaxonomyFromArrayInvalidFieldType($field): void
     {
         self::expectException(InvalidArgumentException::class);
-        TaxonomyV4::fromArray(self::data([$field => 0]));
+        TaxonomyV2::fromArray(self::data([$field => 0]));
     }
 
     public function testTaxonomyFromArrayInvalidMediaType(): void
     {
         self::expectException(InvalidArgumentException::class);
-        TaxonomyV4::fromArray(self::data(['media' => [0]]));
+        TaxonomyV2::fromArray(self::data(['media' => [0]]));
     }
 
     private static function data(array $mergeData = [], string $remove = null): array

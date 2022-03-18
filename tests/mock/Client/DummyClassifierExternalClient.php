@@ -26,7 +26,7 @@ namespace Adshares\Mock\Client;
 use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
-use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Dto\TaxonomyV1;
 use Illuminate\Http\Request;
 use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
@@ -75,7 +75,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         app()->handle($request);
     }
 
-    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV3
+    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV1
     {
         return (new DummyAdClassifyClient())->fetchFilteringOptions();
     }

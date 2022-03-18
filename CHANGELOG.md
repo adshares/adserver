@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Targeting uses taxonomy v4
+- Targeting uses taxonomy v2
 
 ## [1.14.2] - 2022-03-08
 ### Fixed

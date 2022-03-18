@@ -21,33 +21,29 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto;
+namespace Adshares\Common\Application\Dto\TaxonomyV2;
 
-use Adshares\Common\Application\Dto\TaxonomyV3\Item;
-use Adshares\Common\Domain\Adapter\ArrayCollection;
-use Adshares\Common\Domain\ValueObject\SemVer;
-use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
+use Illuminate\Contracts\Support\Arrayable;
 
-final class TaxonomyV3 extends ArrayCollection
+abstract class TargetingItem implements Arrayable
 {
-    /** @var array */
-    private $rawData;
-    /** @var Schema */
-    private $schema;
-    /** @var SemVer */
-    private $version;
+    protected string $type;
+    protected string $name;
+    protected string $label;
 
-    public function __construct(array $rawData, Schema $schema, SemVer $version, Item ...$items)
+    public function __construct(string $type, string $name, string $label)
     {
-        $this->rawData = $rawData;
-        $this->schema = $schema;
-        $this->version = $version;
-
-        parent::__construct($items);
+        $this->type = $type;
+        $this->name = $name;
+        $this->label = $label;
     }
 
-    public function getRawData(): array
+    public function toArray(): array
     {
-        return $this->rawData;
+        return [
+            'type' => $this->type,
+            'name' => $this->name,
+            'label' => $this->label,
+        ];
     }
 }

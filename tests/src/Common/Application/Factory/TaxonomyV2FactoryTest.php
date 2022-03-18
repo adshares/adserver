@@ -21,29 +21,22 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyV4;
+namespace Adshares\Tests\Common\Application\Factory;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Adshares\Common\Application\Dto\TaxonomyV2;
+use Adshares\Common\Application\Factory\TaxonomyV2Factory;
+use PHPUnit\Framework\TestCase;
 
-abstract class TargetingItem implements Arrayable
+class TaxonomyV2FactoryTest extends TestCase
 {
-    protected string $type;
-    protected string $name;
-    protected string $label;
-
-    public function __construct(string $type, string $name, string $label)
+    public function testTaxonomyFromJson(): void
     {
-        $this->type = $type;
-        $this->name = $name;
-        $this->label = $label;
+        $taxonomy = TaxonomyV2Factory::fromJson(self::jsonTaxonomy());
+        self::assertInstanceOf(TaxonomyV2::class, $taxonomy);
     }
 
-    public function toArray(): array
+    private static function jsonTaxonomy(): string
     {
-        return [
-            'type' => $this->type,
-            'name' => $this->name,
-            'label' => $this->label,
-        ];
+        return file_get_contents('tests/mock/targeting_schema_v2.json');
     }
 }

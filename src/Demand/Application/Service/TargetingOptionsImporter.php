@@ -40,6 +40,6 @@ class TargetingOptionsImporter
     public function import(): void
     {
         $taxonomy = $this->client->fetchTargetingOptions();
-        $this->repository->storeTaxonomyV4($taxonomy);
+        $this->repository->storeTaxonomyV2($taxonomy);
     }
 }

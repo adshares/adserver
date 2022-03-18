@@ -21,46 +21,63 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Tests\Common\Application\Dto\TaxonomyV4;
+namespace Adshares\Tests\Common\Application\Dto\TaxonomyV2;
 
-use Adshares\Common\Application\Dto\TaxonomyV4\Meta;
+use Adshares\Common\Application\Dto\TaxonomyV2\Targeting;
 use Adshares\Common\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-class MetaTest extends TestCase
+class TargetingTest extends TestCase
 {
-    public function testMetaFromArray(): void
+    public function testTargetingItemFromArray(): void
     {
-        $targeting = Meta::fromArray(self::data());
+        $targeting = Targeting::fromArray(self::data());
 
         $arr = $targeting->toArray();
-        self::assertEquals('simple', $arr['name'] ?? null);
-        self::assertEquals('4.0.0', $arr['version'] ?? null);
+        self::assertEmpty($arr['user']);
+        self::assertEquals('input', $arr['site'][0]['type'] ?? null);
+        self::assertEquals('MetaMask', $arr['device'][0]['items']['metamask'] ?? null);
     }
 
     /**
      * @dataProvider keyProvider
      */
-    public function testMetaFromArrayMissingField($remove): void
+    public function testTargetingFromArrayMissingField($remove): void
     {
         self::expectException(InvalidArgumentException::class);
-        Meta::fromArray(self::data([], $remove));
+        Targeting::fromArray(self::data([], $remove));
     }
 
     /**
      * @dataProvider keyProvider
      */
-    public function testMetaFromArrayInvalidFieldType($field): void
+    public function testTargetingFromArrayInvalidFieldType($field): void
     {
         self::expectException(InvalidArgumentException::class);
-        Meta::fromArray(self::data([$field => 0]));
+        Targeting::fromArray(self::data([$field => 0]));
     }
 
     private static function data(array $mergeData = [], string $remove = null): array
     {
         $data = array_merge([
-            'name' => 'simple',
-            'version' => '4.0.0',
+            'user' => [],
+            'site' => [
+                [
+                    'type' => 'input',
+                    'name' => 'domain',
+                    'label' => 'Domain'
+                ]
+            ],
+            'device' => [
+                [
+                    'type' => 'dict',
+                    'name' => 'extensions',
+                    'label' => 'Extensions',
+                    'items' => [
+                        'metamask' => 'MetaMask'
+                    ]
+                ]
+            ]
         ], $mergeData);
 
         if ($remove !== null) {
@@ -73,8 +90,9 @@ class MetaTest extends TestCase
     public function keyProvider(): array
     {
         return [
-            ['name'],
-            ['version'],
+            ['user'],
+            ['site'],
+            ['device'],
         ];
     }
 }

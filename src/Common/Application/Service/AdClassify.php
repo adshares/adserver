@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Dto\TaxonomyV1;
 
 interface AdClassify
 {
-    public function fetchFilteringOptions(): TaxonomyV3;
+    public function fetchFilteringOptions(): TaxonomyV1;
 }

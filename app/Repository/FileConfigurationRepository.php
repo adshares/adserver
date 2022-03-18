@@ -24,8 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Common\Application\Dto\Media;
-use Adshares\Common\Application\Dto\TaxonomyV4;
-use Adshares\Common\Application\Dto\TaxonomyV4\Medium;
+use Adshares\Common\Application\Dto\TaxonomyV2;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Factory\MediaFactory;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -80,24 +80,24 @@ final class FileConfigurationRepository implements ConfigurationRepository
         file_put_contents($this->filteringFilePath, serialize($options));
     }
 
-    public function storeTaxonomyV4(TaxonomyV4 $taxonomy): void
+    public function storeTaxonomyV2(TaxonomyV2 $taxonomy): void
     {
         file_put_contents($this->taxonomyFilePath, serialize($taxonomy));
     }
 
     public function fetchMedia(): Media
     {
-        return MediaFactory::fromTaxonomy($this->getTaxonomyV4FromFile());
+        return MediaFactory::fromTaxonomy($this->getTaxonomyV2FromFile());
     }
 
-    public function fetchTaxonomy(): TaxonomyV4
+    public function fetchTaxonomy(): TaxonomyV2
     {
-        return $this->getTaxonomyV4FromFile();
+        return $this->getTaxonomyV2FromFile();
     }
 
     public function fetchMedium(string $mediumName = 'web', ?string $vendor = null): Medium
     {
-        foreach ($this->getTaxonomyV4FromFile()->getMedia() as $medium) {
+        foreach ($this->getTaxonomyV2FromFile()->getMedia() as $medium) {
             if ($medium->getName() === $mediumName) {
                 return $medium;
             }
@@ -105,13 +105,13 @@ final class FileConfigurationRepository implements ConfigurationRepository
         throw new InvalidArgumentException('Unsupported medium');
     }
 
-    private function getTaxonomyV4FromFile(): TaxonomyV4
+    private function getTaxonomyV2FromFile(): TaxonomyV2
     {
         try {
             $data = file_get_contents($this->taxonomyFilePath);
         } catch (ErrorException $exception) {
             throw new RuntimeException('No taxonomy data.');
         }
-        return unserialize($data, [TaxonomyV4::class]);
+        return unserialize($data, [TaxonomyV2::class]);
     }
 }

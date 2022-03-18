@@ -21,22 +21,21 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyV4;
+namespace Adshares\Tests\Common\Application\Dto\TaxonomyV2;
 
-class DictionaryTargetingItem extends TargetingItem
+use Adshares\Common\Application\Dto\TaxonomyV2\DictionaryTargetingItem;
+use PHPUnit\Framework\TestCase;
+
+class DictionaryTargetingItemTest extends TestCase
 {
-    protected array $items;
-
-    public function __construct(string $key, string $label, array $items)
+    public function testDictionaryItem(): void
     {
-        parent::__construct('dict', $key, $label);
-        $this->items = $items;
-    }
+        $item = new DictionaryTargetingItem('category', 'Category', ['paytoclick' => 'Pay to Click']);
 
-    public function toArray(): array
-    {
-        $result = parent::toArray();
-        $result['items'] = $this->items;
-        return $result;
+        $arr = $item->toArray();
+        self::assertEquals('dict', $arr['type']);
+        self::assertEquals('category', $arr['name']);
+        self::assertEquals('Category', $arr['label']);
+        self::assertEquals(['paytoclick' => 'Pay to Click'], $arr['items']);
     }
 }

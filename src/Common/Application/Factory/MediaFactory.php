@@ -24,11 +24,11 @@ declare(strict_types=1);
 namespace Adshares\Common\Application\Factory;
 
 use Adshares\Common\Application\Dto\Media;
-use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 
 class MediaFactory
 {
-    public static function fromTaxonomy(TaxonomyV4 $taxonomy): Media
+    public static function fromTaxonomy(TaxonomyV2 $taxonomy): Media
     {
         $media = new Media();
         foreach ($taxonomy->getMedia() as $medium) {

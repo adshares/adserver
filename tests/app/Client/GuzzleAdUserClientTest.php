@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Tests\Client;
 
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Dto\TaxonomyV4;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Exception\RuntimeException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -77,7 +77,7 @@ JSON;
         $client->expects(self::once())->method('get')->willReturn(new Response(200, [], $json));
         $guzzleAdUserClient = new GuzzleAdUserClient($client);
 
-        self::assertInstanceOf(TaxonomyV4::class, $guzzleAdUserClient->fetchTargetingOptions());
+        self::assertInstanceOf(TaxonomyV2::class, $guzzleAdUserClient->fetchTargetingOptions());
     }
 
     public function testFetchTargetingOptionsException(): void

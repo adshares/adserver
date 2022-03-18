@@ -21,12 +21,22 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyV4;
+namespace Adshares\Common\Application\Dto\TaxonomyV2;
 
-class InputTargetingItem extends TargetingItem
+class DictionaryTargetingItem extends TargetingItem
 {
-    public function __construct(string $key, string $label)
+    protected array $items;
+
+    public function __construct(string $key, string $label, array $items)
     {
-        parent::__construct('input', $key, $label);
+        parent::__construct('dict', $key, $label);
+        $this->items = $items;
+    }
+
+    public function toArray(): array
+    {
+        $result = parent::toArray();
+        $result['items'] = $this->items;
+        return $result;
     }
 }

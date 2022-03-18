@@ -23,17 +23,17 @@ declare(strict_types=1);
 
 namespace Adshares\Mock\Client;
 
-use Adshares\Common\Application\Dto\TaxonomyV3;
-use Adshares\Common\Application\Factory\TaxonomyV3Factory;
+use Adshares\Common\Application\Dto\TaxonomyV1;
+use Adshares\Common\Application\Factory\TaxonomyV1Factory;
 use Adshares\Common\Application\Service\AdClassify;
 
 use function GuzzleHttp\json_decode;
 
 final class DummyAdClassifyClient implements AdClassify
 {
-    public function fetchFilteringOptions(): TaxonomyV3
+    public function fetchFilteringOptions(): TaxonomyV1
     {
-        return TaxonomyV3Factory::fromArray(json_decode($this->getData(), true));
+        return TaxonomyV1Factory::fromArray(json_decode($this->getData(), true));
     }
 
     public function getData(): string

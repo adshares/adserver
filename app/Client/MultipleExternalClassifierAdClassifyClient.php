@@ -25,8 +25,8 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
-use Adshares\Common\Application\Dto\TaxonomyV3;
-use Adshares\Common\Application\Factory\TaxonomyV3Factory;
+use Adshares\Common\Application\Dto\TaxonomyV1;
+use Adshares\Common\Application\Factory\TaxonomyV1Factory;
 use Adshares\Common\Application\Service\AdClassify;
 
 final class MultipleExternalClassifierAdClassifyClient implements AdClassify
@@ -47,7 +47,7 @@ final class MultipleExternalClassifierAdClassifyClient implements AdClassify
         $this->classifierRepository = $classifierRepository;
     }
 
-    public function fetchFilteringOptions(): TaxonomyV3
+    public function fetchFilteringOptions(): TaxonomyV1
     {
         $classifiers = $this->classifierRepository->fetchClassifiers();
 
@@ -67,6 +67,6 @@ final class MultipleExternalClassifierAdClassifyClient implements AdClassify
             }
         }
 
-        return TaxonomyV3Factory::fromArray(['data' => $data]);
+        return TaxonomyV1Factory::fromArray(['data' => $data]);
     }
 }

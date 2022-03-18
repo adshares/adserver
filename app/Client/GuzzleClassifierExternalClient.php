@@ -25,8 +25,8 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Adserver\Utilities\NonceGenerator;
-use Adshares\Common\Application\Dto\TaxonomyV3;
-use Adshares\Common\Application\Factory\TaxonomyV3Factory;
+use Adshares\Common\Application\Dto\TaxonomyV1;
+use Adshares\Common\Application\Factory\TaxonomyV1Factory;
 use Adshares\Common\Exception\RuntimeException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -71,7 +71,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
         }
     }
 
-    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV3
+    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV1
     {
         $url = $classifier->getBaseUrl() . self::PATH_API . self::PATH_TAXONOMY;
 
@@ -97,7 +97,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
             throw new RuntimeException($exception->getMessage(), $exception->getCode(), $exception);
         }
 
-        return TaxonomyV3Factory::fromArray($items);
+        return TaxonomyV1Factory::fromArray($items);
     }
 
     private function buildHeaders(ClassifierExternal $classifier): array

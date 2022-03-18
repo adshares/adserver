@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
-use Adshares\Common\Application\Dto\TaxonomyV3;
+use Adshares\Common\Application\Dto\TaxonomyV1;
 
 interface ClassifierExternalClient
 {
@@ -34,5 +34,5 @@ interface ClassifierExternalClient
 
     public function requestClassification(ClassifierExternal $classifier, array $data): void;
 
-    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV3;
+    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV1;
 }
