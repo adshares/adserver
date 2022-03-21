@@ -60,6 +60,6 @@ final class SemVer
 
     public function __toString(): string
     {
-        return "$this->major.$this->minor.$this->patch";
+        return sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch);
     }
 }

@@ -56,15 +56,12 @@ class TaxonomyV2 implements Arrayable
             }
         }
 
-        foreach ($data['media'] as $mediaData) {
-            if (!is_array($mediaData)) {
-                throw new InvalidArgumentException('The field `media[]` must be an array.');
-            }
-        }
-
         $meta = Meta::fromArray($data['meta']);
         $media = new ArrayableItemCollection();
         foreach ($data['media'] as $mediumData) {
+            if (!is_array($mediumData)) {
+                throw new InvalidArgumentException('The field `media.*` must be an array.');
+            }
             $media->add(Medium::fromArray($mediumData));
         }
 

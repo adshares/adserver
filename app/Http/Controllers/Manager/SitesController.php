@@ -180,7 +180,7 @@ class SitesController extends Controller
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
 
-            if ($updateDomainAndUrl && $site->medium === 'metaverse') {
+            if ($updateDomainAndUrl && $site->medium !== 'web') {
                 throw new UnprocessableEntityHttpException('URL cannot be changed');
             }
         }

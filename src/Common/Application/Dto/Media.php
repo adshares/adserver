@@ -27,12 +27,7 @@ use Illuminate\Contracts\Support\Arrayable;
 
 class Media implements Arrayable
 {
-    private array $data;
-
-    public function __construct()
-    {
-        $this->data = [];
-    }
+    private array $data = [];
 
     public function add(string $name, string $label): void
     {
