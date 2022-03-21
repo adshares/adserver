@@ -98,7 +98,7 @@ final class FileConfigurationRepository implements ConfigurationRepository
     public function fetchMedium(string $mediumName = 'web', ?string $vendor = null): Medium
     {
         foreach ($this->getTaxonomyV2FromFile()->getMedia() as $medium) {
-            if ($medium->getName() === $mediumName) {
+            if ($medium->getName() === $mediumName && $medium->getVendor() === $vendor) {
                 return $medium;
             }
         }

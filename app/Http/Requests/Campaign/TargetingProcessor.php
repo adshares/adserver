@@ -34,24 +34,24 @@ class TargetingProcessor
     {
         $this->targetingSchema = [];
         foreach ($taxonomy->getMedia() as $medium) {
-            $this->targetingSchema[$medium->getName()] = $medium->getTargeting()->toArray();
+            $key = self::buildSchemaKey($medium->getName(), $medium->getVendor());
+            $this->targetingSchema[$key] = $medium->getTargeting()->toArray();
         }
     }
 
     public function processTargeting(array $targeting, string $medium = 'web', ?string $vendor = null): array
     {
-        $this->validateMedium($medium);
+        $this->validateMedium($medium, $vendor);
         if (!$targeting) {
             return [];
         }
-
-        return $this->processGroups($targeting, $this->targetingSchema[$medium]);
+        return $this->processGroups($targeting, $this->targetingSchema[self::buildSchemaKey($medium, $vendor)]);
     }
 
     public function checkIfPathExist(array $path, string $medium = 'web', ?string $vendor = null): bool
     {
-        $this->validateMedium($medium);
-        $schema = $this->targetingSchema[$medium];
+        $this->validateMedium($medium, $vendor);
+        $schema = $this->targetingSchema[self::buildSchemaKey($medium, $vendor)];
         foreach ($path as $entry) {
             if (!isset($schema[$entry])) {
                 return false;
@@ -165,10 +165,15 @@ class TargetingProcessor
         return array_keys($array) === range(0, count($array) - 1);
     }
 
-    private function validateMedium(string $medium): void
+    private function validateMedium(string $medium, ?string $vendor): void
     {
-        if (!isset($this->targetingSchema[$medium])) {
+        if (!isset($this->targetingSchema[self::buildSchemaKey($medium, $vendor)])) {
             throw new InvalidArgumentException('Invalid medium');
         }
+    }
+
+    private static function buildSchemaKey(string $medium, ?string $vendor): string
+    {
+        return sprintf('%s/%s', $medium, $vendor);
     }
 }

@@ -66,7 +66,6 @@ class OptionsController extends Controller
     {
         $vendor = $request->get('vendor');
         $data = $this->optionsRepository->fetchMedium($medium, $vendor)->toArray();
-        $data['vendor'] = $vendor;//TODO vendor should be in returned medium array
 
         if ($request->get('e')) {
             foreach ($data['targeting']['site'] ?? [] as $key => $value) {
@@ -84,14 +83,11 @@ class OptionsController extends Controller
     public function vendors(string $medium): JsonResponse
     {
         $data = [];
-
-        if ($medium === 'metaverse') {
-            $data = [
-                'cryptovoxels' => 'Cryptovoxels',
-                'decentraland' => 'Decentraland',
-            ];
+        foreach ($this->optionsRepository->fetchTaxonomy()->getMedia() as $mediumObject) {
+            if ($mediumObject->getName() === $medium && $mediumObject->getVendor() !== null) {
+                $data[$mediumObject->getVendor()] = $mediumObject->getVendorLabel();
+            }
         }
-
         return self::json($data);
     }
 

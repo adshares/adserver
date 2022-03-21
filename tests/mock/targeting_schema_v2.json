@@ -889,5 +889,26 @@
       }
     }
   ],
-  "integrations": []
+  "vendors": [
+    {
+      "medium": "metaverse",
+      "name": "decentraland",
+      "label": "Decentraland",
+      "formats": [
+        {
+          "path": "$[?(@.type=image)].mimes",
+          "value": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ]
+        }
+      ]
+    },
+    {
+      "medium": "metaverse",
+      "name": "cryptovoxels",
+      "label": "Cryptovoxels"
+    }
+  ]
 }

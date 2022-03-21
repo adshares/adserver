@@ -32,6 +32,7 @@ class Medium implements Arrayable
     private string $name;
     private string $label;
     private ?string $vendor;
+    private ?string $vendorLabel;
     private ArrayableItemCollection $formats;
     private Targeting $targeting;
 
@@ -39,12 +40,14 @@ class Medium implements Arrayable
         string $name,
         string $label,
         ?string $vendor,
+        ?string $vendorLabel,
         ArrayableItemCollection $formats,
         Targeting $targeting
     ) {
         $this->name = $name;
         $this->label = $label;
         $this->vendor = $vendor;
+        $this->vendorLabel = $vendorLabel;
         $this->formats = $formats;
         $this->targeting = $targeting;
     }
@@ -63,6 +66,7 @@ class Medium implements Arrayable
             $data['name'],
             $data['label'],
             $data['vendor'] ?? null,
+            $data['vendorLabel'] ?? null,
             $formats,
             $targeting,
         );
@@ -98,7 +102,10 @@ class Medium implements Arrayable
             throw new InvalidArgumentException('The field `targeting` must be an array.');
         }
         if (isset($data['vendor']) && !is_string($data['vendor'])) {
-            throw new InvalidArgumentException('The field `vendor` must be string or null.');
+            throw new InvalidArgumentException('The field `vendor` must be a string or null.');
+        }
+        if (isset($data['vendorLabel']) && !is_string($data['vendorLabel'])) {
+            throw new InvalidArgumentException('The field `vendorLabel` must be a string or null.');
         }
     }
 
@@ -117,6 +124,11 @@ class Medium implements Arrayable
         return $this->vendor;
     }
 
+    public function getVendorLabel(): ?string
+    {
+        return $this->vendorLabel;
+    }
+
     public function getTargeting(): Targeting
     {
         return $this->targeting;
@@ -128,6 +140,7 @@ class Medium implements Arrayable
             'name' => $this->name,
             'label' => $this->label,
             'vendor' => $this->vendor,
+            'vendorLabel' => $this->vendorLabel,
             'formats' => $this->formats->toArray(),
             'targeting' => $this->targeting->toArray(),
         ];
