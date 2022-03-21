@@ -98,7 +98,7 @@ class TaxonomyV2Factory
         return $data;
     }
 
-    private static function validateVendors($vendors): void
+    private static function validateVendors(array $vendors): void
     {
         foreach ($vendors as $vendorData) {
             $fields = [
@@ -138,6 +138,11 @@ class TaxonomyV2Factory
                     );
                 }
                 foreach ($vendorData[$key] as $change) {
+                    if (!is_array($change)) {
+                        throw new InvalidArgumentException(
+                            sprintf('The field `vendors.*.%s.*` must be an array.', $key)
+                        );
+                    }
                     self::validateChange($change, $key);
                 }
             }
@@ -192,14 +197,12 @@ class TaxonomyV2Factory
         for ($i = 1; $i < strlen($path); $i++) {
             if ($path[$i] === '[') {
                 if ($tokenStart !== null) {
-                    $pathFragments[] = substr($path, $tokenStart, $i - 1 - $tokenStart);
+                    $pathFragments[] = substr($path, $tokenStart, $i - $tokenStart);
                     $tokenStart = null;
                 }
                 $iNext = strpos($path, ']', $i);
                 if ($iNext === false) {
-                    throw new InvalidArgumentException(
-                        sprintf('Path `%s` is missing matching square bracket.', $path)
-                    );
+                    throw new InvalidArgumentException(sprintf('Path `%s` is missing matching square bracket.', $path));
                 }
                 if ($iNext === $i + 1) {
                     $addValue = true;
@@ -209,7 +212,7 @@ class TaxonomyV2Factory
                 $i = $iNext;
             } elseif ($path[$i] === '.') {
                 if ($tokenStart !== null) {
-                    $pathFragments[] = substr($path, $tokenStart, $i - 1 - $tokenStart);
+                    $pathFragments[] = substr($path, $tokenStart, $i - $tokenStart);
                 }
                 $tokenStart = $i + 1;
             }
@@ -235,11 +238,14 @@ class TaxonomyV2Factory
             if (str_starts_with($pathFragment, '[?(@.') && str_ends_with($pathFragment, ')]')) {
                 [$k, $v] = explode('=', substr($pathFragment, strlen('[?(@.'), -strlen(')]')), 2);
                 for ($i = 0; $i < count($temp); $i++) {
-                    if ($temp[$i][$k] ?? '' === $v) {
+                    if (($temp[$i][$k] ?? '') === $v) {
                         $pathFragment = $i;
                         break;
                     }
                 }
+            }
+            if (!array_key_exists($pathFragment, $temp)) {
+                throw new InvalidArgumentException(sprintf('Path fragment `%s` is invalid.', $pathFragment));
             }
             $temp = &$temp[$pathFragment];
         }

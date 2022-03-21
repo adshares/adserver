@@ -38,7 +38,7 @@ class TaxonomyV2FactoryTest extends TestCase
         self::assertInstanceOf(TaxonomyV2::class, $taxonomy);
     }
 
-    public function testTaxonomyIntegration(): void
+    public function testTaxonomyVendor(): void
     {
         $taxonomy = TaxonomyV2Factory::fromJson(self::jsonTaxonomy());
         $decentralandMedium = null;
@@ -61,7 +61,7 @@ class TaxonomyV2FactoryTest extends TestCase
         self::assertNotContains('image/gif', $imageFormat['mimes']);
     }
 
-    public function testTaxonomyIntegrationAddNode(): void
+    public function testTaxonomyVendorAddNode(): void
     {
         $data = json_decode(self::jsonTaxonomy(), true);
         $data['vendors'][] = self::customVendor();
@@ -84,6 +84,42 @@ class TaxonomyV2FactoryTest extends TestCase
             }
         }
         self::assertNotNull($testFormat, 'Format not found');
+    }
+
+    public function testTaxonomyVendorReplaceTargetingValues(): void
+    {
+        $tokenData = [
+            'token-1' => 'Test token 1',
+            'token-2' => 'Test token 2',
+        ];
+        $targetingData = [
+            [
+                'path' => '$.user[?(@.name=cookie3-tag)].items.token.values',
+                'value' => $tokenData,
+            ]
+        ];
+        $data = json_decode(self::jsonTaxonomy(), true);
+        $data['vendors'][] = self::customVendor(['targeting' => $targetingData]);
+        $json = json_encode($data);
+        $taxonomy = TaxonomyV2Factory::fromJson($json);
+        $testMedium = null;
+        foreach ($taxonomy->getMedia() as $medium) {
+            if ($medium->getVendor() === 'test-vendor') {
+                $testMedium = $medium;
+                break;
+            }
+        }
+        self::assertNotNull($testMedium, 'Medium not found');
+
+        $testTokens = null;
+        foreach ($testMedium->toArray()['targeting']['user'] as $targeting) {
+            if ($targeting['name'] === 'cookie3-tag') {
+                $testTokens = $targeting['items']['token']['values'] ?? null;
+                break;
+            }
+        }
+        self::assertNotNull($testTokens, 'Targeting not found');
+        self::assertEquals($tokenData, $testTokens);
     }
 
     /**
@@ -122,6 +158,15 @@ class TaxonomyV2FactoryTest extends TestCase
         TaxonomyV2Factory::fromJson($json);
     }
 
+    public function vendorKeyProvider(): array
+    {
+        return [
+            'medium' => ['medium'],
+            'name' => ['name'],
+            'label' => ['label'],
+        ];
+    }
+
     public function testVendorForMissingMedium(): void
     {
         $data = json_decode(self::jsonTaxonomy(), true);
@@ -132,12 +177,31 @@ class TaxonomyV2FactoryTest extends TestCase
         TaxonomyV2Factory::fromJson($json);
     }
 
-    public function vendorKeyProvider(): array
+    /**
+     * @dataProvider vendorInvalidChange
+     */
+    public function testVendorForInvalidChange($vendorData): void
+    {
+        $data = json_decode(self::jsonTaxonomy(), true);
+        $data['vendors'][] = $vendorData;
+        $json = json_encode($data);
+
+        self::expectException(InvalidArgumentException::class);
+        TaxonomyV2Factory::fromJson($json);
+    }
+
+    public function vendorInvalidChange(): array
     {
         return [
-            'medium' => ['medium'],
-            'name' => ['name'],
-            'label' => ['label'],
+            'invalid changes' => [self::customVendor(['targeting' => 'no'])],
+            'invalid change' => [self::customVendor(['targeting' => ['no']])],
+            'missing path' => [self::customVendor(['targeting' => [['value' => null]]])],
+            'invalid path type' => [self::customVendor(['targeting' => [['path' => 0, 'value' => null]]])],
+            'invalid path format' => [self::customVendor(['targeting' => [['path' => 'mimes', 'value' => null]]])],
+            'invalid path fragment' =>
+                [self::customVendor(['targeting' => [['path' => '$.invalid', 'value' => null]]])],
+            'missing value' => [self::customVendor(['targeting' => [['path' => '$[]']]])],
+            'invalid value type' => [self::customVendor(['targeting' => [['path' => '$[]', 'value' => 0]]])],
         ];
     }
 
