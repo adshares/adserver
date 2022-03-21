@@ -49,7 +49,7 @@ class TaxonomyV2Factory
 
             array_walk_recursive(
                 $data,
-                function (&$value, $key, $parameters) {
+                function (&$value) use ($parameters) {
                     if (is_string($value) && $value[0] === '@' && array_key_exists($value, $parameters)) {
                         $value = $parameters[$value];
                     }
@@ -138,34 +138,39 @@ class TaxonomyV2Factory
                     );
                 }
                 foreach ($vendorData[$key] as $change) {
-                    if (!array_key_exists('path', $change)) {
-                        throw new InvalidArgumentException(
-                            sprintf('The field `vendors.*.%s.*.path` is required.', $key)
-                        );
-                    }
-                    if (!is_string($change['path'])) {
-                        throw new InvalidArgumentException(
-                            sprintf('The key in `vendors.*.%s.*.path` must be a string.', $key)
-                        );
-                    }
-                    if (1 !== preg_match(self::SUPPORTED_JSON_PATH_REGEXP, $change['path'])) {
-                        throw new InvalidArgumentException(
-                            $change['path'] .
-                            sprintf('The key in `vendors.*.%s.*.path` must be a supported JSON path.', $key)
-                        );
-                    }
-                    if (!array_key_exists('value', $change)) {
-                        throw new InvalidArgumentException(
-                            sprintf('The field `vendors.*.%s.*.value` is required.', $key)
-                        );
-                    }
-                    if ($change['value'] !== null && !is_array($change['value'])) {
-                        throw new InvalidArgumentException(
-                            sprintf('The value in `vendors.*.%s.*.value` must be an array or null.', $key)
-                        );
-                    }
+                    self::validateChange($change, $key);
                 }
             }
+        }
+    }
+
+    private static function validateChange(array $change, string $key): void
+    {
+        if (!array_key_exists('path', $change)) {
+            throw new InvalidArgumentException(
+                sprintf('The field `vendors.*.%s.*.path` is required.', $key)
+            );
+        }
+        if (!is_string($change['path'])) {
+            throw new InvalidArgumentException(
+                sprintf('The key in `vendors.*.%s.*.path` must be a string.', $key)
+            );
+        }
+        if (1 !== preg_match(self::SUPPORTED_JSON_PATH_REGEXP, $change['path'])) {
+            throw new InvalidArgumentException(
+                $change['path'] .
+                sprintf('The key in `vendors.*.%s.*.path` must be a supported JSON path.', $key)
+            );
+        }
+        if (!array_key_exists('value', $change)) {
+            throw new InvalidArgumentException(
+                sprintf('The field `vendors.*.%s.*.value` is required.', $key)
+            );
+        }
+        if ($change['value'] !== null && !is_array($change['value'])) {
+            throw new InvalidArgumentException(
+                sprintf('The value in `vendors.*.%s.*.value` must be an array or null.', $key)
+            );
         }
     }
 
