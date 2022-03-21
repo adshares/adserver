@@ -32,6 +32,8 @@ class FormatTest extends TestCase
     public function testFormatFromArray(): void
     {
         $format = Format::fromArray(self::data());
+        self::assertEquals('image', $format->getType());
+        self::assertContains('image/gif', $format->getMimes());
 
         $arr = $format->toArray();
         self::assertEquals('image', $arr['type']);

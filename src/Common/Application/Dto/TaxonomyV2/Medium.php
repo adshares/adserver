@@ -33,6 +33,9 @@ class Medium implements Arrayable
     private string $label;
     private ?string $vendor;
     private ?string $vendorLabel;
+    /**
+     * @var Format[] | ArrayableItemCollection
+     */
     private ArrayableItemCollection $formats;
     private Targeting $targeting;
 
@@ -127,6 +130,14 @@ class Medium implements Arrayable
     public function getVendorLabel(): ?string
     {
         return $this->vendorLabel;
+    }
+
+    /**
+     * @return Format[] | ArrayableItemCollection
+     */
+    public function getFormats(): ArrayableItemCollection
+    {
+        return $this->formats;
     }
 
     public function getTargeting(): Targeting

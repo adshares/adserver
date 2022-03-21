@@ -116,6 +116,19 @@ class Format implements Arrayable
         }
     }
 
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getMimes(): array
+    {
+        return $this->mimes;
+    }
+
     public function toArray(): array
     {
         return [

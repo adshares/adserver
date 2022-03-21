@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
@@ -153,6 +154,12 @@ class CampaignsController extends Controller
         $banners = $conversions = [];
         if (isset($input['ads']) && count($input['ads']) > 0) {
             $banners = $this->prepareBannersFromInput($input['ads'], $campaign->landing_url);
+            $mimesValidator = new MimeTypesValidator($this->configurationRepository->fetchTaxonomy());
+            try {
+                $mimesValidator->validateMimeTypes($banners, $campaign->medium, $campaign->vendor);
+            } catch (InvalidArgumentException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage());
+            }
         }
         if (isset($input['conversions']) && count($input['conversions']) > 0) {
             foreach ($this->prepareConversionsFromInput($input['conversions']) as $conversionInput) {
@@ -197,6 +204,11 @@ class CampaignsController extends Controller
         return substr($imageUrl, strrpos($imageUrl, '/') + 1);
     }
 
+    /**
+     * @param array $input
+     * @param string $campaignLandingUrl
+     * @return Banner[]|array
+     */
     private function prepareBannersFromInput(array $input, string $campaignLandingUrl): array
     {
         $banners = [];
@@ -384,6 +396,12 @@ class CampaignsController extends Controller
 
         if ($banners) {
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray(), $campaign->landing_url);
+            $mimesValidator = new MimeTypesValidator($this->configurationRepository->fetchTaxonomy());
+            try {
+                $mimesValidator->validateMimeTypes($bannersToInsert, $campaign->medium, $campaign->vendor);
+            } catch (InvalidArgumentException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage());
+            }
         }
 
         $conversionsToInsert = [];
