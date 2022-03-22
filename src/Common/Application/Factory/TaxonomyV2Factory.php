@@ -30,7 +30,7 @@ use function GuzzleHttp\json_decode;
 
 class TaxonomyV2Factory
 {
-    private const SUPPORTED_JSON_PATH_REGEXP = '/^\$(\[\?\(@\.[^=]+=[^]]+\)]|\.[^.\[]+)*(\[])?$/';
+    private const JSON_PATH_MATCH_REGEXP = '(\[\?\(@\.[^=]+=[^]]+\)]|\.[^.\[]+|\[]$)';
 
     public static function fromJson(string $json): TaxonomyV2
     {
@@ -77,12 +77,10 @@ class TaxonomyV2Factory
                 ];
                 foreach ($keys as $key) {
                     foreach ($vendorData[$key] ?? [] as $change) {
-                        $path = $change['path'];
-                        $pathParsingResult = self::parseJsonPath($path);
                         $baseData = self::applyChange(
                             $baseData,
                             $key,
-                            $pathParsingResult,
+                            self::parseJsonPath($change['path']),
                             $change['value'],
                         );
                     }
@@ -161,7 +159,8 @@ class TaxonomyV2Factory
                 sprintf('The key in `vendors.*.%s.*.path` must be a string.', $key)
             );
         }
-        if (1 !== preg_match(self::SUPPORTED_JSON_PATH_REGEXP, $change['path'])) {
+        $supportedJsonPath = '/^\$' . self::JSON_PATH_MATCH_REGEXP . '+$/';
+        if (1 !== preg_match($supportedJsonPath, $change['path'])) {
             throw new InvalidArgumentException(
                 $change['path'] .
                 sprintf('The key in `vendors.*.%s.*.path` must be a supported JSON path.', $key)
@@ -191,35 +190,21 @@ class TaxonomyV2Factory
 
     private static function parseJsonPath(string $path): array
     {
-        $pathFragments = [];
-        $tokenStart = null;
+        $matches = [];
+        $result = preg_match_all('/' . self::JSON_PATH_MATCH_REGEXP . '/', $path, $matches);
+        if (false === $result || $result < 1) {
+            throw new InvalidArgumentException(sprintf('Path `%s` is invalid.', $path));
+        }
         $addValue = false;
-        for ($i = 1; $i < strlen($path); $i++) {
-            if ($path[$i] === '[') {
-                if ($tokenStart !== null) {
-                    $pathFragments[] = substr($path, $tokenStart, $i - $tokenStart);
-                    $tokenStart = null;
-                }
-                $iNext = strpos($path, ']', $i);
-                if ($iNext === false) {
-                    throw new InvalidArgumentException(sprintf('Path `%s` is missing matching square bracket.', $path));
-                }
-                if ($iNext === $i + 1) {
-                    $addValue = true;
-                    break;
-                }
-                $pathFragments[] = substr($path, $i, $iNext - $i + 1);
-                $i = $iNext;
-            } elseif ($path[$i] === '.') {
-                if ($tokenStart !== null) {
-                    $pathFragments[] = substr($path, $tokenStart, $i - $tokenStart);
-                }
-                $tokenStart = $i + 1;
-            }
+        $pathFragments = $matches[1];
+        if ($pathFragments[count($pathFragments) - 1] === '[]') {
+            $addValue = true;
+            array_pop($pathFragments);
         }
-        if ($tokenStart !== null) {
-            $pathFragments[] = substr($path, $tokenStart);
-        }
+        $pathFragments = array_map(
+            fn($fragment) => $fragment[0] === '.' ? substr($fragment, 1) : $fragment,
+            $pathFragments
+        );
 
         return [
             'add_value' => $addValue,
