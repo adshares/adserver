@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -77,6 +77,9 @@ final class ImpressionContext
         }
 
         $user = $context->user ?? [];
+        if (is_object($user)) {
+            $user = get_object_vars($user);
+        }
         $user['tid'] = $trackingId;
 
         return new self(
@@ -115,6 +118,7 @@ final class ImpressionContext
             'tags' => $this->site['keywords'] ?? [],
             'headers' => $this->flatHeaders(),
             'extensions' => $this->device['extensions'] ?? [],
+            'account' => $this->user['account'] ?? null,
         ];
     }
 

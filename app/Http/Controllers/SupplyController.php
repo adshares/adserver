@@ -149,8 +149,9 @@ class SupplyController extends Controller
 
         $queryData = [
             'page' => [
-                "iid" => $validated['view_id'],
-                "url" => $validated['context']['site']['url'],
+                'iid' => $validated['view_id'],
+                'url' => $validated['context']['site']['url'],
+                'metamask' => $validated['context']['site']['metamask'] ?? 0,
             ],
             'user' => $validated['context']['user'],
             'zones' => $zones,
