@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,8 +27,7 @@ use Adshares\Common\UrlInterface;
 
 final class SecureUrl implements UrlInterface
 {
-    /** @var string */
-    private $secureUrl;
+    private string $secureUrl;
 
     public function __construct(string $url)
     {

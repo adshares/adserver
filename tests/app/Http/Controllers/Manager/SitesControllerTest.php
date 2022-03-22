@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTime;
@@ -40,7 +41,7 @@ use function GuzzleHttp\json_decode;
 class SitesControllerTest extends TestCase
 {
     private const URI = '/api/sites';
-
+    private const URI_CRYPTOVOXELS_CODE = '/api/sites/cryptovoxels/code';
     private const URI_DOMAIN_VERIFY = '/api/sites/domain/validate';
 
     private const SITE_STRUCTURE = [
@@ -1029,6 +1030,51 @@ JSON
 
         $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['stat' => -1]])
             ->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testGetCryptovoxelsCode(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(
+            [
+                'admin_confirmed_at' => new DateTime(),
+                'email_confirmed_at' => new DateTime(),
+                'wallet_address' => new WalletAddress('ads', '0001-00000001-8B4E'),
+            ]
+        );
+        $this->actingAs($user, 'api');
+
+        $response = $this->get(self::URI_CRYPTOVOXELS_CODE);
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testGetCryptovoxelsCodeUserNotConfirmed(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(
+            [
+                'wallet_address' => new WalletAddress('ads', '0001-00000001-8B4E'),
+            ]
+        );
+        $this->actingAs($user, 'api');
+
+        $response = $this->get(self::URI_CRYPTOVOXELS_CODE);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testGetCryptovoxelsCodeWalletNotConnected(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(
+            [
+                'admin_confirmed_at' => new DateTime(),
+                'email_confirmed_at' => new DateTime(),
+            ]
+        );
+        $this->actingAs($user, 'api');
+
+        $response = $this->get(self::URI_CRYPTOVOXELS_CODE);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     protected function setUp(): void

@@ -130,6 +130,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             ->name('app.sites.change_status');
         Route::get('sites/{site}/codes', [SitesController::class, 'sitesCodes'])
             ->name('app.sites.code');
+        Route::get('sites/cryptovoxels/code', [SitesController::class, 'sitesCryptovoxelsCode']);
 
 # actions
         Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
