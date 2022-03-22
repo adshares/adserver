@@ -384,7 +384,12 @@ class Utils
             return $tid;
         }
 
-        return self::base64UrlEncodeWithChecksumFromBinUuidString(self::binUserId($impressionId));
+        if ($request->get('stid')) {
+            $base = substr(sha1($request->get('stid'), true), 0, 16);
+        } else {
+            $base = self::binUserId($impressionId);
+        }
+        return self::base64UrlEncodeWithChecksumFromBinUuidString($base);
     }
 
     private static function validTrackingId(string $tid): bool
