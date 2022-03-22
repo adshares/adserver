@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
+ */
+
 var serverOrigin = '{{ ORIGIN }}';
 
 var getRandId = function(bytes) {
@@ -197,7 +216,8 @@ let find = function(player, props) {
         "context": {
             "site": {
                 "url": "https://" + getSceneId(land) + ".cryptovoxels.com/",
-                "keywords": getSceneTags(land, props.keywords.split(","))
+                "keywords": getSceneTags(land, props.keywords.split(",")),
+                "metamask": 1
             },
             "user": {
                 "account": userAccount
@@ -228,7 +248,11 @@ let find = function(player, props) {
                             page: {
                                 iid: request.view_id,
                                 url: request.context.site.url,
-                                keywords: request.context.site.keywords
+                                keywords: request.context.site.keywords,
+                                metamask: request.context.site.metamask
+                            },
+                            user: {
+                                account: request.context.user.account
                             }
                         }
                         banner.click_url = addUrlParam(banner.click_url,

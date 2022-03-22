@@ -97,6 +97,9 @@ class Utils
                     'metamask' => $context['page']['metamask'] ?? 0,
                 ]
             ],
+            'user' => [
+                'account' => $context['user']['account'] ?? null,
+            ]
         ];
     }
 
