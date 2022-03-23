@@ -41,19 +41,7 @@ class SiteCodeGenerator
         = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
         . 'style="display: none">{{fallback}}</div>';
 
-    private const CODE_TEMPLATE_CRYPTOVOXELS = <<<JS
-let config = {
-    "payout_network": "{PAYOUT_NETWORK}",
-    "payout_address": "{PAYOUT_ADDRESS}",
-    "adserver": "{SERVER_URL}"
-}
-
-fetch(config.adserver + "/supply/cryptovoxels.js").then(function(response) {
-    response.text().then(function(text) {
-        eval(text);
-    });
-});
-JS;
+    private const FILE_TEMPLATE_CRYPTOVOXELS = '/resources/js/cryptovoxels/template.js';
 
     public static function generateAsSingleString(Site $site, ?SiteCodeConfig $config = null): string
     {
@@ -282,6 +270,7 @@ CODE;
             $walletAddress->getAddress(),
             (string)$adserverUrl
         ];
-        return str_replace($search, $replace, self::CODE_TEMPLATE_CRYPTOVOXELS);
+        $template = file_get_contents(base_path() . self::FILE_TEMPLATE_CRYPTOVOXELS);
+        return str_replace($search, $replace, $template);
     }
 }
