@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,23 +23,22 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Factory;
 
-use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Dto\TaxonomyV1;
 use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
-use Adshares\Common\Exception\RuntimeException;
 use ErrorException;
 use Illuminate\Support\Facades\Log;
 
 use function GuzzleHttp\json_decode;
 
-final class TaxonomyFactory
+final class TaxonomyV1Factory
 {
-    public static function fromJson(string $json): Taxonomy
+    public static function fromJson(string $json): TaxonomyV1
     {
         return self::fromArray(json_decode($json, true));
     }
 
-    public static function fromArray(array $taxonomy): Taxonomy
+    public static function fromArray(array $taxonomy): TaxonomyV1
     {
         $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
 
@@ -50,7 +49,7 @@ final class TaxonomyFactory
             try {
                 $items = array_map(
                     function (array $item) {
-                        return TaxonomyItemFactory::fromArray($item);
+                        return TaxonomyV1ItemFactory::fromArray($item);
                     },
                     $taxonomy['data']
                 );
@@ -64,32 +63,32 @@ final class TaxonomyFactory
 
         $itemsUser = array_map(
             function (array $item) {
-                return TaxonomyItemFactory::fromArray($item);
+                return TaxonomyV1ItemFactory::fromArray($item);
             },
             $taxonomy['data']['user'] ?? []
         );
 
         $itemsSite = array_map(
             function (array $item) {
-                return TaxonomyItemFactory::fromArray($item);
+                return TaxonomyV1ItemFactory::fromArray($item);
             },
             $taxonomy['data']['site'] ?? []
         );
 
         $itemsDevice = array_map(
             function (array $item) {
-                return TaxonomyItemFactory::fromArray($item);
+                return TaxonomyV1ItemFactory::fromArray($item);
             },
             $taxonomy['data']['device'] ?? []
         );
 
-        return new Taxonomy(
+        return new TaxonomyV1(
             $taxonomy,
             $schema,
             $version,
-            TaxonomyItemFactory::groupingItem('user', 'User', ...$itemsUser),
-            TaxonomyItemFactory::groupingItem('site', 'Site', ...$itemsSite),
-            TaxonomyItemFactory::groupingItem('device', 'Device', ...$itemsDevice),
+            TaxonomyV1ItemFactory::groupingItem('user', 'User', ...$itemsUser),
+            TaxonomyV1ItemFactory::groupingItem('site', 'Site', ...$itemsSite),
+            TaxonomyV1ItemFactory::groupingItem('device', 'Device', ...$itemsDevice),
             ...$items
         );
     }

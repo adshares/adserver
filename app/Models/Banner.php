@@ -52,7 +52,6 @@ use Illuminate\Support\Facades\Cache;
  * @property int status
  * @property Campaign campaign
  * @property BannerClassification[] classifications
- * @property int type
  * @property string url
  * @property string|null cdn_url
  * @mixin Builder
@@ -62,12 +61,6 @@ class Banner extends Model
     use AutomateMutators;
     use BinHex;
     use SoftDeletes;
-
-    public const TYPE_IMAGE = 0;
-    public const TYPE_HTML = 1;
-    public const TYPE_DIRECT_LINK = 2;
-    public const TYPE_VIDEO = 3;
-    public const TYPE_MODEL = 4;
 
     public const TEXT_TYPE_IMAGE = 'image';
     public const TEXT_TYPE_HTML = 'html';
@@ -121,7 +114,7 @@ class Banner extends Model
     public function getHidden()
     {
         $hidden = $this->hidden;
-        if ($this->type !== self::TYPE_DIRECT_LINK) {
+        if ($this->creative_type !== self::TEXT_TYPE_DIRECT_LINK) {
             $hidden[] = 'creative_contents';
         }
 
@@ -142,40 +135,6 @@ class Banner extends Model
             self::TEXT_TYPE_VIDEO,
             self::TEXT_TYPE_MODEL,
         ];
-    }
-
-    public static function type(int $type): string
-    {
-        switch ($type) {
-            case self::TYPE_IMAGE:
-                return self::TEXT_TYPE_IMAGE;
-            case self::TYPE_VIDEO:
-                return self::TEXT_TYPE_VIDEO;
-            case self::TYPE_MODEL:
-                return self::TEXT_TYPE_MODEL;
-            case self::TYPE_HTML:
-                return self::TEXT_TYPE_HTML;
-            case self::TYPE_DIRECT_LINK:
-            default:
-                return self::TEXT_TYPE_DIRECT_LINK;
-        }
-    }
-
-    public static function typeAsInteger(string $type): int
-    {
-        switch ($type) {
-            case self::TEXT_TYPE_IMAGE:
-                return self::TYPE_IMAGE;
-            case self::TEXT_TYPE_VIDEO:
-                return self::TYPE_VIDEO;
-            case self::TEXT_TYPE_MODEL:
-                return self::TYPE_MODEL;
-            case self::TEXT_TYPE_HTML:
-                return self::TYPE_HTML;
-            case self::TEXT_TYPE_DIRECT_LINK:
-            default:
-                return self::TYPE_DIRECT_LINK;
-        }
     }
 
     public static function size(string $size): string

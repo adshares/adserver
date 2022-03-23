@@ -31,32 +31,6 @@ class BannerTest extends TestCase
     /**
      * @dataProvider typeToTextTypeProvider
      */
-    public function testMapTypeToTextType(int $type, string $textType): void
-    {
-        self::assertEquals($textType, Banner::type($type));
-    }
-
-    public function testMapTypeToDefaultTextType(): void
-    {
-        self::assertEquals('direct', Banner::type(5));
-    }
-
-    /**
-     * @dataProvider typeToTextTypeProvider
-     */
-    public function testMapTextTypeToType(int $type, string $textType): void
-    {
-        self::assertEquals($type, Banner::typeAsInteger($textType));
-    }
-
-    public function testMapTextTypeToDefaultType(): void
-    {
-        self::assertEquals(2, Banner::typeAsInteger('default'));
-    }
-
-    /**
-     * @dataProvider typeToTextTypeProvider
-     */
     public function testAllowedTypes(int $type, string $textType): void
     {
         self::assertContains($textType, Banner::types());

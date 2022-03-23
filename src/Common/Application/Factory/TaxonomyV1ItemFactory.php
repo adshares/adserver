@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,11 +23,11 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Factory;
 
-use Adshares\Common\Application\Dto\Taxonomy\Item;
-use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
-use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
+use Adshares\Common\Application\Dto\TaxonomyV1\Item;
+use Adshares\Common\Application\Dto\TaxonomyV1\Item\Type;
+use Adshares\Common\Application\Dto\TaxonomyV1\Item\Value;
 
-final class TaxonomyItemFactory
+final class TaxonomyV1ItemFactory
 {
     /** @var string[] */
     public const MAP_TYPE = [

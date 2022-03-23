@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,6 +25,7 @@ namespace Adshares\Tests\Common\Domain\ValueObject;
 
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Illuminate\Support\Facades\Config;
 
 class SecureUrlTest extends TestCase
 {
@@ -39,5 +40,13 @@ class SecureUrlTest extends TestCase
     public function provider(): array
     {
         return [['http://adshares.net'], ['https://adshares.net']];
+    }
+
+    public function testChangeNotNeed(): void
+    {
+        Config::set('app.banner_force_https', false);
+        $secureUrl = new SecureUrl('http://adshares.net');
+
+        self::assertSame('http://adshares.net', (string)$secureUrl);
     }
 }

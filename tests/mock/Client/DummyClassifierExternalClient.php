@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,17 +21,16 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Mock\Client;
 
+use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
-use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Dto\TaxonomyV1;
 use Illuminate\Http\Request;
 use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-
-use function time;
 
 final class DummyClassifierExternalClient implements ClassifierExternalClient
 {
@@ -76,7 +75,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         app()->handle($request);
     }
 
-    public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy
+    public function fetchTaxonomy(ClassifierExternal $classifier): TaxonomyV1
     {
         return (new DummyAdClassifyClient())->fetchFilteringOptions();
     }

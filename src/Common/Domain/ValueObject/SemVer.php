@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,12 +27,9 @@ use InvalidArgumentException;
 
 final class SemVer
 {
-    /** @var int */
-    private $major;
-    /** @var int */
-    private $minor;
-    /** @var int */
-    private $patch;
+    private int $major;
+    private int $minor;
+    private int $patch;
 
     private function __construct(int $major, int $minor, int $patch)
     {
@@ -46,7 +43,7 @@ final class SemVer
         if (
             !preg_match(
                 '#^'
-                . '(v|release\-)?'
+                . '(v|release-)?'
                 . '(?P<core>(?:[0-9]|[1-9][0-9]+)(?:\.(?:[0-9]|[1-9][0-9]+)){0,2})'
                 . '$#',
                 $string,
@@ -63,6 +60,6 @@ final class SemVer
 
     public function __toString(): string
     {
-        return "{$this->major}.{$this->minor}.{$this->patch}";
+        return sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch);
     }
 }

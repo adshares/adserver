@@ -38,8 +38,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
-use function in_array;
-
 /**
  * @property int id
  * @property string uuid
@@ -55,6 +53,8 @@ use function in_array;
  * @property Carbon reassess_available_at
  * @property int status
  * @property string primary_language
+ * @property string medium
+ * @property string|null vendor
  * @property array filtering
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
@@ -117,7 +117,6 @@ class Site extends Model
         'primary_language',
         'filtering',
         'only_accepted_banners',
-        'categories_by_user',
     ];
 
     protected $hidden = [
@@ -219,6 +218,8 @@ class Site extends Model
         int $userId,
         string $url,
         string $name,
+        string $medium,
+        ?string $vendor,
         int $status = Site::STATUS_ACTIVE,
         string $primaryLanguage = 'en',
         bool $onlyAcceptedBanners = false,
@@ -239,6 +240,8 @@ class Site extends Model
         $site->categories_by_user = $categoriesByUser;
         $site->domain = DomainReader::domain($url);
         $site->filtering = $filtering;
+        $site->medium = $medium;
+        $site->vendor = $vendor;
         $site->name = $name;
         $site->only_accepted_banners = $onlyAcceptedBanners;
         $site->primary_language = $primaryLanguage;
@@ -252,8 +255,13 @@ class Site extends Model
         return $site;
     }
 
-    public static function fetchOrCreate(int $userId, string $url, ?string $name = null): ?self
-    {
+    public static function fetchOrCreate(
+        int $userId,
+        string $url,
+        string $medium,
+        ?string $vendor,
+        ?string $name = null
+    ): ?self {
         $domain = DomainReader::domain($url);
 
         $builder = self::where('user_id', $userId)->where('domain', $domain);
@@ -263,7 +271,7 @@ class Site extends Model
         $site = $builder->first();
 
         if (!$site) {
-            $site = Site::create($userId, $url, $name ?? $domain);
+            $site = Site::create($userId, $url, $name ?? $domain, $medium, $vendor);
         }
 
         return $site;

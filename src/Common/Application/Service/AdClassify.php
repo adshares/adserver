@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Dto\TaxonomyV1;
 
 interface AdClassify
 {
-    public function fetchFilteringOptions(): Taxonomy;
+    public function fetchFilteringOptions(): TaxonomyV1;
 }

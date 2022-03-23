@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -58,6 +58,8 @@ class Kernel extends HttpKernel
 
     public const JSON_API = 'api';
 
+    public const JSON_API_NO_TRANSFORM = 'api-no-transform';
+
     protected $middleware = [
         CheckForMaintenanceMode::class,
         TrustProxies::class,
@@ -96,6 +98,12 @@ class Kernel extends HttpKernel
             #post-handle
             SetCacheHeaders::class,
             CamelizeJsonResponse::class,
+        ],
+        self::JSON_API_NO_TRANSFORM => [
+            ValidatePostSize::class,
+            SubstituteBindings::class,
+            #post-handle
+            SetCacheHeaders::class,
         ],
     ];
 
