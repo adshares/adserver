@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2022-03-23
+### Added
+- Cookie3 support
+- Custom metaverses support
+### Changed
+- Targeting uses taxonomy v2
+
 ## [1.14.2] - 2022-03-08
 ### Fixed
 - Video ads scaling
@@ -587,7 +594,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.14.2...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.15.0...develop
+[1.15.0]: https://github.com/adshares/adserver/compare/v1.14.2...v1.15.0
 [1.14.2]: https://github.com/adshares/adserver/compare/v1.14.1...v1.14.2
 [1.14.1]: https://github.com/adshares/adserver/compare/v1.14.0...v1.14.1
 [1.14.0]: https://github.com/adshares/adserver/compare/v1.13.3...v1.14.0

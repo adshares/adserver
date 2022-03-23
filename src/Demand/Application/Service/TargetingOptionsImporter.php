@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,16 +23,13 @@ declare(strict_types=1);
 
 namespace Adshares\Demand\Application\Service;
 
-use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 
 class TargetingOptionsImporter
 {
-    /** @var AdUser */
-    private $client;
-    /** @var ConfigurationRepository */
-    private $repository;
+    private AdUser $client;
+    private ConfigurationRepository $repository;
 
     public function __construct(AdUser $client, ConfigurationRepository $repository)
     {
@@ -43,9 +40,6 @@ class TargetingOptionsImporter
     public function import(): void
     {
         $taxonomy = $this->client->fetchTargetingOptions();
-
-        $options = Selector::fromTaxonomy($taxonomy);
-
-        $this->repository->storeTargetingOptions($options);
+        $this->repository->storeTaxonomyV2($taxonomy);
     }
 }

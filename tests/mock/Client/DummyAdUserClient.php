@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,16 +24,12 @@ declare(strict_types=1);
 namespace Adshares\Mock\Client;
 
 use Adshares\Common\Application\Dto\PageRank;
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Dto\TaxonomyV2;
+use Adshares\Common\Application\Factory\TaxonomyV2Factory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 use RuntimeException;
-
-use function base_path;
-use function file_get_contents;
-use function GuzzleHttp\json_decode;
 
 final class DummyAdUserClient implements AdUser
 {
@@ -56,13 +52,12 @@ final class DummyAdUserClient implements AdUser
         return $result;
     }
 
-    public function fetchTargetingOptions(): Taxonomy
+    public function fetchTargetingOptions(): TaxonomyV2
     {
-        $path = base_path('tests/mock/targeting_schema.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
+        $path = base_path('tests/mock/targeting_schema_v2.json');
+        $json = file_get_contents($path);
 
-        return TaxonomyFactory::fromArray($taxonomy);
+        return TaxonomyV2Factory::fromJson($json);
     }
 
     public function getUserContext(ImpressionContext $context): UserContext

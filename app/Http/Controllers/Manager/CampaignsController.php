@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
@@ -135,7 +136,11 @@ class CampaignsController extends Controller
 
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
-        $input = $this->processTargeting($input);
+        try {
+            $input = $this->processTargeting($input);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
         $status = $input['basic_information']['status'];
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
@@ -149,6 +154,12 @@ class CampaignsController extends Controller
         $banners = $conversions = [];
         if (isset($input['ads']) && count($input['ads']) > 0) {
             $banners = $this->prepareBannersFromInput($input['ads'], $campaign->landing_url);
+            $mimesValidator = new MimeTypesValidator($this->configurationRepository->fetchTaxonomy());
+            try {
+                $mimesValidator->validateMimeTypes($banners, $campaign->medium, $campaign->vendor);
+            } catch (InvalidArgumentException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage());
+            }
         }
         if (isset($input['conversions']) && count($input['conversions']) > 0) {
             foreach ($this->prepareConversionsFromInput($input['conversions']) as $conversionInput) {
@@ -193,41 +204,47 @@ class CampaignsController extends Controller
         return substr($imageUrl, strrpos($imageUrl, '/') + 1);
     }
 
+    /**
+     * @param array $input
+     * @param string $campaignLandingUrl
+     * @return Banner[]|array
+     */
     private function prepareBannersFromInput(array $input, string $campaignLandingUrl): array
     {
         $banners = [];
 
         foreach ($input as $banner) {
-            self::validateSize($banner);
+            self::validateTypeAndSize($banner);
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
             $size = $banner['creative_size'];
+            $type = $banner['creative_type'];
             $bannerModel->creative_size = $size;
-            $bannerModel->creative_type = Banner::type($banner['type']);
+            $bannerModel->creative_type = $type;
 
             try {
-                switch ($banner['type']) {
-                    case Banner::TYPE_IMAGE:
+                switch ($type) {
+                    case Banner::TEXT_TYPE_IMAGE:
                         $fileName = $this->filename($banner['url']);
                         $content = ImageUploader::content($fileName);
                         $mimeType = ImageUploader::contentMimeType($fileName);
                         break;
-                    case Banner::TYPE_VIDEO:
+                    case Banner::TEXT_TYPE_VIDEO:
                         $fileName = $this->filename($banner['url']);
                         $content = VideoUploader::content($fileName);
                         $mimeType = VideoUploader::contentMimeType($fileName);
                         break;
-                    case Banner::TYPE_MODEL:
+                    case Banner::TEXT_TYPE_MODEL:
                         $fileName = $this->filename($banner['url']);
                         $content = ModelUploader::content($fileName);
                         $mimeType = ModelUploader::contentMimeType($content);
                         break;
-                    case Banner::TYPE_HTML:
+                    case Banner::TEXT_TYPE_HTML:
                         $content = ZipUploader::content($this->filename($banner['url']));
                         $mimeType = 'text/html';
                         break;
-                    case Banner::TYPE_DIRECT_LINK:
+                    case Banner::TEXT_TYPE_DIRECT_LINK:
                     default:
                         $content = self::decorateUrlWithSize(
                             empty($banner['creative_contents']) ? $campaignLandingUrl : $banner['creative_contents'],
@@ -241,7 +258,7 @@ class CampaignsController extends Controller
                     sprintf(
                         'Banner (name: %s, type: %s) could not be added (%s).',
                         $banner['name'],
-                        $banner['type'],
+                        $type,
                         $exception->getMessage()
                     )
                 );
@@ -302,7 +319,11 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
-        $input = $this->processTargeting($input);
+        try {
+            $input = $this->processTargeting($input);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         unset($input['status']); // Client cannot change status in EDIT action
 
@@ -333,6 +354,12 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
+        if ($input['basic_information']['medium'] !== $campaign->medium) {
+            throw new UnprocessableEntityHttpException('Medium cannot be changed');
+        }
+        if ($input['basic_information']['vendor'] !== $campaign->vendor) {
+            throw new UnprocessableEntityHttpException('Vendor cannot be changed');
+        }
         $campaign->fill($input);
 
         $campaign->status = Campaign::STATUS_INACTIVE;
@@ -369,6 +396,12 @@ class CampaignsController extends Controller
 
         if ($banners) {
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray(), $campaign->landing_url);
+            $mimesValidator = new MimeTypesValidator($this->configurationRepository->fetchTaxonomy());
+            try {
+                $mimesValidator->validateMimeTypes($bannersToInsert, $campaign->medium, $campaign->vendor);
+            } catch (InvalidArgumentException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage());
+            }
         }
 
         $conversionsToInsert = [];
@@ -596,7 +629,9 @@ class CampaignsController extends Controller
 
     private function processTargeting(array $input): array
     {
-        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
+        $medium = $input['basic_information']['medium'] ?? '';
+        $vendor = $input['basic_information']['vendor'] ?? null;
+        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
 
         $requires = $input['targeting']['requires'] ?? [];
         $baseRequires = json_decode(config('app.campaign_targeting_require') ?? '', true);
@@ -610,8 +645,8 @@ class CampaignsController extends Controller
             $excludes = array_map([__CLASS__, 'normalize'], array_merge_recursive($excludes, $baseExcludes));
         }
 
-        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires);
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes);
+        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires, $medium, $vendor);
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes, $medium, $vendor);
 
         return $input;
     }
@@ -661,25 +696,33 @@ class CampaignsController extends Controller
         }
     }
 
-    private static function validateSize(array $banner): void
+    private static function validateTypeAndSize(array $banner): void
     {
+        $type = $banner['creative_type'] ?? null;
+        if (!in_array($type, Banner::types())) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid type: %s.', $type));
+        }
         $size = $banner['creative_size'];
-        if ($banner['type'] === Banner::TYPE_MODEL) {
+        if ($type === Banner::TEXT_TYPE_MODEL) {
             if ($size !== 'cube') {
-                throw new RuntimeException(sprintf('Invalid model size: %s.', $size));
+                throw new UnprocessableEntityHttpException(sprintf('Invalid model size: %s.', $size));
             }
             return;
         }
-        if ($banner['type'] === Banner::TYPE_VIDEO) {
+        if ($type === Banner::TEXT_TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
-                throw new RuntimeException(sprintf('Invalid video size: %s.', $size));
+                throw new UnprocessableEntityHttpException(sprintf('Invalid video size: %s.', $size));
             }
             if (empty(Size::findMatching(...Size::toDimensions($size)))) {
-                throw new RuntimeException(sprintf('Invalid video size: %s. No match', $size));
+                throw new UnprocessableEntityHttpException(sprintf('Invalid video size: %s. No match', $size));
             }
             return;
         }
 
-        Banner::size($size);
+        try {
+            Banner::size($size);
+        } catch (RuntimeException $runtimeException) {
+            throw new UnprocessableEntityHttpException($runtimeException->getMessage());
+        }
     }
 }

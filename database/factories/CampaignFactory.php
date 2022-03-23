@@ -31,6 +31,8 @@ $factory->define(Campaign::class, function (Faker $faker) {
         'max_cpc' => '200000000000',
         'max_cpm' => '100000000000',
         'budget' => 100 * 1e11,
+        'medium' => 'web',
+        'vendor' => null,
         'targeting_excludes' => [],
         'targeting_requires' => [],
         'classification_status' => 0,

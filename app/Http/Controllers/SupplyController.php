@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
@@ -60,7 +59,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -109,6 +107,8 @@ class SupplyController extends Controller
                 'context' => ['required', 'array:user,device,site'],
                 'context.*' => ['required', 'array'],
                 'context.site.url' => ['required', 'url'],
+                'medium' => ['required', 'string'],
+                'vendor' => ['nullable', 'string'],
             ]
         );
 
@@ -125,8 +125,12 @@ class SupplyController extends Controller
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
             }
         }
-
-        $site = Site::fetchOrCreate($user->id, $validated['context']['site']['url']);
+        $site = Site::fetchOrCreate(
+            $user->id,
+            $validated['context']['site']['url'],
+            $validated['medium'],
+            $validated['vendor'] ?? null
+        );
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
@@ -151,9 +155,11 @@ class SupplyController extends Controller
 
         $queryData = [
             'page' => [
-                "iid" => $validated['view_id'],
-                "url" => $validated['context']['site']['url'],
+                'iid' => $validated['view_id'],
+                'url' => $validated['context']['site']['url'],
+                'metamask' => $validated['context']['site']['metamask'] ?? 0,
             ],
+            'user' => $validated['context']['user'],
             'zones' => $zones,
             'zone_mode' => 'best_match'
         ];
@@ -373,11 +379,16 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        if ($tid === null) {
-            throw new NotFoundHttpException('User not found');
+        if (isset($decodedQueryData['user'])) {
+            $decodedQueryData['user']['tid'] = $tid;
+        } else {
+            $decodedQueryData['user'] = ['tid' => $tid];
         }
-
-        $impressionContext = Utils::getPartialImpressionContext($request, $decodedQueryData['page'], $tid);
+        $impressionContext = Utils::getPartialImpressionContext(
+            $request,
+            $decodedQueryData['page'],
+            $decodedQueryData['user']
+        );
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {

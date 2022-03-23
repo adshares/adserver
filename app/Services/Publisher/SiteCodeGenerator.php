@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,6 +27,8 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Common\UrlInterface;
 use Adshares\Supply\Domain\ValueObject\Size;
 
 class SiteCodeGenerator
@@ -38,6 +40,8 @@ class SiteCodeGenerator
     private const CODE_TEMPLATE_POP
         = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
         . 'style="display: none">{{fallback}}</div>';
+
+    private const FILE_TEMPLATE_CRYPTOVOXELS = '/resources/js/cryptovoxels/template.js';
 
     public static function generateAsSingleString(Site $site, ?SiteCodeConfig $config = null): string
     {
@@ -107,19 +111,19 @@ CODE;
             if (Size::TYPE_POP === $zone->type) {
                 $popsCodes[] = [
                     'label' => $zone->name,
-                    'code'  => $zoneCode,
+                    'code' => $zoneCode,
                 ];
             } else {
                 $displayCodes[] = [
                     'label' => "{$zone->name} {$zone->size}",
-                    'code'  => $zoneCode,
+                    'code' => $zoneCode,
                 ];
             }
         }
 
         return [
-            'common'   => self::getCommonCode($config),
-            'pops'     => $popsCodes,
+            'common' => self::getCommonCode($config),
+            'pops' => $popsCodes,
             'ad_units' => $displayCodes,
         ];
     }
@@ -155,10 +159,10 @@ CODE;
             return strtr(
                 self::CODE_TEMPLATE_POP,
                 [
-                    '{{zoneId}}'        => $zone->uuid,
+                    '{{zoneId}}' => $zone->uuid,
                     '{{selectorClass}}' => CssUtils::normalizeClass(config('app.adserver_id')),
-                    '{{dataOptions}}'   => self::getDataOptionsForPops($config),
-                    '{{fallback}}'      => self::getFallback($config),
+                    '{{dataOptions}}' => self::getDataOptionsForPops($config),
+                    '{{fallback}}' => self::getFallback($config),
                 ]
             );
         }
@@ -166,12 +170,12 @@ CODE;
         $size = Size::toDimensions($zone->size);
 
         $replaceArr = [
-            '{{zoneId}}'        => $zone->uuid,
-            '{{width}}'         => $size[0],
-            '{{height}}'        => $size[1],
+            '{{zoneId}}' => $zone->uuid,
+            '{{width}}' => $size[0],
+            '{{height}}' => $size[1],
             '{{selectorClass}}' => CssUtils::normalizeClass(config('app.adserver_id')),
-            '{{dataOptions}}'   => self::getDataOptions($config),
-            '{{fallback}}'      => self::getFallback($config),
+            '{{dataOptions}}' => self::getDataOptions($config),
+            '{{fallback}}' => self::getFallback($config),
         ];
 
         return strtr(self::CODE_TEMPLATE_DISPLAY, $replaceArr);
@@ -252,5 +256,25 @@ CODE;
         $fallback = join("\n", $options) . "\n";
 
         return "\n\t<style type=\"app/backfill\">\n{$fallback}\t</style>\n";
+    }
+
+    public static function generateCryptovoxels(UrlInterface $adserverUrl, WalletAddress $walletAddress): string
+    {
+        $search = [
+            '{PAYOUT_NETWORK}',
+            '{PAYOUT_ADDRESS}',
+            '{SERVER_URL}',
+        ];
+        $replace = [
+            $walletAddress->getNetwork(),
+            $walletAddress->getAddress(),
+            (string)$adserverUrl
+        ];
+        $template = preg_replace(
+            '/\s*\/\*(\*(?!\/)|[^*])*\*\/\s*/',
+            '',
+            file_get_contents(base_path() . self::FILE_TEMPLATE_CRYPTOVOXELS)
+        );
+        return str_replace($search, $replace, $template);
     }
 }

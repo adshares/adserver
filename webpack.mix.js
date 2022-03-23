@@ -72,7 +72,7 @@ mix.babel([
 ], 'public/-/main.js');
 
 mix.babel([
-    'resources/js/cryptovoxels/*',
+    'resources/js/cryptovoxels/cryptovoxels.js',
 ], 'public/-/cryptovoxels.js');
 
 mix.copyDirectory('resources/img', 'public/img');

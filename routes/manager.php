@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -130,6 +130,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             ->name('app.sites.change_status');
         Route::get('sites/{site}/codes', [SitesController::class, 'sitesCodes'])
             ->name('app.sites.code');
+        Route::get('sites/cryptovoxels/code', [SitesController::class, 'sitesCryptovoxelsCode']);
 
 # actions
         Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
@@ -200,5 +201,13 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
 
         Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
         Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);
+    }
+);
+
+Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(
+    function () {
+        Route::get('options/campaigns/media', [OptionsController::class, 'media']);
+        Route::get('options/campaigns/media/{medium}', [OptionsController::class, 'medium']);
+        Route::get('options/campaigns/media/{medium}/vendors', [OptionsController::class, 'vendors']);
     }
 );

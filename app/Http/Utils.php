@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -56,11 +56,14 @@ class Utils
     public static function getPartialImpressionContext(
         Request $request,
         $contextStr = null,
-        $tid = null
+        $userContext = null
     ): ImpressionContext {
         $context = self::getImpressionContextArray($request, $contextStr);
-
-        return new ImpressionContext($context['site'], $context['device'], $tid ? ['tid' => $tid] : []);
+        return new ImpressionContext(
+            $context['site'],
+            $context['device'],
+            is_array($userContext) ? $userContext : ['tid' => $userContext]
+        );
     }
 
     public static function getImpressionContextArray(Request $request, $contextStr = null): array
@@ -94,6 +97,9 @@ class Utils
                     'metamask' => $context['page']['metamask'] ?? 0,
                 ]
             ],
+            'user' => [
+                'account' => $context['user']['account'] ?? null,
+            ]
         ];
     }
 
@@ -381,7 +387,12 @@ class Utils
             return $tid;
         }
 
-        return self::base64UrlEncodeWithChecksumFromBinUuidString(self::binUserId($impressionId));
+        if ($request->get('stid')) {
+            $base = substr(sha1($request->get('stid'), true), 0, 16);
+        } else {
+            $base = self::binUserId($impressionId);
+        }
+        return self::base64UrlEncodeWithChecksumFromBinUuidString($base);
     }
 
     private static function validTrackingId(string $tid): bool

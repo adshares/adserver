@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,31 +23,19 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Application\Dto\Taxonomy\Item;
-use Adshares\Common\Domain\Adapter\ArrayCollection;
-use Adshares\Common\Domain\ValueObject\SemVer;
-use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
+use Illuminate\Contracts\Support\Arrayable;
 
-final class Taxonomy extends ArrayCollection
+class Media implements Arrayable
 {
-    /** @var array */
-    private $rawData;
-    /** @var Schema */
-    private $schema;
-    /** @var SemVer */
-    private $version;
+    private array $data = [];
 
-    public function __construct(array $rawData, Schema $schema, SemVer $version, Item ...$items)
+    public function add(string $name, string $label): void
     {
-        $this->rawData = $rawData;
-        $this->schema = $schema;
-        $this->version = $version;
-
-        parent::__construct($items);
+        $this->data[$name] = $label;
     }
 
-    public function getRawData(): array
+    public function toArray(): array
     {
-        return $this->rawData;
+        return $this->data;
     }
 }

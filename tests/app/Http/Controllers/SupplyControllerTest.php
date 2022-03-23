@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -69,5 +69,11 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI . '?bid=' . $banner->uuid . '&cid=0123456789abcdef0123456789abcdef');
 
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testFindJson(): void
+    {
+        $response = self::post('/supply/anon', []);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

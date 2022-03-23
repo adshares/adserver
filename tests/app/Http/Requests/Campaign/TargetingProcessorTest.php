@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,22 +23,14 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Mock\Client\DummyAdUserClient;
 
 final class TargetingProcessorTest extends TestCase
 {
-    public function testWhileNoAvailableOptions(): void
-    {
-        $targetingProcessor = new TargetingProcessor(new Selector());
-
-        $result = $targetingProcessor->processTargeting($this->getTargetingValid());
-
-        $this->assertEquals([], $result);
-    }
-
     public function testWhileTargetingEmpty(): void
     {
         $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
@@ -56,6 +48,14 @@ final class TargetingProcessorTest extends TestCase
         $result = $targetingProcessor->processTargeting($targetingValid);
 
         $this->assertEquals($targetingValid, $result);
+    }
+
+    public function testWhileMediumNameInvalid(): void
+    {
+        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
+
+        $this->expectException(InvalidArgumentException::class);
+        $targetingProcessor->processTargeting($this->getTargetingValid(), 'invalid');
     }
 
     /**
@@ -177,8 +177,8 @@ final class TargetingProcessorTest extends TestCase
         );
     }
 
-    private function getTargetingSchema(): Selector
+    private function getTargetingSchema(): TaxonomyV2
     {
-        return $this->app->make(ConfigurationRepository::class)->fetchTargetingOptions();
+        return $this->app->make(ConfigurationRepository::class)->fetchTaxonomy();
     }
 }

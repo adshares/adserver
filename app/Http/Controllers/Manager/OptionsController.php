@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -55,6 +55,40 @@ class OptionsController extends Controller
                 'min_cpa' => config('app.campaign_min_cpa'),
             ]
         );
+    }
+
+    public function media(): JsonResponse
+    {
+        return self::json($this->optionsRepository->fetchMedia()->toArray());
+    }
+
+    public function medium(string $medium, Request $request): JsonResponse
+    {
+        $vendor = $request->get('vendor');
+        $data = $this->optionsRepository->fetchMedium($medium, $vendor)->toArray();
+
+        if ($request->get('e')) {
+            foreach ($data['targeting']['site'] ?? [] as $key => $value) {
+                if ($value['name'] === 'quality') {
+                    unset($data['targeting']['site'][$key]);
+                    $data['targeting']['site'] = array_values($data['targeting']['site']);
+                    break;
+                }
+            }
+        }
+
+        return self::json($data);
+    }
+
+    public function vendors(string $medium): JsonResponse
+    {
+        $data = [];
+        foreach ($this->optionsRepository->fetchTaxonomy()->getMedia() as $mediumObject) {
+            if ($mediumObject->getName() === $medium && $mediumObject->getVendor() !== null) {
+                $data[$mediumObject->getVendor()] = $mediumObject->getVendorLabel();
+            }
+        }
+        return self::json($data);
     }
 
     public function targeting(Request $request): JsonResponse

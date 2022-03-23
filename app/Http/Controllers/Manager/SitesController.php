@@ -35,6 +35,7 @@ use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Dto\PageRank;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
@@ -45,6 +46,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -74,8 +76,14 @@ class SitesController extends Controller
         $url = (string)$input['url'];
         self::validateDomain(DomainReader::domain($url));
 
+        $medium = $input['medium'] ?? null;
+        $vendor = $input['vendor'] ?? null;
         try {
-            $categoriesByUser = $this->siteCategoriesValidator->processCategories($input['categories'] ?? null);
+            $categoriesByUser = $this->siteCategoriesValidator->processCategories(
+                $input['categories'] ?? null,
+                $medium,
+                $vendor
+            );
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
@@ -100,6 +108,8 @@ class SitesController extends Controller
                 $user->id,
                 $url,
                 $input['name'],
+                $medium,
+                $vendor,
                 $input['status'],
                 $input['primary_language'],
                 $onlyAcceptedBanners,
@@ -171,6 +181,10 @@ class SitesController extends Controller
 
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
+
+            if ($updateDomainAndUrl && $site->medium !== 'web') {
+                throw new UnprocessableEntityHttpException('URL cannot be changed');
+            }
         }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
@@ -339,6 +353,28 @@ class SitesController extends Controller
         }
 
         return self::json(['codes' => SiteCodeGenerator::generate($site, $request->toConfig())]);
+    }
+
+    public function sitesCryptovoxelsCode(): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user->is_confirmed) {
+            throw new AccessDeniedHttpException('Confirm account to get code');
+        }
+        if ($user->wallet_address === null) {
+            throw new UnprocessableEntityHttpException('Connect wallet to get code');
+        }
+
+        return self::json(
+            [
+                'code' => SiteCodeGenerator::generateCryptovoxels(
+                    new SecureUrl((string)config('app.url')),
+                    $user->wallet_address
+                )
+            ]
+        );
     }
 
     private function validateInputZones($inputZones): void
