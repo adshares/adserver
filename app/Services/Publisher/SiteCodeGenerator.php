@@ -111,19 +111,19 @@ CODE;
             if (Size::TYPE_POP === $zone->type) {
                 $popsCodes[] = [
                     'label' => $zone->name,
-                    'code'  => $zoneCode,
+                    'code' => $zoneCode,
                 ];
             } else {
                 $displayCodes[] = [
                     'label' => "{$zone->name} {$zone->size}",
-                    'code'  => $zoneCode,
+                    'code' => $zoneCode,
                 ];
             }
         }
 
         return [
-            'common'   => self::getCommonCode($config),
-            'pops'     => $popsCodes,
+            'common' => self::getCommonCode($config),
+            'pops' => $popsCodes,
             'ad_units' => $displayCodes,
         ];
     }
@@ -139,13 +139,13 @@ CODE;
             $jsPath = public_path('-/main.js');
 
             return "<script type=\"text/javascript\">" . str_replace(
-                [
-                    '{{ TLD }}',
-                    '{{ SELECTOR }}',
-                ],
-                $params,
-                file_get_contents($jsPath)
-            ) . "</script>";
+                    [
+                        '{{ TLD }}',
+                        '{{ SELECTOR }}',
+                    ],
+                    $params,
+                    file_get_contents($jsPath)
+                ) . "</script>";
         } else {
             $scriptUrl = $proxyMainJs ? '/main.js' : (new SecureUrl(route('supply-find.js')))->toString();
 
@@ -159,10 +159,10 @@ CODE;
             return strtr(
                 self::CODE_TEMPLATE_POP,
                 [
-                    '{{zoneId}}'        => $zone->uuid,
+                    '{{zoneId}}' => $zone->uuid,
                     '{{selectorClass}}' => CssUtils::normalizeClass(config('app.adserver_id')),
-                    '{{dataOptions}}'   => self::getDataOptionsForPops($config),
-                    '{{fallback}}'      => self::getFallback($config),
+                    '{{dataOptions}}' => self::getDataOptionsForPops($config),
+                    '{{fallback}}' => self::getFallback($config),
                 ]
             );
         }
@@ -170,12 +170,12 @@ CODE;
         $size = Size::toDimensions($zone->size);
 
         $replaceArr = [
-            '{{zoneId}}'        => $zone->uuid,
-            '{{width}}'         => $size[0],
-            '{{height}}'        => $size[1],
+            '{{zoneId}}' => $zone->uuid,
+            '{{width}}' => $size[0],
+            '{{height}}' => $size[1],
             '{{selectorClass}}' => CssUtils::normalizeClass(config('app.adserver_id')),
-            '{{dataOptions}}'   => self::getDataOptions($config),
-            '{{fallback}}'      => self::getFallback($config),
+            '{{dataOptions}}' => self::getDataOptions($config),
+            '{{fallback}}' => self::getFallback($config),
         ];
 
         return strtr(self::CODE_TEMPLATE_DISPLAY, $replaceArr);
@@ -270,7 +270,11 @@ CODE;
             $walletAddress->getAddress(),
             (string)$adserverUrl
         ];
-        $template = file_get_contents(base_path() . self::FILE_TEMPLATE_CRYPTOVOXELS);
+        $template = preg_replace(
+            '/\s*\/\*(\*(?!\/)|[^*])*\*\/\s*/',
+            '',
+            file_get_contents(base_path() . self::FILE_TEMPLATE_CRYPTOVOXELS)
+        );
         return str_replace($search, $replace, $template);
     }
 }
