@@ -94,7 +94,7 @@ var context;
 
 let loadedAdusers = {};
 
-let showWatermark = function(request, banner) {
+let showWatermark = function(request, banner, props) {
     let watermark = parcel.getFeatureById(feature.uuid + '-mark');
     if(!watermark) {
         watermark  = parcel.createFeature('image', {
@@ -160,7 +160,7 @@ let showVideo = function(banner) {
     video.play();
 }
 
-let displayAd = function (props, banner) {
+let displayBanner = function (props, banner) {
     if(banner.type === 'video') {
         feature.set({
             'url': 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif', //props.adserver + '/img/empty.gif',
@@ -176,6 +176,21 @@ let displayAd = function (props, banner) {
             'blendMode': 'Combine'
         });
 
+    }
+}
+
+let displayModel = function (props, banner) {
+        feature.set({
+            'url': banner.serve_url,
+            'link': banner.click_url
+        });
+}
+
+let displayAd = function (props, banner) {
+    if(props.type === 'model') {
+        displayModel(props, banner)
+    } else {
+        displayBanner(props, banner)
     }
 };
 
@@ -209,10 +224,11 @@ let find = function(player, props) {
         "zone_name": props.zone_name,
         "width": feature.scale.x,
         "height": feature.scale.y,
+        "depth": feature.scale.z,
         "min_dpi": 10,
         "exclude": JSON.parse(props.exclude),
-        "type": ["image", "video"] ,
-        "mime_type": ["image/jpeg",  "image/png",  "image/gif", "video/mp4"],
+        "type": props.type === 'model' ? ['model'] : ["image", "video"],
+        "mime_type": props.type === 'model' ? ['model/voxel'] : ["image/jpeg",  "image/png",  "image/gif", "video/mp4"],
         "context": {
             "site": {
                 "url": "https://" + getSceneId(land) + ".cryptovoxels.com/",
@@ -225,7 +241,7 @@ let find = function(player, props) {
         },
         "medium": "metaverse",
         "vendor": "cryptovoxels",
-        "version": "1.1.1",
+        "version": "{{ VERSION }}",
     };
 
     let response = {};
@@ -272,7 +288,7 @@ let find = function(player, props) {
                                 'stid': userAccount
                             });
                         displayAd(props, banner)
-                        showWatermark(request, banner);
+                        showWatermark(request, banner, props);
 
                         try {
                             fetch(banner.view_url).then(function (response) {
@@ -347,6 +363,14 @@ let fn = function(e) {
             'lastImpTime': lastImpressionTime,
             'lastImpId': lastImpressionId
         });
+        if(feature.type === 'megavox') {
+            props.type = 'model'
+        } else if(feature.type === 'image') {
+            props.type = 'image'
+        } else {
+            renderError(["Invalid feature type: use image or megavox"])
+            return;
+        }
         find(e.player, props);
     }
 }
