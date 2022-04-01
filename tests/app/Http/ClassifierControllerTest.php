@@ -36,6 +36,17 @@ final class ClassifierControllerTest extends TestCase
 {
     private const CLASSIFICATION_LIST = '/api/classifications';
 
+    public function testFetchWithInvalidFilter(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        factory(Site::class)->create(['user_id' => $user->id]);
+        $this->actingAs($user, 'api');
+
+        $response = $this->getJson(self::CLASSIFICATION_LIST . '?banner_id=1');
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testGlobalWhenThereIsNoClassifications(): void
     {
         $user = factory(User::class)->create();
