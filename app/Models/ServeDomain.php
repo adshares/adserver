@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,12 +24,17 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Models;
 
 use DateTime;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * @property string base_url
+ * @property DateTime created_at
+ * @property DateTime updated_at
+ * @property DateTime|null deleted_at
+ * @mixin Builder
  */
 class ServeDomain extends Model
 {
@@ -48,7 +53,7 @@ class ServeDomain extends Model
         $serveDomain = ServeDomain::where('base_url', $baseUrl)->first();
         if (null === $serveDomain) {
             $serveDomain = new self();
-            $serveDomain->base_Url = $baseUrl;
+            $serveDomain->base_url = $baseUrl;
         }
         $serveDomain->updated_at = new DateTime();
         $serveDomain->save();

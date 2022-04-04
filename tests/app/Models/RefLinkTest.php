@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,9 +23,8 @@ namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 
 class RefLinkTest extends TestCase
 {
@@ -179,5 +178,15 @@ class RefLinkTest extends TestCase
 
         $refLink = factory(RefLink::class)->create(['refund' => 0.5, 'kept_refund' => 0.5]);
         $this->assertEquals(2, $refLink->calculateBonus(7));
+    }
+
+    public function testUserRelationship(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['name' => 'example']);
+        /** @var RefLink $refLink */
+        $refLink = factory(RefLink::class)->create(['user_id' => $user->id]);
+
+        self::assertEquals('example', $refLink->user->name);
     }
 }
