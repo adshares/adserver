@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,6 +28,7 @@ use Adshares\Ads\Entity\Account;
 use Adshares\Ads\Entity\Tx;
 use Adshares\Ads\Response\GetAccountResponse;
 use Adshares\Ads\Response\TransactionResponse;
+use Adshares\Demand\Application\Exception\TransferMoneyException;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use PHPUnit\Framework\TestCase;
 
@@ -95,6 +96,26 @@ final class TransferMoneyToColdWalletTest extends TestCase
         $response = $service->transfer($waitingPayments);
 
         $this->assertNull($response);
+    }
+
+    public function testIfTransferFailed(): void
+    {
+        $min = 10;
+        $max = 100;
+        $hotWalletValue = 150;
+        $coldWalletAddress = '0003-00000002-1234';
+        $waitingPayments = 20;
+        $transactionId = 'invalid';
+
+        $service = new TransferMoneyToColdWallet(
+            $min,
+            $max,
+            $coldWalletAddress,
+            $this->createAdsClientMock($hotWalletValue, $transactionId)
+        );
+
+        self::expectException(TransferMoneyException::class);
+        $service->transfer($waitingPayments);
     }
 
     private function createAdsClientMock(int $hotWalletValue, ?string $transactionId = null)
