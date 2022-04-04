@@ -139,7 +139,7 @@ class SupplyController extends Controller
 
         $zones = [];
 
-        $zoneSizes = Size::findBestFit($validated['width'], $validated['height'], $validated['min_dpi']);
+        $zoneSizes = Size::findBestFit($validated['width'], $validated['height'], $validated['depth'], $validated['min_dpi']);
 
 
         foreach ($zoneSizes as $zoneSize) {
@@ -170,23 +170,8 @@ class SupplyController extends Controller
 
         return self::json(
             [
-//                'banners' => $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)
-//                    ->toArray(),
-                'banners' => json_decode('[{
-			"id": "9a2f56ed9f4745b9974c2a2a83c72c2f",
-			"publisher_id": "85f115636b384744949300571aad2a4f",
-			"zone_id": "8b05e5c9b9bc4c3baea4d78bee2bef3f",
-			"pay_from": "0001-00000028-3E05",
-			"pay_to": "0001-00000034-EDB8",
-			"type": "image",
-			"size": "300x250",
-			"serve_url": "'. (mt_rand(0, 1) == 0 ? 'https:\/\/wiki.cryptovoxels.com\/blue_beach_chair.vox' : 'https:\/\/wiki.cryptovoxels.com\/treasure_chest.vox') . '",
-			"creative_sha1": "8e3728e8c138d90d3ac0d752e718ee2f414c2a56",
-			"click_url": "https:\/\/adshares.priv\/l\/n\/click\/9a2f56ed9f4745b9974c2a2a83c72c2f?r=aHR0cHM6Ly9ham9xeXN1Yy54eXovY2xpY2svMmZkOGE3OGZmYWMzNGZjMDhjOTdmYzRjNTQ5YWExZjg",
-			"view_url": "https:\/\/adshares.priv\/l\/n\/view\/9a2f56ed9f4745b9974c2a2a83c72c2f?r=aHR0cHM6Ly9ham9xeXN1Yy54eXovdmlldy8yZmQ4YTc4ZmZhYzM0ZmMwOGM5N2ZjNGM1NDlhYTFmOA",
-			"rpm": 0
-		}
-	]'),
+                'banners' => $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)
+                    ->toArray(),
                 'zones' => $queryData['zones'],
                 'zoneSizes' => $zoneSizes,
                 'success' => true,

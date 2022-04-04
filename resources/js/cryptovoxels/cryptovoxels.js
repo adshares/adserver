@@ -102,30 +102,43 @@ let showWatermark = function(request, banner, props) {
         });
     }
 
-    let size = Math.sqrt(feature.scale.x * feature.scale.y) / 10
-    let scale = {
-        x: size,
-        y: size
-    };
-
-    let pos = new Vector3((feature.scale.x - scale.x) / 2, (feature.scale.y - scale.y) / 2, -0.005);
+    let pos;
+    let scale;
+    let rotation;
+    if(props.type === 'model') {
+        let size = Math.sqrt(feature.scale.x * feature.scale.z) / 5
+        scale = {
+            x: size,
+            y: size
+        };
+        pos = new Vector3(-(feature.scale.x - scale.x) / 2, 0, (feature.scale.z - scale.y) / 2);
+        rotation = [feature.rotation.x+Math.PI/2, feature.rotation.y+Math.PI, feature.rotation.z]
+    } else {
+        let size = Math.sqrt(feature.scale.x * feature.scale.y) / 10
+        scale = {
+            x: size,
+            y: size
+        };
+        pos = new Vector3((feature.scale.x - scale.x) / 2, (feature.scale.y - scale.y) / 2, -0.005);
+        rotation = [feature.rotation.x, feature.rotation.y, feature.rotation.z];
+    }
     let matrix = Matrix.RotationYawPitchRoll(feature.rotation.y, feature.rotation.x, feature.rotation.z);
     pos = Vector3.TransformCoordinates(pos, matrix);
 
-    let url = addUrlParam(serverOrigin + '/supply/why', addUrlParam(props.adserver + '/supply/why', {
+    let url = addUrlParam(props.adserver + '/supply/why', {
         'bid': banner.id,
         'cid': banner.cid,
         'iid': request.view_id,
         'url': banner.serve_url,
         'ctx': UrlSafeBase64Encode(JSON.stringify(request.context))
-    }));
+    });
 
     watermark.set({
         position: [feature.position.x+pos.x, feature.position.y+pos.y, feature.position.z+pos.z],
-        rotation: [feature.rotation.x, feature.rotation.y, feature.rotation.z],
+        rotation: rotation,
         scale:  [scale.x, scale.y, 0],
         'stretched': true,
-        'url': 'https://app.adaround.net/img/watermark.png',
+        'url': props.adserver + '/img/watermark.png',
         'link': url,
         'blendMode': 'Combine'
     });
