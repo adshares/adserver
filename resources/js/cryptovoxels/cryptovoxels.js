@@ -138,7 +138,7 @@ let showWatermark = function(request, banner, props) {
         rotation: rotation,
         scale:  [scale.x, scale.y, 0],
         'stretched': true,
-        'url': props.adserver + '/img/watermark.png',
+        'url': 'https://assets.adshares.net/metaverse/watermark.png',
         'link': url,
         'blendMode': 'Combine'
     });
