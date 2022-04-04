@@ -145,7 +145,7 @@ class NetworkBannerFilter
         }
 
         foreach ($this->sizes as $size) {
-            if (!(Size::isValid($size) || $size === Size::CUBE)) {
+            if (!Size::isValid($size)) {
                 throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] Invalid size (%s)', $size));
             }
         }

@@ -54,6 +54,9 @@ class SiteCodeGenerator
         $popsCodes = [];
         $displayCodes = [];
         foreach ($site->zones as $zone) {
+            if (Size::TYPE_MODEL === $zone->type) {
+                continue;
+            }
             $zoneCode = self::getZoneCode($zone, $config);
 
             if (Size::TYPE_POP === $zone->type) {
@@ -106,6 +109,9 @@ CODE;
         $popsCodes = [];
         $displayCodes = [];
         foreach ($site->zones as $zone) {
+            if (Size::TYPE_MODEL === $zone->type) {
+                continue;
+            }
             $zoneCode = self::getZoneCode($zone, $config);
 
             if (Size::TYPE_POP === $zone->type) {
@@ -155,6 +161,9 @@ CODE;
 
     public static function getZoneCode(Zone $zone, ?SiteCodeConfig $config = null): string
     {
+        if (Size::TYPE_MODEL === $zone->type) {
+            return '';
+        }
         if (Size::TYPE_POP === $zone->type) {
             return strtr(
                 self::CODE_TEMPLATE_POP,

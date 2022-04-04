@@ -26,10 +26,8 @@ namespace Adshares\Supply\Domain\ValueObject;
 final class Size
 {
     public const TYPE_DISPLAY = 'display';
-
+    public const TYPE_MODEL = 'model';
     public const TYPE_POP = 'pop';
-
-    public const CUBE = 'cube';
 
     public const SIZE_INFOS = [
         #best
@@ -196,6 +194,11 @@ final class Size
             'label' => 'Pop-under',
             'tags' => ['Desktop', 'Mobile'],
             'type' => self::TYPE_POP,
+        ],
+        'cube' => [
+            'label' => 'Cube',
+            'tags' => ['Metaverse'],
+            'type' => self::TYPE_MODEL,
         ],
     ];
 

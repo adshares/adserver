@@ -391,11 +391,7 @@ class SitesController extends Controller
             if (!isset($inputZone['name']) || !is_string($inputZone['name'])) {
                 throw new UnprocessableEntityHttpException('Invalid name.');
             }
-            if (
-                !isset($inputZone['size']) ||
-                !is_string($inputZone['size']) ||
-                !(Size::isValid($inputZone['size']) || $inputZone['size'] === Size::CUBE)
-            ) {
+            if (!isset($inputZone['size']) || !is_string($inputZone['size']) || !Size::isValid($inputZone['size'])) {
                 throw new UnprocessableEntityHttpException('Invalid size.');
             }
         }
