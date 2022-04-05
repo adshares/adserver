@@ -181,12 +181,6 @@ class CampaignFactory
     private static function validateBannerSize(array $data): void
     {
         $size = $data['size'];
-        if ($data['type'] === Banner::TYPE_MODEL) {
-            if ($size !== 'cube') {
-                throw new InvalidCampaignArgumentException('Unsupported model size.');
-            }
-            return;
-        }
         if ($data['type'] === Banner::TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new InvalidCampaignArgumentException('Unsupported video size.');

@@ -29,6 +29,7 @@ use Adshares\Adserver\Http\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Site;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
@@ -47,7 +48,11 @@ class ClassifierController extends Controller
         $offset = (int)$request->get('offset', 0);
         $userId = Auth::user()->id;
 
-        $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
+        try {
+            $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
         $banners = NetworkBanner::fetchByFilter($networkBannerFilter, Site::fetchAll());
 
         $paginated = $banners->slice($offset, $limit);

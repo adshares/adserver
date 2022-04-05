@@ -23,23 +23,11 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
-use function array_key_exists;
-use function explode;
-use function sprintf;
-
 final class Size
 {
     public const TYPE_DISPLAY = 'display';
-
+    public const TYPE_MODEL = 'model';
     public const TYPE_POP = 'pop';
-
-    public const TYPE_VIDEO = 'video';
-
-    public const TYPES = [
-        self::TYPE_DISPLAY,
-        self::TYPE_POP,
-        self::TYPE_VIDEO,
-    ];
 
     public const SIZE_INFOS = [
         #best
@@ -206,6 +194,11 @@ final class Size
             'label' => 'Pop-under',
             'tags' => ['Desktop', 'Mobile'],
             'type' => self::TYPE_POP,
+        ],
+        'cube' => [
+            'label' => 'Cube',
+            'tags' => ['Metaverse'],
+            'type' => self::TYPE_MODEL,
         ],
     ];
 

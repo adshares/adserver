@@ -137,15 +137,6 @@ class Banner extends Model
         ];
     }
 
-    public static function size(string $size): string
-    {
-        if (!Size::isValid($size)) {
-            throw new RuntimeException(sprintf('Wrong banner size: %s.', $size));
-        }
-
-        return $size;
-    }
-
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
