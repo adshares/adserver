@@ -139,8 +139,12 @@ class SupplyController extends Controller
 
         $zones = [];
 
-        $zoneSizes = Size::findBestFit($validated['width'], $validated['height'], $validated['depth'], $validated['min_dpi']);
-
+        $zoneSizes = Size::findBestFit(
+            $validated['width'],
+            $validated['height'],
+            $validated['depth'],
+            $validated['min_dpi']
+        );
 
         foreach ($zoneSizes as $zoneSize) {
             $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
