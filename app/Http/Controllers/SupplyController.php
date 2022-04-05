@@ -115,6 +115,7 @@ class SupplyController extends Controller
 
         $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
         $validated['zone_name'] = $validated['zone_name'] ?? 'default';
+        $validated['depth'] = $validated['depth'] ?? 0;
 
         $payoutAddress = WalletAddress::fromString($validated['pay_to']);
         $user = User::fetchByWalletAddress($payoutAddress);
