@@ -29,6 +29,8 @@ final class Size
     public const TYPE_MODEL = 'model';
     public const TYPE_POP = 'pop';
 
+    private const CUBE = 'cube';
+
     public const SIZE_INFOS = [
         #best
         '300x250' => [
@@ -195,7 +197,7 @@ final class Size
             'tags' => ['Desktop', 'Mobile'],
             'type' => self::TYPE_POP,
         ],
-        'cube' => [
+        self::CUBE => [
             'label' => 'Cube',
             'tags' => ['Metaverse'],
             'type' => self::TYPE_MODEL,
@@ -204,8 +206,11 @@ final class Size
 
     private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
 
-    public static function findBestFit($width, $height, $min_dpi, $count = 5): array
+    public static function findBestFit($width, $height, $depth, $min_dpi, $count = 5): array
     {
+        if ($depth > 0) {
+            return [self::CUBE];
+        }
         $sizes = array_map(
             function ($info, $size) use ($width, $height, $min_dpi) {
                 if ($info['type'] !== self::TYPE_DISPLAY) {

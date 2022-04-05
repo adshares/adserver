@@ -94,7 +94,7 @@ var context;
 
 let loadedAdusers = {};
 
-let showWatermark = function(request, banner) {
+let showWatermark = function(request, banner, props) {
     let watermark = parcel.getFeatureById(feature.uuid + '-mark');
     if(!watermark) {
         watermark  = parcel.createFeature('image', {
@@ -102,30 +102,43 @@ let showWatermark = function(request, banner) {
         });
     }
 
-    let size = Math.sqrt(feature.scale.x * feature.scale.y) / 10
-    let scale = {
-        x: size,
-        y: size
-    };
-
-    let pos = new Vector3((feature.scale.x - scale.x) / 2, (feature.scale.y - scale.y) / 2, -0.005);
+    let pos;
+    let scale;
+    let rotation;
+    if(props.type === 'model') {
+        let size = Math.sqrt(feature.scale.x * feature.scale.z) / 5
+        scale = {
+            x: size,
+            y: size
+        };
+        pos = new Vector3(-(feature.scale.x - scale.x) / 2, 0, (feature.scale.z - scale.y) / 2);
+        rotation = [feature.rotation.x+Math.PI/2, feature.rotation.y+Math.PI, feature.rotation.z]
+    } else {
+        let size = Math.sqrt(feature.scale.x * feature.scale.y) / 10
+        scale = {
+            x: size,
+            y: size
+        };
+        pos = new Vector3((feature.scale.x - scale.x) / 2, (feature.scale.y - scale.y) / 2, -0.005);
+        rotation = [feature.rotation.x, feature.rotation.y, feature.rotation.z];
+    }
     let matrix = Matrix.RotationYawPitchRoll(feature.rotation.y, feature.rotation.x, feature.rotation.z);
     pos = Vector3.TransformCoordinates(pos, matrix);
 
-    let url = addUrlParam(serverOrigin + '/supply/why', addUrlParam(props.adserver + '/supply/why', {
+    let url = addUrlParam(props.adserver + '/supply/why', {
         'bid': banner.id,
         'cid': banner.cid,
         'iid': request.view_id,
         'url': banner.serve_url,
         'ctx': UrlSafeBase64Encode(JSON.stringify(request.context))
-    }));
+    });
 
     watermark.set({
         position: [feature.position.x+pos.x, feature.position.y+pos.y, feature.position.z+pos.z],
-        rotation: [feature.rotation.x, feature.rotation.y, feature.rotation.z],
+        rotation: rotation,
         scale:  [scale.x, scale.y, 0],
         'stretched': true,
-        'url': 'https://app.adaround.net/img/watermark.png',
+        'url': 'https://assets.adshares.net/metaverse/watermark.png',
         'link': url,
         'blendMode': 'Combine'
     });
@@ -160,7 +173,7 @@ let showVideo = function(banner) {
     video.play();
 }
 
-let displayAd = function (props, banner) {
+let displayBanner = function (props, banner) {
     if(banner.type === 'video') {
         feature.set({
             'url': 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif', //props.adserver + '/img/empty.gif',
@@ -176,6 +189,21 @@ let displayAd = function (props, banner) {
             'blendMode': 'Combine'
         });
 
+    }
+}
+
+let displayModel = function (props, banner) {
+        feature.set({
+            'url': banner.serve_url,
+            'link': banner.click_url
+        });
+}
+
+let displayAd = function (props, banner) {
+    if(props.type === 'model') {
+        displayModel(props, banner)
+    } else {
+        displayBanner(props, banner)
     }
 };
 
@@ -209,10 +237,11 @@ let find = function(player, props) {
         "zone_name": props.zone_name,
         "width": feature.scale.x,
         "height": feature.scale.y,
+        "depth": feature.scale.z,
         "min_dpi": 10,
         "exclude": JSON.parse(props.exclude),
-        "type": ["image", "video"] ,
-        "mime_type": ["image/jpeg",  "image/png",  "image/gif", "video/mp4"],
+        "type": props.type === 'model' ? ['model'] : ["image", "video"],
+        "mime_type": props.type === 'model' ? ['model/voxel'] : ["image/jpeg",  "image/png",  "image/gif", "video/mp4"],
         "context": {
             "site": {
                 "url": "https://" + getSceneId(land) + ".cryptovoxels.com/",
@@ -225,7 +254,7 @@ let find = function(player, props) {
         },
         "medium": "metaverse",
         "vendor": "cryptovoxels",
-        "version": "1.1.1",
+        "version": "{{ VERSION }}",
     };
 
     let response = {};
@@ -272,7 +301,7 @@ let find = function(player, props) {
                                 'stid': userAccount
                             });
                         displayAd(props, banner)
-                        showWatermark(request, banner);
+                        showWatermark(request, banner, props);
 
                         try {
                             fetch(banner.view_url).then(function (response) {
@@ -347,6 +376,14 @@ let fn = function(e) {
             'lastImpTime': lastImpressionTime,
             'lastImpId': lastImpressionId
         });
+        if(feature.type === 'megavox') {
+            props.type = 'model'
+        } else if(feature.type === 'image') {
+            props.type = 'image'
+        } else {
+            renderError(["Invalid feature type: use image or megavox"])
+            return;
+        }
         find(e.player, props);
     }
 }
