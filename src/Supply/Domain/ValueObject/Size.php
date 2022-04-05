@@ -23,23 +23,13 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
-use function array_key_exists;
-use function explode;
-use function sprintf;
-
 final class Size
 {
     public const TYPE_DISPLAY = 'display';
-
+    public const TYPE_MODEL = 'model';
     public const TYPE_POP = 'pop';
 
-    public const TYPE_VIDEO = 'video';
-
-    public const TYPES = [
-        self::TYPE_DISPLAY,
-        self::TYPE_POP,
-        self::TYPE_VIDEO,
-    ];
+    private const CUBE = 'cube';
 
     public const SIZE_INFOS = [
         #best
@@ -207,12 +197,20 @@ final class Size
             'tags' => ['Desktop', 'Mobile'],
             'type' => self::TYPE_POP,
         ],
+        self::CUBE => [
+            'label' => 'Cube',
+            'tags' => ['Metaverse'],
+            'type' => self::TYPE_MODEL,
+        ],
     ];
 
     private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
 
-    public static function findBestFit($width, $height, $min_dpi, $count = 5): array
+    public static function findBestFit($width, $height, $depth, $min_dpi, $count = 5): array
     {
+        if ($depth > 0) {
+            return [self::CUBE];
+        }
         $sizes = array_map(
             function ($info, $size) use ($width, $height, $min_dpi) {
                 if ($info['type'] !== self::TYPE_DISPLAY) {

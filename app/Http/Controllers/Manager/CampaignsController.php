@@ -703,12 +703,6 @@ class CampaignsController extends Controller
             throw new UnprocessableEntityHttpException(sprintf('Invalid type: %s.', $type));
         }
         $size = $banner['creative_size'];
-        if ($type === Banner::TEXT_TYPE_MODEL) {
-            if ($size !== 'cube') {
-                throw new UnprocessableEntityHttpException(sprintf('Invalid model size: %s.', $size));
-            }
-            return;
-        }
         if ($type === Banner::TEXT_TYPE_VIDEO) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid video size: %s.', $size));
@@ -719,10 +713,8 @@ class CampaignsController extends Controller
             return;
         }
 
-        try {
-            Banner::size($size);
-        } catch (RuntimeException $runtimeException) {
-            throw new UnprocessableEntityHttpException($runtimeException->getMessage());
+        if (!Size::isValid($size)) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid banner size: %s.', $size));
         }
     }
 }

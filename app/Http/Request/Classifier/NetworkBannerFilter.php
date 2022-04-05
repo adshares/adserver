@@ -26,38 +26,32 @@ namespace Adshares\Adserver\Http\Request\Classifier;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
-use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
 class NetworkBannerFilter
 {
-    /** @var bool */
-    private $approved;
+    private bool $approved;
 
-    /** @var bool */
-    private $rejected;
+    private bool $rejected;
 
-    /** @var bool */
-    private $unclassified;
+    private bool $unclassified;
 
-    /** @var array */
-    private $sizes;
+    /**
+     * @var string[]
+     */
+    private array $sizes;
 
-    /** @var string */
-    private $type;
+    private ?string $type;
 
-    /** @var int */
-    private $userId;
+    private int $userId;
 
-    /** @var int|null */
-    private $siteId;
+    private ?int $siteId;
 
-    /** @var Uuid|null */
-    private $networkBannerPublicId;
+    private ?Uuid $networkBannerPublicId;
 
-    /** @var string */
-    private $landingUrl;
+    private ?string $landingUrl;
 
     public function __construct(Request $request, int $userId, ?int $siteId)
     {

@@ -21,26 +21,25 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Tests\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\Id;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 
-class EmptyAccountId implements Id
+class EmptyAccountIdTest extends TestCase
 {
-    private string $value;
-
-    public function __construct(string $value = '')
+    public function testEmptyAccountId(): void
     {
-        $this->value = $value;
+        $account = new EmptyAccountId('example');
+
+        self::assertEquals('example', $account->toString());
     }
 
-    public function toString(): string
+    public function testEmptyAccountIdEquals(): void
     {
-        return $this->value;
-    }
+        $account1 = new EmptyAccountId('example');
+        $account2 = new EmptyAccountId();
 
-    public function equals(object $other): bool
-    {
-        return $other instanceof self;
+        self::assertTrue($account1->equals($account2));
     }
 }
