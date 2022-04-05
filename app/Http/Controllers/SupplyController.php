@@ -97,6 +97,7 @@ class SupplyController extends Controller
                 'zone_name' => ['sometimes', 'regex:/^[0-9a-z -_]+$/i'],
                 'width' => ['required', 'numeric', 'gt:0'],
                 'height' => ['required', 'numeric', 'gt:0'],
+                'depth' => ['sometimes', 'numeric', 'gte:0'],
                 'min_dpi' => ['sometimes', 'numeric', 'gt:0'],
                 'type' => ['sometimes', 'array'],
                 'type.*' => ['string'],
@@ -114,6 +115,7 @@ class SupplyController extends Controller
 
         $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
         $validated['zone_name'] = $validated['zone_name'] ?? 'default';
+        $validated['depth'] = $validated['depth'] ?? 0;
 
         $payoutAddress = WalletAddress::fromString($validated['pay_to']);
         $user = User::fetchByWalletAddress($payoutAddress);
@@ -138,8 +140,12 @@ class SupplyController extends Controller
 
         $zones = [];
 
-        $zoneSizes = Size::findBestFit($validated['width'], $validated['height'], $validated['min_dpi']);
-
+        $zoneSizes = Size::findBestFit(
+            $validated['width'],
+            $validated['height'],
+            $validated['depth'],
+            $validated['min_dpi']
+        );
 
         foreach ($zoneSizes as $zoneSize) {
             $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
@@ -442,6 +448,7 @@ class SupplyController extends Controller
         $params = [
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
             '.' . CssUtils::normalizeClass(self::$adserverId),
+            config('app.version')
         ];
 
         $jsPath = public_path('-/cryptovoxels.js');
@@ -453,6 +460,7 @@ class SupplyController extends Controller
                     [
                         '{{ ORIGIN }}',
                         '{{ SELECTOR }}',
+                        '{{ VERSION }}'
                     ],
                     $params,
                     file_get_contents($jsPath)

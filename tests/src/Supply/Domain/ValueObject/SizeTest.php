@@ -54,8 +54,9 @@ final class SizeTest extends TestCase
 
     public function testFindBestFit(): void
     {
-        $this->assertContains('300x250', Size::findBestFit(300, 250, 1));
-        $this->assertContains('336x280', Size::findBestFit(330, 270, 1));
+        $this->assertContains('300x250', Size::findBestFit(300, 250, 0, 1));
+        $this->assertContains('336x280', Size::findBestFit(330, 270, 0, 1));
+        $this->assertContains('cube', Size::findBestFit(330, 270, 10, 1));
     }
 
     public function testFindMatching(): void
