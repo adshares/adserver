@@ -181,10 +181,6 @@ class SitesController extends Controller
 
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
-
-            if ($updateDomainAndUrl && $site->medium !== 'web') {
-                throw new UnprocessableEntityHttpException('URL cannot be changed');
-            }
         }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
