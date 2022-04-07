@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
@@ -132,7 +133,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             ->name('app.sites.code');
         Route::get('sites/cryptovoxels/code', [SitesController::class, 'sitesCryptovoxelsCode']);
 
-# actions
+        // actions
         Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
         Route::get('countries', [ConfigController::class, 'countries']);
         Route::get('notifications', [NotificationsController::class, 'read']);
@@ -143,6 +144,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('invoices', [InvoicesController::class, 'browse']);
         Route::post('invoices', [InvoicesController::class, 'add']);
 
+        Route::get('options/banners', [OptionsController::class, 'banners']);
         Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
         Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
@@ -150,11 +152,11 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('options/sites/languages', [OptionsController::class, 'languages']);
         Route::get('options/sites/zones', [OptionsController::class, 'zones']);
 
-// settings
+        // settings
         Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
         Route::patch('wallet/auto-withdrawal', [SettingsController::class, 'autoWithdrawal']);
 
-// Routes for Withdraw/Deposit
+        // withdraw / deposit
         Route::get('withdrawal-info', [WalletController::class, 'withdrawalInfo']);
         Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);
         Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
@@ -169,7 +171,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::patch('wallet/connect', [WalletController::class, 'connect']);
         Route::post('wallet/connect/confirm/{token}', [WalletController::class, 'connectConfirm']);
 
-// statistics
+        // statistics
         Route::get(
             'campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}',
             [StatsController::class, 'advertiserChart']
