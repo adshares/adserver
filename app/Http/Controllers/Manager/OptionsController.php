@@ -46,6 +46,18 @@ class OptionsController extends Controller
         $this->classifierRepository = $classifierRepository;
     }
 
+    public function banners(): JsonResponse
+    {
+        return self::json(
+            [
+                'upload_limit_image' => config('app.upload_limit_image'),
+                'upload_limit_model' => config('app.upload_limit_model'),
+                'upload_limit_video' => config('app.upload_limit_video'),
+                'upload_limit_zip' => config('app.upload_limit_zip'),
+            ]
+        );
+    }
+
     public function campaigns(): JsonResponse
     {
         return self::json(

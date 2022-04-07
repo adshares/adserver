@@ -57,6 +57,45 @@ final class OptionsControllerTest extends TestCase
         );
     }
 
+    public function testBanners(): void
+    {
+        $expectedFields = [
+            'uploadLimitImage',
+            'uploadLimitModel',
+            'uploadLimitVideo',
+            'uploadLimitZip',
+        ];
+        self::actingAs(factory(User::class)->create(), 'api');
+
+        $response = self::getJson('/api/options/banners');
+        $response->assertStatus(200)
+            ->assertJsonStructure($expectedFields);
+
+        $content = json_decode($response->content(), true);
+        foreach ($expectedFields as $expectedField) {
+            self::assertIsInt($content[$expectedField]);
+        }
+    }
+
+    public function testCampaigns(): void
+    {
+        $expectedFields = [
+            'minBudget',
+            'minCpm',
+            'minCpa',
+        ];
+        self::actingAs(factory(User::class)->create(), 'api');
+
+        $response = self::getJson('/api/options/campaigns');
+        $response->assertStatus(200)
+            ->assertJsonStructure($expectedFields);
+
+        $content = json_decode($response->content(), true);
+        foreach ($expectedFields as $expectedField) {
+            self::assertIsInt($content[$expectedField]);
+        }
+    }
+
     public function testTargeting(): void
     {
         self::actingAs(factory(User::class)->create(), 'api');
