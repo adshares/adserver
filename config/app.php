@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -93,8 +94,8 @@ return [
     'adpanel_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
-    'terms_url' => $appUrl.'/policies/terms.html',
-    'privacy_url' => $appUrl.'/policies/privacy.html',
+    'terms_url' => $appUrl . '/policies/terms.html',
+    'privacy_url' => $appUrl . '/policies/privacy.html',
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_wallet_cold_address' => env('ADSHARES_WALLET_COLD_ADDRESS'),
     'adshares_wallet_min_amount' => env('ADSHARES_WALLET_MIN_AMOUNT'),
@@ -120,9 +121,9 @@ return [
     'allow_zone_in_iframe' => (bool)env('ALLOW_ZONE_IN_IFRAME', true),
     'network_data_cache_ttl' => (int)env('NETWORK_DATA_CACHE_TTL', 60),
 
-    'campaign_min_budget' => (int)env('CAMPAIGN_MIN_BUDGET',5000000000),
-    'campaign_min_cpm' => (int)env('CAMPAIGN_MIN_CPM',5000000000),
-    'campaign_min_cpa' => (int)env('CAMPAIGN_MIN_CPA',1000000000),
+    'campaign_min_budget' => (int)env('CAMPAIGN_MIN_BUDGET', 5000000000),
+    'campaign_min_cpm' => (int)env('CAMPAIGN_MIN_CPM', 5000000000),
+    'campaign_min_cpa' => (int)env('CAMPAIGN_MIN_CPA', 1000000000),
     'classifier_external_name' => env('CLASSIFIER_EXTERNAL_NAME'),
     'classifier_external_base_url' => env('CLASSIFIER_EXTERNAL_BASE_URL'),
     'classifier_external_public_key' => env('CLASSIFIER_EXTERNAL_PUBLIC_KEY'),
@@ -167,6 +168,10 @@ return [
     'auto_withdrawal_limit_bsc' => env('AUTO_WITHDRAWAL_LIMIT_BSC', 1_000_000_000_00),
     'auto_withdrawal_limit_btc' => env('AUTO_WITHDRAWAL_LIMIT_BTC', 1_000_000_000_000_00),
     'auto_withdrawal_limit_eth' => env('AUTO_WITHDRAWAL_LIMIT_ETH', 1_000_000_000_000_00),
+    'upload_limit_image' => (int)env('UPLOAD_LIMIT_IMAGE', 512 * 1024),
+    'upload_limit_model' => (int)env('UPLOAD_LIMIT_MODEL', 1024 * 1024),
+    'upload_limit_video' => (int)env('UPLOAD_LIMIT_VIDEO', 1024 * 1024),
+    'upload_limit_zip' => (int)env('UPLOAD_LIMIT_ZIP', 512 * 1024),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

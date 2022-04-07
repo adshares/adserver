@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Uploader\Image;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -49,6 +50,10 @@ class ImageUploader implements Uploader
     public function upload(): UploadedFile
     {
         $file = $this->request->file('file');
+        $size = $file->getSize();
+        if (!$size || $size > config('app.upload_limit_image')) {
+            throw new RuntimeException('Invalid image size');
+        }
         $name = $file->store('', self::IMAGE_DISK);
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'name' => $name])

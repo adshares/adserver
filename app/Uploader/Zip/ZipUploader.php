@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Uploader\Zip;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Lib\ZipToHtml;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -47,6 +48,10 @@ class ZipUploader implements Uploader
     public function upload(): UploadedFile
     {
         $file = $this->request->file('file');
+        $size = $file->getSize();
+        if (!$size || $size > config('app.upload_limit_zip')) {
+            throw new RuntimeException('Invalid zip size');
+        }
         $name = $file->store('', self::ZIP_DISK);
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'name' => $name])
