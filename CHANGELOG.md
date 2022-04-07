@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.1] - 2022-04-07
+### Added
+- Uploaded file's size validation
+### Changed
+- Allow editing metaverse site's address
+
 ## [1.16.0] - 2022-04-05
 ### Fixed
 - Allow classifying models
@@ -598,7 +604,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.16.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.16.1...develop
+[1.16.1]: https://github.com/adshares/adserver/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/adshares/adserver/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/adshares/adserver/compare/v1.14.2...v1.15.0
 [1.14.2]: https://github.com/adshares/adserver/compare/v1.14.1...v1.14.2

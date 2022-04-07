@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Uploader\Video;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use getID3;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -48,6 +49,10 @@ class VideoUploader implements Uploader
     public function upload(): UploadedFile
     {
         $file = $this->request->file('file');
+        $size = $file->getSize();
+        if (!$size || $size > config('app.upload_limit_video')) {
+            throw new RuntimeException('Invalid video size');
+        }
         $name = $file->store('', self::VIDEO_DISK);
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'name' => $name])
