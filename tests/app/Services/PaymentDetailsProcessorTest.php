@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,12 +23,16 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Services;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
@@ -36,6 +40,7 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
+use Illuminate\Support\Facades\DB;
 
 final class PaymentDetailsProcessorTest extends TestCase
 {
@@ -54,6 +59,34 @@ final class PaymentDetailsProcessorTest extends TestCase
         $this->assertCount(0, NetworkPayment::all());
     }
 
+    public function testProcessingMissingConfigurationOfOperatorFee(): void
+    {
+        DB::delete('DELETE FROM configs WHERE `key` = ?', [Config::OPERATOR_RX_FEE]);
+
+        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
+
+        $adsPayment = $this->createAdsPayment(10000);
+
+        self::expectException(MissingInitialConfigurationException::class);
+        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
+    }
+
+    public function testProcessingMissingConfigurationOfLicenseFee(): void
+    {
+        $licenseReader = self::createMock(LicenseReader::class);
+        $licenseReader->expects(self::once())->method('getFee')->willThrowException(new ConfigException('test'));
+
+        $paymentDetailsProcessor = new PaymentDetailsProcessor(
+            $this->getExchangeRateReader(),
+            $licenseReader
+        );
+
+        $adsPayment = $this->createAdsPayment(10000);
+
+        self::expectException(MissingInitialConfigurationException::class);
+        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
+    }
+
     public function testProcessingDetails(): void
     {
         $totalPayment = 10000;
@@ -61,6 +94,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
 
+        /** @var User $user */
         $user = factory(User::class)->create();
         $userUuid = $user->uuid;
 
@@ -99,6 +133,49 @@ final class PaymentDetailsProcessorTest extends TestCase
         $this->assertEquals($totalPayment, $result->eventValuePartialSum());
         $this->assertEquals($expectedLicenseAmount, $result->licenseFeePartialSum());
         $this->assertEquals($expectedAdIncome, NetworkCasePayment::sum('paid_amount'));
+    }
+
+    public function testAddAdIncomeToUserLedger(): void
+    {
+        $adsPayment = $this->createAdsPayment(100_000_000_000);
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        /** @var NetworkCase $networkCase */
+        $networkCase = factory(NetworkCase::class)->create([
+            'publisher_id' => $user->uuid,
+        ]);
+        /** @var NetworkCasePayment $networkCasePayment */
+        $networkCasePayment = factory(NetworkCasePayment::class)->create([
+            'network_case_id' => $networkCase->id,
+            'ads_payment_id' => $adsPayment->id,
+        ]);
+        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
+
+        $paymentDetailsProcessor->addAdIncomeToUserLedger($adsPayment);
+
+        $entries = UserLedgerEntry::all();
+        self::assertCount(1, $entries);
+        self::assertEquals($networkCasePayment->paid_amount, $entries->first()->amount);
+    }
+
+    public function testAddAdIncomeToUserLedgerWhenNoUser(): void
+    {
+        $adsPayment = $this->createAdsPayment(100_000_000_000);
+        /** @var NetworkCase $networkCase */
+        $networkCase = factory(NetworkCase::class)->create([
+            'publisher_id' => '10000000000000000000000000000000',
+        ]);
+        /** @var NetworkCasePayment $networkCasePayment */
+        factory(NetworkCasePayment::class)->create([
+            'network_case_id' => $networkCase->id,
+            'ads_payment_id' => $adsPayment->id,
+        ]);
+        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
+
+        $paymentDetailsProcessor->addAdIncomeToUserLedger($adsPayment);
+
+        $entries = UserLedgerEntry::all();
+        self::assertCount(0, $entries);
     }
 
     private function getExchangeRateReader(): ExchangeRateReader
