@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -184,7 +184,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM event_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
+                    WHERE l.banner_id IS NULL
+                        AND l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                         AND NOW() - INTERVAL 2 HOUR
                     GROUP BY l.campaign_id
                 ) lc ON lc.campaign_id = c.uuid
@@ -197,7 +198,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM event_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
+                    WHERE l.banner_id IS NULL
+                        AND l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.campaign_id
                 ) lp ON lp.campaign_id = c.uuid
@@ -366,7 +368,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM network_case_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
+                    WHERE l.zone_id IS NULL
+                        AND l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                         AND NOW() - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lc ON lc.site_id = s.uuid
@@ -379,7 +382,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM network_case_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
+                    WHERE l.zone_id IS NULL
+                        AND l.hour_timestamp BETWEEN NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                         AND NOW() - INTERVAL %d %s - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lp ON lp.site_id = s.uuid
