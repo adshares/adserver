@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -65,6 +65,8 @@ class SettingsResponse implements Arrayable
 
     private string $aduserInfoUrl;
 
+    private int $siteOnlyAcceptedBanners;
+
     public function __construct(
         int $hotWalletMinValue,
         int $hotWalletMaxValue,
@@ -81,7 +83,8 @@ class SettingsResponse implements Arrayable
         int $autoRegistrationEnabled,
         int $autoConfirmationEnabled,
         int $emailVerificationRequired,
-        string $aduserInfoUrl
+        string $aduserInfoUrl,
+        int $siteOnlyAcceptedBanners
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
         $this->hotWalletMaxValue = $hotWalletMaxValue;
@@ -99,6 +102,7 @@ class SettingsResponse implements Arrayable
         $this->autoConfirmationEnabled = $autoConfirmationEnabled;
         $this->emailVerificationRequired = $emailVerificationRequired;
         $this->aduserInfoUrl = $aduserInfoUrl;
+        $this->siteOnlyAcceptedBanners = $siteOnlyAcceptedBanners;
     }
 
     public static function fromConfigModel(array $data): self
@@ -119,6 +123,7 @@ class SettingsResponse implements Arrayable
         $autoConfirmationEnabled = $data[Config::AUTO_CONFIRMATION_ENABLED];
         $emailVerificationRequired = $data[Config::EMAIL_VERIFICATION_REQUIRED];
         $aduserInfoUrl = config('app.aduser_info_url');
+        $siteOnlyAcceptedBanners = $data[Config::SITE_ONLY_ACCEPTED_BANNERS];
 
         return new self(
             (int)$hotWalletMinValue,
@@ -136,7 +141,8 @@ class SettingsResponse implements Arrayable
             (int)$autoRegistrationEnabled,
             (int)$autoConfirmationEnabled,
             (int)$emailVerificationRequired,
-            $aduserInfoUrl
+            $aduserInfoUrl,
+            (int)$siteOnlyAcceptedBanners,
         );
     }
 
@@ -159,6 +165,7 @@ class SettingsResponse implements Arrayable
             'auto_confirmation_enabled' => $this->autoConfirmationEnabled,
             'email_verification_required' => $this->emailVerificationRequired,
             'aduser_info_url' => $this->aduserInfoUrl,
+            'site_only_accepted_banners' => $this->siteOnlyAcceptedBanners,
         ];
 
         return ['settings' => $data];

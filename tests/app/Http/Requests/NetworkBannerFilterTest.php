@@ -39,6 +39,7 @@ final class NetworkBannerFilterTest extends TestCase
         self::assertFalse($filter->isUnclassified());
         self::assertEquals(['300x250'], $filter->getSizes());
         self::assertEquals('image', $filter->getType());
+        self::assertFalse($filter->isLocal());
         self::assertEquals('0123456789ABCDEF0123456789ABCDEF', (string)$filter->getNetworkBannerPublicId());
         self::assertEquals('https://example.com', $filter->getLandingUrl());
         self::assertEquals(1, $filter->getUserId());
@@ -88,6 +89,7 @@ final class NetworkBannerFilterTest extends TestCase
                 'unclassified' => false,
                 'sizes' => '["300x250"]',
                 'type' => 'image',
+                'local' => false,
                 'banner_id' => '0123456789ABCDEF0123456789ABCDEF',
                 'landing_url' => 'https://example.com',
             ],

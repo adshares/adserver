@@ -45,6 +45,8 @@ class NetworkBannerFilter
 
     private ?string $type;
 
+    private bool $local;
+
     private int $userId;
 
     private ?int $siteId;
@@ -61,6 +63,7 @@ class NetworkBannerFilter
 
         $this->sizes = json_decode($request->get('sizes', '[]'), true);
         $this->type = $request->get('type');
+        $this->local = (bool)$request->get('local', false);
 
         $this->userId = $userId;
         $this->siteId = $siteId;
@@ -102,6 +105,11 @@ class NetworkBannerFilter
     public function getType(): ?string
     {
         return $this->type;
+    }
+
+    public function isLocal(): bool
+    {
+        return $this->local;
     }
 
     public function getUserId(): int

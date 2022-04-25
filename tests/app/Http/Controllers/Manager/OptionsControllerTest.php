@@ -96,6 +96,20 @@ final class OptionsControllerTest extends TestCase
         }
     }
 
+    public function testSites(): void
+    {
+        $expectedFields = [
+            'onlyAcceptedBanners',
+        ];
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->get('/api/options/sites');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure($expectedFields);
+        self::assertIsInt(json_decode($response->content(), true)['onlyAcceptedBanners']);
+    }
+
     public function testTargeting(): void
     {
         self::actingAs(factory(User::class)->create(), 'api');

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -201,6 +201,7 @@ class ConfigTest extends TestCase
             'invoice-company-country' => '',
             'invoice-company-vat-id' => '',
             'invoice-company-bank-accounts' => '',
+            'site-only-accepted-banners' => '0',
         ];
 
         Cache::forget('config.admin');
@@ -237,6 +238,7 @@ class ConfigTest extends TestCase
             'invoice-company-country' => 'GB',
             'invoice-company-vat-id' => '123123123123',
             'invoice-company-bank-accounts' => '{}',
+            'site-only-accepted-banners' => '1',
         ];
 
         Config::updateAdminSettings($adminSettings);

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -87,6 +87,7 @@ class UpdateAdminSettings extends FormRequest
             'settings.auto_registration_enabled' => 'required|boolean',
             'settings.auto_confirmation_enabled' => 'required|boolean',
             'settings.email_verification_required' => 'required|boolean',
+            'settings.site_only_accepted_banners' => 'sometimes|required|boolean',
         ];
         $rules['settings.registration_mode'] = ['required', Rule::in(RegistrationMode::cases())];
 
@@ -133,6 +134,10 @@ class UpdateAdminSettings extends FormRequest
             $data[Config::REFERRAL_REFUND_COMMISSION] = (new Commission(
                 (float)$values['referral_refund_commission']
             ))->getValue();
+        }
+
+        if (isset($values['site_only_accepted_banners'])) {
+            $data[Config::SITE_ONLY_ACCEPTED_BANNERS] = (int)$values['site_only_accepted_banners'];
         }
 
         return $data;

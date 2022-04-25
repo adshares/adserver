@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,6 +33,8 @@ use function in_array;
 use function sprintf;
 
 /**
+ * @property string key
+ * @property string value
  * @mixin Builder
  */
 class Config extends Model
@@ -77,6 +79,7 @@ class Config extends Model
     public const INVOICE_COMPANY_COUNTRY = 'invoice-company-country';
     public const INVOICE_COMPANY_VAT_ID = 'invoice-company-vat-id';
     public const INVOICE_COMPANY_BANK_ACCOUNTS = 'invoice-company-bank-accounts';
+    public const SITE_ONLY_ACCEPTED_BANNERS = 'site-only-accepted-banners';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
@@ -105,6 +108,7 @@ class Config extends Model
         self::INVOICE_COMPANY_COUNTRY => '',
         self::INVOICE_COMPANY_VAT_ID => '',
         self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
+        self::SITE_ONLY_ACCEPTED_BANNERS => '0',
     ];
 
     public $incrementing = false;
