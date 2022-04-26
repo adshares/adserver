@@ -74,7 +74,8 @@ class OptionsController extends Controller
     {
         return self::json(
             [
-                'onlyAcceptedBanners' => Config::fetchInt(Config::SITE_ONLY_ACCEPTED_BANNERS),
+                'acceptBannersManually' => Config::fetchInt(Config::SITE_ACCEPT_BANNERS_MANUALLY),
+                'classifierLocalBanners' => Config::fetchInt(Config::SITE_CLASSIFIER_LOCAL_BANNERS),
             ]
         );
     }

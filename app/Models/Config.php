@@ -28,10 +28,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-use function array_merge;
-use function in_array;
-use function sprintf;
-
 /**
  * @property string key
  * @property string value
@@ -79,7 +75,8 @@ class Config extends Model
     public const INVOICE_COMPANY_COUNTRY = 'invoice-company-country';
     public const INVOICE_COMPANY_VAT_ID = 'invoice-company-vat-id';
     public const INVOICE_COMPANY_BANK_ACCOUNTS = 'invoice-company-bank-accounts';
-    public const SITE_ONLY_ACCEPTED_BANNERS = 'site-only-accepted-banners';
+    public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
+    public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
@@ -108,7 +105,6 @@ class Config extends Model
         self::INVOICE_COMPANY_COUNTRY => '',
         self::INVOICE_COMPANY_VAT_ID => '',
         self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
-        self::SITE_ONLY_ACCEPTED_BANNERS => '0',
     ];
 
     public $incrementing = false;

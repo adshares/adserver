@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -56,8 +56,7 @@ class AdminController extends Controller
 {
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
 
-    /** @var LicenseVault */
-    private $licenseVault;
+    private LicenseVault $licenseVault;
 
     public function __construct(LicenseVault $licenseVault)
     {
@@ -77,6 +76,35 @@ class AdminController extends Controller
         Config::updateAdminSettings($input);
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function updateSiteSettings(Request $request): JsonResponse
+    {
+        $configData = [];
+        $acceptBannersManually = $request->get('accept_banners_manually');
+        if ($acceptBannersManually !== null) {
+            $configData[Config::SITE_ACCEPT_BANNERS_MANUALLY] =
+                filter_var($acceptBannersManually, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+        }
+        $classifierLocalBanners = $request->get('classifier_local_banners');
+        if ($classifierLocalBanners !== null) {
+            if (!in_array($classifierLocalBanners, ['0', '1', '2'], true)) {
+                throw new UnprocessableEntityHttpException('Field classifierLocalBanners is invalid.');
+            }
+            $configData[Config::SITE_CLASSIFIER_LOCAL_BANNERS] = $classifierLocalBanners;
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($configData as $key => $value) {
+                Config::upsertByKey($key, $value);
+            }
+            DB::commit();
+            return new JsonResponse([], Response::HTTP_NO_CONTENT);
+        } catch (Exception $exception) {
+            DB::rollBack();
+            return new JsonResponse([], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function wallet(): JsonResponse

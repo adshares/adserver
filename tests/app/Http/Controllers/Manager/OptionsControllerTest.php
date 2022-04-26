@@ -99,7 +99,8 @@ final class OptionsControllerTest extends TestCase
     public function testSites(): void
     {
         $expectedFields = [
-            'onlyAcceptedBanners',
+            'classifierLocalBanners',
+            'acceptBannersManually',
         ];
         $this->actingAs(factory(User::class)->create(), 'api');
 
@@ -107,7 +108,10 @@ final class OptionsControllerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure($expectedFields);
-        self::assertIsInt(json_decode($response->content(), true)['onlyAcceptedBanners']);
+        $content = json_decode($response->content(), true);
+        foreach ($expectedFields as $expectedField) {
+            self::assertIsInt($content[$expectedField]);
+        }
     }
 
     public function testTargeting(): void

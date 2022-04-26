@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use Adshares\Adserver\Http\Controllers\Manager\AdminController;
 use Adshares\Adserver\Http\Controllers\Manager\AuthController;
@@ -30,6 +31,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('settings', [AdminController::class, 'listSettings']);
     Route::put('settings', [AdminController::class, 'updateSettings']);
+    Route::put('site-settings', [AdminController::class, 'updateSiteSettings']);
 
     Route::get('wallet', [AdminController::class, 'wallet']);
     Route::get('license', [AdminController::class, 'getLicense']);

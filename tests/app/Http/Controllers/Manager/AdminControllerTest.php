@@ -39,6 +39,8 @@ final class AdminControllerTest extends TestCase
 
     private const URI_SETTINGS = '/admin/settings';
 
+    private const URI_SITE_SETTINGS = '/admin/site-settings';
+
     private const URI_REJECTED_DOMAINS = '/admin/rejected-domains';
 
     private const REGULATION_RESPONSE_STRUCTURE = [
@@ -282,6 +284,35 @@ final class AdminControllerTest extends TestCase
         self::assertEquals('example1.com', $deletedDomains->first()->domain);
     }
 
+    public function testSiteSettings(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->put(
+            self::URI_SITE_SETTINGS,
+            [
+                'classifierLocalBanners' => '1',
+                'acceptBannersManually' => '1',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
+    public function testSiteSettingsClassifierLocalBannersInvalid(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->put(
+            self::URI_SITE_SETTINGS,
+            [
+                'classifierLocalBanners' => '999',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     private function settings(): array
     {
         return [
@@ -298,7 +329,6 @@ final class AdminControllerTest extends TestCase
             'referralRefundCommission' => 0,
             'registrationMode' => 'public',
             'autoConfirmationEnabled' => 1,
-            'siteOnlyAcceptedBanners' => 0,
         ];
     }
 }
