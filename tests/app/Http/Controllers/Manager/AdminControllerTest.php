@@ -291,7 +291,7 @@ final class AdminControllerTest extends TestCase
         $response = $this->put(
             self::URI_SITE_SETTINGS,
             [
-                'classifierLocalBanners' => '1',
+                'classifierLocalBanners' => 'all-by-default',
                 'acceptBannersManually' => '1',
             ]
         );

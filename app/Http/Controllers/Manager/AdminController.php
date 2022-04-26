@@ -88,7 +88,7 @@ class AdminController extends Controller
         }
         $classifierLocalBanners = $request->get('classifier_local_banners');
         if ($classifierLocalBanners !== null) {
-            if (!in_array($classifierLocalBanners, ['0', '1', '2'], true)) {
+            if (!in_array($classifierLocalBanners, ['all-by-default', 'local-by-default', 'local-only'], true)) {
                 throw new UnprocessableEntityHttpException('Field classifierLocalBanners is invalid.');
             }
             $configData[Config::SITE_CLASSIFIER_LOCAL_BANNERS] = $classifierLocalBanners;
