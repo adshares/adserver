@@ -288,7 +288,7 @@ final class AdminControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
-        $response = $this->put(
+        $response = $this->patch(
             self::URI_SITE_SETTINGS,
             [
                 'classifierLocalBanners' => 'all-by-default',
@@ -303,7 +303,7 @@ final class AdminControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
-        $response = $this->put(
+        $response = $this->patch(
             self::URI_SITE_SETTINGS,
             [
                 'classifierLocalBanners' => '999',
