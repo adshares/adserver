@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Repository;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Repository\FileConfigurationRepository;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Exception\RuntimeException;
 
 final class FileConfigurationRepositoryTest extends TestCase
 {
@@ -33,7 +33,7 @@ final class FileConfigurationRepositoryTest extends TestCase
     {
         $repository = new FileConfigurationRepository(__DIR__);
 
-        self::expectException(RuntimeException::class);
+        self::expectException(MissingInitialConfigurationException::class);
         $repository->fetchTargetingOptions();
     }
 
@@ -41,7 +41,7 @@ final class FileConfigurationRepositoryTest extends TestCase
     {
         $repository = new FileConfigurationRepository(__DIR__);
 
-        self::expectException(RuntimeException::class);
+        self::expectException(MissingInitialConfigurationException::class);
         $repository->fetchFilteringOptions();
     }
 
@@ -49,7 +49,7 @@ final class FileConfigurationRepositoryTest extends TestCase
     {
         $repository = new FileConfigurationRepository(__DIR__);
 
-        self::expectException(RuntimeException::class);
+        self::expectException(MissingInitialConfigurationException::class);
         $repository->fetchTaxonomy();
     }
 }
