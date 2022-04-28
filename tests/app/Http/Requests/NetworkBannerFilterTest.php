@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests\Http\Requests;
 
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
@@ -76,6 +77,15 @@ final class NetworkBannerFilterTest extends TestCase
 
         self::expectException(InvalidArgumentException::class);
         new NetworkBannerFilter($request, 1, 2);
+    }
+
+    public function testOnlyLocal(): void
+    {
+        Config::upsertByKey(Config::SITE_CLASSIFIER_LOCAL_BANNERS, Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY);
+
+        $filter = new NetworkBannerFilter(self::getRequest(), 1, 2);
+
+        self::assertTrue($filter->isLocal());
     }
 
     private function getRequest(array $mergeData = []): Request

@@ -77,6 +77,14 @@ class Config extends Model
     public const INVOICE_COMPANY_BANK_ACCOUNTS = 'invoice-company-bank-accounts';
     public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
     public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
+    public const ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS = [
+        Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
+        Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT,
+        Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY,
+    ];
+    public const CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT = 'all-by-default';
+    public const CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT = 'local-by-default';
+    public const CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY = 'local-only';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
