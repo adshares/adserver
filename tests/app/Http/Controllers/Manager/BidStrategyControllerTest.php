@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,7 +30,6 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTimeImmutable;
-use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -38,6 +37,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 
 class BidStrategyControllerTest extends TestCase
 {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -42,6 +42,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\Exception as PhpSpreadsheetException;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -58,8 +60,7 @@ class BidStrategyController extends Controller
         'application/zip',
     ];
 
-    /** @var ConfigurationRepository */
-    private $configurationRepository;
+    private ConfigurationRepository $configurationRepository;
 
     public function __construct(ConfigurationRepository $configurationRepository)
     {
@@ -84,7 +85,7 @@ class BidStrategyController extends Controller
             throw new NotFoundHttpException('Bid strategy does not exist.');
         }
         if (BidStrategy::ADMINISTRATOR_ID !== $bidStrategy->user_id) {
-            throw new HttpException(JsonResponse::HTTP_FORBIDDEN, 'Cannot set bid strategy as default.');
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot set bid strategy as default.');
         }
 
         if ($bidStrategyPublicId != $previousBidStrategyPublicId) {
@@ -98,13 +99,13 @@ class BidStrategyController extends Controller
                 Log::debug(sprintf('Default Bid strategy could not be changed (%s).', $exception->getMessage()));
 
                 throw new HttpException(
-                    JsonResponse::HTTP_INTERNAL_SERVER_ERROR,
+                    Response::HTTP_INTERNAL_SERVER_ERROR,
                     'Cannot change default bid strategy.'
                 );
             }
         }
 
-        return self::json([], JsonResponse::HTTP_NO_CONTENT);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function getBidStrategy(Request $request): JsonResponse
@@ -158,43 +159,11 @@ class BidStrategyController extends Controller
         }
         $reader->setReadDataOnly(true);
         $spreadsheet = $reader->load($pathName);
-
-        $sheets = $spreadsheet->getAllSheets();
-        $sheetsCount = count($sheets);
-
-        $duplicates = [];
-        $bidStrategyDetails = [];
-        for ($i = 1; $i < $sheetsCount; $i++) {
-            $sheet = $sheets[$i];
-
-            $removeDefaults = true;
-
-            $row = 2;
-            while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
-                if ($sheet->getCellByColumnAndRow(2, $row)->getValue() == '*') {
-                    $removeDefaults = false;
-                }
-                ++$row;
-            }
-
-            $row = 2;
-            while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
-                if (!$removeDefaults || 100 !== $value) {
-                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue()
-                        . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
-                    if (!isset($duplicates[$category])) {
-                        $bidStrategyDetails[] = BidStrategyDetail::create($category, (float)$value / 100);
-                    }
-                    $duplicates[$category] = true;
-                }
-
-                ++$row;
-            }
-        }
+        $bidStrategyDetails = $this->getBidStrategyDetailsFromSpreadsheet($spreadsheet);
 
         $this->editBidStrategy($bidStrategy, null, $bidStrategyDetails);
 
-        return self::json([], JsonResponse::HTTP_NO_CONTENT);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     private static function processTargetingOptions(
@@ -327,10 +296,10 @@ class BidStrategyController extends Controller
                 sprintf('Bid strategy (%s) could not be added (%s).', $input['name'], $exception->getMessage())
             );
 
-            throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add bid strategy.');
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add bid strategy.');
         }
 
-        return self::json(['uuid' => $bidStrategy->uuid], JsonResponse::HTTP_CREATED);
+        return self::json(['uuid' => $bidStrategy->uuid], Response::HTTP_CREATED);
     }
 
     public function patchBidStrategy(string $bidStrategyPublicId, BidStrategyRequest $request): JsonResponse
@@ -351,7 +320,7 @@ class BidStrategyController extends Controller
 
         $this->editBidStrategy($bidStrategy, $name, $bidStrategyDetails);
 
-        return self::json([], JsonResponse::HTTP_NO_CONTENT);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function deleteBidStrategy(string $bidStrategyPublicId): JsonResponse
@@ -377,10 +346,10 @@ class BidStrategyController extends Controller
                 sprintf('Bid strategy (%d) could not be deleted (%s).', $bidStrategy->id, $exception->getMessage())
             );
 
-            throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot delete bid strategy.');
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot delete bid strategy.');
         }
 
-        return self::json([], JsonResponse::HTTP_NO_CONTENT);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     private function fetchBidStrategy(string $bidStrategyPublicId): BidStrategy
@@ -428,7 +397,52 @@ class BidStrategyController extends Controller
                 sprintf('Bid strategy (%d) could not be edited (%s).', $bidStrategy->id, $exception->getMessage())
             );
 
-            throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot edit bid strategy.');
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot edit bid strategy.');
         }
+    }
+
+    private function getBidStrategyDetailsFromSpreadsheet(Spreadsheet $spreadsheet): array
+    {
+        $columnPrefix = 1;
+        $columnId = 2;
+        $columnValue = 4;
+        $rowFirstDataRow = 2;
+        $defaultValue = 100;
+
+        $bidStrategyDetails = [];
+
+        $sheets = $spreadsheet->getAllSheets();
+        $sheetsCount = count($sheets);
+
+        $duplicates = [];
+        for ($i = 1; $i < $sheetsCount; $i++) {
+            $sheet = $sheets[$i];
+
+            $removeDefaults = true;
+
+            $row = $rowFirstDataRow;
+            while (null !== $sheet->getCellByColumnAndRow($columnValue, $row)->getValue()) {
+                if ($sheet->getCellByColumnAndRow($columnId, $row)->getValue() === '*') {
+                    $removeDefaults = false;
+                    break;
+                }
+                ++$row;
+            }
+
+            $row = $rowFirstDataRow;
+            while (null !== ($value = $sheet->getCellByColumnAndRow($columnValue, $row)->getValue())) {
+                if (!$removeDefaults || $value !== $defaultValue) {
+                    $category = $sheet->getCellByColumnAndRow($columnPrefix, $row)->getValue()
+                        . ':' . $sheet->getCellByColumnAndRow($columnId, $row)->getValue();
+                    if (!isset($duplicates[$category])) {
+                        $bidStrategyDetails[] = BidStrategyDetail::create($category, (float)$value / 100);
+                    }
+                    $duplicates[$category] = true;
+                }
+
+                ++$row;
+            }
+        }
+        return $bidStrategyDetails;
     }
 }

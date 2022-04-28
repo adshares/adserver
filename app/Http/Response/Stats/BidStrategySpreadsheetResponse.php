@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Http\Response\Stats;
 
 use Adshares\Adserver\Models\BidStrategy;
 use DateTimeImmutable;
+use DateTimeInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -34,6 +35,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BidStrategySpreadsheetResponse
 {
+    private const COLUMN_PREFIX = 1;
+    private const COLUMN_ID = self::COLUMN_PREFIX + 1;
+    private const COLUMN_DESCRIPTION = self::COLUMN_ID + 1;
+    private const COLUMN_VALUE = self::COLUMN_DESCRIPTION + 1;
+
     private const COLUMNS = [
         'Prefix' => [
             'comment' => 'Prefix should not be changed',
@@ -57,11 +63,11 @@ class BidStrategySpreadsheetResponse
         ],
     ];
 
-    private $bidStrategy;
+    private BidStrategy $bidStrategy;
 
-    private $data;
+    private array $data;
 
-    protected $creator;
+    protected ?string $creator;
 
     public function __construct(BidStrategy $bidStrategy, array $data, ?string $creator = null)
     {
@@ -121,7 +127,6 @@ class BidStrategySpreadsheetResponse
         $sheet = $spreadsheet->getActiveSheet();
         $this->setupMainPage($sheet);
 
-//        die(print_r($this->data));
         foreach ($this->data as $page) {
             $sheet = $spreadsheet->createSheet();
             $sheet->setTitle($page['label']);
@@ -155,7 +160,6 @@ class BidStrategySpreadsheetResponse
             $is_open_ended = false;
 
             foreach ($page['data'] as $row) {
-                $x = 1;
                 $id_parts = explode(":", $row['key']);
                 $id = array_pop($id_parts);
                 $prefix = implode(":", $id_parts);
@@ -164,22 +168,19 @@ class BidStrategySpreadsheetResponse
                     $is_open_ended = true;
                 }
 
-                $sheet->setCellValueByColumnAndRow($x++, $y, $prefix);
-                $sheet->setCellValueByColumnAndRow($x++, $y, $id);
-
-                $sheet->setCellValueByColumnAndRow($x++, $y, $row['label']);
-                $sheet->setCellValueByColumnAndRow($x++, $y, $row['value']);
+                $sheet->setCellValueByColumnAndRow(self::COLUMN_PREFIX, $y, $prefix);
+                $sheet->setCellValueByColumnAndRow(self::COLUMN_ID, $y, $id);
+                $sheet->setCellValueByColumnAndRow(self::COLUMN_DESCRIPTION, $y, $row['label']);
+                $sheet->setCellValueByColumnAndRow(self::COLUMN_VALUE, $y, $row['value']);
                 ++$y;
             }
 
             if ($is_open_ended) {
                 for ($i = 0; $i < 10; $i++) {
-                    $x = 1;
-                    $sheet->setCellValueByColumnAndRow($x++, $y, $prefix);
-                    $sheet->setCellValueByColumnAndRow($x++, $y, '');
-
-                    $sheet->setCellValueByColumnAndRow($x++, $y, '');
-                    $sheet->setCellValueByColumnAndRow($x++, $y, '');
+                    $sheet->setCellValueByColumnAndRow(self::COLUMN_PREFIX, $y, $prefix);
+                    $sheet->setCellValueByColumnAndRow(self::COLUMN_ID, $y, '');
+                    $sheet->setCellValueByColumnAndRow(self::COLUMN_DESCRIPTION, $y, '');
+                    $sheet->setCellValueByColumnAndRow(self::COLUMN_VALUE, $y, '');
                     ++$y;
                 }
             }
@@ -202,9 +203,8 @@ class BidStrategySpreadsheetResponse
                 }
             }
 
-            --$x;
-
-            $sheet->getStyleByColumnAndRow(1, 1, $x, $y)->getBorders()->applyFromArray(
+            $columnCount = count(self::COLUMNS);
+            $sheet->getStyleByColumnAndRow(1, 1, $columnCount, $y)->getBorders()->applyFromArray(
                 [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -212,7 +212,7 @@ class BidStrategySpreadsheetResponse
                     ],
                 ]
             );
-            $sheet->getStyleByColumnAndRow(1, 1, $x, 1)->getBorders()->applyFromArray(
+            $sheet->getStyleByColumnAndRow(1, 1, $columnCount, 1)->getBorders()->applyFromArray(
                 [
                     'bottom' => [
                         'borderStyle' => Border::BORDER_DOUBLE,
@@ -236,7 +236,7 @@ class BidStrategySpreadsheetResponse
         $sheet->setTitle('Main');
         $data = [
             ['Name', $this->bidStrategy->name],
-            ['Created', (new DateTimeImmutable())->format(DateTimeImmutable::ATOM)],
+            ['Created', (new DateTimeImmutable())->format(DateTimeInterface::ATOM)],
         ];
 
         $x = 1;
