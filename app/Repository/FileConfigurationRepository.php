@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Common\Application\Dto\Media;
 use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -30,8 +31,8 @@ use Adshares\Common\Application\Factory\MediaFactory;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
-use Adshares\Common\Exception\RuntimeException;
 use ErrorException;
+use Illuminate\Support\Facades\Log;
 
 final class FileConfigurationRepository implements ConfigurationRepository
 {
@@ -60,7 +61,8 @@ final class FileConfigurationRepository implements ConfigurationRepository
         try {
             $data = file_get_contents($this->targetingFilePath);
         } catch (ErrorException $exception) {
-            throw new RuntimeException('No targeting data.');
+            Log::error('No targeting data.');
+            throw new MissingInitialConfigurationException('No targeting data.');
         }
         return unserialize($data, [Selector::class]);
     }
@@ -70,7 +72,8 @@ final class FileConfigurationRepository implements ConfigurationRepository
         try {
             $data = file_get_contents($this->filteringFilePath);
         } catch (ErrorException $exception) {
-            throw new RuntimeException('No filtering data.');
+            Log::error('No filtering data. Run command ops:filtering-options:update');
+            throw new MissingInitialConfigurationException('No filtering data.');
         }
         return unserialize($data, [Selector::class]);
     }
@@ -110,7 +113,8 @@ final class FileConfigurationRepository implements ConfigurationRepository
         try {
             $data = file_get_contents($this->taxonomyFilePath);
         } catch (ErrorException $exception) {
-            throw new RuntimeException('No taxonomy data.');
+            Log::error('No taxonomy data. Run command ops:targeting-options:update');
+            throw new MissingInitialConfigurationException('No taxonomy data.');
         }
         return unserialize($data, [TaxonomyV2::class]);
     }
