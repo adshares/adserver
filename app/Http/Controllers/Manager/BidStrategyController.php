@@ -32,7 +32,7 @@ use Adshares\Adserver\Models\BidStrategyDetail;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\ViewModel\OptionsSelector;
+use Adshares\Common\Application\Dto\TaxonomyV2\Targeting;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -130,11 +130,9 @@ class BidStrategyController extends Controller
     {
         $bidStrategy = $this->fetchBidStrategy($bidStrategyPublicId);
 
-        $targetingOptions = $this->configurationRepository->fetchTargetingOptions();
-        $targetingSchema = (new OptionsSelector($targetingOptions))->toArray();
-
+        $targeting = $this->configurationRepository->fetchMedium()->getTargeting();
         $bidStrategyDetails = $bidStrategy->bidStrategyDetails->pluck('rank', 'category')->toArray();
-        $data = self::processTargetingOptions($targetingSchema, $bidStrategyDetails);
+        $data = self::processTargeting($targeting, $bidStrategyDetails);
 
         return (new BidStrategySpreadsheetResponse($bidStrategy, $data, (string)config('app.name')))->responseStream();
     }
@@ -166,33 +164,24 @@ class BidStrategyController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    private static function processTargetingOptions(
-        array $options,
-        array $bidStrategyDetails,
-        string $parentKey = '',
-        string $parentLabel = ''
-    ): array {
+    private static function processTargeting(Targeting $targeting, array $bidStrategyDetails): array
+    {
         $result = [];
+        $targetingArray = $targeting->toArray();
+        $targetingRootKeys = [
+            'user' => 'User',
+            'site' => 'Site',
+            'device' => 'Device',
+        ];
 
-        foreach ($options as $option) {
-            $key = ('' === $parentKey) ? $option['key'] : $parentKey . ':' . $option['key'];
-            $label = ('' === $parentLabel) ? $option['label'] : $parentLabel . '|' . $option['label'];
-
-            if (isset($option['children'])) {
-                array_push(
-                    $result,
-                    ...self::processTargetingOptions($option['children'], $bidStrategyDetails, $key, $label)
-                );
-            } elseif (isset($option['values'])) {
+        foreach ($targetingRootKeys as $rootKey => $rootLabel) {
+            foreach ($targetingArray[$rootKey] as $option) {
+                $key = $rootKey . ':' . $option['name'];
+                $label = $rootLabel . '|' . $option['label'];
                 $result[] = [
                     'label' => $label,
-                    'data' => self::processTargetingOptionValues($option['values'], $bidStrategyDetails, $key),
-                ];
-            } else {
-                $result[] = [
-                    'label' => $label,
-                    'data'  => self::processTargetingOptionValues(
-                        [],
+                    'data' => self::processTargetingOptionValues(
+                        $option['items'] ?? [],
                         $bidStrategyDetails,
                         $key
                     ),
@@ -212,33 +201,25 @@ class BidStrategyController extends Controller
         $result = [];
 
         if (empty($optionValues)) {
-                $optionValues = [
-                    [
-                        'label' => 'MISSING',
-                        'value' => '',
-                    ],
-                    [
-                        'label' => 'DEFAULT',
-                        'value' => '*',
-                    ]
-                ];
-                foreach ($bidStrategyDetails as $key => $value) {
-                    $id_parts = explode(":", $key);
-                    $id = array_pop($id_parts);
-                    $prefix = implode(":", $id_parts);
+            $optionValues = [
+                '' => 'MISSING',
+                '*' => 'DEFAULT',
+            ];
+            foreach ($bidStrategyDetails as $key => $value) {
+                $id_parts = explode(":", $key);
+                $id = array_pop($id_parts);
+                $prefix = implode(":", $id_parts);
 
-                    if ($parentKey == $prefix) {
-                        $optionValues[] = [
-                        'label' => '',
-                        'value' => $id,
-                        ];
-                    }
+                if ($parentKey === $prefix && !isset($optionValues[$id])) {
+                    $optionValues[$id] = '';
                 }
+            }
         }
 
-        foreach ($optionValues as $optionValue) {
-            $key = ('' === $parentKey) ? $optionValue['value'] : $parentKey . ':' . $optionValue['value'];
-            $label = ('' === $parentLabel) ? $optionValue['label'] : $parentLabel . '/' . $optionValue['label'];
+        foreach ($optionValues as $optionKey => $option) {
+            $optionLabel = is_array($option) ? $option['label'] : $option;
+            $key = ('' === $parentKey) ? $optionKey : $parentKey . ':' . $optionKey;
+            $label = ('' === $parentLabel) ? $optionLabel : $parentLabel . '/' . $optionLabel;
 
             $result[] = [
                 'key' => $key,
@@ -246,15 +227,10 @@ class BidStrategyController extends Controller
                 'value' => ($bidStrategyDetails[$key] ?? 1) * 100,
             ];
 
-            if (isset($optionValue['values'])) {
+            if (is_array($option)) {
                 array_push(
                     $result,
-                    ...self::processTargetingOptionValues(
-                        $optionValue['values'],
-                        $bidStrategyDetails,
-                        $parentKey,
-                        $label
-                    )
+                    ...self::processTargetingOptionValues($option['values'], $bidStrategyDetails, $parentKey, $label)
                 );
             }
         }
