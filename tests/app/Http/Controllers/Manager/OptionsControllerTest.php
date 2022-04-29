@@ -109,9 +109,8 @@ final class OptionsControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure($expectedFields);
         $content = json_decode($response->content(), true);
-        foreach ($expectedFields as $expectedField) {
-            self::assertIsInt($content[$expectedField]);
-        }
+        self::assertEquals(0, $content['acceptBannersManually']);
+        self::assertEquals('all-by-default', $content['classifierLocalBanners']);
     }
 
     public function testTargeting(): void
