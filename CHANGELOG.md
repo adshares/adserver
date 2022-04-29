@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Filtering local banners in site's classifier
+### Removed
+- Legacy targeting (from Taxonomy v1)
 ### Fixed
 - Error while targeting/filtering is not cached
 

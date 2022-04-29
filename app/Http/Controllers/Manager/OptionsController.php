@@ -131,22 +131,6 @@ class OptionsController extends Controller
         return self::json($data);
     }
 
-    public function targeting(Request $request): JsonResponse
-    {
-        $exclusions = [];
-        if ($request->get('e')) {
-            $exclusions = [
-                '/site/quality' => true
-            ];
-        }
-        try {
-            $selector = $this->optionsRepository->fetchTargetingOptions();
-        } catch (MissingInitialConfigurationException $exception) {
-            return self::json();
-        }
-        return self::json(new OptionsSelector($selector->exclude($exclusions)));
-    }
-
     public function targetingReach(TargetingReachRequest $request): JsonResponse
     {
         $targeting = $request->toArray()['targeting'];
