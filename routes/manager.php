@@ -148,6 +148,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
         Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
+        Route::get('options/sites', [OptionsController::class, 'sites']);
         Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
         Route::get('options/sites/languages', [OptionsController::class, 'languages']);
         Route::get('options/sites/zones', [OptionsController::class, 'zones']);

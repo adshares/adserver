@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -38,6 +38,8 @@ final class AdminControllerTest extends TestCase
     private const URI_PRIVACY_POLICY = '/admin/privacy';
 
     private const URI_SETTINGS = '/admin/settings';
+
+    private const URI_SITE_SETTINGS = '/admin/site-settings';
 
     private const URI_REJECTED_DOMAINS = '/admin/rejected-domains';
 
@@ -280,6 +282,35 @@ final class AdminControllerTest extends TestCase
         $deletedDomains = SitesRejectedDomain::onlyTrashed()->get();
         self::assertCount(1, $deletedDomains);
         self::assertEquals('example1.com', $deletedDomains->first()->domain);
+    }
+
+    public function testSiteSettings(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->patch(
+            self::URI_SITE_SETTINGS,
+            [
+                'classifierLocalBanners' => 'all-by-default',
+                'acceptBannersManually' => '1',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
+    public function testSiteSettingsClassifierLocalBannersInvalid(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->patch(
+            self::URI_SITE_SETTINGS,
+            [
+                'classifierLocalBanners' => '999',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function settings(): array

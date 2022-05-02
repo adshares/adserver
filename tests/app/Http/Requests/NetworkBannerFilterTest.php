@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests\Http\Requests;
 
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,6 +40,7 @@ final class NetworkBannerFilterTest extends TestCase
         self::assertFalse($filter->isUnclassified());
         self::assertEquals(['300x250'], $filter->getSizes());
         self::assertEquals('image', $filter->getType());
+        self::assertFalse($filter->isLocal());
         self::assertEquals('0123456789ABCDEF0123456789ABCDEF', (string)$filter->getNetworkBannerPublicId());
         self::assertEquals('https://example.com', $filter->getLandingUrl());
         self::assertEquals(1, $filter->getUserId());
@@ -77,6 +79,15 @@ final class NetworkBannerFilterTest extends TestCase
         new NetworkBannerFilter($request, 1, 2);
     }
 
+    public function testOnlyLocal(): void
+    {
+        Config::upsertByKey(Config::SITE_CLASSIFIER_LOCAL_BANNERS, Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY);
+
+        $filter = new NetworkBannerFilter(self::getRequest(), 1, 2);
+
+        self::assertTrue($filter->isLocal());
+    }
+
     private function getRequest(array $mergeData = []): Request
     {
         $request = self::createMock(Request::class);
@@ -88,6 +99,7 @@ final class NetworkBannerFilterTest extends TestCase
                 'unclassified' => false,
                 'sizes' => '["300x250"]',
                 'type' => 'image',
+                'local' => false,
                 'banner_id' => '0123456789ABCDEF0123456789ABCDEF',
                 'landing_url' => 'https://example.com',
             ],

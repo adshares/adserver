@@ -96,6 +96,23 @@ final class OptionsControllerTest extends TestCase
         }
     }
 
+    public function testSites(): void
+    {
+        $expectedFields = [
+            'classifierLocalBanners',
+            'acceptBannersManually',
+        ];
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->get('/api/options/sites');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure($expectedFields);
+        $content = json_decode($response->content(), true);
+        self::assertEquals(0, $content['acceptBannersManually']);
+        self::assertEquals('all-by-default', $content['classifierLocalBanners']);
+    }
+
     public function testTargeting(): void
     {
         self::actingAs(factory(User::class)->create(), 'api');

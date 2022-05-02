@@ -27,6 +27,7 @@ use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\TargetingReachRequest;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
@@ -67,6 +68,16 @@ class OptionsController extends Controller
                 'min_budget' => config('app.campaign_min_budget'),
                 'min_cpm' => config('app.campaign_min_cpm'),
                 'min_cpa' => config('app.campaign_min_cpa'),
+            ]
+        );
+    }
+
+    public function sites(): JsonResponse
+    {
+        return self::json(
+            [
+                'acceptBannersManually' => Config::fetchInt(Config::SITE_ACCEPT_BANNERS_MANUALLY),
+                'classifierLocalBanners' => Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS),
             ]
         );
     }
