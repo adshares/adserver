@@ -37,21 +37,12 @@ use function GuzzleHttp\json_decode;
 
 class DummyConfigurationRepository implements ConfigurationRepository
 {
-    public function storeTargetingOptions(Selector $options): void
-    {
-    }
-
     public function storeFilteringOptions(Selector $options): void
     {
     }
 
     public function storeTaxonomyV2(TaxonomyV2 $taxonomy): void
     {
-    }
-
-    public function fetchTargetingOptions(): Selector
-    {
-        return $this->getTaxonomyFromFile('tests/mock/targeting_schema_v1.json');
     }
 
     public function fetchFilteringOptions(): Selector
