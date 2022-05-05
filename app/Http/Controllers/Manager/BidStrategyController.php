@@ -30,7 +30,6 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\BidStrategyDetail;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Dto\TaxonomyV2\Targeting;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -67,14 +66,15 @@ class BidStrategyController extends Controller
         $this->configurationRepository = $configurationRepository;
     }
 
-    public function getBidStrategyUuidDefault(): JsonResponse
+    public function getBidStrategyUuidDefault(string $medium, Request $request): JsonResponse
     {
-        return self::json(['uuid' => Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT)]);
+        $vendor = $request->get('vendor');
+        return self::json(['uuid' => BidStrategy::fetchDefault($medium, $vendor)->uuid]);
     }
 
-    public function putBidStrategyUuidDefault(Request $request): JsonResponse
+    public function patchBidStrategyUuidDefault(string $medium, Request $request): JsonResponse
     {
-        $previousBidStrategyPublicId = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
+        $vendor = $request->get('vendor');
         $bidStrategyPublicId = $request->input('uuid');
         if (!Utils::isUuidValid($bidStrategyPublicId)) {
             throw new UnprocessableEntityHttpException(sprintf('Invalid id (%s)', $bidStrategyPublicId));
@@ -84,14 +84,21 @@ class BidStrategyController extends Controller
         if (null === $bidStrategy) {
             throw new NotFoundHttpException('Bid strategy does not exist.');
         }
+        if ($bidStrategy->medium !== $medium || $bidStrategy->vendor !== $vendor) {
+            throw new UnprocessableEntityHttpException('Invalid medium/vendor');
+        }
         if (BidStrategy::ADMINISTRATOR_ID !== $bidStrategy->user_id) {
             throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot set bid strategy as default.');
         }
 
+        $previousBidStrategy = BidStrategy::fetchDefault($medium, $vendor);
+        $previousBidStrategyPublicId = $previousBidStrategy->uuid;
+
         if ($bidStrategyPublicId != $previousBidStrategyPublicId) {
             DB::beginTransaction();
             try {
-                Config::upsertByKey(Config::BID_STRATEGY_UUID_DEFAULT, $bidStrategyPublicId);
+                $bidStrategy->setDefault(true);
+                $previousBidStrategy->setDefault(false);
                 Campaign::updateBidStrategyUuid($bidStrategyPublicId, $previousBidStrategyPublicId);
                 DB::commit();
             } catch (Exception $exception) {
@@ -108,18 +115,18 @@ class BidStrategyController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function getBidStrategy(Request $request): JsonResponse
+    public function getBidStrategies(string $medium, Request $request): JsonResponse
     {
+        $vendor = $request->get('vendor');
         $attachDefault = filter_var($request->input('attach-default', false), FILTER_VALIDATE_BOOLEAN);
         /** @var User $user */
         $user = Auth::user();
         $userId = $user->isAdmin() ? BidStrategy::ADMINISTRATOR_ID : $user->id;
 
-        $bidStrategyCollection = BidStrategy::fetchForUser($userId);
+        $bidStrategyCollection = BidStrategy::fetchForUser($userId, $medium, $vendor);
 
         if ($attachDefault) {
-            $defaultBidStrategyPublicId = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
-            $defaultBidStrategy = BidStrategy::fetchByPublicId($defaultBidStrategyPublicId);
+            $defaultBidStrategy = BidStrategy::fetchDefault($medium, $vendor);
             $bidStrategyCollection->push($defaultBidStrategy);
         }
 
@@ -238,8 +245,9 @@ class BidStrategyController extends Controller
         return $result;
     }
 
-    public function putBidStrategy(BidStrategyRequest $request): JsonResponse
+    public function putBidStrategy(string $medium, BidStrategyRequest $request): JsonResponse
     {
+        $vendor = $request->get('vendor');
         /** @var User $user */
         $user = Auth::user();
         $isAdmin = $user->isAdmin();
@@ -262,7 +270,7 @@ class BidStrategyController extends Controller
         DB::beginTransaction();
 
         try {
-            $bidStrategy = BidStrategy::register($input['name'], $userId);
+            $bidStrategy = BidStrategy::register($input['name'], $userId, $medium, $vendor);
             $bidStrategy->bidStrategyDetails()->saveMany($bidStrategyDetails);
 
             DB::commit();
@@ -306,7 +314,7 @@ class BidStrategyController extends Controller
         if (Campaign::isBidStrategyUsed($bidStrategy->uuid)) {
             throw new UnprocessableEntityHttpException('The bid strategy is used and therefore cannot be deleted.');
         }
-        if ($bidStrategy->uuid === Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT)) {
+        if ($bidStrategy->is_default) {
             throw new UnprocessableEntityHttpException('Default bid strategy cannot be deleted.');
         }
 

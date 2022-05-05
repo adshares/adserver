@@ -52,9 +52,12 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             'campaigns/bid-strategy/{bid_strategy_public_id}/spreadsheet',
             [BidStrategyController::class, 'putBidStrategySpreadsheet']
         );
-        Route::get('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'getBidStrategyUuidDefault']);
-        Route::get('campaigns/bid-strategy', [BidStrategyController::class, 'getBidStrategy']);
-        Route::put('campaigns/bid-strategy', [BidStrategyController::class, 'putBidStrategy']);
+        Route::get(
+            'campaigns/bid-strategy/media/{medium}/uuid-default',
+            [BidStrategyController::class, 'getBidStrategyUuidDefault']
+        );
+        Route::get('campaigns/bid-strategy/media/{medium}', [BidStrategyController::class, 'getBidStrategies']);
+        Route::put('campaigns/bid-strategy/media/{medium}', [BidStrategyController::class, 'putBidStrategy']);
         Route::patch(
             'campaigns/bid-strategy/{bid_strategy_public_id}',
             [BidStrategyController::class, 'patchBidStrategy']

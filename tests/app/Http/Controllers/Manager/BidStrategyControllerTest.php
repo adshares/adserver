@@ -43,10 +43,6 @@ class BidStrategyControllerTest extends TestCase
 {
     private const URI = '/api/campaigns/bid-strategy';
 
-    private const URI_UUID_GET = '/api/campaigns/bid-strategy/uuid-default';
-
-    private const URI_UUID_PUT = '/admin/campaigns/bid-strategy/uuid-default';
-
     private const STRUCTURE_CHECK = [
         [
             'uuid',
@@ -78,7 +74,7 @@ class BidStrategyControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(self::buildUri());
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
     }
@@ -87,7 +83,7 @@ class BidStrategyControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI . '?attach-default=true');
+        $response = $this->getJson(self::buildUri() . '&attach-default=true');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::STRUCTURE_CHECK);
         $response->assertJsonCount(1);
@@ -97,10 +93,10 @@ class BidStrategyControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $responsePut = $this->putJson(self::URI, self::DATA);
+        $responsePut = $this->putJson(self::buildUri(), self::DATA);
         $responsePut->assertStatus(Response::HTTP_CREATED);
 
-        $responseGet = $this->getJson(self::URI);
+        $responseGet = $this->getJson(self::buildUri());
         $responseGet->assertStatus(Response::HTTP_OK);
         $responseGet->assertJsonStructure(self::STRUCTURE_CHECK);
         $responseGet->assertJsonCount(1);
@@ -119,7 +115,7 @@ class BidStrategyControllerTest extends TestCase
         $this->actingAs($user, 'api');
         factory(BidStrategy::class)->times($limit)->create(['user_id' => $user->id]);
 
-        $responsePut = $this->putJson(self::URI, self::DATA);
+        $responsePut = $this->putJson(self::buildUri(), self::DATA);
         $responsePut->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -129,10 +125,10 @@ class BidStrategyControllerTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::buildUriPatchBidStrategy($bidStrategyPublicId), self::DATA);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $bidStrategyEdited = BidStrategy::fetchByPublicId($bidStrategyPublicId)->toArray();
@@ -146,10 +142,10 @@ class BidStrategyControllerTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $bidStrategy = BidStrategy::register('test', $user->id + 1);
+        $bidStrategy = BidStrategy::register('test', $user->id + 1, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::buildUriPatchBidStrategy($bidStrategyPublicId), self::DATA);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -161,7 +157,7 @@ class BidStrategyControllerTest extends TestCase
 
         $bidStrategyPublicId = '0123456789abcdef0123456789abcdef';
 
-        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::buildUriPatchBidStrategy($bidStrategyPublicId), self::DATA);
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -171,9 +167,9 @@ class BidStrategyControllerTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $bidStrategyInvalidPublicId = 1000;
+        $bidStrategyInvalidPublicId = '1000';
 
-        $response = $this->patchJson(self::URI . '/' . $bidStrategyInvalidPublicId, self::DATA);
+        $response = $this->patchJson(self::buildUriPatchBidStrategy($bidStrategyInvalidPublicId), self::DATA);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -185,7 +181,7 @@ class BidStrategyControllerTest extends TestCase
 
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->putJson(self::URI, self::DATA);
+        $response = $this->putJson(self::buildUri(), self::DATA);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
@@ -199,10 +195,10 @@ class BidStrategyControllerTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI . '/' . $bidStrategyPublicId, self::DATA);
+        $response = $this->patchJson(self::buildUriPatchBidStrategy($bidStrategyPublicId), self::DATA);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
@@ -215,7 +211,7 @@ class BidStrategyControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->putJson(self::URI, $data);
+        $response = $this->putJson(self::buildUri(), $data);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -263,76 +259,112 @@ class BidStrategyControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI_UUID_GET);
+        $response = $this->getJson(self::buildUriGetDefaultUuid());
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['uuid']);
     }
 
-    public function testPutDefaultUuidValid(): void
+    public function testChangeDefaultUuidValid(): void
     {
         /** @var User $user */
         $user = factory(User::class)->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID);
+        $initialBidStrategy = (new BidStrategy())->first();
+        self::assertTrue($initialBidStrategy->is_default);
+        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $responsePut = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+        $responsePut = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => $bidStrategyPublicId]);
         $responsePut->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertFalse(BidStrategy::fetchByPublicId($initialBidStrategy->uuid)->is_default);
+        self::assertTrue(BidStrategy::fetchByPublicId($bidStrategyPublicId)->is_default);
 
-        $responseGet = $this->getJson(self::URI_UUID_GET);
+        $responseGet = $this->getJson(self::buildUriGetDefaultUuid());
         $responseGet->assertStatus(Response::HTTP_OK);
         $responseGet->assertJsonStructure(['uuid']);
         self::assertEquals($bidStrategyPublicId, $responseGet->json('uuid'));
     }
 
-    public function testPutDefaultUuidInvalid(): void
+    public function testChangeDefaultUuidInvalid(): void
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
-        $response = $this->put(self::URI_UUID_PUT, ['uuid' => '1234']);
+        $response = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => '1234']);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testPutDefaultUuidNotExisting(): void
+    public function testChangeDefaultUuidNotExisting(): void
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
-        $response = $this->put(self::URI_UUID_PUT, ['uuid' => '00000000000000000000000000000000']);
+        $response = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => '00000000000000000000000000000000']);
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
-    public function testPutDefaultUuidForbidden(): void
+    public function testChangeDefaultUuidInvalidMedium(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->patch(
+            self::buildUriPatchDefaultUuid('metaverse', 'cryptovoxels'),
+            ['uuid' => $bidStrategyPublicId]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeDefaultUuidInvalidVendor(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id, 'metaverse', 'decentraland');
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->patch(
+            self::buildUriPatchDefaultUuid('metaverse', 'cryptovoxels'),
+            ['uuid' => $bidStrategyPublicId]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testChangeDefaultUuidForbidden(): void
     {
         /** @var User $user */
         $user = factory(User::class)->create(['is_admin' => 0]);
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+        $response = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => $bidStrategyPublicId]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testPutDefaultUuidOtherUser(): void
+    public function testChangeDefaultUuidOtherUser(): void
     {
         /** @var User $userAdmin */
         $userAdmin = factory(User::class)->create(['is_admin' => 1]);
         $this->actingAs($userAdmin, 'api');
         /** @var User $userOther */
         $userOther = factory(User::class)->create(['is_admin' => 0]);
-        $bidStrategy = BidStrategy::register('test', $userOther->id);
+        $bidStrategy = BidStrategy::register('test', $userOther->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+        $response = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => $bidStrategyPublicId]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testPutDefaultUuidDbConnectionError(): void
+    public function testChangeDefaultUuidDbConnectionError(): void
     {
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new RuntimeException());
@@ -341,10 +373,10 @@ class BidStrategyControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID);
+        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+        $response = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => $bidStrategyPublicId]);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
@@ -357,11 +389,11 @@ class BidStrategyControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register($bidStrategyName, $user->id);
+        $bidStrategy = BidStrategy::register($bidStrategyName, $user->id, 'web', null);
         $bidStrategy->bidStrategyDetails()->save(BidStrategyDetail::create($bidStrategyCategory, $bidStrategyRank));
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->get(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet');
+        $response = $this->get(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId));
         $response->assertStatus(Response::HTTP_OK);
         $fileName = 'test.xlsx';
         Storage::put($fileName, $response->streamedContent());
@@ -408,10 +440,10 @@ class BidStrategyControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet');
+        $response = $this->post(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId));
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
@@ -420,11 +452,24 @@ class BidStrategyControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
         $file = UploadedFile::fake()->image('avatar.jpg');
 
-        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet', ['file' => $file]);
+        $response = $this->post(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId), ['file' => $file]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUploadSpreadsheetCorruptedFile(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+        $file = new UploadedFile(base_path('tests/mock/empty.zip'), 'empty.zip');
+
+        $response = $this->post(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId), ['file' => $file]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -438,7 +483,7 @@ class BidStrategyControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
         $fileName = 'text.xlsx';
         $fileNameWithPath = Storage::path('') . $fileName;
@@ -455,7 +500,7 @@ class BidStrategyControllerTest extends TestCase
         DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
 
-        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet', ['file' => $file]);
+        $response = $this->post(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId), ['file' => $file]);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
 
         Storage::delete($fileName);
@@ -471,7 +516,7 @@ class BidStrategyControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register($bidStrategyName, $user->id);
+        $bidStrategy = BidStrategy::register($bidStrategyName, $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
         $fileName = 'text.xlsx';
         $fileNameWithPath = Storage::path('') . $fileName;
@@ -484,7 +529,7 @@ class BidStrategyControllerTest extends TestCase
             true
         );
 
-        $response = $this->post(self::URI . '/' . $bidStrategyPublicId . '/spreadsheet', ['file' => $file]);
+        $response = $this->post(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId), ['file' => $file]);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $updatedBidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
@@ -542,6 +587,31 @@ class BidStrategyControllerTest extends TestCase
 
         $writer = new Xlsx($spreadsheet);
         $writer->save($fileName);
+    }
+
+    private static function buildUri(string $medium = 'web', ?string $vendor = null): string
+    {
+        return sprintf('%s/media/%s?vendor=%s', self::URI, $medium, $vendor);
+    }
+
+    private static function buildUriPatchBidStrategy(string $uuid): string
+    {
+        return sprintf('%s/%s', self::URI, $uuid);
+    }
+
+    private static function buildUriPostBidStrategySpreadsheet(string $uuid): string
+    {
+        return sprintf('%s/%s/spreadsheet', self::URI, $uuid);
+    }
+
+    private static function buildUriPatchDefaultUuid(string $medium = 'web', ?string $vendor = null): string
+    {
+        return sprintf('/admin/campaigns/bid-strategy/media/%s/uuid-default?vendor=%s', $medium, $vendor);
+    }
+
+    private static function buildUriGetDefaultUuid(string $medium = 'web', ?string $vendor = null): string
+    {
+        return sprintf('/api/campaigns/bid-strategy/media/%s/uuid-default?vendor=%s', $medium, $vendor);
     }
 
     protected function setUp(): void

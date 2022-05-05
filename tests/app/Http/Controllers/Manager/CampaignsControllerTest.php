@@ -26,12 +26,13 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Http\Response;
@@ -439,11 +440,27 @@ final class CampaignsControllerTest extends TestCase
         ];
     }
 
+    public function testAddCampaignExchangeRateNotAvailable(): void
+    {
+        $exchangeRateRepository = self::createMock(ExchangeRateRepository::class);
+        $exchangeRateRepository->method('fetchExchangeRate')->willThrowException(new ExchangeRateNotAvailableException('test'));
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            static function () use ($exchangeRateRepository) {
+                return $exchangeRateRepository;
+            }
+        );
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
+        $response->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE);
+    }
+
     public function testAddCampaignInvalidSetupMissingDefaultBidStrategy(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        DB::delete('DELETE FROM configs WHERE `key`=?', [Config::BID_STRATEGY_UUID_DEFAULT]);
+        DB::delete('DELETE FROM bid_strategy WHERE 1=1');
 
         $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
         $response->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE);
