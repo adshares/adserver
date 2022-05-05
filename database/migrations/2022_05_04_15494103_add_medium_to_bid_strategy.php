@@ -19,10 +19,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Config;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class AddMediumToBidStrategy extends Migration
@@ -35,6 +39,29 @@ class AddMediumToBidStrategy extends Migration
             $table->boolean('is_default')->default(0);
         });
 
+        $this->setupDefaultBidStrategyForWeb();
+        $this->insertDefaultBidStrategiesForMediaOtherThanWeb();
+    }
+
+    public function down(): void
+    {
+        $now = new DateTimeImmutable();
+        $uuid = bin2hex(
+            DB::selectOne('SELECT `uuid` FROM bid_strategy WHERE user_id = 0 AND `medium` = ? LIMIT 1', ['web'])->uuid
+        );
+
+        Schema::table('bid_strategy', function (Blueprint $table) {
+            $table->dropColumn(['medium', 'vendor', 'is_default']);
+        });
+
+        DB::insert(
+            'INSERT INTO configs (`key`, value, created_at, updated_at) VALUES (?,?,?,?)',
+            [Config::BID_STRATEGY_UUID_DEFAULT, $uuid, $now, $now]
+        );
+    }
+
+    private function setupDefaultBidStrategyForWeb(): void
+    {
         $uuid = DB::selectOne(
             'SELECT `value` FROM configs WHERE `key` = ?',
             [Config::BID_STRATEGY_UUID_DEFAULT]
@@ -43,17 +70,23 @@ class AddMediumToBidStrategy extends Migration
         DB::delete('DELETE FROM configs WHERE `key`=?', [Config::BID_STRATEGY_UUID_DEFAULT]);
     }
 
-    public function down(): void
+    private function insertDefaultBidStrategiesForMediaOtherThanWeb(): void
     {
-        Schema::table('bid_strategy', function (Blueprint $table) {
-            $table->dropColumn(['medium', 'vendor', 'is_default']);
-        });
+        /** @var ConfigurationRepository $configurationRepository */
+        $configurationRepository = app(ConfigurationRepository::class);
+        try {
+            $taxonomy = $configurationRepository->fetchTaxonomy();
+        } catch (MissingInitialConfigurationException $exception) {
+            Log::info(sprintf('Fetch taxonomy exception: %s', $exception->getMessage()));
+            return;
+        }
 
-        $now = new DateTimeImmutable();
-        $uuid = bin2hex(DB::selectOne('SELECT `uuid` FROM bid_strategy WHERE user_id = 0 LIMIT 1')->uuid);
-        DB::insert(
-            'INSERT INTO configs (`key`, value, created_at, updated_at) VALUES (?,?,?,?)',
-            [Config::BID_STRATEGY_UUID_DEFAULT, $uuid, $now, $now]
-        );
+        foreach ($taxonomy->getMedia() as $mediumObject) {
+            BidStrategy::registerIfMissingDefault(
+                sprintf('Default %s', $mediumObject->getVendorLabel() ?: $mediumObject->getLabel()),
+                $mediumObject->getName(),
+                $mediumObject->getVendor(),
+            );
+        }
     }
 }

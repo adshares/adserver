@@ -101,6 +101,16 @@ class BidStrategy extends Model
         return $model;
     }
 
+    public static function registerIfMissingDefault(string $name, string $medium, ?string $vendor): void
+    {
+        if (BidStrategy::fetchDefault($medium, $vendor) !== null) {
+            return;
+        }
+
+        BidStrategy::register($name, BidStrategy::ADMINISTRATOR_ID, $medium, $vendor)
+            ->setDefault(true);
+    }
+
     public static function countByUserId(int $userId): int
     {
         return self::where('user_id', $userId)->count();
