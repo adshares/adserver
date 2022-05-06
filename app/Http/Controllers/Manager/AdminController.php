@@ -343,4 +343,51 @@ class AdminController extends Controller
 
         return self::json($user->toArray());
     }
+
+    public function banUser(int $userId, Request $request): JsonResponse
+    {
+        $reason = $request->input('reason');
+        if (!is_string($reason) || strlen(trim($reason)) < 1 || strlen(trim($reason)) > 255) {
+            throw new UnprocessableEntityHttpException('Invalid reason');
+        }
+
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+
+        $user->is_banned = true;
+        $user->ban_reason = $reason;
+        $user->save();
+
+        return self::json($user->toArray());
+    }
+
+    public function unbanUser(int $userId): JsonResponse
+    {
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+
+        $user->is_banned = false;
+        $user->save();
+
+        return self::json($user->toArray());
+    }
+
+    public function deleteUser(int $userId): JsonResponse
+    {
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+
+        //TODO delete user with all campaigns, sites
+
+        return self::json([], Response::HTTP_NO_CONTENT);
+    }
 }

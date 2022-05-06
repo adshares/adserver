@@ -65,6 +65,8 @@ use Illuminate\Support\Facades\Hash;
  * @property int|null auto_withdrawal
  * @property bool is_auto_withdrawal
  * @property int auto_withdrawal_limit
+ * @property bool is_banned
+ * @property string ban_reason
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -140,6 +142,8 @@ class User extends Authenticatable
         'is_confirmed',
         'is_subscribed',
         'adserver_wallet',
+        'is_banned',
+        'ban_reason',
     ];
 
     protected $traitAutomate = [

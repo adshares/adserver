@@ -313,6 +313,94 @@ final class AdminControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testBanUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId), ['reason' => 'suspicious activity']);
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testBanNotExistingUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->post(self::buildUriBan(-1), ['reason' => 'suspicious activity']);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testBanUserByRegularUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testBanUserNoReason(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUserEmptyReason(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId), ['reason' => ' ']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUserTooLongReason(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId), ['reason' => str_repeat('a', 256)]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUnbanUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriUnban($userId));
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testUnbanNotExistingUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->post(self::buildUriUnban(-1));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testUnbanUserByRegularUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriUnban($userId));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     private function settings(): array
     {
         return [
@@ -330,5 +418,15 @@ final class AdminControllerTest extends TestCase
             'registrationMode' => 'public',
             'autoConfirmationEnabled' => 1,
         ];
+    }
+
+    private static function buildUriBan($userId): string
+    {
+        return sprintf('/admin/users/%d/ban', $userId);
+    }
+
+    private static function buildUriUnban($userId): string
+    {
+        return sprintf('/admin/users/%d/unban', $userId);
     }
 }

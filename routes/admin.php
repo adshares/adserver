@@ -49,6 +49,9 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);
 
     Route::post('users/{id}/switchToModerator', [AdminController::class, 'switchUserToModerator']);
+    Route::post('users/{id}/ban', [AdminController::class, 'banUser']);
+    Route::post('users/{id}/unban', [AdminController::class, 'unbanUser']);
+    Route::post('users/{id}/delete', [AdminController::class, 'deleteUser']);
 });
 
 Route::middleware([Kernel::MODERATOR_ACCESS, Kernel::JSON_API])->group(function () {
