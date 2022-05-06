@@ -545,6 +545,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testDeleteOnDbConnectionError(): void
     {
+        DB::shouldReceive('selectOne')->andReturnNull();
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new RuntimeException());
         DB::shouldReceive('rollback')->andReturnUndefined();
