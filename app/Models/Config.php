@@ -41,7 +41,7 @@ class Config extends Model
     public const LICENCE_TX_FEE = 'licence-tx-fee';
     public const LICENCE_RX_FEE = 'licence-rx-fee';
     public const LICENCE_ACCOUNT = 'licence-account';
-    /** @deprecated default uuid is stored in DB */
+    /** @deprecated default uuid is stored in DB in bid_strategy table */
     public const BID_STRATEGY_UUID_DEFAULT = 'bid-strategy-uuid-default';
     public const ADPAY_BID_STRATEGY_EXPORT_TIME = 'adpay-bid-strategy-export';
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';

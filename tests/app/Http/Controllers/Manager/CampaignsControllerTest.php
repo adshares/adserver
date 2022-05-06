@@ -443,7 +443,8 @@ final class CampaignsControllerTest extends TestCase
     public function testAddCampaignExchangeRateNotAvailable(): void
     {
         $exchangeRateRepository = self::createMock(ExchangeRateRepository::class);
-        $exchangeRateRepository->method('fetchExchangeRate')->willThrowException(new ExchangeRateNotAvailableException('test'));
+        $exchangeRateRepository->method('fetchExchangeRate')
+            ->willThrowException(new ExchangeRateNotAvailableException('test'));
         $this->app->bind(
             ExchangeRateRepository::class,
             static function () use ($exchangeRateRepository) {
