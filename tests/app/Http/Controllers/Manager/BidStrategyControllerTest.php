@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -380,20 +381,22 @@ class BidStrategyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function testDownloadSpreadsheet(): void
-    {
-        $bidStrategyName = 'test';
-        $bidStrategyCategory = 'user:country:af';
-        $bidStrategyRank = 0.3;
+    /**
+     * @dataProvider downloadSpreadSheetProvider
+     */
+    public function testDownloadSpreadsheet(
+        string $bidStrategyName,
+        string $bidStrategyCategory,
+        float $bidStrategyRank
+    ): void {
 
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register($bidStrategyName, $user->id, 'web', null);
         $bidStrategy->bidStrategyDetails()->save(BidStrategyDetail::create($bidStrategyCategory, $bidStrategyRank));
-        $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->get(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId));
+        $response = $this->get(self::buildUriPostBidStrategySpreadsheet($bidStrategy->uuid));
         $response->assertStatus(Response::HTTP_OK);
         $fileName = 'test.xlsx';
         Storage::put($fileName, $response->streamedContent());
@@ -403,36 +406,22 @@ class BidStrategyControllerTest extends TestCase
         $spreadsheet = $reader->load($fileNameWithPath);
 
         $sheets = $spreadsheet->getAllSheets();
-        $sheetsCount = count($sheets);
-        $mainSheet = $sheets[0];
-        $name = $mainSheet->getCellByColumnAndRow(2, 1)->getValue();
-
+        $name = $this->getNameFromSheets($sheets);
+        $bidStrategyDetails = $this->getBidStrategyDetailsFromSheets($sheets);
         self::assertEquals($bidStrategyName, $name);
-
-        $bidStrategyDetails = [];
-        for ($i = 1; $i < $sheetsCount; $i++) {
-            $sheet = $sheets[$i];
-            $row = 2;
-
-            while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
-                if (100 !== $value) {
-                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue()
-                        . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
-                    $bidStrategyDetails[] = [
-                        'category' => $category,
-                        'rank' => (float)$value / 100,
-                    ];
-                }
-
-                ++$row;
-            }
-        }
-
         self::assertCount(1, $bidStrategyDetails);
         self::assertEquals($bidStrategyCategory, $bidStrategyDetails[0]['category']);
         self::assertEquals($bidStrategyRank, $bidStrategyDetails[0]['rank']);
 
         Storage::delete($fileName);
+    }
+
+    public function downloadSpreadSheetProvider(): array
+    {
+        return [
+            'user:country' => ['test', 'user:country:af', 0.3],
+            'site:domain' => ['test', 'site:domain:example.com', 0.9],
+        ];
     }
 
     public function testUploadSpreadsheetMissingFile(): void
@@ -542,6 +531,58 @@ class BidStrategyControllerTest extends TestCase
         Storage::delete($fileName);
     }
 
+    public function testDelete(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
+
+        $response = $this->delete(self::buildUriPatchBidStrategy($bidStrategy->uuid));
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
+    public function testDeleteOnDbConnectionError(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException());
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
+
+        $response = $this->delete(self::buildUriPatchBidStrategy($bidStrategy->uuid));
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testDeleteUsed(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
+        factory(Campaign::class)->create(['user_id' => $user->id, 'bid_strategy_uuid' => $bidStrategy->uuid]);
+
+        $response = $this->delete(self::buildUriPatchBidStrategy($bidStrategy->uuid));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeleteDefault(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = (new BidStrategy())->first();
+
+        $response = $this->delete(self::buildUriPatchBidStrategy($bidStrategy->uuid));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     private function generateXlsx(string $fileName, string $bidStrategyName, array $bidStrategyData): void
     {
         $spreadsheet = new Spreadsheet();
@@ -587,6 +628,35 @@ class BidStrategyControllerTest extends TestCase
 
         $writer = new Xlsx($spreadsheet);
         $writer->save($fileName);
+    }
+
+    private function getNameFromSheets(array $sheets): string
+    {
+        $mainSheet = $sheets[0];
+        return $mainSheet->getCellByColumnAndRow(2, 1)->getValue();
+    }
+
+    private function getBidStrategyDetailsFromSheets(array $sheets): array
+    {
+        $bidStrategyDetails = [];
+        for ($i = 1; $i < count($sheets); $i++) {
+            $sheet = $sheets[$i];
+            $row = 2;
+
+            while (null !== ($value = $sheet->getCellByColumnAndRow(4, $row)->getValue())) {
+                if (100 !== $value) {
+                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue()
+                        . ':' . $sheet->getCellByColumnAndRow(2, $row)->getValue();
+                    $bidStrategyDetails[] = [
+                        'category' => $category,
+                        'rank' => (float)$value / 100,
+                    ];
+                }
+
+                ++$row;
+            }
+        }
+        return $bidStrategyDetails;
     }
 
     private static function buildUri(string $medium = 'web', ?string $vendor = null): string

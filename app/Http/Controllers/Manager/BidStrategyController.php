@@ -208,19 +208,7 @@ class BidStrategyController extends Controller
         $result = [];
 
         if (empty($optionValues)) {
-            $optionValues = [
-                '' => 'MISSING',
-                '*' => 'DEFAULT',
-            ];
-            foreach ($bidStrategyDetails as $key => $value) {
-                $id_parts = explode(":", $key);
-                $id = array_pop($id_parts);
-                $prefix = implode(":", $id_parts);
-
-                if ($parentKey === $prefix && !isset($optionValues[$id])) {
-                    $optionValues[$id] = '';
-                }
-            }
+            $optionValues = self::prepareOptionForInputType($bidStrategyDetails, $parentKey);
         }
 
         foreach ($optionValues as $optionKey => $option) {
@@ -243,6 +231,24 @@ class BidStrategyController extends Controller
         }
 
         return $result;
+    }
+
+    private static function prepareOptionForInputType(array $bidStrategyDetails, string $parentKey): array
+    {
+        $optionValues = [
+            '' => 'MISSING',
+            '*' => 'DEFAULT',
+        ];
+        foreach ($bidStrategyDetails as $key => $value) {
+            $id_parts = explode(':', $key);
+            $id = array_pop($id_parts);
+            $prefix = implode(':', $id_parts);
+
+            if ($parentKey === $prefix && !isset($optionValues[$id])) {
+                $optionValues[$id] = '';
+            }
+        }
+        return $optionValues;
     }
 
     public function putBidStrategy(string $medium, BidStrategyRequest $request): JsonResponse
