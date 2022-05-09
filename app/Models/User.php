@@ -162,6 +162,11 @@ class User extends Authenticatable
 
     protected function toArrayExtras($array)
     {
+        // TODO why email is overwritten with wallet_address on user list (UsersController, L. 48)
+        // $builder->select(['*', DB::raw('IFNULL(email, wallet_address) AS email')]);
+        if (null === $array['email']) {
+            $array['email'] = (string)$array['wallet_address'];
+        }
         unset($array['wallet_address']);
         return $array;
     }
