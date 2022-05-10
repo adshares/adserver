@@ -316,11 +316,12 @@ final class AdminControllerTest extends TestCase
     public function testBanUser(): void
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create()->id;
+        $userId = factory(User::class)->create(['api_token' => '1234'])->id;
 
         $response = $this->post(self::buildUriBan($userId), ['reason' => 'suspicious activity']);
 
         $response->assertStatus(Response::HTTP_OK);
+        self::assertNull(User::fetchById($userId)->api_token);
     }
 
     public function testBanNotExistingUser(): void

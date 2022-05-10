@@ -1,6 +1,4 @@
 <?php
-// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
-
 /**
  * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
@@ -19,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
+// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 
 declare(strict_types=1);
 
@@ -666,6 +666,19 @@ class AuthControllerTest extends TestCase
         $this->get(self::LOG_OUT_URI, ['Authorization' => 'Bearer ' . $apiToken])
             ->assertStatus(Response::HTTP_NO_CONTENT);
         self::assertNull(User::fetchById($user->id)->api_token, 'Token is not null');
+    }
+
+    public function testLogInBannedUser(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)
+            ->create(['password' => '87654321', 'is_banned' => true, 'ban_reason' => 'suspicious activity']);
+
+        $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321']);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $content = json_decode($response->getContent(), true);
+        self::assertArrayHasKey('reason', $content);
     }
 
     public function testSetPassword(): void

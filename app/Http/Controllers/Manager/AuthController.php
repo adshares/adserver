@@ -341,7 +341,12 @@ class AuthController extends Controller
                 $request->filled('remember')
             )
         ) {
-            Auth::user()->generateApiKey();
+            /** @var User $user */
+            $user = Auth::user();
+            if ($user->is_banned) {
+                return new JsonResponse(['reason' => $user->ban_reason], Response::HTTP_FORBIDDEN);
+            }
+            $user->generateApiKey();
             return $this->check();
         }
 

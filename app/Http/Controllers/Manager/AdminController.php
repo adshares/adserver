@@ -357,9 +357,7 @@ class AdminController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $user->is_banned = true;
-        $user->ban_reason = $reason;
-        $user->save();
+        $user->ban($reason);
 
         return self::json($user->toArray());
     }
@@ -372,8 +370,7 @@ class AdminController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $user->is_banned = false;
-        $user->save();
+        $user->unban();
 
         return self::json($user->toArray());
     }

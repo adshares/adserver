@@ -261,6 +261,20 @@ class User extends Authenticatable
         $this->save();
     }
 
+    public function ban(string $reason): void
+    {
+        $this->is_banned = true;
+        $this->ban_reason = $reason;
+        $this->api_token = null;
+        $this->save();
+    }
+
+    public function unban(): void
+    {
+        $this->is_banned = false;
+        $this->save();
+    }
+
     public static function fetchById(int $id): ?self
     {
         return self::find($id);
