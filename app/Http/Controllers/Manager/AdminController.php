@@ -356,7 +356,9 @@ class AdminController extends Controller
         if (empty($user)) {
             throw new NotFoundHttpException();
         }
-
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator can not be banned');
+        }
         $user->ban($reason);
 
         return self::json($user->toArray());
