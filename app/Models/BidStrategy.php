@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -105,6 +105,9 @@ class BidStrategy extends Model
         return self::where('updated_at', '>=', $dateFrom)->limit($limit)->offset($offset)->get();
     }
 
+    /**
+     * @return Collection|BidStrategy[]
+     */
     public static function fetchForUser(int $userId): Collection
     {
         return self::where('user_id', $userId)->get();

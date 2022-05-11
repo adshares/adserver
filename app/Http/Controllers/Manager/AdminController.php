@@ -30,11 +30,16 @@ use Adshares\Adserver\Http\Requests\UpdateRegulation;
 use Adshares\Adserver\Http\Response\LicenseResponse;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
@@ -357,7 +362,7 @@ class AdminController extends Controller
             throw new NotFoundHttpException();
         }
         if ($user->isAdmin()) {
-            throw new UnprocessableEntityHttpException('Administrator can not be banned');
+            throw new UnprocessableEntityHttpException('Administrator cannot be banned');
         }
         $user->ban($reason);
 
@@ -377,15 +382,51 @@ class AdminController extends Controller
         return self::json($user->toArray());
     }
 
-    public function deleteUser(int $userId): JsonResponse
+    public function deleteUser(int $userId, CampaignRepository $campaignRepository): JsonResponse
     {
         /** @var User $user */
         $user = User::find($userId);
         if (empty($user)) {
             throw new NotFoundHttpException();
         }
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator cannot be deleted');
+        }
 
-        //TODO delete user with all campaigns, sites
+        DB::beginTransaction();
+        try {
+            $campaigns = $campaignRepository->findByUserId($userId);
+            foreach ($campaigns as $campaign) {
+                $campaign->conversions()->delete();
+                $campaignRepository->delete($campaign);
+            }
+
+            $bidStrategies = BidStrategy::fetchForUser($userId);
+            foreach ($bidStrategies as $bidStrategy) {
+                $bidStrategy->bidStrategyDetails()->delete();
+                $bidStrategy->delete();
+            }
+
+            $sites = $user->sites();
+            foreach ($sites->get() as $site) {
+                $site->zones()->delete();
+            }
+            $sites->delete();
+
+            $refLinks = RefLink::fetchByUser($userId);
+            foreach ($refLinks as $refLink) {
+                $refLink->delete();
+            }
+            Token::deleteByUserId($userId);
+            Classification::deleteByUserId($userId);
+
+            $user->delete();
+
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }

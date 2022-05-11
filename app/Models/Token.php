@@ -211,4 +211,9 @@ class Token extends Model
             ->where('valid_until', '<', date('Y-m-d H:i:s'))
             ->get();
     }
+
+    public static function deleteByUserId(int $userId): void
+    {
+        self::where('user_id', $userId)->delete();
+    }
 }

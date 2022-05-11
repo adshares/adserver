@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -101,6 +101,11 @@ class Classification extends Model
     public static function findByBannerId(int $bannerId)
     {
         return self::where('banner_id', $bannerId)->get();
+    }
+
+    public static function deleteByUserId(int $userId): void
+    {
+        self::where('user_id', $userId)->delete();
     }
 
     public function banner(): BelongsTo

@@ -21,12 +21,26 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Classification;
+use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\RefLink;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Http\Response;
+use DateTimeImmutable;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
 
 use function json_decode;
@@ -412,6 +426,142 @@ final class AdminControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
+    public function testDeleteUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        /** @var Campaign $campaign */
+        $campaign = factory(Campaign::class)->create(
+            [
+                'uuid' => '0123456789ABCDEF0123456789ABCDEF',
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_INACTIVE,
+                'landing_url' => 'https://example.com',
+                'time_start' => (new DateTimeImmutable())->format(DATE_ATOM),
+                'time_end' => (new DateTimeImmutable('+1 hour'))->format(DATE_ATOM),
+                'name' => 'test campaign',
+                'max_cpc' => 0,
+                'max_cpm' => null,
+                'budget' => 10000000000000,
+                'targeting_excludes' => [
+                    'site' => [
+                        'quality' => ['low'],
+                        'category' => ['adult', 'diets'],
+                    ],
+                ],
+                'targeting_requires' => [
+                    'user' => [
+                        'country' => ['us'],
+                    ],
+                ],
+                'classification_status' => 0,
+                'classification_tags' => null,
+                'bid_strategy_uuid' => '00000000000000000000000000000000',
+            ]
+        );
+        /** @var Banner $banner */
+        $banner = factory(Banner::class)->create(
+            [
+                'campaign_id' => $campaign->id,
+                'creative_contents' => '0123456789012345678901234567890123456789',
+                'creative_type' => 'image',
+                'creative_mime' => 'image/png',
+                'creative_size' => '300x250',
+                'name' => 'IMAGE 1',
+                'status' => Banner::STATUS_INACTIVE,
+            ]
+        );
+        $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
+        /** @var ConversionDefinition $conversionDefinition */
+        $conversionDefinition = factory(ConversionDefinition::class)->create(
+            [
+                'campaign_id' => $campaign->id,
+                'limit_type' => 'in_budget',
+                'is_repeatable' => true,
+            ]
+        );
+
+        /** @var BidStrategy $bidStrategy */
+        $bidStrategy = factory(BidStrategy::class)->create(['user_id' => $user->id]);
+        $bidStrategyDetail = BidStrategyDetail::create('user:country:other', 0.2);
+        $bidStrategy->bidStrategyDetails()->saveMany([$bidStrategyDetail]);
+
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = factory(Zone::class)->create(['site_id' => $site->id]);
+
+        /** @var RefLink $refLink */
+        $refLink = factory(RefLink::class)->create(
+            [
+                'user_id' => $user->id,
+                'token' => 'my-token',
+            ]
+        );
+        Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
+
+        /** @var NetworkCampaign $networkCampaign */
+        $networkCampaign = factory(NetworkCampaign::class)->create();
+        /** @var NetworkBanner $networkBanner */
+        $networkBanner = factory(NetworkBanner::class)->create(
+            ['network_campaign_id' => $networkCampaign->id]
+        );
+        factory(Classification::class)->create(
+            [
+                'banner_id' => $networkBanner->id,
+                'status' => Classification::STATUS_REJECTED,
+                'site_id' => $site->id,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $response = $this->post(self::buildUriDelete($user->id));
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertNotEmpty(User::withTrashed()->find($user->id)->deleted_at);
+        self::assertNotEmpty(Campaign::withTrashed()->find($campaign->id)->deleted_at);
+        self::assertNotEmpty(Banner::withTrashed()->find($banner->id)->deleted_at);
+        self::assertEmpty(BannerClassification::all());
+        self::assertNotEmpty(ConversionDefinition::withTrashed()->find($conversionDefinition->id)->deleted_at);
+        self::assertNotEmpty(BidStrategy::withTrashed()->find($bidStrategy->id)->deleted_at);
+        self::assertNotEmpty(BidStrategyDetail::withTrashed()->find($bidStrategyDetail->id)->deleted_at);
+        self::assertNotEmpty(Site::withTrashed()->find($site->id)->deleted_at);
+        self::assertNotEmpty(Zone::withTrashed()->find($zone->id)->deleted_at);
+        self::assertNotEmpty(RefLink::withTrashed()->find($refLink->id)->deleted_at);
+        self::assertEmpty(Token::where('user_id', $user->id)->get());
+        self::assertEmpty(Classification::where('user_id', $user->id)->get());
+    }
+
+    public function testDeleteAdmin(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create(['is_admin' => 1])->id;
+
+        $response = $this->post(self::buildUriDelete($userId));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeleteNotExistingUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->post(self::buildUriDelete(-1));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDeleteUserByRegularUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriDelete($userId));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     private function settings(): array
     {
         return [
@@ -439,5 +589,10 @@ final class AdminControllerTest extends TestCase
     private static function buildUriUnban($userId): string
     {
         return sprintf('/admin/users/%d/unban', $userId);
+    }
+
+    private static function buildUriDelete($userId): string
+    {
+        return sprintf('/admin/users/%d/delete', $userId);
     }
 }
