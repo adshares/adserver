@@ -32,6 +32,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class SupplyControllerTest extends TestCase
 {
     private const PAGE_WHY_URI = '/supply/why';
+    private const SUPPLY_ANON_URI = '/supply/anon';
 
     public function testPageWhyNoParameters(): void
     {
@@ -73,7 +74,7 @@ final class SupplyControllerTest extends TestCase
 
     public function testFindJson(): void
     {
-        $response = self::post('/supply/anon', []);
+        $response = self::post(self::SUPPLY_ANON_URI, []);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

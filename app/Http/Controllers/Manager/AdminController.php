@@ -30,6 +30,7 @@ use Adshares\Adserver\Http\Requests\UpdateRegulation;
 use Adshares\Adserver\Http\Response\LicenseResponse;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
+use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
@@ -366,6 +367,8 @@ class AdminController extends Controller
         }
         $user->ban($reason);
 
+        Mail::to($user)->queue(new UserBanned($reason));
+
         return self::json($user->toArray());
     }
 
@@ -420,6 +423,7 @@ class AdminController extends Controller
             Token::deleteByUserId($userId);
             Classification::deleteByUserId($userId);
 
+            $user->clearApiKey();
             $user->delete();
 
             DB::commit();
