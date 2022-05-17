@@ -238,7 +238,9 @@ class SupplyController extends Controller
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
-        return self::json($this->findBanners($decodedQueryData, $request, $response, $contextProvider, $bannerFinder)->toArray());
+        return self::json(
+            $this->findBanners($decodedQueryData, $request, $response, $contextProvider, $bannerFinder)->toArray()
+        );
     }
 
     public function findSimple(
