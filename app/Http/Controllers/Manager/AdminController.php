@@ -422,11 +422,12 @@ class AdminController extends Controller
                 $campaignRepository->delete($campaign);
             }
 
-            $bidStrategies = BidStrategy::fetchForUser($userId);
-            foreach ($bidStrategies as $bidStrategy) {
-                $bidStrategy->bidStrategyDetails()->delete();
-                $bidStrategy->delete();
-            }
+            BidStrategy::fetchForUser($userId)->each(
+                function (BidStrategy $bidStrategy) {
+                    $bidStrategy->bidStrategyDetails()->delete();
+                    $bidStrategy->delete();
+                }
+            );
 
             $sites = $user->sites();
             foreach ($sites->get() as $site) {
@@ -434,6 +435,7 @@ class AdminController extends Controller
             }
             $sites->delete();
 
+            RefLink::fetchByUser($userId)->each(fn (RefLink $refLink) => $refLink->delete());
             Token::deleteByUserId($userId);
             Classification::deleteByUserId($userId);
             UserSettings::deleteByUserId($userId);

@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\Token;
@@ -468,6 +469,7 @@ final class AdminControllerTest extends TestCase
         /** @var Zone $zone */
         $zone = factory(Zone::class)->create(['site_id' => $site->id]);
 
+        factory(RefLink::class)->create(['user_id' => $user->id]);
         Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
 
         /** @var NetworkCampaign $networkCampaign */
@@ -500,6 +502,7 @@ final class AdminControllerTest extends TestCase
         self::assertNotEmpty(BidStrategyDetail::withTrashed()->find($bidStrategyDetail->id)->deleted_at);
         self::assertNotEmpty(Site::withTrashed()->find($site->id)->deleted_at);
         self::assertNotEmpty(Zone::withTrashed()->find($zone->id)->deleted_at);
+        self::assertEmpty(RefLink::where('user_id', $user->id)->get());
         self::assertEmpty(Token::where('user_id', $user->id)->get());
         self::assertEmpty(Classification::where('user_id', $user->id)->get());
     }
