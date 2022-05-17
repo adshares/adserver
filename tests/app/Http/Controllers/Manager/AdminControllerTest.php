@@ -37,6 +37,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
@@ -443,7 +444,7 @@ final class AdminControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['api_token' => '1234']);
         /** @var Campaign $campaign */
         $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         /** @var Banner $banner */
@@ -468,13 +469,6 @@ final class AdminControllerTest extends TestCase
         /** @var Zone $zone */
         $zone = factory(Zone::class)->create(['site_id' => $site->id]);
 
-        /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create(
-            [
-                'user_id' => $user->id,
-                'token' => 'my-token',
-            ]
-        );
         Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
 
         /** @var NetworkCampaign $networkCampaign */
@@ -496,6 +490,9 @@ final class AdminControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         self::assertNotEmpty(User::withTrashed()->find($user->id)->deleted_at);
+        self::assertNull(User::withTrashed()->find($user->id)->api_token);
+        self::assertEmpty(User::withTrashed()->where('email', $user->email)->get());
+        self::assertEmpty(UserSettings::where('user_id', $user->id)->get());
         self::assertNotEmpty(Campaign::withTrashed()->find($campaign->id)->deleted_at);
         self::assertNotEmpty(Banner::withTrashed()->find($banner->id)->deleted_at);
         self::assertEmpty(BannerClassification::all());
@@ -504,7 +501,6 @@ final class AdminControllerTest extends TestCase
         self::assertNotEmpty(BidStrategyDetail::withTrashed()->find($bidStrategyDetail->id)->deleted_at);
         self::assertNotEmpty(Site::withTrashed()->find($site->id)->deleted_at);
         self::assertNotEmpty(Zone::withTrashed()->find($zone->id)->deleted_at);
-        self::assertNotEmpty(RefLink::withTrashed()->find($refLink->id)->deleted_at);
         self::assertEmpty(Token::where('user_id', $user->id)->get());
         self::assertEmpty(Classification::where('user_id', $user->id)->get());
     }

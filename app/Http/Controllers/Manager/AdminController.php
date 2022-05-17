@@ -42,6 +42,7 @@ use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
@@ -433,13 +434,11 @@ class AdminController extends Controller
             }
             $sites->delete();
 
-            $refLinks = RefLink::fetchByUser($userId);
-            foreach ($refLinks as $refLink) {
-                $refLink->delete();
-            }
             Token::deleteByUserId($userId);
             Classification::deleteByUserId($userId);
+            UserSettings::deleteByUserId($userId);
 
+            $user->maskEmail();
             $user->clearApiKey();
             $user->delete();
 

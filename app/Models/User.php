@@ -26,6 +26,7 @@ use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -258,6 +259,13 @@ class User extends Authenticatable
     public function clearApiKey(): void
     {
         $this->api_token = null;
+        $this->save();
+    }
+
+    public function maskEmail(): void
+    {
+        $this->email = sprintf('%s@%s', $this->uuid, DomainReader::domain(config('app.url')));
+        $this->email_confirmed_at = null;
         $this->save();
     }
 

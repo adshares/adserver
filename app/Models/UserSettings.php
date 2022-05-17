@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -78,4 +78,9 @@ class UserSettings extends Model
     protected $traitAutomate = [
         'payload' => 'Serialize',
     ];
+
+    public static function deleteByUserId(int $userId): void
+    {
+        self::where('user_id', $userId)->delete();
+    }
 }
