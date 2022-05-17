@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -63,37 +63,22 @@ class UserLedgerEntry extends Model
     public const INDEX_REF_LINK_ID = 'user_ledger_entry_ref_link_id_index';
 
     public const STATUS_ACCEPTED = 0;
-
     public const STATUS_PENDING = 1;
-
     public const STATUS_REJECTED = 2;
-
     public const STATUS_BLOCKED = 3;
-
     public const STATUS_PROCESSING = 4;
-
     public const STATUS_AWAITING_APPROVAL = 5;
-
     public const STATUS_CANCELED = 6;
-
     public const STATUS_SYS_ERROR = 126;
-
     public const STATUS_NET_ERROR = 127;
 
     public const TYPE_UNKNOWN = 0;
-
     public const TYPE_DEPOSIT = 1;
-
     public const TYPE_WITHDRAWAL = 2;
-
     public const TYPE_AD_INCOME = 3;
-
     public const TYPE_AD_EXPENSE = 4;
-
     public const TYPE_BONUS_INCOME = 5;
-
     public const TYPE_BONUS_EXPENSE = 6;
-
     public const TYPE_REFUND = 7;
 
     public const ALLOWED_STATUS_LIST = [
@@ -111,12 +96,12 @@ class UserLedgerEntry extends Model
     public const ALLOWED_TYPE_LIST = [
         self::TYPE_UNKNOWN,
         self::TYPE_DEPOSIT,
-        self::TYPE_REFUND,
         self::TYPE_WITHDRAWAL,
         self::TYPE_AD_INCOME,
         self::TYPE_AD_EXPENSE,
         self::TYPE_BONUS_INCOME,
         self::TYPE_BONUS_EXPENSE,
+        self::TYPE_REFUND,
     ];
 
     public const CREDIT_TYPES = [

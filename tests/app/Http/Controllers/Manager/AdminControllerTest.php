@@ -32,7 +32,6 @@ use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\PanelPlaceholder;
-use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\Token;
