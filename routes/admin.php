@@ -43,7 +43,10 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
 
     Route::get('index/update-time', [AdminController::class, 'getIndexUpdateTime']);
     Route::patch('panel-placeholders', [AdminController::class, 'patchPanelPlaceholders']);
-    Route::put('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'putBidStrategyUuidDefault']);
+    Route::patch(
+        'campaigns/bid-strategy/media/{medium}/uuid-default',
+        [BidStrategyController::class, 'patchBidStrategyUuidDefault']
+    );
 
     Route::get('rejected-domains', [AdminController::class, 'getRejectedDomains']);
     Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);

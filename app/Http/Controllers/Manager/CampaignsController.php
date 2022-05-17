@@ -33,8 +33,6 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Models\User;
@@ -65,6 +63,7 @@ use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class CampaignsController extends Controller
@@ -129,9 +128,8 @@ class CampaignsController extends Controller
     {
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-            $bidStrategyUuid = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
-        } catch (ExchangeRateNotAvailableException | ConfigException $exception) {
-            return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
+        } catch (ExchangeRateNotAvailableException $exception) {
+            throw new ServiceUnavailableHttpException();
         }
 
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
@@ -141,13 +139,20 @@ class CampaignsController extends Controller
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
+        $bidStrategy = BidStrategy::fetchDefault(
+            $input['basic_information']['medium'] ?? '',
+            $input['basic_information']['vendor'] ?? null
+        );
+        if ($bidStrategy === null) {
+            throw new ServiceUnavailableHttpException();
+        }
         $status = $input['basic_information']['status'];
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         /** @var User $user */
         $user = Auth::user();
         $input['user_id'] = $user->id;
-        $input['bid_strategy_uuid'] = $bidStrategyUuid;
+        $input['bid_strategy_uuid'] = $bidStrategy->uuid;
 
         $campaign = new Campaign($input);
 

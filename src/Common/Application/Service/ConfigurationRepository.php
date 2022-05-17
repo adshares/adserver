@@ -30,13 +30,9 @@ use Adshares\Common\Application\Model\Selector;
 
 interface ConfigurationRepository
 {
-    public function storeTargetingOptions(Selector $options): void;
-
     public function storeFilteringOptions(Selector $options): void;
 
     public function storeTaxonomyV2(TaxonomyV2 $taxonomy): void;
-
-    public function fetchTargetingOptions(): Selector;
 
     public function fetchFilteringOptions(): Selector;
 

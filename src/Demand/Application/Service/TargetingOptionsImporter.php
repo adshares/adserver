@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Demand\Application\Service;
 
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 
@@ -41,5 +43,17 @@ class TargetingOptionsImporter
     {
         $taxonomy = $this->client->fetchTargetingOptions();
         $this->repository->storeTaxonomyV2($taxonomy);
+        $this->registerBidStrategyIfNewMedium($taxonomy);
+    }
+
+    private function registerBidStrategyIfNewMedium(TaxonomyV2 $taxonomy): void
+    {
+        foreach ($taxonomy->getMedia() as $mediumObject) {
+            BidStrategy::registerIfMissingDefault(
+                sprintf('Default %s', $mediumObject->getVendorLabel() ?: $mediumObject->getLabel()),
+                $mediumObject->getName(),
+                $mediumObject->getVendor(),
+            );
+        }
     }
 }
