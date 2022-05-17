@@ -542,6 +542,7 @@ final class CampaignsControllerTest extends TestCase
         $this->actingAs($user, 'api');
 
         $campaign = $this->createCampaignForUser($user);
+        /** @var ConversionDefinition $conversion */
         $conversion = factory(ConversionDefinition::class)->create(
             [
                 'campaign_id' => $campaign->id,
