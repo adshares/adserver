@@ -32,10 +32,12 @@ use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\RefLink;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -365,7 +367,22 @@ class AdminController extends Controller
         if ($user->isAdmin()) {
             throw new UnprocessableEntityHttpException('Administrator cannot be banned');
         }
-        $user->ban($reason);
+
+        DB::beginTransaction();
+        try {
+            Campaign::deactivateAllForUserId($userId);
+            $user->sites()->get()->each(
+                function (Site $site) {
+                    $site->changestatus(Site::STATUS_INACTIVE);
+                    $site->save();
+                }
+            );
+            $user->ban($reason);
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         Mail::to($user)->queue(new UserBanned($reason));
 

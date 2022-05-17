@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
@@ -39,7 +40,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
-use DateTimeImmutable;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -330,12 +331,24 @@ final class AdminControllerTest extends TestCase
     public function testBanUser(): void
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create(['api_token' => '1234'])->id;
+        /** @var User $user */
+        $user = factory(User::class)->create(['api_token' => '1234']);
+        /** @var Campaign $campaign */
+        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $response = $this->post(self::buildUriBan($userId), ['reason' => 'suspicious activity']);
+        $response = $this->post(self::buildUriBan($user->id), ['reason' => 'suspicious activity']);
 
         $response->assertStatus(Response::HTTP_OK);
-        self::assertNull(User::fetchById($userId)->api_token);
+        self::assertNull(User::fetchById($user->id)->api_token);
+        self::assertEquals(Campaign::STATUS_INACTIVE, (new Campaign())->find($campaign->id)->status);
+        self::assertEquals(Banner::STATUS_INACTIVE, (new Banner())->find($banner->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        Mail::assertQueued(UserBanned::class);
     }
 
     public function testBanAdmin(): void
@@ -432,46 +445,9 @@ final class AdminControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create();
         /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(
-            [
-                'uuid' => '0123456789ABCDEF0123456789ABCDEF',
-                'user_id' => $user->id,
-                'status' => Campaign::STATUS_INACTIVE,
-                'landing_url' => 'https://example.com',
-                'time_start' => (new DateTimeImmutable())->format(DATE_ATOM),
-                'time_end' => (new DateTimeImmutable('+1 hour'))->format(DATE_ATOM),
-                'name' => 'test campaign',
-                'max_cpc' => 0,
-                'max_cpm' => null,
-                'budget' => 10000000000000,
-                'targeting_excludes' => [
-                    'site' => [
-                        'quality' => ['low'],
-                        'category' => ['adult', 'diets'],
-                    ],
-                ],
-                'targeting_requires' => [
-                    'user' => [
-                        'country' => ['us'],
-                    ],
-                ],
-                'classification_status' => 0,
-                'classification_tags' => null,
-                'bid_strategy_uuid' => '00000000000000000000000000000000',
-            ]
-        );
+        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         /** @var Banner $banner */
-        $banner = factory(Banner::class)->create(
-            [
-                'campaign_id' => $campaign->id,
-                'creative_contents' => '0123456789012345678901234567890123456789',
-                'creative_type' => 'image',
-                'creative_mime' => 'image/png',
-                'creative_size' => '300x250',
-                'name' => 'IMAGE 1',
-                'status' => Banner::STATUS_INACTIVE,
-            ]
-        );
+        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
         $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
         /** @var ConversionDefinition $conversionDefinition */
         $conversionDefinition = factory(ConversionDefinition::class)->create(
