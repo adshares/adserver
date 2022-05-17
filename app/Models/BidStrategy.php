@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -37,6 +37,9 @@ use Illuminate\Support\Carbon;
  * @property string uuid
  * @property int user_id
  * @property string name
+ * @property string medium
+ * @property string|null vendor
+ * @property bool is_default
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
@@ -65,6 +68,8 @@ class BidStrategy extends Model
     protected $fillable = [
         'name',
         'user_id',
+        'medium',
+        'vendor',
     ];
 
     protected $traitAutomate = [
@@ -77,17 +82,33 @@ class BidStrategy extends Model
         'uuid',
     ];
 
-    public static function register(string $name, int $userId): self
+    protected $casts = [
+        'is_default' => 'boolean',
+    ];
+
+    public static function register(string $name, int $userId, string $medium, ?string $vendor): self
     {
         $model = new self(
             [
                 'name' => $name,
                 'user_id' => $userId,
+                'medium' => $medium,
+                'vendor' => $vendor,
             ]
         );
         $model->save();
 
         return $model;
+    }
+
+    public static function registerIfMissingDefault(string $name, string $medium, ?string $vendor): void
+    {
+        if (BidStrategy::fetchDefault($medium, $vendor) !== null) {
+            return;
+        }
+
+        BidStrategy::register($name, BidStrategy::ADMINISTRATOR_ID, $medium, $vendor)
+            ->setDefault(true);
     }
 
     public static function countByUserId(int $userId): int
@@ -100,14 +121,30 @@ class BidStrategy extends Model
         return self::where('uuid', hex2bin($publicId))->first();
     }
 
+    public static function fetchDefault(string $medium, ?string $vendor): ?self
+    {
+        return self::where('is_default', true)
+            ->where('medium', $medium)
+            ->where('vendor', $vendor)->first();
+    }
+
     public static function fetchForExport(DateTime $dateFrom, int $limit, int $offset = 0): Collection
     {
         return self::where('updated_at', '>=', $dateFrom)->limit($limit)->offset($offset)->get();
     }
 
-    public static function fetchForUser(int $userId): Collection
+    public static function fetchForUser(int $userId, string $medium, ?string $vendor): Collection
     {
-        return self::where('user_id', $userId)->get();
+        return self::where('user_id', $userId)
+            ->where('medium', $medium)
+            ->where('vendor', $vendor)
+            ->get();
+    }
+
+    public function setDefault(bool $isDefault): void
+    {
+        $this->is_default = $isDefault;
+        $this->save();
     }
 
     public function bidStrategyDetails(): HasMany

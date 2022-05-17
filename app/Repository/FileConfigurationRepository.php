@@ -36,35 +36,16 @@ use Illuminate\Support\Facades\Log;
 
 final class FileConfigurationRepository implements ConfigurationRepository
 {
-    private const TARGETING_CACHE_FILENAME = 'targeting.cache';
     private const FILTERING_CACHE_FILENAME = 'filtering.cache';
     private const TAXONOMY_CACHE_FILENAME = 'taxonomy.cache';
 
-    private string $targetingFilePath;
     private string $filteringFilePath;
     private string $taxonomyFilePath;
 
     public function __construct(string $cachePath)
     {
-        $this->targetingFilePath = $cachePath . DIRECTORY_SEPARATOR . self::TARGETING_CACHE_FILENAME;
         $this->filteringFilePath = $cachePath . DIRECTORY_SEPARATOR . self::FILTERING_CACHE_FILENAME;
         $this->taxonomyFilePath = $cachePath . DIRECTORY_SEPARATOR . self::TAXONOMY_CACHE_FILENAME;
-    }
-
-    public function storeTargetingOptions(Selector $options): void
-    {
-        file_put_contents($this->targetingFilePath, serialize($options));
-    }
-
-    public function fetchTargetingOptions(): Selector
-    {
-        try {
-            $data = file_get_contents($this->targetingFilePath);
-        } catch (ErrorException $exception) {
-            Log::error('No targeting data.');
-            throw new MissingInitialConfigurationException('No targeting data.');
-        }
-        return unserialize($data, [Selector::class]);
     }
 
     public function fetchFilteringOptions(): Selector

@@ -21,26 +21,6 @@
 
 declare(strict_types=1);
 
-/**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
- *
- * This file is part of AdServer
- *
- * AdServer is free software: you can redistribute and/or modify it
- * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * AdServer is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with AdServer. If not, see <https://www.gnu.org/licenses/>
- */
-
-
 use Adshares\Adserver\Http\Controllers\Manager\BidStrategyController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
@@ -72,9 +52,12 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             'campaigns/bid-strategy/{bid_strategy_public_id}/spreadsheet',
             [BidStrategyController::class, 'putBidStrategySpreadsheet']
         );
-        Route::get('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'getBidStrategyUuidDefault']);
-        Route::get('campaigns/bid-strategy', [BidStrategyController::class, 'getBidStrategy']);
-        Route::put('campaigns/bid-strategy', [BidStrategyController::class, 'putBidStrategy']);
+        Route::get(
+            'campaigns/bid-strategy/media/{medium}/uuid-default',
+            [BidStrategyController::class, 'getBidStrategyUuidDefault']
+        );
+        Route::get('campaigns/bid-strategy/media/{medium}', [BidStrategyController::class, 'getBidStrategies']);
+        Route::put('campaigns/bid-strategy/media/{medium}', [BidStrategyController::class, 'putBidStrategy']);
         Route::patch(
             'campaigns/bid-strategy/{bid_strategy_public_id}',
             [BidStrategyController::class, 'patchBidStrategy']
@@ -146,7 +129,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
 
         Route::get('options/banners', [OptionsController::class, 'banners']);
         Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
-        Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
         Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
         Route::get('options/sites', [OptionsController::class, 'sites']);
         Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);

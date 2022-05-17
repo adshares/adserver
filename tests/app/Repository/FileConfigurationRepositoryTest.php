@@ -29,14 +29,6 @@ use Adshares\Adserver\Tests\TestCase;
 
 final class FileConfigurationRepositoryTest extends TestCase
 {
-    public function testNoTargetingOptions(): void
-    {
-        $repository = new FileConfigurationRepository(__DIR__);
-
-        self::expectException(MissingInitialConfigurationException::class);
-        $repository->fetchTargetingOptions();
-    }
-
     public function testNoFilteringOptions(): void
     {
         $repository = new FileConfigurationRepository(__DIR__);

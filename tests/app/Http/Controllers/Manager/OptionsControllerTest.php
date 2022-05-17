@@ -113,25 +113,6 @@ final class OptionsControllerTest extends TestCase
         self::assertEquals('all-by-default', $content['classifierLocalBanners']);
     }
 
-    public function testTargeting(): void
-    {
-        self::actingAs(factory(User::class)->create(), 'api');
-
-        $response = self::getJson('/api/options/campaigns/targeting');
-        $response->assertStatus(200)
-            ->assertJsonStructure(
-                [
-                    '*' => [
-                        'key',
-                        'label',
-                    ],
-                ]
-            );
-
-        $content = json_decode($response->content(), true);
-        self::assertStructure($content);
-    }
-
     private static function assertStructure(array $content): void
     {
         foreach ($content as $item) {
