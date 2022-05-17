@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,11 +25,8 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Services\Supply\AdSelectCaseExporter;
-use Adshares\Adserver\Services\Supply\NetworkImpressionUpdater;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-
-use function sprintf;
 
 class AdSelectCasePaymentsExportCommand extends BaseCommand
 {
@@ -37,19 +34,13 @@ class AdSelectCasePaymentsExportCommand extends BaseCommand
 
     protected $description = 'Export payments to AdSelect';
 
-    /** @var AdSelectCaseExporter */
-    private $adSelectCaseExporter;
-
-    /** @var NetworkImpressionUpdater */
-    private $networkImpressionUpdater;
+    private AdSelectCaseExporter $adSelectCaseExporter;
 
     public function __construct(
         Locker $locker,
-        AdSelectCaseExporter $adSelectCaseExporter,
-        NetworkImpressionUpdater $networkImpressionUpdater
+        AdSelectCaseExporter $adSelectCaseExporter
     ) {
         $this->adSelectCaseExporter = $adSelectCaseExporter;
-        $this->networkImpressionUpdater = $networkImpressionUpdater;
 
         parent::__construct($locker);
     }
