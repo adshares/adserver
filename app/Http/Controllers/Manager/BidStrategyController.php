@@ -240,9 +240,9 @@ class BidStrategyController extends Controller
             '*' => 'DEFAULT',
         ];
         foreach ($bidStrategyDetails as $key => $value) {
-            $id_parts = explode(':', $key);
-            $id = array_pop($id_parts);
-            $prefix = implode(':', $id_parts);
+            $idParts = explode(':', $key);
+            $id = array_pop($idParts);
+            $prefix = implode(':', $idParts);
 
             if ($parentKey === $prefix && !isset($optionValues[$id])) {
                 $optionValues[$id] = '';
