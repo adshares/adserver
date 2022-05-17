@@ -274,6 +274,7 @@ class User extends Authenticatable
         $this->is_banned = true;
         $this->ban_reason = $reason;
         $this->api_token = null;
+        $this->auto_withdrawal = null;
         $this->save();
     }
 

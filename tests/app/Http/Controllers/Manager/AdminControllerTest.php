@@ -333,7 +333,7 @@ final class AdminControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
         /** @var User $user */
-        $user = factory(User::class)->create(['api_token' => '1234']);
+        $user = factory(User::class)->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
         /** @var Campaign $campaign */
         $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         /** @var Banner $banner */
@@ -344,7 +344,8 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriBan($user->id), ['reason' => 'suspicious activity']);
 
         $response->assertStatus(Response::HTTP_OK);
-        self::assertNull(User::fetchById($user->id)->api_token);
+        self::assertNull(User::find($user->id)->api_token);
+        self::assertNull(User::find($user->id)->auto_withdrawal);
         self::assertEquals(Campaign::STATUS_INACTIVE, (new Campaign())->find($campaign->id)->status);
         self::assertEquals(Banner::STATUS_INACTIVE, (new Banner())->find($banner->id)->status);
         self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);

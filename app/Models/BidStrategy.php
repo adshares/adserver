@@ -150,6 +150,16 @@ class BidStrategy extends Model
         $this->save();
     }
 
+    public static function deleteByUserId(int $userId): void
+    {
+        self::where('user_id', $userId)->get()->each(
+            function (BidStrategy $bidStrategy) {
+                $bidStrategy->bidStrategyDetails()->delete();
+                $bidStrategy->delete();
+            }
+        );
+    }
+
     public function bidStrategyDetails(): HasMany
     {
         return $this->hasMany(BidStrategyDetail::class);
