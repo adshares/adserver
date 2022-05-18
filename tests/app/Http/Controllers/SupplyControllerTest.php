@@ -136,14 +136,15 @@ final class SupplyControllerTest extends TestCase
 
     public function testFindNoData(): void
     {
-        $response = self::post(self::BANNER_FIND_URI, []);
+        $response = self::post(self::BANNER_FIND_URI);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFindJsonNoData(): void
     {
-        $response = self::post(self::SUPPLY_ANON_URI, []);
+        $response = self::post(self::SUPPLY_ANON_URI);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

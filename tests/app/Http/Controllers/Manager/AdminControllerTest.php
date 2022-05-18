@@ -40,10 +40,11 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\RuntimeException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\DB;
 
 use function json_decode;
 
@@ -412,6 +413,20 @@ final class AdminControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testBanUserDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        /** @var User $user */
+        $user = factory(User::class)->create();
+
+        $response = $this->post(self::buildUriBan($user->id), ['reason' => 'suspicious activity']);
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
     public function testUnbanUser(): void
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
@@ -445,7 +460,10 @@ final class AdminControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
         /** @var User $user */
-        $user = factory(User::class)->create(['api_token' => '1234']);
+        $user = factory(User::class)->create([
+            'api_token' => '1234',
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+        ]);
         /** @var Campaign $campaign */
         $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         /** @var Banner $banner */
@@ -494,6 +512,7 @@ final class AdminControllerTest extends TestCase
         self::assertNotEmpty(User::withTrashed()->find($user->id)->deleted_at);
         self::assertNull(User::withTrashed()->find($user->id)->api_token);
         self::assertEmpty(User::withTrashed()->where('email', $user->email)->get());
+        self::assertEmpty(User::withTrashed()->where('wallet_address', $user->wallet_address)->get());
         self::assertEmpty(UserSettings::where('user_id', $user->id)->get());
         self::assertNotEmpty(Campaign::withTrashed()->find($campaign->id)->deleted_at);
         self::assertNotEmpty(Banner::withTrashed()->find($banner->id)->deleted_at);
@@ -535,6 +554,20 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriDelete($userId));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testDeleteUserDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        /** @var User $user */
+        $user = factory(User::class)->create();
+
+        $response = $this->post(self::buildUriDelete($user->id));
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     private function settings(): array

@@ -434,7 +434,7 @@ class AdminController extends Controller
             Classification::deleteByUserId($userId);
             UserSettings::deleteByUserId($userId);
 
-            $user->maskEmail();
+            $user->maskEmailAndWalletAddress();
             $user->clearApiKey();
             $user->delete();
 

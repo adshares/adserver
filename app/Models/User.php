@@ -260,10 +260,11 @@ class User extends Authenticatable
         $this->save();
     }
 
-    public function maskEmail(): void
+    public function maskEmailAndWalletAddress(): void
     {
         $this->email = sprintf('%s@%s', $this->uuid, DomainReader::domain(config('app.url')));
         $this->email_confirmed_at = null;
+        $this->wallet_address = null;
         $this->save();
     }
 
