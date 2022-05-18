@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Legacy targeting (from Taxonomy v1)
 ### Fixed
 - Error while targeting/filtering is not cached
+- Decentraland site name
 
 ## [1.16.2] - 2022-04-21
 ### Fixed
