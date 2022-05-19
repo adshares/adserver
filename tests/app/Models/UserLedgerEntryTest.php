@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,8 +28,7 @@ use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
-
-use function factory;
+use DateTimeImmutable;
 
 final class UserLedgerEntryTest extends TestCase
 {
@@ -55,6 +54,19 @@ final class UserLedgerEntryTest extends TestCase
         self::assertEquals(-370, UserLedgerEntry::getBalanceForAllUsers());
         self::assertEquals(-630, UserLedgerEntry::getWalletBalanceForAllUsers());
         self::assertEquals(260, UserLedgerEntry::getBonusBalanceForAllUsers());
+    }
+
+    public function testBalanceForDeletedUser(): void
+    {
+        /** @var User $user */
+        $user1 = factory(User::class)->create(['deleted_at' => new DateTimeImmutable()]);
+        $this->createAllEntries($user1);
+        $user2 = factory(User::class)->create();
+        $this->createAllEntries($user2);
+
+        self::assertEquals(-185, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(-315, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(130, UserLedgerEntry::getBonusBalanceForAllUsers());
     }
 
     public function testBlockAdExpense(): void
