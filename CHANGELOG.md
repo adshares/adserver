@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.0] - 2022-05-19
+### Added
+- Filtering local banners in site's classifier
+- User banning
+### Removed
+- Legacy targeting (from Taxonomy v1)
+### Fixed
+- Error while targeting/filtering is not cached
+- Unused bonus calculation
+- Decentraland and Cryptovoxels site name
+
 ## [1.16.2] - 2022-04-21
 ### Fixed
 - Admin dashboard reports
@@ -608,7 +619,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.16.2...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.17.0...develop
+[1.17.0]: https://github.com/adshares/adserver/compare/v1.16.2...v1.17.0
 [1.16.2]: https://github.com/adshares/adserver/compare/v1.16.1...v1.16.2
 [1.16.1]: https://github.com/adshares/adserver/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/adshares/adserver/compare/v1.15.0...v1.16.0

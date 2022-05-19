@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,11 +30,20 @@ use Adshares\Adserver\Http\Requests\UpdateRegulation;
 use Adshares\Adserver\Http\Response\LicenseResponse;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
+use Adshares\Adserver\Mail\UserBanned;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\RefLink;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserSettings;
+use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
@@ -56,8 +65,7 @@ class AdminController extends Controller
 {
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
 
-    /** @var LicenseVault */
-    private $licenseVault;
+    private LicenseVault $licenseVault;
 
     public function __construct(LicenseVault $licenseVault)
     {
@@ -79,12 +87,41 @@ class AdminController extends Controller
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
 
+    public function updateSiteSettings(Request $request): JsonResponse
+    {
+        $configData = [];
+        $acceptBannersManually = $request->get('accept_banners_manually');
+        if ($acceptBannersManually !== null) {
+            $configData[Config::SITE_ACCEPT_BANNERS_MANUALLY] =
+                filter_var($acceptBannersManually, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+        }
+        $classifierLocalBanners = $request->get('classifier_local_banners');
+        if ($classifierLocalBanners !== null) {
+            if (!in_array($classifierLocalBanners, Config::ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS, true)) {
+                throw new UnprocessableEntityHttpException('Field classifierLocalBanners is invalid.');
+            }
+            $configData[Config::SITE_CLASSIFIER_LOCAL_BANNERS] = $classifierLocalBanners;
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($configData as $key => $value) {
+                Config::upsertByKey($key, $value);
+            }
+            DB::commit();
+            return new JsonResponse([], Response::HTTP_NO_CONTENT);
+        } catch (Exception $exception) {
+            DB::rollBack();
+            return new JsonResponse([], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function wallet(): JsonResponse
     {
         return self::json([
             'wallet' => [
                 'balance' => UserLedgerEntry::getBalanceForAllUsers(),
-                'unused_bonuses' => UserLedgerEntry::getUnusedBonusesForAllUsers(),
+                'unused_bonuses' => UserLedgerEntry::getBonusBalanceForAllUsers(),
             ]
         ]);
     }
@@ -314,5 +351,99 @@ class AdminController extends Controller
         $user->save();
 
         return self::json($user->toArray());
+    }
+
+    public function banUser(int $userId, Request $request): JsonResponse
+    {
+        $reason = $request->input('reason');
+        if (!is_string($reason) || strlen(trim($reason)) < 1 || strlen(trim($reason)) > 255) {
+            throw new UnprocessableEntityHttpException('Invalid reason');
+        }
+
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator cannot be banned');
+        }
+
+        DB::beginTransaction();
+        try {
+            Campaign::deactivateAllForUserId($userId);
+            $user->sites()->get()->each(
+                function (Site $site) {
+                    $site->changestatus(Site::STATUS_INACTIVE);
+                    $site->save();
+                }
+            );
+            $user->ban($reason);
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        Mail::to($user)->queue(new UserBanned($reason));
+
+        return self::json($user->toArray());
+    }
+
+    public function unbanUser(int $userId): JsonResponse
+    {
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+
+        $user->unban();
+
+        return self::json($user->toArray());
+    }
+
+    public function deleteUser(int $userId, CampaignRepository $campaignRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator cannot be deleted');
+        }
+
+        DB::beginTransaction();
+        try {
+            $campaigns = $campaignRepository->findByUserId($userId);
+            foreach ($campaigns as $campaign) {
+                $campaign->conversions()->delete();
+                $campaignRepository->delete($campaign);
+            }
+            BidStrategy::deleteByUserId($userId);
+
+            $sites = $user->sites();
+            foreach ($sites->get() as $site) {
+                $site->zones()->delete();
+            }
+            $sites->delete();
+
+            RefLink::fetchByUser($userId)->each(fn (RefLink $refLink) => $refLink->delete());
+            Token::deleteByUserId($userId);
+            Classification::deleteByUserId($userId);
+            UserSettings::deleteByUserId($userId);
+
+            $user->maskEmailAndWalletAddress();
+            $user->clearApiKey();
+            $user->delete();
+
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 }

@@ -24,14 +24,17 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\TargetingReachRequest;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OptionsController extends Controller
 {
@@ -69,15 +72,35 @@ class OptionsController extends Controller
         );
     }
 
+    public function sites(): JsonResponse
+    {
+        return self::json(
+            [
+                'acceptBannersManually' => Config::fetchInt(Config::SITE_ACCEPT_BANNERS_MANUALLY),
+                'classifierLocalBanners' => Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS),
+            ]
+        );
+    }
+
     public function media(): JsonResponse
     {
-        return self::json($this->optionsRepository->fetchMedia()->toArray());
+        try {
+            $media = $this->optionsRepository->fetchMedia();
+        } catch (MissingInitialConfigurationException $exception) {
+            return self::json();
+        }
+        return self::json($media->toArray());
     }
 
     public function medium(string $medium, Request $request): JsonResponse
     {
         $vendor = $request->get('vendor');
-        $data = $this->optionsRepository->fetchMedium($medium, $vendor)->toArray();
+        try {
+            $mediumObject = $this->optionsRepository->fetchMedium($medium, $vendor);
+        } catch (MissingInitialConfigurationException $exception) {
+            throw new NotFoundHttpException($exception->getMessage());
+        }
+        $data = $mediumObject->toArray();
 
         if ($request->get('e')) {
             foreach ($data['targeting']['site'] ?? [] as $key => $value) {
@@ -95,23 +118,17 @@ class OptionsController extends Controller
     public function vendors(string $medium): JsonResponse
     {
         $data = [];
-        foreach ($this->optionsRepository->fetchTaxonomy()->getMedia() as $mediumObject) {
+        try {
+            $taxonomy = $this->optionsRepository->fetchTaxonomy();
+        } catch (MissingInitialConfigurationException $exception) {
+            return self::json();
+        }
+        foreach ($taxonomy->getMedia() as $mediumObject) {
             if ($mediumObject->getName() === $medium && $mediumObject->getVendor() !== null) {
                 $data[$mediumObject->getVendor()] = $mediumObject->getVendorLabel();
             }
         }
         return self::json($data);
-    }
-
-    public function targeting(Request $request): JsonResponse
-    {
-        $exclusions = [];
-        if ($request->get('e')) {
-            $exclusions = [
-                '/site/quality' => true
-            ];
-        }
-        return self::json(new OptionsSelector($this->optionsRepository->fetchTargetingOptions()->exclude($exclusions)));
     }
 
     public function targetingReach(TargetingReachRequest $request): JsonResponse
@@ -137,7 +154,12 @@ class OptionsController extends Controller
                 ) => true
             ];
         }
-        return self::json(new OptionsSelector($this->optionsRepository->fetchFilteringOptions()->exclude($exclusions)));
+        try {
+            $selector = $this->optionsRepository->fetchFilteringOptions();
+        } catch (MissingInitialConfigurationException $exception) {
+            return self::json();
+        }
+        return self::json(new OptionsSelector($selector->exclude($exclusions)));
     }
 
     public function languages(): JsonResponse

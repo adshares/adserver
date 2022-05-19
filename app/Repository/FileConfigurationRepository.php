@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Common\Application\Dto\Media;
 use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -30,39 +31,21 @@ use Adshares\Common\Application\Factory\MediaFactory;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
-use Adshares\Common\Exception\RuntimeException;
 use ErrorException;
+use Illuminate\Support\Facades\Log;
 
 final class FileConfigurationRepository implements ConfigurationRepository
 {
-    private const TARGETING_CACHE_FILENAME = 'targeting.cache';
     private const FILTERING_CACHE_FILENAME = 'filtering.cache';
     private const TAXONOMY_CACHE_FILENAME = 'taxonomy.cache';
 
-    private string $targetingFilePath;
     private string $filteringFilePath;
     private string $taxonomyFilePath;
 
     public function __construct(string $cachePath)
     {
-        $this->targetingFilePath = $cachePath . DIRECTORY_SEPARATOR . self::TARGETING_CACHE_FILENAME;
         $this->filteringFilePath = $cachePath . DIRECTORY_SEPARATOR . self::FILTERING_CACHE_FILENAME;
         $this->taxonomyFilePath = $cachePath . DIRECTORY_SEPARATOR . self::TAXONOMY_CACHE_FILENAME;
-    }
-
-    public function storeTargetingOptions(Selector $options): void
-    {
-        file_put_contents($this->targetingFilePath, serialize($options));
-    }
-
-    public function fetchTargetingOptions(): Selector
-    {
-        try {
-            $data = file_get_contents($this->targetingFilePath);
-        } catch (ErrorException $exception) {
-            throw new RuntimeException('No targeting data.');
-        }
-        return unserialize($data, [Selector::class]);
     }
 
     public function fetchFilteringOptions(): Selector
@@ -70,7 +53,8 @@ final class FileConfigurationRepository implements ConfigurationRepository
         try {
             $data = file_get_contents($this->filteringFilePath);
         } catch (ErrorException $exception) {
-            throw new RuntimeException('No filtering data.');
+            Log::error('No filtering data. Run command ops:filtering-options:update');
+            throw new MissingInitialConfigurationException('No filtering data.');
         }
         return unserialize($data, [Selector::class]);
     }
@@ -110,7 +94,8 @@ final class FileConfigurationRepository implements ConfigurationRepository
         try {
             $data = file_get_contents($this->taxonomyFilePath);
         } catch (ErrorException $exception) {
-            throw new RuntimeException('No taxonomy data.');
+            Log::error('No taxonomy data. Run command ops:targeting-options:update');
+            throw new MissingInitialConfigurationException('No taxonomy data.');
         }
         return unserialize($data, [TaxonomyV2::class]);
     }

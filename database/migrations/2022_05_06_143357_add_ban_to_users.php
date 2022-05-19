@@ -19,26 +19,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-namespace Adshares\Common\Application\Service;
-
-use Adshares\Common\Application\Dto\Media;
-use Adshares\Common\Application\Dto\TaxonomyV2;
-use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
-use Adshares\Common\Application\Model\Selector;
-
-interface ConfigurationRepository
+class AddBanToUsers extends Migration
 {
-    public function storeFilteringOptions(Selector $options): void;
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('is_banned')->default(0);
+            $table->string('ban_reason', 255)->nullable();
+        });
+    }
 
-    public function storeTaxonomyV2(TaxonomyV2 $taxonomy): void;
-
-    public function fetchFilteringOptions(): Selector;
-
-    public function fetchTaxonomy(): TaxonomyV2;
-
-    public function fetchMedia(): Media;
-
-    public function fetchMedium(string $mediumName = 'web', ?string $vendor = null): Medium;
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['is_banned', 'ban_reason']);
+        });
+    }
 }

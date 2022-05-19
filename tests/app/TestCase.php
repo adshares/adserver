@@ -25,9 +25,11 @@ use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
+use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Faker\Factory;
 use Faker\Generator;
@@ -68,6 +70,12 @@ abstract class TestCase extends BaseTestCase
             AdsRpcClient::class,
             static function () {
                 return new DummyAdsRpcClient();
+            }
+        );
+        $this->app->bind(
+            AdUser::class,
+            static function () {
+                return new DummyAdUserClient();
             }
         );
     }

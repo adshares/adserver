@@ -23,13 +23,13 @@ declare(strict_types=1);
 
 namespace Adshares\Mock\Client;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Factory\TaxonomyV2Factory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
-use RuntimeException;
 
 final class DummyAdUserClient implements AdUser
 {
@@ -62,7 +62,13 @@ final class DummyAdUserClient implements AdUser
 
     public function getUserContext(ImpressionContext $context): UserContext
     {
-        throw new RuntimeException('Method getUserContext() not implemented');
+        return new UserContext(
+            $context->keywords(),
+            AdUser::HUMAN_SCORE_ON_MISSING_TID,
+            1.0,
+            AdUser::PAGE_INFO_OK,
+            Utils::hexUserId()
+        );
     }
 
     public function reassessPageRankBatch(array $urls): array

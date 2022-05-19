@@ -23,15 +23,49 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
+use Adshares\Adserver\Client\GuzzleAdSelectClient;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Supply\Application\Service\AdSelect;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 final class SupplyControllerTest extends TestCase
 {
+    private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
+    private const SUPPLY_ANON_URI = '/supply/anon';
+    private const FOUND_BANNERS_STRUCTURE = [
+        'id',
+        'publisher_id',
+        'zone_id',
+        'pay_from',
+        'pay_to',
+        'type',
+        'size',
+        'serve_url',
+        'creative_sha1',
+        'click_url',
+        'view_url',
+        'rpm',
+    ];
+    private const FOUND_BANNERS_WITH_CREATION_STRUCTURE = [
+        'banners' => [
+            '*' => self::FOUND_BANNERS_STRUCTURE,
+        ],
+        'zones',
+        'zoneSizes',
+        'success',
+    ];
 
     public function testPageWhyNoParameters(): void
     {
@@ -71,9 +105,83 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
+    public function testFind(): void
+    {
+        $this->mockAdSelect();
+        /** @var User $user */
+        $user = factory(User::class)->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
+        /** @var Zone $zone */
+        $zone = factory(Zone::class)->create(['site_id' => $site->id]);
+        $data = [
+            'page' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+            'zones' => [
+                ['zone' => $zone->uuid]
+            ],
+        ];
+        $content = Utils::urlSafeBase64Encode(json_encode($data));
+
+        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure([self::FOUND_BANNERS_STRUCTURE]);
+    }
+
+    public function testFindNoData(): void
+    {
+        $response = self::post(self::BANNER_FIND_URI);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testFindJson(): void
     {
-        $response = self::post('/supply/anon', []);
+        $this->mockAdSelect();
+        $data = [
+            'pay_to' => 'ADS:0001-00000001-8B4E',
+            'view_id' => '0123456789ABCDEF0123456789ABCDEF',
+            'width' => 300,
+            'height' => 250,
+            'context' => [
+                'user' => ['language' => 'en'],
+                'device' => ['os' => 'Windows'],
+                'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
+            ],
+            'medium' => 'metaverse',
+            'vendor' => 'decentraland',
+        ];
+        $response = self::post(self::SUPPLY_ANON_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FOUND_BANNERS_WITH_CREATION_STRUCTURE);
+        self::assertEquals('Decentraland (0, -10)', Site::first()->name);
+    }
+
+    public function testFindJsonNoData(): void
+    {
+        $response = self::post(self::SUPPLY_ANON_URI);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    private function mockAdSelect(): void
+    {
+        factory(NetworkCampaign::class)->create(['id' => 1]);
+        /** @var NetworkBanner $networkBanner */
+        $networkBanner = factory(NetworkBanner::class)->create(['network_campaign_id' => 1]);
+        $adSelectResponse = self::createMock(ResponseInterface::class);
+        $adSelectResponse->method('getBody')
+            ->willReturn(json_encode([[['banner_id' => $networkBanner->uuid, 'rpm' => '0.01']]]));
+        $client = new Client(['handler' => HandlerStack::create(new MockHandler([$adSelectResponse]))]);
+        $this->app->bind(
+            AdSelect::class,
+            static function () use ($client) {
+                return new GuzzleAdSelectClient($client);
+            }
+        );
     }
 }

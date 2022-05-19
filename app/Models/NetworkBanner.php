@@ -96,6 +96,8 @@ class NetworkBanner extends Model
 
     private const NETWORK_CAMPAIGNS_COLUMN_LANDING_URL = 'network_campaigns.landing_url';
 
+    private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS = 'network_campaigns.source_address';
+
     private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST = 'network_campaigns.source_host';
 
     private const NETWORK_CAMPAIGNS_COLUMN_BUDGET = 'network_campaigns.budget';
@@ -263,7 +265,15 @@ class NetworkBanner extends Model
         }
 
         if (null !== $networkBannerFilter->getLandingUrl()) {
-            $query->where('network_campaigns.landing_url', 'like', '%' . $networkBannerFilter->getLandingUrl() . '%');
+            $query->where(
+                self::NETWORK_CAMPAIGNS_COLUMN_LANDING_URL,
+                'like',
+                '%' . $networkBannerFilter->getLandingUrl() . '%'
+            );
+        }
+
+        if ($networkBannerFilter->isLocal()) {
+            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS, (string)config('app.adshares_address'));
         }
 
         return $query;
@@ -335,6 +345,7 @@ class NetworkBanner extends Model
             self::NETWORK_BANNERS_COLUMN_SIZE,
             self::NETWORK_BANNERS_COLUMN_CLASSIFICATION,
             self::NETWORK_CAMPAIGNS_COLUMN_LANDING_URL,
+            self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS,
             self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST,
             self::NETWORK_CAMPAIGNS_COLUMN_BUDGET,
             self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPM,

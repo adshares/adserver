@@ -157,7 +157,7 @@ class UsersController extends Controller
 
         $advertisers =
             DB::select(
-                $q = sprintf(
+                sprintf(
                     'SELECT 
                     GROUP_CONCAT(DISTINCT u.id SEPARATOR ",") AS user_ids,
                     %s AS email,
@@ -341,7 +341,7 @@ class UsersController extends Controller
 
         $publishers =
             DB::select(
-                $q = sprintf(
+                sprintf(
                     'SELECT 
                     GROUP_CONCAT(DISTINCT u.id SEPARATOR ",") AS user_ids,
                     %s AS email,

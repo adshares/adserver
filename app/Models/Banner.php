@@ -206,6 +206,13 @@ class Banner extends Model
         return $builder->get();
     }
 
+    public function deactivate(): void
+    {
+        if (Banner::STATUS_REJECTED !== $this->status) {
+            $this->status = Banner::STATUS_INACTIVE;
+            $this->save();
+        }
+    }
     public function classifications(): HasMany
     {
         return $this->hasMany(BannerClassification::class);

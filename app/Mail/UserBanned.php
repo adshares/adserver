@@ -19,26 +19,30 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Mail;
 
-namespace Adshares\Common\Application\Service;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-use Adshares\Common\Application\Dto\Media;
-use Adshares\Common\Application\Dto\TaxonomyV2;
-use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
-use Adshares\Common\Application\Model\Selector;
-
-interface ConfigurationRepository
+class UserBanned extends Mailable
 {
-    public function storeFilteringOptions(Selector $options): void;
+    use Queueable;
+    use SerializesModels;
 
-    public function storeTaxonomyV2(TaxonomyV2 $taxonomy): void;
+    protected $reason;
 
-    public function fetchFilteringOptions(): Selector;
+    public function __construct($reason)
+    {
+        $this->reason = $reason;
+    }
 
-    public function fetchTaxonomy(): TaxonomyV2;
-
-    public function fetchMedia(): Media;
-
-    public function fetchMedium(string $mediumName = 'web', ?string $vendor = null): Medium;
+    public function build()
+    {
+        return $this->markdown('emails.user-banned')->with(
+            [
+                'reason' => $this->reason,
+            ]
+        );
+    }
 }

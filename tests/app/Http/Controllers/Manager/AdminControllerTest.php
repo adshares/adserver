@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,13 +21,31 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Mail\UserBanned;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Classification;
+use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\RefLink;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserSettings;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Symfony\Component\HttpFoundation\Response;
 
 use function json_decode;
 
@@ -39,7 +57,11 @@ final class AdminControllerTest extends TestCase
 
     private const URI_SETTINGS = '/admin/settings';
 
+    private const URI_SITE_SETTINGS = '/admin/site-settings';
+
     private const URI_REJECTED_DOMAINS = '/admin/rejected-domains';
+
+    private const URI_WALLET = '/admin/wallet';
 
     private const REGULATION_RESPONSE_STRUCTURE = [
         'content',
@@ -282,6 +304,315 @@ final class AdminControllerTest extends TestCase
         self::assertEquals('example1.com', $deletedDomains->first()->domain);
     }
 
+    public function testSiteSettings(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->patch(
+            self::URI_SITE_SETTINGS,
+            [
+                'classifierLocalBanners' => 'all-by-default',
+                'acceptBannersManually' => '1',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
+    public function testSiteSettingsClassifierLocalBannersInvalid(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->patch(
+            self::URI_SITE_SETTINGS,
+            [
+                'classifierLocalBanners' => '999',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        /** @var User $user */
+        $user = factory(User::class)->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Campaign $campaign */
+        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $response = $this->post(self::buildUriBan($user->id), ['reason' => 'suspicious activity']);
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertNull(User::find($user->id)->api_token);
+        self::assertNull(User::find($user->id)->auto_withdrawal);
+        self::assertEquals(Campaign::STATUS_INACTIVE, (new Campaign())->find($campaign->id)->status);
+        self::assertEquals(Banner::STATUS_INACTIVE, (new Banner())->find($banner->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        Mail::assertQueued(UserBanned::class);
+    }
+
+    public function testBanAdmin(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create(['is_admin' => 1])->id;
+
+        $response = $this->post(self::buildUriBan($userId), ['reason' => 'suspicious activity']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanNotExistingUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->post(self::buildUriBan(-1), ['reason' => 'suspicious activity']);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testBanUserByRegularUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testBanUserNoReason(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUserEmptyReason(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId), ['reason' => ' ']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUserTooLongReason(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriBan($userId), ['reason' => str_repeat('a', 256)]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUserDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        /** @var User $user */
+        $user = factory(User::class)->create();
+
+        $response = $this->post(self::buildUriBan($user->id), ['reason' => 'suspicious activity']);
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testUnbanUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriUnban($userId));
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testUnbanNotExistingUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->post(self::buildUriUnban(-1));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testUnbanUserByRegularUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriUnban($userId));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testDeleteUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        /** @var User $user */
+        $user = factory(User::class)->create([
+            'api_token' => '1234',
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+        ]);
+        /** @var Campaign $campaign */
+        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
+        /** @var ConversionDefinition $conversionDefinition */
+        $conversionDefinition = factory(ConversionDefinition::class)->create(
+            [
+                'campaign_id' => $campaign->id,
+                'limit_type' => 'in_budget',
+                'is_repeatable' => true,
+            ]
+        );
+
+        /** @var BidStrategy $bidStrategy */
+        $bidStrategy = factory(BidStrategy::class)->create(['user_id' => $user->id]);
+        $bidStrategyDetail = BidStrategyDetail::create('user:country:other', 0.2);
+        $bidStrategy->bidStrategyDetails()->saveMany([$bidStrategyDetail]);
+
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = factory(Zone::class)->create(['site_id' => $site->id]);
+
+        factory(RefLink::class)->create(['user_id' => $user->id]);
+        Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
+
+        /** @var NetworkCampaign $networkCampaign */
+        $networkCampaign = factory(NetworkCampaign::class)->create();
+        /** @var NetworkBanner $networkBanner */
+        $networkBanner = factory(NetworkBanner::class)->create(
+            ['network_campaign_id' => $networkCampaign->id]
+        );
+        factory(Classification::class)->create(
+            [
+                'banner_id' => $networkBanner->id,
+                'status' => Classification::STATUS_REJECTED,
+                'site_id' => $site->id,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $response = $this->post(self::buildUriDelete($user->id));
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertNotEmpty(User::withTrashed()->find($user->id)->deleted_at);
+        self::assertNull(User::withTrashed()->find($user->id)->api_token);
+        self::assertEmpty(User::withTrashed()->where('email', $user->email)->get());
+        self::assertEmpty(User::withTrashed()->where('wallet_address', $user->wallet_address)->get());
+        self::assertEmpty(UserSettings::where('user_id', $user->id)->get());
+        self::assertNotEmpty(Campaign::withTrashed()->find($campaign->id)->deleted_at);
+        self::assertNotEmpty(Banner::withTrashed()->find($banner->id)->deleted_at);
+        self::assertEmpty(BannerClassification::all());
+        self::assertNotEmpty(ConversionDefinition::withTrashed()->find($conversionDefinition->id)->deleted_at);
+        self::assertNotEmpty(BidStrategy::withTrashed()->find($bidStrategy->id)->deleted_at);
+        self::assertNotEmpty(BidStrategyDetail::withTrashed()->find($bidStrategyDetail->id)->deleted_at);
+        self::assertNotEmpty(Site::withTrashed()->find($site->id)->deleted_at);
+        self::assertNotEmpty(Zone::withTrashed()->find($zone->id)->deleted_at);
+        self::assertEmpty(RefLink::where('user_id', $user->id)->get());
+        self::assertEmpty(Token::where('user_id', $user->id)->get());
+        self::assertEmpty(Classification::where('user_id', $user->id)->get());
+    }
+
+    public function testDeleteAdmin(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $userId = factory(User::class)->create(['is_admin' => 1])->id;
+
+        $response = $this->post(self::buildUriDelete($userId));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeleteNotExistingUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->post(self::buildUriDelete(-1));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDeleteUserByRegularUser(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $userId = factory(User::class)->create()->id;
+
+        $response = $this->post(self::buildUriDelete($userId));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testDeleteUserDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        /** @var User $user */
+        $user = factory(User::class)->create();
+
+        $response = $this->post(self::buildUriDelete($user->id));
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testWallet(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        factory(UserLedgerEntry::class)->create([
+            'amount' => 2000,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'amount' => -2,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_AD_EXPENSE,
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'amount' => 500,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'amount' => -30,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_BONUS_EXPENSE,
+        ]);
+
+        $response = $this->get(self::URI_WALLET);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(
+            [
+                'wallet' => [
+                    'balance',
+                    'unusedBonuses',
+                ]
+            ]
+        );
+        $content = json_decode($response->content(), true);
+        self::assertEquals(2468, $content['wallet']['balance']);
+        self::assertEquals(470, $content['wallet']['unusedBonuses']);
+    }
+
     private function settings(): array
     {
         return [
@@ -299,5 +630,20 @@ final class AdminControllerTest extends TestCase
             'registrationMode' => 'public',
             'autoConfirmationEnabled' => 1,
         ];
+    }
+
+    private static function buildUriBan($userId): string
+    {
+        return sprintf('/admin/users/%d/ban', $userId);
+    }
+
+    private static function buildUriUnban($userId): string
+    {
+        return sprintf('/admin/users/%d/unban', $userId);
+    }
+
+    private static function buildUriDelete($userId): string
+    {
+        return sprintf('/admin/users/%d/delete', $userId);
     }
 }

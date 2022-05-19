@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,6 +31,14 @@ class CampaignRepository
     public function find()
     {
         return (new Campaign())->with('conversions')->get();
+    }
+
+    /**
+     * @return Collection|Campaign[]
+     */
+    public function findByUserId(int $userId): Collection
+    {
+        return (new Campaign())->where('user_id', $userId)->get();
     }
 
     /**

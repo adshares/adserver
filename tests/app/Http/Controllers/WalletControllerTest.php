@@ -1,8 +1,6 @@
 <?php
-// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
-
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
+// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 
 declare(strict_types=1);
 
@@ -329,8 +329,6 @@ class WalletControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $this->generateUserIncome($user->id, 200000000000);
 
-        $this->actingAs($user, 'api');
-
         $amount = 100000000000;
         $response = $this->postJson('/api/wallet/withdraw', ['amount' => $amount]);
 
@@ -362,8 +360,6 @@ class WalletControllerTest extends TestCase
         ]);
         $this->actingAs($user, 'api');
         $this->generateUserIncome($user->id, 200000000000);
-
-        $this->actingAs($user, 'api');
 
         $amount = 100000000000;
         $response = $this->postJson('/api/wallet/withdraw', ['amount' => $amount]);

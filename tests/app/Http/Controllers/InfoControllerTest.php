@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,11 +43,11 @@ class InfoControllerTest extends TestCase
                     'ADV',
                     'PUB'
                 ],
-                'serverUrl' => 'https://test',
+                'serverUrl' => 'https://example.com',
                 'panelUrl' => 'http://adpanel',
-                'privacyUrl' => 'https://test/policies/privacy.html',
-                'termsUrl' => 'https://test/policies/terms.html',
-                'inventoryUrl' => 'https://test/adshares/inventory/list',
+                'privacyUrl' => 'https://example.com/policies/privacy.html',
+                'termsUrl' => 'https://example.com/policies/terms.html',
+                'inventoryUrl' => 'https://example.com/adshares/inventory/list',
                 'adsAddress' => '0001-00000005-CBCA',
                 'supportEmail' => 'mail@example.com',
                 'demandFee' => 0.0199,

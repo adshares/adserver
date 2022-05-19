@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Request\Classifier;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -45,6 +46,8 @@ class NetworkBannerFilter
 
     private ?string $type;
 
+    private bool $local;
+
     private int $userId;
 
     private ?int $siteId;
@@ -61,6 +64,10 @@ class NetworkBannerFilter
 
         $this->sizes = json_decode($request->get('sizes', '[]'), true);
         $this->type = $request->get('type');
+        $this->local =
+            Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS)
+            === Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY
+            || $request->get('local', false);
 
         $this->userId = $userId;
         $this->siteId = $siteId;
@@ -102,6 +109,11 @@ class NetworkBannerFilter
     public function getType(): ?string
     {
         return $this->type;
+    }
+
+    public function isLocal(): bool
+    {
+        return $this->local;
     }
 
     public function getUserId(): int

@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,7 +26,7 @@ use Faker\Generator as Faker;
 
 $factory->define(UserLedgerEntry::class, function (Faker $faker) {
     return [
-        'user_id' => function() {
+        'user_id' => function () {
             return factory(User::class)->create()->id;
         },
         'amount' => $faker->numberBetween(0, 3800000000000000000),

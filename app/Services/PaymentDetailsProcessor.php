@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,24 +35,16 @@ use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
-use function max;
-use function min;
-use function sprintf;
-
 class PaymentDetailsProcessor
 {
-    /** @var string */
-    private $adServerAddress;
+    private string $adServerAddress;
 
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
+    private ExchangeRateReader $exchangeRateReader;
 
-    /** @var LicenseReader */
-    private $licenseReader;
+    private LicenseReader $licenseReader;
 
     public function __construct(
         ExchangeRateReader $exchangeRateReader,
@@ -156,7 +148,7 @@ class PaymentDetailsProcessor
     {
         try {
             $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
-        } catch (ModelNotFoundException $modelNotFoundException) {
+        } catch (ConfigException $modelNotFoundException) {
             throw new MissingInitialConfigurationException('No config entry for license fee.');
         }
 
