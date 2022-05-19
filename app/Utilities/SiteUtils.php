@@ -23,6 +23,20 @@ namespace Adshares\Adserver\Utilities;
 
 class SiteUtils
 {
+    public static function extractNameFromCryptovoxelsDomain(string $domain): string
+    {
+        if (1 !== preg_match('/^scene-\d+.cryptovoxels.com$/i', $domain)) {
+            return $domain;
+        }
+
+        $prefixLength = strlen('scene-');
+        $suffixLength = strlen('.cryptovoxels.com');
+        return sprintf(
+            'Cryptovoxels %s',
+            substr($domain, $prefixLength, strlen($domain) - $prefixLength - $suffixLength)
+        );
+    }
+
     public static function extractNameFromDecentralandDomain(string $domain): string
     {
         if (1 !== preg_match('/^scene-[n]?\d+-[n]?\d+.decentraland.org$/i', $domain)) {

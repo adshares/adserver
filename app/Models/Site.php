@@ -269,10 +269,13 @@ class Site extends Model
             ->first();
 
         if (!$site) {
-            if ('metaverse' === $medium && 'decentraland' === $vendor) {
-                $name = SiteUtils::extractNameFromDecentralandDomain($domain);
-            } else {
-                $name = $domain;
+            $name = $domain;
+            if ('metaverse' === $medium) {
+                if ('decentraland' === $vendor) {
+                    $name = SiteUtils::extractNameFromDecentralandDomain($domain);
+                } elseif ('cryptovoxels' === $vendor) {
+                    $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
+                }
             }
             $site = Site::create($userId, $url, $name, $medium, $vendor);
         }

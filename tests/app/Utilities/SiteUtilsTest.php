@@ -29,7 +29,28 @@ use PHPUnit\Framework\TestCase;
 final class SiteUtilsTest extends TestCase
 {
     /**
-     * @dataProvider calculateAmountProvider
+     * @dataProvider cryptovoxelsDomainProvider
+     */
+    public function testExtractNameFromCryptovoxelsDomain(string $domain, string $expectedName): void
+    {
+        $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
+
+        $this->assertEquals($expectedName, $name);
+    }
+
+    public function cryptovoxelsDomainProvider(): array
+    {
+        return [
+            ['scene-0.cryptovoxels.com', 'Cryptovoxels 0'],
+            ['scene-1.cryptovoxels.com', 'Cryptovoxels 1'],
+            ['scene-127.cryptovoxels.com', 'Cryptovoxels 127'],
+            ['new.scene-127.cryptovoxels.com', 'new.scene-127.cryptovoxels.com'],
+            ['play.cryptovoxels.com', 'play.cryptovoxels.com'],
+            ['example.com', 'example.com'],
+        ];
+    }
+    /**
+     * @dataProvider decentralandDomainProvider
      */
     public function testExtractNameFromDecentralandDomain(string $domain, string $expectedName): void
     {
@@ -38,7 +59,7 @@ final class SiteUtilsTest extends TestCase
         $this->assertEquals($expectedName, $name);
     }
 
-    public function calculateAmountProvider(): array
+    public function decentralandDomainProvider(): array
     {
         return [
             ['scene-0-n1.decentraland.org', 'Decentraland (0, -1)'],
@@ -47,6 +68,7 @@ final class SiteUtilsTest extends TestCase
             ['scene-0-0.decentraland.org', 'DCL Builder'],
             ['new.scene-0-0.decentraland.org', 'new.scene-0-0.decentraland.org'],
             ['play.decentraland.org', 'play.decentraland.org'],
+            ['example.com', 'example.com'],
         ];
     }
 }
