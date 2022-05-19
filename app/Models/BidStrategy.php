@@ -133,6 +133,9 @@ class BidStrategy extends Model
         return self::where('updated_at', '>=', $dateFrom)->limit($limit)->offset($offset)->get();
     }
 
+    /**
+     * @return Collection|BidStrategy[]
+     */
     public static function fetchForUser(int $userId, string $medium, ?string $vendor): Collection
     {
         return self::where('user_id', $userId)
@@ -145,6 +148,16 @@ class BidStrategy extends Model
     {
         $this->is_default = $isDefault;
         $this->save();
+    }
+
+    public static function deleteByUserId(int $userId): void
+    {
+        self::where('user_id', $userId)->get()->each(
+            function (BidStrategy $bidStrategy) {
+                $bidStrategy->bidStrategyDetails()->delete();
+                $bidStrategy->delete();
+            }
+        );
     }
 
     public function bidStrategyDetails(): HasMany

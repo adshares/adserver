@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -215,5 +216,34 @@ final class DemandControllerTest extends TestCase
             'https://example.com/serve/x' . $bannerActive->uuid . '.doc?v=ec09',
             $content[0]['banners'][0]['serve_url']
         );
+    }
+
+    public function testServeDeletedBanner(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Campaign $campaign */
+        $campaign = factory(Campaign::class)->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+                'deleted_at' => new DateTimeImmutable(),
+            ]
+        );
+        /** @var Banner $banner */
+        $banner = factory(Banner::class)->create([
+            'campaign_id' => $campaign->id,
+            'deleted_at' => new DateTimeImmutable(),
+        ]);
+
+        $response = self::getJson(self::buildServeUri($banner->uuid));
+
+        $response->assertStatus(404);
+    }
+
+    private static function buildServeUri(string $uuid): string
+    {
+        return sprintf('/serve/%s', $uuid);
     }
 }

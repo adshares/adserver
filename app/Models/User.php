@@ -26,6 +26,7 @@ use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -65,6 +66,8 @@ use Illuminate\Support\Facades\Hash;
  * @property int|null auto_withdrawal
  * @property bool is_auto_withdrawal
  * @property int auto_withdrawal_limit
+ * @property bool is_banned
+ * @property string ban_reason
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -140,6 +143,8 @@ class User extends Authenticatable
         'is_confirmed',
         'is_subscribed',
         'adserver_wallet',
+        'is_banned',
+        'ban_reason',
     ];
 
     protected $traitAutomate = [
@@ -158,6 +163,9 @@ class User extends Authenticatable
 
     protected function toArrayExtras($array)
     {
+        if (null === $array['email']) {
+            $array['email'] = (string)$array['wallet_address'];
+        }
         unset($array['wallet_address']);
         return $array;
     }
@@ -252,6 +260,29 @@ class User extends Authenticatable
         $this->save();
     }
 
+    public function maskEmailAndWalletAddress(): void
+    {
+        $this->email = sprintf('%s@%s', $this->uuid, DomainReader::domain(config('app.url')));
+        $this->email_confirmed_at = null;
+        $this->wallet_address = null;
+        $this->save();
+    }
+
+    public function ban(string $reason): void
+    {
+        $this->is_banned = true;
+        $this->ban_reason = $reason;
+        $this->api_token = null;
+        $this->auto_withdrawal = null;
+        $this->save();
+    }
+
+    public function unban(): void
+    {
+        $this->is_banned = false;
+        $this->save();
+    }
+
     public static function fetchById(int $id): ?self
     {
         return self::find($id);
@@ -310,6 +341,11 @@ class User extends Authenticatable
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
+    }
+
+    public function sites(): HasMany
+    {
+        return $this->hasMany(Site::class);
     }
 
     public function getBalance(): int

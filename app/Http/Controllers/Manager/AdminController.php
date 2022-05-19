@@ -30,11 +30,20 @@ use Adshares\Adserver\Http\Requests\UpdateRegulation;
 use Adshares\Adserver\Http\Response\LicenseResponse;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
+use Adshares\Adserver\Mail\UserBanned;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\RefLink;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserSettings;
+use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
@@ -342,5 +351,99 @@ class AdminController extends Controller
         $user->save();
 
         return self::json($user->toArray());
+    }
+
+    public function banUser(int $userId, Request $request): JsonResponse
+    {
+        $reason = $request->input('reason');
+        if (!is_string($reason) || strlen(trim($reason)) < 1 || strlen(trim($reason)) > 255) {
+            throw new UnprocessableEntityHttpException('Invalid reason');
+        }
+
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator cannot be banned');
+        }
+
+        DB::beginTransaction();
+        try {
+            Campaign::deactivateAllForUserId($userId);
+            $user->sites()->get()->each(
+                function (Site $site) {
+                    $site->changestatus(Site::STATUS_INACTIVE);
+                    $site->save();
+                }
+            );
+            $user->ban($reason);
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        Mail::to($user)->queue(new UserBanned($reason));
+
+        return self::json($user->toArray());
+    }
+
+    public function unbanUser(int $userId): JsonResponse
+    {
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+
+        $user->unban();
+
+        return self::json($user->toArray());
+    }
+
+    public function deleteUser(int $userId, CampaignRepository $campaignRepository): JsonResponse
+    {
+        /** @var User $user */
+        $user = User::find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator cannot be deleted');
+        }
+
+        DB::beginTransaction();
+        try {
+            $campaigns = $campaignRepository->findByUserId($userId);
+            foreach ($campaigns as $campaign) {
+                $campaign->conversions()->delete();
+                $campaignRepository->delete($campaign);
+            }
+            BidStrategy::deleteByUserId($userId);
+
+            $sites = $user->sites();
+            foreach ($sites->get() as $site) {
+                $site->zones()->delete();
+            }
+            $sites->delete();
+
+            RefLink::fetchByUser($userId)->each(fn (RefLink $refLink) => $refLink->delete());
+            Token::deleteByUserId($userId);
+            Classification::deleteByUserId($userId);
+            UserSettings::deleteByUserId($userId);
+
+            $user->maskEmailAndWalletAddress();
+            $user->clearApiKey();
+            $user->delete();
+
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 }

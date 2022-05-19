@@ -1,6 +1,4 @@
 <?php
-// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
-
 /**
  * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
@@ -19,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
+// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 
 declare(strict_types=1);
 
@@ -54,6 +54,7 @@ class AuthControllerTest extends TestCase
     private const EMAIL_URI = '/auth/email';
     private const LOG_IN_URI = '/auth/login';
     private const LOG_OUT_URI = '/auth/logout';
+    private const REGISTER_USER = '/auth/register';
     private const WALLET_LOGIN_INIT_URI = '/auth/login/wallet/init';
     private const WALLET_LOGIN_URI = '/auth/login/wallet';
 
@@ -668,6 +669,19 @@ class AuthControllerTest extends TestCase
         self::assertNull(User::fetchById($user->id)->api_token, 'Token is not null');
     }
 
+    public function testLogInBannedUser(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)
+            ->create(['password' => '87654321', 'is_banned' => true, 'ban_reason' => 'suspicious activity']);
+
+        $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321']);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $content = json_decode($response->getContent(), true);
+        self::assertArrayHasKey('reason', $content);
+    }
+
     public function testSetPassword(): void
     {
         $user = $this->walletRegisterUser();
@@ -943,11 +957,30 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
+    public function testRegisterDeletedUser(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['deleted_at' => new DateTime()]);
+
+        $response = $this->postJson(
+            self::REGISTER_USER,
+            [
+                'user' => [
+                    'email' => $user->email,
+                    'password' => '87654321',
+                ],
+                'uri' => '/auth/email-activation/',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     private function registerUser(?string $referralToken = null, int $status = Response::HTTP_CREATED): ?User
     {
         $email = $this->faker->unique()->email;
         $response = $this->postJson(
-            '/auth/register',
+            self::REGISTER_USER,
             [
                 'user' => [
                     'email' => $email,

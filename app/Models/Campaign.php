@@ -189,6 +189,21 @@ class Campaign extends Model
         )->count();
     }
 
+    public static function deactivateAllForUserId(int $userId): int
+    {
+        return self::fetchByUserId($userId)->filter(
+            function (Campaign $campaign) {
+                return in_array($campaign->status, [Campaign::STATUS_ACTIVE, Campaign::STATUS_SUSPENDED], true);
+            }
+        )->each(
+            function (Campaign $campaign) {
+                $campaign->status = Campaign::STATUS_INACTIVE;
+                $campaign->save();
+                $campaign->banners->each(fn(Banner $banner) => $banner->deactivate());
+            }
+        )->count();
+    }
+
     public static function isStatusAllowed(int $status): bool
     {
         return in_array($status, self::STATUSES, true);
