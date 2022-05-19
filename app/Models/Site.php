@@ -29,6 +29,7 @@ use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringMatcher;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -259,19 +260,24 @@ class Site extends Model
         int $userId,
         string $url,
         string $medium,
-        ?string $vendor,
-        ?string $name = null
+        ?string $vendor
     ): ?self {
         $domain = DomainReader::domain($url);
 
-        $builder = self::where('user_id', $userId)->where('domain', $domain);
-        if ($name !== null) {
-            $builder = $builder->where('name', $name);
-        }
-        $site = $builder->first();
+        $site = self::where('user_id', $userId)
+            ->where('domain', $domain)
+            ->first();
 
         if (!$site) {
-            $site = Site::create($userId, $url, $name ?? $domain, $medium, $vendor);
+            $name = $domain;
+            if ('metaverse' === $medium) {
+                if ('decentraland' === $vendor) {
+                    $name = SiteUtils::extractNameFromDecentralandDomain($domain);
+                } elseif ('cryptovoxels' === $vendor) {
+                    $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
+                }
+            }
+            $site = Site::create($userId, $url, $name, $medium, $vendor);
         }
 
         return $site;

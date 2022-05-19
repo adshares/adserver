@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Error while targeting/filtering is not cached
 - Unused bonus calculation
+- Decentraland and Cryptovoxels site name
 
 ## [1.16.2] - 2022-04-21
 ### Fixed

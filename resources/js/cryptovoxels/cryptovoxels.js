@@ -76,14 +76,6 @@ var getImpressionId = function() {
     return lastImpressionId;
 }
 
-var getContext = function (iid) {
-    return {
-        iid: iid,
-        url: "https://" + parcel.id + ".adshares.cryptovoxels.com/",
-        keywords: 'cryptovoxels,metaverse'
-    }
-};
-
 var refreshTime = 10000;
 var cid = getCid();
 
