@@ -37,6 +37,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
@@ -59,6 +60,8 @@ final class AdminControllerTest extends TestCase
     private const URI_SITE_SETTINGS = '/admin/site-settings';
 
     private const URI_REJECTED_DOMAINS = '/admin/rejected-domains';
+
+    private const URI_WALLET = '/admin/wallet';
 
     private const REGULATION_RESPONSE_STRUCTURE = [
         'content',
@@ -568,6 +571,46 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriDelete($user->id));
 
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testWallet(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        factory(UserLedgerEntry::class)->create([
+            'amount' => 2000,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'amount' => -2,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_AD_EXPENSE,
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'amount' => 500,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
+        ]);
+        factory(UserLedgerEntry::class)->create([
+            'amount' => -30,
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_BONUS_EXPENSE,
+        ]);
+
+        $response = $this->get(self::URI_WALLET);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(
+            [
+                'wallet' => [
+                    'balance',
+                    'unusedBonuses',
+                ]
+            ]
+        );
+        $content = json_decode($response->content(), true);
+        self::assertEquals(2468, $content['wallet']['balance']);
+        self::assertEquals(470, $content['wallet']['unusedBonuses']);
     }
 
     private function settings(): array
