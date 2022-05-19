@@ -84,9 +84,11 @@
             "phpunit"
         ],
         "test-coverage": [
+            "Composer\\Config::disableProcessTimeout",
             "XDEBUG_MODE=coverage phpunit --coverage-text"
         ],
         "test-ci": [
+            "Composer\\Config::disableProcessTimeout",
             "@test-coverage --coverage-clover ./storage/phpunit/coverage.xml --log-junit ./storage/phpunit/logfile.xml"
         ],
         "dev": [
