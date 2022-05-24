@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -65,7 +65,7 @@ class SupplyBlacklistedDomain extends Model
             return true;
         }
 
-        $blacklisted = Cache::remember('supply_blacklisted_domains', 10, function () {
+        $blacklisted = Cache::remember('supply_blacklisted_domains', 10 * 60, function () {
             return self::all()->pluck('domain', 'domain')->toArray();
         });
 

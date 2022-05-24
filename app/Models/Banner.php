@@ -26,8 +26,6 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Common\Exception\RuntimeException;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -166,7 +164,7 @@ class Banner extends Model
 
         return Cache::remember(
             'banners.' . $uuid,
-            (int)(config('app.network_data_cache_ttl') / 60),
+            (int)config('app.network_data_cache_ttl'),
             function () use ($binId) {
                 return self::where('uuid', $binId)->with(
                     [

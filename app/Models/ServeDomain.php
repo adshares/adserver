@@ -40,6 +40,8 @@ class ServeDomain extends Model
 {
     use SoftDeletes;
 
+    private const TTL_ONE_HOUR = 3600;
+
     protected $fillable = [
         'base_url',
     ];
@@ -67,7 +69,7 @@ class ServeDomain extends Model
 
     public static function current(?string $subDomain = null): string
     {
-        return Cache::remember('serve-domain.current.' . $subDomain, 60, function () use ($subDomain) {
+        return Cache::remember('serve-domain.current.' . $subDomain, self::TTL_ONE_HOUR, function () use ($subDomain) {
             $domain = ServeDomain::orderBy('id', 'DESC')->first();
             $url = $domain !== null ? $domain->base_url : config('app.serve_base_url');
             if (!empty($subDomain)) {
