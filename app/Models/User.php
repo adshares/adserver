@@ -38,6 +38,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * @property Collection|Campaign[] campaigns
@@ -248,7 +249,7 @@ class User extends Authenticatable
         }
 
         do {
-            $this->api_token = str_random(60);
+            $this->api_token = Str::random(60);
         } while ($this->where('api_token', $this->api_token)->exists());
 
         $this->save();

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,8 +29,8 @@ use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
-use function str_random;
 use function substr;
 use function env;
 
@@ -72,7 +72,7 @@ class CreateAdminUserCommand extends BaseCommand
 
         $name = 'admin';
         if (!$password) {
-            $password = substr(Hash::make(str_random(8)), -8);
+            $password = substr(Hash::make(Str::random(8)), -8);
         }
 
         try {
