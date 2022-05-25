@@ -277,7 +277,7 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenCreatingCampaign(): array
     {
         return [
-            'positive budget' => [1e11, Response::HTTP_CREATED],
+            'positive budget' => [(int)1e11, Response::HTTP_CREATED],
             'no budget' => [0, Response::HTTP_CREATED],
             'negative budget' => [-11, Response::HTTP_BAD_REQUEST],
         ];
@@ -286,8 +286,8 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenStatusChange(): array
     {
         return [
-            'insufficient funds' => [300 * 1e9, Response::HTTP_BAD_REQUEST],
-            'sufficient funds' => [10 * 1e9, Response::HTTP_NO_CONTENT],
+            'insufficient funds' => [(int)(300 * 1e9), Response::HTTP_BAD_REQUEST],
+            'sufficient funds' => [(int)(10 * 1e9), Response::HTTP_NO_CONTENT],
         ];
     }
 
@@ -364,10 +364,10 @@ final class CampaignsControllerTest extends TestCase
     {
         // campaignBudget,isDirectDeal,ads,bonus,expectedCampaignStatus
         return [
-            'not direct deal, has only crypto' => [1e11, false, 1e11, 0, Campaign::STATUS_ACTIVE],
-            'not direct deal, has only bonus' => [1e11, false, 0, 1e11, Campaign::STATUS_ACTIVE],
-            'direct deal, has only crypto' => [1e11, true, 1e11, 0, Campaign::STATUS_ACTIVE],
-            'direct deal, has only bonus' => [1e11, true, 0, 1e11, Campaign::STATUS_DRAFT],
+            'not direct deal, has only crypto' => [(int)1e11, false, (int)1e11, 0, Campaign::STATUS_ACTIVE],
+            'not direct deal, has only bonus' => [(int)1e11, false, 0, (int)1e11, Campaign::STATUS_ACTIVE],
+            'direct deal, has only crypto' => [(int)1e11, true, (int)1e11, 0, Campaign::STATUS_ACTIVE],
+            'direct deal, has only bonus' => [(int)1e11, true, 0, (int)1e11, Campaign::STATUS_DRAFT],
         ];
     }
 

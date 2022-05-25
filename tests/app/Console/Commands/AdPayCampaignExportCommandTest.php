@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
-use PHPUnit\Framework\MockObject\Stub;
+use PHPUnit\Framework\MockObject\Stub\ReturnCallback;
 
 use function factory;
 
@@ -45,6 +45,7 @@ class AdPayCampaignExportCommandTest extends ConsoleTestCase
         );
         $this->instance(AdPay::class, $adPayMock);
 
+        /** @var User $user */
         $user = factory(User::class)->create();
         factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE]);
@@ -56,7 +57,7 @@ class AdPayCampaignExportCommandTest extends ConsoleTestCase
             ->assertExitCode(0);
     }
 
-    private static function assertCampaignCount(int $expectedCount): Stub
+    private static function assertCampaignCount(int $expectedCount): ReturnCallback
     {
         return self::returnCallback(
             function (array $campaigns) use ($expectedCount) {

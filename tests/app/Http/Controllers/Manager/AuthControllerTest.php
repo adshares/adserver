@@ -85,7 +85,7 @@ class AuthControllerTest extends TestCase
         ],
     ];
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);

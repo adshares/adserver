@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -39,19 +39,19 @@ class ImpressionContextTest extends TestCase
         self::assertNotEmpty($body);
 
         self::assertArrayHasKey('url', $body);
-        self::assertInternalType('string', $body['url']);
+        self::assertIsString($body['url']);
 
         self::assertArrayHasKey('tags', $body);
-        self::assertInternalType('array', $body['tags']);
+        self::assertIsArray($body['tags']);
 
         self::assertArrayHasKey('headers', $body);
         self::assertArrayHasKey('user-agent', $body['headers']);
 
         self::assertNotEmpty($body['headers']['user-agent']);
-        self::assertInternalType('string', $body['headers']['user-agent']);
+        self::assertIsString($body['headers']['user-agent']);
     }
 
-    public function bodyProvider()
+    public function bodyProvider(): array
     {
         $json = <<<"JSON"
 {
