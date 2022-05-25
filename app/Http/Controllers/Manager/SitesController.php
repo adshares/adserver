@@ -129,7 +129,8 @@ class SitesController extends Controller
 
         $this->sendCrmMailOnSiteAdded($user, $site);
 
-        return self::json([], Response::HTTP_CREATED)->header('Location', route('app.sites.read', ['site' => $site]));
+        return self::json([], Response::HTTP_CREATED)
+            ->header('Location', route('app.sites.read', ['site' => $site->id]));
     }
 
     public function read(Site $site): JsonResponse
