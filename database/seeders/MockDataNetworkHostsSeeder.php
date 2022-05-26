@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,12 +19,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+namespace Database\Seeders;
+
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
+use DateTime;
 use Illuminate\Database\Seeder;
 
 class MockDataNetworkHostsSeeder extends Seeder

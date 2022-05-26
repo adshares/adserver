@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,18 +19,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+namespace Database\Seeders;
+
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class MockDataCampaignsSeeder extends Seeder
 {
-    private $bannerSizes = [
+    private array $bannerSizes = [
         '728x90',
         '750x200',
         '120x600',
@@ -149,6 +153,7 @@ class MockDataCampaignsSeeder extends Seeder
             [
                 'campaign_id' => $campaign->id,
                 'creative_type' => Banner::TEXT_TYPE_IMAGE,
+                'creative_mime' => 'image/png',
                 'creative_size' => $size,
                 'name' => (null === $filename) ? 'seed' : basename($filename, '.png'),
                 'status' => Banner::STATUS_ACTIVE,
@@ -172,6 +177,7 @@ class MockDataCampaignsSeeder extends Seeder
             [
                 'campaign_id' => $campaign->id,
                 'creative_type' => Banner::TEXT_TYPE_HTML,
+                'creative_mime' => 'text/html',
                 'creative_size' => $size,
                 'creative_contents' => $this->generateBannerHTML(rand(1, 9), $dimensions[0], $dimensions[1]),
                 'name' => sprintf('Banner HTML %s-%s', $dimensions[0], $dimensions[1]),

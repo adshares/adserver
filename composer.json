@@ -25,6 +25,7 @@
         "guzzlehttp/guzzle": "^7.4.0",
         "james-heinrich/getid3": "^1.9",
         "laravel/framework": "^8.0",
+        "laravel/legacy-factories": "^1.3",
         "laravel/tinker": "^2.0",
         "mikehaertl/phpwkhtmltopdf": "^2.5",
         "paragonie/sodium_compat": "^1.8",
@@ -50,7 +51,6 @@
     },
     "autoload": {
         "classmap": [
-            "database/seeds",
             "database/factories"
         ],
         "files": [
@@ -66,7 +66,8 @@
         "psr-4": {
             "Adshares\\Adserver\\Tests\\": "tests/app",
             "Adshares\\Mock\\": "tests/mock",
-            "Adshares\\Tests\\": "tests/src"
+            "Adshares\\Tests\\": "tests/src",
+            "Database\\Seeders\\": "database/seeders/"
         }
     },
     "extra": {

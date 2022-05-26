@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,13 +19,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+namespace Database\Seeders;
+
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class MockDataUsersSeeder extends Seeder
 {
-    protected $limit = 20;
+    protected int $limit = 20;
 
     /**
      * Run the database seeds.
