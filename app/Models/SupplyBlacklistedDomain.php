@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Http\Utils;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -31,6 +32,7 @@ use function strpos;
 /**
  * @property int id
  * @property string domain
+ * @mixin Builder
  */
 class SupplyBlacklistedDomain extends Model
 {

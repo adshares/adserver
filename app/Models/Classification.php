@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\Ownership;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\QueryException;
@@ -36,6 +37,7 @@ use Illuminate\Database\QueryException;
  * @property int site_id
  * @property int banner_id
  * @property int|null status
+ * @mixin Builder
  */
 class Classification extends Model
 {
