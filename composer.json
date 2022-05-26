@@ -22,7 +22,7 @@
         "doctrine/dbal": "2.9.*",
         "fideloper/proxy": "^4.0",
         "fruitcake/laravel-cors": "^3.0",
-        "guzzlehttp/guzzle": "^6.3",
+        "guzzlehttp/guzzle": "^7.4.0",
         "james-heinrich/getid3": "^1.9",
         "laravel/framework": "^7.0",
         "laravel/tinker": "^2.0",

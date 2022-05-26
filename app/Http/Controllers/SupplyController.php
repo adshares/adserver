@@ -50,6 +50,7 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use DateTimeInterface;
 use Exception;
+use GuzzleHttp\Psr7\Query;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -65,8 +66,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
-
-use function GuzzleHttp\Psr7\parse_query;
 
 class SupplyController extends Controller
 {
@@ -533,7 +532,7 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $clickQuery = parse_query(parse_url($networkImpression->context->click_url, PHP_URL_QUERY));
+        $clickQuery = Query::parse(parse_url($networkImpression->context->click_url, PHP_URL_QUERY));
 
         $request->query->set('r', $clickQuery['r']);
         $request->query->set(
@@ -647,7 +646,7 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $viewQuery = parse_query(parse_url($networkImpression->context->view_url, PHP_URL_QUERY));
+        $viewQuery = Query::parse(parse_url($networkImpression->context->view_url, PHP_URL_QUERY));
 
         $request->query->set('r', $viewQuery['r']);
         $request->query->set(
