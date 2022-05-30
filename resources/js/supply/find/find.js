@@ -861,7 +861,7 @@ var fetchBanner = function (banner, context, zone_options) {
     }).then(function (data, xhr) {
         context.cid = getCid();
 
-        context.page.zone = context.zone.zone || banner.zone_id;
+        context.page.zone = banner.zone_id;
         var contextParam = encodeZones([context.page]);
         context.click_url = addUrlParam(banner.click_url,
             {

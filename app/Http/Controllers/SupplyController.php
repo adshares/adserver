@@ -136,7 +136,6 @@ class SupplyController extends Controller
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
-        $validated['$site'] = $site;
 
         $zones = [];
 
@@ -156,7 +155,6 @@ class SupplyController extends Controller
                     'banner_mime' => $validated['mime_type'] ?? null
                 ]
             ];
-            $validated['zones'][] = $zone;
         }
 
         $queryData = [
@@ -235,6 +233,32 @@ class SupplyController extends Controller
 
         try {
             $decodedQueryData = Utils::decodeZones($data);
+            foreach ($decodedQueryData['zones'] as &$zone) {
+                if (isset($zone['pay-to'])) {
+                    $payoutAddress = WalletAddress::fromString($zone['pay-to']);
+                    $user = User::fetchByWalletAddress($payoutAddress);
+
+                    if (!$user) {
+                        if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
+                            $user = User::registerWithWallet($payoutAddress, true);
+                        } else {
+                            return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
+                        }
+                    }
+                    $site = Site::fetchOrCreate(
+                        $user->id,
+                        $decodedQueryData['page']['url'],
+                        'website',
+                        null
+                    );
+                    if ($site->status != Site::STATUS_ACTIVE) {
+                        return $this->sendError("site", "Site '" . $site->name . "' is not active");
+                    }
+
+                    $zoneObject = Zone::fetchOrCreate($site->id, "{$zone['width']}x{$zone['height']}", $zone['zone']);
+                    $zone['zone'] = $zoneObject->uuid;
+                }
+            }
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
