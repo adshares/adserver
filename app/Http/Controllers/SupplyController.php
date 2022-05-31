@@ -43,6 +43,7 @@ use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -235,28 +236,36 @@ class SupplyController extends Controller
             $decodedQueryData = Utils::decodeZones($data);
             foreach ($decodedQueryData['zones'] as &$zone) {
                 if (isset($zone['pay-to'])) {
-                    $payoutAddress = WalletAddress::fromString($zone['pay-to']);
-                    $user = User::fetchByWalletAddress($payoutAddress);
+                    try {
+                        $payoutAddress = WalletAddress::fromString($zone['pay-to']);
+                        $user = User::fetchByWalletAddress($payoutAddress);
 
-                    if (!$user) {
-                        if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
-                            $user = User::registerWithWallet($payoutAddress, true);
-                        } else {
-                            return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
+                        if (!$user) {
+                            if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
+                                $user = User::registerWithWallet($payoutAddress, true);
+                            } else {
+                                return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
+                            }
                         }
-                    }
-                    $site = Site::fetchOrCreate(
-                        $user->id,
-                        $decodedQueryData['page']['url'],
-                        'website',
-                        null
-                    );
-                    if ($site->status != Site::STATUS_ACTIVE) {
-                        return $this->sendError("site", "Site '" . $site->name . "' is not active");
-                    }
+                        $site = Site::fetchOrCreate(
+                            $user->id,
+                            $decodedQueryData['page']['url'],
+                            'website',
+                            null
+                        );
+                        if ($site->status != Site::STATUS_ACTIVE) {
+                            return $this->sendError("site", "Site '" . $site->name . "' is not active");
+                        }
 
-                    $zoneObject = Zone::fetchOrCreate($site->id, "{$zone['width']}x{$zone['height']}", $zone['zone']);
-                    $zone['zone'] = $zoneObject->uuid;
+                        $zoneObject = Zone::fetchOrCreate(
+                            $site->id,
+                            "{$zone['width']}x{$zone['height']}",
+                            $zone['zone']
+                        );
+                        $zone['zone'] = $zoneObject->uuid;
+                    } catch (InvalidArgumentException $ex) {
+                        return $this->sendError("pay_to", $ex->getMessage());
+                    }
                 }
             }
         } catch (RuntimeException $exception) {
