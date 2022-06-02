@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.18.0] - 2022-06-02
 ### Changed
 - Laravel 8
 
@@ -621,7 +623,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.17.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.0...develop
+[1.18.0]: https://github.com/adshares/adserver/compare/v1.17.0...v1.18.0
 [1.17.0]: https://github.com/adshares/adserver/compare/v1.16.2...v1.17.0
 [1.16.2]: https://github.com/adshares/adserver/compare/v1.16.1...v1.16.2
 [1.16.1]: https://github.com/adshares/adserver/compare/v1.16.0...v1.16.1
