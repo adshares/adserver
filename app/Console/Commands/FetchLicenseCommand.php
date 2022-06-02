@@ -28,7 +28,6 @@ use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 
 class FetchLicenseCommand extends BaseCommand
@@ -36,21 +35,21 @@ class FetchLicenseCommand extends BaseCommand
     protected $signature = 'ops:license:fetch';
 
     protected $description = 'Fetch operator license from License Server';
-    private LicenseProvider $licenseProvider;
-    private LicenseDecoder $licenseDecoder;
-    private LicenseReader $licenceReader;
-    private LicenseVault $licenseVault;
+    /** @var LicenseProvider */
+    private $license;
+    /** @var LicenseDecoder */
+    private $licenseDecoder;
+    /** @var LicenseVault */
+    private $licenseVault;
 
     public function __construct(
         Locker $locker,
-        LicenseProvider $licenseProvider,
+        LicenseProvider $license,
         LicenseDecoder $licenseDecoder,
-        LicenseReader $licenseReader,
         LicenseVault $licenseVault
     ) {
-        $this->licenseProvider = $licenseProvider;
+        $this->license = $license;
         $this->licenseDecoder = $licenseDecoder;
-        $this->licenceReader = $licenseReader;
         $this->licenseVault = $licenseVault;
 
         parent::__construct($locker);
@@ -67,7 +66,7 @@ class FetchLicenseCommand extends BaseCommand
         $this->info('Start command ' . $this->signature);
 
         try {
-            $encodedLicense = $this->licenseProvider->fetchLicense();
+            $encodedLicense = $this->license->fetchLicense();
             $this->licenseDecoder->decode($encodedLicense->toString());
             $this->licenseVault->store($encodedLicense->toString());
         } catch (UnexpectedClientResponseException | RuntimeException $exception) {
@@ -81,7 +80,6 @@ class FetchLicenseCommand extends BaseCommand
             return;
         }
 
-        $this->licenceReader->clearCache();
         $this->info('License has been downloaded');
     }
 }

@@ -30,7 +30,6 @@ use Adshares\Common\Exception\RuntimeException;
 
 class LicenseReader
 {
-    private const LICENSE_INFO_BOX = 'licence-info-box';
     private LicenseVault $licenseVault;
 
     public function __construct(LicenseVault $licenseVault)
@@ -90,35 +89,12 @@ class LicenseReader
 
     public function getInfoBox(): bool
     {
-        $value = apcu_fetch(self::LICENSE_INFO_BOX, $success);
-
-        if ($success) {
-            return $value;
-        }
-
         try {
             $license = $this->licenseVault->read();
             $value = $license->getInfoBox();
         } catch (RuntimeException $exception) {
             $value = true;
         }
-
-        apcu_store(self::LICENSE_INFO_BOX, $value);
-
         return $value;
-    }
-
-    public function clearCache(): void
-    {
-        foreach (
-            [
-                Config::LICENCE_ACCOUNT,
-                Config::LICENCE_TX_FEE,
-                Config::LICENCE_RX_FEE,
-                self::LICENSE_INFO_BOX
-            ] as $key
-        ) {
-            apcu_delete($key);
-        }
     }
 }
