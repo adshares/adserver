@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,6 +28,7 @@ use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 
 class FetchLicenseCommand extends BaseCommand
@@ -35,21 +36,21 @@ class FetchLicenseCommand extends BaseCommand
     protected $signature = 'ops:license:fetch';
 
     protected $description = 'Fetch operator license from License Server';
-    /** @var LicenseProvider */
-    private $license;
-    /** @var LicenseDecoder */
-    private $licenseDecoder;
-    /** @var LicenseVault */
-    private $licenseVault;
+    private LicenseProvider $licenseProvider;
+    private LicenseDecoder $licenseDecoder;
+    private LicenseReader $licenceReader;
+    private LicenseVault $licenseVault;
 
     public function __construct(
         Locker $locker,
-        LicenseProvider $license,
+        LicenseProvider $licenseProvider,
         LicenseDecoder $licenseDecoder,
+        LicenseReader $licenseReader,
         LicenseVault $licenseVault
     ) {
-        $this->license = $license;
+        $this->licenseProvider = $licenseProvider;
         $this->licenseDecoder = $licenseDecoder;
+        $this->licenceReader = $licenseReader;
         $this->licenseVault = $licenseVault;
 
         parent::__construct($locker);
@@ -66,7 +67,7 @@ class FetchLicenseCommand extends BaseCommand
         $this->info('Start command ' . $this->signature);
 
         try {
-            $encodedLicense = $this->license->fetchLicense();
+            $encodedLicense = $this->licenseProvider->fetchLicense();
             $this->licenseDecoder->decode($encodedLicense->toString());
             $this->licenseVault->store($encodedLicense->toString());
         } catch (UnexpectedClientResponseException | RuntimeException $exception) {
@@ -80,6 +81,7 @@ class FetchLicenseCommand extends BaseCommand
             return;
         }
 
+        $this->licenceReader->clearCache();
         $this->info('License has been downloaded');
     }
 }

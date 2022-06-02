@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,12 +28,10 @@ use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 
-use function apcu_fetch;
-
 class LicenseReader
 {
-    /** @var LicenseVault */
-    private $licenseVault;
+    private const LICENSE_INFO_BOX = 'licence-info-box';
+    private LicenseVault $licenseVault;
 
     public function __construct(LicenseVault $licenseVault)
     {
@@ -88,5 +86,39 @@ class LicenseReader
         apcu_store($type, $value);
 
         return $value;
+    }
+
+    public function getInfoBox(): bool
+    {
+        $value = apcu_fetch(self::LICENSE_INFO_BOX, $success);
+
+        if ($success) {
+            return $value;
+        }
+
+        try {
+            $license = $this->licenseVault->read();
+            $value = $license->getInfoBox();
+        } catch (RuntimeException $exception) {
+            $value = true;
+        }
+
+        apcu_store(self::LICENSE_INFO_BOX, $value);
+
+        return $value;
+    }
+
+    public function clearCache(): void
+    {
+        foreach (
+            [
+                Config::LICENCE_ACCOUNT,
+                Config::LICENCE_TX_FEE,
+                Config::LICENCE_RX_FEE,
+                self::LICENSE_INFO_BOX
+            ] as $key
+        ) {
+            apcu_delete($key);
+        }
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,8 +28,7 @@ use Illuminate\Contracts\Support\Arrayable;
 
 class LicenseResponse implements Arrayable
 {
-    /** @var License */
-    private $license;
+    private License $license;
 
     public function __construct(
         License $license
@@ -46,6 +45,7 @@ class LicenseResponse implements Arrayable
         unset($licenseArray['fixedFee']);
         unset($licenseArray['demandFee']);
         unset($licenseArray['supplyFee']);
+        unset($licenseArray['infoBox']);
 
         return $licenseArray;
     }
