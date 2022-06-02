@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,10 +27,10 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\InvoiceUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -74,6 +74,7 @@ use Throwable;
  * @property Carbon updated_at
  * @property ?Carbon deleted_at
  * @property string download_url
+ * @mixin Builder
  */
 class Invoice extends Model
 {

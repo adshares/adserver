@@ -189,7 +189,7 @@ class CampaignsController extends Controller
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
             'Location',
-            route('app.campaigns.read', ['campaign' => $campaign])
+            route('app.campaigns.read', ['campaign_id' => $campaign->id])
         );
     }
 
@@ -597,7 +597,7 @@ class CampaignsController extends Controller
 
         return self::json($clonedCampaign->toArray(), Response::HTTP_CREATED)->header(
             'Location',
-            route('app.campaigns.read', ['campaign' => $clonedCampaign])
+            route('app.campaigns.read', ['campaign_id' => $clonedCampaign->id])
         );
     }
 

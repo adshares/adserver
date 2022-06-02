@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Cache;
 
 class ConversionValidator
 {
-    private const CACHE_ITEM_TTL_IN_MINUTES = 5;
+    private const CACHE_ITEM_TTL_IN_SECONDS = 5 * 60;
 
     public function validateSignature(
         string $signature,
@@ -46,7 +46,7 @@ class ConversionValidator
             return false;
         }
 
-        if ($timestampCurrent - $timestampCreated > self::CACHE_ITEM_TTL_IN_MINUTES * 60) {
+        if ($timestampCurrent - $timestampCreated > self::CACHE_ITEM_TTL_IN_SECONDS) {
             return false;
         }
 
@@ -56,7 +56,7 @@ class ConversionValidator
             throw new RuntimeException('Previously used nonce detected');
         }
 
-        Cache::put($cacheKey, 1, self::CACHE_ITEM_TTL_IN_MINUTES);
+        Cache::put($cacheKey, 1, self::CACHE_ITEM_TTL_IN_SECONDS);
 
         $rawNonce = Utils::urlSafeBase64Decode($nonce);
         $expected = Utils::urlSafeBase64Encode(

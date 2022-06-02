@@ -31,7 +31,7 @@ final class CampaignFactoryTest extends TestCase
 {
     private array $data;
 
-    public function setUp()
+    protected function setUp(): void
     {
         $this->data = [
             'id' => Uuid::v4(),

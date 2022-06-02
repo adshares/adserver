@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Http\Utils;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -31,6 +32,7 @@ use function strpos;
 /**
  * @property int id
  * @property string domain
+ * @mixin Builder
  */
 class SupplyBlacklistedDomain extends Model
 {
@@ -65,7 +67,7 @@ class SupplyBlacklistedDomain extends Model
             return true;
         }
 
-        $blacklisted = Cache::remember('supply_blacklisted_domains', 10, function () {
+        $blacklisted = Cache::remember('supply_blacklisted_domains', 10 * 60, function () {
             return self::all()->pluck('domain', 'domain')->toArray();
         });
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,6 +35,7 @@ final class ConversionControllerTest extends TestCase
 {
     public function testConversion(): void
     {
+        /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
@@ -89,6 +90,6 @@ final class ConversionControllerTest extends TestCase
 
     private function buildConversionUrl(string $uuid): string
     {
-        return route('conversion.gif', ['{uuid}' => $uuid]);
+        return route('conversion.gif', ['uuid' => $uuid]);
     }
 }

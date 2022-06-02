@@ -104,7 +104,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        $this->expectExceptionMessageRegExp('/Insufficient funds for User.*/');
+        $this->expectExceptionMessageMatches('/Insufficient funds for User.*/');
         UserLedgerEntry::blockAdExpense($user->id, 150);
     }
 
@@ -114,7 +114,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createSomeEntries($user);
 
-        $this->expectExceptionMessageRegExp('/Values need to be non-negative.*/');
+        $this->expectExceptionMessageMatches('/Values need to be non-negative.*/');
         UserLedgerEntry::blockAdExpense($user->id, -10);
     }
 
@@ -153,7 +153,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createSomeEntries($user);
 
-        $this->expectExceptionMessageRegExp('/Values need to be non-negative.*/');
+        $this->expectExceptionMessageMatches('/Values need to be non-negative.*/');
         UserLedgerEntry::processAdExpense($user->id, -10);
     }
 

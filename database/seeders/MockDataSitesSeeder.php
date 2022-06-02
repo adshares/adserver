@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,15 +19,18 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+namespace Database\Seeders;
+
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Exception;
 use Illuminate\Database\Seeder;
 
 class MockDataSitesSeeder extends Seeder
 {
-    private $zones = [
+    private array $zones = [
         'Leaderboard' => [
             'size' => '728x90',
             'label' => 'leaderboard',

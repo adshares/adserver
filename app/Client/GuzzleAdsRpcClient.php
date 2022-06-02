@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,6 +33,7 @@ use RuntimeException;
 
 final class GuzzleAdsRpcClient implements AdsRpcClient
 {
+    private const TTL_ONE_HOUR = 3600;
     private Client $client;
 
     public function __construct(Client $client)
@@ -68,7 +69,7 @@ final class GuzzleAdsRpcClient implements AdsRpcClient
             fn($data) => Gateway::fromArray($data),
             Cache::remember(
                 'ads-rpc-client.gateways',
-                60,
+                self::TTL_ONE_HOUR,
                 fn() => $this->request('get_gateways')['gateways']
             )
         );

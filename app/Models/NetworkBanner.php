@@ -165,7 +165,7 @@ class NetworkBanner extends Model
         }
         return Cache::remember(
             'network_banners.' . $uuid,
-            (int)(config('app.network_data_cache_ttl') / 60),
+            (int)config('app.network_data_cache_ttl'),
             function () use ($uuid) {
                 return self::where('uuid', hex2bin($uuid))->with(['campaign'])->first();
             }

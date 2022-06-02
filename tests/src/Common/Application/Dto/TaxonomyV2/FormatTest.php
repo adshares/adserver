@@ -40,7 +40,7 @@ class FormatTest extends TestCase
         self::assertContains('image/gif', $arr['mimes']);
         $scopes = $arr['scopes'];
         self::assertContains('300x250', array_keys($scopes));
-        self::assertContains('Medium Rectangle', $scopes['300x250']);
+        self::assertEquals('Medium Rectangle', $scopes['300x250']);
     }
 
     /**

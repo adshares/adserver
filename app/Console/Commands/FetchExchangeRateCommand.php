@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -71,7 +71,7 @@ class FetchExchangeRateCommand extends BaseCommand
         foreach ($currencies as $currency) {
             $this->info(sprintf('Fetching %s rate', $currency));
             $exchangeRate = $this->repositoryRemote->fetchExchangeRate(null, $currency);
-            $this->info(sprintf('Exchange rate: %s', $currency, $exchangeRate->toString()));
+            $this->info(sprintf('Exchange %s rate: %s', $currency, $exchangeRate->toString()));
 
             try {
                 $this->repositoryStorable->storeExchangeRate($exchangeRate);

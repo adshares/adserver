@@ -43,6 +43,7 @@ use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -50,6 +51,7 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use DateTimeInterface;
 use Exception;
+use GuzzleHttp\Psr7\Query;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,11 +68,10 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
-use function GuzzleHttp\Psr7\parse_query;
-
 class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
+    private const TTL_ONE_HOUR = 3600;
 
     private static $adserverId;
 
@@ -136,7 +137,6 @@ class SupplyController extends Controller
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
-        $validated['$site'] = $site;
 
         $zones = [];
 
@@ -156,7 +156,6 @@ class SupplyController extends Controller
                     'banner_mime' => $validated['mime_type'] ?? null
                 ]
             ];
-            $validated['zones'][] = $zone;
         }
 
         $queryData = [
@@ -235,6 +234,40 @@ class SupplyController extends Controller
 
         try {
             $decodedQueryData = Utils::decodeZones($data);
+            foreach ($decodedQueryData['zones'] as &$zone) {
+                if (isset($zone['pay-to'])) {
+                    try {
+                        $payoutAddress = WalletAddress::fromString($zone['pay-to']);
+                        $user = User::fetchByWalletAddress($payoutAddress);
+
+                        if (!$user) {
+                            if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
+                                $user = User::registerWithWallet($payoutAddress, true);
+                            } else {
+                                return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
+                            }
+                        }
+                        $site = Site::fetchOrCreate(
+                            $user->id,
+                            $decodedQueryData['page']['url'],
+                            'website',
+                            null
+                        );
+                        if ($site->status != Site::STATUS_ACTIVE) {
+                            return $this->sendError("site", "Site '" . $site->name . "' is not active");
+                        }
+
+                        $zoneObject = Zone::fetchOrCreate(
+                            $site->id,
+                            "{$zone['width']}x{$zone['height']}",
+                            $zone['zone']
+                        );
+                        $zone['zone'] = $zoneObject->uuid;
+                    } catch (InvalidArgumentException $ex) {
+                        return $this->sendError("pay_to", $ex->getMessage());
+                    }
+                }
+            }
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
@@ -291,7 +324,7 @@ class SupplyController extends Controller
         $response = new Response();
         $img = Cache::remember(
             'banner_cache.' . $foundBanner['serve_url'],
-            (int)(60),
+            self::TTL_ONE_HOUR,
             function () use ($foundBanner) {
                 $bannerContent = file_get_contents($foundBanner['serve_url']);
                 $hash = sha1($bannerContent);
@@ -474,8 +507,8 @@ class SupplyController extends Controller
         $response->setCache(
             [
                 'last_modified' => new DateTime(),
-                'max_age' => 3600 * 1 * 1,
-                's_maxage' => 3600 * 1 * 1,
+                'max_age' => self::TTL_ONE_HOUR,
+                's_maxage' => self::TTL_ONE_HOUR,
                 'private' => false,
                 'public' => true,
             ]
@@ -511,8 +544,8 @@ class SupplyController extends Controller
         $response->setCache(
             [
                 'last_modified' => new DateTime(),
-                'max_age' => 3600 * 24 * 1,
-                's_maxage' => 3600 * 24 * 1,
+                'max_age' => self::TTL_ONE_HOUR * 24,
+                's_maxage' => self::TTL_ONE_HOUR * 24,
                 'private' => false,
                 'public' => true,
             ]
@@ -532,7 +565,7 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $clickQuery = parse_query(parse_url($networkImpression->context->click_url, PHP_URL_QUERY));
+        $clickQuery = Query::parse(parse_url($networkImpression->context->click_url, PHP_URL_QUERY));
 
         $request->query->set('r', $clickQuery['r']);
         $request->query->set(
@@ -646,7 +679,7 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $viewQuery = parse_query(parse_url($networkImpression->context->view_url, PHP_URL_QUERY));
+        $viewQuery = Query::parse(parse_url($networkImpression->context->view_url, PHP_URL_QUERY));
 
         $request->query->set('r', $viewQuery['r']);
         $request->query->set(
