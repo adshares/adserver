@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,7 +28,6 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
-use Adshares\Supply\Infrastructure\Service\SodiumCompatClassifyVerifier;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 

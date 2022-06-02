@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -134,7 +134,7 @@ class Zone extends Model
 
         return Cache::remember(
             'zones.' . $uuid,
-            (int)(config('app.network_data_cache_ttl') / 60),
+            (int)config('app.network_data_cache_ttl'),
             function () use ($binId) {
                 return self::where('uuid', $binId)->with(
                     [

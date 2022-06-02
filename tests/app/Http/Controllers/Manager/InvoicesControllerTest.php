@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,7 +33,7 @@ class InvoicesControllerTest extends TestCase
 {
     private const URI = '/api/invoices';
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         Config::updateAdminSettings(

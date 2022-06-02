@@ -72,7 +72,6 @@ use InvalidArgumentException;
  * @property array basic_information
  * @property array classifications
  * @property array targeting
- * @method static Builder where(string $string, int $campaignId)
  * @mixin Builder
  */
 class Campaign extends Model

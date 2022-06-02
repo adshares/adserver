@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,10 +22,11 @@
 namespace Adshares\Adserver\Http\Middleware;
 
 use Illuminate\Foundation\Http\Middleware\TransformsRequest;
+use Illuminate\Support\Str;
 
 class SnakizeRequest extends TransformsRequest
 {
-    protected function cleanArray(array $data)
+    protected function cleanArray(array $data, $keyPrefix = '')
     {
         return collect($data)->mapWithKeys(
             function ($value, $key) {
@@ -45,6 +46,6 @@ class SnakizeRequest extends TransformsRequest
 
     protected function transform($key, $value)
     {
-        return [snake_case($key) => $value];
+        return [Str::snake($key) => $value];
     }
 }

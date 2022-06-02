@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 
 class CamelizeJsonResponse
 {
@@ -53,7 +54,7 @@ class CamelizeJsonResponse
         return preg_replace_callback(
             '/"([^"]+?)"\s*:/',
             function (array $input): string {
-                return '"' . camel_case($input[1]) . '":';
+                return '"' . Str::camel($input[1]) . '":';
             },
             $json
         );

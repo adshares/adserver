@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -54,7 +54,7 @@ use Illuminate\Support\Collection;
  * @property Carbon updated_at
  * @property ?Carbon deleted_at
  * @property string status
- * @method static RefLink create(array $input = [])
+ * @mixin Builder
  */
 class RefLink extends Model
 {
