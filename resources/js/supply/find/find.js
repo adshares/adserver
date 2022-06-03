@@ -123,7 +123,7 @@ var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
     var clickOverlay;
 
-    if (banner.info_box) {
+    if (false !== banner.info_box) {
         var infoBox = prepareInfoBox(context, banner, contextParam);
         div.appendChild(infoBox);
     }
