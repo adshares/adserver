@@ -20,10 +20,14 @@
  */
 
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\User;
 use Faker\Generator as Faker;
 
 $factory->define(Campaign::class, function (Faker $faker) {
     return [
+        'user_id' => function () {
+            return factory(User::class)->create()->id;
+        },
         'landing_url' => $faker->url,
         'time_start' => $faker->dateTimeThisMonth()->format(DATE_ATOM),
         'status' => Campaign::STATUS_DRAFT,
