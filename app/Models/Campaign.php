@@ -484,21 +484,7 @@ class Campaign extends Model
 
     public function isDirectDeal(): bool
     {
-        if (!isset($this->targeting_requires['site']['domain'])) {
-            return false;
-        }
-
-        $domains = $this->targeting_requires['site']['domain'];
-
-        if ('metaverse' === $this->medium) {
-            if ('decentraland' === $this->vendor) {
-                return 1 !== count($domains) || 'decentraland.org' !== $domains[0];
-            } elseif ('cryptovoxels' === $this->vendor) {
-                return 1 !== count($domains) || 'cryptovoxels.com' !== $domains[0];
-            }
-        }
-
-        return true;
+        return isset($this->targeting_requires['site']['domain']);
     }
 
     public function isOutdated(): bool
