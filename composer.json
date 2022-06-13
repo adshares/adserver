@@ -34,7 +34,8 @@
         "ramsey/uuid": "^4.2.2",
         "symfony/intl": "^5.3",
         "symfony/lock": "^4.2",
-        "symfony/polyfill-php80": "^1.24"
+        "symfony/polyfill-php80": "^1.24",
+        "tymon/jwt-auth": "^1.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",

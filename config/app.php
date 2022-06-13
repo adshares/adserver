@@ -222,6 +222,11 @@ return [
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
         Adshares\Adserver\Providers\Supply\PaymentDetailsVerifyProvider::class,
         Adshares\Adserver\Providers\Supply\ClassifyProvider::class,
+
+        /*
+         * JWT
+         */
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
     ],
 
     /*
