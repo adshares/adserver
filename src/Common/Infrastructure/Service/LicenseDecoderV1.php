@@ -85,7 +85,7 @@ class LicenseDecoderV1 implements LicenseDecoder
             new Commission($data['fixedFee']),
             new Commission($data['demandFee']),
             new Commission($data['supplyFee']),
-            $data['infoBox'] ?? true
+            !($data['privateLabel'] ?? false)
         );
     }
 }

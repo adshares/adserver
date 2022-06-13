@@ -35,20 +35,17 @@ class FetchLicenseCommand extends BaseCommand
     protected $signature = 'ops:license:fetch';
 
     protected $description = 'Fetch operator license from License Server';
-    /** @var LicenseProvider */
-    private $license;
-    /** @var LicenseDecoder */
-    private $licenseDecoder;
-    /** @var LicenseVault */
-    private $licenseVault;
+    private LicenseProvider $licenseProvider;
+    private LicenseDecoder $licenseDecoder;
+    private LicenseVault $licenseVault;
 
     public function __construct(
         Locker $locker,
-        LicenseProvider $license,
+        LicenseProvider $licenseProvider,
         LicenseDecoder $licenseDecoder,
         LicenseVault $licenseVault
     ) {
-        $this->license = $license;
+        $this->licenseProvider = $licenseProvider;
         $this->licenseDecoder = $licenseDecoder;
         $this->licenseVault = $licenseVault;
 
@@ -59,14 +56,13 @@ class FetchLicenseCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
         $this->info('Start command ' . $this->signature);
 
         try {
-            $encodedLicense = $this->license->fetchLicense();
+            $encodedLicense = $this->licenseProvider->fetchLicense();
             $this->licenseDecoder->decode($encodedLicense->toString());
             $this->licenseVault->store($encodedLicense->toString());
         } catch (UnexpectedClientResponseException | RuntimeException $exception) {
