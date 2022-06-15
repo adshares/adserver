@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,6 +36,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -49,7 +50,6 @@ use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
-use stdClass;
 use Symfony\Component\HttpFoundation\Response;
 
 use function array_map;
@@ -79,8 +79,7 @@ class GuzzleAdSelectClient implements AdSelect
 
     private const URI_INVENTORY = '/api/v1/campaigns';
 
-    /** @var Client */
-    private $client;
+    private Client $client;
 
     public function __construct(Client $client)
     {
@@ -284,6 +283,10 @@ class GuzzleAdSelectClient implements AdSelect
 
     private function fetchInOrderOfAppearance(array $params, Collection $zoneCollection): Generator
     {
+        /** @var LicenseReader $licenseReader */
+        $licenseReader = resolve(LicenseReader::class);
+        $infoBox = $licenseReader->getInfoBox();
+
         foreach ($params as $requestId => $bannerIds) {
             foreach ($bannerIds as $item) {
                 $bannerId = $item['banner_id'] ?? null;
@@ -326,6 +329,7 @@ class GuzzleAdSelectClient implements AdSelect
                                 ]
                             )
                         )),
+                        'info_box'      => $infoBox,
                         'rpm'           => $item['rpm'],
                     ];
                 }

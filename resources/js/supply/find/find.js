@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -123,8 +123,10 @@ var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
     var clickOverlay;
 
-    var infoBox = prepareInfoBox(context, banner, contextParam);
-    div.appendChild(infoBox);
+    if (false !== banner.info_box) {
+        var infoBox = prepareInfoBox(context, banner, contextParam);
+        div.appendChild(infoBox);
+    }
 
     if (element.tagName == 'IFRAME') {
 

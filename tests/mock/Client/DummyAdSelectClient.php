@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -111,6 +111,7 @@ final class DummyAdSelectClient implements AdSelect
                             ]
                         )
                     ),
+                    'info_box' => true,
                     'rpm' => 0.5,
                 ];
             }

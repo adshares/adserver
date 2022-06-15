@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,43 +23,34 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use DateTime;
 use DateTimeInterface;
 
 class License
 {
-    /** @var string */
-    private $id;
-    /** @var string */
-    private $type;
-    /** @var int */
-    private $status;
-    /** @var DateTime */
-    private $dateStart;
-    /** @var DateTime */
-    private $dateEnd;
-    /** @var string */
-    private $owner;
-    /** @var AccountId */
-    private $paymentAddress;
-    /** @var Commission */
-    private $fixedFee;
-    /** @var Commission */
-    private $demandFee;
-    /** @var Commission */
-    private $supplyFee;
+    private string $id;
+    private string $type;
+    private int $status;
+    private DateTimeInterface $dateStart;
+    private DateTimeInterface $dateEnd;
+    private string $owner;
+    private AccountId $paymentAddress;
+    private Commission $fixedFee;
+    private Commission $demandFee;
+    private Commission $supplyFee;
+    private bool $infoBox;
 
     public function __construct(
         string $id,
         string $type,
         int $status,
-        DateTime $dateStart,
-        DateTime $dateEnd,
+        DateTimeInterface $dateStart,
+        DateTimeInterface $dateEnd,
         string $owner,
         AccountId $paymentAddress,
         Commission $fixedFee,
         Commission $demandFee,
-        Commission $supplyFee
+        Commission $supplyFee,
+        bool $infoBox
     ) {
         $this->id = $id;
         $this->type = $type;
@@ -71,6 +62,7 @@ class License
         $this->fixedFee = $fixedFee;
         $this->demandFee = $demandFee;
         $this->supplyFee = $supplyFee;
+        $this->infoBox = $infoBox;
     }
 
     public function toArray(): array
@@ -86,6 +78,7 @@ class License
             'fixedFee' => $this->fixedFee->getValue(),
             'demandFee' => $this->demandFee->getValue(),
             'supplyFee' => $this->supplyFee->getValue(),
+            'infoBox' => $this->infoBox,
         ];
     }
 
@@ -102,5 +95,10 @@ class License
     public function getPaymentAddress(): AccountId
     {
         return $this->paymentAddress;
+    }
+
+    public function getInfoBox(): bool
+    {
+        return $this->infoBox;
     }
 }
