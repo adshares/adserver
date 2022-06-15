@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,12 +28,9 @@ use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 
-use function apcu_fetch;
-
 class LicenseReader
 {
-    /** @var LicenseVault */
-    private $licenseVault;
+    private LicenseVault $licenseVault;
 
     public function __construct(LicenseVault $licenseVault)
     {
@@ -87,6 +84,17 @@ class LicenseReader
 
         apcu_store($type, $value);
 
+        return $value;
+    }
+
+    public function getInfoBox(): bool
+    {
+        try {
+            $license = $this->licenseVault->read();
+            $value = $license->getInfoBox();
+        } catch (RuntimeException $exception) {
+            $value = true;
+        }
         return $value;
     }
 }
