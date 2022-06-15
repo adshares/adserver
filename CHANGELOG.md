@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- Command creating an administrator account returns an error code if it is unsuccessful
 - Info box is set dynamically
+
 
 ## [1.18.1] - 2022-06-10
 ### Fixed

@@ -40,12 +40,11 @@ class CreateAdminUserCommand extends BaseCommand
 
     protected $description = 'Create an admin user';
 
-    public function handle(): void
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
-            return;
+            return 1;
         }
 
         $password = $this->option('password');
@@ -58,16 +57,14 @@ class CreateAdminUserCommand extends BaseCommand
 
         if (!$input) {
             $this->error('Email address cannot be empty');
-
-            exit(0);
+            return 1;
         }
 
         try {
             $email = new Email($input);
         } catch (RuntimeException $exception) {
             $this->error($exception->getMessage());
-
-            exit(0);
+            return 1;
         }
 
         $name = 'admin';
@@ -80,16 +77,14 @@ class CreateAdminUserCommand extends BaseCommand
         } catch (QueryException $exception) {
             if (SqlUtils::isDuplicatedEntry($exception)) {
                 $this->error(sprintf('User %s already exists', $email->toString()));
-
-                exit(0);
+                return 1;
             }
 
             $this->error($exception->getMessage());
-
-            exit(0);
+            return 1;
         }
 
-
         $this->info(sprintf('Password: %s', $password));
+        return 0;
     }
 }
