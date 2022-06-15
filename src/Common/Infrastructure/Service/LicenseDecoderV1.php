@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -41,8 +41,7 @@ use function substr;
 class LicenseDecoderV1 implements LicenseDecoder
 {
     private const METHOD = 'AES-128-CBC';
-    /** @var string */
-    private $licenseKey;
+    private string $licenseKey;
 
     public function __construct(string $licenseKey)
     {
@@ -85,7 +84,8 @@ class LicenseDecoderV1 implements LicenseDecoder
             new AccountId($data['paymentAddress']),
             new Commission($data['fixedFee']),
             new Commission($data['demandFee']),
-            new Commission($data['supplyFee'])
+            new Commission($data['supplyFee']),
+            !($data['privateLabel'] ?? false)
         );
     }
 }
