@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -75,6 +75,7 @@ class SiteValidatorTest extends TestCase
         return [
             ['http://example.com'],
             ['https://example.com'],
+            ['https://scene-0-0.decentraland.org'],
         ];
     }
 
