@@ -30,6 +30,7 @@ use Adshares\Adserver\Services\Supply\SiteFilteringMatcher;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteUtils;
+use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -276,6 +277,11 @@ class Site extends Model
                 } elseif ('cryptovoxels' === $vendor) {
                     $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
                 }
+            }
+
+            $url = rtrim($url, '/');
+            if (!SiteValidator::isUrlValid($url)) {
+                throw new InvalidArgumentException('Invalid URL');
             }
             $site = Site::create($userId, $url, $name, $medium, $vendor);
         }
