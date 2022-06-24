@@ -36,6 +36,7 @@ Route::middleware([Kernel::JSON_API])->group(function () {
 Route::middleware([Kernel::JSON_API_NO_TRANSFORM])->group(function () {
     Route::post('jwt/login', [JwtController::class, 'login']);
     Route::post('jwt/logout', [JwtController::class, 'logout']);
+    Route::post('jwt/refresh', [JwtController::class, 'refresh']);
 });
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {

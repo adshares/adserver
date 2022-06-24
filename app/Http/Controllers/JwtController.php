@@ -49,4 +49,9 @@ class JwtController extends Controller
 
         return $this->json(['message' => 'Successfully logged out']);
     }
+
+    public function refresh(): Response
+    {
+        return $this->json(['token' => auth()->refresh()]);
+    }
 }
