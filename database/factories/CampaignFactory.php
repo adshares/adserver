@@ -30,9 +30,7 @@ class CampaignFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => function () {
-                return User::factory()->create()->id;
-            },
+            'user_id' => User::factory(),
             'landing_url' => $this->faker->url,
             'time_start' => $this->faker->dateTimeThisMonth()->format(DATE_ATOM),
             'status' => Campaign::STATUS_DRAFT,

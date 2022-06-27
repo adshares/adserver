@@ -30,7 +30,7 @@ class NetworkBannerFactory extends Factory
     {
         return [
             'uuid' => $this->faker->uuid,
-            'network_campaign_id' => $this->faker->randomDigit,
+            'network_campaign_id' => $this->faker->randomDigit(),
             'serve_url' => $this->faker->url,
             'view_url' => $this->faker->url,
             'click_url' => $this->faker->url,

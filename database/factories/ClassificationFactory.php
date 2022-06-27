@@ -28,9 +28,9 @@ class ClassificationFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => $this->faker->randomDigit,
-            'site_id' => $this->faker->randomDigit,
-            'banner_id' => $this->faker->randomDigit,
+            'user_id' => $this->faker->randomDigit(),
+            'site_id' => $this->faker->randomDigit(),
+            'banner_id' => $this->faker->randomDigit(),
             'status' => null,
         ];
     }

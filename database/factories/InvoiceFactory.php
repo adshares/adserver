@@ -35,9 +35,7 @@ class InvoiceFactory extends Factory
         $vatAmount = $netAmount * 0.23;
 
         return [
-            'user_id' => function () {
-                return User::factory()->create()->id;
-            },
+            'user_id' => User::factory(),
             'type' => Invoice::TYPE_PROFORMA,
             'number' => $this->faker->unique()->numerify('PROF ###/##/####'),
             'issue_date' => $issuedDate,

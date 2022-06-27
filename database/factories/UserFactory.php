@@ -21,7 +21,6 @@
 
 namespace Database\Factories;
 
-use Adshares\Adserver\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class UserFactory extends Factory

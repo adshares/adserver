@@ -29,9 +29,7 @@ class RefLinkFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => function () {
-                return User::factory()->create()->id;
-            },
+            'user_id' => User::factory(),
             'token' => $this->faker->unique()->asciify(),
         ];
     }

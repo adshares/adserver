@@ -31,9 +31,7 @@ class UserLedgerEntryFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => function () {
-                return User::factory()->create()->id;
-            },
+            'user_id' => User::factory(),
             'amount' => $this->faker->numberBetween(0, 3800000000000000000),
             'status' => UserLedgerEntry::STATUS_ACCEPTED,
             'type' => UserLedgerEntry::TYPE_DEPOSIT,

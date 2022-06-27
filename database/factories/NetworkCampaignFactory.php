@@ -35,9 +35,9 @@ class NetworkCampaignFactory extends Factory
             'source_host' => $this->faker->url,
             'source_version' => '0.1',
             'landing_url' => $this->faker->url,
-            'max_cpc' => $this->faker->randomDigit,
-            'max_cpm' => $this->faker->randomDigit,
-            'budget' => $this->faker->randomDigit,
+            'max_cpc' => $this->faker->randomDigit(),
+            'max_cpm' => $this->faker->randomDigit(),
+            'budget' => $this->faker->randomDigit(),
             'date_start' => $this->faker->date('Y-m-d H:i:s'),
             'date_end' => $this->faker->date('Y-m-d H:i:s'),
         ];
