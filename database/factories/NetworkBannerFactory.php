@@ -19,6 +19,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use Adshares\Supply\Domain\ValueObject\Size;
