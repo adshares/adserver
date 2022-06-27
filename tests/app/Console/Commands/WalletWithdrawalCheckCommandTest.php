@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,52 +45,52 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
             return $dummyExchangeRateRepository;
         });
         /** @var User $user1 */
-        $user1 = factory(User::class)->create([
+        $user1 = User::factory()->create([
             'auto_withdrawal' => null,
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
         /** @var User $user2 */
-        $user2 = factory(User::class)->create([
+        $user2 = User::factory()->create([
             'auto_withdrawal' => 150,
             'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
         ]);
         /** @var User $user3 */
-        $user3 = factory(User::class)->create([
+        $user3 = User::factory()->create([
             'auto_withdrawal' => 50,
             'wallet_address' => WalletAddress::fromString('ads:0001-00000003-AB0C')
         ]);
         /** @var User $user4 */
-        $user4 = factory(User::class)->create([
+        $user4 = User::factory()->create([
             'auto_withdrawal' => 50,
             'wallet_address' => WalletAddress::fromString('bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a'),
             'email' => null,
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'user_id' => $user1->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
             'amount' => 1000
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'user_id' => $user2->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
             'amount' => 1000
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'user_id' => $user2->id,
             'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
             'amount' => 100
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'user_id' => $user3->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
             'amount' => 100
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'user_id' => $user3->id,
             'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
             'amount' => 100
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'user_id' => $user4->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
             'amount' => 500

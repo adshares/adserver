@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,15 +19,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Database\Factories;
 
-use Adshares\Adserver\Models\Config;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(Config::class,
-    function (Faker $faker) {
+class ConfigFactory extends Factory
+{
+    public function definition(): array
+    {
         return [
-            'key' => $faker->word,
-            'value' => $faker->word,
+            'key' => $this->faker->word,
+            'value' => $this->faker->word,
         ];
-    });
+    }
+}

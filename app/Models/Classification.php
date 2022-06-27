@@ -27,6 +27,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\QueryException;
@@ -43,6 +44,7 @@ class Classification extends Model
 {
     use Ownership;
     use AutomateMutators;
+    use HasFactory;
 
     public const STATUS_REJECTED = 0;
 

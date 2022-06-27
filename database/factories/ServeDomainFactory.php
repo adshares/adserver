@@ -19,14 +19,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\ServeDomain;
-use Faker\Generator as Faker;
+namespace Database\Factories;
 
-$factory->define(
-    ServeDomain::class,
-    function (Faker $faker) {
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class ServeDomainFactory extends Factory
+{
+    public function definition(): array
+    {
         return [
-            'base_url' => 'https://' . $faker->domainName,
+            'base_url' => 'https://' . $this->faker->domainName,
         ];
     }
-);
+}

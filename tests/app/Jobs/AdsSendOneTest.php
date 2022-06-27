@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -40,7 +40,7 @@ class AdsSendOneTest extends TestCase
         $amount = 10000;
         $addressTo = $addressFrom = '0001-00000000-9B6F';
 
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
 
         $userLedgerEntry = UserLedgerEntry::construct(
             $user->id,

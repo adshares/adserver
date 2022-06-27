@@ -23,12 +23,19 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class BidStrategyFactory extends Factory
+class NetworkCaseFactory extends Factory
 {
     public function definition(): array
     {
         return [
-            'name' => $this->faker->word,
+            'case_id' => $this->faker->uuid,
+            'network_impression_id' => 1,
+            'publisher_id' => $this->faker->uuid,
+            'site_id' => $this->faker->uuid,
+            'zone_id' => $this->faker->uuid,
+            'domain' => $this->faker->domainName,
+            'campaign_id' => $this->faker->uuid,
+            'banner_id' => $this->faker->uuid,
         ];
     }
 }

@@ -25,6 +25,7 @@ use Adshares\Common\Exception\RuntimeException;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -35,6 +36,8 @@ use Illuminate\Support\Facades\Cache;
  */
 class Config extends Model
 {
+    use HasFactory;
+
     public const ADS_LOG_START = 'ads-log-start';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';

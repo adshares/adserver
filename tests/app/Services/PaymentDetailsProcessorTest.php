@@ -95,11 +95,11 @@ final class PaymentDetailsProcessorTest extends TestCase
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userUuid = $user->uuid;
 
-        $networkImpression = factory(NetworkImpression::class)->create();
-        $networkCases = factory(NetworkCase::class)->times($paidEventsCount)->create(
+        $networkImpression = NetworkImpression::factory()->create();
+        $networkCases = NetworkCase::factory()->times($paidEventsCount)->create(
             ['network_impression_id' => $networkImpression->id, 'publisher_id' => $userUuid]
         );
 
@@ -139,13 +139,13 @@ final class PaymentDetailsProcessorTest extends TestCase
     {
         $adsPayment = $this->createAdsPayment(100_000_000_000);
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         /** @var NetworkCase $networkCase */
-        $networkCase = factory(NetworkCase::class)->create([
+        $networkCase = NetworkCase::factory()->create([
             'publisher_id' => $user->uuid,
         ]);
         /** @var NetworkCasePayment $networkCasePayment */
-        $networkCasePayment = factory(NetworkCasePayment::class)->create([
+        $networkCasePayment = NetworkCasePayment::factory()->create([
             'network_case_id' => $networkCase->id,
             'ads_payment_id' => $adsPayment->id,
         ]);
@@ -162,11 +162,11 @@ final class PaymentDetailsProcessorTest extends TestCase
     {
         $adsPayment = $this->createAdsPayment(100_000_000_000);
         /** @var NetworkCase $networkCase */
-        $networkCase = factory(NetworkCase::class)->create([
+        $networkCase = NetworkCase::factory()->create([
             'publisher_id' => '10000000000000000000000000000000',
         ]);
         /** @var NetworkCasePayment $networkCasePayment */
-        factory(NetworkCasePayment::class)->create([
+        NetworkCasePayment::factory()->create([
             'network_case_id' => $networkCase->id,
             'ads_payment_id' => $adsPayment->id,
         ]);

@@ -65,7 +65,7 @@ final class OptionsControllerTest extends TestCase
             'uploadLimitVideo',
             'uploadLimitZip',
         ];
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::getJson('/api/options/banners');
         $response->assertStatus(200)
@@ -84,7 +84,7 @@ final class OptionsControllerTest extends TestCase
             'minCpm',
             'minCpa',
         ];
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::getJson('/api/options/campaigns');
         $response->assertStatus(200)
@@ -102,7 +102,7 @@ final class OptionsControllerTest extends TestCase
             'classifierLocalBanners',
             'acceptBannersManually',
         ];
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->get('/api/options/sites');
 
@@ -132,7 +132,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testFiltering(): void
     {
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::getJson('/api/options/sites/filtering');
         $response->assertStatus(200)
@@ -151,7 +151,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMedia(): void
     {
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::get('/api/options/campaigns/media');
         $response->assertStatus(200);
@@ -160,7 +160,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMedium(): void
     {
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::get('/api/options/campaigns/media/web');
         $response->assertStatus(200);
@@ -170,7 +170,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMediumExcludeQuality(): void
     {
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::get('/api/options/campaigns/media/web?e=1');
         $response->assertStatus(200);
@@ -179,7 +179,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMetaverseVendors(): void
     {
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::get('/api/options/campaigns/media/metaverse/vendors');
         $response->assertStatus(200);
@@ -188,7 +188,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testWebVendors(): void
     {
-        self::actingAs(factory(User::class)->create(), 'api');
+        self::actingAs(User::factory()->create(), 'api');
 
         $response = self::get('/api/options/campaigns/media/web/vendors');
         $response->assertStatus(200);

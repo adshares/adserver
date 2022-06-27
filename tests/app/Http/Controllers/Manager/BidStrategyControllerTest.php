@@ -73,7 +73,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testInitialBidStrategyWithoutDefault(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::buildUri());
         $response->assertStatus(Response::HTTP_OK);
@@ -82,7 +82,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testInitialBidStrategyWithDefault(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::buildUri() . '&attach-default=true');
         $response->assertStatus(Response::HTTP_OK);
@@ -92,7 +92,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testAddBidStrategy(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $responsePut = $this->putJson(self::buildUri(), self::DATA);
         $responsePut->assertStatus(Response::HTTP_CREATED);
@@ -112,9 +112,9 @@ class BidStrategyControllerTest extends TestCase
     {
         $limit = 20;
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
-        factory(BidStrategy::class)->times($limit)->create(['user_id' => $user->id]);
+        BidStrategy::factory()->times($limit)->create(['user_id' => $user->id]);
 
         $responsePut = $this->putJson(self::buildUri(), self::DATA);
         $responsePut->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -123,7 +123,7 @@ class BidStrategyControllerTest extends TestCase
     public function testEditOwnBidStrategy(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
@@ -140,7 +140,7 @@ class BidStrategyControllerTest extends TestCase
     public function testEditAlienBidStrategy(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $bidStrategy = BidStrategy::register('test', $user->id + 1, 'web', null);
@@ -153,7 +153,7 @@ class BidStrategyControllerTest extends TestCase
     public function testEditNotExistingBidStrategy(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $bidStrategyPublicId = '0123456789abcdef0123456789abcdef';
@@ -165,7 +165,7 @@ class BidStrategyControllerTest extends TestCase
     public function testEditInvalidBidStrategy(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $bidStrategyInvalidPublicId = '1000';
@@ -180,7 +180,7 @@ class BidStrategyControllerTest extends TestCase
         DB::shouldReceive('commit')->andThrow(new RuntimeException());
         DB::shouldReceive('rollback')->andReturnUndefined();
 
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->putJson(self::buildUri(), self::DATA);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -193,7 +193,7 @@ class BidStrategyControllerTest extends TestCase
         DB::shouldReceive('rollback')->andReturnUndefined();
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
@@ -210,7 +210,7 @@ class BidStrategyControllerTest extends TestCase
      */
     public function testAddingBidStrategyInvalid(array $data): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->putJson(self::buildUri(), $data);
 
@@ -258,7 +258,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testGetDefaultUuid(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::buildUriGetDefaultUuid());
 
@@ -269,7 +269,7 @@ class BidStrategyControllerTest extends TestCase
     public function testChangeDefaultUuidValid(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $initialBidStrategy = (new BidStrategy())->first();
         self::assertTrue($initialBidStrategy->is_default);
@@ -289,7 +289,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testChangeDefaultUuidInvalid(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->create(['is_admin' => 1]), 'api');
 
         $response = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => '1234']);
 
@@ -298,7 +298,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testChangeDefaultUuidNotExisting(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->create(['is_admin' => 1]), 'api');
 
         $response = $this->patch(self::buildUriPatchDefaultUuid(), ['uuid' => '00000000000000000000000000000000']);
 
@@ -308,7 +308,7 @@ class BidStrategyControllerTest extends TestCase
     public function testChangeDefaultUuidInvalidMedium(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -324,7 +324,7 @@ class BidStrategyControllerTest extends TestCase
     public function testChangeDefaultUuidInvalidVendor(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'metaverse', 'decentraland');
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -340,7 +340,7 @@ class BidStrategyControllerTest extends TestCase
     public function testChangeDefaultUuidForbidden(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 0]);
+        $user = User::factory()->create(['is_admin' => 0]);
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -353,10 +353,10 @@ class BidStrategyControllerTest extends TestCase
     public function testChangeDefaultUuidOtherUser(): void
     {
         /** @var User $userAdmin */
-        $userAdmin = factory(User::class)->create(['is_admin' => 1]);
+        $userAdmin = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($userAdmin, 'api');
         /** @var User $userOther */
-        $userOther = factory(User::class)->create(['is_admin' => 0]);
+        $userOther = User::factory()->create(['is_admin' => 0]);
         $bidStrategy = BidStrategy::register('test', $userOther->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
 
@@ -372,7 +372,7 @@ class BidStrategyControllerTest extends TestCase
         DB::shouldReceive('rollback')->andReturnUndefined();
 
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -391,7 +391,7 @@ class BidStrategyControllerTest extends TestCase
     ): void {
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register($bidStrategyName, $user->id, 'web', null);
         $bidStrategy->bidStrategyDetails()->save(BidStrategyDetail::create($bidStrategyCategory, $bidStrategyRank));
@@ -427,7 +427,7 @@ class BidStrategyControllerTest extends TestCase
     public function testUploadSpreadsheetMissingFile(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -439,7 +439,7 @@ class BidStrategyControllerTest extends TestCase
     public function testUploadSpreadsheetInvalidMimeType(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -452,7 +452,7 @@ class BidStrategyControllerTest extends TestCase
     public function testUploadSpreadsheetCorruptedFile(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -470,7 +470,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategyData = [[$bidStrategyCategory, $bidStrategyRank * 100]];
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -503,7 +503,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategyData = [[$bidStrategyCategory, $bidStrategyRank * 100]];
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register($bidStrategyName, $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
@@ -534,7 +534,7 @@ class BidStrategyControllerTest extends TestCase
     public function testDelete(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
 
@@ -550,7 +550,7 @@ class BidStrategyControllerTest extends TestCase
         DB::shouldReceive('commit')->andThrow(new RuntimeException());
         DB::shouldReceive('rollback')->andReturnUndefined();
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
 
@@ -562,10 +562,10 @@ class BidStrategyControllerTest extends TestCase
     public function testDeleteUsed(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID, 'web', null);
-        factory(Campaign::class)->create(['user_id' => $user->id, 'bid_strategy_uuid' => $bidStrategy->uuid]);
+        Campaign::factory()->create(['user_id' => $user->id, 'bid_strategy_uuid' => $bidStrategy->uuid]);
 
         $response = $this->delete(self::buildUriPatchBidStrategy($bidStrategy->uuid));
 
@@ -575,7 +575,7 @@ class BidStrategyControllerTest extends TestCase
     public function testDeleteDefault(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['is_admin' => 1]);
+        $user = User::factory()->create(['is_admin' => 1]);
         $this->actingAs($user, 'api');
         $bidStrategy = (new BidStrategy())->first();
 

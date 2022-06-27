@@ -54,19 +54,19 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             }
         );
 
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
         $userUuid = $user->uuid;
 
-        $campaign = factory(Campaign::class)->create(['user_id' => $userId, 'budget' => 10 ** 7 * 10 ** 11]);
+        $campaign = Campaign::factory()->create(['user_id' => $userId, 'budget' => 10 ** 7 * 10 ** 11]);
         $campaignId = $campaign->id;
         $campaignUuid = $campaign->uuid;
 
-        $banner = factory(Banner::class)->create(['campaign_id' => $campaignId]);
+        $banner = Banner::factory()->create(['campaign_id' => $campaignId]);
         $bannerUuid = $banner->uuid;
 
         /** @var Collection|EventLog[] $events */
-        $events = factory(EventLog::class)->times(666)->create([
+        $events = EventLog::factory()->times(666)->create([
             'event_value_currency' => null,
             'advertiser_id' => $userUuid,
             'campaign_id' => $campaignUuid,
@@ -86,7 +86,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         $userBalance = (int)ceil(
             $totalInCurrency / $dummyExchangeRateRepository->fetchExchangeRate(new DateTime())->getValue()
         );
-        factory(UserLedgerEntry::class)->create(['amount' => $userBalance, 'user_id' => $userId]);
+        UserLedgerEntry::factory()->create(['amount' => $userBalance, 'user_id' => $userId]);
 
         $this->app->bind(
             AdPay::class,
@@ -120,14 +120,14 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
     public function testNormalization(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->times(1)->create()->each(static function (User $user) {
+        $user = User::factory()->times(1)->create()->each(static function (User $user) {
             $entries = [
                 [UserLedgerEntry::TYPE_DEPOSIT, 100, UserLedgerEntry::STATUS_ACCEPTED],
                 [UserLedgerEntry::TYPE_BONUS_INCOME, 100, UserLedgerEntry::STATUS_ACCEPTED],
             ];
 
             foreach ($entries as $entry) {
-                factory(UserLedgerEntry::class)->create([
+                UserLedgerEntry::factory()->create([
                     'type' => $entry[0],
                     'amount' => $entry[1],
                     'status' => $entry[2],
@@ -135,12 +135,12 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
                 ]);
             }
 
-            factory(Campaign::class)->create([
+            Campaign::factory()->create([
                 'user_id' => $user->id,
                 'budget' => 100,
                 'status' => Campaign::STATUS_ACTIVE,
             ]);
-            factory(Campaign::class)->create([
+            Campaign::factory()->create([
                 'user_id' => $user->id,
                 'budget' => 100,
                 'status' => Campaign::STATUS_ACTIVE,
@@ -148,11 +148,11 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             ]);
 
             Campaign::all()->each(static function (Campaign $campaign) {
-                $banner = factory(Banner::class)->create([
+                $banner = Banner::factory()->create([
                     'campaign_id' => $campaign->id,
                 ]);
 
-                factory(EventLog::class)->times(1)->create([
+                EventLog::factory()->times(1)->create([
                     'event_value_currency' => null,
                     'advertiser_id' => $campaign->user->uuid,
                     'campaign_id' => $campaign->uuid,
@@ -160,7 +160,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
                 ]);
 
                 if (!$campaign->isDirectDeal()) {
-                    factory(EventLog::class)->times(1)->create([
+                    EventLog::factory()->times(1)->create([
                         'event_value_currency' => null,
                         'advertiser_id' => $campaign->user->uuid,
                         'campaign_id' => $campaign->uuid,

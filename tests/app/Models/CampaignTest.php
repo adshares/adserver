@@ -82,9 +82,9 @@ class CampaignTest extends TestCase
             'invalid status' => [
                 false,
                 function () {
-                    return factory(Campaign::class)->create(
+                    return Campaign::factory()->create(
                         [
-                            'user_id' => factory(User::class)->create()->id,
+                            'user_id' => User::factory()->create()->id,
                             'status' => Campaign::STATUS_INACTIVE,
                         ]
                     );
@@ -94,9 +94,9 @@ class CampaignTest extends TestCase
             'same status' => [
                 false,
                 function () {
-                    return factory(Campaign::class)->create(
+                    return Campaign::factory()->create(
                         [
-                            'user_id' => factory(User::class)->create()->id,
+                            'user_id' => User::factory()->create()->id,
                             'status' => Campaign::STATUS_INACTIVE,
                         ]
                     );
@@ -106,9 +106,9 @@ class CampaignTest extends TestCase
             'low budget' => [
                 false,
                 function () {
-                    return factory(Campaign::class)->create(
+                    return Campaign::factory()->create(
                         [
-                            'user_id' => factory(User::class)->create()->id,
+                            'user_id' => User::factory()->create()->id,
                             'status' => Campaign::STATUS_INACTIVE,
                             'budget' => 0,
                         ]
@@ -119,9 +119,9 @@ class CampaignTest extends TestCase
             'outdated campaign' => [
                 false,
                 function () {
-                    return factory(Campaign::class)->create(
+                    return Campaign::factory()->create(
                         [
-                            'user_id' => factory(User::class)->create()->id,
+                            'user_id' => User::factory()->create()->id,
                             'status' => Campaign::STATUS_INACTIVE,
                             'time_end' => (new DateTime('-1 month'))->format(DATE_ATOM),
                         ]
@@ -132,9 +132,9 @@ class CampaignTest extends TestCase
             'insufficient funds on account' => [
                 false,
                 function () {
-                    return factory(Campaign::class)->create(
+                    return Campaign::factory()->create(
                         [
-                            'user_id' => factory(User::class)->create()->id,
+                            'user_id' => User::factory()->create()->id,
                             'status' => Campaign::STATUS_INACTIVE,
                         ]
                     );
@@ -144,15 +144,15 @@ class CampaignTest extends TestCase
             'auto cpm' => [
                 true,
                 function () {
-                    $userId = factory(User::class)->create()->id;
-                    factory(UserLedgerEntry::class)->create(
+                    $userId = User::factory()->create()->id;
+                    UserLedgerEntry::factory()->create(
                         [
                             'user_id' => $userId,
                             'amount' => 1000 * 1e11,
                         ]
                     );
 
-                    return factory(Campaign::class)->create(
+                    return Campaign::factory()->create(
                         [
                             'user_id' => $userId,
                             'status' => Campaign::STATUS_INACTIVE,
@@ -165,15 +165,15 @@ class CampaignTest extends TestCase
             'low cpm' => [
                 false,
                 function () {
-                    $userId = factory(User::class)->create()->id;
-                    factory(UserLedgerEntry::class)->create(
+                    $userId = User::factory()->create()->id;
+                    UserLedgerEntry::factory()->create(
                         [
                             'user_id' => $userId,
                             'amount' => 1000 * 1e11,
                         ]
                     );
 
-                    return factory(Campaign::class)->create(
+                    return Campaign::factory()->create(
                         [
                             'user_id' => $userId,
                             'status' => Campaign::STATUS_INACTIVE,
@@ -186,21 +186,21 @@ class CampaignTest extends TestCase
             'low cpm and conversion' => [
                 true,
                 function () {
-                    $userId = factory(User::class)->create()->id;
-                    factory(UserLedgerEntry::class)->create(
+                    $userId = User::factory()->create()->id;
+                    UserLedgerEntry::factory()->create(
                         [
                             'user_id' => $userId,
                             'amount' => 1000 * 1e11,
                         ]
                     );
-                    $campaign = factory(Campaign::class)->create(
+                    $campaign = Campaign::factory()->create(
                         [
                             'user_id' => $userId,
                             'status' => Campaign::STATUS_INACTIVE,
                             'max_cpm' => 1,
                         ]
                     );
-                    factory(ConversionDefinition::class)->create(
+                    Conversiondefinition::factory()->create(
                         [
                             'campaign_id' => $campaign->id,
                             'value' => 10 ** 10,
@@ -226,7 +226,7 @@ class CampaignTest extends TestCase
     {
         return [
             'Web campaign without targeting' => [
-                fn () => factory(Campaign::class)->create([
+                fn () => Campaign::factory()->create([
                     'medium' => 'web',
                     'vendor' => null,
                     'targeting_requires' => [],
@@ -234,7 +234,7 @@ class CampaignTest extends TestCase
                 false,
             ],
             'Web campaign with direct targeting' => [
-                fn () => factory(Campaign::class)->create([
+                fn () => Campaign::factory()->create([
                     'medium' => 'web',
                     'vendor' => null,
                     'targeting_requires' => [
@@ -246,7 +246,7 @@ class CampaignTest extends TestCase
                 true,
             ],
             'DCL campaign without direct targeting' => [
-                fn () => factory(Campaign::class)->create([
+                fn () => Campaign::factory()->create([
                     'medium' => 'metaverse',
                     'vendor' => 'decentraland',
                     'targeting_requires' => [
@@ -258,7 +258,7 @@ class CampaignTest extends TestCase
                 false,
             ],
             'DCL campaign with direct targeting' => [
-                fn () => factory(Campaign::class)->create([
+                fn () => Campaign::factory()->create([
                     'medium' => 'metaverse',
                     'vendor' => 'decentraland',
                     'targeting_requires' => [
@@ -270,7 +270,7 @@ class CampaignTest extends TestCase
                 true,
             ],
             'Cryptovoxels campaign without direct targeting' => [
-                fn () => factory(Campaign::class)->create([
+                fn () => Campaign::factory()->create([
                     'medium' => 'metaverse',
                     'vendor' => 'cryptovoxels',
                     'targeting_requires' => [
@@ -282,7 +282,7 @@ class CampaignTest extends TestCase
                 false,
             ],
             'Cryptovoxels campaign with direct targeting' => [
-                fn () => factory(Campaign::class)->create([
+                fn () => Campaign::factory()->create([
                     'medium' => 'metaverse',
                     'vendor' => 'cryptovoxels',
                     'targeting_requires' => [

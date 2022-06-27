@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,17 +19,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\NetworkHost;
+namespace Database\Factories;
+
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
-use Faker\Generator as Faker;
+use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(
-    NetworkHost::class,
-    function (Faker $faker) {
+class NetworkHostFactory extends Factory
+{
+    public function definition(): array
+    {
         $addresses = [
             AccountId::fromIncompleteString('0001-00000001'),
             AccountId::fromIncompleteString('0001-00000002'),
@@ -40,18 +44,18 @@ $factory->define(
             AccountId::fromIncompleteString('0001-00000008'),
         ];
 
-        $host = 'https://'.parse_url($faker->url, PHP_URL_HOST);
+        $host = 'https://' . parse_url($this->faker->url, PHP_URL_HOST);
         $info = new Info(
             'adserver',
-            $faker->domainWord,
+            $this->faker->domainWord,
             '0.1',
             new Url($host),
-            new Url($host.':4200'),
-            new Url($host.'/policies/privacy.html'),
-            new Url($host.'/policies/terms.html'),
-            new Url($host.'/adshares/inventory/list'),
+            new Url($host . ':4200'),
+            new Url($host . '/policies/privacy.html'),
+            new Url($host . '/policies/terms.html'),
+            new Url($host . '/adshares/inventory/list'),
             new AccountId('0001-00000004-DBEB'),
-            new Email($faker->companyEmail),
+            new Email($this->faker->companyEmail),
             ['PUB', 'ADV'],
             'public'
         );
@@ -61,12 +65,12 @@ $factory->define(
         $info->setStatistics(new InfoStatistics(1, 1, 1));
 
         return [
-            'address' => $faker->randomElement($addresses),
+            'address' => $this->faker->randomElement($addresses),
             'host' => $host,
-            'last_broadcast' => new DateTime(),
-            'created_at' => new DateTime(),
+            'last_broadcast' => new DateTimeImmutable(),
+            'created_at' => new DateTimeImmutable(),
             'failed_connection' => 0,
             'info' => $info,
         ];
     }
-);
+}

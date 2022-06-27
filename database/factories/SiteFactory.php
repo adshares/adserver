@@ -19,21 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+namespace Database\Factories;
+
 use Adshares\Adserver\Models\Site;
 use Adshares\Common\Application\Service\AdUser;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(Site::class, function (Faker $faker) {
-    return [
-        'name' => $faker->words(2, true),
-        'domain' => 'example.com',
-        'url' => 'https://example.com',
-        'medium' => 'web',
-        'vendor' => null,
-        'primary_language' => $faker->languageCode,
-        'status' => Site::STATUS_ACTIVE,
-        'rank' => 1,
-        'info' => AdUser::PAGE_INFO_OK,
-        'categories' => ['unknown'],
-    ];
-});
+class SiteFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'name' => $this->faker->words(2, true),
+            'domain' => 'example.com',
+            'url' => 'https://example.com',
+            'medium' => 'web',
+            'vendor' => null,
+            'primary_language' => $this->faker->languageCode,
+            'status' => Site::STATUS_ACTIVE,
+            'rank' => 1,
+            'info' => AdUser::PAGE_INFO_OK,
+            'categories' => ['unknown'],
+        ];
+    }
+}

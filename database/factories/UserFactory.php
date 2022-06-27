@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,16 +19,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\User;
-use Faker\Generator as Faker;
+namespace Database\Factories;
 
-$factory->define(User::class, function (Faker $faker) {
-    return [
-        'email' => $faker->unique()->safeEmail,
-        'password' => $faker->password(8),
-        'uuid' => $faker->md5,
-        'is_advertiser' => true,
-        'is_publisher' => true,
-        'is_admin' => false,
-    ];
-});
+use Adshares\Adserver\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class UserFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'email' => $this->faker->unique()->safeEmail,
+            'password' => $this->faker->password(8),
+            'uuid' => $this->faker->md5,
+            'is_advertiser' => true,
+            'is_publisher' => true,
+            'is_admin' => false,
+        ];
+    }
+}

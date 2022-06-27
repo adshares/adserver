@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -51,6 +52,7 @@ class BidStrategy extends Model
 {
     use AutomateMutators;
     use BinHex;
+    use HasFactory;
     use SoftDeletes;
 
     public const ADMINISTRATOR_ID = 0;
