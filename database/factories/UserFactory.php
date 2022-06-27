@@ -37,4 +37,9 @@ class UserFactory extends Factory
             'is_admin' => false,
         ];
     }
+
+    public function admin(): self
+    {
+        return $this->state(['is_admin' => true]);
+    }
 }

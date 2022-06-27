@@ -128,7 +128,7 @@ class AuthControllerTest extends TestCase
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
 
-        $this->actingAs(User::factory()->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
         $this->assertTrue($user->is_email_confirmed);
         $this->assertTrue($user->is_admin_confirmed);
@@ -157,7 +157,7 @@ class AuthControllerTest extends TestCase
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
 
-        $this->actingAs(User::factory()->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
         $this->assertTrue($user->is_email_confirmed);
         $this->assertTrue($user->is_admin_confirmed);
@@ -308,7 +308,7 @@ class AuthControllerTest extends TestCase
             ]
         );
 
-        $this->actingAs(User::factory()->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
 
         self::assertSame(
@@ -346,7 +346,7 @@ class AuthControllerTest extends TestCase
             ]
         );
 
-        $this->actingAs(User::factory()->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
 
         self::assertSame(

@@ -298,7 +298,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithForbiddenAttributes(): void
     {
-        $this->actingAs(User::factory()->create(['is_admin' => false]), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->postJson(self::URI, ['refLink' => ['validUntil' => '2021-01-01 01:00:00']]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -318,7 +318,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkAsAdmin(): void
     {
-        $this->actingAs(User::factory()->create(['is_admin' => true]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->postJson(
             self::URI,
@@ -354,7 +354,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkValidation(): void
     {
-        $this->actingAs(User::factory()->create(['is_admin' => true]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->postJson(
             self::URI,
