@@ -52,7 +52,7 @@ class ListAdministratorsCommandTest extends ConsoleTestCase
 
     public function testTwoAdministrators(): void
     {
-        $emails = factory(User::class)->times(2)->create(['is_admin' => 1])->pluck('email');
+        $emails = User::factory()->admin()->count(2)->create()->pluck('email');
 
         $exitCode = $this->withoutMockingConsoleOutput()->artisan(self::COMMAND_SIGNATURE);
         $output = Artisan::output();
