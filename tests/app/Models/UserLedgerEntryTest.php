@@ -35,7 +35,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testBalance(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createAllEntries($user);
 
         self::assertEquals(-185, $user->getBalance());
@@ -46,9 +46,9 @@ final class UserLedgerEntryTest extends TestCase
     public function testBalanceForAllUsers(): void
     {
         /** @var User $user */
-        $user1 = factory(User::class)->create();
+        $user1 = User::factory()->create();
         $this->createAllEntries($user1);
-        $user2 = factory(User::class)->create();
+        $user2 = User::factory()->create();
         $this->createAllEntries($user2);
 
         self::assertEquals(-370, UserLedgerEntry::getBalanceForAllUsers());
@@ -59,9 +59,9 @@ final class UserLedgerEntryTest extends TestCase
     public function testBalanceForDeletedUser(): void
     {
         /** @var User $user */
-        $user1 = factory(User::class)->create(['deleted_at' => new DateTimeImmutable()]);
+        $user1 = User::factory()->create(['deleted_at' => new DateTimeImmutable()]);
         $this->createAllEntries($user1);
-        $user2 = factory(User::class)->create();
+        $user2 = User::factory()->create();
         $this->createAllEntries($user2);
 
         self::assertEquals(-185, UserLedgerEntry::getBalanceForAllUsers());
@@ -72,7 +72,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testBlockAdExpense(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createSomeEntries($user);
 
         self::assertEquals(240, UserLedgerEntry::getBalanceForAllUsers());
@@ -101,7 +101,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testInvalidBlockAdExpense(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createAllEntries($user);
 
         $this->expectExceptionMessageMatches('/Insufficient funds for User.*/');
@@ -111,7 +111,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testNegativeAmountBlockAdExpense(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createSomeEntries($user);
 
         $this->expectExceptionMessageMatches('/Values need to be non-negative.*/');
@@ -121,7 +121,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testProcessAdExpense(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createSomeEntries($user);
 
         self::assertEquals(240, UserLedgerEntry::getBalanceForAllUsers());
@@ -150,7 +150,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testNegativeAmountProcessAdExpense(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createSomeEntries($user);
 
         $this->expectExceptionMessageMatches('/Values need to be non-negative.*/');
@@ -160,7 +160,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testBalancePushing(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createAllEntries($user);
 
         UserLedgerEntry::pushBlockedToProcessing();
@@ -179,7 +179,7 @@ final class UserLedgerEntryTest extends TestCase
     public function testBalanceRemoval(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->createAllEntries($user);
 
         UserLedgerEntry::removeProcessingExpenses();
@@ -195,15 +195,15 @@ final class UserLedgerEntryTest extends TestCase
         Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.2]);
 
         /** @var User $user1 */
-        $user1 = factory(User::class)->create();
+        $user1 = User::factory()->create();
         /** @var RefLink $refLink1 */
-        $refLink1 = factory(RefLink::class)->create(['user_id' => $user1->id, 'refund' => 0.5, 'kept_refund' => 0.5]);
+        $refLink1 = RefLink::factory()->create(['user_id' => $user1->id, 'refund' => 0.5, 'kept_refund' => 0.5]);
         /** @var User $user2 */
-        $user2 = factory(User::class)->create(['ref_link_id' => $refLink1->id]);
+        $user2 = User::factory()->create(['ref_link_id' => $refLink1->id]);
         /** @var RefLink $refLink2 */
-        $refLink2 = factory(RefLink::class)->create(['user_id' => $user2->id, 'kept_refund' => 0.7]);
+        $refLink2 = RefLink::factory()->create(['user_id' => $user2->id, 'kept_refund' => 0.7]);
         /** @var User $user3 */
-        $user3 = factory(User::class)->create(['ref_link_id' => $refLink2->id]);
+        $user3 = User::factory()->create(['ref_link_id' => $refLink2->id]);
         $this->createSomeEntries($user3);
 
         self::assertEquals(0, $user1->getBalance());
@@ -269,9 +269,9 @@ final class UserLedgerEntryTest extends TestCase
         Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.2]);
 
         /** @var User $user1 */
-        $user1 = factory(User::class)->create();
+        $user1 = User::factory()->create();
         /** @var RefLink $refLink1 */
-        $refLink1 = factory(RefLink::class)->create(
+        $refLink1 = RefLink::factory()->create(
             [
                 'user_id' => $user1->id,
                 'refund' => 0.5,
@@ -280,7 +280,7 @@ final class UserLedgerEntryTest extends TestCase
             ]
         );
         /** @var User $user2 */
-        $user2 = factory(User::class)->create(['ref_link_id' => $refLink1->id]);
+        $user2 = User::factory()->create(['ref_link_id' => $refLink1->id]);
         $this->createSomeEntries($user2);
 
         self::assertEquals(0, $user1->getBalance());
@@ -312,7 +312,7 @@ final class UserLedgerEntryTest extends TestCase
         ];
 
         foreach ($entries as $entry) {
-            factory(UserLedgerEntry::class)->create(
+            UserLedgerEntry::factory()->create(
                 [
                     'status' => UserLedgerEntry::STATUS_ACCEPTED,
                     'type' => $entry[0],
@@ -339,7 +339,7 @@ final class UserLedgerEntryTest extends TestCase
             foreach (UserLedgerEntry::ALLOWED_STATUS_LIST as $status) {
                 foreach ([true, false] as $delete) {
                     /** @var UserLedgerEntry $object */
-                    $object = factory(UserLedgerEntry::class)->create(
+                    $object = UserLedgerEntry::factory()->create(
                         [
                             'status' => $status,
                             'type' => $type,

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -196,8 +196,8 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     private function insertEventConversion(): Conversion
     {
-        $user = factory(User::class)->create();
-        $campaign = factory(Campaign::class)->create(
+        $user = User::factory()->create();
+        $campaign = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'budget' => 100000000000,
@@ -205,7 +205,7 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         );
 
         /** @var EventLog $eventLog */
-        $eventLog = factory(EventLog::class)->create(
+        $eventLog = EventLog::factory()->create(
             [
                 'created_at' => new DateTime('-1 hour'),
                 'event_type' => EventLog::TYPE_VIEW,
@@ -245,15 +245,15 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     private function insertEvent(string $eventType): EventLog
     {
-        $user = factory(User::class)->create();
-        $campaign = factory(Campaign::class)->create(
+        $user = User::factory()->create();
+        $campaign = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'budget' => 100000000000,
             ]
         );
 
-        return factory(EventLog::class)->create(
+        return EventLog::factory()->create(
             [
                 'event_type' => $eventType,
                 'campaign_id' => $campaign->uuid,

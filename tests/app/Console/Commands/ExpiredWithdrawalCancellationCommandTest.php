@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,7 +36,7 @@ class ExpiredWithdrawalCancellationCommandTest extends ConsoleTestCase
 
     public function testCancelExpiredWithdrawal(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
 
         $addressFrom = '0002-00000008-F4B5';
         $addressTo = '0001-00000001-8B4E';

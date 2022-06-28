@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -40,7 +40,7 @@ final class StatsControllerTest extends TestCase
 
     public function testAdvertiserChartWhenViewTypeAndHourResolutionAndDateEndIsEarlierThanDateStart(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
@@ -62,7 +62,7 @@ final class StatsControllerTest extends TestCase
     public function testAdvertiserChartWhenViewTypeAndHourResolution(string $type, array $resolutions): void
     {
         $repository = new DummyStatsRepository();
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
@@ -105,11 +105,11 @@ final class StatsControllerTest extends TestCase
     public function testAdvertiserStats(): void
     {
         $repository = new DummyStatsRepository();
-        $user = factory(User::class)->create(['email' => DummyStatsRepository::USER_EMAIL]);
+        $user = User::factory()->create(['email' => DummyStatsRepository::USER_EMAIL]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
-        factory(Campaign::class)->create(['user_id' => $user->id]);
+        Campaign::factory()->create(['user_id' => $user->id]);
 
         $dateStart = new DateTime();
         $dateEnd = new DateTime();

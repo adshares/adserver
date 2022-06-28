@@ -45,7 +45,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testBrowseCampaignRequestWhenNoCampaigns(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -54,7 +54,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCampaignRequestWhenCampaignIsNotFound(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::URI . '/1');
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -63,7 +63,7 @@ final class CampaignsControllerTest extends TestCase
     /** @dataProvider budgetVsResponseWhenCreatingCampaign */
     public function testCreateCampaignWithoutBannersAndTargeting(int $budget, int $returnValue): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $campaignInputData = $this->campaignInputData();
         $campaignInputData['basicInformation']['budget'] = $budget;
@@ -80,7 +80,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCreateCampaignWithInvalidMedium(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $campaignInputData = $this->campaignInputData();
         $campaignInputData['basicInformation']['medium'] = 'invalid';
@@ -125,7 +125,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testDeleteCampaignWithBanner(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $campaign = $this->createCampaignForUser($user);
@@ -151,7 +151,7 @@ final class CampaignsControllerTest extends TestCase
     {
         $user = $this->createUser();
 
-        $campaign = factory(Campaign::class)->create([
+        $campaign = Campaign::factory()->create([
             'user_id' => $user->id,
             'budget' => $campaignBudget,
         ]);
@@ -170,11 +170,11 @@ final class CampaignsControllerTest extends TestCase
     {
         $user = $this->createUser();
 
-        $campaign = factory(Campaign::class)->create([
+        $campaign = Campaign::factory()->create([
             'user_id' => $user->id,
             'budget' => 10 * 10e9,
         ]);
-        $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
+        $conversionDefinition = Conversiondefinition::factory()->create(['campaign_id' => $campaign->id]);
 
         $this->putJson(
             self::URI . "/{$campaign->id}/status",
@@ -194,11 +194,11 @@ final class CampaignsControllerTest extends TestCase
         int $expectedResponseStatus
     ): void {
         $user = $this->createUser();
-        $campaign = factory(Campaign::class)->create([
+        $campaign = Campaign::factory()->create([
             'user_id' => $user->id,
             'budget' => 10 * 10e9,
         ]);
-        $banner = factory(Banner::class)->create([
+        $banner = Banner::factory()->create([
             'campaign_id' => $campaign->id,
             'status' => $bannerStatusBefore,
         ]);
@@ -219,12 +219,12 @@ final class CampaignsControllerTest extends TestCase
     public function testCampaignWithConversionBannerStatusChange(): void
     {
         $user = $this->createUser();
-        $campaign = factory(Campaign::class)->create([
+        $campaign = Campaign::factory()->create([
             'user_id' => $user->id,
             'budget' => 10 * 10e9,
         ]);
-        $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
-        $banner = factory(Banner::class)->create([
+        $conversionDefinition = Conversiondefinition::factory()->create(['campaign_id' => $campaign->id]);
+        $banner = Banner::factory()->create([
             'campaign_id' => $campaign->id,
             'status' => Banner::STATUS_INACTIVE,
         ]);
@@ -245,8 +245,8 @@ final class CampaignsControllerTest extends TestCase
     {
         $userBalance = 50 * 10e9;
 
-        $user = factory(User::class)->create();
-        factory(UserLedgerEntry::class)->create(['user_id' => $user->id, 'amount' => $userBalance]);
+        $user = User::factory()->create();
+        UserLedgerEntry::factory()->create(['user_id' => $user->id, 'amount' => $userBalance]);
         $this->actingAs($user, 'api');
 
         return $user;
@@ -254,19 +254,19 @@ final class CampaignsControllerTest extends TestCase
 
     private function createCampaignForUser(User $user, array $attributes = []): Campaign
     {
-        return factory(Campaign::class)->create(array_merge(['user_id' => $user->id], $attributes));
+        return Campaign::factory()->create(array_merge(['user_id' => $user->id], $attributes));
     }
 
     private function createBannerForCampaign(Campaign $campaign, array $attributes = []): Banner
     {
-        return factory(Banner::class)->create(array_merge(['campaign_id' => $campaign->id], $attributes));
+        return Banner::factory()->create(array_merge(['campaign_id' => $campaign->id], $attributes));
     }
 
     public function testFailDeleteNotOwnedCampaign(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $campaign = $this->createCampaignForUser($user);
         $this->createBannerForCampaign($campaign);
 
@@ -320,9 +320,9 @@ final class CampaignsControllerTest extends TestCase
         ];
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         foreach ($entries as $entry) {
-            factory(UserLedgerEntry::class)->create([
+            UserLedgerEntry::factory()->create([
                 'type' => $entry[0],
                 'amount' => $entry[1],
                 'status' => $entry[2],
@@ -373,7 +373,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testUpdateBidStrategyValid(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $defaultBidStrategyUuid = BidStrategy::first()->uuid;
 
@@ -386,7 +386,7 @@ final class CampaignsControllerTest extends TestCase
         self::assertEquals($defaultBidStrategyUuid, $previousBidStrategyUuid);
 
         /** @var BidStrategy $bidStrategy */
-        $bidStrategy = factory(BidStrategy::class)->create(['user_id' => $user->id]);
+        $bidStrategy = BidStrategy::factory()->create(['user_id' => $user->id]);
         $campaignInputDataUpdated = array_merge(
             $campaignInputData,
             [
@@ -409,7 +409,7 @@ final class CampaignsControllerTest extends TestCase
      */
     public function testUpdateBidStrategyInvalid(array $bidStrategyData): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $campaignInputData = $this->campaignInputData();
@@ -451,7 +451,7 @@ final class CampaignsControllerTest extends TestCase
                 return $exchangeRateRepository;
             }
         );
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
         $response->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE);
@@ -459,7 +459,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddCampaignInvalidSetupMissingDefaultBidStrategy(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         DB::delete('DELETE FROM bid_strategy WHERE 1=1');
 
@@ -469,11 +469,11 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneNoneExistsCampaign(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $campaign1 = $this->createCampaignForUser($user);
-        $campaign2 = $this->createCampaignForUser(factory(User::class)->create());
+        $campaign2 = $this->createCampaignForUser(User::factory()->create());
 
         $invalidId = $campaign1->id - 1;
         $response = $this->postJson(self::URI . "/{$invalidId}/clone");
@@ -485,7 +485,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneEmptyCampaign(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $campaign = $this->createCampaignForUser(
@@ -538,12 +538,12 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneCampaignWithConversions(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $campaign = $this->createCampaignForUser($user);
         /** @var ConversionDefinition $conversion */
-        $conversion = factory(ConversionDefinition::class)->create(
+        $conversion = Conversiondefinition::factory()->create(
             [
                 'campaign_id' => $campaign->id,
                 'cost' => 1000,
@@ -580,7 +580,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneCampaignWithAds(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $campaign = $this->createCampaignForUser($user);
@@ -617,7 +617,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testUploadBannerNoFile(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $response = $this->postJson('/api/campaigns/banner');
@@ -626,7 +626,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testUploadBanner(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $response = $this->postJson(
@@ -639,9 +639,9 @@ final class CampaignsControllerTest extends TestCase
     public function testCampaignEditMedium(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(
+        $campaign = Campaign::factory()->create(
             [
                 'medium' => 'web',
                 'user_id' => $user->id,

@@ -128,7 +128,7 @@ class AuthControllerTest extends TestCase
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
 
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
         $this->assertTrue($user->is_email_confirmed);
         $this->assertTrue($user->is_admin_confirmed);
@@ -157,7 +157,7 @@ class AuthControllerTest extends TestCase
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
 
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
         $this->assertTrue($user->is_email_confirmed);
         $this->assertTrue($user->is_admin_confirmed);
@@ -176,7 +176,7 @@ class AuthControllerTest extends TestCase
         $this->assertNull($user);
 
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create(['single_use' => true]);
+        $refLink = RefLink::factory()->create(['single_use' => true]);
         $user = $this->registerUser($refLink->token);
         $this->assertNotNull($user);
 
@@ -192,7 +192,7 @@ class AuthControllerTest extends TestCase
         $this->assertNull($user);
 
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create();
+        $refLink = RefLink::factory()->create();
         $user = $this->registerUser($refLink->token, Response::HTTP_FORBIDDEN);
         $this->assertNull($user);
     }
@@ -200,7 +200,7 @@ class AuthControllerTest extends TestCase
     public function testRegisterWithReferral(): void
     {
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create();
+        $refLink = RefLink::factory()->create();
         $this->assertFalse($refLink->used);
 
         $user = $this->registerUser($refLink->token);
@@ -223,7 +223,7 @@ class AuthControllerTest extends TestCase
     public function testEmailActivateWithBonus(): void
     {
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
+        $refLink = RefLink::factory()->create(['bonus' => 100, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
 
         self::assertSame(
@@ -258,7 +258,7 @@ class AuthControllerTest extends TestCase
     public function testEmailActivateNoBonus(): void
     {
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create(['bonus' => 0, 'refund' => 0.5]);
+        $refLink = RefLink::factory()->create(['bonus' => 0, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
         self::assertSame(
             [0, 0, 0],
@@ -285,7 +285,7 @@ class AuthControllerTest extends TestCase
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
+        $refLink = RefLink::factory()->create(['bonus' => 100, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
 
         self::assertSame(
@@ -308,7 +308,7 @@ class AuthControllerTest extends TestCase
             ]
         );
 
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
 
         self::assertSame(
@@ -334,7 +334,7 @@ class AuthControllerTest extends TestCase
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create(['bonus' => 100, 'refund' => 0.5]);
+        $refLink = RefLink::factory()->create(['bonus' => 100, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
 
         self::assertSame(
@@ -346,7 +346,7 @@ class AuthControllerTest extends TestCase
             ]
         );
 
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $this->confirmUser($user);
 
         self::assertSame(
@@ -387,7 +387,7 @@ class AuthControllerTest extends TestCase
             }
         );
 
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::CHECK_URI);
 
@@ -408,7 +408,7 @@ class AuthControllerTest extends TestCase
             }
         );
 
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::CHECK_URI);
 
@@ -437,7 +437,7 @@ class AuthControllerTest extends TestCase
     public function testWalletLoginWithReferral(): void
     {
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create();
+        $refLink = RefLink::factory()->create();
         $this->assertFalse($refLink->used);
 
         $user = $this->walletRegisterUser($refLink->token);
@@ -448,7 +448,7 @@ class AuthControllerTest extends TestCase
 
     public function testWalletLoginBsc(): void
     {
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'wallet_address' => WalletAddress::fromString('bsc:0x79e51bA0407bEc3f1246797462EaF46850294301')
         ]);
         $message = '123abc';
@@ -471,7 +471,7 @@ class AuthControllerTest extends TestCase
 
     public function testNonExistedWalletLoginUser(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
         ]);
         $message = '123abc';
@@ -505,7 +505,7 @@ class AuthControllerTest extends TestCase
     {
         Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::RESTRICTED]);
 
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
         ]);
         $message = '123abc';
@@ -531,7 +531,7 @@ class AuthControllerTest extends TestCase
     {
         Config::updateAdminSettings([Config::REGISTRATION_MODE => RegistrationMode::PRIVATE]);
 
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000002-BB2D')
         ]);
         $message = '123abc';
@@ -555,7 +555,7 @@ class AuthControllerTest extends TestCase
 
     public function testInvalidWalletLoginSignature(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
         $message = '123abc';
@@ -575,7 +575,7 @@ class AuthControllerTest extends TestCase
 
     public function testUnsupportedWalletLoginNetwork(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('btc:3ALP7JRzHAyrhX5LLPSxU1A9duDiGbnaKg')
         ]);
         $message = '123abc';
@@ -595,7 +595,7 @@ class AuthControllerTest extends TestCase
 
     public function testInvalidWalletLoginToken(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
         $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
@@ -610,7 +610,7 @@ class AuthControllerTest extends TestCase
 
     public function testNonExistedWalletLoginToken(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
         $sign = '0x72d877601db72b6d843f11d634447bbdd836de7adbd5b2dfc4fa718ea68e7b18d65547b1265fec0c121ac76dfb086806da393d244dec76d72f49895f48aa5a01';
@@ -625,7 +625,7 @@ class AuthControllerTest extends TestCase
 
     public function testExpiredWalletLoginToken(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
         $message = '123abc';
@@ -657,7 +657,7 @@ class AuthControllerTest extends TestCase
     public function testLogInAndLogOut(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['password' => '87654321']);
+        $user = User::factory()->create(['password' => '87654321']);
 
         $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321'])
             ->assertStatus(Response::HTTP_OK);
@@ -672,7 +672,7 @@ class AuthControllerTest extends TestCase
     public function testLogInBannedUser(): void
     {
         /** @var User $user */
-        $user = factory(User::class)
+        $user = User::factory()
             ->create(['password' => '87654321', 'is_banned' => true, 'ban_reason' => 'suspicious activity']);
 
         $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321']);
@@ -773,7 +773,7 @@ class AuthControllerTest extends TestCase
     public function testChangePassword(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'api_token' => '1234',
             'password' => '87654321',
         ]);
@@ -824,7 +824,7 @@ class AuthControllerTest extends TestCase
 
     public function testChangePasswordNoPassword(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->patch(self::SELF_URI, [
             'user' => [
@@ -837,7 +837,7 @@ class AuthControllerTest extends TestCase
     public function testChangePasswordNoUser(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $token = Token::generate(Token::PASSWORD_RECOVERY, $user);
 
         $response = $this->patch(self::PASSWORD_URI, [
@@ -960,7 +960,7 @@ class AuthControllerTest extends TestCase
     public function testRegisterDeletedUser(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['deleted_at' => new DateTime()]);
+        $user = User::factory()->create(['deleted_at' => new DateTime()]);
 
         $response = $this->postJson(
             self::REGISTER_USER,
