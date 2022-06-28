@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -41,13 +41,13 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
     public function testHandle(): void
     {
         /** @var Collection|EventLog[] $events */
-        factory(EventLog::class)
+        EventLog::factory()
             ->times(3)
             ->create(['pay_to' => AccountId::fromIncompleteString('0001-00000001')]);
-        factory(EventLog::class)
+        EventLog::factory()
             ->times(2)
             ->create(['pay_to' => AccountId::fromIncompleteString('0002-00000002')]);
-        factory(EventLog::class)
+        EventLog::factory()
             ->times(4)
             ->create(['pay_to' => AccountId::fromIncompleteString('0002-00000004')]);
 

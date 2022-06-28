@@ -83,7 +83,7 @@ abstract class TestCase extends BaseTestCase
     protected function login(User $user = null): User
     {
         if (null === $user) {
-            $user = factory(User::class)->create();
+            $user = User::factory()->create();
         }
         $this->actingAs($user, 'api');
         return $user;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -94,9 +94,9 @@ class BannerClassificationsCreateCommandTest extends ConsoleTestCase
 
     private function insertBanner(): Banner
     {
-        $user = factory(User::class)->create();
-        $campaign = factory(Campaign::class)->create(['status' => Campaign::STATUS_ACTIVE, 'user_id' => $user->id]);
+        $user = User::factory()->create();
+        $campaign = Campaign::factory()->create(['status' => Campaign::STATUS_ACTIVE, 'user_id' => $user->id]);
 
-        return factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        return Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
     }
 }

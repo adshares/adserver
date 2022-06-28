@@ -35,6 +35,7 @@ use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -74,6 +75,7 @@ class Site extends Model
     use SoftDeletes;
     use AutomateMutators;
     use BinHex;
+    use HasFactory;
 
     public const STATUS_DRAFT = 0;
 

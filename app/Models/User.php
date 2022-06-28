@@ -30,6 +30,7 @@ use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -80,6 +81,7 @@ class User extends Authenticatable implements JWTSubject
     use AutomateMutators;
     use BinHex;
     use AddressWithNetwork;
+    use HasFactory;
 
     public static $rules_add = [
         'email' => 'required|email|max:150|unique:users',

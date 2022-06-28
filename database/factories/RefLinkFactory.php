@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,14 +19,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\User;
-use Faker\Generator as Faker;
+declare(strict_types=1);
 
-$factory->define(\Adshares\Adserver\Models\RefLink::class, function (Faker $faker) {
-    return [
-        'user_id' => function() {
-            return factory(User::class)->create()->id;
-        },
-        'token' => $faker->unique()->asciify(),
-    ];
-});
+namespace Database\Factories;
+
+use Adshares\Adserver\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class RefLinkFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'user_id' => User::factory(),
+            'token' => $this->faker->unique()->asciify(),
+        ];
+    }
+}

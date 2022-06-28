@@ -31,6 +31,7 @@ use Adshares\Adserver\Utilities\InvoiceUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -81,6 +82,7 @@ class Invoice extends Model
     use AutomateMutators;
     use SoftDeletes;
     use BinHex;
+    use HasFactory;
 
     public const TYPE_PROFORMA = 'proforma';
 

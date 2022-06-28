@@ -36,11 +36,11 @@ final class ConversionControllerTest extends TestCase
     public function testConversion(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(
+        $campaign = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'budget' => 100000000000,
@@ -48,7 +48,7 @@ final class ConversionControllerTest extends TestCase
         );
 
         /** @var EventLog $event */
-        $event = factory(EventLog::class)->create(
+        $event = EventLog::factory()->create(
             [
                 'event_type' => EventLog::TYPE_VIEW,
                 'campaign_id' => $campaign->uuid,

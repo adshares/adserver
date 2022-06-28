@@ -59,7 +59,7 @@ final class DemandControllerTest extends TestCase
             }
         );
 
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $accountAddress = '0001-00000001-0001';
@@ -68,25 +68,25 @@ final class DemandControllerTest extends TestCase
         $transactionId = '0001:00000001:0001';
         $date = '2018-01-01T10:10:00+00:00';
 
-        $payment1 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
-        $payment2 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
-        $payment3 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
+        $payment1 = Payment::factory()->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
+        $payment2 = Payment::factory()->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
+        $payment3 = Payment::factory()->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
         $payment4 =
-            factory(Payment::class)->create(
+            Payment::factory()->create(
                 ['account_address' => $accountAddressDifferentUser, 'tx_id' => $transactionId]
             );
         $payment5 =
-            factory(Payment::class)->create(
+            Payment::factory()->create(
                 ['account_address' => $accountAddressDifferentUser, 'tx_id' => $transactionId]
             );
 
-        factory(EventLog::class)->create(['payment_id' => $payment1]);
-        factory(EventLog::class)->create(['payment_id' => $payment1]);
-        factory(EventLog::class)->create(['payment_id' => $payment2]);
-        factory(EventLog::class)->create(['payment_id' => $payment2]);
-        factory(EventLog::class)->create(['payment_id' => $payment3]);
-        factory(EventLog::class)->create(['payment_id' => $payment4]);
-        factory(EventLog::class)->create(['payment_id' => $payment5]);
+        EventLog::factory()->create(['payment_id' => $payment1]);
+        EventLog::factory()->create(['payment_id' => $payment1]);
+        EventLog::factory()->create(['payment_id' => $payment2]);
+        EventLog::factory()->create(['payment_id' => $payment2]);
+        EventLog::factory()->create(['payment_id' => $payment3]);
+        EventLog::factory()->create(['payment_id' => $payment4]);
+        EventLog::factory()->create(['payment_id' => $payment5]);
 
         $url = sprintf(
             '%s/%s/%s/%s/%s',
@@ -106,29 +106,29 @@ final class DemandControllerTest extends TestCase
 
     public function testInventoryList(): void
     {
-        factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
-        $user = factory(User::class)->create();
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        $campaignDraft = factory(Campaign::class)->create(
+        $campaignDraft = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_DRAFT,
             ]
         );
-        $campaignInactive = factory(Campaign::class)->create(
+        $campaignInactive = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_INACTIVE,
             ]
         );
-        $campaignActive = factory(Campaign::class)->create(
+        $campaignActive = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_ACTIVE,
             ]
         );
-        $campaignSuspended = factory(Campaign::class)->create(
+        $campaignSuspended = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_SUSPENDED,
@@ -136,17 +136,17 @@ final class DemandControllerTest extends TestCase
         );
         $activeCampaignsCount = 1;
 
-        $bannerActive = factory(Banner::class)->create(
+        $bannerActive = Banner::factory()->create(
             [
                 'creative_contents' => 'dummy',
                 'campaign_id' => $campaignActive->id,
                 'status' => Banner::STATUS_ACTIVE,
             ]
         );
-        factory(Banner::class)->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_INACTIVE]);
-        factory(Banner::class)->create(['campaign_id' => $campaignDraft->id]);
-        factory(Banner::class)->create(['campaign_id' => $campaignInactive->id]);
-        factory(Banner::class)->create(['campaign_id' => $campaignSuspended->id]);
+        Banner::factory()->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_INACTIVE]);
+        Banner::factory()->create(['campaign_id' => $campaignDraft->id]);
+        Banner::factory()->create(['campaign_id' => $campaignInactive->id]);
+        Banner::factory()->create(['campaign_id' => $campaignSuspended->id]);
         $activeBannersCount = 1;
 
         $response = $this->getJson(self::INVENTORY_LIST_URL);
@@ -167,18 +167,18 @@ final class DemandControllerTest extends TestCase
     public function testInventoryListWithCdn(): void
     {
         Config::set('app.cdn_provider', 'skynet');
-        factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
-        $user = factory(User::class)->create();
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        $campaignActive = factory(Campaign::class)->create(
+        $campaignActive = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_ACTIVE,
             ]
         );
 
-        $bannerActive = factory(Banner::class)->create(
+        $bannerActive = Banner::factory()->create(
             [
                 'creative_sha1' => '829c3804401b0727f70f73d4415e162400cbe57b',
                 'creative_contents' => 'dummy',
@@ -221,10 +221,10 @@ final class DemandControllerTest extends TestCase
     public function testServeDeletedBanner(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(
+        $campaign = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_ACTIVE,
@@ -232,7 +232,7 @@ final class DemandControllerTest extends TestCase
             ]
         );
         /** @var Banner $banner */
-        $banner = factory(Banner::class)->create([
+        $banner = Banner::factory()->create([
             'campaign_id' => $campaign->id,
             'deleted_at' => new DateTimeImmutable(),
         ]);

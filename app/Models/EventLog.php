@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,6 +34,7 @@ use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -81,6 +82,7 @@ class EventLog extends Model
     use AccountAddress;
     use AutomateMutators;
     use BinHex;
+    use HasFactory;
     use JsonValue;
 
     public const TYPE_VIEW = 'view';

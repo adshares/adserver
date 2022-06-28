@@ -19,21 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
+namespace Database\Factories;
+
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Domain\ValueObject\AccountId;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(UserLedgerEntry::class, function (Faker $faker) {
-    return [
-        'user_id' => function () {
-            return factory(User::class)->create()->id;
-        },
-        'amount' => $faker->numberBetween(0, 3800000000000000000),
-        'status' => UserLedgerEntry::STATUS_ACCEPTED,
-        'type' => UserLedgerEntry::TYPE_DEPOSIT,
-        'address_from' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
-        'address_to' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
-        'txid' => $faker->regexify('[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}'),
-    ];
-});
+class UserLedgerEntryFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'user_id' => User::factory(),
+            'amount' => $this->faker->numberBetween(0, 3800000000000000000),
+            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+            'address_from' => AccountId::fromIncompleteString($this->faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'address_to' => AccountId::fromIncompleteString($this->faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'txid' => $this->faker->regexify('[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}'),
+        ];
+    }
+}

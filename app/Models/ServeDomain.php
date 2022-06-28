@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Models;
 
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
@@ -38,6 +39,7 @@ use Illuminate\Support\Facades\Cache;
  */
 class ServeDomain extends Model
 {
+    use HasFactory;
     use SoftDeletes;
 
     private const TTL_ONE_HOUR = 3600;
