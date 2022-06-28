@@ -70,6 +70,7 @@ class CreateAdminUserCommand extends BaseCommand
         $name = 'admin';
         if (!$password) {
             $password = substr(Hash::make(Str::random(8)), -8);
+            $this->info(sprintf('Password: %s', $password));
         }
 
         try {
@@ -84,7 +85,6 @@ class CreateAdminUserCommand extends BaseCommand
             return 1;
         }
 
-        $this->info(sprintf('Password: %s', $password));
         return 0;
     }
 }
