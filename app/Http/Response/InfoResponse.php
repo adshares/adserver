@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,14 +28,14 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Config\AppMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
 use Illuminate\Contracts\Support\Arrayable;
 
 final class InfoResponse implements Arrayable
 {
-    /** @var Info */
-    private $info;
+    private Info $info;
 
     public const ADSHARES_MODULE_NAME = 'adserver';
 
@@ -80,7 +80,8 @@ final class InfoResponse implements Arrayable
                 new AccountId((string)config('app.adshares_address')),
                 new Email($settings[Config::SUPPORT_EMAIL]),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
-                $settings[Config::REGISTRATION_MODE]
+                $settings[Config::REGISTRATION_MODE],
+                AppMode::getAppMode()
             )
         );
     }

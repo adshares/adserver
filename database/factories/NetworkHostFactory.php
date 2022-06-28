@@ -26,6 +26,8 @@ namespace Database\Factories;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Config\AppMode;
+use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
 use DateTimeImmutable;
@@ -58,8 +60,9 @@ class NetworkHostFactory extends Factory
             new Url($host . '/adshares/inventory/list'),
             new AccountId('0001-00000004-DBEB'),
             new Email($this->faker->companyEmail),
-            ['PUB', 'ADV'],
-            'public'
+            [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
+            RegistrationMode::PUBLIC,
+            AppMode::OPERATIONAL
         );
 
         $info->setDemandFee(0.01);

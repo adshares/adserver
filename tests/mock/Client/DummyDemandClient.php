@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,8 @@ use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\UrlInterface;
+use Adshares\Config\AppMode;
+use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -38,7 +40,7 @@ use function floor;
 
 final class DummyDemandClient implements DemandClient
 {
-    public $campaigns;
+    public array $campaigns;
 
     public function __construct()
     {
@@ -173,8 +175,9 @@ final class DummyDemandClient implements DemandClient
             new Url('https://inventory.example.com/import'),
             new AccountId('0001-00000004-DBEB'),
             new Email('mail@example.com'),
-            ['PUB', 'ADV'],
-            'public'
+            [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
+            RegistrationMode::PUBLIC,
+            AppMode::OPERATIONAL
         );
 
         $info->setDemandFee(0.01);
