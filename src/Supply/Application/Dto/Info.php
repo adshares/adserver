@@ -120,7 +120,7 @@ final class Info
             $email,
             $data['capabilities'],
             $data['registrationMode'] ?? RegistrationMode::PUBLIC,
-            $data['appMode'] ?? AppMode::OPERATIONAL
+            $data['mode'] ?? AppMode::OPERATIONAL
         );
 
         if (isset($data['demandFee'])) {
@@ -152,7 +152,7 @@ final class Info
             'inventoryUrl' => $this->inventoryUrl->toString(),
             'adsAddress' => $this->adsAddress->toString(),
             'registrationMode' => $this->registrationMode,
-            'appMode' => $this->appMode,
+            'mode' => $this->appMode,
         ];
 
         if (null !== $this->supportEmail) {
