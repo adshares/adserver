@@ -19,20 +19,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\NetworkCasePayment;
-use Faker\Generator as Faker;
+declare(strict_types=1);
 
-$factory->define(
-    NetworkCasePayment::class,
-    function (Faker $faker) {
-        $paidAmount = $faker->randomNumber();
-        $operatorFee = $faker->numberBetween(0, $paidAmount);
-        $licenseFee = $faker->numberBetween(0, $paidAmount - $operatorFee);
+namespace Database\Factories;
+
+use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class NetworkCasePaymentFactory extends Factory
+{
+    public function definition(): array
+    {
+        $paidAmount = $this->faker->randomNumber();
+        $operatorFee = $this->faker->numberBetween(0, $paidAmount);
+        $licenseFee = $this->faker->numberBetween(0, $paidAmount - $operatorFee);
+
         return [
-            'network_case_id' => $faker->randomNumber(),
+            'network_case_id' => $this->faker->randomNumber(),
             'created_at' => new DateTimeImmutable(),
             'pay_time' => new DateTimeImmutable(),
-            'ads_payment_id' => $faker->randomNumber(),
+            'ads_payment_id' => $this->faker->randomNumber(),
             'total_amount' => $paidAmount + $operatorFee + $licenseFee,
             'license_fee' => $licenseFee,
             'operator_fee' => $operatorFee,
@@ -41,4 +47,4 @@ $factory->define(
             'paid_amount_currency' => (int)floor($paidAmount * 5.0),
         ];
     }
-);
+}

@@ -96,9 +96,9 @@ final class SupplyControllerTest extends TestCase
     {
         $host = 'https://example.com';
         $campaignId = 1;
-        factory(NetworkHost::class)->create(['host' => $host]);
-        factory(NetworkCampaign::class)->create(['id' => $campaignId, 'source_host' => $host]);
-        $banner = factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        NetworkHost::factory()->create(['host' => $host]);
+        NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
 
         $response = $this->get(self::PAGE_WHY_URI . '?bid=' . $banner->uuid . '&cid=0123456789abcdef0123456789abcdef');
 
@@ -109,11 +109,11 @@ final class SupplyControllerTest extends TestCase
     {
         $this->mockAdSelect();
         /** @var User $user */
-        $user = factory(User::class)->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
+        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
         /** @var Zone $zone */
-        $zone = factory(Zone::class)->create(['site_id' => $site->id]);
+        $zone = Zone::factory()->create(['site_id' => $site->id]);
         $data = [
             'page' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
@@ -170,9 +170,9 @@ final class SupplyControllerTest extends TestCase
 
     private function mockAdSelect(): void
     {
-        factory(NetworkCampaign::class)->create(['id' => 1]);
+        NetworkCampaign::factory()->create(['id' => 1]);
         /** @var NetworkBanner $networkBanner */
-        $networkBanner = factory(NetworkBanner::class)->create(['network_campaign_id' => 1]);
+        $networkBanner = NetworkBanner::factory()->create(['network_campaign_id' => 1]);
         $adSelectResponse = self::createMock(ResponseInterface::class);
         $adSelectResponse->method('getBody')
             ->willReturn(json_encode([[['banner_id' => $networkBanner->uuid, 'rpm' => '0.01']]]));

@@ -26,17 +26,20 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int id
+ * @property string source_address
  * @mixin Builder
  */
 class NetworkCampaign extends Model
 {
     use AutomateMutators;
     use BinHex;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.

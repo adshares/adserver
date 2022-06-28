@@ -21,20 +21,25 @@
 
 declare(strict_types=1);
 
-use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Supply\Domain\ValueObject\Size;
-use Faker\Generator as Faker;
+namespace Database\Factories;
 
-$factory->define(NetworkBanner::class, function (Faker $faker) {
-    return [
-        'uuid' => $faker->uuid,
-        'network_campaign_id' => $faker->randomDigit,
-        'serve_url' => $faker->url,
-        'view_url' => $faker->url,
-        'click_url' => $faker->url,
-        'type' => 'image',
-        'mime' => 'image/png',
-        'size' => $faker->randomKey(Size::SIZE_INFOS),
-        'checksum' => $faker->uuid,
-    ];
-});
+use Adshares\Supply\Domain\ValueObject\Size;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class NetworkBannerFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'uuid' => $this->faker->uuid,
+            'network_campaign_id' => $this->faker->randomDigit(),
+            'serve_url' => $this->faker->url,
+            'view_url' => $this->faker->url,
+            'click_url' => $this->faker->url,
+            'type' => 'image',
+            'mime' => 'image/png',
+            'size' => $this->faker->randomKey(Size::SIZE_INFOS),
+            'checksum' => $this->faker->uuid,
+        ];
+    }
+}

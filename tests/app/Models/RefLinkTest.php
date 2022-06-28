@@ -84,8 +84,8 @@ class RefLinkTest extends TestCase
 
     public function testFetchByToken(): void
     {
-        $refLink1 = factory(RefLink::class)->create(['token' => 'foo1']);
-        factory(RefLink::class)->create(['token' => 'foo2']);
+        $refLink1 = RefLink::factory()->create(['token' => 'foo1']);
+        RefLink::factory()->create(['token' => 'foo2']);
 
         $dbRefLink = RefLink::fetchByToken('foo1');
         $this->assertNotNull($dbRefLink);
@@ -97,8 +97,8 @@ class RefLinkTest extends TestCase
 
     public function testFetchOutdatedRefLink(): void
     {
-        $refLink1 = factory(RefLink::class)->create(['token' => 'foo1', 'valid_until' => now()->addDay()]);
-        factory(RefLink::class)->create(['token' => 'foo2', 'valid_until' => now()->subDay()]);
+        $refLink1 = RefLink::factory()->create(['token' => 'foo1', 'valid_until' => now()->addDay()]);
+        RefLink::factory()->create(['token' => 'foo2', 'valid_until' => now()->subDay()]);
 
         $dbRefLink = RefLink::fetchByToken('foo1');
         $this->assertNotNull($dbRefLink);
@@ -110,9 +110,9 @@ class RefLinkTest extends TestCase
 
     public function testFetchUsedRefLink(): void
     {
-        $refLink1 = factory(RefLink::class)->create(['token' => 'foo1', 'single_use' => true, 'used' => false]);
-        $refLink2 = factory(RefLink::class)->create(['token' => 'foo2', 'single_use' => false, 'used' => true]);
-        factory(RefLink::class)->create(['token' => 'foo3', 'single_use' => true, 'used' => true]);
+        $refLink1 = RefLink::factory()->create(['token' => 'foo1', 'single_use' => true, 'used' => false]);
+        $refLink2 = RefLink::factory()->create(['token' => 'foo2', 'single_use' => false, 'used' => true]);
+        RefLink::factory()->create(['token' => 'foo3', 'single_use' => true, 'used' => true]);
 
         $dbRefLink = RefLink::fetchByToken('foo1');
         $this->assertNotNull($dbRefLink);
@@ -131,25 +131,25 @@ class RefLinkTest extends TestCase
         Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
 
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create();
+        $refLink = RefLink::factory()->create();
         $this->assertEquals(0, $refLink->calculateRefund(0));
         $this->assertEquals(10, $refLink->calculateRefund(100));
         $this->assertEquals(0, $refLink->calculateRefund(1));
 
-        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.33333]);
+        $refLink = RefLink::factory()->create(['kept_refund' => 0.33333]);
         $this->assertEquals(3, $refLink->calculateRefund(100));
 
-        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.66666]);
+        $refLink = RefLink::factory()->create(['kept_refund' => 0.66666]);
         $this->assertEquals(7, $refLink->calculateRefund(100));
 
-        $refLink = factory(RefLink::class)->create(['kept_refund' => 0]);
+        $refLink = RefLink::factory()->create(['kept_refund' => 0]);
         $this->assertEquals(0, $refLink->calculateRefund(100));
 
-        $refLink = factory(RefLink::class)->create(['refund' => 0.6, 'kept_refund' => 0.8]);
+        $refLink = RefLink::factory()->create(['refund' => 0.6, 'kept_refund' => 0.8]);
         $this->assertEquals(0, $refLink->calculateRefund(0));
         $this->assertEquals(48, $refLink->calculateRefund(100));
 
-        $refLink = factory(RefLink::class)->create(['refund' => 0.5, 'kept_refund' => 0.5]);
+        $refLink = RefLink::factory()->create(['refund' => 0.5, 'kept_refund' => 0.5]);
         $this->assertEquals(1, $refLink->calculateRefund(7));
     }
 
@@ -158,34 +158,34 @@ class RefLinkTest extends TestCase
         Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
 
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create();
+        $refLink = RefLink::factory()->create();
         $this->assertEquals(0, $refLink->calculateBonus(0));
         $this->assertEquals(0, $refLink->calculateBonus(100));
         $this->assertEquals(0, $refLink->calculateBonus(10));
 
-        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.33333]);
+        $refLink = RefLink::factory()->create(['kept_refund' => 0.33333]);
         $this->assertEquals(7, $refLink->calculateBonus(100));
 
-        $refLink = factory(RefLink::class)->create(['kept_refund' => 0.66666]);
+        $refLink = RefLink::factory()->create(['kept_refund' => 0.66666]);
         $this->assertEquals(3, $refLink->calculateBonus(100));
 
-        $refLink = factory(RefLink::class)->create(['kept_refund' => 0]);
+        $refLink = RefLink::factory()->create(['kept_refund' => 0]);
         $this->assertEquals(10, $refLink->calculateBonus(100));
 
-        $refLink = factory(RefLink::class)->create(['refund' => 0.6, 'kept_refund' => 0.8]);
+        $refLink = RefLink::factory()->create(['refund' => 0.6, 'kept_refund' => 0.8]);
         $this->assertEquals(0, $refLink->calculateBonus(0));
         $this->assertEquals(12, $refLink->calculateBonus(100));
 
-        $refLink = factory(RefLink::class)->create(['refund' => 0.5, 'kept_refund' => 0.5]);
+        $refLink = RefLink::factory()->create(['refund' => 0.5, 'kept_refund' => 0.5]);
         $this->assertEquals(2, $refLink->calculateBonus(7));
     }
 
     public function testUserRelationship(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['name' => 'example']);
+        $user = User::factory()->create(['name' => 'example']);
         /** @var RefLink $refLink */
-        $refLink = factory(RefLink::class)->create(['user_id' => $user->id]);
+        $refLink = RefLink::factory()->create(['user_id' => $user->id]);
 
         self::assertEquals('example', $refLink->user->name);
     }

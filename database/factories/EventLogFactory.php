@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,14 +19,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
+namespace Database\Factories;
+
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Domain\ValueObject\AccountId;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(
-    EventLog::class,
-    function (Faker $faker) {
+class EventLogFactory extends Factory
+{
+    public function definition(): array
+    {
         $addresses = [
             AccountId::fromIncompleteString('0001-00000001'),
             AccountId::fromIncompleteString('0001-00000002'),
@@ -37,24 +43,24 @@ $factory->define(
             AccountId::fromIncompleteString('0001-00000008'),
         ];
 
-        $caseId = $faker->uuid;
-        $eventType = $faker->randomElement([EventLog::TYPE_VIEW, EventLog::TYPE_CLICK]);
+        $caseId = $this->faker->uuid;
+        $eventType = $this->faker->randomElement([EventLog::TYPE_VIEW, EventLog::TYPE_CLICK]);
 
         return [
             'case_id' => $caseId,
             'event_id' => Utils::createCaseIdContainingEventType($caseId, $eventType),
-            'user_id' => $faker->uuid,
-            'tracking_id' => $faker->uuid,
-            'banner_id' => $faker->uuid,
-            'publisher_id' => $faker->uuid,
-            'advertiser_id' => $faker->uuid,
-            'campaign_id' => $faker->uuid,
-            'zone_id' => $faker->uuid,
+            'user_id' => $this->faker->uuid,
+            'tracking_id' => $this->faker->uuid,
+            'banner_id' => $this->faker->uuid,
+            'publisher_id' => $this->faker->uuid,
+            'advertiser_id' => $this->faker->uuid,
+            'campaign_id' => $this->faker->uuid,
+            'zone_id' => $this->faker->uuid,
             'event_type' => $eventType,
-            'event_value_currency' => $faker->numberBetween(10 ** 4, 10 ** 7),
+            'event_value_currency' => $this->faker->numberBetween(10 ** 4, 10 ** 7),
             'exchange_rate' => null,
             'event_value' => null,
-            'pay_to' => $faker->randomElement($addresses),
+            'pay_to' => $this->faker->randomElement($addresses),
             'payment_status' => 0,
             'their_context' => [
                 'site' => [
@@ -88,4 +94,4 @@ $factory->define(
             ],
         ];
     }
-);
+}

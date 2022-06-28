@@ -19,18 +19,23 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
+namespace Database\Factories;
+
 use Adshares\Adserver\Models\Banner;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(
-    Banner::class,
-    function (Faker $faker) {
-        $size = $faker->randomKey(Size::SIZE_INFOS);
+class BannerFactory extends Factory
+{
+    public function definition(): array
+    {
+        $size = $this->faker->randomKey(Size::SIZE_INFOS);
         $type =
             Size::TYPE_POP === Size::SIZE_INFOS[$size]['type']
                 ? Banner::TEXT_TYPE_DIRECT_LINK
-                : $faker->randomElement([Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_HTML]);
+                : $this->faker->randomElement([Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_HTML]);
         switch ($type) {
             case Banner::TEXT_TYPE_HTML:
                 $mime = 'text/html';
@@ -45,12 +50,12 @@ $factory->define(
         }
 
         return [
-            'creative_contents' => $faker->sha1,
+            'creative_contents' => $this->faker->sha1,
             'creative_type' => $type,
             'creative_mime' => $mime,
             'creative_size' => $size,
-            'name' => $faker->word,
+            'name' => $this->faker->word,
             'status' => Banner::STATUS_ACTIVE,
         ];
     }
-);
+}

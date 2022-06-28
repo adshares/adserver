@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,7 +35,7 @@ class FeatureTest extends TestCase
 
     public function testEnabled(): void
     {
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::FEATURE_KEY . '-enabled',
             'value' => '1',
         ]);
@@ -50,7 +50,7 @@ class FeatureTest extends TestCase
 
     public function testEnabledFalse(): void
     {
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::FEATURE_KEY . '-enabled',
             'value' => '0',
         ]);

@@ -57,16 +57,16 @@ class InvoiceTest extends TestCase
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addMonth()));
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addYear()));
 
-        factory(Invoice::class)->create(['issue_date' => $date]);
-        factory(Invoice::class)->create(['issue_date' => $date]);
-        factory(Invoice::class)->create(['issue_date' => $date])->delete();
+        Invoice::factory()->create(['issue_date' => $date]);
+        Invoice::factory()->create(['issue_date' => $date]);
+        Invoice::factory()->create(['issue_date' => $date])->delete();
 
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->subMonth()));
         $this->assertEquals(4, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date));
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addMonth()));
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->addYear()));
 
-        factory(Invoice::class)->create(['issue_date' => $date->copy()->addMonth()]);
+        Invoice::factory()->create(['issue_date' => $date->copy()->addMonth()]);
 
         $this->assertEquals(1, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date->copy()->subMonth()));
         $this->assertEquals(4, Invoice::getNextSequence(Invoice::TYPE_PROFORMA, $date));
@@ -77,7 +77,7 @@ class InvoiceTest extends TestCase
     public function testCreateProforma(): void
     {
         Carbon::setTestNow('2021-08-04');
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $proforma = Invoice::createProforma(self::getInvoiceData(['user_id' => $user->id]));
 
         $this->assertNotEmpty($proforma->uuid);
@@ -109,7 +109,7 @@ class InvoiceTest extends TestCase
 
     public function testCreateProformaVatRate(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $proforma = Invoice::createProforma(
             self::getInvoiceData(
                 [
@@ -157,7 +157,7 @@ class InvoiceTest extends TestCase
     public function testCreateProformaTemplate(): void
     {
         Carbon::setTestNow('2021-08-04');
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $proforma = Invoice::createProforma(self::getInvoiceData(['user_id' => $user->id]));
 
         $this->assertStringContainsString('PROF abc1/01/08/2021', $proforma->html_output);

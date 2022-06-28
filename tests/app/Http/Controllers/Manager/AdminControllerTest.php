@@ -73,7 +73,7 @@ final class AdminControllerTest extends TestCase
 
     public function testTermsGetWhileEmpty(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->getJson(self::URI_TERMS);
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -82,7 +82,7 @@ final class AdminControllerTest extends TestCase
     public function testTermsGet(): void
     {
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'old content'));
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->getJson(self::URI_TERMS);
         $response->assertStatus(Response::HTTP_OK);
@@ -96,7 +96,7 @@ final class AdminControllerTest extends TestCase
     public function testTermsUpdate(): void
     {
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'old content'));
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $data = ['content' => 'content'];
 
@@ -106,7 +106,7 @@ final class AdminControllerTest extends TestCase
 
     public function testTermsUpdateByUnauthorizedUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 0]), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $data = ['content' => 'content'];
 
@@ -116,7 +116,7 @@ final class AdminControllerTest extends TestCase
 
     public function testPrivacyPolicyGetWhileEmpty(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->getJson(self::URI_PRIVACY_POLICY);
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -125,7 +125,7 @@ final class AdminControllerTest extends TestCase
     public function testPrivacyPolicyGet(): void
     {
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_PRIVACY_POLICY, 'old content'));
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->getJson(self::URI_PRIVACY_POLICY);
         $response->assertStatus(Response::HTTP_OK);
@@ -139,7 +139,7 @@ final class AdminControllerTest extends TestCase
     public function testPrivacyPolicyUpdate(): void
     {
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_PRIVACY_POLICY, 'old content'));
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $data = ['content' => 'content'];
 
@@ -149,7 +149,7 @@ final class AdminControllerTest extends TestCase
 
     public function testPrivacyPolicyUpdateByUnauthorizedUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 0]), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $data = ['content' => 'content'];
 
@@ -159,7 +159,7 @@ final class AdminControllerTest extends TestCase
 
     public function testSettingsStructureUnauthorized(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 0]), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->get(self::URI_SETTINGS);
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -167,7 +167,7 @@ final class AdminControllerTest extends TestCase
 
     public function testSettingsStructure(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->get(self::URI_SETTINGS);
         $response->assertStatus(Response::HTTP_OK);
@@ -178,7 +178,7 @@ final class AdminControllerTest extends TestCase
 
     public function testSettingsModification(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $updatedValues = [
             'settings' =>
@@ -211,7 +211,7 @@ final class AdminControllerTest extends TestCase
 
     public function testInvalidRegistrationMode(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         $settings = $this->settings();
         $settings['registrationMode'] = 'dummy';
 
@@ -225,7 +225,7 @@ final class AdminControllerTest extends TestCase
         foreach ($domains as $domain) {
             SitesRejectedDomain::upsert($domain);
         }
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->getJson(self::URI_REJECTED_DOMAINS);
         $response->assertStatus(Response::HTTP_OK);
@@ -245,7 +245,7 @@ final class AdminControllerTest extends TestCase
      */
     public function testRejectedDomainsPutInvalid(array $data, int $expectedStatus): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->putJson(self::URI_REJECTED_DOMAINS, $data);
         $response->assertStatus($expectedStatus);
@@ -278,7 +278,7 @@ final class AdminControllerTest extends TestCase
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->putJson(self::URI_REJECTED_DOMAINS, ['domains' => []]);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -291,7 +291,7 @@ final class AdminControllerTest extends TestCase
         foreach ($initDomains as $domain) {
             SitesRejectedDomain::upsert($domain);
         }
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->putJson(self::URI_REJECTED_DOMAINS, ['domains' => $inputDomains]);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
@@ -306,7 +306,7 @@ final class AdminControllerTest extends TestCase
 
     public function testSiteSettings(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->patch(
             self::URI_SITE_SETTINGS,
@@ -321,7 +321,7 @@ final class AdminControllerTest extends TestCase
 
     public function testSiteSettingsClassifierLocalBannersInvalid(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->patch(
             self::URI_SITE_SETTINGS,
@@ -335,15 +335,15 @@ final class AdminControllerTest extends TestCase
 
     public function testBanUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         /** @var User $user */
-        $user = factory(User::class)->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
         /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         /** @var Banner $banner */
-        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->post(self::buildUriBan($user->id), ['reason' => 'suspicious activity']);
 
@@ -359,8 +359,8 @@ final class AdminControllerTest extends TestCase
 
     public function testBanAdmin(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create(['is_admin' => 1])->id;
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $userId = User::factory()->admin()->create()->id;
 
         $response = $this->post(self::buildUriBan($userId), ['reason' => 'suspicious activity']);
 
@@ -369,7 +369,7 @@ final class AdminControllerTest extends TestCase
 
     public function testBanNotExistingUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->post(self::buildUriBan(-1), ['reason' => 'suspicious activity']);
 
@@ -378,8 +378,8 @@ final class AdminControllerTest extends TestCase
 
     public function testBanUserByRegularUser(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
-        $userId = factory(User::class)->create()->id;
+        $this->actingAs(User::factory()->create(), 'api');
+        $userId = User::factory()->create()->id;
 
         $response = $this->post(self::buildUriBan($userId));
 
@@ -388,8 +388,8 @@ final class AdminControllerTest extends TestCase
 
     public function testBanUserNoReason(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create()->id;
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $userId = User::factory()->create()->id;
 
         $response = $this->post(self::buildUriBan($userId));
 
@@ -398,8 +398,8 @@ final class AdminControllerTest extends TestCase
 
     public function testBanUserEmptyReason(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create()->id;
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $userId = User::factory()->create()->id;
 
         $response = $this->post(self::buildUriBan($userId), ['reason' => ' ']);
 
@@ -408,8 +408,8 @@ final class AdminControllerTest extends TestCase
 
     public function testBanUserTooLongReason(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create()->id;
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $userId = User::factory()->create()->id;
 
         $response = $this->post(self::buildUriBan($userId), ['reason' => str_repeat('a', 256)]);
 
@@ -421,9 +421,9 @@ final class AdminControllerTest extends TestCase
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
 
         $response = $this->post(self::buildUriBan($user->id), ['reason' => 'suspicious activity']);
 
@@ -432,8 +432,8 @@ final class AdminControllerTest extends TestCase
 
     public function testUnbanUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create()->id;
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $userId = User::factory()->create()->id;
 
         $response = $this->post(self::buildUriUnban($userId));
 
@@ -442,7 +442,7 @@ final class AdminControllerTest extends TestCase
 
     public function testUnbanNotExistingUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->post(self::buildUriUnban(-1));
 
@@ -451,8 +451,8 @@ final class AdminControllerTest extends TestCase
 
     public function testUnbanUserByRegularUser(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
-        $userId = factory(User::class)->create()->id;
+        $this->actingAs(User::factory()->create(), 'api');
+        $userId = User::factory()->create()->id;
 
         $response = $this->post(self::buildUriUnban($userId));
 
@@ -461,19 +461,19 @@ final class AdminControllerTest extends TestCase
 
     public function testDeleteUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         /** @var User $user */
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'api_token' => '1234',
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
         ]);
         /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         /** @var Banner $banner */
-        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
         $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
         /** @var ConversionDefinition $conversionDefinition */
-        $conversionDefinition = factory(ConversionDefinition::class)->create(
+        $conversionDefinition = Conversiondefinition::factory()->create(
             [
                 'campaign_id' => $campaign->id,
                 'limit_type' => 'in_budget',
@@ -482,25 +482,25 @@ final class AdminControllerTest extends TestCase
         );
 
         /** @var BidStrategy $bidStrategy */
-        $bidStrategy = factory(BidStrategy::class)->create(['user_id' => $user->id]);
+        $bidStrategy = BidStrategy::factory()->create(['user_id' => $user->id]);
         $bidStrategyDetail = BidStrategyDetail::create('user:country:other', 0.2);
         $bidStrategy->bidStrategyDetails()->saveMany([$bidStrategyDetail]);
 
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
-        $zone = factory(Zone::class)->create(['site_id' => $site->id]);
+        $zone = Zone::factory()->create(['site_id' => $site->id]);
 
-        factory(RefLink::class)->create(['user_id' => $user->id]);
+        RefLink::factory()->create(['user_id' => $user->id]);
         Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
 
         /** @var NetworkCampaign $networkCampaign */
-        $networkCampaign = factory(NetworkCampaign::class)->create();
+        $networkCampaign = NetworkCampaign::factory()->create();
         /** @var NetworkBanner $networkBanner */
-        $networkBanner = factory(NetworkBanner::class)->create(
+        $networkBanner = NetworkBanner::factory()->create(
             ['network_campaign_id' => $networkCampaign->id]
         );
-        factory(Classification::class)->create(
+        Classification::factory()->create(
             [
                 'banner_id' => $networkBanner->id,
                 'status' => Classification::STATUS_REJECTED,
@@ -532,8 +532,8 @@ final class AdminControllerTest extends TestCase
 
     public function testDeleteAdmin(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        $userId = factory(User::class)->create(['is_admin' => 1])->id;
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $userId = User::factory()->admin()->create()->id;
 
         $response = $this->post(self::buildUriDelete($userId));
 
@@ -542,7 +542,7 @@ final class AdminControllerTest extends TestCase
 
     public function testDeleteNotExistingUser(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->post(self::buildUriDelete(-1));
 
@@ -551,8 +551,8 @@ final class AdminControllerTest extends TestCase
 
     public function testDeleteUserByRegularUser(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
-        $userId = factory(User::class)->create()->id;
+        $this->actingAs(User::factory()->create(), 'api');
+        $userId = User::factory()->create()->id;
 
         $response = $this->post(self::buildUriDelete($userId));
 
@@ -564,9 +564,9 @@ final class AdminControllerTest extends TestCase
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
 
         $response = $this->post(self::buildUriDelete($user->id));
 
@@ -575,23 +575,23 @@ final class AdminControllerTest extends TestCase
 
     public function testWallet(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-        factory(UserLedgerEntry::class)->create([
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        UserLedgerEntry::factory()->create([
             'amount' => 2000,
             'status' => UserLedgerEntry::STATUS_ACCEPTED,
             'type' => UserLedgerEntry::TYPE_DEPOSIT,
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'amount' => -2,
             'status' => UserLedgerEntry::STATUS_ACCEPTED,
             'type' => UserLedgerEntry::TYPE_AD_EXPENSE,
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'amount' => 500,
             'status' => UserLedgerEntry::STATUS_ACCEPTED,
             'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
         ]);
-        factory(UserLedgerEntry::class)->create([
+        UserLedgerEntry::factory()->create([
             'amount' => -30,
             'status' => UserLedgerEntry::STATUS_ACCEPTED,
             'type' => UserLedgerEntry::TYPE_BONUS_EXPENSE,

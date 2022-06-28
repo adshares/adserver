@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Utilities\DomainReader;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -58,6 +59,7 @@ class NetworkCase extends Model
 {
     use AutomateMutators;
     use BinHex;
+    use HasFactory;
     use JsonValue;
 
     private const SQL_QUERY_SELECT_FIRST_CASE_ID_FROM_DATE_RANGE = <<<SQL

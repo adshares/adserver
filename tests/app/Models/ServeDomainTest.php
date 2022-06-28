@@ -39,7 +39,7 @@ class ServeDomainTest extends TestCase
 
     public function testChangeUrlHost(): void
     {
-        factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
 
         self::assertEquals(
             'https://example.com/serve/x0123456789ABCDEF.doc?v=1234',
@@ -49,14 +49,14 @@ class ServeDomainTest extends TestCase
 
     public function testCurrent(): void
     {
-        factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
 
         self::assertEquals('https://app.example.com', ServeDomain::current('app'));
     }
 
     public function testClear(): void
     {
-        factory(ServeDomain::class)->create(
+        ServeDomain::factory()->create(
             ['base_url' => 'https://example.com', 'updated_at' => new DateTime('-1 year')]
         );
         self::assertEquals(1, ServeDomain::count());
@@ -67,7 +67,7 @@ class ServeDomainTest extends TestCase
 
     public function testFetch(): void
     {
-        factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
 
         self::assertEquals(['https://example.com'], ServeDomain::fetch());
     }

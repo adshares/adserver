@@ -25,6 +25,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -54,6 +55,7 @@ use const PHP_INT_MAX;
  */
 class UserLedgerEntry extends Model
 {
+    use HasFactory;
     use SoftDeletes;
 
     public const INDEX_USER_ID = 'user_ledger_entry_user_id_index';
