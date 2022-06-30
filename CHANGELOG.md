@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.18.4] - 2022-06-30
 ### Added
 - Command listing administrators
 ### Fixed
@@ -641,7 +643,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.3...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.4...develop
+[1.18.4]: https://github.com/adshares/adserver/compare/v1.18.3...v1.18.4
 [1.18.3]: https://github.com/adshares/adserver/compare/v1.18.2...v1.18.3
 [1.18.2]: https://github.com/adshares/adserver/compare/v1.18.1...v1.18.2
 [1.18.1]: https://github.com/adshares/adserver/compare/v1.18.0...v1.18.1
