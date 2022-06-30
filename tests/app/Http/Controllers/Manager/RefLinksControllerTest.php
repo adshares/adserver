@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -39,7 +39,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testRefLinkInfo(): void
     {
-        factory(RefLink::class)->create(
+        RefLink::factory()->create(
             [
                 'token' => 'my-token',
                 'valid_until' => null,
@@ -58,7 +58,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testOutDatedRefLinkInfo(): void
     {
-        factory(RefLink::class)->create(
+        RefLink::factory()->create(
             [
                 'token' => 'my-token',
                 'valid_until' => '2020-01-01 01:00:00',
@@ -75,7 +75,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testUnusedRefLinkInfo(): void
     {
-        factory(RefLink::class)->create(
+        RefLink::factory()->create(
             [
                 'token' => 'my-token',
                 'single_use' => true,
@@ -93,7 +93,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testUsedRefLinkInfo(): void
     {
-        factory(RefLink::class)->create(
+        RefLink::factory()->create(
             [
                 'token' => 'my-token',
                 'single_use' => true,
@@ -111,7 +111,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinksWhenNoRefLinks(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -120,10 +120,10 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinks(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        factory(RefLink::class)->create(
+        RefLink::factory()->create(
             [
                 'user_id' => $user->id,
                 'token' => 'my-token',
@@ -137,15 +137,15 @@ class RefLinksControllerTest extends TestCase
             ]
         );
         // default ref link
-        factory(RefLink::class)->create(['user_id' => $user->id]);
+        RefLink::factory()->create(['user_id' => $user->id]);
         // outdated ref link
-        factory(RefLink::class)->create(['user_id' => $user->id, 'valid_until' => now()->subDay()]);
+        RefLink::factory()->create(['user_id' => $user->id, 'valid_until' => now()->subDay()]);
         // used ref link
-        factory(RefLink::class)->create(['user_id' => $user->id, 'single_use' => true, 'used' => true]);
+        RefLink::factory()->create(['user_id' => $user->id, 'single_use' => true, 'used' => true]);
         // deleted ref link
-        factory(RefLink::class)->create(['user_id' => $user->id, 'deleted_at' => now()]);
+        RefLink::factory()->create(['user_id' => $user->id, 'deleted_at' => now()]);
         // other user ref link
-        factory(RefLink::class)->create();
+        RefLink::factory()->create();
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -167,13 +167,13 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinksWithUsage(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        $refLink = factory(RefLink::class)->create(['user_id' => $user->id]);
+        $refLink = RefLink::factory()->create(['user_id' => $user->id]);
 
-        factory(User::class)->create(['ref_link_id' => $refLink->id]);
-        factory(User::class)->create(['ref_link_id' => $refLink->id]);
+        User::factory()->create(['ref_link_id' => $refLink->id]);
+        User::factory()->create(['ref_link_id' => $refLink->id]);
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -185,12 +185,12 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinksWithRefund(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        $refLink = factory(RefLink::class)->create(['user_id' => $user->id]);
+        $refLink = RefLink::factory()->create(['user_id' => $user->id]);
 
-        factory(UserLedgerEntry::class)->create(
+        UserLedgerEntry::factory()->create(
             [
                 'user_id' => $user->id,
                 'type' => UserLedgerEntry::TYPE_REFUND,
@@ -198,7 +198,7 @@ class RefLinksControllerTest extends TestCase
                 'amount' => 1000,
             ]
         );
-        factory(UserLedgerEntry::class)->create(
+        UserLedgerEntry::factory()->create(
             [
                 'user_id' => $user->id,
                 'type' => UserLedgerEntry::TYPE_REFUND,
@@ -206,7 +206,7 @@ class RefLinksControllerTest extends TestCase
                 'amount' => 200,
             ]
         );
-        factory(UserLedgerEntry::class)->create(
+        UserLedgerEntry::factory()->create(
             [
                 'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
                 'ref_link_id' => $refLink->id,
@@ -224,7 +224,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLink(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->postJson(self::URI, []);
         $response->assertStatus(Response::HTTP_CREATED);
@@ -245,7 +245,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithCustomAttributes(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         $response = $this->postJson(
             self::URI,
             [
@@ -270,10 +270,10 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithDuplicatedToken(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        factory(RefLink::class)->create(['token' => 'dummy-token']);
+        RefLink::factory()->create(['token' => 'dummy-token']);
 
         $response = $this->postJson(self::URI, ['refLink' => ['token' => 'dummy-token']]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -284,10 +284,10 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithDuplicatedDeletedToken(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        factory(RefLink::class)->create(['user_id' => $user->id, 'token' => 'dummy-token', 'deleted_at' => now()]);
+        RefLink::factory()->create(['user_id' => $user->id, 'token' => 'dummy-token', 'deleted_at' => now()]);
 
         $response = $this->postJson(self::URI, ['refLink' => ['token' => 'dummy-token']]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -298,7 +298,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithForbiddenAttributes(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => false]), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->postJson(self::URI, ['refLink' => ['validUntil' => '2021-01-01 01:00:00']]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -318,7 +318,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkAsAdmin(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->postJson(
             self::URI,
@@ -354,7 +354,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkValidation(): void
     {
-        $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
+        $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->postJson(
             self::URI,

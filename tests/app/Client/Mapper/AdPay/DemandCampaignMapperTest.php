@@ -37,9 +37,9 @@ final class DemandCampaignMapperTest extends TestCase
     public function testMappingIds(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE]);
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE]);
         $expected = [$campaign->uuid];
         $collection = new Collection([$campaign]);
 
@@ -49,11 +49,11 @@ final class DemandCampaignMapperTest extends TestCase
     public function testMappingToArray(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         /** @var Campaign $campaign */
         $dateTimeStart = new DateTime();
         $dateTimeEnd = new DateTime('+1 hour');
-        $campaign = factory(Campaign::class)->create(
+        $campaign = Campaign::factory()->create(
             [
                 'uuid' => '0123456789ABCDEF0123456789ABCDEF',
                 'user_id' => $user->id,
@@ -82,7 +82,7 @@ final class DemandCampaignMapperTest extends TestCase
             ]
         );
         /** @var Banner $banner */
-        $banner = factory(Banner::class)->create(
+        $banner = Banner::factory()->create(
             [
                 'campaign_id' => $campaign->id,
                 'creative_contents' => '0123456789012345678901234567890123456789',
@@ -94,7 +94,7 @@ final class DemandCampaignMapperTest extends TestCase
             ]
         );
         /** @var ConversionDefinition $conversionDefinition */
-        $conversionDefinition = factory(ConversionDefinition::class)->create(
+        $conversionDefinition = Conversiondefinition::factory()->create(
             [
                 'campaign_id' => $campaign->id,
                 'limit_type' => 'in_budget',

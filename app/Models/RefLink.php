@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -59,6 +60,7 @@ use Illuminate\Support\Collection;
 class RefLink extends Model
 {
     use AutomateMutators;
+    use HasFactory;
     use SoftDeletes;
     use Ownership;
     use DateAtom;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -58,8 +58,8 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
 
     public function testUpdateSitesInVerification(): void
     {
-        $siteInVerification = factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
-        factory(Site::class)->create();
+        $siteInVerification = Site::factory()->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
+        Site::factory()->create();
 
         $adUser = $this->createMock(AdUser::class);
         $expected = [
@@ -89,8 +89,8 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
 
     public function testUpdateSitesAll(): void
     {
-        $siteInVerification = factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
-        $siteVerified = factory(Site::class)->create();
+        $siteInVerification = Site::factory()->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
+        $siteVerified = Site::factory()->create();
 
         $adUser = $this->createMock(AdUser::class);
         $expected = [
@@ -136,7 +136,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
      */
     public function testAdUserException(Exception $exception): void
     {
-        factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
+        Site::factory()->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
 
         $adUser = $this->createMock(AdUser::class);
         $adUser->expects(self::once())
@@ -162,7 +162,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
      */
     public function testAdUserResponse(array $response): void
     {
-        factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
+        Site::factory()->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
 
         $adUser = $this->createMock(AdUser::class);
         $adUser->expects(self::once())
@@ -196,7 +196,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
 
     public function testIncompleteSite(): void
     {
-        factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN, 'categories' => null]);
+        Site::factory()->create(['info' => AdUser::PAGE_INFO_UNKNOWN, 'categories' => null]);
 
         $adUser = $this->createMock(AdUser::class);
         $adUser->expects(self::never())->method('fetchPageRankBatch');
@@ -208,9 +208,9 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
     public function testEmailSend(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id, 'info' => AdUser::PAGE_INFO_UNKNOWN]);
+        $site = Site::factory()->create(['user_id' => $user->id, 'info' => AdUser::PAGE_INFO_UNKNOWN]);
 
         $adUser = $this->createMock(AdUser::class);
         $adUser->expects(self::once())

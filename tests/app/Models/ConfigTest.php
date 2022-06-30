@@ -40,7 +40,7 @@ class ConfigTest extends TestCase
     {
         $dateTime = new DateTime('2000-01-01');
 
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::TEST_KEY,
             'value' => $dateTime->format(DateTimeInterface::ATOM),
         ]);
@@ -54,7 +54,7 @@ class ConfigTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::TEST_KEY,
             'value' => 'invalid-date-format',
         ]);
@@ -89,7 +89,7 @@ class ConfigTest extends TestCase
     {
         $value = 5;
 
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::TEST_KEY,
             'value' => $value,
         ]);
@@ -102,7 +102,7 @@ class ConfigTest extends TestCase
     {
         $value = 5.5;
 
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::TEST_KEY,
             'value' => $value,
         ]);
@@ -133,7 +133,7 @@ class ConfigTest extends TestCase
     {
         $value = 'test-string';
 
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::TEST_KEY,
             'value' => $value,
         ]);
@@ -155,7 +155,7 @@ class ConfigTest extends TestCase
      */
     public function isTrueOnly(string $value, bool $result): void
     {
-        factory(Config::class)->create([
+        Config::factory()->create([
             'key' => self::TEST_KEY,
             'value' => $value,
         ]);

@@ -87,7 +87,7 @@ class SitesControllerTest extends TestCase
 
     public function testEmptyDb(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -102,7 +102,7 @@ class SitesControllerTest extends TestCase
      */
     public function testCreateSite($data, $preset): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->postJson(self::URI, ['site' => $data]);
 
@@ -138,12 +138,12 @@ class SitesControllerTest extends TestCase
     public function testCreateMultipleSites(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         array_map(
             function () use ($user) {
-                factory(Site::class)->create(['user_id' => $user->id]);
+                Site::factory()->create(['user_id' => $user->id]);
             },
             $this->creationDataProvider()
         );
@@ -222,7 +222,7 @@ JSON
      */
     public function testCreateSiteUnprocessable(array $siteData, int $expectedStatus): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         $response = $this->postJson(self::URI, ['site' => $siteData]);
 
@@ -386,7 +386,7 @@ JSON
     public function testCreateSiteWithDuplicatedPopUp(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         $siteData = self::simpleSiteData();
@@ -407,10 +407,10 @@ JSON
     public function testUpdateSite($data): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var  Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(self::getSiteUri($site->id), ['site' => $data]);
         $response->assertStatus(Response::HTTP_OK);
@@ -427,10 +427,10 @@ JSON
     public function testUpdateSiteUrl(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
         $url = 'https://example2.com';
 
         $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => $url]]);
@@ -448,10 +448,10 @@ JSON
     public function testUpdateSiteInvalidUrl(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var  Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => 'ftp://example']]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -460,12 +460,12 @@ JSON
     public function testUpdateSiteRestorePopUp(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
-        $zone = factory(Zone::class)->create(
+        $zone = Zone::factory()->create(
             [
                 'site_id' => $site->id,
                 'type' => 'pop',
@@ -487,12 +487,12 @@ JSON
     public function testUpdateSiteDeletePopUp(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
-        $zone = factory(Zone::class)->create(
+        $zone = Zone::factory()->create(
             [
                 'site_id' => $site->id,
                 'type' => 'pop',
@@ -513,12 +513,12 @@ JSON
     public function testUpdateSiteAdZone(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
-        $zone = factory(Zone::class)->create(
+        $zone = Zone::factory()->create(
             [
                 'name' => 'a',
                 'site_id' => $site->id,
@@ -551,12 +551,12 @@ JSON
     public function testUpdateSiteAdZoneDeleted(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
-        $zone = factory(Zone::class)->create(
+        $zone = Zone::factory()->create(
             [
                 'name' => 'a',
                 'site_id' => $site->id,
@@ -593,10 +593,10 @@ JSON
     public function testDeleteSite(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $this->deleteJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_OK);
 
@@ -606,12 +606,12 @@ JSON
     public function testDeleteSiteWithZones(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-        factory(Zone::class, 3)->create(['site_id' => $site->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        Zone::factory()->count(3)->create(['site_id' => $site->id]);
 
         $this->assertDatabaseHas(
             'zones',
@@ -659,14 +659,14 @@ JSON
 
     public function testFailDeleteNotOwnedSite(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         $this->deleteJson(self::getSiteUri($site->id))->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -705,12 +705,12 @@ JSON
     public function updateZonesInSite($data): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-        factory(Zone::class, 3)->create(['site_id' => $site->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        Zone::factory()->count(3)->create(['site_id' => $site->id]);
         $response = $this->getJson(self::getSiteUri($site->id));
         $response->assertJsonCount(3, 'adUnits');
 
@@ -782,12 +782,12 @@ JSON
     public function failZoneUpdatesInSite($data): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-        factory(Zone::class, 3)->create(['site_id' => $site->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        Zone::factory()->count(3)->create(['site_id' => $site->id]);
         $response = $this->getJson(self::getSiteUri($site->id));
         $response->assertJsonCount(3, 'adUnits');
 
@@ -805,7 +805,7 @@ JSON
      */
     public function testSiteFiltering(array $data, array $preset): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         $postResponse = $this->postJson(self::URI, ['site' => $data]);
 
         $postResponse->assertStatus(Response::HTTP_CREATED);
@@ -880,7 +880,7 @@ JSON
      */
     public function testVerifyDomain(array $data, int $expectedStatus, string $expectedMessage): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         SitesRejectedDomain::upsert('rejected.com');
 
         $response = $this->postJson(self::URI_DOMAIN_VERIFY, $data);
@@ -910,10 +910,10 @@ JSON
     public function testSiteCodesConfirm(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(['email_confirmed_at' => null, 'admin_confirmed_at' => null]);
+        $user = User::factory()->create(['email_confirmed_at' => null, 'admin_confirmed_at' => null]);
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->getJson('/api/sites/' . $site->id . '/codes');
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -943,14 +943,14 @@ JSON
     public function testSiteSizes(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $sizes = ['300x250', '336x280', '728x90'];
         foreach ($sizes as $size) {
-            factory(Zone::class)->create(['site_id' => $site->id, 'size' => $size]);
+            Zone::factory()->create(['site_id' => $site->id, 'size' => $size]);
         }
 
         $response = $this->getJson('/api/sites/sizes/' . $site->id);
@@ -962,10 +962,10 @@ JSON
     public function testSiteRank(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(
+        $site = Site::factory()->create(
             [
                 'user_id' => $user->id,
                 'rank' => 0.2,
@@ -983,10 +983,10 @@ JSON
     public function testChangeStatus(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
+        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
 
         $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => Site::STATUS_INACTIVE]])
             ->assertStatus(Response::HTTP_OK);
@@ -997,10 +997,10 @@ JSON
     public function testChangeStatusInvalid(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => -1]])
             ->assertStatus(Response::HTTP_BAD_REQUEST);
@@ -1009,10 +1009,10 @@ JSON
     public function testChangeStatusMissing(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         /** @var Site $site */
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['stat' => -1]])
             ->assertStatus(Response::HTTP_BAD_REQUEST);
@@ -1021,7 +1021,7 @@ JSON
     public function testGetCryptovoxelsCode(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(
+        $user = User::factory()->create(
             [
                 'admin_confirmed_at' => new DateTime(),
                 'email_confirmed_at' => new DateTime(),
@@ -1037,7 +1037,7 @@ JSON
     public function testGetCryptovoxelsCodeUserNotConfirmed(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(
+        $user = User::factory()->create(
             [
                 'wallet_address' => new WalletAddress('ads', '0001-00000001-8B4E'),
             ]
@@ -1051,7 +1051,7 @@ JSON
     public function testGetCryptovoxelsCodeWalletNotConnected(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create(
+        $user = User::factory()->create(
             [
                 'admin_confirmed_at' => new DateTime(),
                 'email_confirmed_at' => new DateTime(),

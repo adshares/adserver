@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,15 +45,19 @@ class AdSelectTest extends TestCase
             }
         );
 
-        $user = factory(User::class)->create();
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-        $zone = factory(Zone::class)->create(['site_id' => $site->id]);
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site->id]);
 
         $campaign =
-            factory(NetworkCampaign::class)->create(
+            NetworkCampaign::factory()->create(
                 ['status' => Status::STATUS_ACTIVE, 'publisher_id' => $user->uuid]
             );
-        $banner = factory(NetworkBanner::class)->create(
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(
             [
                 'network_campaign_id' => $campaign->id,
                 'status' => Status::STATUS_ACTIVE,

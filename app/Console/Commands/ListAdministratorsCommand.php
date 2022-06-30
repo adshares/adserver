@@ -34,11 +34,11 @@ use Illuminate\Support\Str;
 use function substr;
 use function env;
 
-class CreateAdminUserCommand extends BaseCommand
+class ListAdministratorsCommand extends BaseCommand
 {
-    protected $signature = 'ops:admin:create {--password=}';
+    protected $signature = 'ops:admin:list';
 
-    protected $description = 'Create an admin user';
+    protected $description = 'Lists administrators e-mails';
 
     public function handle(): int
     {
@@ -47,42 +47,17 @@ class CreateAdminUserCommand extends BaseCommand
             return 1;
         }
 
-        $password = $this->option('password');
+        $administrators = User::where('is_admin', 1)->get();
 
-        if (!$password) {
-            $password = env('TMP_ADMIN_PASSWORD');
+        if (0 === $administrators->count()) {
+            $this->info('No administrators');
+            return 0;
         }
 
-        $input = $this->ask('Please type an admin email', config('app.adshares_operator_email'));
-
-        if (!$input) {
-            $this->error('Email address cannot be empty');
-            return 1;
-        }
-
-        try {
-            $email = new Email($input);
-        } catch (RuntimeException $exception) {
-            $this->error($exception->getMessage());
-            return 1;
-        }
-
-        $name = 'admin';
-        if (!$password) {
-            $password = substr(Hash::make(Str::random(8)), -8);
-            $this->info(sprintf('Password: %s', $password));
-        }
-
-        try {
-            User::registerAdmin($email->toString(), $name, $password);
-        } catch (QueryException $exception) {
-            if (SqlUtils::isDuplicatedEntry($exception)) {
-                $this->error(sprintf('User %s already exists', $email->toString()));
-                return 1;
-            }
-
-            $this->error($exception->getMessage());
-            return 1;
+        $this->info(sprintf('Found %d administrator(s):', $administrators->count()));
+        $i = 0;
+        foreach ($administrators as $administrator) {
+            $this->info(sprintf('%d: %s', ++$i, $administrator->email));
         }
 
         return 0;

@@ -46,7 +46,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawSameNode(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $this->generateUserIncome($user->id, 500000000000);
 
@@ -70,7 +70,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawDiffNode(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $this->generateUserIncome($user->id, 500000000000);
 
@@ -94,7 +94,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawMaxAmount(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $this->generateUserIncome($user->id, 50000000000);
 
@@ -117,7 +117,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawOverBalance(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $this->generateUserIncome($user->id, 50000000000);
 
@@ -141,7 +141,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawInvalidAddress(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
@@ -156,7 +156,7 @@ class WalletControllerTest extends TestCase
     public function testCalculateWithdrawInvalidAdServerAddress(): void
     {
         Config::set('app.adshares_address', '');//invalid ADS address set for AdServer
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
@@ -170,7 +170,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawAdsWallet(): void
     {
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'email' => null,
             'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E')
         ]);
@@ -194,7 +194,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawBscWallet(): void
     {
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'email' => null,
             'wallet_address' => new WalletAddress(
                 WalletAddress::NETWORK_BSC,
@@ -221,7 +221,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawUnsupportedWalletNetwork(): void
     {
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'email' => null,
             'wallet_address' => new WalletAddress(
                 WalletAddress::NETWORK_BTC,
@@ -244,7 +244,7 @@ class WalletControllerTest extends TestCase
         Mail::fake();
         Queue::fake();
 
-        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
 
         $this->actingAs($user, 'api');
@@ -286,7 +286,7 @@ class WalletControllerTest extends TestCase
         Mail::fake();
         Queue::fake();
 
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'email_confirmed_at' => now(),
             'admin_confirmed_at' => now(),
             'email' => null,
@@ -317,7 +317,7 @@ class WalletControllerTest extends TestCase
         Mail::fake();
         Queue::fake();
 
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'email_confirmed_at' => now(),
             'admin_confirmed_at' => now(),
             'email' => null,
@@ -349,7 +349,7 @@ class WalletControllerTest extends TestCase
         Mail::fake();
         Queue::fake();
 
-        $user = factory(User::class)->create([
+        $user = User::factory()->create([
             'email_confirmed_at' => now(),
             'admin_confirmed_at' => now(),
             'email' => null,
@@ -371,7 +371,7 @@ class WalletControllerTest extends TestCase
     {
         Mail::fake();
 
-        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
 
         $this->actingAs($user, 'api');
@@ -404,7 +404,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawCancelInvalidLedgerEntry(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->generateUserIncome($user->id, 200000000000);
 
         $this->actingAs($user, 'api');
@@ -416,7 +416,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawWithMemo(): void
     {
-        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
@@ -435,7 +435,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawNoConfirmed(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
@@ -451,7 +451,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInvalidAddress(): void
     {
-        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
@@ -467,7 +467,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInvalidMemo(): void
     {
-        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
@@ -484,7 +484,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInsufficientFunds(): void
     {
-        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $amount = 20 * (10 ** 11);
         $this->generateUserIncome($user->id, $amount);
         $this->actingAs($user, 'api');
@@ -501,7 +501,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInvalidAmount(): void
     {
-        $user = factory(User::class)->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
@@ -516,7 +516,7 @@ class WalletControllerTest extends TestCase
 
     public function testDepositInfo(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'api');
         $response = $this->get('/api/deposit-info');
 
@@ -537,7 +537,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistory(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
@@ -597,7 +597,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryLimit(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
@@ -629,7 +629,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryLimitInvalid(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         $response = $this->getJson('/api/wallet/history?limit=0');
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -637,7 +637,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryOffset(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
@@ -669,7 +669,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryOffsetInvalid(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->actingAs(User::factory()->create(), 'api');
         $response = $this->getJson('/api/wallet/history?limit=1&offset=-1');
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -677,7 +677,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryTypes(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
@@ -710,7 +710,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryTypesInvalid(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
@@ -724,7 +724,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryDates(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
@@ -759,7 +759,7 @@ class WalletControllerTest extends TestCase
 
     public function testHistoryDatesInvalid(): void
     {
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
@@ -835,7 +835,7 @@ class WalletControllerTest extends TestCase
 
     public function testConnectChangeAddress(): void
     {
-        $user = $this->login(factory(User::class)->create([
+        $user = $this->login(User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
             'email' => null,
         ]));
@@ -870,7 +870,7 @@ class WalletControllerTest extends TestCase
 
     public function testConnectWithOverwrite(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
 
@@ -965,7 +965,7 @@ class WalletControllerTest extends TestCase
     {
         $this->login();
         $message = '123abc';
-        $token = Token::generate(Token::WALLET_CONNECT, factory(User::class)->create(), [
+        $token = Token::generate(Token::WALLET_CONNECT, User::factory()->create(), [
             'request' => [],
             'message' => $message,
         ]);
@@ -1006,7 +1006,7 @@ class WalletControllerTest extends TestCase
 
     public function testConnectConfirmWithOverwrite(): void
     {
-        factory(User::class)->create([
+        User::factory()->create([
             'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E')
         ]);
 
@@ -1049,7 +1049,7 @@ class WalletControllerTest extends TestCase
     public function testInvalidConnectConfirmUser(): void
     {
         $this->login();
-        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, factory(User::class)->create(), [
+        $token = Token::generate(Token::WALLET_CONNECT_CONFIRM, User::factory()->create(), [
             'wallet_address' => 'ads:0001-00000001-8B4E',
         ]);
 

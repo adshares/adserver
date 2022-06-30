@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -60,7 +60,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $adsTx->save();
 
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $user->uuid = '00000000000000000000000000000123';
         $user->save();
 
@@ -96,7 +96,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $info = $demandClient->fetchInfo(new NullUrl());
         $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
-        $networkImpression = factory(NetworkImpression::class)->create();
+        $networkImpression = NetworkImpression::factory()->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
 
         $publisherIds = [];
@@ -105,7 +105,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         foreach ($paymentDetails as $paymentDetail) {
             $publisherId = $paymentDetail['publisher_id'];
 
-            factory(NetworkCase::class)->create(
+            NetworkCase::factory()->create(
                 [
                     'case_id' => $paymentDetail['case_id'],
                     'network_impression_id' => $networkImpression->id,
@@ -121,7 +121,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         }
 
         foreach ($publisherIds as $publisherId) {
-            factory(User::class)->create(['uuid' => $publisherId]);
+            User::factory()->create(['uuid' => $publisherId]);
         }
 
         $adsTx = new AdsPayment();

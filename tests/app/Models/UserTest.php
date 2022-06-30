@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,7 +30,7 @@ class UserTest extends TestCase
     public function testFetchByWalletAddress(): void
     {
         /** @var User $user */
-        $user = factory(User::class)->create();
+        $user = User::factory()->create();
         $user->wallet_address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E');
         $user->saveOrFail();
 
@@ -80,7 +80,7 @@ class UserTest extends TestCase
         $this->assertNull($user->password);
     }
 
-    public function testRegisteradmin(): void
+    public function testRegisterAdmin(): void
     {
         $user = User::registerAdmin('test@test.pl', 'admin2', '123123');
         $this->assertNotNull($user->uuid);
@@ -92,6 +92,7 @@ class UserTest extends TestCase
         $this->assertFalse($user->isPublisher());
         $this->assertFalse($user->isAdvertiser());
         $this->assertNotNull($user->password);
+        $this->assertNotNull($user->admin_confirmed_at);
     }
 
     public function testAutoWithdrawal(): void
