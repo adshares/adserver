@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command listing administrators
 ### Fixed
 - Do not log entered password
+- Guest requests from DCL
 
 ## [1.18.3] - 2022-06-23
 ### Fixed
