@@ -80,7 +80,7 @@ class UserTest extends TestCase
         $this->assertNull($user->password);
     }
 
-    public function testRegisteradmin(): void
+    public function testRegisterAdmin(): void
     {
         $user = User::registerAdmin('test@test.pl', 'admin2', '123123');
         $this->assertNotNull($user->uuid);
@@ -92,6 +92,7 @@ class UserTest extends TestCase
         $this->assertFalse($user->isPublisher());
         $this->assertFalse($user->isAdvertiser());
         $this->assertNotNull($user->password);
+        $this->assertNotNull($user->admin_confirmed_at);
     }
 
     public function testAutoWithdrawal(): void

@@ -439,6 +439,7 @@ class User extends Authenticatable implements JWTSubject
         ]);
         $user->is_admin = true;
         $user->confirmEmail();
+        $user->confirmAdmin();
         $user->saveOrFail();
         return $user;
     }
