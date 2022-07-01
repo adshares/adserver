@@ -75,7 +75,7 @@ class MockDataCampaignsSeeder extends Seeder
 
                 if (isset($cr->conversion_definitions)) {
                     foreach ($cr->conversion_definitions as $conversionData) {
-                        $name = $campaign->name.'Conversion';
+                        $name = $campaign->name . 'Conversion';
 
                         $conversion = new ConversionDefinition();
                         $conversion->name = $name;
@@ -90,11 +90,11 @@ class MockDataCampaignsSeeder extends Seeder
 
                 $banners = [];
 
-                $files = glob(__DIR__."/assets/{$cr->code}/*.png");
+                $files = glob(__DIR__ . "/assets/{$cr->code}/*.png");
 
                 foreach ($files as $filename) {
                     $size = getimagesize($filename);
-                    $b = $this->makeImageBanner($campaign, $size[0].'x'.$size[1], $filename);
+                    $b = $this->makeImageBanner($campaign, $size[0] . 'x' . $size[1], $filename);
                     $b->save();
                     $banners[] = $b;
                     $this->command->info(" Added banner - #{$b->id} [{$b->creative_size}]");
@@ -122,11 +122,12 @@ class MockDataCampaignsSeeder extends Seeder
         DB::commit();
 
         $this->command->info('Campaigns mock data seeded - for first user and last '.($i).' users');
+        return 0;
     }
 
     private function createCampaign(User $user, $cr, BidStrategy $bidStrategy): Campaign
     {
-        $campaign = factory(Campaign::class)->create(
+        $campaign = Campaign::factory()->create(
             [
                 'landing_url' => $cr->url,
                 'user_id' => $user->id,
