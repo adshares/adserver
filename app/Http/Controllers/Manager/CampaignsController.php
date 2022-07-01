@@ -27,14 +27,12 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Mail\Crm\CampaignCreated;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
@@ -599,37 +597,6 @@ class CampaignsController extends Controller
             'Location',
             route('app.campaigns.read', ['campaign_id' => $clonedCampaign->id])
         );
-    }
-
-    public function classify(int $campaignId): JsonResponse
-    {
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-
-        $targetingRequires = ($campaign->targeting_requires) ? json_decode($campaign->targeting_requires, true) : null;
-        $targetingExcludes = ($campaign->targeting_excludes) ? json_decode($campaign->targeting_excludes, true) : null;
-
-        ClassifyCampaign::dispatch($campaignId, $targetingRequires, $targetingExcludes, []);
-
-        $campaign->classification_status = 1;
-        $campaign->update();
-
-        Notification::add(
-            $campaign->user_id,
-            Notification::CLASSIFICATION_TYPE,
-            'Classify queued',
-            sprintf('Campaign %s has been queued to classify', $campaign->id)
-        );
-
-        return self::json([], Response::HTTP_NO_CONTENT);
-    }
-
-    public function disableClassify(int $campaignId): void
-    {
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-        $campaign->classification_status = 0;
-        $campaign->classification_tags = null;
-
-        $campaign->update();
     }
 
     private function processTargeting(array $input): array
