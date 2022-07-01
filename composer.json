@@ -104,7 +104,9 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "optimize-autoloader": true,
-        "allow-plugins": true
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "repositories": {
         "adshares-ads-php-client": {

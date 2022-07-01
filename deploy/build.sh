@@ -25,6 +25,7 @@ function artisanCommand {
     ./artisan --no-interaction "$@"
 }
 
+mkdir -p storage/app/invoices
 mkdir -p storage/app/public/banners
 mkdir -p storage/framework/{cache,sessions,views}
 chmod 777 storage -R
