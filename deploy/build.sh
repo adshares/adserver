@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018-2021 Adshares sp. z o.o.
+# Copyright (c) 2018-2022 Adshares sp. z o.o.
 #
 # This file is part of AdServer
 #
@@ -25,16 +25,14 @@ function artisanCommand {
     ./artisan --no-interaction "$@"
 }
 
-mkdir -pm 777 storage
-mkdir -pm 777 storage/app/public/banners
-mkdir -pm 777 storage/framework/cache
-mkdir -pm 777 storage/framework/sessions
-mkdir -pm 777 storage/framework/views
+mkdir -p storage/app/public/banners
+mkdir -p storage/framework/{cache,sessions,views}
+chmod 777 storage -R
 
 echo 'user_id;network_banner_uuid' > storage/app/reported-ads.txt
 chmod 664 storage/app/reported-ads.txt
 
-ln -sf ${SERVICE_DIR}/storage/app/public public/storage
+ln -sf "${SERVICE_DIR}"/storage/app/public public/storage
 
 composer install --no-dev --optimize-autoloader
 if [ $? -ne 0 ]; then exit 1; fi
