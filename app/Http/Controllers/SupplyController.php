@@ -107,7 +107,6 @@ class SupplyController extends Controller
                 'exclude' => ['sometimes', 'array:quality,category'],
                 'exclude.*' => ['sometimes', 'array'],
                 'context' => ['required', 'array:user,device,site'],
-                'context.*' => ['required', 'array'],
                 'context.site.url' => ['required', 'url'],
                 'medium' => ['required', 'string'],
                 'vendor' => ['nullable', 'string'],
@@ -164,7 +163,7 @@ class SupplyController extends Controller
                 'url' => $validated['context']['site']['url'],
                 'metamask' => $validated['context']['site']['metamask'] ?? 0,
             ],
-            'user' => $validated['context']['user'],
+            'user' => $validated['context']['user'] ?? [],
             'zones' => $zones,
             'zone_mode' => 'best_match'
         ];

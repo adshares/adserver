@@ -438,6 +438,7 @@ class User extends Authenticatable
         ]);
         $user->is_admin = true;
         $user->confirmEmail();
+        $user->confirmAdmin();
         $user->saveOrFail();
         return $user;
     }
