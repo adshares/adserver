@@ -29,7 +29,6 @@
         "mikehaertl/phpwkhtmltopdf": "^2.5",
         "paragonie/sodium_compat": "^1.8",
         "phpoffice/phpspreadsheet": "^1.6",
-        "ralouphie/mimey": "^2.1",
         "ramsey/uuid": "^4.2.2",
         "symfony/intl": "^5.3",
         "symfony/lock": "^4.2",
@@ -104,7 +103,9 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "optimize-autoloader": true,
-        "allow-plugins": true
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "repositories": {
         "adshares-ads-php-client": {
