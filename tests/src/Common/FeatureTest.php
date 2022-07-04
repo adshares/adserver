@@ -27,6 +27,8 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Feature;
 
+use function factory;
+
 class FeatureTest extends TestCase
 {
     private const FEATURE_KEY = 'feature';

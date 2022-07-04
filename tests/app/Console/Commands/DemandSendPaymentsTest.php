@@ -33,6 +33,8 @@ use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
 use Illuminate\Database\Eloquent\Collection;
 
+use function factory;
+
 class DemandSendPaymentsTest extends ConsoleTestCase
 {
     public function testNoPayments(): void

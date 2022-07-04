@@ -107,7 +107,7 @@ class MockDataSitesSeeder extends Seeder
             }
 
             foreach ($publisher->sites as $site) {
-                $newSite = Site::factory()->create([
+                $newSite = factory(Site::class)->create([
                     'user_id' => $user->id,
                     'name' => $site->name,
                     'status' => $site->status,
@@ -118,7 +118,7 @@ class MockDataSitesSeeder extends Seeder
                 $zones = isset($site->zones) ? json_decode(json_encode($site->zones), true) : $this->zones;
 
                 foreach ($zones as $zoneNames => $zone) {
-                    Zone::factory()->create([
+                    factory(Zone::class)->create([
                         'uuid' => $zone['uuid'] ?? null,
                         'name' => $zoneNames,
                         'site_id' => $newSite->id,
@@ -132,6 +132,5 @@ class MockDataSitesSeeder extends Seeder
         DB::commit();
 
         $this->command->info('[mock] seeding: sites [done]');
-        return 0;
     }
 }
