@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -60,17 +60,13 @@ final class GuzzleDemandClient implements DemandClient
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     . '?limit={limit}&offset={offset}';
 
-    /** @var ClassifierExternalRepository */
-    private $classifierRepository;
+    private ClassifierExternalRepository $classifierRepository;
 
-    /** @var ClassifierExternalSignatureVerifier */
-    private $classifierExternalSignatureVerifier;
+    private ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier;
 
-    /** @var SignatureVerifier */
-    private $signatureVerifier;
+    private SignatureVerifier $signatureVerifier;
 
-    /** @var int */
-    private $timeout;
+    private int $timeout;
 
     public function __construct(
         ClassifierExternalRepository $classifierRepository,
@@ -188,7 +184,7 @@ final class GuzzleDemandClient implements DemandClient
             $response = $client->get((string)$infoUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s (%s).', (string)$infoUrl, $exception->getMessage()),
+                sprintf('Could not connect to %s (%s).', $infoUrl->toString(), $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );
