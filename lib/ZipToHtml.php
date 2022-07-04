@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,7 +22,7 @@
 namespace Adshares\Lib;
 
 use DOMXPath;
-use finfo;
+use Mimey\MimeTypes;
 use RuntimeException;
 
 use function sprintf;
@@ -96,7 +96,7 @@ class ZipToHtml
             );
         }
 
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimes = new MimeTypes();
 
         $unzipped_size = 0;
         $zip = zip_open($this->filename);
@@ -129,12 +129,12 @@ class ZipToHtml
                         $this->html_file = $name;
                         $this->html_file_contents = zip_entry_read($zip_entry, $size);
                     } else {
-                        $contents = zip_entry_read($zip_entry, $size);
                         $this->assets[$name] = [
-                            'contents' => $contents,
+                            'contents' => zip_entry_read($zip_entry, $size),
                             'type' => $ext,
-                            'mime_type' => $finfo->buffer($contents),
+                            'mime_type' => $mimes->getMimeType($ext),
                             'data_uri' => null,
+
                         ];
                     }
 

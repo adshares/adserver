@@ -37,6 +37,7 @@ use Adshares\Mock\Client\DummyExchangeRateRepository;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 
+use function factory;
 use function json_decode;
 use function random_int;
 
