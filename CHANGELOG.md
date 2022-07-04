@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.18.4] - 2022-06-30
 ### Added
 - Command listing administrators
+- JWT authentication for other services
 ### Fixed
 - Do not log entered password
 - Guest requests from DCL
