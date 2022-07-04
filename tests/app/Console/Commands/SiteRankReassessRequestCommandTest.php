@@ -33,8 +33,6 @@ use DateTimeImmutable;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
-use function factory;
-
 class SiteRankReassessRequestCommandTest extends ConsoleTestCase
 {
     private const SIGNATURE = 'ops:supply:site-rank:reassess';

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,11 +21,15 @@
 
 namespace Adshares\Lib;
 
-class DOMDocumentSafe extends \DOMDocument
+use DOMDocument;
+use DOMNode;
+use DOMXPath;
+
+class DOMDocumentSafe extends DOMDocument
 {
-    public function saveHTML()
+    public function saveHTML(DOMNode $node = null): string|false
     {
-        $xpath = new \DOMXPath($this);
+        $xpath = new DOMXPath($this);
         $script_texts = [];
         $scripts = $xpath->query("//script");
         foreach ($scripts as $script) {
@@ -37,7 +41,7 @@ class DOMDocumentSafe extends \DOMDocument
             $script->textContent = $key;
         }
 
-        $html = parent::saveHTML();
+        $html = parent::saveHTML($node);
 
         return $this->fillScripts($html, $script_texts);
     }

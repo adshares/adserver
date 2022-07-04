@@ -148,7 +148,7 @@ return [
     'now_payments_exchange' => (bool)env('NOW_PAYMENTS_EXCHANGE', false),
     'fiat_deposit_min_amount' => (int)env('FIAT_DEPOSIT_MIN_AMOUNT', 2000),
     'fiat_deposit_max_amount' => (int)env('FIAT_DEPOSIT_MAX_AMOUNT', 100000),
-    'exchange_currencies' => explode(',', env('EXCHANGE_CURRENCIES')),
+    'exchange_currencies' => explode(',', env('EXCHANGE_CURRENCIES', '')),
     'exchange_api_url' => env('EXCHANGE_API_URL'),
     'exchange_api_key' => env('EXCHANGE_API_KEY'),
     'exchange_api_secret' => env('EXCHANGE_API_SECRET'),

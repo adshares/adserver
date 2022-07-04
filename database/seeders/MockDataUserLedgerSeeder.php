@@ -56,12 +56,13 @@ class MockDataUserLedgerSeeder extends Seeder
 
             foreach ($user1->txs as $tx) {
                 $tx->user_id = $userId;
-                factory(UserLedgerEntry::class)->create((array) $tx);
+                UserLedgerEntry::factory()->create((array) $tx);
             }
             $this->command->info(" Added - txs for user <{$user->email}>");
         }
         DB::commit();
 
         $this->command->info('[mock] seeding: user ledger entries [done]');
+        return 0;
     }
 }

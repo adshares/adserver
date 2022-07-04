@@ -52,7 +52,7 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $this->createEvent($caseId4, '0001-00000002-0001', 2, $payment4, 'view');
         $this->createEvent($caseId4, '0001-00000002-0001', 3, $payment4, 'click');
 
-        factory(EventLog::class)->times(100)->create();
+        EventLog::factory()->times(100)->create();
     }
 
     private function createPayment(string $accountAddress, string $transactionId, int $fee): int
