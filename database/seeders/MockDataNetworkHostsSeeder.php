@@ -25,6 +25,8 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Config\AppMode;
+use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
 use DateTime;
@@ -47,8 +49,9 @@ class MockDataNetworkHostsSeeder extends Seeder
             new Url('http://webserver/adshares/inventory/list'),
             new AccountId('0001-00000004-DBEB'),
             new Email('mail@example.com'),
-            ['PUB', 'ADV'],
-            'public'
+            [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
+            RegistrationMode::PUBLIC,
+            AppMode::OPERATIONAL
         );
 
         $info->setDemandFee(0.01);

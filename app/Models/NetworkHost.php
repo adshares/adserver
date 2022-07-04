@@ -139,26 +139,9 @@ class NetworkHost extends Model
 
     public function getInfoAttribute(): Info
     {
-        if ($this->attributes['info']) {
-            $info = json_decode($this->attributes['info'], true);
+        $info = json_decode($this->attributes['info'], true);
 
-            return Info::fromArray($info);
-        }
-
-        return new Info(
-            InfoResponse::ADSHARES_MODULE_NAME,
-            'bc-tmp-srv',
-            'pre-v0.3',
-            new SecureUrl($this->attributes['host']),
-            new NullUrl(),
-            new NullUrl(),
-            new NullUrl(),
-            new SecureUrl($this->attributes['host'] . '/adshares/inventory/list'),
-            new EmptyAccountId(),
-            null,
-            [Info::CAPABILITY_ADVERTISER],
-            RegistrationMode::PUBLIC
-        );
+        return Info::fromArray($info);
     }
 
     public function setInfoAttribute(Info $info): void

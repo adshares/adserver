@@ -157,6 +157,7 @@ return [
     'crm_mail_address_on_campaign_created' => env('CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED'),
     'crm_mail_address_on_site_added' => env('CRM_MAIL_ADDRESS_ON_SITE_ADDED'),
     'cdn_provider' => env('CDN_PROVIDER'),
+    'setup' => (int)env('APP_SETUP', 0),
     'skynet_api_url' => env('SKYNET_API_URL'),
     'skynet_api_key' => env('SKYNET_API_KEY'),
     'skynet_cdn_url' => env('SKYNET_CDN_URL'),
@@ -222,6 +223,11 @@ return [
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
         Adshares\Adserver\Providers\Supply\PaymentDetailsVerifyProvider::class,
         Adshares\Adserver\Providers\Supply\ClassifyProvider::class,
+
+        /*
+         * JWT
+         */
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
     ],
 
     /*
