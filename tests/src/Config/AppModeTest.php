@@ -19,39 +19,39 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Config;
+declare(strict_types=1);
 
+namespace Adshares\Tests\Config;
+
+use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Config\AppMode;
 
-final class AppMode
+class AppModeTest extends TestCase
 {
-    public const INITIALIZATION = 'initialization';
-    public const MAINTENANCE = 'maintenance';
-    public const OPERATIONAL = 'operational';
-
-    public function __construct()
+    public function testDirectCreationFail(): void
     {
-        throw new RuntimeException();
+        self::expectException(RuntimeException::class);
+
+        new AppMode();
     }
 
-    private static function cases(): array
+    public function testValidateValidMode(): void
     {
-        return [
-            self::INITIALIZATION,
-            self::MAINTENANCE,
-            self::OPERATIONAL,
-        ];
+        self::expectNotToPerformAssertions();
+
+        AppMode::validate('operational');
     }
 
-    public static function validate(string $value): void
+    public function testValidateInvalidMode(): void
     {
-        if (!in_array($value, self::cases())) {
-            throw new RuntimeException(sprintf('Given value %s is not correct.', $value));
-        }
+        self::expectException(RuntimeException::class);
+
+        AppMode::validate('invalid');
     }
 
-    public static function getAppMode(): string
+    public function testGetAppMode(): void
     {
-        return 1 === config('app.setup') ? self::INITIALIZATION : self::OPERATIONAL;
+        self::assertEquals('operational', AppMode::getAppMode());
     }
 }

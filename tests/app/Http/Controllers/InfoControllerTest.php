@@ -58,6 +58,7 @@ class InfoControllerTest extends TestCase
                     'campaigns' => 0,
                     'sites' => 0,
                 ],
+                'mode' => 'operational',
             ],
             $response->json()
         );
