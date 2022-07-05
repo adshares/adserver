@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
+- Default value of site classifier accepted banners setting
 - Progress of fetching hosts
 
 ## [1.18.4] - 2022-06-30
