@@ -53,12 +53,11 @@ final class Info
     private UrlInterface $serverUrl;
     private Id $adsAddress;
     private ?Email $supportEmail;
-    private ?float $demandFee;
-    private ?float $supplyFee;
+    private ?float $demandFee = null;
+    private ?float $supplyFee = null;
     private string $registrationMode;
     private string $appMode;
-
-    private ?InfoStatistics $statistics;
+    private ?InfoStatistics $statistics = null;
 
     public function __construct(
         string $module,
