@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Config;
@@ -238,14 +239,35 @@ final class DemandControllerTest extends TestCase
             ]
         );
 
+        /** @var AdsAuthenticator $authenticator */
+        $authenticator = $this->app->make(AdsAuthenticator::class);
+
         Config::set('app.inventory_export_whitelist', ['0001-00000002-BB2D']);
+
         $response = $this->getJson(self::INVENTORY_LIST_URL);
-        $response->assertSuccessful();
-        $content = json_decode($response->getContent(), true);
-        $this->assertCount(0, $content);
+        $response->assertStatus(401);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [
+                'Authorization' => $authenticator->getHeader(
+                    config('app.adshares_address'),
+                    config('app.adshares_secret')
+                )
+            ]
+        );
+        $response->assertStatus(403);
 
         Config::set('app.inventory_export_whitelist', ['0001-00000003-AB0C', '0001-00000005-CBCA']);
-        $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [
+                'Authorization' => $authenticator->getHeader(
+                    config('app.adshares_address'),
+                    config('app.adshares_secret')
+                )
+            ]
+        );
         $response->assertSuccessful();
         $content = json_decode($response->getContent(), true);
         $this->assertCount(1, $content);
