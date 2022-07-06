@@ -72,7 +72,7 @@ class AdsAuthenticator
 
     public function verifyRequest(Request $request): string
     {
-        $this->logger->debug(sprintf('X-WSSE: %s', $request->headers->get('x-wsse')));
+        $this->logger->debug(sprintf('Authorization: %s', $request->headers->get('authorization')));
         // phpcs:ignore Generic.Files.LineLength.TooLong
         $adsRegex = '/ADS account="(?P<account>[^"]+)", nonce="(?P<nonce>[a-zA-Z0-9+\/]+={0,2})", created="(?P<created>[^"]+)", signature="(?P<signature>[^"]+)"/';
         if (
