@@ -539,9 +539,7 @@ SQL;
             }
         }
 
-        $activeCampaigns = config('app.inventory_access') !== 'private' ?
-            $this->campaignRepository->fetchActiveCampaigns() :
-            new Collection();
+        $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
         $bannerClassifications = $this->fetchBannerClassifications($activeCampaigns);
         $cdnEnabled = !empty(config('app.cdn_provider'));
 

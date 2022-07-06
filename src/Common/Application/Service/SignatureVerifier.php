@@ -25,7 +25,12 @@ use DateTimeInterface;
 
 interface SignatureVerifier
 {
-    public function createFromTransactionId(string $privateKey, string $transactionId, string $accountAddress, DateTimeInterface $date): string;
+    public function createFromTransactionId(
+        string $privateKey,
+        string $transactionId,
+        string $accountAddress,
+        DateTimeInterface $date
+    ): string;
 
     public function verifyTransactionId(
         string $publicKey,

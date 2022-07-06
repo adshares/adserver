@@ -91,6 +91,7 @@ class AdsAuthenticatorTest extends TestCase
 
         /** @var AdsAuthenticator $authenticator */
         $authenticator = $this->app->make(AdsAuthenticator::class);
+        // phpcs:ignore Generic.Files.LineLength.TooLong
         $header = 'ADS account="0001-00000001-8B4E", nonce="NjRiNmNjN2U3YThiMTg0YQ==", created="foo", signature="d1fca407938483b6afb0561fc11ef4d38d72892b7b2f6ac98166cc2bb9d775dfa33cf046fc1cbe584ce4cf0a3b3d361e90ade30763023cf755ee31b71a5c570e"';
         $request = new Request();
         $request->headers->set('Authorization', $header);

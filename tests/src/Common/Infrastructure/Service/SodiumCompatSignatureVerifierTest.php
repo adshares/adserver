@@ -42,7 +42,13 @@ class SodiumCompatSignatureVerifierTest extends TestCase
         $date = new DateTime();
 
         $signature = $signatureService->createFromTransactionId(self::PRIVATE_KEY, $transactionId, $accountId, $date);
-        $isVerified = $signatureService->verifyTransactionId(self::PUBLIC_KEY, $signature, $transactionId, $accountId, $date);
+        $isVerified = $signatureService->verifyTransactionId(
+            self::PUBLIC_KEY,
+            $signature,
+            $transactionId,
+            $accountId,
+            $date
+        );
 
         $this->assertTrue($isVerified);
     }
@@ -59,6 +65,4 @@ class SodiumCompatSignatureVerifierTest extends TestCase
 
         $this->assertTrue($isVerified);
     }
-
-
 }
