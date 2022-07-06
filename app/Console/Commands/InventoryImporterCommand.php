@@ -33,15 +33,12 @@ use Adshares\Supply\Application\Service\InventoryImporter;
 class InventoryImporterCommand extends BaseCommand
 {
     protected $signature = 'ops:demand:inventory:import';
-
     protected $description = 'Import data from all defined inventories';
-
     private InventoryImporter $inventoryImporterService;
 
     public function __construct(Locker $locker, InventoryImporter $inventoryImporterService)
     {
         $this->inventoryImporterService = $inventoryImporterService;
-
         parent::__construct($locker);
     }
 
@@ -60,11 +57,11 @@ class InventoryImporterCommand extends BaseCommand
 
         $this->removeNonExistentHosts();
 
-        $networkHosts = NetworkHost::fetchHosts();
+        $networkHosts = NetworkHost::fetchHosts(config('app.inventory_import_whitelist'));
 
         $networkHostCount = $networkHosts->count();
         if ($networkHostCount === 0) {
-            $this->info('[Inventory Importer] Stopped importing. No hosts found.');
+            $this->info('[Inventory Importer] Stopped importing - no hosts found');
             return;
         }
 
@@ -74,6 +71,12 @@ class InventoryImporterCommand extends BaseCommand
             $address = new AccountId($networkHost->address);
             $info = $networkHost->info;
             try {
+                $this->comment(
+                    sprintf(
+                        '[Inventory Importer] Importing inventory from %s',
+                        $address->toString()
+                    )
+                );
                 $this->inventoryImporterService->import($address, $info->getServerUrl(), $info->getInventoryUrl());
 
                 $networkHost->connectionSuccessful();
@@ -81,33 +84,39 @@ class InventoryImporterCommand extends BaseCommand
             } catch (UnexpectedClientResponseException $exception) {
                 $networkHost->connectionFailed();
 
-                $this->warn(sprintf(
-                    '[Inventory Importer] Inventory (%s) is unavailable (Exception: %s)',
-                    $address->toString(),
-                    $exception->getMessage()
-                ));
+                $this->warn(
+                    sprintf(
+                        '[Inventory Importer] Inventory (%s) is unavailable (Exception: %s)',
+                        $address->toString(),
+                        $exception->getMessage()
+                    )
+                );
 
                 if ($networkHost->isInventoryToBeRemoved()) {
                     $this->inventoryImporterService->clearInventoryForHostAddress($address);
 
-                    $this->info(sprintf(
-                        '[Inventory Importer] Inventory (%s) has been removed.',
-                        $address->toString()
-                    ));
+                    $this->info(
+                        sprintf(
+                            '[Inventory Importer] Inventory (%s) has been removed',
+                            $address->toString()
+                        )
+                    );
                 }
             } catch (EmptyInventoryException $exception) {
                 $this->inventoryImporterService->clearInventoryForHostAddress($address);
 
-                $this->info(sprintf(
-                    '[Inventory Importer] Inventory (%s) is empty. It has been removed from the database.',
-                    $address->toString()
-                ));
+                $this->info(
+                    sprintf(
+                        '[Inventory Importer] Inventory (%s) is empty. It has been removed from the database',
+                        $address->toString()
+                    )
+                );
             }
         }
 
         $this->info(
             sprintf(
-                '[Inventory Importer] Finished importing data from %d/%d inventories.',
+                '[Inventory Importer] Finished importing data from %d/%d inventories',
                 $networkHostSuccessfulConnectionCount,
                 $networkHostCount
             )
@@ -123,7 +132,7 @@ class InventoryImporterCommand extends BaseCommand
 
             $this->info(
                 sprintf(
-                    '[Inventory Importer] Non existent inventory (%s) has been removed.',
+                    '[Inventory Importer] Non existent inventory (%s) has been removed',
                     $address
                 )
             );

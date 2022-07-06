@@ -173,7 +173,8 @@ return [
     'upload_limit_model' => (int)env('UPLOAD_LIMIT_MODEL', 1024 * 1024),
     'upload_limit_video' => (int)env('UPLOAD_LIMIT_VIDEO', 1024 * 1024),
     'upload_limit_zip' => (int)env('UPLOAD_LIMIT_ZIP', 512 * 1024),
-    'inventory_access' => env('INVENTORY_ACCESS', 'public'),
+    'inventory_import_whitelist' => array_filter(explode(',', env('INVENTORY_IMPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
+    'inventory_export_whitelist' => array_filter(explode(',', env('INVENTORY_EXPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

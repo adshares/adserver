@@ -33,10 +33,10 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('[mock] seeding: payments');
-        $payment1 = $this->createPayment('0001-00000005-0001', '0001:00000003:0001', 2);
-        $payment2 = $this->createPayment('0001-00000005-0001', '0001:00000003:0002', 3);
-        $payment3 = $this->createPayment('0001-00000005-0001', '0001:00000003:0003', 1);
-        $payment4 = $this->createPayment('0001-00000005-0002', '0002:00000003:0002', 5);
+        $payment1 = $this->createPayment('0001-00000005-CBCA', '0001:00000003:0001', 2);
+        $payment2 = $this->createPayment('0001-00000005-CBCA', '0001:00000003:0002', 3);
+        $payment3 = $this->createPayment('0001-00000005-CBCA', '0001:00000003:0003', 1);
+        $payment4 = $this->createPayment('0001-00000005-CBCA', '0002:00000003:0002', 5);
 
         $this->command->info('[mock] seeding: event_logs');
 
@@ -45,12 +45,12 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $caseId3 = Uuid::v4();
         $caseId4 = Uuid::v4();
 
-        $this->createEvent($caseId1, '0001-00000001-0001', 10, $payment1, 'view');
-        $this->createEvent($caseId1, '0001-00000001-0001', 100, $payment1, 'click');
-        $this->createEvent($caseId2, '0001-00000001-0001', 1, $payment2, 'view');
-        $this->createEvent($caseId3, '0001-00000001-0001', 1, $payment3, 'view');
-        $this->createEvent($caseId4, '0001-00000002-0001', 2, $payment4, 'view');
-        $this->createEvent($caseId4, '0001-00000002-0001', 3, $payment4, 'click');
+        $this->createEvent($caseId1, '0001-00000001-8B4E', 10, $payment1, 'view');
+        $this->createEvent($caseId1, '0001-00000001-8B4E', 100, $payment1, 'click');
+        $this->createEvent($caseId2, '0001-00000001-8B4E', 1, $payment2, 'view');
+        $this->createEvent($caseId3, '0001-00000001-8B4E', 1, $payment3, 'view');
+        $this->createEvent($caseId4, '0001-00000002-BB2D', 2, $payment4, 'view');
+        $this->createEvent($caseId4, '0001-00000002-BB2D', 3, $payment4, 'click');
 
         factory(EventLog::class)->times(100)->create();
     }

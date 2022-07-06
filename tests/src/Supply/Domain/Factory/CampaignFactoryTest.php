@@ -44,7 +44,7 @@ final class CampaignFactoryTest extends TestCase
             'updated_at' => (new DateTime())->modify('-1 days'),
             'source_campaign' => [
                 'host' => 'localhost:8101',
-                'address' => '0001-00000001-0001',
+                'address' => '0001-00000001-8B4E',
                 'version' => '0.1',
                 'created_at' => new DateTime(),
                 'updated_at' => new DateTime(),

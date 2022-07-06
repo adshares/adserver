@@ -62,8 +62,8 @@ final class DemandControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        $accountAddress = '0001-00000001-0001';
-        $accountAddressDifferentUser = '0001-00000002-0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $accountAddressDifferentUser = '0001-00000002-BB2D';
 
         $transactionId = '0001:00000001:0001';
         $date = '2018-01-01T10:10:00+00:00';
@@ -218,34 +218,37 @@ final class DemandControllerTest extends TestCase
         );
     }
 
-    public function testPrivateInventoryList(): void
+    public function testWhitelistInventoryList(): void
     {
-        Config::set('app.inventory_access', 'private');
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
         $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        $campaignActive = Campaign::factory()->create(
+        $campaign = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_ACTIVE,
             ]
         );
-
-        $bannerActive = Banner::factory()->create(
+        Banner::factory()->create(
             [
                 'creative_contents' => 'dummy',
-                'campaign_id' => $campaignActive->id,
+                'campaign_id' => $campaign->id,
                 'status' => Banner::STATUS_ACTIVE,
             ]
         );
-        Banner::factory()->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_INACTIVE]);
 
+        Config::set('app.inventory_export_whitelist', ['0001-00000002-BB2D']);
         $response = $this->getJson(self::INVENTORY_LIST_URL);
         $response->assertSuccessful();
         $content = json_decode($response->getContent(), true);
-
         $this->assertCount(0, $content);
+
+        Config::set('app.inventory_export_whitelist', ['0001-00000003-AB0C', '0001-00000005-CBCA']);
+        $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $response->assertSuccessful();
+        $content = json_decode($response->getContent(), true);
+        $this->assertCount(1, $content);
     }
 
     public function testServeDeletedBanner(): void

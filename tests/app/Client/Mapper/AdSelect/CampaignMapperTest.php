@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -160,7 +160,7 @@ final class CampaignMapperTest extends TestCase
             'updated_at' => (new DateTime())->modify('-1 days'),
             'source_campaign' => [
                 'host' => 'localhost:8101',
-                'address' => '0001-00000001-0001',
+                'address' => '0001-00000001-8B4E',
                 'version' => '0.1',
                 'created_at' => new DateTime(),
                 'updated_at' => new DateTime(),
@@ -209,7 +209,7 @@ final class CampaignMapperTest extends TestCase
             'updated_at' => (new DateTime())->modify('-2 days'),
             'source_campaign' => [
                 'host' => 'localhost:8101',
-                'address' => '0001-00000001-0001',
+                'address' => '0001-00000001-8B4E',
                 'version' => '0.1',
                 'created_at' => new DateTime(),
                 'updated_at' => new DateTime(),
