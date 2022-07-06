@@ -117,7 +117,7 @@ return [
     'x_adselect_version' => env('X_ADSELECT_VERSION', 'php'),
 
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
-    'check_zone_domain' => (bool)env('CHECK_ZONE_DOMAIN', false),
+    'check_zone_domain' => (bool)env('CHECK_ZONE_DOMAIN', true),
     'allow_zone_in_iframe' => (bool)env('ALLOW_ZONE_IN_IFRAME', true),
     'network_data_cache_ttl' => (int)env('NETWORK_DATA_CACHE_TTL', 60),
 
@@ -173,6 +173,7 @@ return [
     'upload_limit_model' => (int)env('UPLOAD_LIMIT_MODEL', 1024 * 1024),
     'upload_limit_video' => (int)env('UPLOAD_LIMIT_VIDEO', 1024 * 1024),
     'upload_limit_zip' => (int)env('UPLOAD_LIMIT_ZIP', 512 * 1024),
+    'inventory_access' => env('INVENTORY_ACCESS', 'public'),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

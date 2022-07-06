@@ -538,8 +538,9 @@ SQL;
 
         $campaigns = [];
 
-        $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
-
+        $activeCampaigns = config('app.inventory_access') !== 'private' ?
+            $this->campaignRepository->fetchActiveCampaigns() :
+            new Collection();
         $bannerClassifications = $this->fetchBannerClassifications($activeCampaigns);
         $cdnEnabled = !empty(config('app.cdn_provider'));
 

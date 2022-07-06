@@ -218,6 +218,36 @@ final class DemandControllerTest extends TestCase
         );
     }
 
+    public function testPrivateInventoryList(): void
+    {
+        Config::set('app.inventory_access', 'private');
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = User::factory()->create();
+        $this->actingAs($user, 'api');
+
+        $campaignActive = Campaign::factory()->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+            ]
+        );
+
+        $bannerActive = Banner::factory()->create(
+            [
+                'creative_contents' => 'dummy',
+                'campaign_id' => $campaignActive->id,
+                'status' => Banner::STATUS_ACTIVE,
+            ]
+        );
+        Banner::factory()->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_INACTIVE]);
+
+        $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $response->assertSuccessful();
+        $content = json_decode($response->getContent(), true);
+
+        $this->assertCount(0, $content);
+    }
+
     public function testServeDeletedBanner(): void
     {
         /** @var User $user */

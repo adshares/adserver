@@ -40,7 +40,7 @@ final class PaymentDetailsVerifyTest extends TestCase
         $date = new DateTime();
         $verifier = self::createMock(SignatureVerifier::class);
         $verifier->expects(self::once())
-            ->method('verify')
+            ->method('verifyTransactionId')
             ->with($publicKey, $signature, $transactionId, $accountAddress, $date)
             ->willReturn(true);
         $adsClient = self::createMock(Ads::class);

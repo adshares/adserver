@@ -43,6 +43,6 @@ class PaymentDetailsVerify
     {
         $publicKey = $this->adsClient->getPublicKeyByAccountAddress($accountAddress);
 
-        return $this->signatureVerifier->verify($publicKey, $signature, $transactionId, $accountAddress, $date);
+        return $this->signatureVerifier->verifyTransactionId($publicKey, $signature, $transactionId, $accountAddress, $date);
     }
 }

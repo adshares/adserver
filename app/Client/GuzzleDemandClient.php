@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -59,24 +60,23 @@ final class GuzzleDemandClient implements DemandClient
 
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     . '?limit={limit}&offset={offset}';
-
     private ClassifierExternalRepository $classifierRepository;
-
     private ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier;
-
     private SignatureVerifier $signatureVerifier;
-
+    private AdsAuthenticator $adsAuthenticator;
     private int $timeout;
 
     public function __construct(
         ClassifierExternalRepository $classifierRepository,
         ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier,
         SignatureVerifier $signatureVerifier,
+        AdsAuthenticator $adsAuthenticator,
         int $timeout
     ) {
         $this->classifierRepository = $classifierRepository;
         $this->classifierExternalSignatureVerifier = $classifierExternalSignatureVerifier;
         $this->signatureVerifier = $signatureVerifier;
+        $this->adsAuthenticator = $adsAuthenticator;
         $this->timeout = $timeout;
     }
 
@@ -136,7 +136,12 @@ final class GuzzleDemandClient implements DemandClient
         $privateKey = (string)config('app.adshares_secret');
         $accountAddress = (string)config('app.adshares_address');
         $date = new DateTime();
-        $signature = $this->signatureVerifier->create($privateKey, $transactionId, $accountAddress, $date);
+        $signature = $this->signatureVerifier->createFromTransactionId(
+            $privateKey,
+            $transactionId,
+            $accountAddress,
+            $date
+        );
 
         $dateFormatted = $date->format(DateTimeInterface::ATOM);
 
@@ -207,6 +212,10 @@ final class GuzzleDemandClient implements DemandClient
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Cache-Control' => 'no-cache',
+                'Authorization' => $this->adsAuthenticator->getHeader(
+                    config('app.adshares_address'),
+                    config('app.adshares_secret')
+                ),
             ],
             'timeout' => $this->timeout,
         ];
