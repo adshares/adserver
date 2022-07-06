@@ -219,7 +219,7 @@ class CampaignsController extends Controller
         $banners = [];
 
         foreach ($input as $banner) {
-            self::validateTypeAndSize($banner);
+            self::validateBanner($banner);
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
@@ -701,8 +701,17 @@ class CampaignsController extends Controller
         }
     }
 
-    private static function validateTypeAndSize(array $banner): void
+    private static function validateBanner(array $banner): void
     {
+        foreach (['creative_type', 'creative_size', 'name', 'url'] as $field) {
+            if (!isset($banner[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
+            }
+            if (!is_string($banner[$field]) || strlen($banner[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a non-empty string', $field));
+            }
+        }
+
         $type = $banner['creative_type'] ?? null;
         if (!in_array($type, Banner::types())) {
             throw new UnprocessableEntityHttpException(sprintf('Invalid type: %s.', $type));

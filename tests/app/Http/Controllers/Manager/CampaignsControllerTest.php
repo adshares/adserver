@@ -35,9 +35,11 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
-use Illuminate\Http\Response;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 final class CampaignsControllerTest extends TestCase
 {
@@ -58,6 +60,92 @@ final class CampaignsControllerTest extends TestCase
 
         $response = $this->getJson(self::URI . '/1');
         $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testAddCampaignWithBanner(): void
+    {
+        $adPath = base_path('tests/mock/980x120.png');
+        $filesystemMock = self::createMock(FilesystemAdapter::class);
+        $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
+        $filesystemMock->method('path')->willReturn($adPath);
+        Storage::shouldReceive('disk')->andReturn($filesystemMock);
+        $this->actingAs(User::factory()->create(), 'api');
+
+        $response = $this->postJson(self::URI, ['campaign' => $this->getCampaignData()]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+    }
+
+    /**
+     * @dataProvider addCampaignWithBannerInvalidProvider
+     */
+    public function testAddCampaignWithInvalidBanner(array $campaignInputData): void
+    {
+        $adPath = base_path('tests/mock/980x120.png');
+        $filesystemMock = self::createMock(FilesystemAdapter::class);
+        $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
+        $filesystemMock->method('path')->willReturn($adPath);
+        Storage::shouldReceive('disk')->andReturn($filesystemMock);
+        $this->actingAs(User::factory()->create(), 'api');
+
+        $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function addCampaignWithBannerInvalidProvider(): array
+    {
+        return [
+            'without size' => [$this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeSize')]])],
+            'with empty size' => [$this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => ''])]])],
+            'with invalid size type' =>
+                [$this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => 1])]])],
+            'without type' => [$this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeType')]])],
+            'with empty type' => [$this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => ''])]])],
+            'with invalid type' =>
+                [$this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => 1])]])],
+            'without name' => [$this->getCampaignData(['ads' => [$this->getBannerData([], 'name')]])],
+            'with invalid name type' => [$this->getCampaignData(['ads' => [$this->getBannerData(['name' => 1])]])],
+            'with empty name' => [$this->getCampaignData(['ads' => [$this->getBannerData(['name' => ''])]])],
+            'without url' => [$this->getCampaignData(['ads' => [$this->getBannerData([], 'url')]])],
+            'with empty url' => [$this->getCampaignData(['ads' => [$this->getBannerData(['url' => ''])]])],
+            'with invalid url type' => [$this->getCampaignData(['ads' => [$this->getBannerData(['url' => 1])]])],
+            'size not in taxonomy' =>
+                [$this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => '600x600'])]])],
+        ];
+    }
+
+    private function getCampaignData(array $mergeData = []): array
+    {
+        return array_merge(
+            $this->campaignInputData(),
+            [
+                'ads' => [
+                    $this->getBannerData(),
+                ],
+            ],
+            $mergeData,
+        );
+    }
+
+    private function getBannerData(array $mergeData = [], string $remove = null): array
+    {
+        $data = array_merge(
+            [
+                'creativeSize' => '300x250',
+                'creativeType' => 'image',
+                'name' => 'IMAGE 1',
+                'url' =>
+                    'http://localhost:8010/upload-preview/image/nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png',
+            ],
+            $mergeData,
+        );
+
+        if ($remove !== null) {
+            unset($data[$remove]);
+        }
+
+        return $data;
     }
 
     /** @dataProvider budgetVsResponseWhenCreatingCampaign */
