@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,17 +21,31 @@
 
 namespace Adshares\Common\Application\Service;
 
-use DateTime;
+use DateTimeInterface;
 
 interface SignatureVerifier
 {
-    public function create(string $privateKey, string $transactionId, string $accountAddress, DateTime $date): string;
+    public function createFromTransactionId(
+        string $privateKey,
+        string $transactionId,
+        string $accountAddress,
+        DateTimeInterface $date
+    ): string;
 
-    public function verify(
+    public function verifyTransactionId(
         string $publicKey,
         string $signature,
         string $transactionId,
         string $accountAddress,
-        DateTime $date
+        DateTimeInterface $date
+    ): bool;
+
+    public function createFromNonce(string $privateKey, string $nonce, DateTimeInterface $date): string;
+
+    public function verifyNonce(
+        string $publicKey,
+        string $signature,
+        string $nonce,
+        DateTimeInterface $date
     ): bool;
 }

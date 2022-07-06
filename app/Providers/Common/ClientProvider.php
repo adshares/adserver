@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -39,6 +39,7 @@ use Adshares\Adserver\Client\MultipleExternalClassifierAdClassifyClient;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
@@ -125,6 +126,7 @@ final class ClientProvider extends ServiceProvider
                     $app->make(ClassifierExternalRepository::class),
                     $app->make(ClassifierExternalSignatureVerifier::class),
                     $app->make(SignatureVerifier::class),
+                    $app->make(AdsAuthenticator::class),
                     $timeoutForDemandService
                 );
             }

@@ -32,17 +32,17 @@ final class SourceCampaignTest extends TestCase
     {
         $this->expectException(InvalidUrlException::class);
 
-        new SourceCampaign('', '0001-00000001-0001', '0.1', new DateTime(), new DateTime());
+        new SourceCampaign('', '0001-00000001-8B4E', '0.1', new DateTime(), new DateTime());
     }
 
     public function testWhenInputDataAreCorrect(): void
     {
         $createdAt = new DateTime();
         $updatedAt = new DateTime();
-        $source = new SourceCampaign('localhost', '0001-00000001-0001', '0.1', $createdAt, $updatedAt);
+        $source = new SourceCampaign('localhost', '0001-00000001-8B4E', '0.1', $createdAt, $updatedAt);
 
         $this->assertEquals('localhost', $source->getHost());
-        $this->assertEquals('0001-00000001-0001', $source->getAddress());
+        $this->assertEquals('0001-00000001-8B4E', $source->getAddress());
         $this->assertEquals('0.1', $source->getVersion());
         $this->assertEquals($createdAt, $source->getCreatedAt());
         $this->assertEquals($updatedAt, $source->getUpdatedAt());

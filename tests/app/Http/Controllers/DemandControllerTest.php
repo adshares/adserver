@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Config;
@@ -62,8 +63,8 @@ final class DemandControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user, 'api');
 
-        $accountAddress = '0001-00000001-0001';
-        $accountAddressDifferentUser = '0001-00000002-0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $accountAddressDifferentUser = '0001-00000002-BB2D';
 
         $transactionId = '0001:00000001:0001';
         $date = '2018-01-01T10:10:00+00:00';
@@ -216,6 +217,60 @@ final class DemandControllerTest extends TestCase
             'https://example.com/serve/x' . $bannerActive->uuid . '.doc?v=ec09',
             $content[0]['banners'][0]['serve_url']
         );
+    }
+
+    public function testWhitelistInventoryList(): void
+    {
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = User::factory()->create();
+        $this->actingAs($user, 'api');
+
+        $campaign = Campaign::factory()->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+            ]
+        );
+        Banner::factory()->create(
+            [
+                'creative_contents' => 'dummy',
+                'campaign_id' => $campaign->id,
+                'status' => Banner::STATUS_ACTIVE,
+            ]
+        );
+
+        /** @var AdsAuthenticator $authenticator */
+        $authenticator = $this->app->make(AdsAuthenticator::class);
+
+        Config::set('app.inventory_export_whitelist', ['0001-00000002-BB2D']);
+
+        $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $response->assertStatus(401);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [
+                'Authorization' => $authenticator->getHeader(
+                    config('app.adshares_address'),
+                    config('app.adshares_secret')
+                )
+            ]
+        );
+        $response->assertStatus(403);
+
+        Config::set('app.inventory_export_whitelist', ['0001-00000003-AB0C', '0001-00000005-CBCA']);
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [
+                'Authorization' => $authenticator->getHeader(
+                    config('app.adshares_address'),
+                    config('app.adshares_secret')
+                )
+            ]
+        );
+        $response->assertSuccessful();
+        $content = json_decode($response->getContent(), true);
+        $this->assertCount(1, $content);
     }
 
     public function testServeDeletedBanner(): void
