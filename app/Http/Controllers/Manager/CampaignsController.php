@@ -70,13 +70,9 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class CampaignsController extends Controller
 {
     private CampaignRepository $campaignRepository;
-
     private ConfigurationRepository $configurationRepository;
-
     private ExchangeRateReader $exchangeRateReader;
-
     private BannerClassificationCreator $bannerClassificationCreator;
-
     private ClassifierExternalRepository $classifierExternalRepository;
 
     public function __construct(
@@ -95,10 +91,19 @@ class CampaignsController extends Controller
 
     public function upload(Request $request): UploadedFile
     {
+        $mediumName = $request->get('medium');
+        $vendor = $request->get('vendor');
+        if (!is_string($mediumName)) {
+            throw new UnprocessableEntityHttpException('Field `medium` must be a string');
+        }
+        if (null !== $vendor && !is_string($vendor)) {
+            throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null');
+        }
         try {
-            return Factory::create($request)->upload();
-        } catch (RuntimeException $exception) {
-            throw new BadRequestHttpException($exception->getMessage());
+            $medium = $this->configurationRepository->fetchMedium($mediumName, $vendor);
+            return Factory::create($request)->upload($medium);
+        } catch (InvalidArgumentException | RuntimeException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
         }
     }
 

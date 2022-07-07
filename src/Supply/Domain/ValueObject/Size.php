@@ -255,14 +255,6 @@ final class Size
         );
     }
 
-    /**
-     * @deprecated Size should be validated basing on taxonomy
-     */
-    public static function isValid(string $size): bool
-    {
-        return array_key_exists($size, self::SIZE_INFOS);
-    }
-
     public static function fromDimensions(int $width, int $height): string
     {
         return sprintf('%dx%d', $width, $height);
@@ -278,6 +270,9 @@ final class Size
         ];
     }
 
+    /**
+     * @deprecated match should be validated basing on taxonomy
+     */
     public static function findMatching(int $width, int $height, float $minZoom = 0.25, float $maxZoom = 4.0): array
     {
         $sizes = array_keys(array_filter(self::SIZE_INFOS, fn($info) => self::TYPE_DISPLAY === $info['type']));

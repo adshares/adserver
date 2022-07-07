@@ -26,14 +26,6 @@ use PHPUnit\Framework\TestCase;
 
 final class SizeTest extends TestCase
 {
-    public function testIsValidSize(): void
-    {
-        $this->assertTrue(Size::isValid('300x250'));
-        $this->assertFalse(Size::isValid('152x1'));
-        $this->assertFalse(Size::isValid('00x0'));
-        $this->assertFalse(Size::isValid(''));
-    }
-
     public function testDimensions(): void
     {
         $this->assertEquals('728x90', Size::fromDimensions(728, 90));

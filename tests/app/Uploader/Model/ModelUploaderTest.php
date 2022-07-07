@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Uploader\Model;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -41,8 +42,9 @@ final class ModelUploaderTest extends TestCase
             ->method('file')
             ->willReturn(UploadedFile::fake()->create('a.glb', 1));
         $uploader = new ModelUploader($request);
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        $uploadedFile = $uploader->upload();
+        $uploadedFile = $uploader->upload($medium);
         [$name, $extension] = explode('.', $uploadedFile->toArray()['name']);
         self::assertNotEquals('a', $name);
         self::assertEquals('glb', $extension);

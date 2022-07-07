@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,11 +21,12 @@
 
 namespace Adshares\Adserver\Uploader;
 
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Illuminate\Http\Response;
 
 interface Uploader
 {
-    public function upload(): UploadedFile;
+    public function upload(Medium $medium): UploadedFile;
 
     public function preview(string $fileName): Response;
 

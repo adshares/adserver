@@ -47,7 +47,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testBrowseCampaignRequestWhenNoCampaigns(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->createUser();
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -56,7 +56,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCampaignRequestWhenCampaignIsNotFound(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->createUser();
 
         $response = $this->getJson(self::URI . '/1');
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -69,7 +69,7 @@ final class CampaignsControllerTest extends TestCase
         $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
         $filesystemMock->method('path')->willReturn($adPath);
         Storage::shouldReceive('disk')->andReturn($filesystemMock);
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->createUser();
 
         $response = $this->postJson(self::URI, ['campaign' => $this->getCampaignData()]);
 
@@ -86,7 +86,7 @@ final class CampaignsControllerTest extends TestCase
         $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
         $filesystemMock->method('path')->willReturn($adPath);
         Storage::shouldReceive('disk')->andReturn($filesystemMock);
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->createUser();
 
         $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
 
@@ -151,7 +151,7 @@ final class CampaignsControllerTest extends TestCase
     /** @dataProvider budgetVsResponseWhenCreatingCampaign */
     public function testCreateCampaignWithoutBannersAndTargeting(int $budget, int $returnValue): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->createUser();
 
         $campaignInputData = $this->campaignInputData();
         $campaignInputData['basicInformation']['budget'] = $budget;
@@ -168,7 +168,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCreateCampaignWithInvalidMedium(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->createUser();
 
         $campaignInputData = $this->campaignInputData();
         $campaignInputData['basicInformation']['medium'] = 'invalid';
@@ -213,8 +213,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testDeleteCampaignWithBanner(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->createUser();
 
         $campaign = $this->createCampaignForUser($user);
         $banner = $this->createBannerForCampaign($campaign);
@@ -352,7 +351,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testFailDeleteNotOwnedCampaign(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->createUser();
 
         $user = User::factory()->create();
         $campaign = $this->createCampaignForUser($user);
@@ -461,8 +460,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testUpdateBidStrategyValid(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->createUser();
         $defaultBidStrategyUuid = BidStrategy::first()->uuid;
 
         $campaignInputData = $this->campaignInputData();
@@ -626,8 +624,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneCampaignWithConversions(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->createUser();
 
         $campaign = $this->createCampaignForUser($user);
         /** @var ConversionDefinition $conversion */
@@ -668,8 +665,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneCampaignWithAds(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->createUser();
 
         $campaign = $this->createCampaignForUser($user);
         $banner = $this->createBannerForCampaign(
@@ -705,21 +701,65 @@ final class CampaignsControllerTest extends TestCase
 
     public function testUploadBannerNoFile(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $this->createUser();
 
         $response = $this->postJson('/api/campaigns/banner');
-        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUploadBannerNoMedium(): void
+    {
+        $this->createUser();
+
+        $response = $this->postJson(
+            '/api/campaigns/banner',
+            [
+                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+            ]
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUploadBannerInvalidVendor(): void
+    {
+        $this->createUser();
+
+        $response = $this->postJson(
+            '/api/campaigns/banner',
+            [
+                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                'medium' => 'web',
+                'vendor' => 'premium',
+            ]
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUploadBannerInvalidVendorType(): void
+    {
+        $this->createUser();
+
+        $response = $this->postJson(
+            '/api/campaigns/banner',
+            [
+                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                'medium' => 'web',
+                'vendor' => 1,
+            ]
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUploadBanner(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $this->createUser();
 
         $response = $this->postJson(
             '/api/campaigns/banner',
-            ['file' => UploadedFile::fake()->image('photo.jpg', 300, 250)]
+            [
+                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                'medium' => 'web',
+            ]
         );
         $response->assertStatus(Response::HTTP_OK);
     }
