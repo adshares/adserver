@@ -58,6 +58,8 @@ final class CampaignFactoryTest extends TestCase
             'max_cpm' => 100000000000,
             'budget' => 1000000000000,
             'demand_host' => 'localhost:8101',
+            'medium' => 'web',
+            'vendor' => null,
             'targeting_excludes' => [],
             'targeting_requires' => [],
         ];

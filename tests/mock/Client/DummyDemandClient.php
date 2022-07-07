@@ -68,6 +68,8 @@ final class DummyDemandClient implements DemandClient
                 'max_cpc' => 100000000000,
                 'max_cpm' => 100000000000,
                 'budget' => 1000000000000,
+                'medium' => 'web',
+                'vendor' => null,
                 'targeting_excludes' => [
                     'site' => [
                         'one',
@@ -99,6 +101,8 @@ final class DummyDemandClient implements DemandClient
                 'max_cpc' => 1000000000000,
                 'max_cpm' => 1000000000000,
                 'budget' => 1000000000000000,
+                'medium' => 'web',
+                'vendor' => null,
                 'demand_host' => 'localhost:8101',
                 'targeting_excludes' => [],
                 'targeting_requires' => [],

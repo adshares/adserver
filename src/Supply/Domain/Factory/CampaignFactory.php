@@ -32,7 +32,6 @@ use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Classification;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
 
@@ -65,6 +64,8 @@ class CampaignFactory
             $budget,
             $sourceHost,
             isset($data['status']) ? Status::fromStatus($data['status']) : Status::processing(),
+            $data['medium'],
+            $data['vendor'],
             $data['targeting_requires'],
             $data['targeting_excludes']
         );
