@@ -58,7 +58,7 @@ use InvalidArgumentException;
  * @property float bid
  * @property int budget
  * @property string medium
- * @property string $vendor
+ * @property string|null $vendor
  * @property int max_cpc
  * @property int max_cpm
  * @property array|null|string targeting_requires

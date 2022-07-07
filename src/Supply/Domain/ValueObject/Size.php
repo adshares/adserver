@@ -255,6 +255,9 @@ final class Size
         );
     }
 
+    /**
+     * @deprecated Size should be validated basing on taxonomy
+     */
     public static function isValid(string $size): bool
     {
         return array_key_exists($size, self::SIZE_INFOS);
@@ -277,31 +280,35 @@ final class Size
 
     public static function findMatching(int $width, int $height, float $minZoom = 0.25, float $maxZoom = 4.0): array
     {
+        $sizes = array_keys(array_filter(self::SIZE_INFOS, fn($info) => self::TYPE_DISPLAY === $info['type']));
+        return self::findMatchingWithSizes($sizes, $width, $height, $minZoom, $maxZoom);
+    }
+
+    public static function findMatchingWithSizes(
+        array $sizes,
+        int $width,
+        int $height,
+        float $minZoom = 0.25,
+        float $maxZoom = 4.0
+    ): array {
         if ($width <= 0 || $height <= 0) {
             return [];
         }
 
-        return array_keys(
-            array_filter(
-                self::SIZE_INFOS,
-                function ($info, $size) use ($width, $height, $minZoom, $maxZoom) {
-                    if ($info['type'] !== self::TYPE_DISPLAY) {
-                        return false;
-                    }
+        return array_filter(
+            $sizes,
+            function ($size) use ($width, $height, $minZoom, $maxZoom) {
+                [$x, $y] = explode('x', $size);
 
-                    [$x, $y] = explode("x", $size);
+                $zoom = min($x / $width, $y / $height);
+                if ($zoom < $minZoom || $zoom > $maxZoom) {
+                    return false;
+                }
 
-                    $zoom = min($x / $width, $y / $height);
-                    if ($zoom < $minZoom || $zoom > $maxZoom) {
-                        return false;
-                    }
+                $occupiedField = $zoom * min($width / $x, $height / $y);
 
-                    $occupiedField = $zoom * min($width / $x, $height / $y);
-
-                    return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
-                },
-                ARRAY_FILTER_USE_BOTH
-            )
+                return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
+            }
         );
     }
 
