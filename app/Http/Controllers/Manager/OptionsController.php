@@ -27,11 +27,13 @@ use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\TargetingReachRequest;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -169,6 +171,41 @@ class OptionsController extends Controller
 
     public function zones(): JsonResponse
     {
-        return self::json(Simulator::getZoneTypes());
+        try {
+            $medium = $this->optionsRepository->fetchMedium();
+        } catch (MissingInitialConfigurationException $exception) {
+            return self::json();
+        }
+
+        $types = [];
+        foreach ($medium->getFormats() as $format) {
+            foreach ($format->getScopes() as $size => $label) {
+                if (isset($types[$size])) {
+                    continue;
+                }
+                $types[$size] = [
+                    'label' => $label,
+                    'size' => $size,
+                    'tags' => Size::SIZE_INFOS[$size]['tags'] ?? ['Other'],
+                    'type' => $this->getType($format->getType()),
+                ];
+            }
+        }
+        return self::json(array_values($types));
+    }
+
+    private function getType(string $type): string
+    {
+        switch ($type) {
+            case Banner::TEXT_TYPE_DIRECT_LINK:
+                return Size::TYPE_POP;
+            case Banner::TEXT_TYPE_MODEL:
+                return Size::TYPE_MODEL;
+            case Banner::TEXT_TYPE_IMAGE:
+            case Banner::TEXT_TYPE_HTML:
+            case Banner::TEXT_TYPE_VIDEO:
+            default:
+                return Size::TYPE_DISPLAY;
+        }
     }
 }
