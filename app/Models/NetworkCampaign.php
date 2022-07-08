@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int id
+ * @property string uuid
  * @property string source_address
  * @property string medium
  * @property string|null vendor
