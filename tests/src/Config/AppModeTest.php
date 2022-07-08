@@ -21,38 +21,37 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Console\Commands;
+namespace Adshares\Tests\Config;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
-use Adshares\Adserver\Console\Locker;
-use Illuminate\Console\Command;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Config\AppMode;
 
-class BaseCommand extends Command
+class AppModeTest extends TestCase
 {
-    use LineFormatterTrait;
-
-    private Locker $locker;
-
-    protected $signature = 'base:command';
-
-    protected $description = 'This method should be used for inheritance only';
-
-    public function __construct(Locker $locker)
+    public function testDirectCreationFail(): void
     {
-        $this->locker = $locker;
+        self::expectException(RuntimeException::class);
 
-        parent::__construct();
+        new AppMode();
     }
 
-    protected function lock($name = null, $blocking = false): bool
+    public function testValidateValidMode(): void
     {
-        $lockId = $name ?: config('app.adserver_id') . $this->getName();
+        self::expectNotToPerformAssertions();
 
-        return $this->locker->lock($lockId, $blocking);
+        AppMode::validate('operational');
     }
 
-    protected function release(): void
+    public function testValidateInvalidMode(): void
     {
-        $this->locker->release();
+        self::expectException(RuntimeException::class);
+
+        AppMode::validate('invalid');
+    }
+
+    public function testGetAppMode(): void
+    {
+        self::assertEquals('operational', AppMode::getAppMode());
     }
 }

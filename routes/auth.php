@@ -21,6 +21,7 @@
 
 declare(strict_types=1);
 
+use Adshares\Adserver\Http\Controllers\JwtController;
 use Adshares\Adserver\Http\Controllers\Manager\AuthController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,12 @@ Route::middleware([Kernel::JSON_API])->group(function () {
     Route::get('login/wallet/init', [AuthController::class, 'walletLoginInit']);
     Route::post('login/wallet', [AuthController::class, 'walletLogin']);
     Route::post('email/activate', [AuthController::class, 'emailActivate']);
+});
+
+Route::middleware([Kernel::JSON_API_NO_TRANSFORM])->group(function () {
+    Route::post('jwt/login', [JwtController::class, 'login']);
+    Route::post('jwt/logout', [JwtController::class, 'logout']);
+    Route::post('jwt/refresh', [JwtController::class, 'refresh']);
 });
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {

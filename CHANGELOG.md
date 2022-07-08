@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.5] - 2022-07-08
+### Added
+- Inventory whitelist for adservers
+### Fixed
+- Default value of site classifier accepted banners setting
+- Progress of fetching hosts
+
 ## [1.18.4] - 2022-06-30
 ### Added
 - Command listing administrators
+- JWT authentication for other services
 ### Fixed
 - Do not log entered password
 - Guest requests from DCL
@@ -643,7 +651,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.4...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.5...develop
+[1.18.5]: https://github.com/adshares/adserver/compare/v1.18.4...v1.18.5
 [1.18.4]: https://github.com/adshares/adserver/compare/v1.18.3...v1.18.4
 [1.18.3]: https://github.com/adshares/adserver/compare/v1.18.2...v1.18.3
 [1.18.2]: https://github.com/adshares/adserver/compare/v1.18.1...v1.18.2

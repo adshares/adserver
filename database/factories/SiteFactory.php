@@ -42,6 +42,7 @@ class SiteFactory extends Factory
             'rank' => 1,
             'info' => AdUser::PAGE_INFO_OK,
             'categories' => ['unknown'],
+            'only_accepted_banners' => 0,
         ];
     }
 }

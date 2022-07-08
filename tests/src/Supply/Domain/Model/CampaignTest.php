@@ -89,7 +89,7 @@ final class CampaignTest extends TestCase
 
     public function testToArray(): void
     {
-        $sourceAddress = '0001-00000001-0001';
+        $sourceAddress = '0001-00000001-8B4E';
         $sourceCreatedAt = (new DateTime())->modify('-1 day');
         $sourceUpdatedAt = (new DateTime())->modify('-5 hours');
         $createdAt = (new DateTime())->modify('-2 hours');
@@ -163,7 +163,7 @@ final class CampaignTest extends TestCase
     {
         return new SourceCampaign(
             'example.com',
-            '0001-00000001-0001',
+            '0001-00000001-8B4E',
             '0.1',
             new DateTime(),
             new DateTime()

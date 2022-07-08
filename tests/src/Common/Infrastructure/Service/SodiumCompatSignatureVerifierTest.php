@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Common\Infrastructure\Service;
 
+use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Infrastructure\Service\SodiumCompatSignatureVerifier;
 use DateTime;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +33,7 @@ class SodiumCompatSignatureVerifierTest extends TestCase
     private const PRIVATE_KEY = 'CB5A6B541436A904BCFEE0CCE2D2B207977012492A035C5455027D5E48176EE1';
     private const PUBLIC_KEY = 'A25FFEE788D6E06D2DA70B48E44BCA0ABC5E5BEB16252B3E022C6C7B971EECC2';
 
-    public function testIfCreatedSignatureIsCorrect(): void
+    public function testIfTransactionIdSignatureIsCorrect(): void
     {
         $signatureService = new SodiumCompatSignatureVerifier();
 
@@ -40,8 +41,27 @@ class SodiumCompatSignatureVerifierTest extends TestCase
         $accountId = '0003-00000007-AF0B';
         $date = new DateTime();
 
-        $signature = $signatureService->create(self::PRIVATE_KEY, $transactionId, $accountId, $date);
-        $isVerified = $signatureService->verify(self::PUBLIC_KEY, $signature, $transactionId, $accountId, $date);
+        $signature = $signatureService->createFromTransactionId(self::PRIVATE_KEY, $transactionId, $accountId, $date);
+        $isVerified = $signatureService->verifyTransactionId(
+            self::PUBLIC_KEY,
+            $signature,
+            $transactionId,
+            $accountId,
+            $date
+        );
+
+        $this->assertTrue($isVerified);
+    }
+
+    public function testIfNonceSignatureIsCorrect(): void
+    {
+        $signatureService = new SodiumCompatSignatureVerifier();
+
+        $nonce = 'YTBmNTAzZmIwNDdjZGM5Mw==';
+        $date = new DateTime();
+
+        $signature = $signatureService->createFromNonce(self::PRIVATE_KEY, $nonce, $date);
+        $isVerified = $signatureService->verifyNonce(self::PUBLIC_KEY, $signature, $nonce, $date);
 
         $this->assertTrue($isVerified);
     }

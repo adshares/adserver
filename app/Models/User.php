@@ -40,6 +40,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
  * @property Collection|Campaign[] campaigns
@@ -72,7 +73,7 @@ use Illuminate\Support\Str;
  * @property string ban_reason
  * @mixin Builder
  */
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
     use SoftDeletes;
@@ -467,5 +468,18 @@ class User extends Authenticatable
     public static function fetchEmails(): Collection
     {
         return self::where('subscribe', 1)->whereNotNull('email')->get()->pluck('email');
+    }
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims(): array
+    {
+        return [
+            'admin' => $this->isAdmin(),
+            'username' => $this->email ?? $this->wallet_address->toString()
+        ];
     }
 }
