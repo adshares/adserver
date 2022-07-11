@@ -30,7 +30,9 @@ use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyAdUserClient;
+use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Supply\Application\Service\DemandClient;
 use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -76,6 +78,12 @@ abstract class TestCase extends BaseTestCase
             AdUser::class,
             static function () {
                 return new DummyAdUserClient();
+            }
+        );
+        $this->app->bind(
+            DemandClient::class,
+            static function () {
+                return new DummyDemandClient();
             }
         );
     }

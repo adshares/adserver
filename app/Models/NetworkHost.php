@@ -106,14 +106,17 @@ class NetworkHost extends Model
         return $networkHost;
     }
 
-    public static function fetchHosts(): Collection
+    public static function fetchHosts(array $whitelist = []): Collection
     {
-        return self::where(
+        $query = self::where(
             'failed_connection',
             '<',
             self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED
-        )
-            ->get();
+        );
+        if (!empty($whitelist)) {
+            $query->whereIn('address', $whitelist);
+        }
+        return $query->get();
     }
 
     public function connectionSuccessful(): void

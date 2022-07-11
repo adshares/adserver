@@ -224,9 +224,9 @@ class Site extends Model
         string $name,
         string $medium,
         ?string $vendor,
+        bool $onlyAcceptedBanners,
         int $status = Site::STATUS_ACTIVE,
         string $primaryLanguage = 'en',
-        bool $onlyAcceptedBanners = false,
         array $categoriesByUser = null,
         array $filtering = null
     ): Site {
@@ -285,7 +285,11 @@ class Site extends Model
             if (!SiteValidator::isUrlValid($url)) {
                 throw new InvalidArgumentException('Invalid URL');
             }
-            $site = Site::create($userId, $url, $name, $medium, $vendor);
+
+            $onlyAcceptedBanners =
+                Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT
+                !== Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS);
+            $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners);
         }
 
         return $site;

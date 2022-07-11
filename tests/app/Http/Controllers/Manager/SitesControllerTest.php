@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
@@ -87,7 +88,7 @@ class SitesControllerTest extends TestCase
 
     public function testEmptyDb(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->setupUser();
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -102,7 +103,7 @@ class SitesControllerTest extends TestCase
      */
     public function testCreateSite($data, $preset): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->setupUser();
 
         $response = $this->postJson(self::URI, ['site' => $data]);
 
@@ -137,9 +138,7 @@ class SitesControllerTest extends TestCase
 
     public function testCreateMultipleSites(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
 
         array_map(
             function () use ($user) {
@@ -222,7 +221,7 @@ JSON
      */
     public function testCreateSiteUnprocessable(array $siteData, int $expectedStatus): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->setupUser();
 
         $response = $this->postJson(self::URI, ['site' => $siteData]);
 
@@ -401,14 +400,26 @@ JSON
         self::assertCount(1, (new Zone())->where('site_id', $siteId)->get());
     }
 
+    public function testCreateSiteWhenOnlyLocalBannersAreAllowed(): void
+    {
+        Config::upsertByKey(Config::SITE_CLASSIFIER_LOCAL_BANNERS, Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY);
+        $this->setupUser();
+        $siteData = self::simpleSiteData(['onlyAcceptedBanners' => false]);
+
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $siteId = $this->getIdFromLocation($response->headers->get('Location'));
+        $site = (new Site())->where('id', $siteId)->first();
+        self::assertTrue($site->only_accepted_banners);
+    }
+
     /**
      * @dataProvider updateDataProvider
      */
     public function testUpdateSite($data): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var  Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
 
@@ -426,9 +437,7 @@ JSON
 
     public function testUpdateSiteUrl(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         $url = 'https://example2.com';
@@ -445,11 +454,47 @@ JSON
         self::assertEquals('unknown', $site->info);
     }
 
+    public function testUpdateSiteOnlyAcceptedBanners(): void
+    {
+        $user = $this->setupUser();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['onlyAcceptedBanners' => true]]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $site->refresh();
+        self::assertTrue($site->only_accepted_banners);
+    }
+
+    public function testUpdateSiteOnlyAcceptedBannersWhenOnlyLocalAllowed(): void
+    {
+        Config::upsertByKey(Config::SITE_CLASSIFIER_LOCAL_BANNERS, Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY);
+        $user = $this->setupUser();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id, 'only_accepted_banners' => 1]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['onlyAcceptedBanners' => false]]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $site->refresh();
+        self::assertTrue($site->only_accepted_banners);
+    }
+
+    public function testUpdateSiteOnlyAcceptedBannersInvalidType(): void
+    {
+        $user = $this->setupUser();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id, 'only_accepted_banners' => 1]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['onlyAcceptedBanners' => 1]]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testUpdateSiteInvalidUrl(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var  Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
 
@@ -459,9 +504,7 @@ JSON
 
     public function testUpdateSiteRestorePopUp(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
@@ -486,9 +529,7 @@ JSON
 
     public function testUpdateSiteDeletePopUp(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
@@ -512,9 +553,7 @@ JSON
 
     public function testUpdateSiteAdZone(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
@@ -550,9 +589,7 @@ JSON
 
     public function testUpdateSiteAdZoneDeleted(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         /** @var Zone $zone */
@@ -592,9 +629,7 @@ JSON
 
     public function testDeleteSite(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
 
@@ -605,9 +640,7 @@ JSON
 
     public function testDeleteSiteWithZones(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
 
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
@@ -704,9 +737,7 @@ JSON
      */
     public function updateZonesInSite($data): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
 
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
@@ -781,9 +812,7 @@ JSON
      */
     public function failZoneUpdatesInSite($data): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
 
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
@@ -805,7 +834,7 @@ JSON
      */
     public function testSiteFiltering(array $data, array $preset): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->setupUser();
         $postResponse = $this->postJson(self::URI, ['site' => $data]);
 
         $postResponse->assertStatus(Response::HTTP_CREATED);
@@ -880,7 +909,7 @@ JSON
      */
     public function testVerifyDomain(array $data, int $expectedStatus, string $expectedMessage): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->setupUser();
         SitesRejectedDomain::upsert('rejected.com');
 
         $response = $this->postJson(self::URI_DOMAIN_VERIFY, $data);
@@ -942,9 +971,7 @@ JSON
 
     public function testSiteSizes(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
 
@@ -961,9 +988,7 @@ JSON
 
     public function testSiteRank(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(
             [
@@ -982,9 +1007,7 @@ JSON
 
     public function testChangeStatus(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
 
@@ -996,9 +1019,7 @@ JSON
 
     public function testChangeStatusInvalid(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
 
@@ -1008,9 +1029,7 @@ JSON
 
     public function testChangeStatusMissing(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
 
@@ -1075,5 +1094,14 @@ JSON
         );
 
         $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
+    }
+
+    private function setupUser(): User
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->actingAs($user, 'api');
+
+        return $user;
     }
 }

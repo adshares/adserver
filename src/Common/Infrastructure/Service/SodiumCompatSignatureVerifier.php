@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,19 +25,19 @@ namespace Adshares\Common\Infrastructure\Service;
 
 use Adshares\Common\Application\Service\Exception\SignatureVerifierException;
 use Adshares\Common\Application\Service\SignatureVerifier;
-use DateTime;
 use DateTimeInterface;
 use SodiumException;
+use Throwable;
 
 class SodiumCompatSignatureVerifier implements SignatureVerifier
 {
-    public function create(
+    public function createFromTransactionId(
         string $privateKey,
         string $transactionId,
         string $accountAddress,
-        DateTime $date
+        DateTimeInterface $date
     ): string {
-        $message = $this->createMessageHash($transactionId, $accountAddress, $date);
+        $message = $this->createMessageHashFromTransactionId($transactionId, $accountAddress, $date);
         try {
             return Sodium::sign($privateKey, $message);
         } catch (SodiumException $exception) {
@@ -52,14 +52,14 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
         }
     }
 
-    public function verify(
+    public function verifyTransactionId(
         string $publicKey,
         string $signature,
         string $transactionId,
         string $accountAddress,
-        DateTime $date
+        DateTimeInterface $date
     ): bool {
-        $message = $this->createMessageHash($transactionId, $accountAddress, $date);
+        $message = $this->createMessageHashFromTransactionId($transactionId, $accountAddress, $date);
         try {
             return Sodium::verify($signature, $message, $publicKey);
         } catch (SodiumException $exception) {
@@ -73,8 +73,52 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
         }
     }
 
-    private function createMessageHash(string $transactionId, string $accountAddress, DateTime $date): string
+    public function createFromNonce(string $privateKey, string $nonce, DateTimeInterface $date): string
     {
+        $message = $this->createMessageHashFromNonce($nonce, $date);
+        try {
+            return Sodium::sign($privateKey, $message);
+        } catch (SodiumException $exception) {
+            throw new SignatureVerifierException(
+                sprintf(
+                    'Cannot create a signature (nonce: %s, date: %s).',
+                    $nonce,
+                    $date->format(DateTimeInterface::ATOM)
+                )
+            );
+        }
+    }
+
+    public function verifyNonce(
+        string $publicKey,
+        string $signature,
+        string $nonce,
+        DateTimeInterface $date
+    ): bool {
+        $message = $this->createMessageHashFromNonce($nonce, $date);
+        try {
+            return Sodium::verify($signature, $message, $publicKey);
+        } catch (Throwable $exception) {
+            throw new SignatureVerifierException(
+                sprintf(
+                    'Verification failed. Wrong signature (%s) or public key (%s).',
+                    $signature,
+                    $publicKey
+                )
+            );
+        }
+    }
+
+    private function createMessageHashFromTransactionId(
+        string $transactionId,
+        string $accountAddress,
+        DateTimeInterface $date
+    ): string {
         return sha1($transactionId . $date->format('U') . $accountAddress);
+    }
+
+    private function createMessageHashFromNonce(string $nonce, DateTimeInterface $date): string
+    {
+        return sha1($nonce . $date->format('U'));
     }
 }

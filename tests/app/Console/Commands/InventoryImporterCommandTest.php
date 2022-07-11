@@ -22,15 +22,53 @@
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\Status;
+use Illuminate\Support\Facades\Config;
 
 final class InventoryImporterCommandTest extends ConsoleTestCase
 {
+    public function testImport(): void
+    {
+        NetworkHost::factory()->create(['address' => '0001-00000002-BB2D']);
+        NetworkHost::factory()->create(['address' => '0001-00000003-AB0C']);
+        NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+
+        $this->artisan('ops:demand:inventory:import')
+            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000002-BB2D')
+            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000003-AB0C')
+            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000005-CBCA')
+            ->expectsOutput('[Inventory Importer] Finished importing data from 3/3 inventories')
+            ->assertExitCode(0);
+    }
+
+    public function testWhitelistImport(): void
+    {
+        NetworkHost::factory()->create(['address' => '0001-00000002-BB2D']);
+        NetworkHost::factory()->create(['address' => '0001-00000003-AB0C']);
+        NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+
+        Config::set('app.inventory_import_whitelist', ['0001-00000003-AB0C', '0001-00000005-CBCA']);
+        $this->artisan('ops:demand:inventory:import')
+            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000003-AB0C')
+            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000005-CBCA')
+            ->expectsOutput('[Inventory Importer] Finished importing data from 2/2 inventories')
+            ->doesntExpectOutput('[Inventory Importer] Importing inventory from 0001-00000002-BB2D')
+            ->assertExitCode(0);
+
+        Config::set('app.inventory_import_whitelist', ['0001-00000004-DBEB']);
+        $this->artisan('ops:demand:inventory:import')
+            ->expectsOutput('[Inventory Importer] Stopped importing - no hosts found')
+            ->assertExitCode(0);
+    }
+
     public function testNoHosts(): void
     {
-        $this->artisan('ops:demand:inventory:import')->assertExitCode(0);
+        $this->artisan('ops:demand:inventory:import')
+            ->expectsOutput('[Inventory Importer] Stopped importing - no hosts found')
+            ->assertExitCode(0);
     }
 
     public function testNonExistentHosts(): void

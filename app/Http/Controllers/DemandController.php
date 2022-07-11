@@ -33,6 +33,7 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -51,6 +52,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -62,13 +64,9 @@ use function sprintf;
 class DemandController extends Controller
 {
     private const CONTENT_TYPE = 'Content-Type';
-
     private const PAYMENT_DETAILS_LIMIT_DEFAULT = 1000;
-
     private const PAYMENT_DETAILS_LIMIT_MAX = 10000;
-
     private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-
     private const SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE = <<<SQL
 SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM conversions WHERE payment_id IN (%s)
 UNION ALL
@@ -76,33 +74,28 @@ SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM event_log
 LIMIT ?
 OFFSET ?;
 SQL;
-
     private const PLACEHOLDER_BANNER_ID = '{bid}';
-
     private const PLACEHOLDER_CASE_ID = '{cid}';
-
     private const PLACEHOLDER_PUBLISHER_ID = '{pid}';
-
     private const PLACEHOLDER_SERVER_ID = '{aid}';
-
     private const PLACEHOLDER_SITE_ID = '{sid}';
-
     private const PLACEHOLDER_ZONE_ID = '{zid}';
 
     private PaymentDetailsVerify $paymentDetailsVerify;
-
     private CampaignRepository $campaignRepository;
-
     private LicenseReader $licenseReader;
+    private AdsAuthenticator $authenticator;
 
     public function __construct(
         PaymentDetailsVerify $paymentDetailsVerify,
         CampaignRepository $campaignRepository,
-        LicenseReader $licenseReader
+        LicenseReader $licenseReader,
+        AdsAuthenticator $authenticator
     ) {
         $this->paymentDetailsVerify = $paymentDetailsVerify;
         $this->campaignRepository = $campaignRepository;
         $this->licenseReader = $licenseReader;
+        $this->authenticator = $authenticator;
     }
 
     public function serve(Request $request, $id): Response
@@ -531,15 +524,22 @@ SQL;
         return DB::select($query, array_merge($paymentIds, $paymentIds, [$limit, $offset]));
     }
 
-    public function inventoryList(): JsonResponse
+    public function inventoryList(Request $request): JsonResponse
     {
         $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
 
-        $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
+        $whitelist = config('app.inventory_export_whitelist');
+        if (!empty($whitelist)) {
+            $account = $this->authenticator->verifyRequest($request);
+            if (!in_array($account, $whitelist)) {
+                throw new AccessDeniedHttpException();
+            }
+        }
 
+        $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
         $bannerClassifications = $this->fetchBannerClassifications($activeCampaigns);
         $cdnEnabled = !empty(config('app.cdn_provider'));
 

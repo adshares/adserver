@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,6 +35,7 @@ use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use DateTime;
 use Illuminate\Support\Facades\Log;
 
 class AdsFetchHosts extends BaseCommand
@@ -49,14 +50,11 @@ class AdsFetchHosts extends BaseCommand
      */
     private const PERIOD = 43200;//12 hours = 12 * 60 * 60 s
 
-    /** @var string */
     protected $signature = 'ads:fetch-hosts';
 
-    /** @var string */
     protected $description = 'Fetches Demand AdServers';
 
-    /** @var DemandClient */
-    private $client;
+    private DemandClient $client;
 
     public function __construct(Locker $locker, DemandClient $client)
     {
@@ -78,7 +76,7 @@ class AdsFetchHosts extends BaseCommand
         $timeNow = time();
         $timeBlock = $this->getTimeOfFirstBlock($timeNow);
 
-        $progressBar = $this->output->createProgressBar(floor(self::PERIOD / self::BLOCK_TIME) + 1);
+        $progressBar = $this->output->createProgressBar((int)floor(self::PERIOD / self::BLOCK_TIME) + 1);
         $progressBar->start();
         while ($timeBlock <= $timeNow - self::BLOCK_TIME) {
             $blockId = dechex($timeBlock);
@@ -115,12 +113,12 @@ class AdsFetchHosts extends BaseCommand
             foreach ($broadcastArray as $broadcast) {
                 $this->handleBroadcast($broadcast);
             }
-        } catch (CommandException $ce) {
-            $code = $ce->getCode();
+        } catch (CommandException $commandException) {
+            $code = $commandException->getCode();
             if (CommandError::BROADCAST_NOT_READY === $code) {
-                Log::warning("Error $code: Broadcast not ready for block $blockId");
+                Log::warning(sprintf('Error %s: Broadcast not ready for block %s', $code, $blockId));
             } else {
-                Log::error("Error $code: Unexpected error for block $blockId");
+                Log::error(sprintf('Error %s: Unexpected error for block %s', $code, $blockId));
             }
         }
     }
@@ -128,24 +126,20 @@ class AdsFetchHosts extends BaseCommand
     private function handleBroadcast(Broadcast $broadcast): void
     {
         $address = $broadcast->getAddress();
-        $time = $broadcast->getTime();
+        $time = new DateTime('@' . $broadcast->getTime()->getTimestamp());
 
         try {
             $url = BroadcastableUrl::fromHex($broadcast->getMessage());
-            Log::debug("Fetching {$url->toString()}");
+            Log::debug(sprintf('Fetching %s', $url->toString()));
 
             $info = $this->client->fetchInfo($url);
-
             $this->validateInfo($info, $address);
-
-            Log::debug("Got {$url->toString()}");
+            Log::debug(sprintf('Got %s', $url->toString()));
 
             $host = NetworkHost::registerHost($address, $info, $time);
-
-            Log::debug("Stored {$url->toString()} as #{$host->id}");
+            Log::debug(sprintf('Stored %s as #%d', $url->toString(), $host->id));
         } catch (RuntimeException | UnexpectedClientResponseException $exception) {
-            $url = $url ?? '';
-            Log::debug("[$url] {$exception->getMessage()}");
+            Log::debug(sprintf('[%s] {%s}', $url ?? '', $exception->getMessage()));
         }
     }
 

@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Mail\Crm\SiteAdded;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
@@ -88,9 +89,15 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
 
-        $onlyAcceptedBanners = $input['only_accepted_banners'] ?? false;
-        if (!is_bool($onlyAcceptedBanners)) {
-            throw new UnprocessableEntityHttpException('Invalid only_accepted_banners');
+        $siteClassifierSetting = Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS);
+        if (Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY === $siteClassifierSetting) {
+            $onlyAcceptedBanners = true;
+        } else {
+            $defaultSetting = Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT !== $siteClassifierSetting;
+            $onlyAcceptedBanners = $input['only_accepted_banners'] ?? $defaultSetting;
+            if (!is_bool($onlyAcceptedBanners)) {
+                throw new UnprocessableEntityHttpException('Field `only_accepted_banners` must be a boolean');
+            }
         }
 
         $inputZones = $input['ad_units'] ?? null;
@@ -110,9 +117,9 @@ class SitesController extends Controller
                 $input['name'],
                 $medium,
                 $vendor,
+                $onlyAcceptedBanners,
                 $input['status'],
                 $input['primary_language'],
-                $onlyAcceptedBanners,
                 $categoriesByUser,
                 $filtering,
             );
@@ -182,6 +189,18 @@ class SitesController extends Controller
 
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
+        }
+        if (isset($input['only_accepted_banners'])) {
+            if (!is_bool($input['only_accepted_banners'])) {
+                throw new UnprocessableEntityHttpException('Field `only_accepted_banners` must be a boolean');
+            }
+            $siteClassifierSetting = Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS);
+            if (
+                Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY === $siteClassifierSetting
+                && !$input['only_accepted_banners']
+            ) {
+                throw new UnprocessableEntityHttpException('Field `only_accepted_banners` cannot be changed');
+            }
         }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
