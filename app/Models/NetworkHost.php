@@ -152,7 +152,7 @@ class NetworkHost extends Model
         $this->attributes['info'] = json_encode($info->toArray());
     }
 
-    public static function findNonExistentHostsAddresses(): array
+    public static function findNonExistentHostsAddresses(array $whitelist = []): array
     {
         $self = new self();
 
@@ -161,7 +161,14 @@ class NetworkHost extends Model
             ->rightJoin('network_campaigns', function ($join) {
                 $join->on('network_hosts.address', '=', 'network_campaigns.source_address');
             })
-            ->where('network_hosts.address', null)
+            ->where(
+                function ($query) use ($whitelist) {
+                    $query->where('network_hosts.address', null);
+                    if (!empty($whitelist)) {
+                        $query->orWhereNotIn('network_campaigns.source_address', $whitelist);
+                    }
+                }
+            )
             ->where('network_campaigns.status', '=', Status::STATUS_ACTIVE);
 
         return $query->get()->pluck('address')->toArray();
