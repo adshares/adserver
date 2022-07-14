@@ -36,7 +36,7 @@ use Symfony\Component\Lock\Store\SemaphoreStore;
  */
 class Locker
 {
-    private ?Lock $lock;
+    private ?Lock $lock = null;
 
     public function lock($name = null, $blocking = false): bool
     {
