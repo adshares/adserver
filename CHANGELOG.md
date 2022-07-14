@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Laravel 9
+### Fixed
+- Clear non whitelisted campaigns
 
 ## [1.18.5] - 2022-07-08
 ### Added

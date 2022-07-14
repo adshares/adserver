@@ -55,9 +55,10 @@ class InventoryImporterCommand extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
-        $this->removeNonExistentHosts();
+        $whitelist = config('app.inventory_import_whitelist');
+        $this->removeNonExistentHosts($whitelist);
 
-        $networkHosts = NetworkHost::fetchHosts(config('app.inventory_import_whitelist'));
+        $networkHosts = NetworkHost::fetchHosts($whitelist);
 
         $networkHostCount = $networkHosts->count();
         if ($networkHostCount === 0) {
@@ -123,9 +124,9 @@ class InventoryImporterCommand extends BaseCommand
         );
     }
 
-    private function removeNonExistentHosts(): void
+    private function removeNonExistentHosts(array $whitelist = []): void
     {
-        $addresses = NetworkHost::findNonExistentHostsAddresses();
+        $addresses = NetworkHost::findNonExistentHostsAddresses($whitelist);
 
         foreach ($addresses as $address) {
             $this->inventoryImporterService->clearInventoryForHostAddress(new AccountId($address));
