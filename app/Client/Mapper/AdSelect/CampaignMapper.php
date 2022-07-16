@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\Classification;
@@ -32,7 +33,7 @@ use DateTime;
 
 class CampaignMapper
 {
-    public static function map(Campaign $campaign): array
+    public static function map(Medium $medium, Campaign $campaign): array
     {
         $banners = [];
         $campaignArray = $campaign->toArray();
@@ -45,7 +46,10 @@ class CampaignMapper
                 ],
             ];
             if ($banner->getType() === Banner::TYPE_VIDEO) {
-                $mappedBanner['banner_size'] = Size::findMatching(...Size::toDimensions($banner->getSize()));
+                $mappedBanner['banner_size'] = Size::findMatchingWithSizes(
+                    self::extractVideoSizesFromMedium($medium),
+                    ...Size::toDimensions($banner->getSize())
+                );
             } else {
                 $mappedBanner['banner_size'] = $banner->getSize();
             }
@@ -101,5 +105,15 @@ class CampaignMapper
         }
 
         return $dateEnd->getTimestamp();
+    }
+
+    private static function extractVideoSizesFromMedium(Medium $medium): array
+    {
+        foreach ($medium->getFormats() as $format) {
+            if (Banner::TYPE_VIDEO === $format->getType()) {
+                return array_keys($format->getScopes());
+            }
+        }
+        return [];
     }
 }

@@ -73,7 +73,7 @@ final class NetworkBannerFilterTest extends TestCase
 
     public function testInvalidSize(): void
     {
-        $request = self::getRequest(['sizes' => '["invalid"]']);
+        $request = self::getRequest(['sizes' => '["-invalid-invalid-"]']);
 
         self::expectException(InvalidArgumentException::class);
         new NetworkBannerFilter($request, 1, 2);

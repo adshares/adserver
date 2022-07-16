@@ -54,7 +54,9 @@ class MimeTypesValidator
 
             $arrayDiff = array_diff(array_unique($mimes), $supported[$bannerType]);
             if (!empty($arrayDiff)) {
-                throw new InvalidArgumentException(sprintf('Not supported ad mime type `%s`', join(', ', $arrayDiff)));
+                throw new InvalidArgumentException(
+                    sprintf('Not supported ad mime type `%s` for %s banner', join(', ', $arrayDiff), $bannerType)
+                );
             }
         }
     }
