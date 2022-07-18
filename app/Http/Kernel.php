@@ -50,6 +50,8 @@ class Kernel extends HttpKernel
 
     public const ADMIN_ACCESS = 'only-admin-users';
 
+    public const ADMIN_JWT_ACCESS = 'jwt-admin-users';
+
     public const MODERATOR_ACCESS = 'only-moderator-users';
 
     public const AGENCY_ACCESS = 'only-agency-users';
@@ -79,6 +81,10 @@ class Kernel extends HttpKernel
         ],
         self::ADMIN_ACCESS => [
             self::AUTH . ':api',
+            RequireAdminAccess::class,
+        ],
+        self::ADMIN_JWT_ACCESS => [
+            self::AUTH . ':jwt',
             RequireAdminAccess::class,
         ],
         self::MODERATOR_ACCESS => [

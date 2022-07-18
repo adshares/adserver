@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,6 +45,9 @@ class RouteServiceProvider extends ServiceProvider
 
         Route::prefix(self::PREFIX_ADMIN)
             ->group(base_path('routes/admin.php'));
+
+        Route::prefix(self::PREFIX_API)
+            ->group(base_path('routes/config.php'));
 
         Route::prefix(self::PREFIX_API)
             ->group(base_path('routes/manager.php'));
