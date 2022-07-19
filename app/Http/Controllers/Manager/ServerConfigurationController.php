@@ -21,120 +21,98 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Rules\AccountIdRule;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Config\RegistrationMode;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
 
 class ServerConfigurationController extends Controller
 {
-    private const KEYS_MAIL = [
-        Config::SUPPORT_EMAIL,
-        Config::TECHNICAL_EMAIL,
-    ];
-
-    private const RULES_MAIL = [
-        Config::SUPPORT_EMAIL => 'email|max:255',
-        Config::TECHNICAL_EMAIL => 'email|max:255',
-    ];
-
-    private const KEYS_WALLET = [
+    private const ALLOWED_KEYS = [
+        Config::ADSERVER_NAME,
+        Config::AUTO_CONFIRMATION_ENABLED,
+        Config::AUTO_REGISTRATION_ENABLED,
         Config::COLD_WALLET_ADDRESS,
         Config::COLD_WALLET_IS_ACTIVE,
-        Config::HOT_WALLET_MAX_VALUE,
+        Config::EMAIL_VERIFICATION_REQUIRED,
         Config::HOT_WALLET_MIN_VALUE,
+        Config::HOT_WALLET_MAX_VALUE,
+        Config::INVOICE_ENABLED,
+        Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME,
+        Config::PANEL_PLACEHOLDER_UPDATE_TIME,
+        Config::REFERRAL_REFUND_ENABLED,
+        Config::REGISTRATION_MODE,
+        Config::SITE_ACCEPT_BANNERS_MANUALLY,
+        Config::SITE_CLASSIFIER_LOCAL_BANNERS,
+        Config::SUPPORT_EMAIL,
+        Config::TECHNICAL_EMAIL,
+//        Config::OPERATOR_TX_FEE,
+//        Config::OPERATOR_RX_FEE,
+//        Config::LICENCE_TX_FEE,
+//        Config::LICENCE_RX_FEE,
+//        Config::LICENCE_ACCOUNT,
+//        Config::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
+//        Config::REFERRAL_REFUND_COMMISSION,
+//        Config::INVOICE_CURRENCIES,
+//        Config::INVOICE_NUMBER_FORMAT,
+//        Config::INVOICE_COMPANY_NAME,
+//        Config::INVOICE_COMPANY_ADDRESS,
+//        Config::INVOICE_COMPANY_POSTAL_CODE,
+//        Config::INVOICE_COMPANY_CITY,
+//        Config::INVOICE_COMPANY_COUNTRY,
+//        Config::INVOICE_COMPANY_VAT_ID,
+//        Config::INVOICE_COMPANY_BANK_ACCOUNTS,
+
+// not administrator's configuration
+//        Config::ADS_LOG_START,
+//        Config::ADSELECT_INVENTORY_EXPORT_TIME,
+//        Config::ADPAY_BID_STRATEGY_EXPORT_TIME,
+//        Config::ADPAY_CAMPAIGN_EXPORT_TIME,
+//        Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
+//        Config::ADPAY_LAST_EXPORTED_EVENT_TIME,
+//        Config::LAST_UPDATED_IMPRESSION_ID,
+//        Config::OPERATOR_WALLET_EMAIL_LAST_TIME,
     ];
+    private const MAX_VALUE_LENGTH = 255;
 
-    private const RULES_WALLET = [
-        Config::COLD_WALLET_IS_ACTIVE => 'boolean',
-        Config::HOT_WALLET_MAX_VALUE => [
-            'integer',
-            'min:0',
-            'max:100000000000000000',
-            'gt:' . Config::HOT_WALLET_MIN_VALUE,
-        ],
-        Config::HOT_WALLET_MIN_VALUE => [
-            'integer',
-            'min:0',
-            'max:100000000000000000',
-        ],
-    ];
-
-    public function fetchMail(): JsonResponse
+    public function fetch(string $key = null): JsonResponse
     {
-        return self::json($this->fetchData(self::KEYS_MAIL));
-    }
-
-    public function storeMail(Request $request): JsonResponse
-    {
-        $validated = $request->validate(self::RULES_MAIL);
-        $this->storeData($validated);
-        return self::json();
-    }
-
-    public function fetchWallet(): JsonResponse
-    {
-        return self::json($this->fetchData(self::KEYS_WALLET));
-    }
-
-    public function storeWallet(Request $request): JsonResponse
-    {
-        $hotWalletValues = $this->fetchData([Config::HOT_WALLET_MAX_VALUE, Config::HOT_WALLET_MIN_VALUE]);
-        $input = array_merge($hotWalletValues, $request->input());
-        $rules = array_merge(
-            self::RULES_WALLET,
-            [
-                Config::COLD_WALLET_ADDRESS => new AccountIdRule([new AccountId(config('app.adshares_address'))]),
-            ]
-        );
-        $validated = Validator::make(
-            $input,
-            $rules,
-            ['hotwallet-max-value.gt' => 'The hotwallet-max-value must be greater than hotwallet-min-value']
-        )->validated();
-
-        if (isset($validated[Config::COLD_WALLET_IS_ACTIVE])) {
-            $validated[Config::COLD_WALLET_IS_ACTIVE] = (int)$validated[Config::COLD_WALLET_IS_ACTIVE];
+        if (null !== $key) {
+            $collection = Config::where('key', $key);
+        } else {
+            $collection = Config::all();
         }
-
-        $this->storeData($validated);
-        return self::json();
-    }
-
-    /**
-     * @deprecated general purpose endpoint can be removed at any time
-     */
-    public function fetch(Request $request): JsonResponse
-    {
-        $content = json_decode($request->getContent(), true);
-
-        return self::json($this->fetchData($content));
-    }
-
-    /**
-     * @deprecated general purpose endpoint can be removed at any time
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $content = $request->input();
-
-        $this->storeData($content);
-
-        return self::json();
-    }
-
-    private function fetchData(array $keys): array
-    {
-        return Config::whereIn('key', $keys)->get()
+        $data = $collection
             ->pluck('value', 'key')
             ->toArray();
+
+        return self::json($data);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->input();
+        $this->storeData($this->validatedData($data));
+
+        return self::json();
+    }
+
+    public function storeOne(string $key, Request $request): JsonResponse
+    {
+        $data = [$key => $request->input('value')];
+        $this->storeData($this->validatedData($data));
+
+        return self::json();
     }
 
     private function storeData(array $data): void
@@ -150,5 +128,151 @@ class ServerConfigurationController extends Controller
             DB::rollBack();
             throw new RuntimeException('Cannot store configuration');
         }
+    }
+
+    private function validatedData(array $data): array
+    {
+        if (!$data) {
+            throw new UnprocessableEntityHttpException('Data is required');
+        }
+
+        $validatedData = [];
+        foreach ($data as $field => $value) {
+            self::validateKeyAndValue($field, $value);
+
+            if (self::isEmailField($field) && false === ($value = filter_var($value, FILTER_VALIDATE_EMAIL))) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an e-mail', $field));
+            } elseif (self::isBooleanField($field)) {
+                if (null === ($value = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE))) {
+                    throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a boolean', $field));
+                }
+                $value = $value ? '1' : '0';
+            } elseif (self::isClickAmountField($field)) {
+                self::validateClickAmount($field, $value);
+            } elseif (self::isAccountIdField($field)) {
+                self::validateAccountIdField($field, $value);
+            } elseif (self::isDateTimeField($field)) {
+                self::validateDateTime($field, $value);
+            } elseif (Config::REGISTRATION_MODE === $field) {
+                self::validateRegistrationMode($field, $value);
+            } elseif (Config::SITE_CLASSIFIER_LOCAL_BANNERS === $field) {
+                self::validateSiteClassifierLocalBanners($field, $value);
+            }
+
+            $validatedData[$field] = $value;
+        }
+
+        return $validatedData;
+    }
+
+    private static function validateAccountIdField(string $field, string $value): void
+    {
+        if (!AccountId::isValid($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an account ID', $field));
+        }
+    }
+
+    private static function validateDateTime(string $field, $value): void
+    {
+        if (false === DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value)) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Field `%s` must be a date in ISO-8601 format', $field)
+            );
+        }
+    }
+
+    private static function validateKeyAndValue($field, $value): void
+    {
+        if (!in_array($field, self::ALLOWED_KEYS, true)) {
+            throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $field));
+        }
+        if (!is_string($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a string', $field));
+        }
+        if (strlen($value) > self::MAX_VALUE_LENGTH) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Field `%s` must have at most %d characters', $field, self::MAX_VALUE_LENGTH)
+            );
+        }
+    }
+
+    private static function validateClickAmount(string $field, string $value): void
+    {
+        if (
+            false === filter_var(
+                $value,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 0, 'max_range' => AdsConverter::TOTAL_SUPPLY]]
+            )
+        ) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an amount in clicks', $field));
+        }
+    }
+
+    private static function validateRegistrationMode(string $field, string $value): void
+    {
+        if (!in_array($value, RegistrationMode::cases(), true)) {
+            throw new UnprocessableEntityHttpException(
+                sprintf(
+                    'Field `%s` must be one of %s',
+                    $field,
+                    implode(', ', RegistrationMode::cases())
+                )
+            );
+        }
+    }
+
+    private static function validateSiteClassifierLocalBanners($field, $value): void
+    {
+        if (!in_array($value, Config::ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS, true)) {
+            throw new UnprocessableEntityHttpException(
+                sprintf(
+                    'Field `%s` must be one of %s',
+                    $field,
+                    implode(', ', Config::ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS)
+                )
+            );
+        }
+    }
+
+    private static function isAccountIdField(string $field): bool
+    {
+        return in_array($field, [Config::COLD_WALLET_ADDRESS], true);
+    }
+
+    private static function isBooleanField(string $field): bool
+    {
+        return in_array(
+            $field,
+            [
+                Config::AUTO_CONFIRMATION_ENABLED,
+                Config::AUTO_REGISTRATION_ENABLED,
+                Config::EMAIL_VERIFICATION_REQUIRED,
+                Config::COLD_WALLET_IS_ACTIVE,
+                Config::INVOICE_ENABLED,
+                Config::REFERRAL_REFUND_ENABLED,
+                Config::SITE_ACCEPT_BANNERS_MANUALLY,
+            ],
+            true
+        );
+    }
+
+    private static function isClickAmountField(string $field): bool
+    {
+        return in_array($field, [Config::HOT_WALLET_MIN_VALUE, Config::HOT_WALLET_MAX_VALUE], true);
+    }
+
+    private static function isDateTimeField(string $field): bool
+    {
+        return in_array(
+            $field,
+            [Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME, Config::PANEL_PLACEHOLDER_UPDATE_TIME],
+            true
+        );
+    }
+
+    private static function isEmailField(string $field): bool
+    {
+        return in_array($field, [Config::TECHNICAL_EMAIL, Config::SUPPORT_EMAIL], true);
     }
 }

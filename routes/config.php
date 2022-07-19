@@ -26,11 +26,7 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(function () {
-    Route::post('config', [ServerConfigurationController::class, 'fetch']);
+    Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
     Route::patch('config', [ServerConfigurationController::class, 'store']);
-
-    Route::get('config/mail', [ServerConfigurationController::class, 'fetchMail']);
-    Route::patch('config/mail', [ServerConfigurationController::class, 'storeMail']);
-    Route::get('config/wallet', [ServerConfigurationController::class, 'fetchWallet']);
-    Route::patch('config/wallet', [ServerConfigurationController::class, 'storeWallet']);
+    Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 });
