@@ -608,7 +608,11 @@ class WalletController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $message = sprintf('Connect your wallet with %s adserver %s', config('app.adserver_name'), NonceGenerator::get());
+        $message = sprintf(
+            'Connect your wallet with %s adserver %s',
+            config('app.adserver_name'),
+            NonceGenerator::get()
+        );
 
         $payload = [
             'request' => $request->all(),
