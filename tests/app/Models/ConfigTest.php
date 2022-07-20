@@ -159,11 +159,11 @@ class ConfigTest extends TestCase
 
     public function testFetchAdminSettings(): void
     {
-        $adminSettings = [
+        $expectedSettings = [
             'payment-tx-fee' => '0.01',
             'payment-rx-fee' => '0.01',
-            'hotwallet-min-value' => '500000000000000',
-            'hotwallet-max-value' => '2000000000000000',
+            'hotwallet-min-value' => '2000000000000000',
+            'hotwallet-max-value' => '50000000000000000',
             'cold-wallet-address' => '',
             'cold-wallet-is-active' => '0',
             'adserver-name' => 'AdServer',
@@ -185,10 +185,17 @@ class ConfigTest extends TestCase
             'invoice-company-country' => '',
             'invoice-company-vat-id' => '',
             'invoice-company-bank-accounts' => '',
+            'site-accept-banners-manually' => '0',
+            'site-classifier-local-banners' => 'all-by-default',
         ];
 
         Cache::forget('config.admin');
-        self::assertEquals($adminSettings, Config::fetchAdminSettings());
+
+        $settings = Config::fetchAdminSettings();
+        foreach ($expectedSettings as $key => $value) {
+            self::assertArrayHasKey($key, $settings);
+            self::assertEquals($value, $settings[$key]);
+        }
     }
 
     public function testUpdateAdminSettings(): void
@@ -219,11 +226,18 @@ class ConfigTest extends TestCase
             'invoice-company-country' => 'GB',
             'invoice-company-vat-id' => '123123123123',
             'invoice-company-bank-accounts' => '{}',
+            'site-accept-banners-manually' => '0',
+            'site-classifier-local-banners' => 'all-by-default',
         ];
 
         Config::updateAdminSettings($adminSettings);
         Cache::forget('config.admin');
-        self::assertEquals($adminSettings, Config::fetchAdminSettings());
+
+        $settings = Config::fetchAdminSettings();
+        foreach ($adminSettings as $key => $value) {
+            self::assertArrayHasKey($key, $settings);
+            self::assertEquals($value, $settings[$key]);
+        }
     }
 
     public function boolDataProvider(): array

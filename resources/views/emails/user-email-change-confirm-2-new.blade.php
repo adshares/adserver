@@ -11,5 +11,5 @@ Confirm and save new email
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

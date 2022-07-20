@@ -1,6 +1,6 @@
 userId={{ $userUuid }}
 email={{ $email }}
-adserverName={{ config('app.name') }}
+adserverName={{ config('app.adserver_name') }}
 adserverId={{ config('app.adserver_id') }}
 publisher=true
 websiteUrl={{ $site->url }}

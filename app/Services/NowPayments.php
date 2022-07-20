@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -128,7 +128,7 @@ final class NowPayments
             'paymentAmount' => $amount,
             'products' => [
                 [
-                    'name' => sprintf('Deposit ADS into %s', config('app.name')),
+                    'name' => sprintf('Deposit ADS into %s', config('app.adserver_name')),
                     'quantity' => 1,
                     'subtotal' => $amount,
                     'subtotal_tax' => 0,

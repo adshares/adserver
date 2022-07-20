@@ -13,5 +13,5 @@ Withdrawal order has been added.
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

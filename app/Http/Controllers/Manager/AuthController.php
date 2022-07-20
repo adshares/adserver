@@ -369,7 +369,7 @@ MSG;
 
         $message = sprintf(
             $message,
-            config('app.name'),
+            config('app.adserver_name'),
             new SecureUrl((string)config('app.terms_url')),
             new SecureUrl((string)config('app.privacy_url')),
             date(DateTimeInterface::RFC2822)

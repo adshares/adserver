@@ -12,5 +12,5 @@ Please confirm you want to connect your Adshares account to this cryptocurrency 
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

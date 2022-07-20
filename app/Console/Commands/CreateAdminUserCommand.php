@@ -53,7 +53,7 @@ class CreateAdminUserCommand extends BaseCommand
             $password = env('TMP_ADMIN_PASSWORD');
         }
 
-        $input = $this->ask('Please type an admin email', config('app.adshares_operator_email'));
+        $input = $this->ask('Please type an admin email', config('app.technical_email'));
 
         if (!$input) {
             $this->error('Email address cannot be empty');

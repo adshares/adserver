@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -91,9 +91,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TransferMoneyToColdWallet::class,
             function (Application $app) {
-                $coldWalletAddress = (string)config('app.adshares_wallet_cold_address');
-                $minAmount = (int)config('app.adshares_wallet_min_amount');
-                $maxAmount = (int)config('app.adshares_wallet_max_amount');
+                $coldWalletAddress = config('app.cold_wallet_address') ?? '';
+                $minAmount = (int)config('app.hotwallet_min_value');
+                $maxAmount = (int)config('app.hotwallet_max_value');
                 $adsClient = $app->make(AdsClient::class);
 
                 return new TransferMoneyToColdWallet($minAmount, $maxAmount, $coldWalletAddress, $adsClient);
@@ -103,8 +103,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             WalletFundsChecker::class,
             function (Application $app) {
-                $minAmount = (int)config('app.adshares_wallet_min_amount');
-                $maxAmount = (int)config('app.adshares_wallet_max_amount');
+                $minAmount = (int)config('app.hotwallet_min_value');
+                $maxAmount = (int)config('app.hotwallet_max_value');
                 $adsClient = $app->make(AdsClient::class);
 
                 return new WalletFundsChecker($minAmount, $maxAmount, $adsClient);

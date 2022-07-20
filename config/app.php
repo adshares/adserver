@@ -20,13 +20,11 @@
  */
 
 $appUrl = env('APP_URL', 'http://localhost');
-$appEnv = env('APP_ENV', 'production');
 $aduserUrl = env('ADUSER_BASE_URL', env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION')));
 
 return [
-    'name' => env('APP_NAME', 'AdServer'),
     'version' => env('APP_VERSION', '#'),
-    'env' => $appEnv,
+    'env' => env('APP_ENV', 'production'),
     'url' => $appUrl,
     'debug' => env('APP_DEBUG', false),
     'refresh_testing_database' => env('APP_REFRESH_TESTING_DATABASE', false),
@@ -97,10 +95,6 @@ return [
     'terms_url' => $appUrl . '/policies/terms.html',
     'privacy_url' => $appUrl . '/policies/privacy.html',
     'adshares_address' => env('ADSHARES_ADDRESS'),
-    'adshares_wallet_cold_address' => env('ADSHARES_WALLET_COLD_ADDRESS'),
-    'adshares_wallet_max_amount' => 50000000000000000,
-    'adshares_wallet_min_amount' => 2000000000000000,
-    'adshares_operator_email' => env('ADSHARES_OPERATOR_EMAIL'),
     'adshares_node_host' => env('ADSHARES_NODE_HOST'),
     'adshares_node_port' => env('ADSHARES_NODE_PORT'),
     'adshares_secret' => env('ADSHARES_SECRET'),
@@ -173,8 +167,10 @@ return [
     'upload_limit_model' => (int)env('UPLOAD_LIMIT_MODEL', 1024 * 1024),
     'upload_limit_video' => (int)env('UPLOAD_LIMIT_VIDEO', 1024 * 1024),
     'upload_limit_zip' => (int)env('UPLOAD_LIMIT_ZIP', 512 * 1024),
-    'inventory_import_whitelist' => array_filter(explode(',', env('INVENTORY_IMPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
-    'inventory_export_whitelist' => array_filter(explode(',', env('INVENTORY_EXPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
+    'inventory_import_whitelist' =>
+        array_filter(explode(',', env('INVENTORY_IMPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
+    'inventory_export_whitelist' =>
+        array_filter(explode(',', env('INVENTORY_EXPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

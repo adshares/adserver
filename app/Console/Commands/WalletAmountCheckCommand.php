@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -40,8 +40,7 @@ class WalletAmountCheckCommand extends BaseCommand
 
     protected $description = 'Check and inform operator about insufficient funds on the account.';
 
-    /** @var WalletFundsChecker */
-    private $hotWalletCheckerService;
+    private WalletFundsChecker $hotWalletCheckerService;
 
     public function __construct(Locker $locker, WalletFundsChecker $hotWalletCheckerService)
     {
@@ -78,8 +77,8 @@ class WalletAmountCheckCommand extends BaseCommand
         }
 
         if ($this->shouldEmailBeSent()) {
-            $email = config('app.adshares_operator_email');
-            $transferValueInAds = (string)number_format((float)AdsConverter::clicksToAds($transferValue), 4, '.', '');
+            $email = config('app.technical_email');
+            $transferValueInAds = number_format((float)AdsConverter::clicksToAds($transferValue), 4, '.', '');
 
             Mail::to($email)->queue(
                 new WalletFundsEmail($transferValueInAds, (string)config('app.adshares_address'))
@@ -89,7 +88,7 @@ class WalletAmountCheckCommand extends BaseCommand
                 '[Wallet] Email has been sent to %s to transfer %s ADS from Cold (%s) to Hot Wallet (%s).',
                 $email,
                 $transferValueInAds,
-                config('app.adshares_wallet_cold_address'),
+                config('app.cold_wallet_address'),
                 config('app.adshares_address')
             );
 

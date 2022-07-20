@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -222,7 +222,7 @@ class AdsProcessTx extends BaseCommand
 
     private function checkIfColdWalletTransaction(AdsPayment $adsPayment): bool
     {
-        return $adsPayment->address === config('app.adshares_wallet_cold_address');
+        return $adsPayment->address === config('app.cold_wallet_address');
     }
 
     private function handleSendOneTx(AdsPayment $adsPayment, SendOneTransaction $transaction): void

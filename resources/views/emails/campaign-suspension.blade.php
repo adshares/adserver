@@ -9,5 +9,5 @@ Once there are sufficient funds on your account, your campaigns will be automati
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

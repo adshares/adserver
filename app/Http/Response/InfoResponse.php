@@ -70,7 +70,7 @@ final class InfoResponse implements Arrayable
         return new self(
             new Info(
                 self::ADSHARES_MODULE_NAME,
-                (string)config('app.name'),
+                config('app.adserver_name'),
                 (string)config('app.version'),
                 new SecureUrl((string)config('app.url')),
                 new Url((string)config('app.adpanel_url')),
