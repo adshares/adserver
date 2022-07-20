@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
@@ -28,6 +29,8 @@ class MoveEnvToConfig extends Migration
 
     public function up(): void
     {
+        self::fillMissingDates();
+
         $keys = array_map(
             fn($item) => sprintf("'%s'", $item),
             [Config::LICENCE_ACCOUNT, Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE]
@@ -52,5 +55,11 @@ class MoveEnvToConfig extends Migration
             ['key' => Config::LICENCE_TX_FEE],
             ['value' => '0.01']
         );
+    }
+
+    private static function fillMissingDates(): void
+    {
+        DB::update('UPDATE configs SET created_at = updated_at WHERE created_at IS NULL');
+        DB::update('UPDATE configs SET updated_at = created_at WHERE updated_at IS NULL');
     }
 }
