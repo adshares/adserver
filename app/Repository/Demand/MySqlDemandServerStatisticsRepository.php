@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -66,6 +66,8 @@ SQL;
     private const QUERY_CAMPAIGNS = <<<SQL
 SELECT
     c.name,
+    c.medium,
+    c.vendor,
     SUM(IFNULL(e.views, 0)) AS impressions,
     ROUND(SUM(IFNULL(e.cost, 0)), 2) AS cost,
     ROUND(1000 * IFNULL(SUM(e.cost)/SUM(e.views), 0), 2) AS cpm,
@@ -80,6 +82,8 @@ FROM (
 JOIN (
     SELECT 
         c.uuid AS campaign_id,
+        c.medium AS medium,
+        c.vendor AS vendor,
         GROUP_CONCAT(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(
           SUBSTRING_INDEX(SUBSTRING_INDEX(c.landing_url, '/', 3), '://', -1), '/', 1), '?', 1), "www.", -1)) AS name,
         GROUP_CONCAT((
@@ -88,9 +92,9 @@ JOIN (
             WHERE b.campaign_id = c.id
         )) AS sizes
     FROM campaigns c
-    GROUP BY 1
+    GROUP BY 1, 2, 3
 ) c ON c.campaign_id = e.campaign_id
-GROUP BY 1;
+GROUP BY 1, 2, 3;
 SQL;
 
     private const QUERY_BANNERS_SIZES = <<<SQL
