@@ -21,7 +21,6 @@
 
 declare(strict_types=1);
 
-use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,9 +43,6 @@ Route::get('/l/ns/view', [SupplyController::class, 'logNetworkSimpleView']);
 Route::get('/l/ns/click', [SupplyController::class, 'logNetworkSimpleClick']);
 
 Route::get('/supply/targeting-reach', [SupplyController::class, 'targetingReachList']);
-
-### simulator ###
-Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
 # WHY PAGE
 Route::get('/supply/why', [SupplyController::class, 'why']);

@@ -31,18 +31,23 @@ class MySqlSupplyServerStatisticsRepository
     private const QUERY_STATISTICS = <<<SQL
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d")                       AS date,
+  s.medium,
+  s.vendor,
   SUM(views)                                                      AS impressions,
   SUM(clicks)                                                     AS clicks,
   ROUND((SUM(e.revenue_case) / 100000000000) / #volume_coefficient, 2) AS volume
 FROM network_case_logs_hourly e
+JOIN sites s ON e.site_id = s.uuid
 WHERE e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
-GROUP BY 1;
+GROUP BY 1, 2, 3;
 SQL;
 
     private const QUERY_DOMAINS = <<<SQL
 SELECT
   s.domain                                                          AS name,
+  s.medium,
+  s.vendor,
   SUM(l.views)                                                      AS impressions,
   SUM(l.clicks)                                                     AS clicks,
   ROUND((SUM(l.revenue_case) / 100000000000) / #volume_coefficient, 2) AS volume
@@ -50,13 +55,15 @@ FROM network_case_logs_hourly l JOIN sites s ON l.site_id = s.uuid
 WHERE l.hour_timestamp < DATE(NOW()) - INTERVAL #offset DAY
   AND l.hour_timestamp >= DATE(NOW()) - INTERVAL #offset+#days DAY
   AND s.deleted_at IS NULL
-GROUP BY 1
+GROUP BY 1, 2, 3
 HAVING impressions > 0;
 SQL;
 
     private const QUERY_SIZES = <<<SQL
 SELECT
   z.size                         AS size,
+  s.medium,
+  s.vendor,
   IFNULL(SUM(e.views), 0)        AS impressions,
   COUNT(*)                       AS number
 FROM zones z
@@ -70,7 +77,7 @@ FROM zones z
   ) e ON e.zone_id = z.uuid
 WHERE z.status = 1
   AND z.deleted_at IS NULL
-GROUP BY 1;
+GROUP BY 1, 2, 3;
 SQL;
 
     public function fetchStatistics(float $totalFee): array

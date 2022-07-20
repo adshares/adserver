@@ -255,11 +255,6 @@ final class Size
         );
     }
 
-    public static function isValid(string $size): bool
-    {
-        return array_key_exists($size, self::SIZE_INFOS);
-    }
-
     public static function fromDimensions(int $width, int $height): string
     {
         return sprintf('%dx%d', $width, $height);
@@ -275,33 +270,31 @@ final class Size
         ];
     }
 
-    public static function findMatching(int $width, int $height, float $minZoom = 0.25, float $maxZoom = 4.0): array
-    {
+    public static function findMatchingWithSizes(
+        array $sizes,
+        int $width,
+        int $height,
+        float $minZoom = 0.25,
+        float $maxZoom = 4.0
+    ): array {
         if ($width <= 0 || $height <= 0) {
             return [];
         }
 
-        return array_keys(
-            array_filter(
-                self::SIZE_INFOS,
-                function ($info, $size) use ($width, $height, $minZoom, $maxZoom) {
-                    if ($info['type'] !== self::TYPE_DISPLAY) {
-                        return false;
-                    }
+        return array_filter(
+            $sizes,
+            function ($size) use ($width, $height, $minZoom, $maxZoom) {
+                [$x, $y] = self::toDimensions($size);
 
-                    [$x, $y] = explode("x", $size);
+                $zoom = min($x / $width, $y / $height);
+                if ($zoom < $minZoom || $zoom > $maxZoom) {
+                    return false;
+                }
 
-                    $zoom = min($x / $width, $y / $height);
-                    if ($zoom < $minZoom || $zoom > $maxZoom) {
-                        return false;
-                    }
+                $occupiedField = $zoom * min($width / $x, $height / $y);
 
-                    $occupiedField = $zoom * min($width / $x, $height / $y);
-
-                    return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
-                },
-                ARRAY_FILTER_USE_BOTH
-            )
+                return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
+            }
         );
     }
 

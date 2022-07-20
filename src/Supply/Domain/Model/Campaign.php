@@ -34,24 +34,17 @@ use Datetime;
 final class Campaign
 {
     private Id $id;
-
     private string $landingUrl;
-
     /** @var ArrayCollection|Banner[] */
     private ArrayCollection $banners;
-
     private SourceCampaign $sourceCampaign;
-
     private Budget $budget;
-
     private array $targetingExcludes;
-
     private array $targetingRequires;
-
     private Status $status;
-
+    private string $medium;
+    private ?string $vendor;
     private Id $demandCampaignId;
-
     private CampaignDate $campaignDate;
 
     public function __construct(
@@ -63,6 +56,8 @@ final class Campaign
         Budget $budget,
         SourceCampaign $sourceCampaign,
         Status $status,
+        string $medium,
+        ?string $vendor,
         array $targetingRequires = [],
         array $targetingExcludes = []
     ) {
@@ -74,6 +69,8 @@ final class Campaign
         $this->targetingRequires = $targetingRequires;
         $this->targetingExcludes = $targetingExcludes;
         $this->status = $status;
+        $this->medium = $medium;
+        $this->vendor = $vendor;
         $this->campaignDate = $campaignDate;
         $this->banners = new ArrayCollection($banners);
     }
@@ -117,6 +114,8 @@ final class Campaign
             'targeting_requires' => $this->targetingRequires,
             'targeting_excludes' => $this->targetingExcludes,
             'status' => $this->status->getStatus(),
+            'medium' => $this->medium,
+            'vendor' => $this->vendor,
         ];
     }
 
@@ -186,5 +185,15 @@ final class Campaign
     public function getMaxCpm(): ?int
     {
         return $this->budget->getMaxCpm();
+    }
+
+    public function getMedium(): string
+    {
+        return $this->medium;
+    }
+
+    public function getVendor(): ?string
+    {
+        return $this->vendor;
     }
 }

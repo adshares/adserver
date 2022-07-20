@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -217,85 +217,8 @@ class Simulator extends Controller
         'za' => 'Zhuang, Chuang',
         'zu' => 'Zulu',
     ];
-    public const FILTERING_JSON = <<<FILTERING_JSON
-[
-          {
-            "id": "1",
-            "label": "Creative type",
-            "key":"category",
-            "values": [
-              {"label": "Audio Ad (Auto-Play)", "value": "1"},
-              {"label": "Audio Ad (User Initiated)", "value": "2"},
-              {"label": "In-Banner Video Ad (Auto-Play)", "value": "6"},
-              {"label": "In-Banner Video Ad (User Initiated)", "value": "7"},
-              {"label": "Provocative or Suggestive Imagery", "value": "9"},
-              {"label": "Shaky, Flashing, Flickering, Extreme Animation, Smileys", "value": "10"},
-              {"label": "Surveys", "value": "11"},
-              {"label": "Text Only", "value": "12"},
-              {"label": "User Interactive (e.g., Embedded Games)", "value": "13"},
-              {"label": "Windows Dialog or Alert Style", "value": "14"},
-              {"label": "Has Audio On/Off Button", "value": "15"}
-            ],
-            "value_type": "string",
-            "allow_input": true
-          },
-          {
-            "id": "2",
-            "label": "Language",
-            "key": "lang",
-            "values": [
-              {"label": "Polish", "value": "pl"},
-              {"label": "English", "value": "en"},
-              {"label": "Italian", "value": "it"},
-              {"label": "Japanese", "value": "jp"}
-            ],
-            "value_type": "string",
-            "allow_input": false
-          },      
-          {
-            "id": "3",
-            "label": "Browser",
-            "key": "browser",
-            "values": [
-              {"label": "Firefox", "value": "firefox"},
-              {"label": "Chrome", "value": "chrome"},
-              {"label": "Safari", "value": "safari"},
-              {"label": "Edge", "value": "edge"}
-            ],
-            "value_type": "string",
-            "allow_input": false
-          },  
-          {
-            "id": "4",
-            "label": "Javascript support",
-            "key": "js_enabled",
-            "value_type": "boolean",
-            "values": [
-              {"label": "Yes", "value": "true"},
-              {"label": "No", "value": "false"}
-            ],
-            "allow_input": false
-          }
-        ]
-FILTERING_JSON;
 
-    public static function getZoneTypes(): array
-    {
-        $types = [];
-
-        foreach (Size::SIZE_INFOS as $size => $meta) {
-            $types[] = [
-                'label' => $meta['label'],
-                'size' => $size,
-                'tags' => $meta['tags'],
-                'type' => $meta['type'],
-            ];
-        }
-
-        return $types;
-    }
-
-    public static function getAvailableLanguages()
+    public static function getAvailableLanguages(): array
     {
         return array_map(
             function ($key, $value) {
@@ -303,29 +226,6 @@ FILTERING_JSON;
             },
             array_keys(self::LANGUAGES),
             self::LANGUAGES
-        );
-    }
-
-    public function view()
-    {
-        return new Response();
-    }
-
-    public function click()
-    {
-        return new Response();
-    }
-
-    public function userData()
-    {
-        return new JsonResponse(
-            [
-                'user' => [
-                    'keywords' => 'one, two, three',
-                    'human_score' => 5,
-                ],
-                'lang' => 'pl',
-            ]
         );
     }
 }

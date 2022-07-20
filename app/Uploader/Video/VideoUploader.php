@@ -25,8 +25,10 @@ namespace Adshares\Adserver\Uploader\Video;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Supply\Domain\ValueObject\Size;
 use getID3;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -38,6 +40,7 @@ class VideoUploader implements Uploader
 {
     public const VIDEO_FILE = 'video';
     private const VIDEO_DISK = 'banners';
+    private const FORMAT_TYPE_VIDEO = 'video';
 
     private Request $request;
 
@@ -46,23 +49,41 @@ class VideoUploader implements Uploader
         $this->request = $request;
     }
 
-    public function upload(): UploadedFile
+    public function upload(Medium $medium): UploadedFile
     {
         $file = $this->request->file('file');
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_video')) {
             throw new RuntimeException('Invalid video size');
         }
+        $fileInfo = (new getID3())->analyze($file->getRealPath());
+        $width = $fileInfo['video']['resolution_x'];
+        $height = $fileInfo['video']['resolution_y'];
+
+        $this->validateDimensions($medium, $width, $height);
         $name = $file->store('', self::VIDEO_DISK);
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'name' => $name])
         );
 
-        $fileInfo = (new getID3())->analyze($file->getRealPath());
-        $width = $fileInfo['video']['resolution_x'];
-        $height = $fileInfo['video']['resolution_y'];
-
         return new UploadedVideo($name, $previewUrl->toString(), $width, $height);
+    }
+
+    private function validateDimensions(Medium $medium, $width, $height): void
+    {
+        if (empty(Size::findMatchingWithSizes($this->extractSizesFromMedium($medium), $width, $height))) {
+            throw new RuntimeException('Unsupported video size');
+        }
+    }
+
+    private function extractSizesFromMedium(Medium $medium): array
+    {
+        foreach ($medium->getFormats() as $format) {
+            if (self::FORMAT_TYPE_VIDEO === $format->getType()) {
+                return array_keys($format->getScopes());
+            }
+        }
+        return [];
     }
 
     public function removeTemporaryFile(string $fileName): void
@@ -79,7 +100,7 @@ class VideoUploader implements Uploader
         $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
         $mime = mime_content_type($path);
 
-        $response = new Response(file_get_contents($path), 200);
+        $response = new Response(file_get_contents($path));
         $response->header('Content-Type', $mime);
 
         return $response;

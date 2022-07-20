@@ -586,6 +586,8 @@ SQL;
                 'date_end' => $campaign->time_end,
                 'created_at' => $campaign->created_at->format(DateTimeInterface::ATOM),
                 'updated_at' => $campaign->updated_at->format(DateTimeInterface::ATOM),
+                'medium' => $campaign->medium,
+                'vendor' => $campaign->vendor,
                 'max_cpc' => $campaign->max_cpc,
                 'max_cpm' => $campaign->max_cpm,
                 'budget' => $this->calculateBudgetAfterFees($campaign->budget, $licenceTxFee, $operatorTxFee),

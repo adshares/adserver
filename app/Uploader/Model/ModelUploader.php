@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Uploader\Model;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class ModelUploader implements Uploader
         $this->request = $request;
     }
 
-    public function upload(): UploadedFile
+    public function upload(Medium $medium): UploadedFile
     {
         $file = $this->request->file('file');
         $size = $file->getSize();
@@ -69,7 +70,7 @@ class ModelUploader implements Uploader
         $content = self::content($fileName);
         $mime = self::contentMimeType($content);
 
-        $response = new Response($content, 200);
+        $response = new Response($content);
         $response->header('Content-Type', $mime);
 
         return $response;

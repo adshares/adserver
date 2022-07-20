@@ -57,7 +57,13 @@ use function json_encode;
 final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
-
+    private const DEFAULT_VENDOR = null;
+    private const MEDIUM_METAVERSE = 'metaverse';
+    private const MEDIUM_WEB = 'web';
+    private const METAVERSE_VENDORS = [
+        'cryptovoxels' => 'cryptovoxels.com',
+        'decentraland' => 'decentraland.org',
+    ];
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     . '?limit={limit}&offset={offset}';
     private ClassifierExternalRepository $classifierRepository;
@@ -296,6 +302,7 @@ final class GuzzleDemandClient implements DemandClient
         $data['max_cpc'] = (int)$data['max_cpc'];
         $data['max_cpm'] = (int)$data['max_cpm'];
         $data['banners'] = $banners;
+        [$data['medium'], $data['vendor']] = self::extractMediumAndVendor($data);
 
         if (array_key_exists($data['id'], $campaignDemandIdsToSupplyIds)) {
             $data['id'] = Uuid::fromString($campaignDemandIdsToSupplyIds[$data['id']]);
@@ -304,6 +311,32 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         return $data;
+    }
+
+    private static function extractMediumAndVendor(array $data): array
+    {
+        if ($data['medium'] ?? false) {
+            return [$data['medium'], $data['vendor'] ?? self::DEFAULT_VENDOR];
+        }
+
+        if ($data['targeting_requires']['site']['domain'] ?? false) {
+            $domains = $data['targeting_requires']['site']['domain'];
+
+            foreach (self::METAVERSE_VENDORS as $vendor => $vendorDomain) {
+                $matchesCount = 0;
+                foreach ($domains as $domain) {
+                    if (!str_ends_with($domain, $vendorDomain)) {
+                        break;
+                    }
+                    ++$matchesCount;
+                }
+                if (count($domains) === $matchesCount) {
+                    return [self::MEDIUM_METAVERSE, $vendor];
+                }
+            }
+        }
+
+        return [self::MEDIUM_WEB, self::DEFAULT_VENDOR];
     }
 
     public function validateFetchInfoResponse(array $data): void
