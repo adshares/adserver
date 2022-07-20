@@ -54,7 +54,7 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response = $this->getJson(
             self::URI_CONFIG,
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($user)]
+            $this->getHeaders($user)
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -66,7 +66,7 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response = $this->getJson(
             self::URI_CONFIG,
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+            $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -79,7 +79,7 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response = $this->getJson(
             self::URI_CONFIG . '/support-email',
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+            $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -92,7 +92,7 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response = $this->getJson(
             self::URI_CONFIG . '/invalid',
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+            $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -106,7 +106,7 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response = $this->getJson(
             self::URI_CONFIG . '/' . $key,
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+            $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -120,11 +120,35 @@ final class ServerConfigurationControllerTest extends TestCase
         $response = $this->putJson(
             self::URI_CONFIG . '/support-email',
             ['value' => 'sup@example.com'],
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+            $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK);
         self::assertDatabaseHas(Config::class, ['value' => 'sup@example.com']);
+    }
+
+    public function testStoreSingleNull(): void
+    {
+        $nullableKey = Config::OPERATOR_RX_FEE;
+        $defaultValueOfNullableKey = '0.01';
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->putJson(
+            self::URI_CONFIG . '/' . $nullableKey,
+            ['value' => null],
+            $this->getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertDatabaseMissing(Config::class, ['key' => $nullableKey]);
+
+        $response = $this->getJson(
+            self::URI_CONFIG . '/' . $nullableKey,
+            $this->getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([$nullableKey => $defaultValueOfNullableKey]);
     }
 
     public function testStore(): void
@@ -137,7 +161,7 @@ final class ServerConfigurationControllerTest extends TestCase
                 'support-email' => 'sup@example.com',
                 'technical-email' => 'tech@example.com',
             ],
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+            $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -155,7 +179,7 @@ final class ServerConfigurationControllerTest extends TestCase
         $response = $this->patchJson(
             self::URI_CONFIG,
             $data,
-            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+            $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -165,6 +189,7 @@ final class ServerConfigurationControllerTest extends TestCase
     {
         return [
             'invalid key' => [['invalid' => 'invalid']],
+            'invalid not empty' => [['invoice-company-city' => '']],
             'invalid value type' => [['support-email' => true]],
             'invalid value length' => [
                 [
@@ -182,13 +207,19 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid classifier setting' => [['site-classifier-local-banners' => 'invalid']],
             'invalid registration mode' => [['registration-mode' => 'invalid']],
             'invalid date format mode' => [['panel-placeholder-update-time' => '2020-01-01 12:34']],
-            'invalid commission (negative)' => [['referral-refund-commission' => '-0.1']],
-            'invalid commission (out of range)' => [['referral-refund-commission' => '1.0001']],
+            'invalid commission (negative)' => [['payment-rx-fee' => '-0.1']],
+            'invalid commission (out of range)' => [['payment-rx-fee' => '1.0001']],
+            'invalid commission (empty)' => [['payment-rx-fee' => '']],
             'invalid invoice currencies (lowercase)' => [['invoice-currencies' => 'eur']],
             'invalid invoice currencies (comma on start)' => [['invoice-currencies' => ',EUR']],
             'invalid invoice currencies (comma on end)' => [['invoice-currencies' => 'EUR,']],
             'invalid invoice currencies (double comma)' => [['invoice-currencies' => 'EUR,,USD']],
             'invalid invoice bank accounts (malformed json)' => [['invoice-company-bank-accounts' => '{']],
         ];
+    }
+
+    private function getHeaders($user): array
+    {
+        return ['Authorization' => 'Bearer ' . JWTAuth::fromUser($user)];
     }
 }

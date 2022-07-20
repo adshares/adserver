@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,7 +27,7 @@ use Adshares\Common\Exception\RuntimeException;
 
 final class Commission
 {
-    private $value;
+    private float $value;
 
     public function __construct(float $value)
     {

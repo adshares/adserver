@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Config\RegistrationMode;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -95,31 +96,33 @@ class Config extends Model
     public const CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY = 'local-only';
 
     private const ADMIN_SETTINGS_DEFAULTS = [
-        self::OPERATOR_TX_FEE => '',
-        self::OPERATOR_RX_FEE => '',
-        self::HOT_WALLET_MIN_VALUE => '',
-        self::HOT_WALLET_MAX_VALUE => '',
-        self::COLD_WALLET_ADDRESS => '',
-        self::COLD_WALLET_IS_ACTIVE => '',
         self::ADSERVER_NAME => '',
-        self::TECHNICAL_EMAIL => '',
-        self::SUPPORT_EMAIL => '',
-        self::REFERRAL_REFUND_ENABLED => '',
-        self::REFERRAL_REFUND_COMMISSION => '',
-        self::REGISTRATION_MODE => '',
-        self::AUTO_REGISTRATION_ENABLED => '',
-        self::AUTO_CONFIRMATION_ENABLED => '',
-        self::EMAIL_VERIFICATION_REQUIRED => '',
-        self::INVOICE_ENABLED => '',
-        self::INVOICE_CURRENCIES => '',
-        self::INVOICE_NUMBER_FORMAT => '',
-        self::INVOICE_COMPANY_NAME => '',
+        self::AUTO_CONFIRMATION_ENABLED => '0',
+        self::AUTO_REGISTRATION_ENABLED => '0',
+        self::COLD_WALLET_ADDRESS => '',
+        self::COLD_WALLET_IS_ACTIVE => '0',
+        self::EMAIL_VERIFICATION_REQUIRED => '0',
+        self::HOT_WALLET_MAX_VALUE => '50000000000000000',
+        self::HOT_WALLET_MIN_VALUE => '2000000000000000',
         self::INVOICE_COMPANY_ADDRESS => '',
-        self::INVOICE_COMPANY_POSTAL_CODE => '',
+        self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
         self::INVOICE_COMPANY_CITY => '',
         self::INVOICE_COMPANY_COUNTRY => '',
+        self::INVOICE_COMPANY_NAME => '',
+        self::INVOICE_COMPANY_POSTAL_CODE => '',
         self::INVOICE_COMPANY_VAT_ID => '',
-        self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
+        self::INVOICE_CURRENCIES => '',
+        self::INVOICE_ENABLED => '0',
+        self::INVOICE_NUMBER_FORMAT => '',
+        self::OPERATOR_RX_FEE => '0.01',
+        self::OPERATOR_TX_FEE => '0.01',
+        self::REFERRAL_REFUND_COMMISSION => '',
+        self::REFERRAL_REFUND_ENABLED => '0',
+        self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
+        self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
+        self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
+        self::SUPPORT_EMAIL => '',
+        self::TECHNICAL_EMAIL => '',
     ];
 
     private const TECHNICAL_SETTINGS = [
@@ -131,6 +134,8 @@ class Config extends Model
         self::ADPAY_LAST_EXPORTED_EVENT_TIME,
         self::LAST_UPDATED_IMPRESSION_ID,
         self::OPERATOR_WALLET_EMAIL_LAST_TIME,
+        self::PANEL_PLACEHOLDER_NOTIFICATION_TIME,
+        self::PANEL_PLACEHOLDER_UPDATE_TIME,
         self::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
     ];
 
@@ -264,5 +269,10 @@ class Config extends Model
             self::upsertByKey($key, $value);
         }
         Cache::forget('config.admin');
+    }
+
+    public static function removeByKey(string $key): void
+    {
+        Config::whereKey($key)->delete();
     }
 }

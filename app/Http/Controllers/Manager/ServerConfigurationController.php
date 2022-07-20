@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\ConfigException;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
@@ -41,35 +40,33 @@ use Throwable;
 class ServerConfigurationController extends Controller
 {
     private const ALLOWED_KEYS = [
-        Config::ADSERVER_NAME => 'required',
-        Config::AUTO_CONFIRMATION_ENABLED => 'required|boolean',
-        Config::AUTO_REGISTRATION_ENABLED => 'required|boolean',
-        Config::COLD_WALLET_ADDRESS => 'required|accountId',
-        Config::COLD_WALLET_IS_ACTIVE => 'required|boolean',
-        Config::EMAIL_VERIFICATION_REQUIRED => 'required|boolean',
-        Config::HOT_WALLET_MIN_VALUE => 'required|clickAmount',
-        Config::HOT_WALLET_MAX_VALUE => 'required|clickAmount',
-        Config::INVOICE_COMPANY_ADDRESS => 'required',
-        Config::INVOICE_COMPANY_BANK_ACCOUNTS => 'required|json',
-        Config::INVOICE_COMPANY_CITY => 'required',
-        Config::INVOICE_COMPANY_COUNTRY => 'required|country',
-        Config::INVOICE_COMPANY_NAME => 'required',
-        Config::INVOICE_COMPANY_POSTAL_CODE => 'required',
-        Config::INVOICE_COMPANY_VAT_ID => 'required',
-        Config::INVOICE_CURRENCIES => 'required|currenciesList',
-        Config::INVOICE_ENABLED => 'required|boolean',
-        Config::INVOICE_NUMBER_FORMAT => 'required',
-        Config::OPERATOR_RX_FEE => 'required|commission',
-        Config::OPERATOR_TX_FEE => 'required|commission',
-        Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME => 'required|dateTime',
-        Config::PANEL_PLACEHOLDER_UPDATE_TIME => 'required|dateTime',
-        Config::REFERRAL_REFUND_COMMISSION => 'required|commission',
-        Config::REFERRAL_REFUND_ENABLED => 'required|boolean',
-        Config::REGISTRATION_MODE => 'required|registrationMode',
-        Config::SITE_ACCEPT_BANNERS_MANUALLY => 'required|boolean',
-        Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'required|siteClassifierLocalBanners',
-        Config::SUPPORT_EMAIL => 'required|email',
-        Config::TECHNICAL_EMAIL => 'required|email',
+        Config::ADSERVER_NAME => 'notEmpty',
+        Config::AUTO_CONFIRMATION_ENABLED => 'boolean',
+        Config::AUTO_REGISTRATION_ENABLED => 'boolean',
+        Config::COLD_WALLET_ADDRESS => 'accountId',
+        Config::COLD_WALLET_IS_ACTIVE => 'boolean',
+        Config::EMAIL_VERIFICATION_REQUIRED => 'boolean',
+        Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
+        Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
+        Config::INVOICE_COMPANY_ADDRESS => 'notEmpty',
+        Config::INVOICE_COMPANY_BANK_ACCOUNTS => 'notEmpty|json',
+        Config::INVOICE_COMPANY_CITY => 'notEmpty',
+        Config::INVOICE_COMPANY_COUNTRY => 'country',
+        Config::INVOICE_COMPANY_NAME => 'notEmpty',
+        Config::INVOICE_COMPANY_POSTAL_CODE => 'notEmpty',
+        Config::INVOICE_COMPANY_VAT_ID => 'notEmpty',
+        Config::INVOICE_CURRENCIES => 'currenciesList',
+        Config::INVOICE_ENABLED => 'boolean',
+        Config::INVOICE_NUMBER_FORMAT => 'notEmpty',
+        Config::OPERATOR_RX_FEE => 'nullable|commission',
+        Config::OPERATOR_TX_FEE => 'nullable|commission',
+        Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
+        Config::REFERRAL_REFUND_ENABLED => 'boolean',
+        Config::REGISTRATION_MODE => 'registrationMode',
+        Config::SITE_ACCEPT_BANNERS_MANUALLY => 'boolean',
+        Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'siteClassifierLocalBanners',
+        Config::SUPPORT_EMAIL => 'email',
+        Config::TECHNICAL_EMAIL => 'email',
     ];
     private const MAX_VALUE_LENGTH = 255;
     private const RULE_NULLABLE = 'nullable';
@@ -78,13 +75,8 @@ class ServerConfigurationController extends Controller
     {
         if (null !== $key) {
             self::validateKey($key);
-            try {
-                $value = Config::fetchStringOrFail($key);
-            } catch (ConfigException $exception) {
-                $value = null;
-            }
             $data = [
-                $key => $value,
+                $key => Config::fetchAdminSettings()[$key] ?? null,
             ];
         } else {
             $data = Config::fetchAdminSettings();
@@ -116,7 +108,11 @@ class ServerConfigurationController extends Controller
         DB::beginTransaction();
         try {
             foreach ($data as $key => $value) {
-                Config::upsertByKey($key, $value);
+                if (null === $value) {
+                    Config::removeByKey($key);
+                } else {
+                    Config::upsertByKey($key, $value);
+                }
             }
             DB::commit();
         } catch (Throwable $exception) {
@@ -187,15 +183,18 @@ class ServerConfigurationController extends Controller
         }
 
         foreach ($rules as $rule) {
+            if (self::RULE_NULLABLE === $rule) {
+                continue;
+            }
             $name = Str::camel('validate_' . $rule);
             self::{$name}($field, $value);
         }
     }
 
-    private static function validateRequired(string $field, string $value): void
+    private static function validateNotEmpty(string $field, string $value): void
     {
         if (empty($value)) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` cannot be empty', $field));
         }
     }
 
@@ -266,7 +265,7 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validateSiteClassifierLocalBanners($field, $value): void
+    private static function validateSiteClassifierLocalBanners(string $field, string $value): void
     {
         if (!in_array($value, Config::ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS, true)) {
             throw new UnprocessableEntityHttpException(
