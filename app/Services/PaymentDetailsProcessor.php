@@ -146,13 +146,7 @@ class PaymentDetailsProcessor
 
     private function fetchLicenseFee(): float
     {
-        try {
-            $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
-        } catch (ConfigException $modelNotFoundException) {
-            throw new MissingInitialConfigurationException('No config entry for license fee.');
-        }
-
-        return $licenseFee;
+        return $this->licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
     }
 
     private function fetchNetworkCasesForPaymentDetails(array $paymentDetails): Collection

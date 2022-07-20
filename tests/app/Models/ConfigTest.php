@@ -35,8 +35,7 @@ class ConfigTest extends TestCase
 {
     private const TEST_KEY = 'test-key';
 
-    /** @test */
-    public function fetchDateTime(): void
+    public function testFetchDateTime(): void
     {
         $dateTime = new DateTime('2000-01-01');
 
@@ -49,8 +48,7 @@ class ConfigTest extends TestCase
         self::assertNotSame($dateTime, Config::fetchDateTime(self::TEST_KEY));
     }
 
-    /** @test */
-    public function fetchDateTimeInvalidFormat(): void
+    public function testFetchDateTimeInvalidFormat(): void
     {
         $this->expectException(RuntimeException::class);
 
@@ -62,8 +60,7 @@ class ConfigTest extends TestCase
         Config::fetchDateTime(self::TEST_KEY);
     }
 
-    /** @test */
-    public function fetchDateTimeNotInDatabase(): void
+    public function testFetchDateTimeNotInDatabase(): void
     {
         self::assertEquals(new DateTime('@0'), Config::fetchDateTime(self::TEST_KEY));
 
@@ -73,8 +70,7 @@ class ConfigTest extends TestCase
         self::assertNotSame($dateTime, Config::fetchDateTime(self::TEST_KEY, $dateTime));
     }
 
-    /** @test */
-    public function upsertDateTime(): void
+    public function testUpsertDateTime(): void
     {
         $dateTime = new DateTime('2000-01-01');
 
@@ -84,8 +80,7 @@ class ConfigTest extends TestCase
         self::assertNotSame($dateTime, Config::fetchDateTime(self::TEST_KEY));
     }
 
-    /** @test */
-    public function fetchInt(): void
+    public function testFetchInt(): void
     {
         $value = 5;
 
@@ -97,8 +92,7 @@ class ConfigTest extends TestCase
         self::assertSame($value, Config::fetchInt(self::TEST_KEY));
     }
 
-    /** @test */
-    public function fetchFloatOrFail(): void
+    public function testFetchFloatOrFail(): void
     {
         $value = 5.5;
 
@@ -110,16 +104,14 @@ class ConfigTest extends TestCase
         self::assertSame($value, Config::fetchFloatOrFail(self::TEST_KEY));
     }
 
-    /** @test */
-    public function fetchFloatOrFailNotInDatabase(): void
+    public function testFetchFloatOrFailNotInDatabase(): void
     {
         $this->expectException(ConfigException::class);
 
         Config::fetchFloatOrFail(self::TEST_KEY);
     }
 
-    /** @test */
-    public function upsertInt(): void
+    public function testUpsertInt(): void
     {
         $value = 9;
 
@@ -128,8 +120,7 @@ class ConfigTest extends TestCase
         self::assertSame($value, Config::fetchInt(self::TEST_KEY));
     }
 
-    /** @test */
-    public function fetchStringOrFail(): void
+    public function testFetchStringOrFail(): void
     {
         $value = 'test-string';
 
@@ -141,8 +132,7 @@ class ConfigTest extends TestCase
         self::assertSame($value, Config::fetchStringOrFail(self::TEST_KEY));
     }
 
-    /** @test */
-    public function fetchStringOrFailNotInDatabase(): void
+    public function testFetchStringOrFailNotInDatabase(): void
     {
         $this->expectException(ConfigException::class);
 
@@ -150,10 +140,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider boolDataProvider
      */
-    public function isTrueOnly(string $value, bool $result): void
+    public function testIsTrueOnly(string $value, bool $result): void
     {
         Config::factory()->create([
             'key' => self::TEST_KEY,
@@ -163,21 +152,16 @@ class ConfigTest extends TestCase
         self::assertSame($result, Config::isTrueOnly(self::TEST_KEY));
     }
 
-    /**
-     * @test
-     */
-    public function isTrueOnlyNotInDatabase(): void
+    public function testIsTrueOnlyNotInDatabase(): void
     {
         self::assertFalse(Config::isTrueOnly(self::TEST_KEY));
     }
 
-    /** @test */
-    public function fetchAdminSettings(): void
+    public function testFetchAdminSettings(): void
     {
         $adminSettings = [
             'payment-tx-fee' => '0.01',
             'payment-rx-fee' => '0.01',
-            'licence-rx-fee' => '0.01',
             'hotwallet-min-value' => '500000000000000',
             'hotwallet-max-value' => '2000000000000000',
             'cold-wallet-address' => '',
@@ -207,13 +191,11 @@ class ConfigTest extends TestCase
         self::assertEquals($adminSettings, Config::fetchAdminSettings());
     }
 
-    /** @test */
-    public function updateAdminSettings(): void
+    public function testUpdateAdminSettings(): void
     {
         $adminSettings = [
             'payment-tx-fee' => '1',
             'payment-rx-fee' => '2',
-            'licence-rx-fee' => '3',
             'hotwallet-min-value' => '4',
             'hotwallet-max-value' => '5',
             'cold-wallet-address' => '0000-00000000-XXXX',

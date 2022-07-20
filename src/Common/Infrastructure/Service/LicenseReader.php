@@ -23,13 +23,18 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Infrastructure\Service;
 
-use Adshares\Adserver\Models\Config;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 
 class LicenseReader
 {
+    private const CE_LICENSE_ACCOUNT = '0001-00000024-FF89';
+    private const CE_LICENSE_FEE = 0.01;
+    private const LICENSE_ACCOUNT = 'licence-account';
+    public const LICENSE_RX_FEE = 'licence-rx-fee';
+    public const LICENSE_TX_FEE = 'licence-tx-fee';
+
     private LicenseVault $licenseVault;
 
     public function __construct(LicenseVault $licenseVault)
@@ -39,7 +44,7 @@ class LicenseReader
 
     public function getAddress(): AccountId
     {
-        $value = apcu_fetch(Config::LICENCE_ACCOUNT);
+        $value = apcu_fetch(self::LICENSE_ACCOUNT);
 
         if ($value) {
             return new AccountId($value);
@@ -48,19 +53,19 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return new AccountId(Config::fetchStringOrFail(Config::LICENCE_ACCOUNT, true));
+            return new AccountId(self::CE_LICENSE_ACCOUNT);
         }
 
         $value = $license->getPaymentAddress();
 
-        apcu_store(Config::LICENCE_ACCOUNT, $value->toString());
+        apcu_store(self::LICENSE_ACCOUNT, $value->toString());
 
         return $value;
     }
 
     public function getFee(string $type): float
     {
-        if (!in_array($type, [Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE], true)) {
+        if (!in_array($type, [self::LICENSE_RX_FEE, self::LICENSE_TX_FEE], true)) {
             throw new RuntimeException(sprintf('Unsupported fee (%s) type', $type));
         }
 
@@ -73,12 +78,12 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return Config::fetchFloatOrFail($type, true);
+            return self::CE_LICENSE_FEE;
         }
 
-        if ($type === Config::LICENCE_TX_FEE) {
+        if (self::LICENSE_TX_FEE === $type) {
             $value = $license->getDemandFee();
-        } elseif ($type === Config::LICENCE_RX_FEE) {
+        } elseif (self::LICENSE_RX_FEE === $type) {
             $value = $license->getSupplyFee();
         }
 

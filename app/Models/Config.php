@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,8 +42,11 @@ class Config extends Model
     public const ADS_LOG_START = 'ads-log-start';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
+    /** @deprecated fee should be read from {@see LicenseReader} */
     public const LICENCE_TX_FEE = 'licence-tx-fee';
+    /** @deprecated fee should be read from {@see LicenseReader} */
     public const LICENCE_RX_FEE = 'licence-rx-fee';
+    /** @deprecated account ID should be read from {@see LicenseReader} */
     public const LICENCE_ACCOUNT = 'licence-account';
     /** @deprecated default uuid is stored in DB in bid_strategy table */
     public const BID_STRATEGY_UUID_DEFAULT = 'bid-strategy-uuid-default';
@@ -93,7 +97,6 @@ class Config extends Model
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
         self::OPERATOR_RX_FEE => '',
-        self::LICENCE_RX_FEE => '',
         self::HOT_WALLET_MIN_VALUE => '',
         self::HOT_WALLET_MAX_VALUE => '',
         self::COLD_WALLET_ADDRESS => '',
@@ -185,26 +188,13 @@ class Config extends Model
         return (int)self::fetchByKeyOrDefault($key, (string)$default);
     }
 
-    public static function fetchFloatOrFail(string $key, bool $allowLicenseKeys = false): float
+    public static function fetchFloatOrFail(string $key): float
     {
-        $licenseKeys = [
-            self::LICENCE_RX_FEE,
-            self::LICENCE_TX_FEE,
-        ];
-
-        if (!$allowLicenseKeys && in_array($key, $licenseKeys, true)) {
-            throw new RuntimeException(sprintf('These value %s need to be taken from a license reader', $key));
-        }
-
         return (float)self::fetchByKeyOrFail($key)->value;
     }
 
-    public static function fetchStringOrFail(string $key, bool $allowLicenseKeys = false): string
+    public static function fetchStringOrFail(string $key): string
     {
-        if (!$allowLicenseKeys && $key === self::LICENCE_ACCOUNT) {
-            throw new RuntimeException(sprintf('This value %s needs to be taken from a license reader', $key));
-        }
-
         return (string)self::fetchByKeyOrFail($key)->value;
     }
 

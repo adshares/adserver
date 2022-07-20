@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -48,8 +48,7 @@ class DemandPreparePayments extends BaseCommand
 
     protected $description = 'Prepares payments for events and license';
 
-    /** @var LicenseReader */
-    private $licenseReader;
+    private LicenseReader $licenseReader;
 
     public function __construct(Locker $locker, LicenseReader $licenseReader)
     {
@@ -82,7 +81,7 @@ class DemandPreparePayments extends BaseCommand
         }
 
         $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
-        $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
+        $demandLicenseFeeCoefficient = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
         $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         $conversions = Conversion::fetchUnpaidConversions($from, $to);
