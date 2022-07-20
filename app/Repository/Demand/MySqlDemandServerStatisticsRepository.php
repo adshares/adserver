@@ -30,13 +30,16 @@ class MySqlDemandServerStatisticsRepository
     private const QUERY_STATISTICS = <<<SQL
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d") AS date,
+  c.medium,
+  c.vendor,
   SUM(views)                                AS impressions,
   SUM(clicks)                               AS clicks,
   ROUND(SUM(e.cost) / 100000000000, 2)      AS volume
 FROM event_logs_hourly e
+JOIN campaigns c ON c.uuid = e.campaign_id
 WHERE e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
-GROUP BY 1;
+GROUP BY 1, 2, 3;
 SQL;
 
     private const QUERY_DOMAINS = <<<SQL
