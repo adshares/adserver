@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -84,6 +84,8 @@ class BackupAdServerStatisticsCommand extends BaseCommand
 SELECT
     domain,
     size,
+    medium,
+    vendor,
     country,
     COUNT(1)                                                  AS views_all,
     COUNT(DISTINCT impression_id)                             AS impressions,
@@ -96,6 +98,8 @@ FROM
     (SELECT
          s.domain                                                                                   AS domain,
          size,
+         s.medium,
+         s.vendor,
          IFNULL(i.country, 'null')                                                                  AS country,
          IFNULL(i.user_id, i.tracking_id)                                                           AS uid,
          IF(clicks.network_case_id IS NULL, 0, 1)                                                   AS is_view_clicked,
@@ -107,6 +111,6 @@ FROM
               JOIN sites s on c.site_id = s.uuid
               JOIN zones z on c.zone_id = z.uuid
      WHERE c.created_at BETWEEN :date_start AND :date_end) d
-GROUP BY 1,2,3;
+GROUP BY 1,2,3,4,5;
 SQL;
 }
