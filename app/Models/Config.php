@@ -122,6 +122,18 @@ class Config extends Model
         self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
     ];
 
+    private const TECHNICAL_SETTINGS = [
+        self::ADS_LOG_START,
+        self::ADSELECT_INVENTORY_EXPORT_TIME,
+        self::ADPAY_BID_STRATEGY_EXPORT_TIME,
+        self::ADPAY_CAMPAIGN_EXPORT_TIME,
+        self::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
+        self::ADPAY_LAST_EXPORTED_EVENT_TIME,
+        self::LAST_UPDATED_IMPRESSION_ID,
+        self::OPERATOR_WALLET_EMAIL_LAST_TIME,
+        self::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
+    ];
+
     public $incrementing = false;
 
     protected $primaryKey = 'key';
@@ -195,7 +207,7 @@ class Config extends Model
 
     public static function fetchStringOrFail(string $key): string
     {
-        return (string)self::fetchByKeyOrFail($key)->value;
+        return self::fetchByKeyOrFail($key)->value;
     }
 
     public static function fetchJsonOrFail(string $key): array
@@ -239,8 +251,7 @@ class Config extends Model
     public static function fetchAdminSettings(): array
     {
         return Cache::remember('config.admin', 10 * 60, function () {
-            $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
-                ->get()
+            $fetched = self::all()
                 ->pluck('value', 'key')
                 ->toArray();
             return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);

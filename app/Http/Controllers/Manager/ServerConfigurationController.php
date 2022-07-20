@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ConfigException;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
@@ -69,20 +70,6 @@ class ServerConfigurationController extends Controller
         Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'required|siteClassifierLocalBanners',
         Config::SUPPORT_EMAIL => 'required|email',
         Config::TECHNICAL_EMAIL => 'required|email',
-
-// not administrator's configuration
-//        Config::ADS_LOG_START,
-//        Config::ADSELECT_INVENTORY_EXPORT_TIME,
-//        Config::ADPAY_BID_STRATEGY_EXPORT_TIME,
-//        Config::ADPAY_CAMPAIGN_EXPORT_TIME,
-//        Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
-//        Config::ADPAY_LAST_EXPORTED_EVENT_TIME,
-//        Config::LAST_UPDATED_IMPRESSION_ID,
-//        Config::LICENCE_ACCOUNT,
-//        Config::LICENCE_RX_FEE,
-//        Config::LICENCE_TX_FEE,
-//        Config::OPERATOR_WALLET_EMAIL_LAST_TIME,
-//        Config::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
     ];
     private const MAX_VALUE_LENGTH = 255;
     private const RULE_NULLABLE = 'nullable';
@@ -90,13 +77,18 @@ class ServerConfigurationController extends Controller
     public function fetch(string $key = null): JsonResponse
     {
         if (null !== $key) {
-            $collection = Config::where('key', $key);
+            self::validateKey($key);
+            try {
+                $value = Config::fetchStringOrFail($key);
+            } catch (ConfigException $exception) {
+                $value = null;
+            }
+            $data = [
+                $key => $value,
+            ];
         } else {
-            $collection = Config::all();
+            $data = Config::fetchAdminSettings();
         }
-        $data = $collection
-            ->pluck('value', 'key')
-            ->toArray();
 
         return self::json($data);
     }
@@ -177,9 +169,7 @@ class ServerConfigurationController extends Controller
 
     private static function validateKeyAndValue($field, $value): void
     {
-        if (!isset(self::ALLOWED_KEYS[$field])) {
-            throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $field));
-        }
+        self::validateKey($field);
 
         $rules = explode('|', self::ALLOWED_KEYS[$field]);
 
@@ -246,6 +236,13 @@ class ServerConfigurationController extends Controller
     {
         if (1 !== preg_match('/^[A-Z]{2,}((,[A-Z]{2,})+)?$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be in valid format', $field));
+        }
+    }
+
+    private static function validateKey(string $key): void
+    {
+        if (!isset(self::ALLOWED_KEYS[$key])) {
+            throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
         }
     }
 

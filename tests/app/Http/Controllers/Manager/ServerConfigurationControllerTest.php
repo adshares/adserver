@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -70,6 +71,46 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['support-email', 'technical-email']);
+    }
+
+    public function testFetchByKey(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->getJson(
+            self::URI_CONFIG . '/support-email',
+            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['support-email']);
+    }
+
+    public function testFetchByInvalidKey(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->getJson(
+            self::URI_CONFIG . '/invalid',
+            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchByKeyWhileValueIsNull(): void
+    {
+        $key = Config::SUPPORT_EMAIL;
+        DB::delete('DELETE FROM configs WHERE `key` = ?', [$key]);
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->getJson(
+            self::URI_CONFIG . '/' . $key,
+            ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)]
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([$key => null]);
     }
 
     public function testStoreSingle(): void
