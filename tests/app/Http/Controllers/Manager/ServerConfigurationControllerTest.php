@@ -123,24 +123,31 @@ final class ServerConfigurationControllerTest extends TestCase
     public function storeInvalidDataProvider(): array
     {
         return [
-//            'invalid key' => [['invalid' => 'invalid']],
-//            'invalid value type' => [['support-email' => true]],
-//            'invalid value length' => [
-//                [
-//                    'support-email' =>
-//                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid' .
-//                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid' .
-//                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid@example.com'
-//                ]
-//            ],
-//            'invalid email format' => [['support-email' => 'invalid']],
-//            'invalid boolean format' => [['cold-wallet-is-active' => '23']],
-//            'invalid amount (not integer)' => [['hotwallet-min-value' => '1234a']],
-//            'invalid amount (negative)' => [['hotwallet-min-value' => '-1']],
-//            'invalid amount (out of range)' => [['hotwallet-min-value' => '3875820600000000001']],
-//            'invalid classifier setting' => [['site-classifier-local-banners' => 'invalid']],
-//            'invalid registration mode' => [['registration-mode' => 'invalid']],
+            'invalid key' => [['invalid' => 'invalid']],
+            'invalid value type' => [['support-email' => true]],
+            'invalid value length' => [
+                [
+                    'support-email' =>
+                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid' .
+                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid' .
+                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid@example.com'
+                ]
+            ],
+            'invalid email format' => [['support-email' => 'invalid']],
+            'invalid boolean format' => [['cold-wallet-is-active' => '23']],
+            'invalid amount (not integer)' => [['hotwallet-min-value' => '1234a']],
+            'invalid amount (negative)' => [['hotwallet-min-value' => '-1']],
+            'invalid amount (out of range)' => [['hotwallet-min-value' => '3875820600000000001']],
+            'invalid classifier setting' => [['site-classifier-local-banners' => 'invalid']],
+            'invalid registration mode' => [['registration-mode' => 'invalid']],
             'invalid date format mode' => [['panel-placeholder-update-time' => '2020-01-01 12:34']],
+            'invalid commission (negative)' => [['referral-refund-commission' => '-0.1']],
+            'invalid commission (out of range)' => [['referral-refund-commission' => '1.0001']],
+            'invalid invoice currencies (lowercase)' => [['invoice-currencies' => 'eur']],
+            'invalid invoice currencies (comma on start)' => [['invoice-currencies' => ',EUR']],
+            'invalid invoice currencies (comma on end)' => [['invoice-currencies' => 'EUR,']],
+            'invalid invoice currencies (double comma)' => [['invoice-currencies' => 'EUR,,USD']],
+            'invalid invoice bank accounts (malformed json)' => [['invoice-company-bank-accounts' => '{']],
         ];
     }
 }
