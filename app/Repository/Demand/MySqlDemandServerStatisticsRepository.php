@@ -30,8 +30,8 @@ class MySqlDemandServerStatisticsRepository
     private const QUERY_STATISTICS = <<<SQL
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d") AS date,
-  c.medium,
-  c.vendor,
+  c.medium                                  AS medium,
+  c.vendor                                  AS vendor,
   SUM(views)                                AS impressions,
   SUM(clicks)                               AS clicks,
   ROUND(SUM(e.cost) / 100000000000, 2)      AS volume
@@ -44,16 +44,20 @@ SQL;
 
     private const QUERY_DOMAINS = <<<SQL
 SELECT
-	e.name,
-	SUM(e.impressions) AS impressions,
-	ROUND(SUM(e.cost)/100000000000, 2) AS cost,
+	e.name                                                         AS name,
+    c.medium                                                       AS medium,
+    c.vendor                                                       AS vendor,
+	SUM(e.impressions)                                             AS impressions,
+    SUM(e.clicks)                                                  AS clicks,
+	ROUND(SUM(e.cost)/100000000000, 2)                             AS cost,
 	ROUND(1000 * (SUM(e.cost)/100000000000)/SUM(e.impressions), 2) AS cpm,
-	GROUP_CONCAT(DISTINCT b.creative_size) AS sizes
+	GROUP_CONCAT(DISTINCT b.creative_size)                         AS sizes
 FROM (
 	SELECT
 		e.banner_id,
 		SUBSTRING_INDEX(e.domain, "www.", -1) AS name,
 		SUM(e.views) AS impressions,
+		SUM(e.clicks) AS clicks,
 		SUM(e.cost) AS cost
 	FROM event_logs_hourly e
 	WHERE e.hour_timestamp < DATE(NOW()) - INTERVAL #offset DAY
@@ -63,18 +67,19 @@ FROM (
 	GROUP BY 1, 2
 ) e
 LEFT JOIN banners b ON b.uuid = e.banner_id
-GROUP BY 1;
+LEFT JOIN campaigns c ON c.id = b.campaign_id
+GROUP BY 1, 2, 3;
 SQL;
 
     private const QUERY_CAMPAIGNS = <<<SQL
 SELECT
-    c.name,
-    c.medium,
-    c.vendor,
-    SUM(IFNULL(e.views, 0)) AS impressions,
-    ROUND(SUM(IFNULL(e.cost, 0)), 2) AS cost,
+    c.name                                               AS name,
+    c.medium                                             AS medium,
+    c.vendor                                             AS vendor,
+    SUM(IFNULL(e.views, 0))                              AS impressions,
+    ROUND(SUM(IFNULL(e.cost, 0)), 2)                     AS cost,
     ROUND(1000 * IFNULL(SUM(e.cost)/SUM(e.views), 0), 2) AS cpm,
-    GROUP_CONCAT(c.sizes) AS sizes
+    GROUP_CONCAT(c.sizes)                                AS sizes
 FROM (
     SELECT e.campaign_id, SUM(e.views) AS views, SUM(e.cost)/100000000000 AS cost
     FROM event_logs_hourly e
@@ -102,9 +107,9 @@ SQL;
 
     private const QUERY_BANNERS_SIZES = <<<SQL
 SELECT
-  creative_size AS size,
-  c.medium,
-  c.vendor,
+  creative_size                                    AS size,
+  c.medium                                         AS medium,
+  c.vendor                                         AS vendor,
   IFNULL(SUM(e.views), 0)                          AS impressions,
   COUNT(*)                                         AS number
 FROM banners b
