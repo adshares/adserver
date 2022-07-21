@@ -215,6 +215,9 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid invoice currencies (comma on end)' => [['invoice-currencies' => 'EUR,']],
             'invalid invoice currencies (double comma)' => [['invoice-currencies' => 'EUR,,USD']],
             'invalid invoice bank accounts (malformed json)' => [['invoice-company-bank-accounts' => '{']],
+            'invalid hex (not hex)' =>
+                [['adshares-secret' => 'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid0']],
+            'invalid hex (size)' => [['adshares-secret' => '012345678']],
         ];
     }
 

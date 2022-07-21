@@ -21,28 +21,44 @@
 
 use Adshares\Adserver\Models\Config;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MoveEnvToConfig extends Migration
 {
     private const CE_LICENSE_ACCOUNT = '0001-00000024-FF89';
     private const CE_LICENSE_FEE = '0.01';
     private const ENVIRONMENT_VARIABLES_MIGRATION = [
-        'CAMPAIGN_MIN_BUDGET' => 'campaign-min-budget',
-        'CAMPAIGN_MIN_CPA' => 'campaign-min-cpa',
-        'CAMPAIGN_MIN_CPM' => 'campaign-min-cpm',
+        'ADSHARES_SECRET' => Config::ADSHARES_SECRET,
+        'CAMPAIGN_MIN_BUDGET' => Config::CAMPAIGN_MIN_BUDGET,
+        'CAMPAIGN_MIN_CPA' => Config::CAMPAIGN_MIN_CPA,
+        'CAMPAIGN_MIN_CPM' => Config::CAMPAIGN_MIN_CPM,
     ];
 
     public function up(): void
     {
         self::fillMissingDates();
         self::deleteFromConfigs([Config::LICENCE_ACCOUNT, Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE]);
+
+        Schema::table(
+            'configs',
+            function (Blueprint $table) {
+                $table->text('value')->change();
+            }
+        );
         $this->migrateEnvironmentVariables();
     }
 
     public function down(): void
     {
         $this->revertEnvironmentVariablesMigration();
+        Schema::table(
+            'configs',
+            function (Blueprint $table) {
+                $table->string('value')->change();
+            }
+        );
 
         Config::updateOrCreate(
             ['key' => Config::LICENCE_ACCOUNT],

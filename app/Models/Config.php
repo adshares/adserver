@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * @property string key
@@ -41,6 +42,7 @@ class Config extends Model
     use HasFactory;
 
     public const ADS_LOG_START = 'ads-log-start';
+    public const ADSHARES_SECRET = 'adshares-secret';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     /** @deprecated fee should be read from {@see LicenseReader} */
@@ -100,6 +102,7 @@ class Config extends Model
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::ADSERVER_NAME => '',
+        self::ADSHARES_SECRET => '',
         self::AUTO_CONFIRMATION_ENABLED => '0',
         self::AUTO_REGISTRATION_ENABLED => '0',
         self::CAMPAIGN_MIN_BUDGET => '5000000000',
@@ -143,6 +146,9 @@ class Config extends Model
         self::PANEL_PLACEHOLDER_NOTIFICATION_TIME,
         self::PANEL_PLACEHOLDER_UPDATE_TIME,
         self::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
+    ];
+    private const SECRETS = [
+        self::ADSHARES_SECRET,
     ];
 
     public $incrementing = false;
@@ -272,6 +278,9 @@ class Config extends Model
     public static function updateAdminSettings(array $settings): void
     {
         foreach ($settings as $key => $value) {
+            if (in_array($key, self::SECRETS, true)) {
+                $value = Crypt::encryptString($value);
+            }
             self::upsertByKey($key, $value);
         }
         Cache::forget('config.admin');

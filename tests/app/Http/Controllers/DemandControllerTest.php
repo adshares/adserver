@@ -34,6 +34,7 @@ use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Crypt;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -262,7 +263,7 @@ final class DemandControllerTest extends TestCase
             [
                 'Authorization' => $authenticator->getHeader(
                     config('app.adshares_address'),
-                    config('app.adshares_secret')
+                    Crypt::decryptString(config('app.adshares_secret'))
                 )
             ]
         );
@@ -274,7 +275,7 @@ final class DemandControllerTest extends TestCase
             [
                 'Authorization' => $authenticator->getHeader(
                     config('app.adshares_address'),
-                    config('app.adshares_secret')
+                    Crypt::decryptString(config('app.adshares_secret'))
                 )
             ]
         );

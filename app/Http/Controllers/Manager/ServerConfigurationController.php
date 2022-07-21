@@ -40,6 +40,7 @@ use Throwable;
 class ServerConfigurationController extends Controller
 {
     private const ALLOWED_KEYS = [
+        Config::ADSHARES_SECRET => 'hex:64',
         Config::ADSERVER_NAME => 'notEmpty',
         Config::AUTO_CONFIRMATION_ENABLED => 'boolean',
         Config::AUTO_REGISTRATION_ENABLED => 'boolean',
@@ -166,6 +167,18 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validateHex(string $field, string $value, ?string $length = null): void
+    {
+        if (null !== $length && strlen($value) !== (int)$length) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Field `%s` must be have %d characters', $field, (int)$length)
+            );
+        }
+        if (1 !== preg_match('/^[0-9A-Z]$/', $value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a hexadecimal string', $field));
+        }
+    }
+
     private static function validateKeyAndValue($field, $value): void
     {
         self::validateKey($field);
@@ -189,8 +202,10 @@ class ServerConfigurationController extends Controller
             if (self::RULE_NULLABLE === $rule) {
                 continue;
             }
-            $name = Str::camel('validate_' . $rule);
-            self::{$name}($field, $value);
+            $ruleParts = explode(':', $rule);
+            $signature = Str::camel('validate_' . $ruleParts[0]);
+            $parameters = explode(',', $ruleParts[1] ?? '');
+            self::{$signature}($field, $value, ...$parameters);
         }
     }
 

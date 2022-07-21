@@ -47,6 +47,7 @@ use DateTimeInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
@@ -139,7 +140,7 @@ final class GuzzleDemandClient implements DemandClient
     {
         $client = new Client($this->requestParameters($host));
 
-        $privateKey = (string)config('app.adshares_secret');
+        $privateKey = Crypt::decryptString(config('app.adshares_secret'));
         $accountAddress = (string)config('app.adshares_address');
         $date = new DateTime();
         $signature = $this->signatureVerifier->createFromTransactionId(
@@ -220,7 +221,7 @@ final class GuzzleDemandClient implements DemandClient
                 'Cache-Control' => 'no-cache',
                 'Authorization' => $this->adsAuthenticator->getHeader(
                     config('app.adshares_address'),
-                    config('app.adshares_secret')
+                    Crypt::decryptString(config('app.adshares_secret'))
                 ),
             ],
             'timeout' => $this->timeout,

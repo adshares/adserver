@@ -97,7 +97,6 @@ return [
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_node_host' => env('ADSHARES_NODE_HOST'),
     'adshares_node_port' => env('ADSHARES_NODE_PORT'),
-    'adshares_secret' => env('ADSHARES_SECRET'),
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
     'ads_operator_server_url' => env('ADS_OPERATOR_SERVER_URL', 'https://ads-operator.adshares.net'),

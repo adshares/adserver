@@ -43,6 +43,7 @@ use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
@@ -54,16 +55,20 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             AdsClient::class,
             function () {
-                $drv = new CliDriver(
+                $secret = config('app.adshares_secret');
+                if (null !== $secret) {
+                    $secret = Crypt::decryptString($secret);
+                }
+                $driver = new CliDriver(
                     config('app.adshares_address'),
-                    config('app.adshares_secret'),
+                    $secret,
                     config('app.adshares_node_host'),
                     config('app.adshares_node_port')
                 );
-                $drv->setCommand(config('app.adshares_command'));
-                $drv->setWorkingDir(config('app.adshares_workingdir'));
+                $driver->setCommand(config('app.adshares_command'));
+                $driver->setWorkingDir(config('app.adshares_workingdir'));
 
-                return new AdsClient($drv);
+                return new AdsClient($driver);
             }
         );
 
