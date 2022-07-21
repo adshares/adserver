@@ -63,7 +63,7 @@ class AppServiceProvider extends ServiceProvider
                     config('app.adshares_address'),
                     $secret,
                     config('app.adshares_node_host'),
-                    config('app.adshares_node_port')
+                    (int)config('app.adshares_node_port')
                 );
                 $driver->setCommand(config('app.adshares_command'));
                 $driver->setWorkingDir(config('app.adshares_workingdir'));

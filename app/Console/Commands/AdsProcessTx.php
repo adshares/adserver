@@ -45,26 +45,16 @@ use InvalidArgumentException;
 class AdsProcessTx extends BaseCommand
 {
     public const EXIT_CODE_SUCCESS = 0;
-
     public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
-
     public const EXIT_CODE_LOCKED = 2;
 
     protected $signature = 'ads:process-tx';
-
     protected $description = 'Fetches and processes incoming transactions';
 
-    /** @var string */
-    private $adServerAddress;
-
-    /** @var AdsLogReader */
-    private $adsLogReader;
-
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
-
-    /** @var AdsClient */
-    private $adsClient;
+    private string $adServerAddress;
+    private AdsLogReader $adsLogReader;
+    private ExchangeRateReader $exchangeRateReader;
+    private AdsClient $adsClient;
 
     public function __construct(
         Locker $locker,
@@ -73,7 +63,7 @@ class AdsProcessTx extends BaseCommand
         AdsClient $adsClient
     ) {
         parent::__construct($locker);
-        $this->adServerAddress = (string)config('app.adshares_address');
+        $this->adServerAddress = config('app.adshares_address');
         $this->adsLogReader = $adsLogReader;
         $this->exchangeRateReader = $exchangeRateReader;
         $this->adsClient = $adsClient;

@@ -31,6 +31,9 @@ class MoveEnvToConfig extends Migration
     private const CE_LICENSE_FEE = '0.01';
     private const ENVIRONMENT_VARIABLES_MIGRATION = [
         'ADSHARES_SECRET' => Config::ADSHARES_SECRET,
+        'ADSHARES_ADDRESS' => Config::ADSHARES_ADDRESS,
+        'ADSHARES_NODE_HOST' => Config::ADSHARES_NODE_HOST,
+        'ADSHARES_NODE_PORT' => Config::ADSHARES_NODE_PORT,
         'CAMPAIGN_MIN_BUDGET' => Config::CAMPAIGN_MIN_BUDGET,
         'CAMPAIGN_MIN_CPA' => Config::CAMPAIGN_MIN_CPA,
         'CAMPAIGN_MIN_CPM' => Config::CAMPAIGN_MIN_CPM,

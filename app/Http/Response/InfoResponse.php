@@ -77,7 +77,7 @@ final class InfoResponse implements Arrayable
                 new SecureUrl((string)config('app.privacy_url')),
                 new SecureUrl((string)config('app.terms_url')),
                 new SecureUrl(route('demand-inventory')),
-                new AccountId((string)config('app.adshares_address')),
+                new AccountId(config('app.adshares_address')),
                 new Email($settings[Config::SUPPORT_EMAIL]),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
                 $settings[Config::REGISTRATION_MODE],

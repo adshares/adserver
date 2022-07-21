@@ -900,7 +900,7 @@ class SupplyController extends Controller
 
     public function targetingReachList(): Response
     {
-        if (null === ($networkHost = NetworkHost::fetchByAddress((string)config('app.adshares_address')))) {
+        if (null === ($networkHost = NetworkHost::fetchByAddress(config('app.adshares_address')))) {
             return response(
                 ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
                 Response::HTTP_INTERNAL_SERVER_ERROR

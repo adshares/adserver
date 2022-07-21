@@ -141,7 +141,7 @@ final class GuzzleDemandClient implements DemandClient
         $client = new Client($this->requestParameters($host));
 
         $privateKey = Crypt::decryptString(config('app.adshares_secret'));
-        $accountAddress = (string)config('app.adshares_address');
+        $accountAddress = config('app.adshares_address');
         $date = new DateTime();
         $signature = $this->signatureVerifier->createFromTransactionId(
             $privateKey,

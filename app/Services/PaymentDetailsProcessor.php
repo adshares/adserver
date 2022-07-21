@@ -50,7 +50,7 @@ class PaymentDetailsProcessor
         ExchangeRateReader $exchangeRateReader,
         LicenseReader $licenseReader
     ) {
-        $this->adServerAddress = (string)config('app.adshares_address');
+        $this->adServerAddress = config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
         $this->licenseReader = $licenseReader;
     }

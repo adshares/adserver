@@ -81,7 +81,7 @@ class WalletAmountCheckCommand extends BaseCommand
             $transferValueInAds = number_format((float)AdsConverter::clicksToAds($transferValue), 4, '.', '');
 
             Mail::to($email)->queue(
-                new WalletFundsEmail($transferValueInAds, (string)config('app.adshares_address'))
+                new WalletFundsEmail($transferValueInAds, config('app.adshares_address'))
             );
 
             $message = sprintf(

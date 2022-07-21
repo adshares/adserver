@@ -218,6 +218,10 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid hex (not hex)' =>
                 [['adshares-secret' => 'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid0']],
             'invalid hex (size)' => [['adshares-secret' => '012345678']],
+            'invalid host' => [[Config::ADSHARES_NODE_HOST => 'invalid..invalid']],
+            'invalid port (no a number)' => [[Config::ADSHARES_NODE_PORT => 'invalid']],
+            'invalid port (negative)' => [[Config::ADSHARES_NODE_PORT => '-1']],
+            'invalid port (out of range)' => [[Config::ADSHARES_NODE_PORT => '100000']],
         ];
     }
 

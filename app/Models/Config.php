@@ -42,6 +42,9 @@ class Config extends Model
     use HasFactory;
 
     public const ADS_LOG_START = 'ads-log-start';
+    public const ADSHARES_ADDRESS = 'adshares-address';
+    public const ADSHARES_NODE_HOST = 'adshares-node-host';
+    public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
@@ -102,7 +105,10 @@ class Config extends Model
 
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::ADSERVER_NAME => '',
-        self::ADSHARES_SECRET => '',
+        self::ADSHARES_ADDRESS => '',
+        self::ADSHARES_NODE_HOST => '',
+        self::ADSHARES_NODE_PORT => '6511',
+        self::ADSHARES_SECRET => null,
         self::AUTO_CONFIRMATION_ENABLED => '0',
         self::AUTO_REGISTRATION_ENABLED => '0',
         self::CAMPAIGN_MIN_BUDGET => '5000000000',

@@ -40,6 +40,9 @@ use Throwable;
 class ServerConfigurationController extends Controller
 {
     private const ALLOWED_KEYS = [
+        Config::ADSHARES_ADDRESS => 'accountId',
+        Config::ADSHARES_NODE_HOST => 'host',
+        Config::ADSHARES_NODE_PORT => 'nullable|port',
         Config::ADSHARES_SECRET => 'hex:64',
         Config::ADSERVER_NAME => 'notEmpty',
         Config::AUTO_CONFIRMATION_ENABLED => 'boolean',
@@ -253,6 +256,26 @@ class ServerConfigurationController extends Controller
     {
         if (1 !== preg_match('/^[A-Z]{2,}((,[A-Z]{2,})+)?$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be in valid format', $field));
+        }
+    }
+
+    private static function validateHost(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a host', $field));
+        }
+    }
+
+    private static function validatePort(string $field, string $value): void
+    {
+        if (
+            false === filter_var(
+                $value,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 0, 'max_range' => 65535]]
+            )
+        ) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a port number', $field));
         }
     }
 
