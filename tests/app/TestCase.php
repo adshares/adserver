@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
@@ -54,6 +55,13 @@ abstract class TestCase extends BaseTestCase
         Mail::fake();
         Storage::fake(self::DISK);
         $this->faker = Factory::create();
+
+        Config::updateAdminSettings(
+            [
+                Config::ADSHARES_ADDRESS => '0001-00000005-CBCA',
+            ]
+        );
+
         $adsClient = $this->app->make(AdsClient::class);
 
         $this->app->bind(

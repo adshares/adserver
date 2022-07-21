@@ -211,7 +211,6 @@ class AdsProcessTxTest extends ConsoleTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Config::updateAdminSettings([Config::ADSHARES_ADDRESS => '0001-00000005-CBCA']);
         $this->mockAdsClient();
     }
 
