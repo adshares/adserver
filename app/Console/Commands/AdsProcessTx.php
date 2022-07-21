@@ -63,7 +63,6 @@ class AdsProcessTx extends BaseCommand
         AdsClient $adsClient
     ) {
         parent::__construct($locker);
-        $this->adServerAddress = config('app.adshares_address');
         $this->adsLogReader = $adsLogReader;
         $this->exchangeRateReader = $exchangeRateReader;
         $this->adsClient = $adsClient;
@@ -79,6 +78,7 @@ class AdsProcessTx extends BaseCommand
 
         $this->info('Start command ' . $this->getName());
 
+        $this->adServerAddress = config('app.adshares_address');
         try {
             $transactionCount = $this->adsLogReader->parseLog();
             $this->info("Number of added transactions: ${transactionCount}");
