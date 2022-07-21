@@ -35,6 +35,7 @@ use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 use function uniqid;
 
@@ -60,8 +61,7 @@ final class DemandControllerTest extends TestCase
             }
         );
 
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $this->setupUser();
 
         $accountAddress = '0001-00000001-8B4E';
         $accountAddressDifferentUser = '0001-00000002-BB2D';
@@ -108,27 +108,30 @@ final class DemandControllerTest extends TestCase
     public function testInventoryList(): void
     {
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
 
+        /** @var Campaign $campaignDraft */
         $campaignDraft = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_DRAFT,
             ]
         );
+        /** @var Campaign $campaignInactive */
         $campaignInactive = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_INACTIVE,
             ]
         );
+        /** @var Campaign $campaignActive */
         $campaignActive = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_ACTIVE,
             ]
         );
+        /** @var Campaign $campaignSuspended */
         $campaignSuspended = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
@@ -137,6 +140,7 @@ final class DemandControllerTest extends TestCase
         );
         $activeCampaignsCount = 1;
 
+        /** @var Banner $bannerActive */
         $bannerActive = Banner::factory()->create(
             [
                 'creative_contents' => 'dummy',
@@ -163,15 +167,20 @@ final class DemandControllerTest extends TestCase
             'https://example.com/serve/x' . $bannerActive->uuid . '.doc?v=829c',
             $content[0]['banners'][0]['serve_url']
         );
+        $this->assertEquals($campaignActive->medium, $content[0]['medium']);
+        $this->assertEquals($campaignActive->vendor, $content[0]['vendor']);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInventoryListWithCdn(): void
     {
         Config::set('app.cdn_provider', 'skynet');
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
 
+        /** @var Campaign $campaignActive */
         $campaignActive = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
@@ -179,13 +188,14 @@ final class DemandControllerTest extends TestCase
             ]
         );
 
+        /** @var Banner $bannerActive */
         $bannerActive = Banner::factory()->create(
             [
                 'creative_sha1' => '829c3804401b0727f70f73d4415e162400cbe57b',
                 'creative_contents' => 'dummy',
                 'campaign_id' => $campaignActive->id,
                 'status' => Banner::STATUS_ACTIVE,
-                'cdn_url' => 'http://foo.com/file.png'
+                'cdn_url' => 'https://foo.com/file.png'
             ]
         );
 
@@ -198,7 +208,7 @@ final class DemandControllerTest extends TestCase
         $this->assertCount(1, $content[0]['banners']);
         $this->assertEquals($bannerActive->uuid, $content[0]['banners'][0]['id']);
         $this->assertEquals('829c3804401b0727f70f73d4415e162400cbe57b', $content[0]['banners'][0]['checksum']);
-        $this->assertEquals('http://foo.com/file.png', $content[0]['banners'][0]['serve_url']);
+        $this->assertEquals('https://foo.com/file.png', $content[0]['banners'][0]['serve_url']);
 
         //change content
         $bannerActive->creative_contents = 'foo content';
@@ -222,9 +232,9 @@ final class DemandControllerTest extends TestCase
     public function testWhitelistInventoryList(): void
     {
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
 
+        /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
             [
                 'user_id' => $user->id,
@@ -275,9 +285,7 @@ final class DemandControllerTest extends TestCase
 
     public function testServeDeletedBanner(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->setupUser();
         /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
             [
@@ -300,5 +308,14 @@ final class DemandControllerTest extends TestCase
     private static function buildServeUri(string $uuid): string
     {
         return sprintf('/serve/%s', $uuid);
+    }
+
+    private function setupUser(): User
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->actingAs($user, 'api');
+
+        return $user;
     }
 }

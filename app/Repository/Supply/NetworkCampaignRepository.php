@@ -215,6 +215,8 @@ class NetworkCampaignRepository implements CampaignRepository
                 'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
                 'targeting_requires' => $networkCampaign->targeting_requires ?? [],
                 self::STATUS_FIELD => $networkCampaign->status,
+                'medium' => $networkCampaign->medium,
+                'vendor' => $networkCampaign->vendor,
             ]
         );
     }

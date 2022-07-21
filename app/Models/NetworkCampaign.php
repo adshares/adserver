@@ -32,7 +32,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int id
+ * @property string uuid
  * @property string source_address
+ * @property string medium
+ * @property string|null vendor
  * @mixin Builder
  */
 class NetworkCampaign extends Model
@@ -78,6 +81,8 @@ class NetworkCampaign extends Model
         'budget',
         'date_start',
         'date_end',
+        'medium',
+        'vendor',
         'targeting_requires',
         'targeting_excludes',
         'status',

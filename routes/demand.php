@@ -25,7 +25,6 @@ use Adshares\Adserver\Http\Controllers\ClassificationController;
 use Adshares\Adserver\Http\Controllers\ConversionController;
 use Adshares\Adserver\Http\Controllers\DemandController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
-use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'])
@@ -63,9 +62,6 @@ Route::group(
             ->name('banner-context');
     }
 );
-
-### simulator ###
-Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
 # should be moved to a better place - place for routing which don't have to be authenticated but belongs to manager
 Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])

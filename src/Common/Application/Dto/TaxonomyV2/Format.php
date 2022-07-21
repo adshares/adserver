@@ -33,6 +33,9 @@ class Format implements Arrayable
      * @var string[]
      */
     private array $mimes;
+    /**
+     * @var array<string, string>
+     */
     private array $scopes;
 
     public function __construct(string $type, array $mimes, array $scopes)
@@ -127,6 +130,14 @@ class Format implements Arrayable
     public function getMimes(): array
     {
         return $this->mimes;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getScopes(): array
+    {
+        return $this->scopes;
     }
 
     public function toArray(): array

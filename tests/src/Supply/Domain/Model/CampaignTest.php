@@ -50,8 +50,8 @@ final class CampaignTest extends TestCase
             new Budget(1000000000000, 100000000000, null),
             self::sourceCampaign(),
             Status::toDelete(),
-            [],
-            []
+            'web',
+            null
         );
 
         $this->assertEquals(Status::STATUS_TO_DELETE, $campaign->getStatus());
@@ -75,8 +75,8 @@ final class CampaignTest extends TestCase
             new Budget(1000000000000, 100000000000, null),
             self::sourceCampaign(),
             Status::active(),
-            [],
-            []
+            'web',
+            null
         );
         $campaign->setBanners(new ArrayCollection([$banner]));
 
@@ -119,8 +119,8 @@ final class CampaignTest extends TestCase
             new Budget($budget, $maxCpc, null),
             $sourceHost,
             Status::active(),
-            [],
-            []
+            'web',
+            null
         );
 
         $expected = [
@@ -142,6 +142,8 @@ final class CampaignTest extends TestCase
             'targeting_requires' => [],
             'targeting_excludes' => [],
             'status' => Status::STATUS_ACTIVE,
+            'medium' => 'web',
+            'vendor' => null,
         ];
 
         $this->assertEquals($expected, $campaign->toArray());

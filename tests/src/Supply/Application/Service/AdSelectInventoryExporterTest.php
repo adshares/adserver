@@ -148,6 +148,8 @@ class AdSelectInventoryExporterTest extends TestCase
             new Budget(1000000000000, null, 200000000000),
             new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
             Status::processing(),
+            'web',
+            null
         );
     }
 }

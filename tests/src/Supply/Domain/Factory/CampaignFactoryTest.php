@@ -58,6 +58,8 @@ final class CampaignFactoryTest extends TestCase
             'max_cpm' => 100000000000,
             'budget' => 1000000000000,
             'demand_host' => 'localhost:8101',
+            'medium' => 'web',
+            'vendor' => null,
             'targeting_excludes' => [],
             'targeting_requires' => [],
         ];
@@ -168,38 +170,7 @@ final class CampaignFactoryTest extends TestCase
         $this->expectException(InvalidCampaignArgumentException::class);
 
         $data = $this->data;
-        $data['banners'][2]['size'] = '10:9';
-
-        CampaignFactory::createFromArray($data);
-    }
-
-    public function testCreateFromArrayWhenVideoBannerSizeInvalid(): void
-    {
-        $this->expectException(InvalidCampaignArgumentException::class);
-
-        $data = $this->data;
-        $data['banners'][2]['size'] = '5x5';
-
-        CampaignFactory::createFromArray($data);
-    }
-
-    public function testCreateFromArrayWhenImageBannerSizeInvalid(): void
-    {
-        $this->expectException(InvalidCampaignArgumentException::class);
-
-        $data = $this->data;
-        $data['banners'][0]['size'] = '5x5';
-
-        CampaignFactory::createFromArray($data);
-    }
-
-    public function testCreateFromArrayWhenModelBannerSizeInvalid(): void
-    {
-        $this->expectException(InvalidCampaignArgumentException::class);
-
-        $data = $this->data;
-        $data['banners'][1]['size'] = '5x5';
-
+        $data['banners'][2]['size'] = 10;
 
         CampaignFactory::createFromArray($data);
     }

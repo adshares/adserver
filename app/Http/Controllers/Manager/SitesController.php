@@ -36,6 +36,8 @@ use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Dto\PageRank;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
@@ -53,11 +55,14 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
+    private ConfigurationRepository $configurationRepository;
     private SiteCategoriesValidator $siteCategoriesValidator;
 
     public function __construct(
+        ConfigurationRepository $configurationRepository,
         SiteCategoriesValidator $siteCategoriesValidator
     ) {
+        $this->configurationRepository = $configurationRepository;
         $this->siteCategoriesValidator = $siteCategoriesValidator;
     }
 
@@ -101,7 +106,7 @@ class SitesController extends Controller
         }
 
         $inputZones = $input['ad_units'] ?? null;
-        $this->validateInputZones($inputZones);
+        $this->validateInputZones($this->configurationRepository->fetchMedium($medium, $vendor), $inputZones);
         $filtering = $input['filtering'] ?? null;
         $this->validateFiltering($filtering);
 
@@ -203,7 +208,10 @@ class SitesController extends Controller
             }
         }
         $inputZones = $request->input('site.ad_units');
-        $this->validateInputZones($inputZones);
+        $this->validateInputZones(
+            $this->configurationRepository->fetchMedium($site->medium, $site->vendor),
+            $inputZones
+        );
 
         DB::beginTransaction();
 
@@ -393,7 +401,7 @@ class SitesController extends Controller
         );
     }
 
-    private function validateInputZones($inputZones): void
+    private function validateInputZones(Medium $medium, $inputZones): void
     {
         if (null === $inputZones) {
             return;
@@ -403,14 +411,29 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException('Invalid ad units type.');
         }
 
+        $allowedSizes = $this->getAllowedSizes($medium);
         foreach ($inputZones as $inputZone) {
             if (!isset($inputZone['name']) || !is_string($inputZone['name'])) {
                 throw new UnprocessableEntityHttpException('Invalid name.');
             }
-            if (!isset($inputZone['size']) || !is_string($inputZone['size']) || !Size::isValid($inputZone['size'])) {
+            if (
+                !isset($inputZone['size'])
+                || !is_string($inputZone['size'])
+                || !in_array($inputZone['size'], $allowedSizes)
+            ) {
                 throw new UnprocessableEntityHttpException('Invalid size.');
             }
         }
+    }
+
+    private function getAllowedSizes(Medium $medium): array
+    {
+        $sizes = [];
+        foreach ($medium->getFormats() as $format) {
+            $sizes = array_merge($sizes, $format->getScopes());
+        }
+
+        return array_keys($sizes);
     }
 
     private function validateFiltering($filtering): void

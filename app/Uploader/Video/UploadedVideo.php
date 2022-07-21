@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Uploader\Video;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class UploadedVideo implements UploadedFile
 {
@@ -36,10 +35,6 @@ class UploadedVideo implements UploadedFile
 
     public function __construct(string $name, string $previewUrl, int $width, int $height)
     {
-        if (empty(Size::findMatching($width, $height))) {
-            throw new BadRequestHttpException('Unsupported video size');
-        }
-
         $this->name = $name;
         $this->previewUrl = $previewUrl;
         $this->width = $width;

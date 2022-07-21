@@ -34,6 +34,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
@@ -64,19 +65,12 @@ use function strtolower;
 class GuzzleAdSelectClient implements AdSelect
 {
     private const URI_CASE_EXPORT = '/api/v1/cases';
-
     private const URI_CASE_LAST_EXPORTED_ID = '/api/v1/cases/last';
-
     private const URI_CASE_CLICK_EXPORT = '/api/v1/clicks';
-
     private const URI_CASE_CLICK_LAST_EXPORTED_ID = '/api/v1/clicks/last';
-
     private const URI_CASE_PAYMENT_EXPORT = '/api/v1/payments';
-
     private const URI_CASE_PAYMENT_LAST_EXPORTED_ID = '/api/v1/payments/last';
-
     private const URI_FIND_BANNERS = '/api/v1/find';
-
     private const URI_INVENTORY = '/api/v1/campaigns';
 
     private Client $client;
@@ -88,11 +82,15 @@ class GuzzleAdSelectClient implements AdSelect
 
     public function exportInventory(CampaignCollection $campaigns): void
     {
+        $configurationRepository = resolve(ConfigurationRepository::class);
         $mapped = [];
 
         /** @var Campaign $campaign */
         foreach ($campaigns as $campaign) {
-            $mapped[] = CampaignMapper::map($campaign);
+            $mapped[] = CampaignMapper::map(
+                $configurationRepository->fetchMedium($campaign->getMedium(), $campaign->getVendor()),
+                $campaign
+            );
         }
         try {
             $this->client->post(

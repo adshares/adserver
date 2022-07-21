@@ -157,7 +157,7 @@ class NetworkBannerFilter
         }
 
         foreach ($this->sizes as $size) {
-            if (!Size::isValid($size)) {
+            if (!is_string($size) || strlen($size) <= 0 || strlen($size) > 16) {
                 throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] Invalid size (%s)', $size));
             }
         }

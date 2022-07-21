@@ -24,10 +24,12 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use DateTime;
-use PHPUnit\Framework\TestCase;
 use stdClass;
 
 final class CampaignMapperTest extends TestCase
@@ -72,7 +74,7 @@ final class CampaignMapperTest extends TestCase
 
         $campaign = CampaignFactory::createFromArray($campaignData);
 
-        $this->assertEquals($expected, CampaignMapper::map($campaign));
+        $this->assertEquals($expected, CampaignMapper::map($this->getMedium(), $campaign));
     }
 
     public function testMappingCampaignWithClassification(): void
@@ -113,7 +115,7 @@ final class CampaignMapperTest extends TestCase
         ];
 
         $campaign = CampaignFactory::createFromArray($campaignDataWithClassification);
-        $mapped = CampaignMapper::map($campaign);
+        $mapped = CampaignMapper::map($this->getMedium(), $campaign);
         // time_end must be compared separately with timestamp range because it is overwritten
         $mappedTimeEnd = $mapped['time_end'];
         unset($mapped['time_end']);
@@ -141,7 +143,7 @@ final class CampaignMapperTest extends TestCase
             ]
         );
         $campaign = CampaignFactory::createFromArray($campaignData);
-        $mapped = CampaignMapper::map($campaign);
+        $mapped = CampaignMapper::map($this->getMedium(), $campaign);
 
         $bannerSizes = $mapped['banners'][0]['banner_size'];
         self::assertIsArray($bannerSizes);
@@ -173,6 +175,8 @@ final class CampaignMapperTest extends TestCase
             'max_cpm' => 100000000002,
             'budget' => 1000000000000,
             'demand_host' => 'localhost:8101',
+            'medium' => 'web',
+            'vendor' => null,
             'targeting_excludes' => [],
             'targeting_requires' => [],
         ];
@@ -239,6 +243,8 @@ final class CampaignMapperTest extends TestCase
             'max_cpc' => 10000000001,
             'max_cpm' => 10000000002,
             'budget' => 93555000000,
+            'medium' => 'web',
+            'vendor' => null,
             'targeting_excludes' => [],
             'targeting_requires' => [
                 "device" => [
@@ -248,5 +254,10 @@ final class CampaignMapperTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    private function getMedium(): Medium
+    {
+        return (new DummyConfigurationRepository())->fetchMedium();
     }
 }
