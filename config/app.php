@@ -115,9 +115,6 @@ return [
     'allow_zone_in_iframe' => (bool)env('ALLOW_ZONE_IN_IFRAME', true),
     'network_data_cache_ttl' => (int)env('NETWORK_DATA_CACHE_TTL', 60),
 
-    'campaign_min_budget' => (int)env('CAMPAIGN_MIN_BUDGET', 5000000000),
-    'campaign_min_cpm' => (int)env('CAMPAIGN_MIN_CPM', 5000000000),
-    'campaign_min_cpa' => (int)env('CAMPAIGN_MIN_CPA', 1000000000),
     'classifier_external_name' => env('CLASSIFIER_EXTERNAL_NAME'),
     'classifier_external_base_url' => env('CLASSIFIER_EXTERNAL_BASE_URL'),
     'classifier_external_public_key' => env('CLASSIFIER_EXTERNAL_PUBLIC_KEY'),

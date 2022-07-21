@@ -26,34 +26,35 @@ use Illuminate\Support\Facades\DB;
 class MoveEnvToConfig extends Migration
 {
     private const CE_LICENSE_ACCOUNT = '0001-00000024-FF89';
+    private const CE_LICENSE_FEE = '0.01';
+    private const ENVIRONMENT_VARIABLES_MIGRATION = [
+        'CAMPAIGN_MIN_BUDGET' => 'campaign-min-budget',
+        'CAMPAIGN_MIN_CPA' => 'campaign-min-cpa',
+        'CAMPAIGN_MIN_CPM' => 'campaign-min-cpm',
+    ];
 
     public function up(): void
     {
         self::fillMissingDates();
-
-        $keys = array_map(
-            fn($item) => sprintf("'%s'", $item),
-            [Config::LICENCE_ACCOUNT, Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE]
-        );
-
-        $sql = sprintf('DELETE FROM configs WHERE `key` IN (%s);', implode(',', $keys));
-
-        DB::delete($sql);
+        self::deleteFromConfigs([Config::LICENCE_ACCOUNT, Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE]);
+        $this->migrateEnvironmentVariables();
     }
 
     public function down(): void
     {
+        $this->revertEnvironmentVariablesMigration();
+
         Config::updateOrCreate(
             ['key' => Config::LICENCE_ACCOUNT],
             ['value' => self::CE_LICENSE_ACCOUNT]
         );
         Config::updateOrCreate(
             ['key' => Config::LICENCE_RX_FEE],
-            ['value' => '0.01']
+            ['value' => self::CE_LICENSE_FEE]
         );
         Config::updateOrCreate(
             ['key' => Config::LICENCE_TX_FEE],
-            ['value' => '0.01']
+            ['value' => self::CE_LICENSE_FEE]
         );
     }
 
@@ -61,5 +62,33 @@ class MoveEnvToConfig extends Migration
     {
         DB::update('UPDATE configs SET created_at = updated_at WHERE created_at IS NULL');
         DB::update('UPDATE configs SET updated_at = created_at WHERE updated_at IS NULL');
+    }
+
+    private function migrateEnvironmentVariables(): void
+    {
+        $settings = [];
+        foreach (self::ENVIRONMENT_VARIABLES_MIGRATION as $envKey => $configKey) {
+            if (null !== ($envValue = env($envKey))) {
+                $settings[$configKey] = $envValue;
+            }
+        }
+        Config::updateAdminSettings($settings);
+    }
+
+    private function revertEnvironmentVariablesMigration(): void
+    {
+        self::deleteFromConfigs(array_values(self::ENVIRONMENT_VARIABLES_MIGRATION));
+    }
+
+    private function deleteFromConfigs(array $keys): void
+    {
+        $quotedKeys = array_map(
+            fn($item) => sprintf("'%s'", $item),
+            $keys
+        );
+
+        $sql = sprintf('DELETE FROM configs WHERE `key` IN (%s);', implode(',', $quotedKeys));
+
+        DB::delete($sql);
     }
 }

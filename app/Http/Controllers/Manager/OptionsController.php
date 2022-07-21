@@ -67,9 +67,9 @@ class OptionsController extends Controller
     {
         return self::json(
             [
-                'min_budget' => config('app.campaign_min_budget'),
-                'min_cpm' => config('app.campaign_min_cpm'),
-                'min_cpa' => config('app.campaign_min_cpa'),
+                'min_budget' => (int)config('app.campaign_min_budget'),
+                'min_cpm' => (int)config('app.campaign_min_cpm'),
+                'min_cpa' => (int)config('app.campaign_min_cpa'),
             ]
         );
     }

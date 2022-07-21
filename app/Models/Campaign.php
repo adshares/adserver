@@ -408,17 +408,17 @@ class Campaign extends Model
 
     private function checkBudget(): bool
     {
-        if ($this->budget < config('app.campaign_min_budget')) {
+        if ($this->budget < (int)config('app.campaign_min_budget')) {
             return false;
         }
 
-        if ($this->isAutoCpm() || $this->max_cpm >= config('app.campaign_min_cpm')) {
+        if ($this->isAutoCpm() || $this->max_cpm >= (int)config('app.campaign_min_cpm')) {
             return true;
         }
 
         foreach ($this->conversions as $conversion) {
             /** @var $conversion ConversionDefinition */
-            if ($conversion->value >= config('app.campaign_min_cpa')) {
+            if ($conversion->value >= (int)config('app.campaign_min_cpa')) {
                 return true;
             }
         }

@@ -60,6 +60,9 @@ class Config extends Model
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
+    public const CAMPAIGN_MIN_BUDGET = 'campaign-min-budget';
+    public const CAMPAIGN_MIN_CPA = 'campaign-min-cpa';
+    public const CAMPAIGN_MIN_CPM = 'campaign-min-cpm';
     public const COLD_WALLET_ADDRESS = 'cold-wallet-address';
     public const COLD_WALLET_IS_ACTIVE = 'cold-wallet-is-active';
     public const ADSERVER_NAME = 'adserver-name';
@@ -99,6 +102,9 @@ class Config extends Model
         self::ADSERVER_NAME => '',
         self::AUTO_CONFIRMATION_ENABLED => '0',
         self::AUTO_REGISTRATION_ENABLED => '0',
+        self::CAMPAIGN_MIN_BUDGET => '5000000000',
+        self::CAMPAIGN_MIN_CPA => '1000000000',
+        self::CAMPAIGN_MIN_CPM => '5000000000',
         self::COLD_WALLET_ADDRESS => '',
         self::COLD_WALLET_IS_ACTIVE => '0',
         self::EMAIL_VERIFICATION_REQUIRED => '0',
