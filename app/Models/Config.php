@@ -60,6 +60,13 @@ class Config extends Model
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
     public const EXCHANGE_CURRENCIES = 'exchange-currencies';
+    public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
+    public const NOW_PAYMENTS_CURRENCY = 'now-payments-currency';
+    public const NOW_PAYMENTS_EXCHANGE = 'now-payments-exchange';
+    public const NOW_PAYMENTS_FEE = 'now-payments-fee';
+    public const NOW_PAYMENTS_IPN_SECRET = 'now-payments-ipn-secret';
+    public const NOW_PAYMENTS_MAX_AMOUNT = 'now-payments-max-amount';
+    public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     /** @deprecated fee should be read from {@see LicenseReader} */
@@ -154,6 +161,13 @@ class Config extends Model
         self::INVOICE_CURRENCIES => '',
         self::INVOICE_ENABLED => '0',
         self::INVOICE_NUMBER_FORMAT => '',
+        self::NOW_PAYMENTS_API_KEY => '',
+        self::NOW_PAYMENTS_CURRENCY => 'USD',
+        self::NOW_PAYMENTS_EXCHANGE => '0',
+        self::NOW_PAYMENTS_FEE => '0.05',
+        self::NOW_PAYMENTS_IPN_SECRET => '',
+        self::NOW_PAYMENTS_MAX_AMOUNT => '1000',
+        self::NOW_PAYMENTS_MIN_AMOUNT => '25',
         self::OPERATOR_RX_FEE => '0.01',
         self::OPERATOR_TX_FEE => '0.01',
         self::REFERRAL_REFUND_COMMISSION => '',
@@ -181,6 +195,7 @@ class Config extends Model
     private const SECRETS = [
         self::ADSHARES_SECRET,
         self::EXCHANGE_API_SECRET,
+        self::NOW_PAYMENTS_IPN_SECRET,
     ];
 
     public $incrementing = false;

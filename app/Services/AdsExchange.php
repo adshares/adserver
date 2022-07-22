@@ -33,13 +33,13 @@ final class AdsExchange
 {
     private string $apiUrl;
     private string $apiKey;
-    private string $apiSecret;
+    private string $encryptedApiSecret;
 
     public function __construct()
     {
         $this->apiUrl = config('app.exchange_api_url');
         $this->apiKey = config('app.exchange_api_key');
-        $this->apiSecret = config('app.exchange_api_secret');
+        $this->encryptedApiSecret = config('app.exchange_api_secret');
     }
 
     public function exchange(
@@ -110,7 +110,7 @@ final class AdsExchange
         return hash_hmac(
             'sha512',
             json_encode($filtered, JSON_NUMERIC_CHECK | JSON_UNESCAPED_SLASHES),
-            Crypt::decryptString($this->apiSecret)
+            Crypt::decryptString($this->encryptedApiSecret)
         );
     }
 

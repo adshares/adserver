@@ -74,6 +74,13 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_CURRENCIES => 'nullable|currenciesList',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
+        Config::NOW_PAYMENTS_API_KEY => 'nullable',
+        Config::NOW_PAYMENTS_CURRENCY => 'nullable|currency',
+        Config::NOW_PAYMENTS_EXCHANGE => 'nullable|boolean',
+        Config::NOW_PAYMENTS_FEE => 'nullable|commission',
+        Config::NOW_PAYMENTS_IPN_SECRET => 'nullable',
+        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|amount',
+        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|amount',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
         Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
@@ -143,6 +150,13 @@ class ServerConfigurationController extends Controller
     {
         if (!AccountId::isValid($value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an account ID', $field));
+        }
+    }
+
+    private static function validateAmount(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an amount', $field));
         }
     }
 
@@ -257,8 +271,15 @@ class ServerConfigurationController extends Controller
             return;
         }
 
-        if (1 !== preg_match('/^[A-Z]{2,}((,[A-Z]{2,})+)?$/', $value)) {
+        if (1 !== preg_match('/^[A-Z]{3,}((,[A-Z]{3,})+)?$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be in valid format', $field));
+        }
+    }
+
+    private static function validateCurrency(string $field, string $value): void
+    {
+        if (1 !== preg_match('/^[A-Z]{3,}$/', $value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a currency', $field));
         }
     }
 
