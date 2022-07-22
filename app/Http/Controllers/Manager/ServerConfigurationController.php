@@ -112,19 +112,9 @@ class ServerConfigurationController extends Controller
 
     private function storeData(array $data): void
     {
-        DB::beginTransaction();
         try {
-            foreach ($data as $key => $value) {
-                if (null === $value) {
-                    Config::removeByKey($key);
-                } else {
-                    Config::upsertByKey($key, $value);
-                }
-            }
-            DB::commit();
+            Config::updateAdminSettings($data);
         } catch (Throwable $exception) {
-            Log::error(sprintf('Exception during server configuration update (%s)', $exception->getMessage()));
-            DB::rollBack();
             throw new RuntimeException('Cannot store configuration');
         }
     }

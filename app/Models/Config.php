@@ -31,6 +31,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * @property string key
@@ -283,17 +286,25 @@ class Config extends Model
 
     public static function updateAdminSettings(array $settings): void
     {
-        foreach ($settings as $key => $value) {
-            if (in_array($key, self::SECRETS, true)) {
-                $value = Crypt::encryptString($value);
+        DB::beginTransaction();
+        try {
+            foreach ($settings as $key => $value) {
+                if (null === $value) {
+                    Config::whereKey($key)->delete();
+                    continue;
+                }
+
+                if (in_array($key, self::SECRETS, true)) {
+                    $value = Crypt::encryptString($value);
+                }
+                self::upsertByKey($key, $value);
             }
-            self::upsertByKey($key, $value);
+            DB::commit();
+        } catch (Throwable $exception) {
+            Log::error(sprintf("Exception during administrator's settings update (%s)", $exception->getMessage()));
+            DB::rollBack();
+            throw $exception;
         }
         Cache::forget('config.admin');
-    }
-
-    public static function removeByKey(string $key): void
-    {
-        Config::whereKey($key)->delete();
     }
 }

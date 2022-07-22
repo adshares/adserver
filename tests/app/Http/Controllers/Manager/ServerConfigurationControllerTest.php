@@ -100,8 +100,8 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testFetchByKeyWhileValueIsNull(): void
     {
-        $key = Config::SUPPORT_EMAIL;
-        DB::delete('DELETE FROM configs WHERE `key` = ?', [$key]);
+        $key = Config::ADSHARES_SECRET;
+        Config::updateAdminSettings([$key => null]);
         $admin = User::factory()->admin()->create();
 
         $response = $this->getJson(

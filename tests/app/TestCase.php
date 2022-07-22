@@ -22,7 +22,9 @@
 namespace Adshares\Adserver\Tests;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\AdUser;
@@ -54,6 +56,15 @@ abstract class TestCase extends BaseTestCase
         Mail::fake();
         Storage::fake(self::DISK);
         $this->faker = Factory::create();
+
+        Config::updateAdminSettings(
+            [
+                Config::ADSHARES_ADDRESS => '0001-00000005-CBCA',
+                Config::ADSHARES_SECRET => 'CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB',
+            ]
+        );
+        DatabaseConfigReader::overwriteAdministrationConfig();
+
         $adsClient = $this->app->make(AdsClient::class);
 
         $this->app->bind(
