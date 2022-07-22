@@ -31,8 +31,6 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
@@ -52,6 +50,9 @@ class ServerConfigurationController extends Controller
         Config::CAMPAIGN_MIN_CPM => 'nullable|clickAmount',
         Config::COLD_WALLET_ADDRESS => 'accountId',
         Config::COLD_WALLET_IS_ACTIVE => 'boolean',
+        Config::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => 'nullable|email',
+        Config::CRM_MAIL_ADDRESS_ON_SITE_ADDED => 'nullable|email',
+        Config::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => 'nullable|email',
         Config::EMAIL_VERIFICATION_REQUIRED => 'boolean',
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',

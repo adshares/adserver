@@ -49,6 +49,9 @@ class Config extends Model
     public const ADSHARES_NODE_HOST = 'adshares-node-host';
     public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
+    public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
+    public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
+    public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     /** @deprecated fee should be read from {@see LicenseReader} */
@@ -119,6 +122,9 @@ class Config extends Model
         self::CAMPAIGN_MIN_CPM => '5000000000',
         self::COLD_WALLET_ADDRESS => '',
         self::COLD_WALLET_IS_ACTIVE => '0',
+        self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
+        self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
+        self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
         self::EMAIL_VERIFICATION_REQUIRED => '0',
         self::HOT_WALLET_MAX_VALUE => '50000000000000000',
         self::HOT_WALLET_MIN_VALUE => '2000000000000000',
