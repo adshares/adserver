@@ -110,7 +110,7 @@ class WalletController extends Controller
     {
         $btcInfo = null;
         if (config('app.btc_withdraw')) {
-            $fee = config('app.btc_withdraw_fee');
+            $fee = (float)config('app.btc_withdraw_fee');
             $rate = 0;
             try {
                 $exchangeRate = $exchangeRateReader->fetchExchangeRate(null, 'BTC')->toArray();
@@ -120,8 +120,8 @@ class WalletController extends Controller
             }
 
             $btcInfo = [
-                'minAmount' => config('app.btc_withdraw_min_amount'),
-                'maxAmount' => config('app.btc_withdraw_max_amount'),
+                'minAmount' => (int)config('app.btc_withdraw_min_amount'),
+                'maxAmount' => (int)config('app.btc_withdraw_max_amount'),
                 'exchangeRate' => $rate / (1 - $fee),
             ];
         }
@@ -405,8 +405,8 @@ class WalletController extends Controller
 
     private function withdrawBtc(Request $request): JsonResponse
     {
-        $minAmount = 1e11 * config('app.btc_withdraw_min_amount');
-        $maxAmount = 1e11 * config('app.btc_withdraw_max_amount');
+        $minAmount = 1e11 * (int)config('app.btc_withdraw_min_amount');
+        $maxAmount = 1e11 * (int)config('app.btc_withdraw_max_amount');
 
         Validator::make(
             $request->all(),

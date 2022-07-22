@@ -49,6 +49,10 @@ class Config extends Model
     public const ADSHARES_NODE_HOST = 'adshares-node-host';
     public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
+    public const BTC_WITHDRAW = 'btc-withdraw';
+    public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
+    public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
+    public const BTC_WITHDRAW_MIN_AMOUNT = 'btc-withdraw-min-amount';
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
@@ -117,6 +121,10 @@ class Config extends Model
         self::ADSHARES_SECRET => null,
         self::AUTO_CONFIRMATION_ENABLED => '0',
         self::AUTO_REGISTRATION_ENABLED => '0',
+        self::BTC_WITHDRAW => '0',
+        self::BTC_WITHDRAW_FEE => '0.05',
+        self::BTC_WITHDRAW_MAX_AMOUNT => '1000000000000000',
+        self::BTC_WITHDRAW_MIN_AMOUNT => '10000000000000',
         self::CAMPAIGN_MIN_BUDGET => '5000000000',
         self::CAMPAIGN_MIN_CPA => '1000000000',
         self::CAMPAIGN_MIN_CPM => '5000000000',

@@ -43,6 +43,7 @@ class WalletControllerTest extends TestCase
     private const CONNECT_INIT_URI = '/api/wallet/connect/init';
     private const CONNECT_URI = '/api/wallet/connect';
     private const CONNECT_CONFIRM_URI = '/api/wallet/connect/confirm';
+    private const INFO_URI = '/api/withdrawal-info';
 
     public function testCalculateWithdrawSameNode(): void
     {
@@ -1066,6 +1067,25 @@ class WalletControllerTest extends TestCase
 
         $response = $this->post(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testWithdrawalInfoWhenNoWithdrawalAvailable(): void
+    {
+        $this->login();
+        $response = $this->get(self::INFO_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['btc' => null]);
+    }
+
+    public function testWithdrawalInfoWhenWithdrawalAvailable(): void
+    {
+        Config::updateAdminSettings([Config::BTC_WITHDRAW => '1']);
+        $this->login();
+        $response = $this->get(self::INFO_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['btc' => ['minAmount', 'maxAmount', 'exchangeRate']]);
     }
 
     private function generateUserIncome(int $userId, int $amount): void
