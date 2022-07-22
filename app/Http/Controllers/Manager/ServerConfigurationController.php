@@ -80,6 +80,7 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_CURRENCIES => 'nullable|currenciesList',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
+        Config::MAX_PAGE_ZONES => 'nullable|positiveInteger',
         Config::NETWORK_DATA_CACHE_TTL => 'nullable|positiveInteger',
         Config::NOW_PAYMENTS_API_KEY => 'nullable',
         Config::NOW_PAYMENTS_CURRENCY => 'nullable|currency',

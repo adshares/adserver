@@ -387,7 +387,7 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Site not accepted');
         }
         if (($decodedQueryData['zone_mode'] ?? '') !== 'best_match') {
-            $zones = array_slice($zones, 0, config('app.max_page_zones'));
+            $zones = array_slice($zones, 0, (int)config('app.max_page_zones'));
         }
         return $zones;
     }

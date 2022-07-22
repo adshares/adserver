@@ -118,7 +118,6 @@ return [
     'main_js_tld' => env('MAIN_JS_TLD'),
     'fiat_deposit_min_amount' => (int)env('FIAT_DEPOSIT_MIN_AMOUNT', 2000),
     'fiat_deposit_max_amount' => (int)env('FIAT_DEPOSIT_MAX_AMOUNT', 100000),
-    'max_page_zones' => (int)env('MAX_PAGE_ZONES', 4),
     'setup' => (int)env('APP_SETUP', 0),
     'skynet_api_url' => env('SKYNET_API_URL'),
     'skynet_api_key' => env('SKYNET_API_KEY'),

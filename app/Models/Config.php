@@ -66,6 +66,7 @@ class Config extends Model
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
     public const EXCHANGE_CURRENCIES = 'exchange-currencies';
+    public const MAX_PAGE_ZONES = 'max-page-zones';
     public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
     public const NOW_PAYMENTS_CURRENCY = 'now-payments-currency';
@@ -180,6 +181,7 @@ class Config extends Model
         self::INVOICE_CURRENCIES => '',
         self::INVOICE_ENABLED => '0',
         self::INVOICE_NUMBER_FORMAT => '',
+        self::MAX_PAGE_ZONES => '4',
         self::NETWORK_DATA_CACHE_TTL => '60',
         self::NOW_PAYMENTS_API_KEY => '',
         self::NOW_PAYMENTS_CURRENCY => 'USD',
