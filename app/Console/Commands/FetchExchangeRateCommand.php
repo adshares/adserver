@@ -32,14 +32,10 @@ use Illuminate\Database\QueryException;
 class FetchExchangeRateCommand extends BaseCommand
 {
     protected $signature = 'ops:exchange-rate:fetch';
-
     protected $description = 'Fetch exchange rate';
 
-    /** @var EloquentExchangeRateRepository */
-    private $repositoryStorable;
-
-    /** @var ExchangeRateRepository */
-    private $repositoryRemote;
+    private EloquentExchangeRateRepository $repositoryStorable;
+    private ExchangeRateRepository $repositoryRemote;
 
     public function __construct(
         Locker $locker,
@@ -67,8 +63,9 @@ class FetchExchangeRateCommand extends BaseCommand
 
             return;
         }
+        $currenciesArray = explode(',', $currencies);
 
-        foreach ($currencies as $currency) {
+        foreach ($currenciesArray as $currency) {
             $this->info(sprintf('Fetching %s rate', $currency));
             $exchangeRate = $this->repositoryRemote->fetchExchangeRate(null, $currency);
             $this->info(sprintf('Exchange %s rate: %s', $currency, $exchangeRate->toString()));

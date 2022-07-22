@@ -45,7 +45,7 @@ class ServerConfigurationController extends Controller
         Config::ADSERVER_NAME => 'notEmpty',
         Config::AUTO_CONFIRMATION_ENABLED => 'boolean',
         Config::AUTO_REGISTRATION_ENABLED => 'boolean',
-        Config::BTC_WITHDRAW => 'boolean',
+        Config::BTC_WITHDRAW => 'nullable|boolean',
         Config::BTC_WITHDRAW_FEE => 'nullable|commission',
         Config::BTC_WITHDRAW_MAX_AMOUNT => 'nullable|clickAmount',
         Config::BTC_WITHDRAW_MIN_AMOUNT => 'nullable|clickAmount',
@@ -53,23 +53,27 @@ class ServerConfigurationController extends Controller
         Config::CAMPAIGN_MIN_CPA => 'nullable|clickAmount',
         Config::CAMPAIGN_MIN_CPM => 'nullable|clickAmount',
         Config::COLD_WALLET_ADDRESS => 'accountId',
-        Config::COLD_WALLET_IS_ACTIVE => 'boolean',
+        Config::COLD_WALLET_IS_ACTIVE => 'nullable|boolean',
         Config::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_SITE_ADDED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => 'nullable|email',
-        Config::EMAIL_VERIFICATION_REQUIRED => 'boolean',
+        Config::EMAIL_VERIFICATION_REQUIRED => 'nullable|boolean',
+        Config::EXCHANGE_API_KEY => 'nullable',
+        Config::EXCHANGE_API_SECRET => 'nullable',
+        Config::EXCHANGE_API_URL => 'nullable|url',
+        Config::EXCHANGE_CURRENCIES => 'nullable|currenciesList',
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
-        Config::INVOICE_COMPANY_ADDRESS => 'notEmpty',
-        Config::INVOICE_COMPANY_BANK_ACCOUNTS => 'notEmpty|json',
-        Config::INVOICE_COMPANY_CITY => 'notEmpty',
-        Config::INVOICE_COMPANY_COUNTRY => 'country',
-        Config::INVOICE_COMPANY_NAME => 'notEmpty',
-        Config::INVOICE_COMPANY_POSTAL_CODE => 'notEmpty',
-        Config::INVOICE_COMPANY_VAT_ID => 'notEmpty',
-        Config::INVOICE_CURRENCIES => 'currenciesList',
-        Config::INVOICE_ENABLED => 'boolean',
-        Config::INVOICE_NUMBER_FORMAT => 'notEmpty',
+        Config::INVOICE_COMPANY_ADDRESS => 'nullable|notEmpty',
+        Config::INVOICE_COMPANY_BANK_ACCOUNTS => 'nullable|notEmpty|json',
+        Config::INVOICE_COMPANY_CITY => 'nullable|notEmpty',
+        Config::INVOICE_COMPANY_COUNTRY => 'nullable|country',
+        Config::INVOICE_COMPANY_NAME => 'nullable|notEmpty',
+        Config::INVOICE_COMPANY_POSTAL_CODE => 'nullable|notEmpty',
+        Config::INVOICE_COMPANY_VAT_ID => 'nullable|notEmpty',
+        Config::INVOICE_CURRENCIES => 'nullable|currenciesList',
+        Config::INVOICE_ENABLED => 'nullable|boolean',
+        Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
         Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
@@ -249,6 +253,10 @@ class ServerConfigurationController extends Controller
 
     private static function validateCurrenciesList(string $field, string $value): void
     {
+        if (empty($value)) {
+            return;
+        }
+
         if (1 !== preg_match('/^[A-Z]{2,}((,[A-Z]{2,})+)?$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be in valid format', $field));
         }
@@ -258,19 +266,6 @@ class ServerConfigurationController extends Controller
     {
         if (false === filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a host', $field));
-        }
-    }
-
-    private static function validatePort(string $field, string $value): void
-    {
-        if (
-            false === filter_var(
-                $value,
-                FILTER_VALIDATE_INT,
-                ['options' => ['min_range' => 0, 'max_range' => 65535]]
-            )
-        ) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a port number', $field));
         }
     }
 
@@ -285,6 +280,19 @@ class ServerConfigurationController extends Controller
     {
         if (null === json_decode($value, true)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a JSON', $field));
+        }
+    }
+
+    private static function validatePort(string $field, string $value): void
+    {
+        if (
+            false === filter_var(
+                $value,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 0, 'max_range' => 65535]]
+            )
+        ) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a port number', $field));
         }
     }
 
@@ -311,6 +319,13 @@ class ServerConfigurationController extends Controller
                     implode(', ', Config::ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS)
                 )
             );
+        }
+    }
+
+    private static function validateUrl(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_URL)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a url', $field));
         }
     }
 }

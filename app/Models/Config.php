@@ -56,6 +56,10 @@ class Config extends Model
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
+    public const EXCHANGE_API_KEY = 'exchange-api-key';
+    public const EXCHANGE_API_SECRET = 'exchange-api-secret';
+    public const EXCHANGE_API_URL = 'exchange-api-url';
+    public const EXCHANGE_CURRENCIES = 'exchange-currencies';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     /** @deprecated fee should be read from {@see LicenseReader} */
@@ -134,6 +138,10 @@ class Config extends Model
         self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
         self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
         self::EMAIL_VERIFICATION_REQUIRED => '0',
+        self::EXCHANGE_API_KEY => '',
+        self::EXCHANGE_API_SECRET => '',
+        self::EXCHANGE_API_URL => '',
+        self::EXCHANGE_CURRENCIES => 'USD,BTC',
         self::HOT_WALLET_MAX_VALUE => '50000000000000000',
         self::HOT_WALLET_MIN_VALUE => '2000000000000000',
         self::INVOICE_COMPANY_ADDRESS => '',
@@ -172,6 +180,7 @@ class Config extends Model
     ];
     private const SECRETS = [
         self::ADSHARES_SECRET,
+        self::EXCHANGE_API_SECRET,
     ];
 
     public $incrementing = false;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,18 +26,14 @@ namespace Adshares\Adserver\Services;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 
 final class AdsExchange
 {
-    /** @var string */
-    private $apiUrl;
-
-    /** @var string */
-    private $apiKey;
-
-    /** @var string */
-    private $apiSecret;
+    private string $apiUrl;
+    private string $apiKey;
+    private string $apiSecret;
 
     public function __construct()
     {
@@ -114,7 +110,7 @@ final class AdsExchange
         return hash_hmac(
             'sha512',
             json_encode($filtered, JSON_NUMERIC_CHECK | JSON_UNESCAPED_SLASHES),
-            $this->apiSecret
+            Crypt::decryptString($this->apiSecret)
         );
     }
 

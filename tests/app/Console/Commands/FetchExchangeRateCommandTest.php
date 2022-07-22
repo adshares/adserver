@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,24 +21,35 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
 
 final class FetchExchangeRateCommandTest extends ConsoleTestCase
 {
     public function testFetchExchangeRate(): void
     {
-        $this->app->bind(
-            ExchangeRateRepository::class,
-            function () {
-                return new DummyExchangeRateRepository();
-            }
-        );
+        Config::updateAdminSettings([Config::EXCHANGE_CURRENCIES => 'USD']);
         $mockRepository = $this->createMock(EloquentExchangeRateRepository::class);
         $mockRepository->expects($this->once())->method('storeExchangeRate');
+
+        $this->app->bind(
+            EloquentExchangeRateRepository::class,
+            function () use ($mockRepository) {
+                return $mockRepository;
+            }
+        );
+
+        $this->artisan('ops:exchange-rate:fetch')->assertExitCode(0);
+    }
+
+    public function testFetchExchangeRateWhenNoCurrenciesSet(): void
+    {
+        Config::updateAdminSettings([Config::EXCHANGE_CURRENCIES => '']);
+        $mockRepository = $this->createMock(EloquentExchangeRateRepository::class);
+        $mockRepository->expects($this->never())->method('storeExchangeRate');
 
         $this->app->bind(
             EloquentExchangeRateRepository::class,
