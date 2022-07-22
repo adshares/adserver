@@ -105,11 +105,6 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
 
-    'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
-    'check_zone_domain' => (bool)env('CHECK_ZONE_DOMAIN', true),
-    'allow_zone_in_iframe' => (bool)env('ALLOW_ZONE_IN_IFRAME', true),
-    'network_data_cache_ttl' => (int)env('NETWORK_DATA_CACHE_TTL', 60),
-
     'classifier_external_name' => env('CLASSIFIER_EXTERNAL_NAME'),
     'classifier_external_base_url' => env('CLASSIFIER_EXTERNAL_BASE_URL'),
     'classifier_external_public_key' => env('CLASSIFIER_EXTERNAL_PUBLIC_KEY'),

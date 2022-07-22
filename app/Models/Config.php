@@ -49,6 +49,8 @@ class Config extends Model
     public const ADSHARES_NODE_HOST = 'adshares-node-host';
     public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
+    public const ALLOW_ZONE_IN_IFRAME = 'allow_zone-in-iframe';
+    public const BANNER_FORCE_HTTPS = 'banner-force-https';
     public const BTC_WITHDRAW = 'btc-withdraw';
     public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
     public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
@@ -56,6 +58,7 @@ class Config extends Model
     public const CAMPAIGN_TARGETING_EXCLUDE = 'campaign-targeting-exclude';
     public const CAMPAIGN_TARGETING_REQUIRE = 'campaign-targeting-require';
     public const CDN_PROVIDER = 'cdn-provider';
+    public const CHECK_ZONE_DOMAIN = 'check-zone-domain';
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
@@ -63,6 +66,7 @@ class Config extends Model
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
     public const EXCHANGE_CURRENCIES = 'exchange-currencies';
+    public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
     public const NOW_PAYMENTS_CURRENCY = 'now-payments-currency';
     public const NOW_PAYMENTS_EXCHANGE = 'now-payments-exchange';
@@ -135,8 +139,10 @@ class Config extends Model
         self::ADSHARES_NODE_HOST => '',
         self::ADSHARES_NODE_PORT => '6511',
         self::ADSHARES_SECRET => null,
+        self::ALLOW_ZONE_IN_IFRAME => '1',
         self::AUTO_CONFIRMATION_ENABLED => '0',
         self::AUTO_REGISTRATION_ENABLED => '0',
+        self::BANNER_FORCE_HTTPS => '1',
         self::BTC_WITHDRAW => '0',
         self::BTC_WITHDRAW_FEE => '0.05',
         self::BTC_WITHDRAW_MAX_AMOUNT => '1000000000000000',
@@ -147,6 +153,7 @@ class Config extends Model
         self::CAMPAIGN_TARGETING_EXCLUDE => '',
         self::CAMPAIGN_TARGETING_REQUIRE => '',
         self::CDN_PROVIDER => '',
+        self::CHECK_ZONE_DOMAIN => '1',
         self::COLD_WALLET_ADDRESS => '',
         self::COLD_WALLET_IS_ACTIVE => '0',
         self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
@@ -169,6 +176,7 @@ class Config extends Model
         self::INVOICE_CURRENCIES => '',
         self::INVOICE_ENABLED => '0',
         self::INVOICE_NUMBER_FORMAT => '',
+        self::NETWORK_DATA_CACHE_TTL => '60',
         self::NOW_PAYMENTS_API_KEY => '',
         self::NOW_PAYMENTS_CURRENCY => 'USD',
         self::NOW_PAYMENTS_EXCHANGE => '0',

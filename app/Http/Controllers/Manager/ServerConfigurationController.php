@@ -43,8 +43,10 @@ class ServerConfigurationController extends Controller
         Config::ADSHARES_NODE_PORT => 'nullable|port',
         Config::ADSHARES_SECRET => 'hex:64',
         Config::ADSERVER_NAME => 'notEmpty',
-        Config::AUTO_CONFIRMATION_ENABLED => 'boolean',
-        Config::AUTO_REGISTRATION_ENABLED => 'boolean',
+        Config::ALLOW_ZONE_IN_IFRAME => 'nullable|boolean',
+        Config::AUTO_CONFIRMATION_ENABLED => 'nullable|boolean',
+        Config::AUTO_REGISTRATION_ENABLED => 'nullable|boolean',
+        Config::BANNER_FORCE_HTTPS => 'nullable|boolean',
         Config::BTC_WITHDRAW => 'nullable|boolean',
         Config::BTC_WITHDRAW_FEE => 'nullable|commission',
         Config::BTC_WITHDRAW_MAX_AMOUNT => 'nullable|clickAmount',
@@ -55,6 +57,7 @@ class ServerConfigurationController extends Controller
         Config::CAMPAIGN_TARGETING_EXCLUDE => 'nullable|json',
         Config::CAMPAIGN_TARGETING_REQUIRE => 'nullable|json',
         Config::CDN_PROVIDER => 'nullable',
+        Config::CHECK_ZONE_DOMAIN => 'nullable|boolean',
         Config::COLD_WALLET_ADDRESS => 'accountId',
         Config::COLD_WALLET_IS_ACTIVE => 'nullable|boolean',
         Config::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => 'nullable|email',
@@ -77,13 +80,14 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_CURRENCIES => 'nullable|currenciesList',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
+        Config::NETWORK_DATA_CACHE_TTL => 'nullable|positiveInteger',
         Config::NOW_PAYMENTS_API_KEY => 'nullable',
         Config::NOW_PAYMENTS_CURRENCY => 'nullable|currency',
         Config::NOW_PAYMENTS_EXCHANGE => 'nullable|boolean',
         Config::NOW_PAYMENTS_FEE => 'nullable|commission',
         Config::NOW_PAYMENTS_IPN_SECRET => 'nullable',
-        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|amount',
-        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|amount',
+        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|positiveInteger',
+        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|positiveInteger',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
         Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
@@ -158,10 +162,10 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validateAmount(string $field, string $value): void
+    private static function validatePositiveInteger(string $field, string $value): void
     {
         if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an amount', $field));
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an positive integer', $field));
         }
     }
 

@@ -37,7 +37,7 @@ final class SecureUrl implements UrlInterface
     /** @deprecated Use: SecureUrl */
     public static function change(string $uri): string
     {
-        if (config('app.banner_force_https') === false) {
+        if ((bool)config('app.banner_force_https') === false) {
             return $uri;
         }
 
