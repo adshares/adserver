@@ -127,10 +127,6 @@ return [
     'auto_withdrawal_limit_bsc' => env('AUTO_WITHDRAWAL_LIMIT_BSC', 1_000_000_000_00),
     'auto_withdrawal_limit_btc' => env('AUTO_WITHDRAWAL_LIMIT_BTC', 1_000_000_000_000_00),
     'auto_withdrawal_limit_eth' => env('AUTO_WITHDRAWAL_LIMIT_ETH', 1_000_000_000_000_00),
-    'upload_limit_image' => (int)env('UPLOAD_LIMIT_IMAGE', 512 * 1024),
-    'upload_limit_model' => (int)env('UPLOAD_LIMIT_MODEL', 1024 * 1024),
-    'upload_limit_video' => (int)env('UPLOAD_LIMIT_VIDEO', 1024 * 1024),
-    'upload_limit_zip' => (int)env('UPLOAD_LIMIT_ZIP', 512 * 1024),
     'inventory_import_whitelist' =>
         array_filter(explode(',', env('INVENTORY_IMPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
     'inventory_export_whitelist' =>

@@ -54,7 +54,7 @@ class ImageUploader implements Uploader
     {
         $file = $this->request->file('file');
         $size = $file->getSize();
-        if (!$size || $size > config('app.upload_limit_image')) {
+        if (!$size || $size > (int)config('app.upload_limit_image')) {
             throw new RuntimeException('Invalid image size');
         }
         $imageSize = getimagesize($file->getRealPath());

@@ -99,6 +99,10 @@ class ServerConfigurationController extends Controller
         Config::SITE_FILTERING_REQUIRE => 'nullable|json',
         Config::SUPPORT_EMAIL => 'email',
         Config::TECHNICAL_EMAIL => 'email',
+        Config::UPLOAD_LIMIT_IMAGE => 'nullable|positiveInteger',
+        Config::UPLOAD_LIMIT_MODEL => 'nullable|positiveInteger',
+        Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
+        Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
     ];
     private const MAX_VALUE_LENGTH = 255;
     private const RULE_NULLABLE = 'nullable';

@@ -78,6 +78,10 @@ class Config extends Model
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
     public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
+    public const UPLOAD_LIMIT_IMAGE = 'upload-limit-image';
+    public const UPLOAD_LIMIT_MODEL = 'upload-limit-model';
+    public const UPLOAD_LIMIT_VIDEO = 'upload-limit-video';
+    public const UPLOAD_LIMIT_ZIP = 'upload-limit-zip';
     /** @deprecated fee should be read from {@see LicenseReader} */
     public const LICENCE_TX_FEE = 'licence-tx-fee';
     /** @deprecated fee should be read from {@see LicenseReader} */
@@ -195,6 +199,10 @@ class Config extends Model
         self::SITE_FILTERING_REQUIRE => '',
         self::SUPPORT_EMAIL => '',
         self::TECHNICAL_EMAIL => '',
+        self::UPLOAD_LIMIT_IMAGE => (string)(512 * 1024),
+        self::UPLOAD_LIMIT_MODEL => (string)(1024 * 1024),
+        self::UPLOAD_LIMIT_VIDEO => (string)(1024 * 1024),
+        self::UPLOAD_LIMIT_ZIP => (string)(512 * 1024),
     ];
 
     private const TECHNICAL_SETTINGS = [

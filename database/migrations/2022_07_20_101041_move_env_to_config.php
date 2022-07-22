@@ -64,6 +64,10 @@ class MoveEnvToConfig extends Migration
         'NOW_PAYMENTS_MIN_AMOUNT' => Config::NOW_PAYMENTS_MIN_AMOUNT,
         'SITE_FILTERING_EXCLUDE' => Config::SITE_FILTERING_EXCLUDE,
         'SITE_FILTERING_REQUIRE' => Config::SITE_FILTERING_REQUIRE,
+        'UPLOAD_LIMIT_IMAGE' => Config::UPLOAD_LIMIT_IMAGE,
+        'UPLOAD_LIMIT_MODEL' => Config::UPLOAD_LIMIT_MODEL,
+        'UPLOAD_LIMIT_VIDEO' => Config::UPLOAD_LIMIT_VIDEO,
+        'UPLOAD_LIMIT_ZIP' => Config::UPLOAD_LIMIT_ZIP,
     ];
 
     public function up(): void
