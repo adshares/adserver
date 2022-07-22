@@ -46,6 +46,8 @@ class Config extends Model
 
     public const ADS_LOG_START = 'ads-log-start';
     public const ADSHARES_ADDRESS = 'adshares-address';
+    public const ADSHARES_LICENSE_ID = 'adshares-license-id';
+    public const ADSHARES_LICENSE_KEY = 'adshares-license-key';
     public const ADSHARES_NODE_HOST = 'adshares-node-host';
     public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
@@ -149,6 +151,8 @@ class Config extends Model
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::ADSERVER_NAME => '',
         self::ADSHARES_ADDRESS => '',
+        self::ADSHARES_LICENSE_ID => '',
+        self::ADSHARES_LICENSE_KEY => '',
         self::ADSHARES_NODE_HOST => '',
         self::ADSHARES_NODE_PORT => '6511',
         self::ADSHARES_SECRET => null,
@@ -237,6 +241,7 @@ class Config extends Model
         self::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
     ];
     private const SECRETS = [
+        self::ADSHARES_LICENSE_KEY,
         self::ADSHARES_SECRET,
         self::EXCHANGE_API_SECRET,
         self::NOW_PAYMENTS_IPN_SECRET,

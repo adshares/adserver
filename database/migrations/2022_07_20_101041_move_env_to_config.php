@@ -139,12 +139,27 @@ class MoveEnvToConfig extends Migration
             $settings[Config::INVENTORY_IMPORT_WHITELIST] = $importWhiteList;
         }
 
+        if (null !== ($licenseKey = env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')))) {
+            $settings[Config::ADSHARES_LICENSE_ID] = substr($licenseKey, 0, 10);
+            $settings[Config::ADSHARES_LICENSE_KEY] = $licenseKey;
+        }
+
         Config::updateAdminSettings($settings);
     }
 
     private function revertEnvironmentVariablesMigration(): void
     {
-        self::deleteFromConfigs(array_values(self::ENVIRONMENT_VARIABLES_MIGRATION));
+        self::deleteFromConfigs(
+            array_merge(
+                array_values(self::ENVIRONMENT_VARIABLES_MIGRATION),
+                [
+                    Config::ADSHARES_LICENSE_ID,
+                    Config::ADSHARES_LICENSE_KEY,
+                    Config::INVENTORY_EXPORT_WHITELIST,
+                    Config::INVENTORY_IMPORT_WHITELIST,
+                ]
+            )
+        );
     }
 
     private function deleteFromConfigs(array $keys): void

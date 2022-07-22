@@ -166,7 +166,7 @@ final class ClientProvider extends ServiceProvider
                             'timeout' => 5,
                         ]
                     ),
-                    (string)config('app.license_id')
+                    config('app.adshares_license_id'),
                 );
             }
         );

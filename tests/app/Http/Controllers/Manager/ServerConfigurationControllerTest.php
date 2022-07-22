@@ -225,6 +225,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid port (negative)' => [[Config::ADSHARES_NODE_PORT => '-1']],
             'invalid port (out of range)' => [[Config::ADSHARES_NODE_PORT => '100000']],
             'invalid url' => [[Config::EXCHANGE_API_URL => 'invalid']],
+            'invalid license key' => [[Config::ADSHARES_LICENSE_KEY => 'invalid']],
         ];
     }
 

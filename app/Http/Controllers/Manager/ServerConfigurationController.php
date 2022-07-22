@@ -39,6 +39,7 @@ class ServerConfigurationController extends Controller
 {
     private const ALLOWED_KEYS = [
         Config::ADSHARES_ADDRESS => 'accountId',
+        Config::ADSHARES_LICENSE_KEY => 'nullable|licenseKey',
         Config::ADSHARES_NODE_HOST => 'host',
         Config::ADSHARES_NODE_PORT => 'nullable|port',
         Config::ADSHARES_SECRET => 'hex:64',
@@ -310,6 +311,13 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validateJson(string $field, string $value): void
+    {
+        if (null === json_decode($value, true)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a JSON', $field));
+        }
+    }
+
     private static function validateKey(string $key): void
     {
         if (!isset(self::ALLOWED_KEYS[$key])) {
@@ -317,10 +325,10 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validateJson(string $field, string $value): void
+    private static function validateLicenseKey(string $field, string $value): void
     {
-        if (null === json_decode($value, true)) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a JSON', $field));
+        if (1 !== preg_match('/^(COM|SRV)-[\da-z]{6}-[\da-z]{5}-[\da-z]{5}-[\da-z]{4}-[\da-z]{4}$/i', $value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a license key', $field));
         }
     }
 

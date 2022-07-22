@@ -119,7 +119,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             LicenseDecoder::class,
             function () {
-                return new LicenseDecoderV1((string)config('app.license_key'));
+                return new LicenseDecoderV1(Crypt::decryptString(config('app.adshares_license_key')));
             }
         );
 
