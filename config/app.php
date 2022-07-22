@@ -104,7 +104,6 @@ return [
     'aduser_info_url' => env('ADUSER_INFO_URL', $aduserUrl . '/panel.html?rated=1&url={domain}'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
-    'x_adselect_version' => env('X_ADSELECT_VERSION', 'php'),
 
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
     'check_zone_domain' => (bool)env('CHECK_ZONE_DOMAIN', true),
