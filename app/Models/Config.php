@@ -53,6 +53,8 @@ class Config extends Model
     public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
     public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
     public const BTC_WITHDRAW_MIN_AMOUNT = 'btc-withdraw-min-amount';
+    public const CAMPAIGN_TARGETING_EXCLUDE = 'campaign-targeting-exclude';
+    public const CAMPAIGN_TARGETING_REQUIRE = 'campaign-targeting-require';
     public const CDN_PROVIDER = 'cdn-provider';
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
@@ -70,6 +72,8 @@ class Config extends Model
     public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
+    public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
+    public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
     /** @deprecated fee should be read from {@see LicenseReader} */
     public const LICENCE_TX_FEE = 'licence-tx-fee';
     /** @deprecated fee should be read from {@see LicenseReader} */
@@ -140,6 +144,8 @@ class Config extends Model
         self::CAMPAIGN_MIN_BUDGET => '5000000000',
         self::CAMPAIGN_MIN_CPA => '1000000000',
         self::CAMPAIGN_MIN_CPM => '5000000000',
+        self::CAMPAIGN_TARGETING_EXCLUDE => '',
+        self::CAMPAIGN_TARGETING_REQUIRE => '',
         self::CDN_PROVIDER => '',
         self::COLD_WALLET_ADDRESS => '',
         self::COLD_WALLET_IS_ACTIVE => '0',
@@ -177,6 +183,8 @@ class Config extends Model
         self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
         self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
         self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
+        self::SITE_FILTERING_EXCLUDE => '',
+        self::SITE_FILTERING_REQUIRE => '',
         self::SUPPORT_EMAIL => '',
         self::TECHNICAL_EMAIL => '',
     ];

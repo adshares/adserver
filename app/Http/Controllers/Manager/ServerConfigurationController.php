@@ -52,6 +52,8 @@ class ServerConfigurationController extends Controller
         Config::CAMPAIGN_MIN_BUDGET => 'nullable|clickAmount',
         Config::CAMPAIGN_MIN_CPA => 'nullable|clickAmount',
         Config::CAMPAIGN_MIN_CPM => 'nullable|clickAmount',
+        Config::CAMPAIGN_TARGETING_EXCLUDE => 'nullable|json',
+        Config::CAMPAIGN_TARGETING_REQUIRE => 'nullable|json',
         Config::CDN_PROVIDER => 'nullable',
         Config::COLD_WALLET_ADDRESS => 'accountId',
         Config::COLD_WALLET_IS_ACTIVE => 'nullable|boolean',
@@ -89,6 +91,8 @@ class ServerConfigurationController extends Controller
         Config::REGISTRATION_MODE => 'registrationMode',
         Config::SITE_ACCEPT_BANNERS_MANUALLY => 'boolean',
         Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'siteClassifierLocalBanners',
+        Config::SITE_FILTERING_EXCLUDE => 'nullable|json',
+        Config::SITE_FILTERING_REQUIRE => 'nullable|json',
         Config::SUPPORT_EMAIL => 'email',
         Config::TECHNICAL_EMAIL => 'email',
     ];
