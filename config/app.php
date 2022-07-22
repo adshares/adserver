@@ -92,8 +92,6 @@ return [
     'adpanel_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
-    'terms_url' => $appUrl . '/policies/terms.html',
-    'privacy_url' => $appUrl . '/policies/privacy.html',
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
     'ads_operator_server_url' => env('ADS_OPERATOR_SERVER_URL', 'https://ads-operator.adshares.net'),

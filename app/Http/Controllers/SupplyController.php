@@ -831,8 +831,8 @@ class SupplyController extends Controller
         $data = [
             'url' => $banner->serve_url,
             'supplyName' => config('app.adserver_name'),
-            'supplyTermsUrl' => config('app.terms_url'),
-            'supplyPrivacyUrl' => config('app.privacy_url'),
+            'supplyTermsUrl' => route('terms-url'),
+            'supplyPrivacyUrl' => route('privacy-url'),
             'supplyPanelUrl' => config('app.adpanel_url'),
             'supplyBannerReportUrl' => new SecureUrl(
                 route(
