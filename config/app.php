@@ -28,6 +28,7 @@ return [
     'url' => $appUrl,
     'debug' => env('APP_DEBUG', false),
     'refresh_testing_database' => env('APP_REFRESH_TESTING_DATABASE', false),
+    'setup' => (int)env('APP_SETUP', 0),
 
     /*
     |--------------------------------------------------------------------------
@@ -114,14 +115,10 @@ return [
     'serve_base_url' => env('SERVE_BASE_URL') ?: $appUrl,
     'main_js_base_url' => env('MAIN_JS_BASE_URL') ?: $appUrl,
     'main_js_tld' => env('MAIN_JS_TLD'),
-    'setup' => (int)env('APP_SETUP', 0),
     'skynet_api_url' => env('SKYNET_API_URL'),
     'skynet_api_key' => env('SKYNET_API_KEY'),
     'skynet_cdn_url' => env('SKYNET_CDN_URL'),
-    'inventory_import_whitelist' =>
-        array_filter(explode(',', env('INVENTORY_IMPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
-    'inventory_export_whitelist' =>
-        array_filter(explode(',', env('INVENTORY_EXPORT_WHITELIST', env('INVENTORY_WHITELIST', '')))),
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

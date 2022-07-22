@@ -34,7 +34,6 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Crypt;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -254,7 +253,7 @@ final class DemandControllerTest extends TestCase
         /** @var AdsAuthenticator $authenticator */
         $authenticator = $this->app->make(AdsAuthenticator::class);
 
-        SystemConfig::set('app.inventory_export_whitelist', ['0001-00000002-BB2D']);
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
 
         $response = $this->getJson(self::INVENTORY_LIST_URL);
         $response->assertStatus(401);
@@ -270,7 +269,7 @@ final class DemandControllerTest extends TestCase
         );
         $response->assertStatus(403);
 
-        SystemConfig::set('app.inventory_export_whitelist', ['0001-00000003-AB0C', '0001-00000005-CBCA']);
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000003-AB0C,0001-00000005-CBCA']);
         $response = $this->getJson(
             self::INVENTORY_LIST_URL,
             [

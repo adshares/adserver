@@ -531,7 +531,7 @@ SQL;
 
         $campaigns = [];
 
-        $whitelist = config('app.inventory_export_whitelist');
+        $whitelist = array_filter(explode(',', config('app.inventory_export_whitelist')));
         if (!empty($whitelist)) {
             $account = $this->authenticator->verifyRequest($request);
             if (!in_array($account, $whitelist)) {

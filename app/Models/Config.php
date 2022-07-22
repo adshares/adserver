@@ -72,6 +72,8 @@ class Config extends Model
     public const EXCHANGE_CURRENCIES = 'exchange-currencies';
     public const FIAT_DEPOSIT_MAX_AMOUNT = 'fiat-deposit-max-amount';
     public const FIAT_DEPOSIT_MIN_AMOUNT = 'fiat-deposit-min-amount';
+    public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
+    public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
     public const MAX_PAGE_ZONES = 'max-page-zones';
     public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
@@ -183,6 +185,8 @@ class Config extends Model
         self::FIAT_DEPOSIT_MIN_AMOUNT => '2000',
         self::HOT_WALLET_MAX_VALUE => '50000000000000000',
         self::HOT_WALLET_MIN_VALUE => '2000000000000000',
+        self::INVENTORY_EXPORT_WHITELIST => '',
+        self::INVENTORY_IMPORT_WHITELIST => '',
         self::INVOICE_COMPANY_ADDRESS => '',
         self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
         self::INVOICE_COMPANY_CITY => '',

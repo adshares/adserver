@@ -129,6 +129,16 @@ class MoveEnvToConfig extends Migration
                 $settings[$configKey] = $envValue;
             }
         }
+
+        $exportWhiteList = env('INVENTORY_EXPORT_WHITELIST', env('INVENTORY_WHITELIST'));
+        if (null !== $exportWhiteList) {
+            $settings[Config::INVENTORY_EXPORT_WHITELIST] = $exportWhiteList;
+        }
+        $importWhiteList = env('INVENTORY_IMPORT_WHITELIST', env('INVENTORY_WHITELIST'));
+        if (null !== $importWhiteList) {
+            $settings[Config::INVENTORY_IMPORT_WHITELIST] = $importWhiteList;
+        }
+
         Config::updateAdminSettings($settings);
     }
 
