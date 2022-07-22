@@ -53,6 +53,7 @@ class Config extends Model
     public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
     public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
     public const BTC_WITHDRAW_MIN_AMOUNT = 'btc-withdraw-min-amount';
+    public const CDN_PROVIDER = 'cdn-provider';
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
@@ -139,6 +140,7 @@ class Config extends Model
         self::CAMPAIGN_MIN_BUDGET => '5000000000',
         self::CAMPAIGN_MIN_CPA => '1000000000',
         self::CAMPAIGN_MIN_CPM => '5000000000',
+        self::CDN_PROVIDER => '',
         self::COLD_WALLET_ADDRESS => '',
         self::COLD_WALLET_IS_ACTIVE => '0',
         self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',

@@ -57,15 +57,14 @@ class FetchExchangeRateCommand extends BaseCommand
         }
 
         $this->info('Start command ' . $this->signature);
-        $currencies = config('app.exchange_currencies');
+        $currencies = array_filter(explode(',', config('app.exchange_currencies')));
         if (empty($currencies)) {
             $this->warn('Exchange currencies list is empty');
 
             return;
         }
-        $currenciesArray = explode(',', $currencies);
 
-        foreach ($currenciesArray as $currency) {
+        foreach ($currencies as $currency) {
             $this->info(sprintf('Fetching %s rate', $currency));
             $exchangeRate = $this->repositoryRemote->fetchExchangeRate(null, $currency);
             $this->info(sprintf('Exchange %s rate: %s', $currency, $exchangeRate->toString()));

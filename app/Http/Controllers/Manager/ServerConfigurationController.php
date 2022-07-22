@@ -52,6 +52,7 @@ class ServerConfigurationController extends Controller
         Config::CAMPAIGN_MIN_BUDGET => 'nullable|clickAmount',
         Config::CAMPAIGN_MIN_CPA => 'nullable|clickAmount',
         Config::CAMPAIGN_MIN_CPM => 'nullable|clickAmount',
+        Config::CDN_PROVIDER => 'nullable',
         Config::COLD_WALLET_ADDRESS => 'accountId',
         Config::COLD_WALLET_IS_ACTIVE => 'nullable|boolean',
         Config::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => 'nullable|email',
