@@ -503,8 +503,8 @@ class WalletController extends Controller
         $address = $this->getAdServerAdsAddress();
 
         $fiatDeposit = Config::isTrueOnly(Config::INVOICE_ENABLED) ? [
-            'minAmount' => config('app.fiat_deposit_min_amount'),
-            'maxAmount' => config('app.fiat_deposit_max_amount'),
+            'minAmount' => (int)config('app.fiat_deposit_min_amount'),
+            'maxAmount' => (int)config('app.fiat_deposit_max_amount'),
             'currencies' => explode(',', Config::fetchStringOrFail(Config::INVOICE_CURRENCIES)),
         ] : null;
 

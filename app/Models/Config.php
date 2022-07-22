@@ -50,6 +50,10 @@ class Config extends Model
     public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
     public const ALLOW_ZONE_IN_IFRAME = 'allow_zone-in-iframe';
+    public const AUTO_WITHDRAWAL_LIMIT_ADS = 'auto-withdrawal-limit-ads';
+    public const AUTO_WITHDRAWAL_LIMIT_BSC = 'auto-withdrawal-limit-bsc';
+    public const AUTO_WITHDRAWAL_LIMIT_BTC = 'auto-withdrawal-limit-btc';
+    public const AUTO_WITHDRAWAL_LIMIT_ETH = 'auto-withdrawal-limit-eth';
     public const BANNER_FORCE_HTTPS = 'banner-force-https';
     public const BTC_WITHDRAW = 'btc-withdraw';
     public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
@@ -66,6 +70,8 @@ class Config extends Model
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
     public const EXCHANGE_CURRENCIES = 'exchange-currencies';
+    public const FIAT_DEPOSIT_MAX_AMOUNT = 'fiat-deposit-max-amount';
+    public const FIAT_DEPOSIT_MIN_AMOUNT = 'fiat-deposit-min-amount';
     public const MAX_PAGE_ZONES = 'max-page-zones';
     public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
@@ -147,6 +153,10 @@ class Config extends Model
         self::ALLOW_ZONE_IN_IFRAME => '1',
         self::AUTO_CONFIRMATION_ENABLED => '0',
         self::AUTO_REGISTRATION_ENABLED => '0',
+        self::AUTO_WITHDRAWAL_LIMIT_ADS => '100000000',      //1_000_000_00
+        self::AUTO_WITHDRAWAL_LIMIT_BSC => '100000000000',   //1_000_000_000_00
+        self::AUTO_WITHDRAWAL_LIMIT_BTC => '100000000000000',//1_000_000_000_000_00
+        self::AUTO_WITHDRAWAL_LIMIT_ETH => '100000000000000',//1_000_000_000_000_00
         self::BANNER_FORCE_HTTPS => '1',
         self::BTC_WITHDRAW => '0',
         self::BTC_WITHDRAW_FEE => '0.05',
@@ -169,6 +179,8 @@ class Config extends Model
         self::EXCHANGE_API_SECRET => '',
         self::EXCHANGE_API_URL => '',
         self::EXCHANGE_CURRENCIES => 'USD,BTC',
+        self::FIAT_DEPOSIT_MAX_AMOUNT => '100000',
+        self::FIAT_DEPOSIT_MIN_AMOUNT => '2000',
         self::HOT_WALLET_MAX_VALUE => '50000000000000000',
         self::HOT_WALLET_MIN_VALUE => '2000000000000000',
         self::INVOICE_COMPANY_ADDRESS => '',
@@ -201,10 +213,10 @@ class Config extends Model
         self::SITE_FILTERING_REQUIRE => '',
         self::SUPPORT_EMAIL => '',
         self::TECHNICAL_EMAIL => '',
-        self::UPLOAD_LIMIT_IMAGE => (string)(512 * 1024),
-        self::UPLOAD_LIMIT_MODEL => (string)(1024 * 1024),
-        self::UPLOAD_LIMIT_VIDEO => (string)(1024 * 1024),
-        self::UPLOAD_LIMIT_ZIP => (string)(512 * 1024),
+        self::UPLOAD_LIMIT_IMAGE => '524288',//512 * 1024
+        self::UPLOAD_LIMIT_MODEL => '1048576',//1024 * 1024
+        self::UPLOAD_LIMIT_VIDEO => '1048576',//1024 * 1024
+        self::UPLOAD_LIMIT_ZIP => '524288',//512 * 1024
     ];
 
     private const TECHNICAL_SETTINGS = [
