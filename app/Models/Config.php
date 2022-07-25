@@ -82,6 +82,7 @@ class Config extends Model
     public const FIAT_DEPOSIT_MIN_AMOUNT = 'fiat-deposit-min-amount';
     public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
     public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
+    public const INVENTORY_WHITELIST = 'inventory-whitelist';
     public const MAX_PAGE_ZONES = 'max-page-zones';
     public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
@@ -156,94 +157,6 @@ class Config extends Model
     public const CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT = 'all-by-default';
     public const CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT = 'local-by-default';
     public const CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY = 'local-only';
-
-    private const ADMIN_SETTINGS_DEFAULTS = [
-        self::ADSERVER_NAME => '',
-        self::ADSHARES_ADDRESS => '',
-        self::ADSHARES_LICENSE_ID => '',
-        self::ADSHARES_LICENSE_KEY => '',
-        self::ADSHARES_LICENSE_SERVER_URL => 'https://account.adshares.pl/',
-        self::ADSHARES_NODE_HOST => '',
-        self::ADSHARES_NODE_PORT => '6511',
-        self::ADSHARES_SECRET => null,
-        self::ALLOW_ZONE_IN_IFRAME => '1',
-        self::AUTO_CONFIRMATION_ENABLED => '0',
-        self::AUTO_REGISTRATION_ENABLED => '0',
-        self::AUTO_WITHDRAWAL_LIMIT_ADS => '100000000',      //1_000_000_00
-        self::AUTO_WITHDRAWAL_LIMIT_BSC => '100000000000',   //1_000_000_000_00
-        self::AUTO_WITHDRAWAL_LIMIT_BTC => '100000000000000',//1_000_000_000_000_00
-        self::AUTO_WITHDRAWAL_LIMIT_ETH => '100000000000000',//1_000_000_000_000_00
-        self::BANNER_FORCE_HTTPS => '1',
-        self::BTC_WITHDRAW => '0',
-        self::BTC_WITHDRAW_FEE => '0.05',
-        self::BTC_WITHDRAW_MAX_AMOUNT => '1000000000000000',
-        self::BTC_WITHDRAW_MIN_AMOUNT => '10000000000000',
-        self::CAMPAIGN_MIN_BUDGET => '5000000000',
-        self::CAMPAIGN_MIN_CPA => '1000000000',
-        self::CAMPAIGN_MIN_CPM => '5000000000',
-        self::CAMPAIGN_TARGETING_EXCLUDE => '',
-        self::CAMPAIGN_TARGETING_REQUIRE => '',
-        self::CDN_PROVIDER => '',
-        self::CHECK_ZONE_DOMAIN => '1',
-        self::CLASSIFIER_EXTERNAL_API_KEY_NAME => '',
-        self::CLASSIFIER_EXTERNAL_API_KEY_SECRET => '',
-        self::CLASSIFIER_EXTERNAL_BASE_URL => 'https://adclassify.adshares.net',
-        self::CLASSIFIER_EXTERNAL_NAME => '0001000000081a67',
-        self::CLASSIFIER_EXTERNAL_PUBLIC_KEY => 'FE736A82F91247B022953A58744EAEA18C477468831E680EEDFB49A29F6F7088',
-        self::COLD_WALLET_ADDRESS => '',
-        self::COLD_WALLET_IS_ACTIVE => '0',
-        self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
-        self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
-        self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
-        self::EMAIL_VERIFICATION_REQUIRED => '0',
-        self::EXCHANGE_API_KEY => '',
-        self::EXCHANGE_API_SECRET => '',
-        self::EXCHANGE_API_URL => '',
-        self::EXCHANGE_CURRENCIES => 'USD,BTC',
-        self::FIAT_DEPOSIT_MAX_AMOUNT => '100000',
-        self::FIAT_DEPOSIT_MIN_AMOUNT => '2000',
-        self::HOT_WALLET_MAX_VALUE => '50000000000000000',
-        self::HOT_WALLET_MIN_VALUE => '2000000000000000',
-        self::INVENTORY_EXPORT_WHITELIST => '',
-        self::INVENTORY_IMPORT_WHITELIST => '',
-        self::INVOICE_COMPANY_ADDRESS => '',
-        self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
-        self::INVOICE_COMPANY_CITY => '',
-        self::INVOICE_COMPANY_COUNTRY => '',
-        self::INVOICE_COMPANY_NAME => '',
-        self::INVOICE_COMPANY_POSTAL_CODE => '',
-        self::INVOICE_COMPANY_VAT_ID => '',
-        self::INVOICE_CURRENCIES => '',
-        self::INVOICE_ENABLED => '0',
-        self::INVOICE_NUMBER_FORMAT => '',
-        self::MAX_PAGE_ZONES => '4',
-        self::NETWORK_DATA_CACHE_TTL => '60',
-        self::NOW_PAYMENTS_API_KEY => '',
-        self::NOW_PAYMENTS_CURRENCY => 'USD',
-        self::NOW_PAYMENTS_EXCHANGE => '0',
-        self::NOW_PAYMENTS_FEE => '0.05',
-        self::NOW_PAYMENTS_IPN_SECRET => '',
-        self::NOW_PAYMENTS_MAX_AMOUNT => '1000',
-        self::NOW_PAYMENTS_MIN_AMOUNT => '25',
-        self::OPERATOR_RX_FEE => '0.01',
-        self::OPERATOR_TX_FEE => '0.01',
-        self::REFERRAL_REFUND_COMMISSION => '',
-        self::REFERRAL_REFUND_ENABLED => '0',
-        self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
-        self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
-        self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
-        self::SITE_FILTERING_EXCLUDE => '',
-        self::SITE_FILTERING_REQUIRE => '',
-        self::SKYNET_API_KEY => '',
-        self::SKYNET_API_URL => 'https://siasky.net',
-        self::SKYNET_CDN_URL => '',
-        self::SUPPORT_EMAIL => '',
-        self::TECHNICAL_EMAIL => '',
-        self::UPLOAD_LIMIT_IMAGE => '524288',//512 * 1024
-        self::UPLOAD_LIMIT_MODEL => '1048576',//1024 * 1024
-        self::UPLOAD_LIMIT_VIDEO => '1048576',//1024 * 1024
-        self::UPLOAD_LIMIT_ZIP => '524288',//512 * 1024
-    ];
 
     private const TECHNICAL_SETTINGS = [
         self::ADS_LOG_START,
@@ -387,7 +300,7 @@ class Config extends Model
             $fetched = self::all()
                 ->pluck('value', 'key')
                 ->toArray();
-            return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);
+            return array_merge(self::getDefaultAdminSettings($fetched), $fetched);
         });
     }
 
@@ -413,5 +326,97 @@ class Config extends Model
             throw $exception;
         }
         Cache::forget('config.admin');
+    }
+
+    private static function getDefaultAdminSettings(array $fetched): array
+    {
+        return [
+            self::ADSERVER_NAME => '',
+            self::ADSHARES_ADDRESS => '',
+            self::ADSHARES_LICENSE_ID => '',
+            self::ADSHARES_LICENSE_KEY => '',
+            self::ADSHARES_LICENSE_SERVER_URL => 'https://account.adshares.pl/',
+            self::ADSHARES_NODE_HOST => '',
+            self::ADSHARES_NODE_PORT => '6511',
+            self::ADSHARES_SECRET => null,
+            self::ALLOW_ZONE_IN_IFRAME => '1',
+            self::AUTO_CONFIRMATION_ENABLED => '0',
+            self::AUTO_REGISTRATION_ENABLED => '0',
+            self::AUTO_WITHDRAWAL_LIMIT_ADS => (string)1_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_BSC => (string)1_000_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_BTC => (string)1_000_000_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_ETH => (string)1_000_000_000_000_00,
+            self::BANNER_FORCE_HTTPS => '1',
+            self::BTC_WITHDRAW => '0',
+            self::BTC_WITHDRAW_FEE => '0.05',
+            self::BTC_WITHDRAW_MAX_AMOUNT => '1000000000000000',
+            self::BTC_WITHDRAW_MIN_AMOUNT => '10000000000000',
+            self::CAMPAIGN_MIN_BUDGET => '5000000000',
+            self::CAMPAIGN_MIN_CPA => '1000000000',
+            self::CAMPAIGN_MIN_CPM => '5000000000',
+            self::CAMPAIGN_TARGETING_EXCLUDE => '',
+            self::CAMPAIGN_TARGETING_REQUIRE => '',
+            self::CDN_PROVIDER => '',
+            self::CHECK_ZONE_DOMAIN => '1',
+            self::CLASSIFIER_EXTERNAL_API_KEY_NAME => '',
+            self::CLASSIFIER_EXTERNAL_API_KEY_SECRET => '',
+            self::CLASSIFIER_EXTERNAL_BASE_URL => 'https://adclassify.adshares.net',
+            self::CLASSIFIER_EXTERNAL_NAME => '0001000000081a67',
+            self::CLASSIFIER_EXTERNAL_PUBLIC_KEY => 'FE736A82F91247B022953A58744EAEA18C477468831E680EEDFB49A29F6F7088',
+            self::COLD_WALLET_ADDRESS => '',
+            self::COLD_WALLET_IS_ACTIVE => '0',
+            self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
+            self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
+            self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
+            self::EMAIL_VERIFICATION_REQUIRED => '0',
+            self::EXCHANGE_API_KEY => '',
+            self::EXCHANGE_API_SECRET => '',
+            self::EXCHANGE_API_URL => '',
+            self::EXCHANGE_CURRENCIES => 'USD,BTC',
+            self::FIAT_DEPOSIT_MAX_AMOUNT => '100000',
+            self::FIAT_DEPOSIT_MIN_AMOUNT => '2000',
+            self::HOT_WALLET_MAX_VALUE => '50000000000000000',
+            self::HOT_WALLET_MIN_VALUE => '2000000000000000',
+            self::INVENTORY_EXPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? '',
+            self::INVENTORY_IMPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? '',
+            self::INVENTORY_WHITELIST => '',
+            self::INVOICE_COMPANY_ADDRESS => '',
+            self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
+            self::INVOICE_COMPANY_CITY => '',
+            self::INVOICE_COMPANY_COUNTRY => '',
+            self::INVOICE_COMPANY_NAME => '',
+            self::INVOICE_COMPANY_POSTAL_CODE => '',
+            self::INVOICE_COMPANY_VAT_ID => '',
+            self::INVOICE_CURRENCIES => '',
+            self::INVOICE_ENABLED => '0',
+            self::INVOICE_NUMBER_FORMAT => '',
+            self::MAX_PAGE_ZONES => '4',
+            self::NETWORK_DATA_CACHE_TTL => '60',
+            self::NOW_PAYMENTS_API_KEY => '',
+            self::NOW_PAYMENTS_CURRENCY => 'USD',
+            self::NOW_PAYMENTS_EXCHANGE => '0',
+            self::NOW_PAYMENTS_FEE => '0.05',
+            self::NOW_PAYMENTS_IPN_SECRET => '',
+            self::NOW_PAYMENTS_MAX_AMOUNT => '1000',
+            self::NOW_PAYMENTS_MIN_AMOUNT => '25',
+            self::OPERATOR_RX_FEE => '0.01',
+            self::OPERATOR_TX_FEE => '0.01',
+            self::REFERRAL_REFUND_COMMISSION => '',
+            self::REFERRAL_REFUND_ENABLED => '0',
+            self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
+            self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
+            self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
+            self::SITE_FILTERING_EXCLUDE => '',
+            self::SITE_FILTERING_REQUIRE => '',
+            self::SKYNET_API_KEY => '',
+            self::SKYNET_API_URL => 'https://siasky.net',
+            self::SKYNET_CDN_URL => '',
+            self::SUPPORT_EMAIL => '',
+            self::TECHNICAL_EMAIL => '',
+            self::UPLOAD_LIMIT_IMAGE => (string)(512 * 1024),
+            self::UPLOAD_LIMIT_MODEL => (string)(1024 * 1024),
+            self::UPLOAD_LIMIT_VIDEO => (string)(1024 * 1024),
+            self::UPLOAD_LIMIT_ZIP => (string)(512 * 1024),
+        ];
     }
 }

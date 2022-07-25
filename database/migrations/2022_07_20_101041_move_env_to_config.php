@@ -66,6 +66,9 @@ class MoveEnvToConfig extends Migration
         'EXCHANGE_CURRENCIES' => Config::EXCHANGE_CURRENCIES,
         'FIAT_DEPOSIT_MAX_AMOUNT' => Config::FIAT_DEPOSIT_MAX_AMOUNT,
         'FIAT_DEPOSIT_MIN_AMOUNT' => Config::FIAT_DEPOSIT_MIN_AMOUNT,
+        'INVENTORY_EXPORT_WHITELIST' => Config::INVENTORY_EXPORT_WHITELIST,
+        'INVENTORY_IMPORT_WHITELIST' => Config::INVENTORY_IMPORT_WHITELIST,
+        'INVENTORY_WHITELIST' => Config::INVENTORY_WHITELIST,
         'MAX_PAGE_ZONES' => Config::MAX_PAGE_ZONES,
         'NETWORK_DATA_CACHE_TTL' => Config::NETWORK_DATA_CACHE_TTL,
         'NOW_PAYMENTS_API_KEY' => Config::NOW_PAYMENTS_API_KEY,
@@ -139,15 +142,6 @@ class MoveEnvToConfig extends Migration
             }
         }
 
-        $exportWhiteList = env('INVENTORY_EXPORT_WHITELIST', env('INVENTORY_WHITELIST'));
-        if (null !== $exportWhiteList) {
-            $settings[Config::INVENTORY_EXPORT_WHITELIST] = $exportWhiteList;
-        }
-        $importWhiteList = env('INVENTORY_IMPORT_WHITELIST', env('INVENTORY_WHITELIST'));
-        if (null !== $importWhiteList) {
-            $settings[Config::INVENTORY_IMPORT_WHITELIST] = $importWhiteList;
-        }
-
         if (null !== ($licenseKey = env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')))) {
             $settings[Config::ADSHARES_LICENSE_ID] = substr($licenseKey, 0, 10);
             $settings[Config::ADSHARES_LICENSE_KEY] = $licenseKey;
@@ -164,8 +158,6 @@ class MoveEnvToConfig extends Migration
                 [
                     Config::ADSHARES_LICENSE_ID,
                     Config::ADSHARES_LICENSE_KEY,
-                    Config::INVENTORY_EXPORT_WHITELIST,
-                    Config::INVENTORY_IMPORT_WHITELIST,
                 ]
             )
         );
