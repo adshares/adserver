@@ -26,12 +26,30 @@ use Illuminate\Support\Facades\Config as SystemConfig;
 
 class DatabaseConfigReader
 {
+    private const MAIL_KEY_MAP = [
+        Config::MAIL_FROM_ADDRESS => 'mail.from.address',
+        Config::MAIL_FROM_NAME => 'mail.from.name',
+        Config::MAIL_MAILER => 'mail.default',
+        Config::MAIL_SMTP_ENCRYPTION => 'mail.mailers.smtp.encryption',
+        Config::MAIL_SMTP_HOST => 'mail.mailers.smtp.host',
+        Config::MAIL_SMTP_PASSWORD => 'mail.mailers.smtp.password',
+        Config::MAIL_SMTP_PORT => 'mail.mailers.smtp.port',
+        Config::MAIL_SMTP_USERNAME => 'mail.mailers.smtp.username',
+    ];
+
     public static function overwriteAdministrationConfig(): void
     {
         $settings = Config::fetchAdminSettings();
         foreach ($settings as $key => $value) {
-            $configKey = 'app.' . str_replace('-', '_', $key);
-            SystemConfig::set($configKey, $value);
+            SystemConfig::set(self::mapKey($key), $value);
         }
+    }
+
+    private static function mapKey(string $key): string
+    {
+        if (isset(self::MAIL_KEY_MAP[$key])) {
+            return self::MAIL_KEY_MAP[$key];
+        }
+        return 'app.' . str_replace('-', '_', $key);
     }
 }

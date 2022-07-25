@@ -91,6 +91,14 @@ class Config extends Model
     public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
     public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
     public const INVENTORY_WHITELIST = 'inventory-whitelist';
+    public const MAIL_FROM_ADDRESS = 'mail-from-address';
+    public const MAIL_FROM_NAME = 'mail-from-name';
+    public const MAIL_MAILER = 'mail-mailer';
+    public const MAIL_SMTP_ENCRYPTION = 'mail-smtp-encryption';
+    public const MAIL_SMTP_HOST = 'mail-smtp-host';
+    public const MAIL_SMTP_PASSWORD = 'mail-smtp-password';
+    public const MAIL_SMTP_PORT = 'mail-smtp-port';
+    public const MAIL_SMTP_USERNAME = 'mail-smtp-username';
     public const MAIN_JS_BASE_URL = 'main-js-base-url';
     public const MAIN_JS_TLD = 'main-js-tld';
     public const MAX_PAGE_ZONES = 'max-page-zones';
@@ -161,9 +169,9 @@ class Config extends Model
     public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
     public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
     public const ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS = [
-        Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
-        Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT,
-        Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY,
+        self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
+        self::CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT,
+        self::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY,
     ];
     public const CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT = 'all-by-default';
     public const CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT = 'local-by-default';
@@ -356,9 +364,9 @@ class Config extends Model
             self::ADSHARES_SECRET => null,
             self::ADUSER_BASE_URL => '',
             self::ADUSER_INFO_URL =>
-                isset($fetched[Config::ADUSER_BASE_URL])
-                    ? ($fetched[Config::ADUSER_BASE_URL] . '/panel.html?rated=1&url={domain}') : '',
-            self::ADUSER_INTERNAL_URL => $fetched[Config::ADUSER_BASE_URL] ?? '',
+                isset($fetched[self::ADUSER_BASE_URL])
+                    ? ($fetched[self::ADUSER_BASE_URL] . '/panel.html?rated=1&url={domain}') : '',
+            self::ADUSER_INTERNAL_URL => $fetched[self::ADUSER_BASE_URL] ?? '',
             self::ADUSER_SERVE_SUBDOMAIN => '',
             self::ALLOW_ZONE_IN_IFRAME => '1',
             self::AUTO_CONFIRMATION_ENABLED => '0',
@@ -411,6 +419,14 @@ class Config extends Model
             self::INVOICE_CURRENCIES => '',
             self::INVOICE_ENABLED => '0',
             self::INVOICE_NUMBER_FORMAT => '',
+            self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
+            self::MAIL_FROM_NAME => "AdServer's Administrator",
+            self::MAIL_MAILER => 'smtp',
+            self::MAIL_SMTP_ENCRYPTION => 'tls',
+            self::MAIL_SMTP_HOST => 'localhost',
+            self::MAIL_SMTP_PASSWORD => '',
+            self::MAIL_SMTP_PORT => '587',
+            self::MAIL_SMTP_USERNAME => '',
             self::MAIN_JS_BASE_URL => '',
             self::MAIN_JS_TLD => '',
             self::MAX_PAGE_ZONES => '4',

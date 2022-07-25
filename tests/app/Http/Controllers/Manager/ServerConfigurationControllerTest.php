@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -226,6 +225,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid port (out of range)' => [[Config::ADSHARES_NODE_PORT => '100000']],
             'invalid url' => [[Config::EXCHANGE_API_URL => 'invalid']],
             'invalid license key' => [[Config::ADSHARES_LICENSE_KEY => 'invalid']],
+            'invalid mailer' => [[Config::MAIL_MAILER => 'invalid']],
         ];
     }
 

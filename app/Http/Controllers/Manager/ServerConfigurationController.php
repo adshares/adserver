@@ -105,6 +105,14 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_CURRENCIES => 'nullable|currenciesList',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
+        Config::MAIL_SMTP_ENCRYPTION => 'nullable|notEmpty',
+        Config::MAIL_FROM_ADDRESS => 'email',
+        Config::MAIL_FROM_NAME => 'nullable|notEmpty',
+        Config::MAIL_SMTP_HOST => 'nullable|host',
+        Config::MAIL_MAILER => 'nullable|mailer',
+        Config::MAIL_SMTP_PASSWORD => 'nullable',
+        Config::MAIL_SMTP_PORT => 'nullable|port',
+        Config::MAIL_SMTP_USERNAME => 'nullable',
         Config::MAIN_JS_BASE_URL => 'nullable|url',
         Config::MAIN_JS_TLD => 'nullable|host',
         Config::MAX_PAGE_ZONES => 'nullable|positiveInteger',
@@ -353,6 +361,14 @@ class ServerConfigurationController extends Controller
     {
         if (1 !== preg_match('/^(COM|SRV)-[\da-z]{6}-[\da-z]{5}-[\da-z]{5}-[\da-z]{4}-[\da-z]{4}$/i', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a license key', $field));
+        }
+    }
+
+    private static function validateMailer(string $field, string $value): void
+    {
+        $allowedMailers = array_keys(config('mail.mailers'));
+        if (!in_array($value, $allowedMailers, true)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a known mailer', $field));
         }
     }
 
