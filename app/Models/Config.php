@@ -95,6 +95,9 @@ class Config extends Model
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
     public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
+    public const SKYNET_API_KEY = 'skynet-api-key';
+    public const SKYNET_API_URL = 'skynet-api-url';
+    public const SKYNET_CDN_URL = 'skynet-cdn-url';
     public const UPLOAD_LIMIT_IMAGE = 'upload-limit-image';
     public const UPLOAD_LIMIT_MODEL = 'upload-limit-model';
     public const UPLOAD_LIMIT_VIDEO = 'upload-limit-video';
@@ -231,6 +234,9 @@ class Config extends Model
         self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
         self::SITE_FILTERING_EXCLUDE => '',
         self::SITE_FILTERING_REQUIRE => '',
+        self::SKYNET_API_KEY => '',
+        self::SKYNET_API_URL => 'https://siasky.net',
+        self::SKYNET_CDN_URL => '',
         self::SUPPORT_EMAIL => '',
         self::TECHNICAL_EMAIL => '',
         self::UPLOAD_LIMIT_IMAGE => '524288',//512 * 1024
@@ -258,6 +264,7 @@ class Config extends Model
         self::CLASSIFIER_EXTERNAL_API_KEY_SECRET,
         self::EXCHANGE_API_SECRET,
         self::NOW_PAYMENTS_IPN_SECRET,
+        self::SKYNET_API_KEY,
     ];
 
     public $incrementing = false;

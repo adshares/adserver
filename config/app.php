@@ -81,6 +81,7 @@ return [
     */
 
     'key' => env('APP_KEY'),
+    'adserver_secret' => env('APP_KEY'),//todo remove duplication
 
     'cipher' => 'AES-256-CBC',
 
@@ -91,7 +92,6 @@ return [
     */
 
     'adpanel_url' => env('ADPANEL_URL'),
-    'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
@@ -107,9 +107,6 @@ return [
     'serve_base_url' => env('SERVE_BASE_URL') ?: $appUrl,
     'main_js_base_url' => env('MAIN_JS_BASE_URL') ?: $appUrl,
     'main_js_tld' => env('MAIN_JS_TLD'),
-    'skynet_api_url' => env('SKYNET_API_URL'),
-    'skynet_api_key' => env('SKYNET_API_KEY'),
-    'skynet_cdn_url' => env('SKYNET_CDN_URL'),
 
     /*
     |--------------------------------------------------------------------------
