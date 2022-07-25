@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -39,10 +39,10 @@ class ClassifierExternalRepository
     public function fetchClassifierByName(string $name): ?ClassifierExternal
     {
         if ($this->fetchDefaultClassifierName() === $name) {
-            $publicKey = (string)config('app.classifier_external_public_key') ?: null;
-            $baseUrl = (string)config('app.classifier_external_base_url') ?: null;
-            $apiKeyName = (string)config('app.classifier_external_api_key_name') ?: null;
-            $apiKeySecret = (string)config('app.classifier_external_api_key_secret') ?: null;
+            $publicKey = config('app.classifier_external_public_key') ?: null;
+            $baseUrl = config('app.classifier_external_base_url') ?: null;
+            $apiKeyName = config('app.classifier_external_api_key_name') ?: null;
+            $apiKeySecret = config('app.classifier_external_api_key_secret') ?: null;
 
             if (null !== $publicKey && null !== $baseUrl && null !== $apiKeyName && null !== $apiKeySecret) {
                 return new ClassifierExternal($name, $publicKey, $baseUrl, $apiKeyName, $apiKeySecret);
@@ -72,7 +72,7 @@ class ClassifierExternalRepository
 
     public function fetchDefaultClassifierName(): ?string
     {
-        return (string)config('app.classifier_external_name') ?: null;
+        return config('app.classifier_external_name') ?: null;
     }
 
     public function fetchRequiredClassifiersNames(): array

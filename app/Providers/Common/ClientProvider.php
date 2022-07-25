@@ -162,7 +162,7 @@ final class ClientProvider extends ServiceProvider
                     new Client(
                         [
                             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.license_url'),
+                            'base_uri' => config('app.adshares_license_server_url'),
                             'timeout' => 5,
                         ]
                     ),

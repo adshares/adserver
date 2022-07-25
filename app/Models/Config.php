@@ -48,6 +48,7 @@ class Config extends Model
     public const ADSHARES_ADDRESS = 'adshares-address';
     public const ADSHARES_LICENSE_ID = 'adshares-license-id';
     public const ADSHARES_LICENSE_KEY = 'adshares-license-key';
+    public const ADSHARES_LICENSE_SERVER_URL = 'adshares-license-server-url';
     public const ADSHARES_NODE_HOST = 'adshares-node-host';
     public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
@@ -65,6 +66,11 @@ class Config extends Model
     public const CAMPAIGN_TARGETING_REQUIRE = 'campaign-targeting-require';
     public const CDN_PROVIDER = 'cdn-provider';
     public const CHECK_ZONE_DOMAIN = 'check-zone-domain';
+    public const CLASSIFIER_EXTERNAL_API_KEY_NAME = 'classifier-external-api-key-name';
+    public const CLASSIFIER_EXTERNAL_API_KEY_SECRET = 'classifier-external-api-key-secret';
+    public const CLASSIFIER_EXTERNAL_BASE_URL = 'classifier-external-base-url';
+    public const CLASSIFIER_EXTERNAL_NAME = 'classifier-external-name';
+    public const CLASSIFIER_EXTERNAL_PUBLIC_KEY = 'classifier-external-public-key';
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
@@ -153,6 +159,7 @@ class Config extends Model
         self::ADSHARES_ADDRESS => '',
         self::ADSHARES_LICENSE_ID => '',
         self::ADSHARES_LICENSE_KEY => '',
+        self::ADSHARES_LICENSE_SERVER_URL => 'https://account.adshares.pl/',
         self::ADSHARES_NODE_HOST => '',
         self::ADSHARES_NODE_PORT => '6511',
         self::ADSHARES_SECRET => null,
@@ -175,6 +182,11 @@ class Config extends Model
         self::CAMPAIGN_TARGETING_REQUIRE => '',
         self::CDN_PROVIDER => '',
         self::CHECK_ZONE_DOMAIN => '1',
+        self::CLASSIFIER_EXTERNAL_API_KEY_NAME => '',
+        self::CLASSIFIER_EXTERNAL_API_KEY_SECRET => '',
+        self::CLASSIFIER_EXTERNAL_BASE_URL => 'https://adclassify.adshares.net',
+        self::CLASSIFIER_EXTERNAL_NAME => '0001000000081a67',
+        self::CLASSIFIER_EXTERNAL_PUBLIC_KEY => 'FE736A82F91247B022953A58744EAEA18C477468831E680EEDFB49A29F6F7088',
         self::COLD_WALLET_ADDRESS => '',
         self::COLD_WALLET_IS_ACTIVE => '0',
         self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
@@ -243,6 +255,7 @@ class Config extends Model
     private const SECRETS = [
         self::ADSHARES_LICENSE_KEY,
         self::ADSHARES_SECRET,
+        self::CLASSIFIER_EXTERNAL_API_KEY_SECRET,
         self::EXCHANGE_API_SECRET,
         self::NOW_PAYMENTS_IPN_SECRET,
     ];

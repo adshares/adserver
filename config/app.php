@@ -104,12 +104,6 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
 
-    'classifier_external_name' => env('CLASSIFIER_EXTERNAL_NAME'),
-    'classifier_external_base_url' => env('CLASSIFIER_EXTERNAL_BASE_URL'),
-    'classifier_external_public_key' => env('CLASSIFIER_EXTERNAL_PUBLIC_KEY'),
-    'classifier_external_api_key_name' => env('CLASSIFIER_EXTERNAL_API_KEY_NAME'),
-    'classifier_external_api_key_secret' => env('CLASSIFIER_EXTERNAL_API_KEY_SECRET'),
-    'license_url' => env('ADSHARES_LICENSE_SERVER_URL', 'https://account.adshares.pl'),
     'serve_base_url' => env('SERVE_BASE_URL') ?: $appUrl,
     'main_js_base_url' => env('MAIN_JS_BASE_URL') ?: $appUrl,
     'main_js_tld' => env('MAIN_JS_TLD'),

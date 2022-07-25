@@ -60,7 +60,14 @@ abstract class TestCase extends BaseTestCase
         Config::updateAdminSettings(
             [
                 Config::ADSHARES_ADDRESS => '0001-00000005-CBCA',
+                Config::ADSHARES_LICENSE_SERVER_URL => 'https://account.e11.click',
                 Config::ADSHARES_SECRET => 'CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB',
+                Config::CLASSIFIER_EXTERNAL_API_KEY_NAME => 'api_key_name',
+                Config::CLASSIFIER_EXTERNAL_API_KEY_SECRET => 'api_key_secret',
+                Config::CLASSIFIER_EXTERNAL_BASE_URL => 'http://webserver',
+                Config::CLASSIFIER_EXTERNAL_NAME => 'test_classifier',
+                Config::CLASSIFIER_EXTERNAL_PUBLIC_KEY =>
+                    'D69BCCF69C2D0F6CED025A05FA7F3BA687D1603AC1C8D9752209AC2BBF2C4D17',
             ]
         );
         DatabaseConfigReader::overwriteAdministrationConfig();
