@@ -32,10 +32,7 @@ return [
     |
     */
 
-    /**
-     * @deprecated MAIL_DRIVER was renamed to MAIL_MAILER. MAIL_DRIVER will be removed
-     */
-    'default' => env('MAIL_MAILER', env('MAIL_DRIVER', 'smtp')),
+    'default' => env('MAIL_MAILER', 'smtp'),
 
     /*
     |--------------------------------------------------------------------------

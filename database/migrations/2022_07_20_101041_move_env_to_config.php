@@ -82,7 +82,6 @@ class MoveEnvToConfig extends Migration
         'MAIL_FROM_ADDRESS' => Config::MAIL_FROM_ADDRESS,
         'MAIL_FROM_NAME' => Config::MAIL_FROM_NAME,
         'MAIL_HOST' => Config::MAIL_SMTP_HOST,
-        'MAIL_MAILER' => Config::MAIL_MAILER,
         'MAIL_PASSWORD' => Config::MAIL_SMTP_PASSWORD,
         'MAIL_PORT' => Config::MAIL_SMTP_PORT,
         'MAIL_USERNAME' => Config::MAIL_SMTP_USERNAME,
@@ -171,6 +170,10 @@ class MoveEnvToConfig extends Migration
             $settings[Config::ADUSER_BASE_URL] = $aduserUrl;
         }
 
+        if (null !== ($mailer = env('MAIL_MAILER', env('MAIL_DRIVER')))) {
+            $settings[Config::MAIL_MAILER] = $mailer;
+        }
+
         Config::updateAdminSettings($settings);
     }
 
@@ -181,6 +184,7 @@ class MoveEnvToConfig extends Migration
                 array_values(self::ENVIRONMENT_VARIABLES_MIGRATION),
                 [
                     Config::ADUSER_BASE_URL,
+                    Config::MAIL_MAILER,
                 ]
             )
         );
