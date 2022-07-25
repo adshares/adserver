@@ -136,7 +136,7 @@ class ServerConfigurationController extends Controller
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
     ];
-    private const MAX_VALUE_LENGTH = 255;
+    private const MAX_VALUE_LENGTH = 65535;
     private const RULE_NULLABLE = 'nullable';
 
     public function fetch(string $key = null): JsonResponse
@@ -235,7 +235,7 @@ class ServerConfigurationController extends Controller
                 sprintf('Field `%s` must be have %d characters', $field, (int)$length)
             );
         }
-        if (1 !== preg_match('/^[0-9A-Z]$/', $value)) {
+        if (1 !== preg_match('/^[\dA-Z]$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a hexadecimal string', $field));
         }
     }

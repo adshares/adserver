@@ -72,7 +72,7 @@ final class InfoResponse implements Arrayable
                 config('app.adserver_name'),
                 (string)config('app.version'),
                 new SecureUrl((string)config('app.url')),
-                new Url((string)config('app.adpanel_url')),
+                new Url(config('app.adpanel_url')),
                 new SecureUrl(route('privacy-url')),
                 new SecureUrl(route('terms-url')),
                 new SecureUrl(route('demand-inventory')),

@@ -51,7 +51,6 @@ class Config extends Model
     public const ADS_RPC_URL = 'ads-rpc-url';
     public const ADSELECT_URL = 'adselect-endpoint';
     public const ADSHARES_ADDRESS = 'adshares-address';
-    public const ADSHARES_LICENSE_ID = 'adshares-license-id';
     public const ADSHARES_LICENSE_KEY = 'adshares-license-key';
     public const ADSHARES_LICENSE_SERVER_URL = 'adshares-license-server-url';
     public const ADSHARES_NODE_HOST = 'adshares-node-host';
@@ -350,7 +349,6 @@ class Config extends Model
             self::ADSELECT_URL => 'http://localhost:8011',
             self::ADSERVER_NAME => '',
             self::ADSHARES_ADDRESS => '',
-            self::ADSHARES_LICENSE_ID => '',
             self::ADSHARES_LICENSE_KEY => '',
             self::ADSHARES_LICENSE_SERVER_URL => 'https://account.adshares.pl/',
             self::ADSHARES_NODE_HOST => '',

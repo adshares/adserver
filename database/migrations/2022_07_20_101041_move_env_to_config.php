@@ -36,6 +36,7 @@ class MoveEnvToConfig extends Migration
         'ADS_RPC_URL' => Config::ADS_RPC_URL,
         'ADSELECT_ENDPOINT' => Config::ADSELECT_URL,
         'ADSHARES_ADDRESS' => Config::ADSHARES_ADDRESS,
+        'ADSHARES_LICENSE_KEY' => Config::ADSHARES_LICENSE_KEY,
         'ADSHARES_LICENSE_SERVER_URL' => Config::ADSHARES_LICENSE_SERVER_URL,
         'ADSHARES_NODE_HOST' => Config::ADSHARES_NODE_HOST,
         'ADSHARES_NODE_PORT' => Config::ADSHARES_NODE_PORT,
@@ -77,6 +78,8 @@ class MoveEnvToConfig extends Migration
         'INVENTORY_EXPORT_WHITELIST' => Config::INVENTORY_EXPORT_WHITELIST,
         'INVENTORY_IMPORT_WHITELIST' => Config::INVENTORY_IMPORT_WHITELIST,
         'INVENTORY_WHITELIST' => Config::INVENTORY_WHITELIST,
+        'MAIN_JS_BASE_URL' => Config::MAIN_JS_BASE_URL,
+        'MAIN_JS_TLD' => Config::MAIN_JS_TLD,
         'MAX_PAGE_ZONES' => Config::MAX_PAGE_ZONES,
         'NETWORK_DATA_CACHE_TTL' => Config::NETWORK_DATA_CACHE_TTL,
         'NOW_PAYMENTS_API_KEY' => Config::NOW_PAYMENTS_API_KEY,
@@ -86,6 +89,7 @@ class MoveEnvToConfig extends Migration
         'NOW_PAYMENTS_IPN_SECRET' => Config::NOW_PAYMENTS_IPN_SECRET,
         'NOW_PAYMENTS_MAX_AMOUNT' => Config::NOW_PAYMENTS_MAX_AMOUNT,
         'NOW_PAYMENTS_MIN_AMOUNT' => Config::NOW_PAYMENTS_MIN_AMOUNT,
+        'SERVE_BASE_URL' => Config::SERVE_BASE_URL,
         'SITE_FILTERING_EXCLUDE' => Config::SITE_FILTERING_EXCLUDE,
         'SITE_FILTERING_REQUIRE' => Config::SITE_FILTERING_REQUIRE,
         'SKYNET_API_KEY' => Config::SKYNET_API_KEY,
@@ -95,9 +99,6 @@ class MoveEnvToConfig extends Migration
         'UPLOAD_LIMIT_MODEL' => Config::UPLOAD_LIMIT_MODEL,
         'UPLOAD_LIMIT_VIDEO' => Config::UPLOAD_LIMIT_VIDEO,
         'UPLOAD_LIMIT_ZIP' => Config::UPLOAD_LIMIT_ZIP,
-        'SERVE_BASE_URL' => Config::SERVE_BASE_URL,
-        'MAIN_JS_BASE_URL' => Config::MAIN_JS_BASE_URL,
-        'MAIN_JS_TLD' => Config::MAIN_JS_TLD,
     ];
 
     public function up(): void
@@ -153,11 +154,6 @@ class MoveEnvToConfig extends Migration
             }
         }
 
-        if (null !== ($licenseKey = env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')))) {
-            $settings[Config::ADSHARES_LICENSE_ID] = substr($licenseKey, 0, 10);
-            $settings[Config::ADSHARES_LICENSE_KEY] = $licenseKey;
-        }
-
         if (
             null !== ($aduserUrl = env(
                 'ADUSER_BASE_URL',
@@ -176,8 +172,6 @@ class MoveEnvToConfig extends Migration
             array_merge(
                 array_values(self::ENVIRONMENT_VARIABLES_MIGRATION),
                 [
-                    Config::ADSHARES_LICENSE_ID,
-                    Config::ADSHARES_LICENSE_KEY,
                     Config::ADUSER_BASE_URL,
                 ]
             )

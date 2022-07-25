@@ -19,11 +19,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-$mail_encryption = env('MAIL_ENCRYPTION', 'tls');
-if ($mail_encryption === 'none') {
-    $mail_encryption = '';
-}
-
 return [
 
     /*
@@ -65,7 +60,7 @@ return [
             'transport' => 'smtp',
             'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
             'port' => env('MAIL_PORT', 587),
-            'encryption' => $mail_encryption,
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,

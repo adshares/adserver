@@ -56,6 +56,7 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\SupplyClient;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\ServiceProvider;
 
 use function config;
@@ -158,6 +159,11 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             LicenseProvider::class,
             function () {
+                $licenseId = config('app.adshares_license_key') ? substr(
+                    Crypt::decryptString(config('app.adshares_license_key')),
+                    0,
+                    10
+                ) : '';
                 return new GuzzleLicenseClient(
                     new Client(
                         [
@@ -166,7 +172,7 @@ final class ClientProvider extends ServiceProvider
                             'timeout' => 5,
                         ]
                     ),
-                    config('app.adshares_license_id'),
+                    $licenseId
                 );
             }
         );
