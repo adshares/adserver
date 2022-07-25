@@ -81,8 +81,6 @@ return [
     */
 
     'key' => env('APP_KEY'),
-    'adserver_secret' => env('APP_KEY'),//todo remove duplication
-
     'cipher' => 'AES-256-CBC',
 
     /*
