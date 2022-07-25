@@ -27,8 +27,6 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
-use DateTimeImmutable;
-use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -217,15 +215,6 @@ class ServerConfigurationController extends Controller
     {
         if (!in_array($value, ['0', '1'])) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a boolean', $field));
-        }
-    }
-
-    private static function validateDateTime(string $field, string $value): void
-    {
-        if (false === DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value)) {
-            throw new UnprocessableEntityHttpException(
-                sprintf('Field `%s` must be a date in ISO-8601 format', $field)
-            );
         }
     }
 

@@ -61,7 +61,7 @@ abstract class TestCase extends BaseTestCase
             [
                 Config::ADPANEL_URL => 'http://adpanel',
                 Config::ADSHARES_ADDRESS => '0001-00000005-CBCA',
-                Config::ADSHARES_LICENSE_SERVER_URL => 'http://license',
+                Config::ADSHARES_LICENSE_SERVER_URL => 'http://license-server',
                 Config::ADSHARES_SECRET => 'CA978112CA1BBDCAFAC231B39A23DC4DA786EFF8147C4E72B9807785AFEE48BB',
                 Config::CLASSIFIER_EXTERNAL_API_KEY_NAME => 'api_key_name',
                 Config::CLASSIFIER_EXTERNAL_API_KEY_SECRET => 'api_key_secret',

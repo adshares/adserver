@@ -188,37 +188,31 @@ final class ServerConfigurationControllerTest extends TestCase
     {
         return [
             'invalid key' => [['invalid' => 'invalid']],
-            'invalid not empty' => [['invoice-company-city' => '']],
-            'invalid value type' => [['support-email' => true]],
-            'invalid value length' => [
-                [
-                    'support-email' =>
-                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid' .
-                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid' .
-                        'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid@example.com'
-                ]
-            ],
-            'invalid email format' => [['support-email' => 'invalid']],
-            'invalid boolean format' => [['cold-wallet-is-active' => '23']],
-            'invalid click amount (not integer)' => [['hotwallet-min-value' => '1234a']],
-            'invalid click amount (negative)' => [['hotwallet-min-value' => '-1']],
-            'invalid click amount (out of range)' => [['hotwallet-min-value' => '3875820600000000001']],
-            'invalid amount (not integer)' => [['hotwallet-min-value' => '1234a']],
-            'invalid amount (negative)' => [['hotwallet-min-value' => '-1']],
-            'invalid classifier setting' => [['site-classifier-local-banners' => 'invalid']],
-            'invalid registration mode' => [['registration-mode' => 'invalid']],
-            'invalid date format mode' => [['panel-placeholder-update-time' => '2020-01-01 12:34']],
-            'invalid commission (negative)' => [['payment-rx-fee' => '-0.1']],
-            'invalid commission (out of range)' => [['payment-rx-fee' => '1.0001']],
-            'invalid commission (empty)' => [['payment-rx-fee' => '']],
-            'invalid invoice currencies (lowercase)' => [['invoice-currencies' => 'eur']],
-            'invalid invoice currencies (comma on start)' => [['invoice-currencies' => ',EUR']],
-            'invalid invoice currencies (comma on end)' => [['invoice-currencies' => 'EUR,']],
-            'invalid invoice currencies (double comma)' => [['invoice-currencies' => 'EUR,,USD']],
-            'invalid invoice bank accounts (malformed json)' => [['invoice-company-bank-accounts' => '{']],
+            'invalid not empty' => [[Config::INVOICE_COMPANY_CITY => '']],
+            'invalid value type' => [[Config::SUPPORT_EMAIL => true]],
+            'invalid value length' => [[Config::SUPPORT_EMAIL => str_repeat('a', 65536)]],
+            'invalid email format' => [[Config::SUPPORT_EMAIL => 'invalid']],
+            'invalid account ID' => [[Config::ADSHARES_ADDRESS => 'invalid']],
+            'invalid boolean format' => [[Config::COLD_WALLET_IS_ACTIVE => '23']],
+            'invalid click amount (not integer)' => [[Config::HOT_WALLET_MIN_VALUE => '1234a']],
+            'invalid click amount (negative)' => [[Config::HOT_WALLET_MIN_VALUE => '-1']],
+            'invalid click amount (out of range)' => [[Config::HOT_WALLET_MIN_VALUE => '3875820600000000001']],
+            'invalid positive integer (not integer)' => [[Config::FIAT_DEPOSIT_MAX_AMOUNT => '1234a']],
+            'invalid positive integer (negative)' => [[Config::FIAT_DEPOSIT_MAX_AMOUNT => '-1']],
+            'invalid classifier setting' => [[Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'invalid']],
+            'invalid registration mode' => [[Config::REGISTRATION_MODE => 'invalid']],
+            'invalid commission (negative)' => [[Config::OPERATOR_RX_FEE => '-0.1']],
+            'invalid commission (out of range)' => [[Config::OPERATOR_RX_FEE => '1.0001']],
+            'invalid commission (empty)' => [[Config::OPERATOR_RX_FEE => '']],
+            'invalid invoice currency (lowercase)' => [[Config::NOW_PAYMENTS_CURRENCY => 'eur']],
+            'invalid invoice currencies (lowercase)' => [[Config::INVOICE_CURRENCIES => 'eur']],
+            'invalid invoice currencies (comma on start)' => [[Config::INVOICE_CURRENCIES => ',EUR']],
+            'invalid invoice currencies (comma on end)' => [[Config::INVOICE_CURRENCIES => 'EUR,']],
+            'invalid invoice currencies (double comma)' => [[Config::INVOICE_CURRENCIES => 'EUR,,USD']],
+            'invalid invoice bank accounts (malformed json)' => [[Config::INVOICE_COMPANY_BANK_ACCOUNTS => '{']],
             'invalid hex (not hex)' =>
-                [['adshares-secret' => 'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid0']],
-            'invalid hex (size)' => [['adshares-secret' => '012345678']],
+                [[Config::ADSHARES_SECRET => 'invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinvalid0']],
+            'invalid hex (size)' => [[Config::ADSHARES_SECRET => '012345678']],
             'invalid host' => [[Config::ADSHARES_NODE_HOST => 'invalid..invalid']],
             'invalid port (no a number)' => [[Config::ADSHARES_NODE_PORT => 'invalid']],
             'invalid port (negative)' => [[Config::ADSHARES_NODE_PORT => '-1']],
@@ -226,6 +220,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid url' => [[Config::EXCHANGE_API_URL => 'invalid']],
             'invalid license key' => [[Config::ADSHARES_LICENSE_KEY => 'invalid']],
             'invalid mailer' => [[Config::MAIL_MAILER => 'invalid']],
+            'invalid country' => [[Config::INVOICE_COMPANY_COUNTRY => 'invalid']],
         ];
     }
 
