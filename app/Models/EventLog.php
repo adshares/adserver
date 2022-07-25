@@ -321,7 +321,7 @@ SQL;
     {
         $domain = $context['site']['domain'] ?: null;
 
-        if (!$domain || DomainReader::domain((string)config('app.serve_base_url')) === $domain) {
+        if (!$domain || DomainReader::domain(config('app.serve_base_url')) === $domain) {
             return null;
         }
 

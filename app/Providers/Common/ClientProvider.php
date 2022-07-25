@@ -71,7 +71,7 @@ final class ClientProvider extends ServiceProvider
                     new Client(
                         [
                             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.adpay_endpoint'),
+                            'base_uri' => config('app.adpay_url'),
                             'timeout' => 300,
                         ]
                     )
@@ -85,7 +85,7 @@ final class ClientProvider extends ServiceProvider
                 $client = new Client(
                     [
                         'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                        'base_uri' => config('app.adselect_endpoint'),
+                        'base_uri' => config('app.adselect_url'),
                         'timeout' => 5,
                     ]
                 );

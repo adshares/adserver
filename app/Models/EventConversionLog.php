@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -199,7 +199,7 @@ class EventConversionLog extends Model
 
         $domain = isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
 
-        if (!$domain || DomainReader::domain((string)config('app.serve_base_url')) === $domain) {
+        if (!$domain || DomainReader::domain(config('app.serve_base_url')) === $domain) {
             return null;
         }
 

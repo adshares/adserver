@@ -20,7 +20,6 @@
  */
 
 $appUrl = env('APP_URL', 'http://localhost');
-$aduserUrl = env('ADUSER_BASE_URL', env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION')));
 
 return [
     'version' => env('APP_VERSION', '#'),
@@ -29,6 +28,9 @@ return [
     'debug' => env('APP_DEBUG', false),
     'refresh_testing_database' => env('APP_REFRESH_TESTING_DATABASE', false),
     'setup' => (int)env('APP_SETUP', 0),
+    'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
+    'adshares_command' => env('ADSHARES_COMMAND'),
+    'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
 
     /*
     |--------------------------------------------------------------------------
@@ -82,29 +84,6 @@ return [
 
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Adshares Adserver & Network Components Integration configuration
-    |--------------------------------------------------------------------------
-    */
-
-    'adpanel_url' => env('ADPANEL_URL'),
-    'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
-    'adshares_command' => env('ADSHARES_COMMAND'),
-    'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
-    'ads_operator_server_url' => env('ADS_OPERATOR_SERVER_URL', 'https://ads-operator.adshares.net'),
-    'ads_rpc_url' => env('ADS_RPC_URL', 'https://rpc.adshares.net'),
-    'aduser_base_url' => $aduserUrl,
-    'aduser_internal_url' => env('ADUSER_INTERNAL_URL', $aduserUrl),
-    'aduser_serve_subdomain' => env('ADUSER_SERVE_SUBDOMAIN'),
-    'aduser_info_url' => env('ADUSER_INFO_URL', $aduserUrl . '/panel.html?rated=1&url={domain}'),
-    'adpay_endpoint' => env('ADPAY_ENDPOINT'),
-    'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
-
-    'serve_base_url' => env('SERVE_BASE_URL') ?: $appUrl,
-    'main_js_base_url' => env('MAIN_JS_BASE_URL') ?: $appUrl,
-    'main_js_tld' => env('MAIN_JS_TLD'),
 
     /*
     |--------------------------------------------------------------------------

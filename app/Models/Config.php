@@ -44,7 +44,12 @@ class Config extends Model
 {
     use HasFactory;
 
+    public const ADPANEL_URL = 'adpanel-url';
+    public const ADPAY_URL = 'adpay-endpoint';
     public const ADS_LOG_START = 'ads-log-start';
+    public const ADS_OPERATOR_SERVER_URL = 'ads-operator-server-url';
+    public const ADS_RPC_URL = 'ads-rpc-url';
+    public const ADSELECT_URL = 'adselect-endpoint';
     public const ADSHARES_ADDRESS = 'adshares-address';
     public const ADSHARES_LICENSE_ID = 'adshares-license-id';
     public const ADSHARES_LICENSE_KEY = 'adshares-license-key';
@@ -52,6 +57,10 @@ class Config extends Model
     public const ADSHARES_NODE_HOST = 'adshares-node-host';
     public const ADSHARES_NODE_PORT = 'adshares-node-port';
     public const ADSHARES_SECRET = 'adshares-secret';
+    public const ADUSER_BASE_URL = 'aduser-base-url';
+    public const ADUSER_INFO_URL = 'aduser-info-url';
+    public const ADUSER_INTERNAL_URL = 'aduser-internal-url';
+    public const ADUSER_SERVE_SUBDOMAIN = 'aduser-serve-subdomain';
     public const ALLOW_ZONE_IN_IFRAME = 'allow_zone-in-iframe';
     public const AUTO_WITHDRAWAL_LIMIT_ADS = 'auto-withdrawal-limit-ads';
     public const AUTO_WITHDRAWAL_LIMIT_BSC = 'auto-withdrawal-limit-bsc';
@@ -83,6 +92,8 @@ class Config extends Model
     public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
     public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
     public const INVENTORY_WHITELIST = 'inventory-whitelist';
+    public const MAIN_JS_BASE_URL = 'main-js-base-url';
+    public const MAIN_JS_TLD = 'main-js-tld';
     public const MAX_PAGE_ZONES = 'max-page-zones';
     public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
@@ -94,6 +105,7 @@ class Config extends Model
     public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
+    public const SERVE_BASE_URL = 'serve-base-url';
     public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
     public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
     public const SKYNET_API_KEY = 'skynet-api-key';
@@ -331,6 +343,11 @@ class Config extends Model
     private static function getDefaultAdminSettings(array $fetched): array
     {
         return [
+            self::ADPANEL_URL => 'http://localhost:8080',
+            self::ADPAY_URL => 'http://localhost:8012',
+            self::ADS_OPERATOR_SERVER_URL => 'https://ads-operator.adshares.net',
+            self::ADS_RPC_URL => 'https://rpc.adshares.net',
+            self::ADSELECT_URL => 'http://localhost:8011',
             self::ADSERVER_NAME => '',
             self::ADSHARES_ADDRESS => '',
             self::ADSHARES_LICENSE_ID => '',
@@ -339,6 +356,12 @@ class Config extends Model
             self::ADSHARES_NODE_HOST => '',
             self::ADSHARES_NODE_PORT => '6511',
             self::ADSHARES_SECRET => null,
+            self::ADUSER_BASE_URL => '',
+            self::ADUSER_INFO_URL =>
+                isset($fetched[Config::ADUSER_BASE_URL])
+                    ? ($fetched[Config::ADUSER_BASE_URL] . '/panel.html?rated=1&url={domain}') : '',
+            self::ADUSER_INTERNAL_URL => $fetched[Config::ADUSER_BASE_URL] ?? '',
+            self::ADUSER_SERVE_SUBDOMAIN => '',
             self::ALLOW_ZONE_IN_IFRAME => '1',
             self::AUTO_CONFIRMATION_ENABLED => '0',
             self::AUTO_REGISTRATION_ENABLED => '0',
@@ -390,6 +413,8 @@ class Config extends Model
             self::INVOICE_CURRENCIES => '',
             self::INVOICE_ENABLED => '0',
             self::INVOICE_NUMBER_FORMAT => '',
+            self::MAIN_JS_BASE_URL => '',
+            self::MAIN_JS_TLD => '',
             self::MAX_PAGE_ZONES => '4',
             self::NETWORK_DATA_CACHE_TTL => '60',
             self::NOW_PAYMENTS_API_KEY => '',
@@ -404,6 +429,7 @@ class Config extends Model
             self::REFERRAL_REFUND_COMMISSION => '',
             self::REFERRAL_REFUND_ENABLED => '0',
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
+            self::SERVE_BASE_URL => '',
             self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
             self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
             self::SITE_FILTERING_EXCLUDE => '',

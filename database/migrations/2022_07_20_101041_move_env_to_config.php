@@ -30,11 +30,19 @@ class MoveEnvToConfig extends Migration
     private const CE_LICENSE_ACCOUNT = '0001-00000024-FF89';
     private const CE_LICENSE_FEE = '0.01';
     private const ENVIRONMENT_VARIABLES_MIGRATION = [
+        'ADPANEL_URL' => Config::ADPANEL_URL,
+        'ADPAY_ENDPOINT' => Config::ADPAY_URL,
+        'ADS_OPERATOR_SERVER_URL' => Config::ADS_OPERATOR_SERVER_URL,
+        'ADS_RPC_URL' => Config::ADS_RPC_URL,
+        'ADSELECT_ENDPOINT' => Config::ADSELECT_URL,
         'ADSHARES_ADDRESS' => Config::ADSHARES_ADDRESS,
         'ADSHARES_LICENSE_SERVER_URL' => Config::ADSHARES_LICENSE_SERVER_URL,
         'ADSHARES_NODE_HOST' => Config::ADSHARES_NODE_HOST,
         'ADSHARES_NODE_PORT' => Config::ADSHARES_NODE_PORT,
         'ADSHARES_SECRET' => Config::ADSHARES_SECRET,
+        'ADUSER_INFO_URL' => Config::ADUSER_INFO_URL,
+        'ADUSER_INTERNAL_URL' => Config::ADUSER_INTERNAL_URL,
+        'ADUSER_SERVE_SUBDOMAIN' => Config::ADUSER_SERVE_SUBDOMAIN,
         'ALLOW_ZONE_IN_IFRAME' => Config::ALLOW_ZONE_IN_IFRAME,
         'AUTO_WITHDRAWAL_LIMIT_ADS' => Config::AUTO_WITHDRAWAL_LIMIT_ADS,
         'AUTO_WITHDRAWAL_LIMIT_BSC' => Config::AUTO_WITHDRAWAL_LIMIT_BSC,
@@ -87,6 +95,9 @@ class MoveEnvToConfig extends Migration
         'UPLOAD_LIMIT_MODEL' => Config::UPLOAD_LIMIT_MODEL,
         'UPLOAD_LIMIT_VIDEO' => Config::UPLOAD_LIMIT_VIDEO,
         'UPLOAD_LIMIT_ZIP' => Config::UPLOAD_LIMIT_ZIP,
+        'SERVE_BASE_URL' => Config::SERVE_BASE_URL,
+        'MAIN_JS_BASE_URL' => Config::MAIN_JS_BASE_URL,
+        'MAIN_JS_TLD' => Config::MAIN_JS_TLD,
     ];
 
     public function up(): void
@@ -147,6 +158,15 @@ class MoveEnvToConfig extends Migration
             $settings[Config::ADSHARES_LICENSE_KEY] = $licenseKey;
         }
 
+        if (
+            null !== ($aduserUrl = env(
+                'ADUSER_BASE_URL',
+                env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION'))
+            ))
+        ) {
+            $settings[Config::ADUSER_BASE_URL] = $aduserUrl;
+        }
+
         Config::updateAdminSettings($settings);
     }
 
@@ -158,6 +178,7 @@ class MoveEnvToConfig extends Migration
                 [
                     Config::ADSHARES_LICENSE_ID,
                     Config::ADSHARES_LICENSE_KEY,
+                    Config::ADUSER_BASE_URL,
                 ]
             )
         );
