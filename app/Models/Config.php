@@ -45,11 +45,11 @@ class Config extends Model
     use HasFactory;
 
     public const ADPANEL_URL = 'adpanel-url';
-    public const ADPAY_URL = 'adpay-endpoint';
+    public const ADPAY_URL = 'adpay-url';
     public const ADS_LOG_START = 'ads-log-start';
     public const ADS_OPERATOR_SERVER_URL = 'ads-operator-server-url';
     public const ADS_RPC_URL = 'ads-rpc-url';
-    public const ADSELECT_URL = 'adselect-endpoint';
+    public const ADSELECT_URL = 'adselect-url';
     public const ADSHARES_ADDRESS = 'adshares-address';
     public const ADSHARES_LICENSE_KEY = 'adshares-license-key';
     public const ADSHARES_LICENSE_SERVER_URL = 'adshares-license-server-url';

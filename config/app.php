@@ -19,12 +19,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-$appUrl = env('APP_URL', 'http://localhost');
-
 return [
     'version' => env('APP_VERSION', '#'),
     'env' => env('APP_ENV', 'production'),
-    'url' => $appUrl,
+    'url' => env('APP_URL', 'http://localhost'),
     'debug' => env('APP_DEBUG', false),
     'refresh_testing_database' => env('APP_REFRESH_TESTING_DATABASE', false),
     'setup' => (int)env('APP_SETUP', 0),
