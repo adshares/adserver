@@ -23,9 +23,10 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Common\Domain\ValueObject;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Illuminate\Support\Facades\Config;
 
 class SecureUrlTest extends TestCase
 {
@@ -44,7 +45,8 @@ class SecureUrlTest extends TestCase
 
     public function testChangeNotNeed(): void
     {
-        Config::set('app.banner_force_https', false);
+        Config::updateAdminSettings([Config::BANNER_FORCE_HTTPS => '0']);
+        DatabaseConfigReader::overwriteAdministrationConfig();
         $secureUrl = new SecureUrl('http://adshares.net');
 
         self::assertSame('http://adshares.net', (string)$secureUrl);

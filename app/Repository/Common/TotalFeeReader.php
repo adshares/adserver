@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,8 +30,7 @@ class TotalFeeReader
 {
     private const FEE_PRECISION_MAXIMUM = 4;
 
-    /** @var LicenseReader */
-    private $licenseReader;
+    private LicenseReader $licenseReader;
 
     public function __construct(LicenseReader $licenseReader)
     {
@@ -40,7 +39,7 @@ class TotalFeeReader
 
     public function getTotalFeeDemand(): float
     {
-        $licenseFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
+        $licenseFee = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
         $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         return $this->computeTotalFee($licenseFee, $operatorFee);
@@ -48,7 +47,7 @@ class TotalFeeReader
 
     public function getTotalFeeSupply(): float
     {
-        $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
+        $licenseFee = $this->licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
         $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
 
         return $this->computeTotalFee($licenseFee, $operatorFee);

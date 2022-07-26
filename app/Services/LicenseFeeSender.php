@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -92,7 +92,7 @@ final class LicenseFeeSender
     {
         $payment = NetworkPayment::registerNetworkPayment(
             $this->fetchLicenseAccount(),
-            (string)config('app.adshares_address'),
+            config('app.adshares_address'),
             $this->licenseFeeSum(),
             $this->adsPayment
         );

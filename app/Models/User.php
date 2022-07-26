@@ -423,7 +423,7 @@ class User extends Authenticatable implements JWTSubject
         return self::register([
             'wallet_address' => $address,
             'auto_withdrawal' => $autoWithdrawal
-                ? config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()))
+                ? (int)config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()))
                 : null,
             'is_advertiser' => true,
             'is_publisher' => true,

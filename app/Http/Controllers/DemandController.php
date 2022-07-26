@@ -526,12 +526,12 @@ SQL;
 
     public function inventoryList(Request $request): JsonResponse
     {
-        $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
+        $licenceTxFee = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
         $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
 
-        $whitelist = config('app.inventory_export_whitelist');
+        $whitelist = array_filter(explode(',', config('app.inventory_export_whitelist')));
         if (!empty($whitelist)) {
             $account = $this->authenticator->verifyRequest($request);
             if (!in_array($account, $whitelist)) {

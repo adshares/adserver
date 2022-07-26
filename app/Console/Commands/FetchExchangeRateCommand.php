@@ -32,14 +32,10 @@ use Illuminate\Database\QueryException;
 class FetchExchangeRateCommand extends BaseCommand
 {
     protected $signature = 'ops:exchange-rate:fetch';
-
     protected $description = 'Fetch exchange rate';
 
-    /** @var EloquentExchangeRateRepository */
-    private $repositoryStorable;
-
-    /** @var ExchangeRateRepository */
-    private $repositoryRemote;
+    private EloquentExchangeRateRepository $repositoryStorable;
+    private ExchangeRateRepository $repositoryRemote;
 
     public function __construct(
         Locker $locker,
@@ -61,7 +57,7 @@ class FetchExchangeRateCommand extends BaseCommand
         }
 
         $this->info('Start command ' . $this->signature);
-        $currencies = config('app.exchange_currencies');
+        $currencies = array_filter(explode(',', config('app.exchange_currencies')));
         if (empty($currencies)) {
             $this->warn('Exchange currencies list is empty');
 

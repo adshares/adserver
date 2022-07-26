@@ -21,29 +21,12 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Common\Domain\ValueObject;
+use Adshares\Adserver\Http\Controllers\Manager\ServerConfigurationController;
+use Adshares\Adserver\Http\Kernel;
+use Illuminate\Support\Facades\Route;
 
-use Adshares\Common\Exception\RuntimeException;
-
-final class Commission
-{
-    private float $value;
-
-    public function __construct(float $value)
-    {
-        if ($value < 0) {
-            throw new RuntimeException('Commission must be greater than 0.00.');
-        }
-
-        if ($value > 1) {
-            throw new RuntimeException('Commission must be smaller than 1.00.');
-        }
-
-        $this->value = round($value, 4);
-    }
-
-    public function getValue(): float
-    {
-        return $this->value;
-    }
-}
+Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(function () {
+    Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
+    Route::patch('config', [ServerConfigurationController::class, 'store']);
+    Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
+});

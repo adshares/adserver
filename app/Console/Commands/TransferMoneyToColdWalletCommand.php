@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,16 +29,13 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Exception\TransferMoneyException;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 
-use function sprintf;
-
 class TransferMoneyToColdWalletCommand extends BaseCommand
 {
     protected $signature = 'ops:wallet:transfer:cold';
 
     protected $description = 'Transfer money from Hot to Cold Wallet when amount is greater than `max` definition';
 
-    /** @var TransferMoneyToColdWallet */
-    private $transferMoneyToColdWalletService;
+    private TransferMoneyToColdWallet $transferMoneyToColdWalletService;
 
     public function __construct(Locker $locker, TransferMoneyToColdWallet $transferMoneyToColdWalletService)
     {
@@ -77,7 +74,7 @@ class TransferMoneyToColdWalletCommand extends BaseCommand
             $message = sprintf(
                 '[Wallet] Successfully transfer %s clicks to Cold Wallet (%s) (txid: %s).',
                 $response->getTransferValue(),
-                config('app.adshares_wallet_cold_address'),
+                config('app.cold_wallet_address'),
                 $response->getTransactionId()
             );
 
@@ -85,5 +82,7 @@ class TransferMoneyToColdWalletCommand extends BaseCommand
         } catch (TransferMoneyException $exception) {
             $this->error($exception->getMessage());
         }
+
+        $this->info('[Wallet] Finish command ' . $this->signature);
     }
 }

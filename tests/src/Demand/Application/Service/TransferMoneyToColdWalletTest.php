@@ -118,6 +118,24 @@ final class TransferMoneyToColdWalletTest extends TestCase
         $service->transfer($waitingPayments);
     }
 
+    public function testTransferWhenColdWalletIsNotSet(): void
+    {
+        $min = 10;
+        $max = 100;
+        $coldWalletAddress = '';
+        $waitingPayments = 20;
+
+        $service = new TransferMoneyToColdWallet(
+            $min,
+            $max,
+            $coldWalletAddress,
+            self::createMock(AdsClient::class)
+        );
+
+        self::expectException(TransferMoneyException::class);
+        $service->transfer($waitingPayments);
+    }
+
     private function createAdsClientMock(int $hotWalletValue, ?string $transactionId = null)
     {
         $adsClient = $this->createMock(AdsClient::class);

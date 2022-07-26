@@ -387,7 +387,7 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Site not accepted');
         }
         if (($decodedQueryData['zone_mode'] ?? '') !== 'best_match') {
-            $zones = array_slice($zones, 0, config('app.max_page_zones'));
+            $zones = array_slice($zones, 0, (int)config('app.max_page_zones'));
         }
         return $zones;
     }
@@ -830,9 +830,9 @@ class SupplyController extends Controller
 
         $data = [
             'url' => $banner->serve_url,
-            'supplyName' => config('app.name'),
-            'supplyTermsUrl' => config('app.terms_url'),
-            'supplyPrivacyUrl' => config('app.privacy_url'),
+            'supplyName' => config('app.adserver_name'),
+            'supplyTermsUrl' => route('terms-url'),
+            'supplyPrivacyUrl' => route('privacy-url'),
             'supplyPanelUrl' => config('app.adpanel_url'),
             'supplyBannerReportUrl' => new SecureUrl(
                 route(
@@ -900,7 +900,7 @@ class SupplyController extends Controller
 
     public function targetingReachList(): Response
     {
-        if (null === ($networkHost = NetworkHost::fetchByAddress((string)config('app.adshares_address')))) {
+        if (null === ($networkHost = NetworkHost::fetchByAddress(config('app.adshares_address')))) {
             return response(
                 ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
                 Response::HTTP_INTERNAL_SERVER_ERROR

@@ -8,7 +8,7 @@
 @if (isset($content))
 {!! $content !!}
 @else
-Contact support {{ config('app.adshares_support_email') }}
+Contact support {{ config('app.support_email') }}
 @endif
 </body>
 </html>

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -110,7 +110,7 @@ class WalletController extends Controller
     {
         $btcInfo = null;
         if (config('app.btc_withdraw')) {
-            $fee = config('app.btc_withdraw_fee');
+            $fee = (float)config('app.btc_withdraw_fee');
             $rate = 0;
             try {
                 $exchangeRate = $exchangeRateReader->fetchExchangeRate(null, 'BTC')->toArray();
@@ -120,8 +120,8 @@ class WalletController extends Controller
             }
 
             $btcInfo = [
-                'minAmount' => config('app.btc_withdraw_min_amount'),
-                'maxAmount' => config('app.btc_withdraw_max_amount'),
+                'minAmount' => (int)config('app.btc_withdraw_min_amount'),
+                'maxAmount' => (int)config('app.btc_withdraw_max_amount'),
                 'exchangeRate' => $rate / (1 - $fee),
             ];
         }
@@ -405,8 +405,8 @@ class WalletController extends Controller
 
     private function withdrawBtc(Request $request): JsonResponse
     {
-        $minAmount = 1e11 * config('app.btc_withdraw_min_amount');
-        $maxAmount = 1e11 * config('app.btc_withdraw_max_amount');
+        $minAmount = 1e11 * (int)config('app.btc_withdraw_min_amount');
+        $maxAmount = 1e11 * (int)config('app.btc_withdraw_max_amount');
 
         Validator::make(
             $request->all(),
@@ -503,8 +503,8 @@ class WalletController extends Controller
         $address = $this->getAdServerAdsAddress();
 
         $fiatDeposit = Config::isTrueOnly(Config::INVOICE_ENABLED) ? [
-            'minAmount' => config('app.fiat_deposit_min_amount'),
-            'maxAmount' => config('app.fiat_deposit_max_amount'),
+            'minAmount' => (int)config('app.fiat_deposit_min_amount'),
+            'maxAmount' => (int)config('app.fiat_deposit_max_amount'),
             'currencies' => explode(',', Config::fetchStringOrFail(Config::INVOICE_CURRENCIES)),
         ] : null;
 
@@ -608,7 +608,11 @@ class WalletController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $message = sprintf('Connect your wallet with %s adserver %s', config('app.name'), NonceGenerator::get());
+        $message = sprintf(
+            'Connect your wallet with %s adserver %s',
+            config('app.adserver_name'),
+            NonceGenerator::get()
+        );
 
         $payload = [
             'request' => $request->all(),

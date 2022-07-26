@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -103,7 +103,7 @@ class SettingsController extends Controller
 
         if (null !== $autoWithdrawal) {
             $autoWithdrawal = (int)$autoWithdrawal;
-            $min = config('app.auto_withdrawal_limit_' . strtolower($user->wallet_address->getNetwork()));
+            $min = (int)config('app.auto_withdrawal_limit_' . strtolower($user->wallet_address->getNetwork()));
             if ($autoWithdrawal < $min) {
                 return self::json(
                     [

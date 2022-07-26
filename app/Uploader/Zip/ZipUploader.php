@@ -50,7 +50,7 @@ class ZipUploader implements Uploader
     {
         $file = $this->request->file('file');
         $size = $file->getSize();
-        if (!$size || $size > config('app.upload_limit_zip')) {
+        if (!$size || $size > (int)config('app.upload_limit_zip')) {
             throw new RuntimeException('Invalid zip size');
         }
         $name = $file->store('', self::ZIP_DISK);

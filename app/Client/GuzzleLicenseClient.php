@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,10 +35,8 @@ class GuzzleLicenseClient implements LicenseProvider
 {
     private const GET_ENDPOINT = '/api/v1/license/';
 
-    /** @var Client */
-    private $client;
-    /** @var string */
-    private $licenseId;
+    private Client $client;
+    private string $licenseId;
 
     public function __construct(
         Client $client,

@@ -5,5 +5,5 @@ Please transfer {{ $transferValue }} ADS from Cold Wallet to Hot Wallet - {{ $ad
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -73,7 +74,7 @@ return [
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => env('APP_NAME', 'AdServer'),
             'emoji' => env('LOG_SLACK_EMOJI', ':-1:'),
-            'level' => env('LOG_SLACK_LEVEL', env('LOG_LEVEL', 'warning')),
+            'level' => env('LOG_SLACK_LEVEL', env('LOG_LEVEL', 'error')),
         ],
 
         'syslog' => [

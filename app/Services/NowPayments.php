@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,6 +36,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -43,47 +44,29 @@ use Throwable;
 final class NowPayments
 {
     private const NOW_PAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
-
     private const NOW_PAYMENTS_URL = 'https://nowpayments.io/payment';
 
-    /** @var string */
-    private $apiKey;
-
-    /** @var string */
-    private $ipnSecret;
-
-    /** @var string */
-    private $currency;
-
-    /** @var int */
-    private $minAmount;
-
-    /** @var int */
-    private $maxAmount;
-
-    /** @var float */
-    private $fee;
-
-    /** @var string */
-    private $exchangeUrl;
-
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
-
-    /** @var AdsExchange */
-    private $adsExchange;
+    private string $apiKey;
+    private string $encryptedIpnSecret;
+    private string $currency;
+    private int $minAmount;
+    private int $maxAmount;
+    private float $fee;
+    private bool $useExchange;
+    private ExchangeRateReader $exchangeRateReader;
+    private AdsExchange $adsExchange;
 
     public function __construct(ExchangeRateReader $exchangeRateReader, AdsExchange $adsExchange)
     {
         $this->exchangeRateReader = $exchangeRateReader;
         $this->adsExchange = $adsExchange;
         $this->apiKey = config('app.now_payments_api_key');
-        $this->ipnSecret = config('app.now_payments_ipn_secret');
+        $this->encryptedIpnSecret = config('app.now_payments_ipn_secret');
         $this->currency = config('app.now_payments_currency');
         $this->minAmount = (int)config('app.now_payments_min_amount');
         $this->maxAmount = (int)config('app.now_payments_max_amount');
         $this->fee = (float)config('app.now_payments_fee');
-        $this->useExchange = config('app.now_payments_exchange');
+        $this->useExchange = (bool)config('app.now_payments_exchange');
     }
 
     public function info(): ?array
@@ -128,7 +111,7 @@ final class NowPayments
             'paymentAmount' => $amount,
             'products' => [
                 [
-                    'name' => sprintf('Deposit ADS into %s', config('app.name')),
+                    'name' => sprintf('Deposit ADS into %s', config('app.adserver_name')),
                     'quantity' => 1,
                     'subtotal' => $amount,
                     'subtotal_tax' => 0,
@@ -163,7 +146,7 @@ final class NowPayments
         return hash_hmac(
             'sha512',
             json_encode($params, JSON_UNESCAPED_SLASHES),
-            $this->ipnSecret
+            Crypt::decryptString($this->encryptedIpnSecret)
         );
     }
 

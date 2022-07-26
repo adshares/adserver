@@ -7,5 +7,5 @@ In order to check your account, please log in to the platform, select “Billing
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

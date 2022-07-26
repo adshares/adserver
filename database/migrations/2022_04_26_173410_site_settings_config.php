@@ -37,7 +37,7 @@ class SiteSettingsConfig extends Migration
         DB::table('configs')->insert(
             [
                 'key' => Config::SITE_CLASSIFIER_LOCAL_BANNERS,
-                'value' => 'all-by-default',
+                'value' => Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
                 'created_at' => new DateTime(),
             ]
         );

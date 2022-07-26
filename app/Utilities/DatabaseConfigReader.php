@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,26 +26,30 @@ use Illuminate\Support\Facades\Config as SystemConfig;
 
 class DatabaseConfigReader
 {
+    private const MAIL_KEY_MAP = [
+        Config::MAIL_FROM_ADDRESS => 'mail.from.address',
+        Config::MAIL_FROM_NAME => 'mail.from.name',
+        Config::MAIL_MAILER => 'mail.default',
+        Config::MAIL_SMTP_ENCRYPTION => 'mail.mailers.smtp.encryption',
+        Config::MAIL_SMTP_HOST => 'mail.mailers.smtp.host',
+        Config::MAIL_SMTP_PASSWORD => 'mail.mailers.smtp.password',
+        Config::MAIL_SMTP_PORT => 'mail.mailers.smtp.port',
+        Config::MAIL_SMTP_USERNAME => 'mail.mailers.smtp.username',
+    ];
+
     public static function overwriteAdministrationConfig(): void
     {
         $settings = Config::fetchAdminSettings();
+        foreach ($settings as $key => $value) {
+            SystemConfig::set(self::mapKey($key), $value);
+        }
+    }
 
-        $hotWalletMinValue = $settings[Config::HOT_WALLET_MIN_VALUE];
-        $hotWalletMaxValue = $settings[Config::HOT_WALLET_MAX_VALUE];
-        $coldWalletAddress = $settings[Config::COLD_WALLET_ADDRESS];
-        $serverName = $settings[Config::ADSERVER_NAME];
-        $technicalEmail = $settings[Config::TECHNICAL_EMAIL];
-        $supportEmail = $settings[Config::SUPPORT_EMAIL];
-        $operatorTxFee = $settings[Config::OPERATOR_TX_FEE];
-        $operatorRxFee = $settings[Config::OPERATOR_RX_FEE];
-
-        SystemConfig::set('app.adshares_wallet_min_amount', $hotWalletMinValue);
-        SystemConfig::set('app.adshares_wallet_max_amount', $hotWalletMaxValue);
-        SystemConfig::set('app.adshares_wallet_cold_address', $coldWalletAddress);
-        SystemConfig::set('app.name', $serverName);
-        SystemConfig::set('app.adshares_operator_email', $technicalEmail);
-        SystemConfig::set('app.adshares_support_email', $supportEmail);
-        SystemConfig::set('app.' . Config::OPERATOR_TX_FEE, $operatorTxFee);
-        SystemConfig::set('app.' . Config::OPERATOR_RX_FEE, $operatorRxFee);
+    private static function mapKey(string $key): string
+    {
+        if (isset(self::MAIL_KEY_MAP[$key])) {
+            return self::MAIL_KEY_MAP[$key];
+        }
+        return 'app.' . str_replace('-', '_', $key);
     }
 }

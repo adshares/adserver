@@ -44,7 +44,7 @@ final class CampaignTest extends TestCase
         $campaign = new Campaign(
             Uuid::v4(),
             Uuid::v4(),
-            'http://example.com',
+            'https://example.com',
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [$banner],
             new Budget(1000000000000, 100000000000, null),
@@ -69,7 +69,7 @@ final class CampaignTest extends TestCase
         $campaign = new Campaign(
             Uuid::v4(),
             Uuid::v4(),
-            'http://example.com',
+            'https://example.com',
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
             new Budget(1000000000000, 100000000000, null),
@@ -109,24 +109,25 @@ final class CampaignTest extends TestCase
         $demandCampaignId = Uuid::v4();
         $budget = 1000000000000;
         $maxCpc = 100000000000;
+        $medium = 'web';
 
         $campaign = new Campaign(
             $id,
             $demandCampaignId,
-            'http://example.com',
+            'https://example.com',
             new CampaignDate($dateStart, $dateEnd, $createdAt, $updatedAt),
             [],
             new Budget($budget, $maxCpc, null),
             $sourceHost,
             Status::active(),
-            'web',
+            $medium,
             null
         );
 
         $expected = [
             'id' => $id,
             'demand_campaign_id' => $demandCampaignId,
-            'landing_url' => 'http://example.com',
+            'landing_url' => 'https://example.com',
             'max_cpc' => $maxCpc,
             'max_cpm' => null,
             'budget' => $budget,
@@ -142,7 +143,7 @@ final class CampaignTest extends TestCase
             'targeting_requires' => [],
             'targeting_excludes' => [],
             'status' => Status::STATUS_ACTIVE,
-            'medium' => 'web',
+            'medium' => $medium,
             'vendor' => null,
         ];
 
@@ -159,6 +160,8 @@ final class CampaignTest extends TestCase
         $this->assertEquals($budget, $campaign->getBudget());
         $this->assertEquals($maxCpc, $campaign->getMaxCpc());
         $this->assertNull($campaign->getMaxCpm());
+        $this->assertEquals($medium, $campaign->getMedium());
+        $this->assertNull($campaign->getVendor());
     }
 
     private static function sourceCampaign(): SourceCampaign

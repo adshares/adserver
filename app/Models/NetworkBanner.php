@@ -276,7 +276,7 @@ class NetworkBanner extends Model
         }
 
         if ($networkBannerFilter->isLocal()) {
-            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS, (string)config('app.adshares_address'));
+            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS, config('app.adshares_address'));
         }
 
         return $query;

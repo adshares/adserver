@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,17 +31,10 @@ use Adshares\Demand\Application\Exception\TransferMoneyException;
 
 class TransferMoneyToColdWallet
 {
-    /** @var int */
-    private $minAmount;
-
-    /** @var int */
-    private $maxAmount;
-
-    /** @var string */
-    private $coldWalletAddress;
-
-    /** @var AdsClient */
-    private $adsClient;
+    private int $minAmount;
+    private int $maxAmount;
+    private string $coldWalletAddress;
+    private AdsClient $adsClient;
 
     public function __construct(int $minAmount, int $maxAmount, string $coldWalletAddress, AdsClient $adsClient)
     {
@@ -53,6 +46,9 @@ class TransferMoneyToColdWallet
 
     public function transfer(int $waitingPaymentsAmount): ?TransferMoneyResponse
     {
+        if (!$this->coldWalletAddress) {
+            throw new TransferMoneyException('[Wallet] Cold wallet address is not set.');
+        }
         $waitingPaymentsAmount = (int)abs($waitingPaymentsAmount);
         $limit = $this->calculateLimitValue();
         $operatorBalance = $this->fetchOperatorBalance();

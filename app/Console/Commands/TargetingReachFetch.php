@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -65,7 +65,7 @@ class TargetingReachFetch extends BaseCommand
         }
         $this->info(sprintf('Start command %s', $this->name));
 
-        $adserverAddress = (string)config('app.adshares_address');
+        $adserverAddress = config('app.adshares_address');
         $dateThreshold = new DateTimeImmutable('-23 hours');
         $networkHosts = NetworkHost::fetchHosts();
         $networkVectorsMetas = NetworkVectorsMeta::fetch()->keyBy('network_host_id');

@@ -66,21 +66,20 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
-        $settings = Config::fetchAdminSettings();
         return new self(
             new Info(
                 self::ADSHARES_MODULE_NAME,
-                (string)config('app.name'),
+                config('app.adserver_name'),
                 (string)config('app.version'),
                 new SecureUrl((string)config('app.url')),
-                new Url((string)config('app.adpanel_url')),
-                new SecureUrl((string)config('app.privacy_url')),
-                new SecureUrl((string)config('app.terms_url')),
+                new Url(config('app.adpanel_url')),
+                new SecureUrl(route('privacy-url')),
+                new SecureUrl(route('terms-url')),
                 new SecureUrl(route('demand-inventory')),
-                new AccountId((string)config('app.adshares_address')),
-                new Email($settings[Config::SUPPORT_EMAIL]),
+                new AccountId(config('app.adshares_address')),
+                new Email(config('app.support_email')),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
-                $settings[Config::REGISTRATION_MODE],
+                config('app.registration_mode'),
                 AppMode::getAppMode()
             )
         );

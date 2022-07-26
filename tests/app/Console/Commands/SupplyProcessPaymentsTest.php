@@ -137,7 +137,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
         /** @var LicenseReader $licenseReader */
         $licenseReader = app()->make(LicenseReader::class);
-        $licenseFeeCoefficient = $licenseReader->getFee(Config::LICENCE_RX_FEE);
+        $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
 
         foreach ($paymentDetails as $paymentDetail) {
             $publisherId = $paymentDetail['publisher_id'];
@@ -204,7 +204,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
         /** @var LicenseReader $licenseReader */
         $licenseReader = app()->make(LicenseReader::class);
-        $licenseFeeCoefficient = $licenseReader->getFee(Config::LICENCE_RX_FEE);
+        $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
 
         foreach ($paymentDetails as $paymentDetail) {
             $publisherId = $paymentDetail['publisher_id'];

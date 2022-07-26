@@ -71,22 +71,6 @@ final class PaymentDetailsProcessorTest extends TestCase
         $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
     }
 
-    public function testProcessingMissingConfigurationOfLicenseFee(): void
-    {
-        $licenseReader = self::createMock(LicenseReader::class);
-        $licenseReader->expects(self::once())->method('getFee')->willThrowException(new ConfigException('test'));
-
-        $paymentDetailsProcessor = new PaymentDetailsProcessor(
-            $this->getExchangeRateReader(),
-            $licenseReader
-        );
-
-        $adsPayment = $this->createAdsPayment(10000);
-
-        self::expectException(MissingInitialConfigurationException::class);
-        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
-    }
-
     public function testProcessingDetails(): void
     {
         $totalPayment = 10000;
