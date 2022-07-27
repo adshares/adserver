@@ -266,7 +266,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function maskEmailAndWalletAddress(): void
     {
-        $this->email = sprintf('%s@%s', $this->uuid, DomainReader::domain(config('app.adserver_url')));
+        $this->email = sprintf('%s@%s', $this->uuid, DomainReader::domain(config('app.url')));
         $this->email_confirmed_at = null;
         $this->wallet_address = null;
         $this->save();
