@@ -20,6 +20,7 @@
  */
 
 use Adshares\Adserver\Models\Config;
+use Dotenv\Dotenv;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,7 @@ class MoveEnvToConfig extends Migration
         'ADUSER_INTERNAL_URL' => Config::ADUSER_INTERNAL_URL,
         'ADUSER_SERVE_SUBDOMAIN' => Config::ADUSER_SERVE_SUBDOMAIN,
         'ALLOW_ZONE_IN_IFRAME' => Config::ALLOW_ZONE_IN_IFRAME,
+        'APP_URL' => Config::URL,
         'AUTO_WITHDRAWAL_LIMIT_ADS' => Config::AUTO_WITHDRAWAL_LIMIT_ADS,
         'AUTO_WITHDRAWAL_LIMIT_BSC' => Config::AUTO_WITHDRAWAL_LIMIT_BSC,
         'AUTO_WITHDRAWAL_LIMIT_BTC' => Config::AUTO_WITHDRAWAL_LIMIT_BTC,
@@ -154,6 +156,9 @@ class MoveEnvToConfig extends Migration
 
     private function migrateEnvironmentVariables(): void
     {
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+        $dotenv->load();
+
         $settings = [];
         foreach (self::ENVIRONMENT_VARIABLES_MIGRATION as $envKey => $configKey) {
             if (null !== ($envValue = env($envKey))) {

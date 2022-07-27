@@ -122,6 +122,7 @@ class Config extends Model
     public const UPLOAD_LIMIT_MODEL = 'upload-limit-model';
     public const UPLOAD_LIMIT_VIDEO = 'upload-limit-video';
     public const UPLOAD_LIMIT_ZIP = 'upload-limit-zip';
+    public const URL = 'url';
     /** @deprecated fee should be read from {@see LicenseReader} */
     public const LICENCE_TX_FEE = 'licence-tx-fee';
     /** @deprecated fee should be read from {@see LicenseReader} */
@@ -427,7 +428,7 @@ class Config extends Model
             self::MAIL_SMTP_PASSWORD => '',
             self::MAIL_SMTP_PORT => '587',
             self::MAIL_SMTP_USERNAME => '',
-            self::MAIN_JS_BASE_URL => '',
+            self::MAIN_JS_BASE_URL => $fetched[self::URL] ?? '',
             self::MAIN_JS_TLD => '',
             self::MAX_PAGE_ZONES => '4',
             self::NETWORK_DATA_CACHE_TTL => '60',
@@ -443,7 +444,7 @@ class Config extends Model
             self::REFERRAL_REFUND_COMMISSION => '',
             self::REFERRAL_REFUND_ENABLED => '0',
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
-            self::SERVE_BASE_URL => '',
+            self::SERVE_BASE_URL => $fetched[self::URL] ?? '',
             self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
             self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
             self::SITE_FILTERING_EXCLUDE => '',
@@ -457,6 +458,7 @@ class Config extends Model
             self::UPLOAD_LIMIT_MODEL => (string)(1024 * 1024),
             self::UPLOAD_LIMIT_VIDEO => (string)(1024 * 1024),
             self::UPLOAD_LIMIT_ZIP => (string)(512 * 1024),
+            self::URL => '',
         ];
     }
 }
