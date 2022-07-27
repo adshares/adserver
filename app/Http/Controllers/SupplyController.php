@@ -41,6 +41,7 @@ use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -83,7 +84,8 @@ class SupplyController extends Controller
     public function findJson(
         Request $request,
         AdUser $contextProvider,
-        AdSelect $bannerFinder
+        AdSelect $bannerFinder,
+        ConfigurationRepository $configurationRepository
     ) {
 
         $type = $request->get('type');
@@ -137,13 +139,15 @@ class SupplyController extends Controller
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
 
+        $medium = $configurationRepository->fetchMedium($validated['medium'], $validated['vendor']);
         $zones = [];
 
         $zoneSizes = Size::findBestFit(
-            $validated['width'],
-            $validated['height'],
-            $validated['depth'],
-            $validated['min_dpi']
+            $medium,
+            (float)$validated['width'],
+            (float)$validated['height'],
+            (float)$validated['depth'],
+            (float)$validated['min_dpi']
         );
 
         foreach ($zoneSizes as $zoneSize) {
