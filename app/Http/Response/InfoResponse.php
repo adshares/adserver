@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Response;
 
-use Adshares\Adserver\Models\Config;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Config\AppMode;
@@ -76,7 +76,8 @@ final class InfoResponse implements Arrayable
                 new SecureUrl(route('privacy-url')),
                 new SecureUrl(route('terms-url')),
                 new SecureUrl(route('demand-inventory')),
-                new AccountId(config('app.adshares_address')),
+                null === config('app.adshares_address')
+                    ? new AccountId(config('app.adshares_address')) : new EmptyAccountId(),
                 new Email(config('app.support_email')),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
                 config('app.registration_mode'),
