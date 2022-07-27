@@ -314,14 +314,22 @@ class Config extends Model
         return self::fetchByKeyOrDefault($key) === '1';
     }
 
-    public static function fetchAdminSettings(): array
+    public static function fetchAdminSettings(bool $withSecrets = false): array
     {
-        return Cache::remember('config.admin', 10 * 60, function () {
+        $adminSettings = Cache::remember('config.admin', 10 * 60, function () {
             $fetched = self::all()
                 ->pluck('value', 'key')
                 ->toArray();
             return array_merge(self::getDefaultAdminSettings($fetched), $fetched);
         });
+
+        if (!$withSecrets) {
+            foreach (self::SECRETS as $secretKey) {
+                unset($adminSettings[$secretKey]);
+            }
+        }
+
+        return $adminSettings;
     }
 
     public static function updateAdminSettings(array $settings): void
@@ -421,7 +429,7 @@ class Config extends Model
             self::INVOICE_ENABLED => '0',
             self::INVOICE_NUMBER_FORMAT => '',
             self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
-            self::MAIL_FROM_NAME => "AdServer's Administrator",
+            self::MAIL_FROM_NAME => 'Adshares AdServer',
             self::MAIL_MAILER => 'smtp',
             self::MAIL_SMTP_ENCRYPTION => 'tls',
             self::MAIL_SMTP_HOST => 'localhost',

@@ -141,6 +141,7 @@ class ServerConfigurationController extends Controller
         Config::UPLOAD_LIMIT_MODEL => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
+        Config::URL => 'url',
     ];
     private const MAX_VALUE_LENGTH = 65535;
     private const RULE_NULLABLE = 'nullable';
@@ -232,7 +233,7 @@ class ServerConfigurationController extends Controller
                 sprintf('Field `%s` must be have %d characters', $field, (int)$length)
             );
         }
-        if (1 !== preg_match('/^[\dA-Z]$/', $value)) {
+        if (1 !== preg_match('/^[\dA-Z]{64}$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a hexadecimal string', $field));
         }
     }
