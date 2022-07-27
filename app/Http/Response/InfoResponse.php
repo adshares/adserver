@@ -71,7 +71,7 @@ final class InfoResponse implements Arrayable
                 self::ADSHARES_MODULE_NAME,
                 config('app.adserver_name'),
                 (string)config('app.version'),
-                new SecureUrl((string)config('app.url')),
+                new SecureUrl(config('app.adserver_url')),
                 new Url(config('app.adpanel_url')),
                 new SecureUrl(route('privacy-url')),
                 new SecureUrl(route('terms-url')),
