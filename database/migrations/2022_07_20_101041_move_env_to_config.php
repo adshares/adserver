@@ -20,6 +20,7 @@
  */
 
 use Adshares\Adserver\Models\Config;
+use Dotenv\Dotenv;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -155,6 +156,9 @@ class MoveEnvToConfig extends Migration
 
     private function migrateEnvironmentVariables(): void
     {
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+        $dotenv->load();
+
         $settings = [];
         foreach (self::ENVIRONMENT_VARIABLES_MIGRATION as $envKey => $configKey) {
             if (null !== ($envValue = env($envKey))) {
