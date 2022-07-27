@@ -60,7 +60,7 @@ class MockDataUsersSeeder extends Seeder
 
             if (isset($row->adserverWallet)) {
                 if ($row->adserverWallet->total_funds) {
-                    factory(UserLedgerEntry::class)->create([
+                    UserLedgerEntry::factory()->create([
                         'user_id' => $user->id,
                         'amount' => $row->adserverWallet->total_funds * (10 ** 11),
                     ]);
@@ -72,5 +72,6 @@ class MockDataUsersSeeder extends Seeder
         DB::commit();
 
         $this->command->info('[mock] seeding: users from users.json - DONE');
+        return 0;
     }
 }
