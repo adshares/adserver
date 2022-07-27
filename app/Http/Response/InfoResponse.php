@@ -76,7 +76,7 @@ final class InfoResponse implements Arrayable
                 new SecureUrl(config('app.url') . route('privacy-url', [], false)),
                 new SecureUrl(config('app.url') . route('terms-url', [], false)),
                 new SecureUrl(config('app.url') . route('demand-inventory', [], false)),
-                null === config('app.adshares_address')
+                null !== config('app.adshares_address')
                     ? new AccountId(config('app.adshares_address')) : new EmptyAccountId(),
                 new Email(config('app.support_email')),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],

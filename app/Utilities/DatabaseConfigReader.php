@@ -39,7 +39,7 @@ class DatabaseConfigReader
 
     public static function overwriteAdministrationConfig(): void
     {
-        $settings = Config::fetchAdminSettings();
+        $settings = Config::fetchAdminSettings(true);
         foreach ($settings as $key => $value) {
             SystemConfig::set(self::mapKey($key), $value);
         }
