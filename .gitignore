@@ -7,8 +7,7 @@
 /public/storage
 /public/mix-manifest.json
 
-/storage/*.key
-
+var
 /vendor/
 
 /.vscode

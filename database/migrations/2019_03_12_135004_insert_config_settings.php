@@ -27,40 +27,42 @@ class InsertConfigSettings extends Migration
 {
     public function up(): void
     {
-        DB::table('configs')->insert(
+        $now = new DateTimeImmutable();
+        $timestamps = [
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
+        $configurationEntries = [
             [
                 'key' => Config::HOT_WALLET_MIN_VALUE,
                 'value' => config('app.hotwallet_min_value') ?? '2000000000000000',
-            ]
-        );
-
-        DB::table('configs')->insert(
+            ],
             [
                 'key' => Config::HOT_WALLET_MAX_VALUE,
                 'value' => config('app.hotwallet_max_value') ?? '50000000000000000',
-            ]
-        );
-
-        DB::table('configs')->insert(
+            ],
             [
                 'key' => Config::ADSERVER_NAME,
                 'value' => config('app.adserver_name') ?? 'AdServer',
-            ]
-        );
-
-        DB::table('configs')->insert(
+            ],
             [
                 'key' => Config::TECHNICAL_EMAIL,
                 'value' => config('app.technical_email') ?? 'mail@example.com',
-            ]
-        );
-
-        DB::table('configs')->insert(
+            ],
             [
                 'key' => Config::SUPPORT_EMAIL,
                 'value' => config('app.support_email') ?? 'mail@example.com',
-            ]
-        );
+            ],
+        ];
+
+        foreach ($configurationEntries as $configurationEntry) {
+            DB::table('configs')->insert(
+                array_merge(
+                    $timestamps,
+                    $configurationEntry,
+                )
+            );
+        }
     }
 
     public function down(): void
