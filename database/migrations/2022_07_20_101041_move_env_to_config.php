@@ -211,8 +211,8 @@ class MoveEnvToConfig extends Migration
     {
         $projectDirectory = __DIR__ . '/../../';
         $environment = Env::get('APP_ENV');
-        $filename = $projectDirectory . '.env.' . $environment;
-        if (!is_file($filename)) {
+        $filename = '.env.' . $environment;
+        if (!is_file($projectDirectory . $filename)) {
             $filename = '.env';
         }
 
