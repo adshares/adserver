@@ -23,6 +23,7 @@ use Adshares\Adserver\Models\Config;
 use Dotenv\Dotenv;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -156,8 +157,7 @@ class MoveEnvToConfig extends Migration
 
     private function migrateEnvironmentVariables(): void
     {
-        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
-        $dotenv->load();
+        $this->loadEnvironmentVariables();
 
         $settings = [];
         foreach (self::ENVIRONMENT_VARIABLES_MIGRATION as $envKey => $configKey) {
@@ -205,5 +205,18 @@ class MoveEnvToConfig extends Migration
         $sql = sprintf('DELETE FROM configs WHERE `key` IN (%s);', implode(',', $quotedKeys));
 
         DB::delete($sql);
+    }
+
+    private function loadEnvironmentVariables(): void
+    {
+        $projectDirectory = __DIR__ . '/../../';
+        $environment = Env::get('APP_ENV');
+        $filename = $projectDirectory . '.env.' . $environment;
+        if (!is_file($filename)) {
+            $filename = '.env';
+        }
+
+        $dotenv = Dotenv::createImmutable($projectDirectory, $filename);
+        $dotenv->load();
     }
 }
