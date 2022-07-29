@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Laravel 9
 
+## [1.18.7] - 2022-07-27
+### Fixed
+- Support new sizes in metaverse
+
 ## [1.18.6] - 2022-07-20
 ### Changed
 - Add medium and vendor to stats
@@ -660,7 +664,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.6...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.7...develop
+[1.18.7]: https://github.com/adshares/adserver/compare/v1.18.6...v1.18.7
 [1.18.6]: https://github.com/adshares/adserver/compare/v1.18.5...v1.18.6
 [1.18.5]: https://github.com/adshares/adserver/compare/v1.18.4...v1.18.5
 [1.18.4]: https://github.com/adshares/adserver/compare/v1.18.3...v1.18.4
