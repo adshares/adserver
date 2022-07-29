@@ -91,11 +91,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::post('campaigns/{campaign_id}/clone', [CampaignsController::class, 'clone'])
             ->name('app.campaigns.clone');
 
-        Route::post('campaigns/{campaign_id}/classify', [CampaignsController::class, 'classify'])
-            ->name('app.campaigns.classify');
-        Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])
-            ->name('app.campaigns.disable_classify');
-
         Route::post('sites/domain/validate', [SitesController::class, 'verifyDomain']);
         Route::post('sites', [SitesController::class, 'create'])
             ->name('app.sites.add');

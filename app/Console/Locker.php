@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,8 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console;
 
 use Symfony\Component\Console\Exception\LogicException;
-use Symfony\Component\Lock\Factory;
 use Symfony\Component\Lock\Lock;
+use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Lock\Store\SemaphoreStore;
 
@@ -36,8 +36,7 @@ use Symfony\Component\Lock\Store\SemaphoreStore;
  */
 class Locker
 {
-    /** @var Lock */
-    private $lock;
+    private ?Lock $lock = null;
 
     public function lock($name = null, $blocking = false): bool
     {
@@ -55,7 +54,7 @@ class Locker
             $store = new FlockStore();
         }
 
-        $this->lock = (new Factory($store))->createLock($name ?: 'Locker');
+        $this->lock = (new LockFactory($store))->createLock($name ?: 'Locker');
         if (!$this->lock->acquire($blocking)) {
             $this->lock = null;
 

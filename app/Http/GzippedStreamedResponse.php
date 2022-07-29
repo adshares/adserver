@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,21 +24,11 @@ namespace Adshares\Adserver\Http;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * StreamedResponse represents a streamed HTTP response.
- *
- * A StreamedResponse uses a callback for its content.
- *
- * The callback should use the standard PHP functions like echo
- * to stream the response back to the client. The flush() method
- * can also be used if needed.
- *
- * @see flush()
- *
- * @author Fabien Potencier <fabien@symfony.com>
+ * @parent
  */
 class GzippedStreamedResponse extends StreamedResponse
 {
-    public function sendContent()
+    public function sendContent(): static
     {
         ob_start(
             function ($output) {
@@ -56,5 +46,7 @@ class GzippedStreamedResponse extends StreamedResponse
         if (function_exists('ob_gzhandler')) {
             ob_end_flush();
         }
+
+        return $this;
     }
 }

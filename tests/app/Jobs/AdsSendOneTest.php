@@ -29,8 +29,6 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 
-use function factory;
-
 class AdsSendOneTest extends TestCase
 {
     public function testNegativeBalance(): void

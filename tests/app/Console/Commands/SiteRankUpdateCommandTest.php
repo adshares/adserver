@@ -36,8 +36,6 @@ use Exception;
 use Illuminate\Mail\PendingMail;
 use Illuminate\Support\Facades\Mail;
 
-use function factory;
-
 class SiteRankUpdateCommandTest extends ConsoleTestCase
 {
     private const SIGNATURE = 'ops:supply:site-rank:update';
