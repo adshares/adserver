@@ -21,6 +21,7 @@
 
 namespace Adshares\Tests\Supply\Domain\ValueObject;
 
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Supply\Domain\ValueObject\Size;
 use PHPUnit\Framework\TestCase;
 
@@ -46,9 +47,39 @@ final class SizeTest extends TestCase
 
     public function testFindBestFit(): void
     {
-        $this->assertContains('300x250', Size::findBestFit(300, 250, 0, 1));
-        $this->assertContains('336x280', Size::findBestFit(330, 270, 0, 1));
-        $this->assertContains('cube', Size::findBestFit(330, 270, 10, 1));
+        $medium = Medium::fromArray([
+            'name' => 'web',
+            'label' => 'Website',
+            'formats' => [
+                [
+                    'type' => 'image',
+                    'mimes' => ['image/png'],
+                    'scopes' => [
+                        '300x250' => 'Medium Rectangle',
+                        '728x90' => 'Leaderboard',
+                        '300x600' => 'Half Page',
+                        '320x100' => 'Large Mobile Banner',
+                    ],
+                ],
+                [
+                    'type' => 'video',
+                    'mimes' => ['video/mp4'],
+                    'scopes' => [
+                        '300x250' => 'Medium Rectangle',
+                        '336x280' => 'Large Rectangle',
+                    ],
+                ]
+            ],
+            'targeting' => [
+                'user' => [],
+                'site' => [],
+                'device' => [],
+            ],
+        ]);
+
+        $this->assertContains('300x250', Size::findBestFit($medium, 300, 250, 0, 1));
+        $this->assertContains('336x280', Size::findBestFit($medium, 330, 270, 0, 1));
+        $this->assertContains('cube', Size::findBestFit($medium, 330, 270, 10, 1));
     }
 
     public function testFindMatching(): void
