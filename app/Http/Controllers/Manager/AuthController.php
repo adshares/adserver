@@ -34,6 +34,8 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -571,7 +573,10 @@ MSG;
     {
         if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
             try {
-                $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+                $exchangeRate = match (config('app.currency')) {
+                    Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
+                    Currency::USD => ExchangeRate::ONE(),
+                };
                 $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
             } catch (ExchangeRateNotAvailableException $exception) {
                 Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));

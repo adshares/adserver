@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,14 +29,9 @@ use Illuminate\Contracts\Support\Arrayable;
 
 class ExchangeRate implements Arrayable
 {
-    /** @var DateTime */
-    private $dateTime;
-
-    /** @var float */
-    private $value;
-
-    /** @var string */
-    private $currency;
+    private DateTime $dateTime;
+    private float $value;
+    private string $currency;
 
     public function __construct(DateTime $dateTime, float $value, string $currency)
     {
@@ -82,5 +77,10 @@ class ExchangeRate implements Arrayable
             'value' => $this->value,
             'currency' => $this->currency,
         ];
+    }
+
+    public static function ONE(): self
+    {
+        return new self(new DateTime(), 1.0, '---');
     }
 }

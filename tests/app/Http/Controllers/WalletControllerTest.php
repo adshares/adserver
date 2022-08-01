@@ -33,7 +33,11 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Model\Currency;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Symfony\Component\HttpFoundation\Response;
@@ -280,6 +284,33 @@ class WalletControllerTest extends TestCase
         $response2->assertStatus(Response::HTTP_OK);
         self::assertSame(UserLedgerEntry::STATUS_PENDING, UserLedgerEntry::find($userLedgerEntry->id)->status);
         Queue::assertPushed(AdsSendOne::class, 1);
+    }
+
+    public function testConfirmWithdrawalInvalidToken(): void
+    {
+        $this->login();
+
+        $response = $this->postJson('/api/wallet/confirm-withdrawal', ['token' => '0123']);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testConfirmConfirmedWithdrawal(): void
+    {
+        $user = $this->login();
+        /** @var UserLedgerEntry $ledgerEntry */
+        $ledgerEntry = UserLedgerEntry::factory()->create(
+            [
+                'user_id' => $user->id,
+                'amount' => -1000,
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+            ]);
+        $token = Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, ['ledgerEntry' => $ledgerEntry->id,]);
+
+        $response = $this->postJson('/api/wallet/confirm-withdrawal', ['token' => $token->uuid]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testWithdrawAdsWallet(): void
@@ -836,10 +867,12 @@ class WalletControllerTest extends TestCase
 
     public function testConnectChangeAddress(): void
     {
-        $user = $this->login(User::factory()->create([
-            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
-            'email' => null,
-        ]));
+        $user = $this->login(
+            User::factory()->create([
+                'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+                'email' => null,
+            ])
+        );
         $message = '123abc';
         $token = Token::generate(Token::WALLET_CONNECT, $user, [
             'request' => [],
@@ -1078,14 +1111,62 @@ class WalletControllerTest extends TestCase
         $response->assertJson(['btc' => null]);
     }
 
-    public function testWithdrawalInfoWhenWithdrawalAvailable(): void
+    public function testWithdrawalInfoWhenAdsWithdrawalAvailable(): void
     {
-        Config::updateAdminSettings([Config::BTC_WITHDRAW => '1']);
+        $expectedRate = 0.3333;
+        Config::updateAdminSettings([Config::BTC_WITHDRAW => '1', Config::BTC_WITHDRAW_FEE => '0']);
         $this->login();
+
         $response = $this->get(self::INFO_URI);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['btc' => ['minAmount', 'maxAmount', 'exchangeRate']]);
+        $response->assertJsonFragment(['exchangeRate' => $expectedRate]);
+    }
+
+    public function testWithdrawalInfoWhenUsdWithdrawalAvailable(): void
+    {
+        SystemConfig::set('app.currency', Currency::USD);
+        $expectedRate = 1.0;
+        Config::updateAdminSettings([Config::BTC_WITHDRAW => '1', Config::BTC_WITHDRAW_FEE => '0']);
+        $this->login();
+
+        $response = $this->get(self::INFO_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['btc' => ['minAmount', 'maxAmount', 'exchangeRate']]);
+        $response->assertJsonFragment(['exchangeRate' => $expectedRate]);
+    }
+
+    public function testWithdrawalInfoWhenExchangeRateNotAvailable(): void
+    {
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            function () {
+                $mock = self::createMock(ExchangeRateRepository::class);
+                $mock->method('fetchExchangeRate')->willThrowException(new ExchangeRateNotAvailableException());
+                return $mock;
+            }
+        );
+        $expectedRate = 0;
+        Config::updateAdminSettings([Config::BTC_WITHDRAW => '1', Config::BTC_WITHDRAW_FEE => '0']);
+        $this->login();
+
+        $response = $this->get(self::INFO_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['btc' => ['minAmount', 'maxAmount', 'exchangeRate']]);
+        $response->assertJsonFragment(['exchangeRate' => $expectedRate]);
+    }
+
+    public function testGetAdServerAdsAddressWhileNotSet()
+    {
+        $this->login();
+        Config::updateAdminSettings([Config::ADSHARES_ADDRESS => '']);
+
+        $response = $this->get('/api/deposit-info');
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     private function generateUserIncome(int $userId, int $amount): void

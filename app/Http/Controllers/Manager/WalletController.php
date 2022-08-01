@@ -37,6 +37,8 @@ use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -67,54 +69,45 @@ use function config;
 class WalletController extends Controller
 {
     private const FIELD_ADDRESS = 'address';
-
     private const FIELD_AMOUNT = 'amount';
-
-    private const FIELD_DATE_FROM = 'date_from';
-
-    private const FIELD_DATE_TO = 'date_to';
-
-    private const FIELD_ERROR = 'error';
-
-    private const FIELD_FEE = 'fee';
-
-    private const FIELD_RECEIVE = 'receive';
-
-    private const FIELD_LIMIT = 'limit';
-
-    private const FIELD_MEMO = 'memo';
-
-    private const FIELD_MESSAGE = 'message';
-
-    private const FIELD_OFFSET = 'offset';
-
-    private const FIELD_TO = 'to';
-
-    private const FIELD_TOTAL = 'total';
-
-    private const FIELD_TYPES = 'types';
-
     private const FIELD_BTC = 'btc';
-
-    private const FIELD_NOW_PAYMENTS = 'now_payments';
-
-    private const FIELD_UNWRAPPERS = 'unwrappers';
-
-    private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
-
+    private const FIELD_DATE_FROM = 'date_from';
+    private const FIELD_DATE_TO = 'date_to';
+    private const FIELD_ERROR = 'error';
+    private const FIELD_FEE = 'fee';
     private const FIELD_FIAT = 'fiat';
-
+    private const FIELD_LIMIT = 'limit';
+    private const FIELD_MEMO = 'memo';
+    private const FIELD_MESSAGE = 'message';
+    private const FIELD_NOW_PAYMENTS = 'now_payments';
+    private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
+    private const FIELD_OFFSET = 'offset';
+    private const FIELD_RECEIVE = 'receive';
+    private const FIELD_TO = 'to';
+    private const FIELD_TOTAL = 'total';
+    private const FIELD_TYPES = 'types';
+    private const FIELD_UNWRAPPERS = 'unwrappers';
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
-    public function withdrawalInfo(ExchangeRateReader $exchangeRateReader): JsonResponse
+    public function __construct(private readonly ExchangeRateReader $exchangeRateReader)
+    {
+    }
+
+    public function withdrawalInfo(): JsonResponse
     {
         $btcInfo = null;
         if (config('app.btc_withdraw')) {
             $fee = config('app.btc_withdraw_fee');
             $rate = 0;
             try {
-                $exchangeRate = $exchangeRateReader->fetchExchangeRate(null, 'BTC')->toArray();
-                $rate = (float)$exchangeRate['value'];
+                /** @var Currency $appCurrency */
+                $appCurrency = config('app.currency');
+                $rateToAds = match ($appCurrency) {
+                    Currency::ADS => ExchangeRate::ONE()->getValue(),
+                    default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)->getValue(),
+                };
+
+                $rate = $this->exchangeRateReader->fetchExchangeRate(null, 'BTC')->getValue() / $rateToAds;
             } catch (ExchangeRateNotAvailableException $exception) {
                 Log::error(sprintf('[NowPayments] Cannot fetch exchange rate: %s', $exception->getMessage()));
             }
@@ -269,10 +262,17 @@ class WalletController extends Controller
                 $userLedgerEntry->save();
             }
         } else {
+            /** @var Currency $appCurrency */
+            $appCurrency = config('app.currency');
+            $exchangeRate = match ($appCurrency) {
+                Currency::ADS => ExchangeRate::ONE(),
+                default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+            };
+
             AdsSendOne::dispatch(
                 $userLedgerEntry,
                 $token['payload']['request']['to'],
-                $token['payload']['request']['amount'],
+                $exchangeRate->toClick($token['payload']['request']['amount']),
                 $token['payload']['request']['memo'] ?? ''
             );
             $fee = AdsUtils::calculateFee(
@@ -283,7 +283,7 @@ class WalletController extends Controller
             Mail::to($userLedgerEntry->user)->queue(
                 new WithdrawalSuccess(
                     $token['payload']['request']['amount'],
-                    $currency,
+                    $appCurrency->value,
                     $fee,
                     new WalletAddress(WalletAddress::NETWORK_ADS, $token['payload']['request']['to'])
                 )
@@ -369,6 +369,13 @@ class WalletController extends Controller
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed($addressFrom, $addressTo);
 
+        /** @var Currency $appCurrency */
+        $appCurrency = config('app.currency');
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => ExchangeRate::ONE(),
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+        };
+
         DB::beginTransaction();
 
         if (!$ledgerEntry->save()) {
@@ -385,7 +392,7 @@ class WalletController extends Controller
                 new WithdrawalApproval(
                     Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
                     $amount,
-                    'ADS',
+                    $appCurrency->value,
                     $adsFee,
                     new WalletAddress(WalletAddress::NETWORK_ADS, (string)$addressTo)
                 )
@@ -394,7 +401,7 @@ class WalletController extends Controller
             AdsSendOne::dispatch(
                 $ledgerEntry,
                 $addressTo,
-                $amount,
+                $exchangeRate->toClick($amount),
                 $this->getWalletAdsMessage($rpcClient, $address)
             );
         }
@@ -535,6 +542,7 @@ class WalletController extends Controller
 
     public function nowPaymentsInit(NowPayments $nowPayments, Request $request): JsonResponse
     {
+        /** @var User $user */
         $user = Auth::user();
         $amount = (float)$request->get('amount', 10);
 

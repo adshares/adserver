@@ -32,6 +32,8 @@ use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
@@ -40,15 +42,10 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentDetailsProcessor
 {
-    private ExchangeRateReader $exchangeRateReader;
-    private LicenseReader $licenseReader;
-
     public function __construct(
-        ExchangeRateReader $exchangeRateReader,
-        LicenseReader $licenseReader
+        private readonly ExchangeRateReader $exchangeRateReader,
+        private readonly LicenseReader $licenseReader,
     ) {
-        $this->exchangeRateReader = $exchangeRateReader;
-        $this->licenseReader = $licenseReader;
     }
 
     private static function fetchOperatorFee(): float
@@ -112,7 +109,14 @@ class PaymentDetailsProcessor
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
     {
         $adServerAddress = config('app.adshares_address');
+        /** @var Currency $appCurrency */
+        $appCurrency = config('app.currency');
         $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
+
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => ExchangeRate::ONE(),
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+        };
 
         foreach ($splitPayments as $splitPayment) {
             if (null === ($user = User::fetchByUuid($splitPayment->publisher_id))) {
@@ -131,7 +135,7 @@ class PaymentDetailsProcessor
             $amount = (int)$splitPayment->paid_amount;
             UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
-                $amount,
+                $exchangeRate->fromClick($amount),
                 UserLedgerEntry::STATUS_ACCEPTED,
                 UserLedgerEntry::TYPE_AD_INCOME,
                 $adsPayment->address,

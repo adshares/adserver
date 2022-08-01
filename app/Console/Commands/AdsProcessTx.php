@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Entity\Transaction\SendManyTransaction;
-use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
@@ -36,6 +35,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Common\AdsLogReader;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -51,21 +51,13 @@ class AdsProcessTx extends BaseCommand
     protected $signature = 'ads:process-tx';
     protected $description = 'Fetches and processes incoming transactions';
 
-    private string $adServerAddress;
-    private AdsLogReader $adsLogReader;
-    private ExchangeRateReader $exchangeRateReader;
-    private AdsClient $adsClient;
-
     public function __construct(
         Locker $locker,
-        AdsLogReader $adsLogReader,
-        ExchangeRateReader $exchangeRateReader,
-        AdsClient $adsClient
+        private readonly AdsLogReader $adsLogReader,
+        private readonly ExchangeRateReader $exchangeRateReader,
+        private readonly AdsClient $adsClient
     ) {
         parent::__construct($locker);
-        $this->adsLogReader = $adsLogReader;
-        $this->exchangeRateReader = $exchangeRateReader;
-        $this->adsClient = $adsClient;
     }
 
     public function handle(): int
@@ -78,21 +70,23 @@ class AdsProcessTx extends BaseCommand
 
         $this->info('Start command ' . $this->getName());
 
-        $this->adServerAddress = config('app.adshares_address');
         try {
             $transactionCount = $this->adsLogReader->parseLog();
-            $this->info("Number of added transactions: ${transactionCount}");
+            $this->info(sprintf('Number of added transactions: %d', $transactionCount));
         } catch (CommandException $commandException) {
             $this->error('Cannot get log');
         }
 
         try {
             $this->updateBlockIds($this->adsClient);
-        } catch (CommandException $exc) {
-            $code = $exc->getCode();
-            $message = $exc->getMessage();
-            $this->error("Cannot update blocks due to CommandException (${code})(${message})");
-
+        } catch (CommandException $exception) {
+            $this->error(
+                sprintf(
+                    'Cannot update blocks due to CommandException (%s)(%s)',
+                    $exception->getCode(),
+                    $exception->getMessage()
+                )
+            );
             $this->info('Premature finish processing incoming txs.');
 
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
@@ -103,14 +97,18 @@ class AdsProcessTx extends BaseCommand
         foreach ($adsPayments as $adsPayment) {
             try {
                 DB::beginTransaction();
-
                 $this->handleDbTx($adsPayment);
-
                 DB::commit();
-            } catch (Exception $e) {
+            } catch (Exception $exception) {
+                Log::error(
+                    sprintf(
+                        'Exception during processing incoming payment (id=%d): (%s)',
+                        $adsPayment->id,
+                        $exception->getMessage()
+                    )
+                );
                 DB::rollBack();
-
-                throw $e;
+                throw $exception;
             }
         }
 
@@ -127,7 +125,7 @@ class AdsProcessTx extends BaseCommand
             try {
                 $response = $adsClient->getBlockIds();
                 $updatedBlocks = $response->getUpdatedBlocks();
-                $this->info("Updated blocks: ${updatedBlocks}");
+                $this->info(sprintf('Updated blocks: %d', $updatedBlocks));
                 if ($updatedBlocks === 0) {
                     break;
                 }
@@ -148,10 +146,13 @@ class AdsProcessTx extends BaseCommand
             $transactionId = $adsPayment->txid;
             $transaction = $this->adsClient->getTransaction($transactionId)->getTxn();
         } catch (CommandException $commandException) {
-            $code = $commandException->getCode();
-            $message = $commandException->getMessage();
             $this->info(
-                "Cannot get transaction [$transactionId] data due to CommandException (${code})(${message})"
+                sprintf(
+                    'Cannot get transaction [%s] data due to CommandException (%s)(%s)',
+                    $transactionId,
+                    $commandException->getCode(),
+                    $commandException->getMessage()
+                )
             );
 
             return;
@@ -191,9 +192,9 @@ class AdsProcessTx extends BaseCommand
     private function isSendManyTransactionTargetValid(SendManyTransaction $transaction): bool
     {
         if ($transaction->getWireCount() > 0) {
+            $adServerAddress = config('app.adshares_address');
             foreach ($transaction->getWires() as $wire) {
-                /** @var $wire SendManyTransactionWire */
-                if ($wire->getTargetAddress() === $this->adServerAddress) {
+                if ($wire->getTargetAddress() === $adServerAddress) {
                     return true;
                 }
             }
@@ -219,9 +220,9 @@ class AdsProcessTx extends BaseCommand
     {
         $adsPayment->tx_time = $transaction->getTime();
 
-        $targetAddr = $transaction->getTargetAddress();
+        $targetAddress = $transaction->getTargetAddress();
 
-        if ($targetAddr === $this->adServerAddress) {
+        if ($targetAddress === config('app.adshares_address')) {
             $message = $transaction->getMessage();
             $uuid = $this->extractUuidFromMessage($message);
             $user = User::fetchByUuid($uuid);
@@ -232,14 +233,20 @@ class AdsProcessTx extends BaseCommand
                 DB::beginTransaction();
 
                 $senderAddress = $transaction->getSenderAddress();
+                /** @var Currency $appCurrency */
+                $appCurrency = config('app.currency');
                 $amount = $transaction->getAmount();
+                if (Currency::ADS !== $appCurrency) {
+                    $amount = $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)
+                        ->fromClick($amount);
+                }
 
                 $ledgerEntry = UserLedgerEntry::construct(
                     $user->id,
                     $amount,
                     UserLedgerEntry::STATUS_ACCEPTED,
                     UserLedgerEntry::TYPE_DEPOSIT
-                )->addressed($senderAddress, $targetAddr)
+                )->addressed($senderAddress, $targetAddress)
                     ->processed($adsPayment->txid);
 
                 $adsPayment->status = AdsPayment::STATUS_USER_DEPOSIT;
@@ -248,19 +255,15 @@ class AdsProcessTx extends BaseCommand
                 $adsPayment->save();
 
                 if (null !== $user->email) {
-                    Mail::to($user)->queue(new DepositProcessed($amount));
+                    Mail::to($user)->queue(new DepositProcessed($amount, $appCurrency));
                 }
 
-                try {
-                    $reactivatedCount = $this->reactivateSuspendedCampaigns($user);
-                    if ($reactivatedCount > 0) {
-                        Log::debug("We restarted all suspended campaigns owned by user [{$user->id}].");
-                        if (null !== $user->email) {
-                            Mail::to($user)->queue(new CampaignResume());
-                        }
+                $reactivatedCount = $this->reactivateSuspendedCampaigns($user);
+                if ($reactivatedCount > 0) {
+                    Log::debug(sprintf('We restarted all suspended campaigns owned by user [%s].', $user->id));
+                    if (null !== $user->email) {
+                        Mail::to($user)->queue(new CampaignResume());
                     }
-                } catch (InvalidArgumentException $exception) {
-                    Log::debug("Notify user [{$user->id}] that we cannot restart campaigns.");
                 }
 
                 DB::commit();

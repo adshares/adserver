@@ -26,9 +26,7 @@ use Adshares\Adserver\Mail\WithdrawalSuccess;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
-use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 
@@ -39,11 +37,7 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
     public function testAutoWithdrawal(): void
     {
         Queue::fake();
-        Mail::fake();
-        $dummyExchangeRateRepository = new DummyExchangeRateRepository();
-        $this->app->bind(ExchangeRateRepository::class, static function () use ($dummyExchangeRateRepository) {
-            return $dummyExchangeRateRepository;
-        });
+
         /** @var User $user1 */
         $user1 = User::factory()->create([
             'auto_withdrawal' => null,

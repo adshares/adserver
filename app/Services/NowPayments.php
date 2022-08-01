@@ -28,6 +28,7 @@ use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -53,13 +54,11 @@ final class NowPayments
     private int $maxAmount;
     private float $fee;
     private bool $useExchange;
-    private ExchangeRateReader $exchangeRateReader;
-    private AdsExchange $adsExchange;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader, AdsExchange $adsExchange)
-    {
-        $this->exchangeRateReader = $exchangeRateReader;
-        $this->adsExchange = $adsExchange;
+    public function __construct(
+        private readonly ExchangeRateReader $exchangeRateReader,
+        private readonly AdsExchange $adsExchange,
+    ) {
         $this->apiKey = config('app.now_payments_api_key');
         $this->encryptedIpnSecret = config('app.now_payments_ipn_secret');
         $this->currency = config('app.now_payments_currency');
@@ -184,7 +183,7 @@ final class NowPayments
     {
         $orderId = $params['orderId'] ?? '';
         $paymentId = $params['paymentId'] ?? '';
-        $amount = (float)($params['tragetAmount'] ?? 0);
+        $amount = (float)($params['targetAmount'] ?? 0);
 
         return $this->deposit($user, $amount, $orderId, $paymentId);
     }
@@ -192,14 +191,14 @@ final class NowPayments
     private function getExchangeRate(): float
     {
         try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(null, $this->currency)->toArray();
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(null, $this->currency);
         } catch (ExchangeRateNotAvailableException $exception) {
             Log::error(sprintf('[NowPayments] Cannot fetch exchange rate: %s', $exception->getMessage()));
 
             return 0;
         }
 
-        return (float)$exchangeRate['value'];
+        return $exchangeRate->getValue();
     }
 
     private function saveDeposit(
@@ -222,6 +221,10 @@ final class NowPayments
         }
 
         $clicks = AdsConverter::adsToClicks($amount);
+        /** @var Currency $appCurrency */
+        if (Currency::ADS !== ($appCurrency = config('app.currency'))) {
+            $clicks = $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)->fromClick($clicks);
+        }
         $status = $processed ? UserLedgerEntry::STATUS_ACCEPTED : UserLedgerEntry::STATUS_PROCESSING;
         if ($entry === null) {
             $entry = UserLedgerEntry::construct(

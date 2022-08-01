@@ -43,6 +43,7 @@ use const PHP_INT_MAX;
 /**
  * @mixin Builder
  * @property int|null id
+ * @property int user_id
  * @property int status
  * @property int type
  * @property int amount
@@ -52,6 +53,7 @@ use const PHP_INT_MAX;
  * @property int currency_amount
  * @property User user
  * @property ?RefLink refLink
+ * @property int ref_link_id
  */
 class UserLedgerEntry extends Model
 {
