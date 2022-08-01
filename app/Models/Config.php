@@ -365,7 +365,7 @@ class Config extends Model
             self::ADS_RPC_URL => 'https://rpc.adshares.net',
             self::ADSELECT_URL => 'http://localhost:8011',
             self::ADSERVER_NAME => '',
-            self::ADSHARES_ADDRESS => '',
+            self::ADSHARES_ADDRESS => null,
             self::ADSHARES_LICENSE_KEY => '',
             self::ADSHARES_LICENSE_SERVER_URL => 'https://account.adshares.pl/',
             self::ADSHARES_NODE_HOST => '',
