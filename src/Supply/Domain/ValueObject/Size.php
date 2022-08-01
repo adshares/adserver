@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+
 final class Size
 {
     public const TYPE_DISPLAY = 'display';
@@ -206,17 +208,27 @@ final class Size
 
     private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
 
-    public static function findBestFit($width, $height, $depth, $min_dpi, $count = 5): array
-    {
+    public static function findBestFit(
+        Medium $medium,
+        float $width,
+        float $height,
+        float $depth,
+        float $min_dpi,
+        int $count = 5
+    ): array {
         if ($depth > 0) {
             return [self::CUBE];
         }
-        $sizes = array_map(
-            function ($info, $size) use ($width, $height, $min_dpi) {
-                if ($info['type'] !== self::TYPE_DISPLAY) {
-                    return false;
-                }
 
+        $scopes = [];
+        foreach ($medium->getFormats() as $format) {
+            if (in_array($format->getType(), ['image', 'video'])) {
+                $scopes = array_merge($scopes, $format->getScopes());
+            }
+        }
+
+        $sizes = array_map(
+            function ($size) use ($width, $height, $min_dpi) {
                 [$x, $y] = explode("x", $size);
 
                 $dpi = min($x / $width, $y / $height);
@@ -227,13 +239,12 @@ final class Size
                 $score = 1 - min($x / $width, $y / $height) / max($x / $width, $y / $height);
 
                 return [
-                    'size'  => $size,
+                    'size' => $size,
                     'score' => $score,
-                    'dpi'   => $dpi,
+                    'dpi' => $dpi,
                 ];
             },
-            self::SIZE_INFOS,
-            array_keys(self::SIZE_INFOS)
+            array_keys($scopes)
         );
 
         $sizes = array_filter($sizes);
