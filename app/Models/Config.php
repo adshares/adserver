@@ -30,6 +30,7 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -361,9 +362,14 @@ class Config extends Model
     public static function fetchAdminSettings(bool $withSecrets = false): array
     {
         $adminSettings = Cache::remember('config.admin', 10 * 60, function () {
-            $fetched = self::all()
-                ->pluck('value', 'key')
-                ->toArray();
+            try {
+                $fetched = self::all()
+                    ->pluck('value', 'key')
+                    ->toArray();
+            } catch (QueryException $exception) {
+                Log::error(sprintf('Fetching admin settings from DB failed. %s', $exception->getMessage()));
+                $fetched = [];
+            }
             $merged = array_merge(self::getDefaultAdminSettings($fetched), $fetched);
             foreach ($merged as $key => $value) {
                 $merged[$key] = self::mapValueType($key, $value);
