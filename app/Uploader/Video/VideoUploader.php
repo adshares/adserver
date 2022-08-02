@@ -53,7 +53,7 @@ class VideoUploader implements Uploader
     {
         $file = $this->request->file('file');
         $size = $file->getSize();
-        if (!$size || $size > (int)config('app.upload_limit_video')) {
+        if (!$size || $size > config('app.upload_limit_video')) {
             throw new RuntimeException('Invalid video size');
         }
         $fileInfo = (new getID3())->analyze($file->getRealPath());

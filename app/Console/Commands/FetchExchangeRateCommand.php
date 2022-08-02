@@ -57,7 +57,7 @@ class FetchExchangeRateCommand extends BaseCommand
         }
 
         $this->info('Start command ' . $this->signature);
-        $currencies = array_filter(explode(',', config('app.exchange_currencies')));
+        $currencies = config('app.exchange_currencies');
         if (empty($currencies)) {
             $this->warn('Exchange currencies list is empty');
 

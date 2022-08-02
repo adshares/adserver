@@ -63,9 +63,9 @@ final class NowPayments
         $this->apiKey = config('app.now_payments_api_key');
         $this->encryptedIpnSecret = config('app.now_payments_ipn_secret');
         $this->currency = config('app.now_payments_currency');
-        $this->minAmount = (int)config('app.now_payments_min_amount');
-        $this->maxAmount = (int)config('app.now_payments_max_amount');
-        $this->fee = (float)config('app.now_payments_fee');
+        $this->minAmount = config('app.now_payments_min_amount');
+        $this->maxAmount = config('app.now_payments_max_amount');
+        $this->fee = config('app.now_payments_fee');
         $this->useExchange = (bool)config('app.now_payments_exchange');
     }
 

@@ -103,7 +103,7 @@ class SettingsController extends Controller
 
         if (null !== $autoWithdrawal) {
             $autoWithdrawal = (int)$autoWithdrawal;
-            $min = (int)config('app.auto_withdrawal_limit_' . strtolower($user->wallet_address->getNetwork()));
+            $min = config('app.auto_withdrawal_limit_' . strtolower($user->wallet_address->getNetwork()));
             if ($autoWithdrawal < $min) {
                 return self::json(
                     [

@@ -55,10 +55,10 @@ class OptionsController extends Controller
     {
         return self::json(
             [
-                'upload_limit_image' => (int)config('app.upload_limit_image'),
-                'upload_limit_model' => (int)config('app.upload_limit_model'),
-                'upload_limit_video' => (int)config('app.upload_limit_video'),
-                'upload_limit_zip' => (int)config('app.upload_limit_zip'),
+                'upload_limit_image' => config('app.upload_limit_image'),
+                'upload_limit_model' => config('app.upload_limit_model'),
+                'upload_limit_video' => config('app.upload_limit_video'),
+                'upload_limit_zip' => config('app.upload_limit_zip'),
             ]
         );
     }
@@ -67,9 +67,9 @@ class OptionsController extends Controller
     {
         return self::json(
             [
-                'min_budget' => (int)config('app.campaign_min_budget'),
-                'min_cpm' => (int)config('app.campaign_min_cpm'),
-                'min_cpa' => (int)config('app.campaign_min_cpa'),
+                'min_budget' => config('app.campaign_min_budget'),
+                'min_cpm' => config('app.campaign_min_cpm'),
+                'min_cpa' => config('app.campaign_min_cpa'),
             ]
         );
     }

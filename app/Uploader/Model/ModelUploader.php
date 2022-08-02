@@ -49,7 +49,7 @@ class ModelUploader implements Uploader
     {
         $file = $this->request->file('file');
         $size = $file->getSize();
-        if (!$size || $size > (int)config('app.upload_limit_model')) {
+        if (!$size || $size > config('app.upload_limit_model')) {
             throw new RuntimeException('Invalid model size');
         }
         $name = $file->storeAs('', Str::random(40) . '.' . $file->getClientOriginalExtension(), self::DISK);

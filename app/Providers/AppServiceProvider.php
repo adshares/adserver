@@ -63,7 +63,7 @@ class AppServiceProvider extends ServiceProvider
                     config('app.adshares_address'),
                     $secret,
                     config('app.adshares_node_host'),
-                    (int)config('app.adshares_node_port')
+                    config('app.adshares_node_port')
                 );
                 $driver->setCommand(config('app.adshares_command'));
                 $driver->setWorkingDir(config('app.adshares_workingdir'));
@@ -97,8 +97,8 @@ class AppServiceProvider extends ServiceProvider
             TransferMoneyToColdWallet::class,
             function (Application $app) {
                 $coldWalletAddress = config('app.cold_wallet_address') ?? '';
-                $minAmount = (int)config('app.hotwallet_min_value');
-                $maxAmount = (int)config('app.hotwallet_max_value');
+                $minAmount = config('app.hotwallet_min_value');
+                $maxAmount = config('app.hotwallet_max_value');
                 $adsClient = $app->make(AdsClient::class);
 
                 return new TransferMoneyToColdWallet($minAmount, $maxAmount, $coldWalletAddress, $adsClient);
@@ -108,8 +108,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             WalletFundsChecker::class,
             function (Application $app) {
-                $minAmount = (int)config('app.hotwallet_min_value');
-                $maxAmount = (int)config('app.hotwallet_max_value');
+                $minAmount = config('app.hotwallet_min_value');
+                $maxAmount = config('app.hotwallet_max_value');
                 $adsClient = $app->make(AdsClient::class);
 
                 return new WalletFundsChecker($minAmount, $maxAmount, $adsClient);

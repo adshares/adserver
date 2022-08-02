@@ -55,7 +55,7 @@ class InventoryImporterCommand extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
-        $whitelist = array_filter(explode(',', config('app.inventory_import_whitelist')));
+        $whitelist = config('app.inventory_import_whitelist');
         $this->removeNonExistentHosts($whitelist);
 
         $networkHosts = NetworkHost::fetchHosts($whitelist);

@@ -21,7 +21,7 @@
 
 return [
     'name' => env('APP_NAME', 'AdServer'),
-    'version' => env('APP_VERSION', '#'),
+    'version' => (string)env('APP_VERSION', '#'),
     'env' => env('APP_ENV', 'production'),
     'url' => env('APP_URL', 'http://localhost'),
     'debug' => env('APP_DEBUG', false),
