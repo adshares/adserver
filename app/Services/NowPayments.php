@@ -66,7 +66,7 @@ final class NowPayments
         $this->minAmount = config('app.now_payments_min_amount');
         $this->maxAmount = config('app.now_payments_max_amount');
         $this->fee = config('app.now_payments_fee');
-        $this->useExchange = (bool)config('app.now_payments_exchange');
+        $this->useExchange = config('app.now_payments_exchange');
     }
 
     public function info(): ?array

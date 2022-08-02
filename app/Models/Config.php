@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Utilities\ConfigTypes;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Config\RegistrationMode;
@@ -191,6 +192,49 @@ class Config extends Model
         self::PANEL_PLACEHOLDER_UPDATE_TIME,
         self::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
     ];
+
+    private const TYPE_CONVERSIONS = [
+        self::ADSHARES_NODE_PORT => ConfigTypes::Integer,
+        self::ALLOW_ZONE_IN_IFRAME => ConfigTypes::Bool,
+        self::AUTO_CONFIRMATION_ENABLED => ConfigTypes::Bool,
+        self::AUTO_REGISTRATION_ENABLED => ConfigTypes::Bool,
+        self::AUTO_WITHDRAWAL_LIMIT_ADS => ConfigTypes::Integer,
+        self::AUTO_WITHDRAWAL_LIMIT_BSC => ConfigTypes::Integer,
+        self::AUTO_WITHDRAWAL_LIMIT_BTC => ConfigTypes::Integer,
+        self::AUTO_WITHDRAWAL_LIMIT_ETH => ConfigTypes::Integer,
+        self::BANNER_FORCE_HTTPS => ConfigTypes::Bool,
+        self::BTC_WITHDRAW => ConfigTypes::Bool,
+        self::BTC_WITHDRAW_FEE => ConfigTypes::Float,
+        self::BTC_WITHDRAW_MAX_AMOUNT => ConfigTypes::Integer,
+        self::BTC_WITHDRAW_MIN_AMOUNT => ConfigTypes::Integer,
+        self::CAMPAIGN_MIN_BUDGET => ConfigTypes::Integer,
+        self::CAMPAIGN_MIN_CPA => ConfigTypes::Integer,
+        self::CAMPAIGN_MIN_CPM => ConfigTypes::Integer,
+        self::CHECK_ZONE_DOMAIN => ConfigTypes::Bool,
+        self::COLD_WALLET_IS_ACTIVE => ConfigTypes::Bool,
+        self::EMAIL_VERIFICATION_REQUIRED => ConfigTypes::Bool,
+        self::EXCHANGE_CURRENCIES => ConfigTypes::Array,
+        self::FIAT_DEPOSIT_MAX_AMOUNT => ConfigTypes::Integer,
+        self::FIAT_DEPOSIT_MIN_AMOUNT => ConfigTypes::Integer,
+        self::HOT_WALLET_MAX_VALUE => ConfigTypes::Integer,
+        self::HOT_WALLET_MIN_VALUE => ConfigTypes::Integer,
+        self::INVENTORY_EXPORT_WHITELIST => ConfigTypes::Array,
+        self::INVENTORY_IMPORT_WHITELIST => ConfigTypes::Array,
+        self::INVOICE_ENABLED => ConfigTypes::Bool,
+        self::MAX_PAGE_ZONES => ConfigTypes::Integer,
+        self::NETWORK_DATA_CACHE_TTL => ConfigTypes::Integer,
+        self::NOW_PAYMENTS_EXCHANGE => ConfigTypes::Bool,
+        self::NOW_PAYMENTS_FEE => ConfigTypes::Float,
+        self::NOW_PAYMENTS_MAX_AMOUNT => ConfigTypes::Integer,
+        self::NOW_PAYMENTS_MIN_AMOUNT => ConfigTypes::Integer,
+        self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
+        self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
+        self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
+        self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
+        self::UPLOAD_LIMIT_VIDEO => ConfigTypes::Integer,
+        self::UPLOAD_LIMIT_ZIP => ConfigTypes::Integer,
+    ];
+
     private const SECRETS = [
         self::ADSHARES_LICENSE_KEY,
         self::ADSHARES_SECRET,
@@ -320,7 +364,12 @@ class Config extends Model
             $fetched = self::all()
                 ->pluck('value', 'key')
                 ->toArray();
-            return array_merge(self::getDefaultAdminSettings($fetched), $fetched);
+            $merged = array_merge(self::getDefaultAdminSettings($fetched), $fetched);
+            foreach ($merged as $key => $value) {
+                $merged[$key] = self::mapValueType($key, $value);
+            }
+
+            return $merged;
         });
 
         if (!$withSecrets) {
@@ -330,6 +379,21 @@ class Config extends Model
         }
 
         return $adminSettings;
+    }
+
+    private static function mapValueType(string $key, ?string $value): string|array|int|null|float|bool
+    {
+        if (null === $value) {
+            return null;
+        }
+
+        return match (self::TYPE_CONVERSIONS[$key] ?? ConfigTypes::String) {
+            ConfigTypes::Array => array_filter(explode(',', $value)),
+            ConfigTypes::Bool => '1' === $value,
+            ConfigTypes::Float => (float)$value,
+            ConfigTypes::Integer => (int)$value,
+            default => $value,
+        };
     }
 
     public static function updateAdminSettings(array $settings): void

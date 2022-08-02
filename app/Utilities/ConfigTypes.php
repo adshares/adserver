@@ -21,12 +21,10 @@
 
 namespace Adshares\Adserver\Utilities;
 
-use Adshares\Adserver\Models\Config;
-use Illuminate\Support\Facades\Config as SystemConfig;
-
 enum ConfigTypes
 {
     case Array;
+    case Bool;
     case Float;
     case Integer;
     case String;

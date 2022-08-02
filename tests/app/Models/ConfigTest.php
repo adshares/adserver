@@ -165,17 +165,17 @@ class ConfigTest extends TestCase
             'hotwallet-min-value' => '2000000000000000',
             'hotwallet-max-value' => '50000000000000000',
             'cold-wallet-address' => '',
-            'cold-wallet-is-active' => '0',
+            'cold-wallet-is-active' => false,
             'adserver-name' => 'AdServer',
             'technical-email' => 'mail@example.com',
             'support-email' => 'mail@example.com',
-            'referral-refund-enabled' => '0',
+            'referral-refund-enabled' => false,
             'referral-refund-commission' => '0',
             'registration-mode' => 'public',
             'auto-registration-enabled' => '1',
             'auto-confirmation-enabled' => '1',
-            'email-verification-required' => '0',
-            'invoice-enabled' => '0',
+            'email-verification-required' => false,
+            'invoice-enabled' => false,
             'invoice-currencies' => 'EUR,USD',
             'invoice-number-format' => 'INV NNNN/MM/YYYY',
             'invoice-company-name' => '',
@@ -185,7 +185,7 @@ class ConfigTest extends TestCase
             'invoice-company-country' => '',
             'invoice-company-vat-id' => '',
             'invoice-company-bank-accounts' => '',
-            'site-accept-banners-manually' => '0',
+            'site-accept-banners-manually' => false,
             'site-classifier-local-banners' => 'all-by-default',
         ];
 
@@ -194,12 +194,42 @@ class ConfigTest extends TestCase
         $settings = Config::fetchAdminSettings();
         foreach ($expectedSettings as $key => $value) {
             self::assertArrayHasKey($key, $settings);
-            self::assertEquals($value, $settings[$key]);
+            self::assertEquals($value, $settings[$key], sprintf('For key `%s`', $key));
         }
     }
 
     public function testUpdateAdminSettings(): void
     {
+        $expectedSettings = [
+            'payment-tx-fee' => '1',
+            'payment-rx-fee' => '2',
+            'hotwallet-min-value' => '4',
+            'hotwallet-max-value' => '5',
+            'cold-wallet-address' => '0000-00000000-XXXX',
+            'cold-wallet-is-active' => '1',
+            'adserver-name' => 'xxx',
+            'technical-email' => 'mail2@example.com',
+            'support-email' => 'mail3@example.com',
+            'referral-refund-enabled' => '1',
+            'referral-refund-commission' => '0.5',
+            'registration-mode' => 'private',
+            'auto-registration-enabled' => false,
+            'auto-confirmation-enabled' => false,
+            'email-verification-required' => '1',
+            'invoice-enabled' => '1',
+            'invoice-currencies' => 'PLN',
+            'invoice-number-format' => 'AAAA/YYYY',
+            'invoice-company-name' => 'Foo',
+            'invoice-company-address' => 'Mock street',
+            'invoice-company-postal-code' => '1212-89',
+            'invoice-company-city' => 'FooCity',
+            'invoice-company-country' => 'GB',
+            'invoice-company-vat-id' => '123123123123',
+            'invoice-company-bank-accounts' => '{}',
+            'site-accept-banners-manually' => false,
+            'site-classifier-local-banners' => 'all-by-default',
+        ];
+
         $adminSettings = [
             'payment-tx-fee' => '1',
             'payment-rx-fee' => '2',
@@ -234,9 +264,9 @@ class ConfigTest extends TestCase
         Cache::forget('config.admin');
 
         $settings = Config::fetchAdminSettings();
-        foreach ($adminSettings as $key => $value) {
+        foreach ($expectedSettings as $key => $value) {
             self::assertArrayHasKey($key, $settings);
-            self::assertEquals($value, $settings[$key]);
+            self::assertEquals($value, $settings[$key], sprintf('For key `%s`', $key));
         }
     }
 
