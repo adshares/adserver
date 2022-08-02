@@ -30,6 +30,7 @@ use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublishe
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Services\NowPayments;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseDecoder;
@@ -171,6 +172,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        DatabaseConfigReader::overwriteAdministrationConfig();
         if (config('app.debug')) {
             DB::listen(
                 function ($query) {
