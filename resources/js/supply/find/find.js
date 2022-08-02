@@ -635,6 +635,7 @@ var getActiveZones = function(call_func, retryNo) {
         } else {
             var filter = function(x) { return !x.__invalid; };
             call_func(zones.filter(filter), params.filter(filter));
+            retryFn();
         }
     }
     fn();
