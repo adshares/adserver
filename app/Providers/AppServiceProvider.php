@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,6 +43,7 @@ use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
@@ -54,16 +55,20 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             AdsClient::class,
             function () {
-                $drv = new CliDriver(
+                $secret = config('app.adshares_secret');
+                if (null !== $secret) {
+                    $secret = Crypt::decryptString($secret);
+                }
+                $driver = new CliDriver(
                     config('app.adshares_address'),
-                    config('app.adshares_secret'),
+                    $secret,
                     config('app.adshares_node_host'),
                     config('app.adshares_node_port')
                 );
-                $drv->setCommand(config('app.adshares_command'));
-                $drv->setWorkingDir(config('app.adshares_workingdir'));
+                $driver->setCommand(config('app.adshares_command'));
+                $driver->setWorkingDir(config('app.adshares_workingdir'));
 
-                return new AdsClient($drv);
+                return new AdsClient($driver);
             }
         );
 
@@ -91,9 +96,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TransferMoneyToColdWallet::class,
             function (Application $app) {
-                $coldWalletAddress = (string)config('app.adshares_wallet_cold_address');
-                $minAmount = (int)config('app.adshares_wallet_min_amount');
-                $maxAmount = (int)config('app.adshares_wallet_max_amount');
+                $coldWalletAddress = config('app.cold_wallet_address') ?? '';
+                $minAmount = config('app.hotwallet_min_value');
+                $maxAmount = config('app.hotwallet_max_value');
                 $adsClient = $app->make(AdsClient::class);
 
                 return new TransferMoneyToColdWallet($minAmount, $maxAmount, $coldWalletAddress, $adsClient);
@@ -103,8 +108,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             WalletFundsChecker::class,
             function (Application $app) {
-                $minAmount = (int)config('app.adshares_wallet_min_amount');
-                $maxAmount = (int)config('app.adshares_wallet_max_amount');
+                $minAmount = config('app.hotwallet_min_value');
+                $maxAmount = config('app.hotwallet_max_value');
                 $adsClient = $app->make(AdsClient::class);
 
                 return new WalletFundsChecker($minAmount, $maxAmount, $adsClient);
@@ -114,7 +119,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             LicenseDecoder::class,
             function () {
-                return new LicenseDecoderV1((string)config('app.license_key'));
+                $licenseKey =
+                    config('app.adshares_license_key') ? Crypt::decryptString(config('app.adshares_license_key')) : '';
+                return new LicenseDecoderV1($licenseKey);
             }
         );
 

@@ -21,12 +21,12 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\Status;
-use Illuminate\Support\Facades\Config;
 
 final class InventoryImporterCommandTest extends ConsoleTestCase
 {
@@ -50,7 +50,7 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
         NetworkHost::factory()->create(['address' => '0001-00000003-AB0C']);
         NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
 
-        Config::set('app.inventory_import_whitelist', ['0001-00000003-AB0C', '0001-00000005-CBCA']);
+        Config::updateAdminSettings([Config::INVENTORY_IMPORT_WHITELIST => '0001-00000003-AB0C,0001-00000005-CBCA']);
         $this->artisan('ops:demand:inventory:import')
             ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000003-AB0C')
             ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000005-CBCA')
@@ -58,7 +58,7 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
             ->doesntExpectOutput('[Inventory Importer] Importing inventory from 0001-00000002-BB2D')
             ->assertExitCode(0);
 
-        Config::set('app.inventory_import_whitelist', ['0001-00000004-DBEB']);
+        Config::updateAdminSettings([Config::INVENTORY_IMPORT_WHITELIST => '0001-00000004-DBEB']);
         $this->artisan('ops:demand:inventory:import')
             ->expectsOutput('[Inventory Importer] Stopped importing - no hosts found')
             ->assertExitCode(0);

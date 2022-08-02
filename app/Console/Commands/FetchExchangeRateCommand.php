@@ -32,14 +32,10 @@ use Illuminate\Database\QueryException;
 class FetchExchangeRateCommand extends BaseCommand
 {
     protected $signature = 'ops:exchange-rate:fetch';
-
     protected $description = 'Fetch exchange rate';
 
-    /** @var EloquentExchangeRateRepository */
-    private $repositoryStorable;
-
-    /** @var ExchangeRateRepository */
-    private $repositoryRemote;
+    private EloquentExchangeRateRepository $repositoryStorable;
+    private ExchangeRateRepository $repositoryRemote;
 
     public function __construct(
         Locker $locker,

@@ -36,6 +36,8 @@ before_install:
   - mkdir -p storage/framework/{sessions,views,cache}
   - chmod 777 -R storage
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2>/dev/null | mysql mysql
+  - openssl genrsa -out config/jwt/private.pem 2048
+  - openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
 install:
   - yarn install && yarn run prod

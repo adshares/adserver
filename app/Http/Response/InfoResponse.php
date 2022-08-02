@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Response;
 
-use Adshares\Adserver\Models\Config;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Config\AppMode;
@@ -66,21 +66,21 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
-        $settings = Config::fetchAdminSettings();
         return new self(
             new Info(
                 self::ADSHARES_MODULE_NAME,
-                (string)config('app.name'),
-                (string)config('app.version'),
-                new SecureUrl((string)config('app.url')),
-                new Url((string)config('app.adpanel_url')),
-                new SecureUrl((string)config('app.privacy_url')),
-                new SecureUrl((string)config('app.terms_url')),
-                new SecureUrl(route('demand-inventory')),
-                new AccountId((string)config('app.adshares_address')),
-                new Email($settings[Config::SUPPORT_EMAIL]),
+                config('app.adserver_name'),
+                config('app.version'),
+                new SecureUrl(config('app.url')),
+                new Url(config('app.adpanel_url')),
+                new SecureUrl(config('app.url') . route('privacy-url', [], false)),
+                new SecureUrl(config('app.url') . route('terms-url', [], false)),
+                new SecureUrl(config('app.url') . route('demand-inventory', [], false)),
+                null !== config('app.adshares_address')
+                    ? new AccountId(config('app.adshares_address')) : new EmptyAccountId(),
+                new Email(config('app.support_email')),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
-                $settings[Config::REGISTRATION_MODE],
+                config('app.registration_mode'),
                 AppMode::getAppMode()
             )
         );

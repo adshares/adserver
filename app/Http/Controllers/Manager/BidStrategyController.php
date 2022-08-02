@@ -141,7 +141,8 @@ class BidStrategyController extends Controller
         $bidStrategyDetails = $bidStrategy->bidStrategyDetails->pluck('rank', 'category')->toArray();
         $data = self::processTargeting($targeting, $bidStrategyDetails);
 
-        return (new BidStrategySpreadsheetResponse($bidStrategy, $data, (string)config('app.name')))->responseStream();
+        return (new BidStrategySpreadsheetResponse($bidStrategy, $data, config('app.adserver_name')))
+            ->responseStream();
     }
 
     public function putBidStrategySpreadsheet(string $bidStrategyPublicId, Request $request): JsonResponse

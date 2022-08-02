@@ -28,12 +28,12 @@ use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WalletConnectConfirm;
 use Adshares\Adserver\Mail\WalletConnected;
 use Adshares\Adserver\Mail\WithdrawalApproval;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,6 +43,7 @@ class WalletControllerTest extends TestCase
     private const CONNECT_INIT_URI = '/api/wallet/connect/init';
     private const CONNECT_URI = '/api/wallet/connect';
     private const CONNECT_CONFIRM_URI = '/api/wallet/connect/confirm';
+    private const INFO_URI = '/api/withdrawal-info';
 
     public function testCalculateWithdrawSameNode(): void
     {
@@ -155,7 +156,7 @@ class WalletControllerTest extends TestCase
 
     public function testCalculateWithdrawInvalidAdServerAddress(): void
     {
-        Config::set('app.adshares_address', '');//invalid ADS address set for AdServer
+        Config::updateAdminSettings([Config::ADSHARES_ADDRESS => null]);//invalid ADS address set for AdServer
         $this->actingAs(User::factory()->create(), 'api');
         $response = $this->postJson(
             '/api/calculate-withdrawal',
@@ -1066,6 +1067,25 @@ class WalletControllerTest extends TestCase
 
         $response = $this->post(self::CONNECT_CONFIRM_URI . '/' . $token->uuid);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testWithdrawalInfoWhenNoWithdrawalAvailable(): void
+    {
+        $this->login();
+        $response = $this->get(self::INFO_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['btc' => null]);
+    }
+
+    public function testWithdrawalInfoWhenWithdrawalAvailable(): void
+    {
+        Config::updateAdminSettings([Config::BTC_WITHDRAW => '1']);
+        $this->login();
+        $response = $this->get(self::INFO_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['btc' => ['minAmount', 'maxAmount', 'exchangeRate']]);
     }
 
     private function generateUserIncome(int $userId, int $amount): void

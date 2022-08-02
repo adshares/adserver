@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -608,7 +608,11 @@ class WalletController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $message = sprintf('Connect your wallet with %s adserver %s', config('app.name'), NonceGenerator::get());
+        $message = sprintf(
+            'Connect your wallet with %s adserver %s',
+            config('app.adserver_name'),
+            NonceGenerator::get()
+        );
 
         $payload = [
             'request' => $request->all(),

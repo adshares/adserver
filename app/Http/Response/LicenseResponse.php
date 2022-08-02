@@ -39,7 +39,8 @@ class LicenseResponse implements Arrayable
     public function toArray(): array
     {
         $licenseArray = $this->license->toArray();
-        $licenseArray['detailsUrl'] = sprintf('%s/license/%s', config('app.license_url'), $licenseArray['id']);
+        $licenseArray['detailsUrl'] =
+            sprintf('%s/license/%s', config('app.adshares_license_server_url'), $licenseArray['id']);
 
         unset($licenseArray['paymentAddress']);
         unset($licenseArray['fixedFee']);

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,7 +43,7 @@ class UtilsTest extends TestCase
 
     public function testTrackingIdFromUserId(): void
     {
-        $tid = '6WQ43VoOQqaIGVmIao68L2qb7wUbKQ';
+        $tid = '6WQ43VoOQqaIGVmIao68L8k9SIhFSg';
 
         $uidHex = Utils::hexUuidFromBase64UrlWithChecksum($tid);
 

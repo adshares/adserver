@@ -5,5 +5,5 @@ The panel placeholders were changed on {{ $date }}. Make sure the changes were y
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

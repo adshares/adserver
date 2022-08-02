@@ -5,5 +5,5 @@ Your account has been confirmed.
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

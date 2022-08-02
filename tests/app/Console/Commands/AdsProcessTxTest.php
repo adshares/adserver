@@ -28,6 +28,7 @@ use Adshares\Ads\Response\GetBlockIdsResponse;
 use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
@@ -44,9 +45,7 @@ use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
 class AdsProcessTxTest extends ConsoleTestCase
 {
     private const TX_ID_CONNECTION = '0001:00000608:0002';
-
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
-
     private const TX_ID_SEND_ONE = '0001:00000083:0001';
 
     public function testAdsProcessValidUserDeposit(): void

@@ -56,6 +56,7 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\SupplyClient;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\ServiceProvider;
 
 use function config;
@@ -71,7 +72,7 @@ final class ClientProvider extends ServiceProvider
                     new Client(
                         [
                             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.adpay_endpoint'),
+                            'base_uri' => config('app.adpay_url'),
                             'timeout' => 300,
                         ]
                     )
@@ -85,7 +86,7 @@ final class ClientProvider extends ServiceProvider
                 $client = new Client(
                     [
                         'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                        'base_uri' => config('app.adselect_endpoint'),
+                        'base_uri' => config('app.adselect_url'),
                         'timeout' => 5,
                     ]
                 );
@@ -158,15 +159,20 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             LicenseProvider::class,
             function () {
+                $licenseId = config('app.adshares_license_key') ? substr(
+                    Crypt::decryptString(config('app.adshares_license_key')),
+                    0,
+                    10
+                ) : '';
                 return new GuzzleLicenseClient(
                     new Client(
                         [
                             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.license_url'),
+                            'base_uri' => config('app.adshares_license_server_url'),
                             'timeout' => 5,
                         ]
                     ),
-                    (string)config('app.license_id')
+                    $licenseId
                 );
             }
         );

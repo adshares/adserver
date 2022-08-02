@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,14 +32,9 @@ class Newsletter extends Mailable
     use Queueable;
     use SerializesModels;
 
-    /** @var int */
-    public $tries = 100;
-
-    /** @var string */
-    private $body;
-
-    /** @var bool */
-    private $attachUnsubscribe;
+    public int $tries = 100;
+    private string $body;
+    private bool $attachUnsubscribe;
 
     public function __construct(string $subject, string $body, bool $attachUnsubscribe = false)
     {
@@ -85,6 +80,6 @@ class Newsletter extends Mailable
 
     public static function createDigest(string $emailAddress): string
     {
-        return sha1($emailAddress . config('app.adserver_secret'));
+        return sha1($emailAddress . config('app.key'));
     }
 }
