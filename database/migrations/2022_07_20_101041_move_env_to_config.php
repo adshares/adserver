@@ -161,7 +161,7 @@ class MoveEnvToConfig extends Migration
 
         $settings = [];
         foreach (self::ENVIRONMENT_VARIABLES_MIGRATION as $envKey => $configKey) {
-            if (null !== ($envValue = env($envKey))) {
+            if ('' !== ($envValue = env($envKey, ''))) {
                 $settings[$configKey] = $envValue;
             }
         }
