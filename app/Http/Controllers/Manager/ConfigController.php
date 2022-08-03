@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,7 +30,7 @@ class ConfigController extends Controller
 {
     public function adsharesAddress(): JsonResponse
     {
-        return self::json(['adsharesAddress' => config('app.adshares_address')], 200);
+        return self::json(['adsharesAddress' => config('app.adshares_address')]);
     }
 
     public function countries(): JsonResponse

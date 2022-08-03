@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Invoice;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Illuminate\Support\Carbon;
 
 class InvoiceTest extends TestCase
@@ -46,6 +47,7 @@ class InvoiceTest extends TestCase
                 Config::INVOICE_NUMBER_FORMAT => 'PROF AAAA/NN/MM/YYYY',
             ]
         );
+        DatabaseConfigReader::overwriteAdministrationConfig();
     }
 
     public function testGetNextSequence(): void

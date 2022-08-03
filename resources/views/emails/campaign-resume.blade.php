@@ -6,5 +6,5 @@ In order to check your balance, please log in to the platform and select “Bill
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

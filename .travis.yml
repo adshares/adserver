@@ -5,7 +5,7 @@ services: mysql
 git:
   depth: false
 php:
-  - 7.4
+  - 8.1
 cache:
   directories:
     - $HOME/.composer/cache/files
@@ -36,6 +36,8 @@ before_install:
   - mkdir -p storage/framework/{sessions,views,cache}
   - chmod 777 -R storage
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2>/dev/null | mysql mysql
+  - openssl genrsa -out config/jwt/private.pem 2048
+  - openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
 install:
   - yarn install && yarn run prod
@@ -55,11 +57,6 @@ jobs:
 
 notifications:
   email: false
-  slack:
-    rooms:
-      secure: "Y8RTLtFmkDyWd4U17IJsu51VyLhGpRDQeynzJpmXsj4m7Gv6cYjCwdqAox90rCsudeRXPCvLqOPTujZ5cj0qoXIkfKPwAJ1GeHEjxPL6oUO+UF9SnWliL8b4JGUw/QHFqT0VWhgfE0l+QYfHMEAarGFzM03AEyDVkSuVEtbWzQtjvNpe+CCVu8QGzqOJcTrPQ9zjFOwCPc69dIHKsPY+6baFqnx0/GQAx1FGWoRt5iwQdvWoPJ7qajP9kOY7b8wEE/R/9Wfx4YWXgT/fhpYw/cX+jwexlayoCyFC1JpvbEWcS+A9wsOv9+rRptJzNAnL6Z9ZZtfJj2YRIxg1/91ddGDX9QiMCC/Ia/T04DDQizPQRDoDc3qa2a8rZqqMrxwlsUz8qEW8EQnrdM4AuJp4SFX/OMUKzh6zGWglb4BrrRTsgHVJZpjGUVn2zkTnpfGZ+9LsvawC40bgdgNTt4Ty7yvzwTVYwfK5k4gIiuo4wfRXybdhPTTFo0dmF72Bad7GBjjhTeOG0Q1HK3ErRUHN3pD8OBBoNlfsKh6QQnBCwSKAV9ZRyBDvUiYoe14n3+1GVSddKKCuZj0TmvQo7drFg2cpXcU79UmssP3aKXuv2Ew7csxj7aaz8E8eywnDIWX0mwCDOUD+TmoThlvIZufJVPy8mEmzZALQTg5+GBxJggw="
-    on_success: change
-    on_failure: always
 
 addons:
   sonarcloud:

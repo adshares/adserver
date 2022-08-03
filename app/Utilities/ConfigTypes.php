@@ -19,22 +19,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Middleware;
+namespace Adshares\Adserver\Utilities;
 
-use Illuminate\Http\Middleware\TrustProxies as Middleware;
-use Symfony\Component\HttpFoundation\Request;
-
-class TrustProxies extends Middleware
+enum ConfigTypes
 {
-    /**
-     * The headers that should be used to detect proxies.
-     *
-     * @var string
-     */
-    protected $headers =
-        Request::HEADER_X_FORWARDED_FOR |
-        Request::HEADER_X_FORWARDED_HOST |
-        Request::HEADER_X_FORWARDED_PORT |
-        Request::HEADER_X_FORWARDED_PROTO |
-        Request::HEADER_X_FORWARDED_AWS_ELB;
+    case Array;
+    case Bool;
+    case Float;
+    case Integer;
+    case String;
 }

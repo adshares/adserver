@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
@@ -33,7 +34,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Crypt;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -176,7 +177,7 @@ final class DemandControllerTest extends TestCase
      */
     public function testInventoryListWithCdn(): void
     {
-        Config::set('app.cdn_provider', 'skynet');
+        Config::updateAdminSettings([Config::CDN_PROVIDER => 'skynet']);
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
         $user = $this->setupUser();
 
@@ -252,7 +253,7 @@ final class DemandControllerTest extends TestCase
         /** @var AdsAuthenticator $authenticator */
         $authenticator = $this->app->make(AdsAuthenticator::class);
 
-        Config::set('app.inventory_export_whitelist', ['0001-00000002-BB2D']);
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
 
         $response = $this->getJson(self::INVENTORY_LIST_URL);
         $response->assertStatus(401);
@@ -262,19 +263,19 @@ final class DemandControllerTest extends TestCase
             [
                 'Authorization' => $authenticator->getHeader(
                     config('app.adshares_address'),
-                    config('app.adshares_secret')
+                    Crypt::decryptString(config('app.adshares_secret'))
                 )
             ]
         );
         $response->assertStatus(403);
 
-        Config::set('app.inventory_export_whitelist', ['0001-00000003-AB0C', '0001-00000005-CBCA']);
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000003-AB0C,0001-00000005-CBCA']);
         $response = $this->getJson(
             self::INVENTORY_LIST_URL,
             [
                 'Authorization' => $authenticator->getHeader(
                     config('app.adshares_address'),
-                    config('app.adshares_secret')
+                    Crypt::decryptString(config('app.adshares_secret'))
                 )
             ]
         );

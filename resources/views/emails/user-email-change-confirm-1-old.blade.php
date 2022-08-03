@@ -11,5 +11,5 @@ Confirm email change request
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

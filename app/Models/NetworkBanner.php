@@ -168,7 +168,7 @@ class NetworkBanner extends Model
         }
         return Cache::remember(
             'network_banners.' . $uuid,
-            (int)config('app.network_data_cache_ttl'),
+            config('app.network_data_cache_ttl'),
             function () use ($uuid) {
                 return self::where('uuid', hex2bin($uuid))->with(['campaign'])->first();
             }
@@ -276,7 +276,7 @@ class NetworkBanner extends Model
         }
 
         if ($networkBannerFilter->isLocal()) {
-            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS, (string)config('app.adshares_address'));
+            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS, config('app.adshares_address'));
         }
 
         return $query;

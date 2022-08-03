@@ -16,5 +16,5 @@ Your sites were verified:
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

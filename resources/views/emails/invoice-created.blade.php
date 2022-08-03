@@ -6,5 +6,5 @@ Your invoice has been attached to the message. You can also download it from thi
 
 Thanks,
 
-{{ config('app.name') }} Team
+{{ config('app.adserver_name') }} Team
 @endcomponent

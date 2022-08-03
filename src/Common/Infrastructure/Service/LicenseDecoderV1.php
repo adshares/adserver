@@ -72,10 +72,11 @@ class LicenseDecoderV1 implements LicenseDecoder
             throw new RuntimeException(sprintf('Wrong licenseKey (%s).', $this->licenseKey));
         }
 
+        $licenseId = substr($this->licenseKey, 0, 10);
         $data = json_decode($data, true);
 
         return new License(
-            (string)config('app.license_id'),
+            $licenseId,
             $data['type'],
             $data['status'],
             DateTime::createFromFormat(DateTimeInterface::ATOM, $data['beginDate']),

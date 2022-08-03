@@ -40,17 +40,13 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentDetailsProcessor
 {
-    private string $adServerAddress;
-
     private ExchangeRateReader $exchangeRateReader;
-
     private LicenseReader $licenseReader;
 
     public function __construct(
         ExchangeRateReader $exchangeRateReader,
         LicenseReader $licenseReader
     ) {
-        $this->adServerAddress = (string)config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
         $this->licenseReader = $licenseReader;
     }
@@ -115,6 +111,7 @@ class PaymentDetailsProcessor
 
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
     {
+        $adServerAddress = config('app.adshares_address');
         $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
 
         foreach ($splitPayments as $splitPayment) {
@@ -138,7 +135,7 @@ class PaymentDetailsProcessor
                 UserLedgerEntry::STATUS_ACCEPTED,
                 UserLedgerEntry::TYPE_AD_INCOME,
                 $adsPayment->address,
-                $this->adServerAddress,
+                $adServerAddress,
                 $adsPayment->txid
             )->save();
         }
@@ -146,13 +143,7 @@ class PaymentDetailsProcessor
 
     private function fetchLicenseFee(): float
     {
-        try {
-            $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
-        } catch (ConfigException $modelNotFoundException) {
-            throw new MissingInitialConfigurationException('No config entry for license fee.');
-        }
-
-        return $licenseFee;
+        return $this->licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
     }
 
     private function fetchNetworkCasesForPaymentDetails(array $paymentDetails): Collection

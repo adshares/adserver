@@ -30,8 +30,6 @@ use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use PHPUnit\Framework\MockObject\Stub\ReturnCallback;
 
-use function factory;
-
 class AdPayCampaignExportCommandTest extends ConsoleTestCase
 {
     public function testHandle(): void

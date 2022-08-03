@@ -206,8 +206,8 @@ class AdminController extends Controller
                 $emailSendDateTime =
                     $registerDateTime->modify(sprintf('+%d minutes', self::EMAIL_NOTIFICATION_DELAY_IN_MINUTES));
                 Config::upsertDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME, $emailSendDateTime);
-                Mail::to(config('app.adshares_operator_email'))
-                    ->bcc(config('app.adshares_support_email'))
+                Mail::to(config('app.technical_email'))
+                    ->bcc(config('app.support_email'))
                     ->later($emailSendDateTime, new PanelPlaceholdersChange());
             }
         } catch (Exception $exception) {

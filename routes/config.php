@@ -19,22 +19,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Middleware;
+declare(strict_types=1);
 
-use Illuminate\Http\Middleware\TrustProxies as Middleware;
-use Symfony\Component\HttpFoundation\Request;
+use Adshares\Adserver\Http\Controllers\Manager\ServerConfigurationController;
+use Adshares\Adserver\Http\Kernel;
+use Illuminate\Support\Facades\Route;
 
-class TrustProxies extends Middleware
-{
-    /**
-     * The headers that should be used to detect proxies.
-     *
-     * @var string
-     */
-    protected $headers =
-        Request::HEADER_X_FORWARDED_FOR |
-        Request::HEADER_X_FORWARDED_HOST |
-        Request::HEADER_X_FORWARDED_PORT |
-        Request::HEADER_X_FORWARDED_PROTO |
-        Request::HEADER_X_FORWARDED_AWS_ELB;
-}
+Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(function () {
+    Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
+    Route::patch('config', [ServerConfigurationController::class, 'store']);
+    Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
+});

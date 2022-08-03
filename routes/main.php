@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -48,8 +48,8 @@ Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fet
 
 Route::get('/stats/server/{date}', [StatisticsGlobalController::class, 'fetchServerStatisticsAsFile']);
 
-Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
-Route::get('/policies/terms.html', [InfoController::class, 'terms']);
+Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy'])->name('privacy-url');
+Route::get('/policies/terms.html', [InfoController::class, 'terms'])->name('terms-url');
 Route::get('/panel/placeholders', [InfoController::class, 'getPanelPlaceholders']);
 
 Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name(

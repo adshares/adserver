@@ -19,11 +19,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-$mail_encryption = env('MAIL_ENCRYPTION', 'tls');
-if ($mail_encryption === 'none') {
-    $mail_encryption = '';
-}
-
 return [
 
     /*
@@ -37,10 +32,7 @@ return [
     |
     */
 
-    /**
-     * @deprecated MAIL_DRIVER was renamed to MAIL_MAILER. MAIL_DRIVER will be removed
-     */
-    'default' => env('MAIL_MAILER', env('MAIL_DRIVER', 'smtp')),
+    'default' => env('MAIL_MAILER', 'smtp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -65,7 +57,7 @@ return [
             'transport' => 'smtp',
             'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
             'port' => env('MAIL_PORT', 587),
-            'encryption' => $mail_encryption,
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,

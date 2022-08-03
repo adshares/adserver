@@ -103,8 +103,8 @@ class SettingsResponse implements Arrayable
 
     public static function fromConfigModel(array $data): self
     {
-        $publisherCommission = $data[Config::OPERATOR_RX_FEE] ?? null;
-        $advertiserCommission = $data[Config::OPERATOR_TX_FEE] ?? null;
+        $publisherCommission = $data[Config::OPERATOR_RX_FEE];
+        $advertiserCommission = $data[Config::OPERATOR_TX_FEE];
         $hotWalletMinValue = $data[Config::HOT_WALLET_MIN_VALUE];
         $hotWalletMaxValue = $data[Config::HOT_WALLET_MAX_VALUE];
         $coldWalletIsActive = $data[Config::COLD_WALLET_IS_ACTIVE];

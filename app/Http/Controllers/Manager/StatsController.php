@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -304,7 +304,7 @@ class StatsController extends Controller
         return (new PublisherReportResponse(
             $data,
             $name,
-            (string)config('app.name'),
+            config('app.adserver_name'),
             $isModerator || $isAgency
         ))->responseStream();
     }
@@ -354,7 +354,7 @@ class StatsController extends Controller
         return (new AdvertiserReportResponse(
             $data,
             $name,
-            (string)config('app.name'),
+            config('app.adserver_name'),
             $isModerator || $isAgency
         ))->responseStream();
     }
@@ -409,7 +409,7 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetchReportData($input);
         $data = $result->toArray();
-        (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isModerator || $isAgency))
+        (new AdvertiserReportResponse($data, $name, config('app.adserver_name'), $isModerator || $isAgency))
             ->saveAsFile($reportMeta->uuid);
 
         $reportMeta->ready();
@@ -468,7 +468,7 @@ class StatsController extends Controller
         $result = $this->publisherStatsDataProvider->fetchReportData($input);
         $data = $result->toArray();
 
-        (new PublisherReportResponse($data, $name, (string)config('app.name'), $isModerator || $isAgency))
+        (new PublisherReportResponse($data, $name, config('app.adserver_name'), $isModerator || $isAgency))
             ->saveAsFile($reportMeta->uuid);
 
         $reportMeta->ready();

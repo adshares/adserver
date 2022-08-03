@@ -21,13 +21,21 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Utilities\ConfigTypes;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Config\RegistrationMode;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * @property string key
@@ -38,11 +46,90 @@ class Config extends Model
 {
     use HasFactory;
 
+    public const ADPANEL_URL = 'adpanel-url';
+    public const ADPAY_URL = 'adpay-url';
     public const ADS_LOG_START = 'ads-log-start';
+    public const ADS_OPERATOR_SERVER_URL = 'ads-operator-server-url';
+    public const ADS_RPC_URL = 'ads-rpc-url';
+    public const ADSELECT_URL = 'adselect-url';
+    public const ADSHARES_ADDRESS = 'adshares-address';
+    public const ADSHARES_LICENSE_KEY = 'adshares-license-key';
+    public const ADSHARES_LICENSE_SERVER_URL = 'adshares-license-server-url';
+    public const ADSHARES_NODE_HOST = 'adshares-node-host';
+    public const ADSHARES_NODE_PORT = 'adshares-node-port';
+    public const ADSHARES_SECRET = 'adshares-secret';
+    public const ADUSER_BASE_URL = 'aduser-base-url';
+    public const ADUSER_INFO_URL = 'aduser-info-url';
+    public const ADUSER_INTERNAL_URL = 'aduser-internal-url';
+    public const ADUSER_SERVE_SUBDOMAIN = 'aduser-serve-subdomain';
+    public const ALLOW_ZONE_IN_IFRAME = 'allow_zone-in-iframe';
+    public const AUTO_WITHDRAWAL_LIMIT_ADS = 'auto-withdrawal-limit-ads';
+    public const AUTO_WITHDRAWAL_LIMIT_BSC = 'auto-withdrawal-limit-bsc';
+    public const AUTO_WITHDRAWAL_LIMIT_BTC = 'auto-withdrawal-limit-btc';
+    public const AUTO_WITHDRAWAL_LIMIT_ETH = 'auto-withdrawal-limit-eth';
+    public const BANNER_FORCE_HTTPS = 'banner-force-https';
+    public const BTC_WITHDRAW = 'btc-withdraw';
+    public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
+    public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
+    public const BTC_WITHDRAW_MIN_AMOUNT = 'btc-withdraw-min-amount';
+    public const CAMPAIGN_TARGETING_EXCLUDE = 'campaign-targeting-exclude';
+    public const CAMPAIGN_TARGETING_REQUIRE = 'campaign-targeting-require';
+    public const CDN_PROVIDER = 'cdn-provider';
+    public const CHECK_ZONE_DOMAIN = 'check-zone-domain';
+    public const CLASSIFIER_EXTERNAL_API_KEY_NAME = 'classifier-external-api-key-name';
+    public const CLASSIFIER_EXTERNAL_API_KEY_SECRET = 'classifier-external-api-key-secret';
+    public const CLASSIFIER_EXTERNAL_BASE_URL = 'classifier-external-base-url';
+    public const CLASSIFIER_EXTERNAL_NAME = 'classifier-external-name';
+    public const CLASSIFIER_EXTERNAL_PUBLIC_KEY = 'classifier-external-public-key';
+    public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
+    public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
+    public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
+    public const EXCHANGE_API_KEY = 'exchange-api-key';
+    public const EXCHANGE_API_SECRET = 'exchange-api-secret';
+    public const EXCHANGE_API_URL = 'exchange-api-url';
+    public const EXCHANGE_CURRENCIES = 'exchange-currencies';
+    public const FIAT_DEPOSIT_MAX_AMOUNT = 'fiat-deposit-max-amount';
+    public const FIAT_DEPOSIT_MIN_AMOUNT = 'fiat-deposit-min-amount';
+    public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
+    public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
+    public const INVENTORY_WHITELIST = 'inventory-whitelist';
+    public const MAIL_FROM_ADDRESS = 'mail-from-address';
+    public const MAIL_FROM_NAME = 'mail-from-name';
+    public const MAIL_MAILER = 'mail-mailer';
+    public const MAIL_SMTP_ENCRYPTION = 'mail-smtp-encryption';
+    public const MAIL_SMTP_HOST = 'mail-smtp-host';
+    public const MAIL_SMTP_PASSWORD = 'mail-smtp-password';
+    public const MAIL_SMTP_PORT = 'mail-smtp-port';
+    public const MAIL_SMTP_USERNAME = 'mail-smtp-username';
+    public const MAIN_JS_BASE_URL = 'main-js-base-url';
+    public const MAIN_JS_TLD = 'main-js-tld';
+    public const MAX_PAGE_ZONES = 'max-page-zones';
+    public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
+    public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
+    public const NOW_PAYMENTS_CURRENCY = 'now-payments-currency';
+    public const NOW_PAYMENTS_EXCHANGE = 'now-payments-exchange';
+    public const NOW_PAYMENTS_FEE = 'now-payments-fee';
+    public const NOW_PAYMENTS_IPN_SECRET = 'now-payments-ipn-secret';
+    public const NOW_PAYMENTS_MAX_AMOUNT = 'now-payments-max-amount';
+    public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
+    public const SERVE_BASE_URL = 'serve-base-url';
+    public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
+    public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
+    public const SKYNET_API_KEY = 'skynet-api-key';
+    public const SKYNET_API_URL = 'skynet-api-url';
+    public const SKYNET_CDN_URL = 'skynet-cdn-url';
+    public const UPLOAD_LIMIT_IMAGE = 'upload-limit-image';
+    public const UPLOAD_LIMIT_MODEL = 'upload-limit-model';
+    public const UPLOAD_LIMIT_VIDEO = 'upload-limit-video';
+    public const UPLOAD_LIMIT_ZIP = 'upload-limit-zip';
+    public const URL = 'url';
+    /** @deprecated fee should be read from {@see LicenseReader} */
     public const LICENCE_TX_FEE = 'licence-tx-fee';
+    /** @deprecated fee should be read from {@see LicenseReader} */
     public const LICENCE_RX_FEE = 'licence-rx-fee';
+    /** @deprecated account ID should be read from {@see LicenseReader} */
     public const LICENCE_ACCOUNT = 'licence-account';
     /** @deprecated default uuid is stored in DB in bid_strategy table */
     public const BID_STRATEGY_UUID_DEFAULT = 'bid-strategy-uuid-default';
@@ -55,6 +142,9 @@ class Config extends Model
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
+    public const CAMPAIGN_MIN_BUDGET = 'campaign-min-budget';
+    public const CAMPAIGN_MIN_CPA = 'campaign-min-cpa';
+    public const CAMPAIGN_MIN_CPM = 'campaign-min-cpm';
     public const COLD_WALLET_ADDRESS = 'cold-wallet-address';
     public const COLD_WALLET_IS_ACTIVE = 'cold-wallet-is-active';
     public const ADSERVER_NAME = 'adserver-name';
@@ -82,41 +172,77 @@ class Config extends Model
     public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
     public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
     public const ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS = [
-        Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
-        Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT,
-        Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY,
+        self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
+        self::CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT,
+        self::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY,
     ];
     public const CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT = 'all-by-default';
     public const CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT = 'local-by-default';
     public const CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY = 'local-only';
 
-    private const ADMIN_SETTINGS_DEFAULTS = [
-        self::OPERATOR_TX_FEE => '',
-        self::OPERATOR_RX_FEE => '',
-        self::LICENCE_RX_FEE => '',
-        self::HOT_WALLET_MIN_VALUE => '',
-        self::HOT_WALLET_MAX_VALUE => '',
-        self::COLD_WALLET_ADDRESS => '',
-        self::COLD_WALLET_IS_ACTIVE => '',
-        self::ADSERVER_NAME => '',
-        self::TECHNICAL_EMAIL => '',
-        self::SUPPORT_EMAIL => '',
-        self::REFERRAL_REFUND_ENABLED => '',
-        self::REFERRAL_REFUND_COMMISSION => '',
-        self::REGISTRATION_MODE => '',
-        self::AUTO_REGISTRATION_ENABLED => '',
-        self::AUTO_CONFIRMATION_ENABLED => '',
-        self::EMAIL_VERIFICATION_REQUIRED => '',
-        self::INVOICE_ENABLED => '',
-        self::INVOICE_CURRENCIES => '',
-        self::INVOICE_NUMBER_FORMAT => '',
-        self::INVOICE_COMPANY_NAME => '',
-        self::INVOICE_COMPANY_ADDRESS => '',
-        self::INVOICE_COMPANY_POSTAL_CODE => '',
-        self::INVOICE_COMPANY_CITY => '',
-        self::INVOICE_COMPANY_COUNTRY => '',
-        self::INVOICE_COMPANY_VAT_ID => '',
-        self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
+    private const TECHNICAL_SETTINGS = [
+        self::ADS_LOG_START,
+        self::ADSELECT_INVENTORY_EXPORT_TIME,
+        self::ADPAY_BID_STRATEGY_EXPORT_TIME,
+        self::ADPAY_CAMPAIGN_EXPORT_TIME,
+        self::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
+        self::ADPAY_LAST_EXPORTED_EVENT_TIME,
+        self::LAST_UPDATED_IMPRESSION_ID,
+        self::OPERATOR_WALLET_EMAIL_LAST_TIME,
+        self::PANEL_PLACEHOLDER_NOTIFICATION_TIME,
+        self::PANEL_PLACEHOLDER_UPDATE_TIME,
+        self::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD,
+    ];
+
+    private const TYPE_CONVERSIONS = [
+        self::ADSHARES_NODE_PORT => ConfigTypes::Integer,
+        self::ALLOW_ZONE_IN_IFRAME => ConfigTypes::Bool,
+        self::AUTO_CONFIRMATION_ENABLED => ConfigTypes::Bool,
+        self::AUTO_REGISTRATION_ENABLED => ConfigTypes::Bool,
+        self::AUTO_WITHDRAWAL_LIMIT_ADS => ConfigTypes::Integer,
+        self::AUTO_WITHDRAWAL_LIMIT_BSC => ConfigTypes::Integer,
+        self::AUTO_WITHDRAWAL_LIMIT_BTC => ConfigTypes::Integer,
+        self::AUTO_WITHDRAWAL_LIMIT_ETH => ConfigTypes::Integer,
+        self::BANNER_FORCE_HTTPS => ConfigTypes::Bool,
+        self::BTC_WITHDRAW => ConfigTypes::Bool,
+        self::BTC_WITHDRAW_FEE => ConfigTypes::Float,
+        self::BTC_WITHDRAW_MAX_AMOUNT => ConfigTypes::Integer,
+        self::BTC_WITHDRAW_MIN_AMOUNT => ConfigTypes::Integer,
+        self::CAMPAIGN_MIN_BUDGET => ConfigTypes::Integer,
+        self::CAMPAIGN_MIN_CPA => ConfigTypes::Integer,
+        self::CAMPAIGN_MIN_CPM => ConfigTypes::Integer,
+        self::CHECK_ZONE_DOMAIN => ConfigTypes::Bool,
+        self::COLD_WALLET_IS_ACTIVE => ConfigTypes::Bool,
+        self::EMAIL_VERIFICATION_REQUIRED => ConfigTypes::Bool,
+        self::EXCHANGE_CURRENCIES => ConfigTypes::Array,
+        self::FIAT_DEPOSIT_MAX_AMOUNT => ConfigTypes::Integer,
+        self::FIAT_DEPOSIT_MIN_AMOUNT => ConfigTypes::Integer,
+        self::HOT_WALLET_MAX_VALUE => ConfigTypes::Integer,
+        self::HOT_WALLET_MIN_VALUE => ConfigTypes::Integer,
+        self::INVENTORY_EXPORT_WHITELIST => ConfigTypes::Array,
+        self::INVENTORY_IMPORT_WHITELIST => ConfigTypes::Array,
+        self::INVOICE_ENABLED => ConfigTypes::Bool,
+        self::MAX_PAGE_ZONES => ConfigTypes::Integer,
+        self::NETWORK_DATA_CACHE_TTL => ConfigTypes::Integer,
+        self::NOW_PAYMENTS_EXCHANGE => ConfigTypes::Bool,
+        self::NOW_PAYMENTS_FEE => ConfigTypes::Float,
+        self::NOW_PAYMENTS_MAX_AMOUNT => ConfigTypes::Integer,
+        self::NOW_PAYMENTS_MIN_AMOUNT => ConfigTypes::Integer,
+        self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
+        self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
+        self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
+        self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
+        self::UPLOAD_LIMIT_VIDEO => ConfigTypes::Integer,
+        self::UPLOAD_LIMIT_ZIP => ConfigTypes::Integer,
+    ];
+
+    private const SECRETS = [
+        self::ADSHARES_LICENSE_KEY,
+        self::ADSHARES_SECRET,
+        self::CLASSIFIER_EXTERNAL_API_KEY_SECRET,
+        self::EXCHANGE_API_SECRET,
+        self::NOW_PAYMENTS_IPN_SECRET,
+        self::SKYNET_API_KEY,
     ];
 
     public $incrementing = false;
@@ -185,27 +311,14 @@ class Config extends Model
         return (int)self::fetchByKeyOrDefault($key, (string)$default);
     }
 
-    public static function fetchFloatOrFail(string $key, bool $allowLicenseKeys = false): float
+    public static function fetchFloatOrFail(string $key): float
     {
-        $licenseKeys = [
-            self::LICENCE_RX_FEE,
-            self::LICENCE_TX_FEE,
-        ];
-
-        if (!$allowLicenseKeys && in_array($key, $licenseKeys, true)) {
-            throw new RuntimeException(sprintf('These value %s need to be taken from a license reader', $key));
-        }
-
         return (float)self::fetchByKeyOrFail($key)->value;
     }
 
-    public static function fetchStringOrFail(string $key, bool $allowLicenseKeys = false): string
+    public static function fetchStringOrFail(string $key): string
     {
-        if (!$allowLicenseKeys && $key === self::LICENCE_ACCOUNT) {
-            throw new RuntimeException(sprintf('This value %s needs to be taken from a license reader', $key));
-        }
-
-        return (string)self::fetchByKeyOrFail($key)->value;
+        return self::fetchByKeyOrFail($key)->value;
     }
 
     public static function fetchJsonOrFail(string $key): array
@@ -246,22 +359,184 @@ class Config extends Model
         return self::fetchByKeyOrDefault($key) === '1';
     }
 
-    public static function fetchAdminSettings(): array
+    public static function fetchAdminSettings(bool $withSecrets = false): array
     {
-        return Cache::remember('config.admin', 10 * 60, function () {
-            $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
-                ->get()
-                ->pluck('value', 'key')
-                ->toArray();
-            return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);
+        $adminSettings = Cache::remember('config.admin', 10 * 60, function () {
+            try {
+                $fetched = self::all()
+                    ->pluck('value', 'key')
+                    ->toArray();
+            } catch (QueryException $exception) {
+                Log::error(sprintf('Fetching admin settings from DB failed. %s', $exception->getMessage()));
+                $fetched = [];
+            }
+            $merged = array_merge(self::getDefaultAdminSettings($fetched), $fetched);
+            foreach ($merged as $key => $value) {
+                $merged[$key] = self::mapValueType($key, $value);
+            }
+
+            return $merged;
         });
+
+        if (!$withSecrets) {
+            foreach (self::SECRETS as $secretKey) {
+                unset($adminSettings[$secretKey]);
+            }
+        }
+
+        return $adminSettings;
+    }
+
+    private static function mapValueType(string $key, ?string $value): string|array|int|null|float|bool
+    {
+        if (null === $value) {
+            return null;
+        }
+
+        return match (self::TYPE_CONVERSIONS[$key] ?? ConfigTypes::String) {
+            ConfigTypes::Array => array_filter(explode(',', $value)),
+            ConfigTypes::Bool => '1' === $value,
+            ConfigTypes::Float => (float)$value,
+            ConfigTypes::Integer => (int)$value,
+            default => $value,
+        };
     }
 
     public static function updateAdminSettings(array $settings): void
     {
-        foreach ($settings as $key => $value) {
-            self::upsertByKey($key, $value);
+        DB::beginTransaction();
+        try {
+            foreach ($settings as $key => $value) {
+                if (null === $value) {
+                    Config::whereKey($key)->delete();
+                    continue;
+                }
+
+                if (in_array($key, self::SECRETS, true)) {
+                    $value = Crypt::encryptString($value);
+                }
+                self::upsertByKey($key, $value);
+            }
+            DB::commit();
+        } catch (Throwable $exception) {
+            Log::error(sprintf("Exception during administrator's settings update (%s)", $exception->getMessage()));
+            DB::rollBack();
+            throw $exception;
         }
         Cache::forget('config.admin');
+    }
+
+    private static function getDefaultAdminSettings(array $fetched): array
+    {
+        return [
+            self::ADPANEL_URL => 'http://localhost:8080',
+            self::ADPAY_URL => 'http://localhost:8012',
+            self::ADS_OPERATOR_SERVER_URL => 'https://ads-operator.adshares.net',
+            self::ADS_RPC_URL => 'https://rpc.adshares.net',
+            self::ADSELECT_URL => 'http://localhost:8011',
+            self::ADSERVER_NAME => 'AdServer',
+            self::ADSHARES_ADDRESS => null,
+            self::ADSHARES_LICENSE_KEY => '',
+            self::ADSHARES_LICENSE_SERVER_URL => 'https://account.adshares.pl/',
+            self::ADSHARES_NODE_HOST => '',
+            self::ADSHARES_NODE_PORT => '6511',
+            self::ADSHARES_SECRET => null,
+            self::ADUSER_BASE_URL => '',
+            self::ADUSER_INFO_URL =>
+                isset($fetched[self::ADUSER_BASE_URL])
+                    ? ($fetched[self::ADUSER_BASE_URL] . '/panel.html?rated=1&url={domain}') : '',
+            self::ADUSER_INTERNAL_URL => $fetched[self::ADUSER_BASE_URL] ?? '',
+            self::ADUSER_SERVE_SUBDOMAIN => '',
+            self::ALLOW_ZONE_IN_IFRAME => '1',
+            self::AUTO_CONFIRMATION_ENABLED => '0',
+            self::AUTO_REGISTRATION_ENABLED => '0',
+            self::AUTO_WITHDRAWAL_LIMIT_ADS => (string)1_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_BSC => (string)1_000_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_BTC => (string)1_000_000_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_ETH => (string)1_000_000_000_000_00,
+            self::BANNER_FORCE_HTTPS => '1',
+            self::BTC_WITHDRAW => '0',
+            self::BTC_WITHDRAW_FEE => '0.05',
+            self::BTC_WITHDRAW_MAX_AMOUNT => '1000000000000000',
+            self::BTC_WITHDRAW_MIN_AMOUNT => '10000000000000',
+            self::CAMPAIGN_MIN_BUDGET => '5000000000',
+            self::CAMPAIGN_MIN_CPA => '1000000000',
+            self::CAMPAIGN_MIN_CPM => '5000000000',
+            self::CAMPAIGN_TARGETING_EXCLUDE => '',
+            self::CAMPAIGN_TARGETING_REQUIRE => '',
+            self::CDN_PROVIDER => '',
+            self::CHECK_ZONE_DOMAIN => '1',
+            self::CLASSIFIER_EXTERNAL_API_KEY_NAME => '',
+            self::CLASSIFIER_EXTERNAL_API_KEY_SECRET => '',
+            self::CLASSIFIER_EXTERNAL_BASE_URL => 'https://adclassify.adshares.net',
+            self::CLASSIFIER_EXTERNAL_NAME => '0001000000081a67',
+            self::CLASSIFIER_EXTERNAL_PUBLIC_KEY => 'FE736A82F91247B022953A58744EAEA18C477468831E680EEDFB49A29F6F7088',
+            self::COLD_WALLET_ADDRESS => '',
+            self::COLD_WALLET_IS_ACTIVE => '0',
+            self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
+            self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
+            self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
+            self::EMAIL_VERIFICATION_REQUIRED => '0',
+            self::EXCHANGE_API_KEY => '',
+            self::EXCHANGE_API_SECRET => '',
+            self::EXCHANGE_API_URL => '',
+            self::EXCHANGE_CURRENCIES => 'USD,BTC',
+            self::FIAT_DEPOSIT_MAX_AMOUNT => '100000',
+            self::FIAT_DEPOSIT_MIN_AMOUNT => '2000',
+            self::HOT_WALLET_MAX_VALUE => '50000000000000000',
+            self::HOT_WALLET_MIN_VALUE => '2000000000000000',
+            self::INVENTORY_EXPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? '',
+            self::INVENTORY_IMPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? '',
+            self::INVENTORY_WHITELIST => '',
+            self::INVOICE_COMPANY_ADDRESS => '',
+            self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
+            self::INVOICE_COMPANY_CITY => '',
+            self::INVOICE_COMPANY_COUNTRY => '',
+            self::INVOICE_COMPANY_NAME => '',
+            self::INVOICE_COMPANY_POSTAL_CODE => '',
+            self::INVOICE_COMPANY_VAT_ID => '',
+            self::INVOICE_CURRENCIES => '',
+            self::INVOICE_ENABLED => '0',
+            self::INVOICE_NUMBER_FORMAT => '',
+            self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
+            self::MAIL_FROM_NAME => 'Adshares AdServer',
+            self::MAIL_MAILER => 'smtp',
+            self::MAIL_SMTP_ENCRYPTION => 'tls',
+            self::MAIL_SMTP_HOST => 'localhost',
+            self::MAIL_SMTP_PASSWORD => '',
+            self::MAIL_SMTP_PORT => '587',
+            self::MAIL_SMTP_USERNAME => '',
+            self::MAIN_JS_BASE_URL => $fetched[self::URL] ?? '',
+            self::MAIN_JS_TLD => '',
+            self::MAX_PAGE_ZONES => '4',
+            self::NETWORK_DATA_CACHE_TTL => '60',
+            self::NOW_PAYMENTS_API_KEY => '',
+            self::NOW_PAYMENTS_CURRENCY => 'USD',
+            self::NOW_PAYMENTS_EXCHANGE => '0',
+            self::NOW_PAYMENTS_FEE => '0.05',
+            self::NOW_PAYMENTS_IPN_SECRET => '',
+            self::NOW_PAYMENTS_MAX_AMOUNT => '1000',
+            self::NOW_PAYMENTS_MIN_AMOUNT => '25',
+            self::OPERATOR_RX_FEE => '0.01',
+            self::OPERATOR_TX_FEE => '0.01',
+            self::REFERRAL_REFUND_COMMISSION => '',
+            self::REFERRAL_REFUND_ENABLED => '0',
+            self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
+            self::SERVE_BASE_URL => $fetched[self::URL] ?? '',
+            self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
+            self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
+            self::SITE_FILTERING_EXCLUDE => '',
+            self::SITE_FILTERING_REQUIRE => '',
+            self::SKYNET_API_KEY => '',
+            self::SKYNET_API_URL => 'https://siasky.net',
+            self::SKYNET_CDN_URL => '',
+            self::SUPPORT_EMAIL => 'mail@example.com',
+            self::TECHNICAL_EMAIL => 'mail@example.com',
+            self::UPLOAD_LIMIT_IMAGE => (string)(512 * 1024),
+            self::UPLOAD_LIMIT_MODEL => (string)(1024 * 1024),
+            self::UPLOAD_LIMIT_VIDEO => (string)(1024 * 1024),
+            self::UPLOAD_LIMIT_ZIP => (string)(512 * 1024),
+            self::URL => '',
+        ];
     }
 }

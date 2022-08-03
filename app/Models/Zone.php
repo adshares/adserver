@@ -136,7 +136,7 @@ class Zone extends Model
 
         return Cache::remember(
             'zones.' . $uuid,
-            (int)config('app.network_data_cache_ttl'),
+            config('app.network_data_cache_ttl'),
             function () use ($binId) {
                 return self::where('uuid', $binId)->with(
                     [

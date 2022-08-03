@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Invoice;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
 
@@ -48,6 +49,7 @@ class InvoicesControllerTest extends TestCase
                 Config::INVOICE_NUMBER_FORMAT => 'PROF NN/MM/YYYY',
             ]
         );
+        DatabaseConfigReader::overwriteAdministrationConfig();
     }
 
     public function testBrowseInvoicesWhenNoInvoices(): void

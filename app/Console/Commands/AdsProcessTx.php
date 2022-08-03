@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,26 +45,16 @@ use InvalidArgumentException;
 class AdsProcessTx extends BaseCommand
 {
     public const EXIT_CODE_SUCCESS = 0;
-
     public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
-
     public const EXIT_CODE_LOCKED = 2;
 
     protected $signature = 'ads:process-tx';
-
     protected $description = 'Fetches and processes incoming transactions';
 
-    /** @var string */
-    private $adServerAddress;
-
-    /** @var AdsLogReader */
-    private $adsLogReader;
-
-    /** @var ExchangeRateReader */
-    private $exchangeRateReader;
-
-    /** @var AdsClient */
-    private $adsClient;
+    private string $adServerAddress;
+    private AdsLogReader $adsLogReader;
+    private ExchangeRateReader $exchangeRateReader;
+    private AdsClient $adsClient;
 
     public function __construct(
         Locker $locker,
@@ -73,7 +63,6 @@ class AdsProcessTx extends BaseCommand
         AdsClient $adsClient
     ) {
         parent::__construct($locker);
-        $this->adServerAddress = (string)config('app.adshares_address');
         $this->adsLogReader = $adsLogReader;
         $this->exchangeRateReader = $exchangeRateReader;
         $this->adsClient = $adsClient;
@@ -89,6 +78,7 @@ class AdsProcessTx extends BaseCommand
 
         $this->info('Start command ' . $this->getName());
 
+        $this->adServerAddress = config('app.adshares_address');
         try {
             $transactionCount = $this->adsLogReader->parseLog();
             $this->info("Number of added transactions: ${transactionCount}");
@@ -222,7 +212,7 @@ class AdsProcessTx extends BaseCommand
 
     private function checkIfColdWalletTransaction(AdsPayment $adsPayment): bool
     {
-        return $adsPayment->address === config('app.adshares_wallet_cold_address');
+        return $adsPayment->address === config('app.cold_wallet_address');
     }
 
     private function handleSendOneTx(AdsPayment $adsPayment, SendOneTransaction $transaction): void

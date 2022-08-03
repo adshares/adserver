@@ -394,7 +394,7 @@ class SitesController extends Controller
         return self::json(
             [
                 'code' => SiteCodeGenerator::generateCryptovoxels(
-                    new SecureUrl((string)config('app.url')),
+                    new SecureUrl(config('app.url')),
                     $user->wallet_address
                 )
             ]
