@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.8] - 2022-08-04
+### Added
+- MySQL stored procedures clearing tables
+
 ## [1.18.7] - 2022-07-27
 ### Fixed
 - Support new sizes in metaverse
@@ -662,7 +666,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.7...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.8...develop
+[1.18.8]: https://github.com/adshares/adserver/compare/v1.18.7...v1.18.8
 [1.18.7]: https://github.com/adshares/adserver/compare/v1.18.6...v1.18.7
 [1.18.6]: https://github.com/adshares/adserver/compare/v1.18.5...v1.18.6
 [1.18.5]: https://github.com/adshares/adserver/compare/v1.18.4...v1.18.5
