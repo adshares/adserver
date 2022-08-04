@@ -517,8 +517,7 @@ class WalletControllerTest extends TestCase
 
     public function testDepositInfo(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->login();
         $response = $this->get('/api/deposit-info');
 
         $response->assertStatus(Response::HTTP_OK)->assertJson(['address' => config('app.adshares_address')]);
@@ -534,6 +533,20 @@ class WalletControllerTest extends TestCase
 
         // check value
         $this->assertNotFalse(strpos($message, $user->uuid));
+    }
+
+    public function testDepositInfoWithFiat(): void
+    {
+        Config::updateAdminSettings([Config::INVOICE_ENABLED => '1']);
+        $this->login();
+        $response = $this->get('/api/deposit-info');
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['fiat' => [
+            'minAmount' => 2000,
+            'maxAmount' => 100000,
+            'currencies' => ['EUR', 'USD'],
+        ]]);
     }
 
     public function testHistory(): void
