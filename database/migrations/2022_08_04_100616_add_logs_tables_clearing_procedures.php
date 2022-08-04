@@ -71,17 +71,6 @@ CONTAINS SQL
 SQL SECURITY DEFINER
 COMMENT ''
 BEGIN
-    SET @last := (SELECT MIN(id) FROM network_event_logs WHERE created_at = _date);
-    IF @last IS NOT NULL THEN
-        label: LOOP
-            SET @offset := (SELECT MIN(id) FROM network_event_logs);
-            DELETE FROM network_event_logs WHERE id BETWEEN @offset AND @offset+999 AND id < @last ORDER BY id ASC;
-            IF @offset >= @last THEN
-                LEAVE label;
-            END IF;
-        END LOOP label;
-    END IF;
-    
     SET @last := (SELECT MIN(id) FROM network_impressions WHERE created_at = _date);
     IF @last IS NOT NULL THEN
         label: LOOP
