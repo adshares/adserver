@@ -78,6 +78,35 @@ final class NowPaymentsTest extends TestCase
         });
     }
 
+    /**
+     * @dataProvider exchangeCurrencyProvider
+     */
+    public function testExchangeWhileLedgerExists(Currency $currency, string $targetAmount, int $expectedAmount): void
+    {
+        SystemConfig::set('app.currency', $currency);
+        $nowPayments = $this->setupNowPayments();
+        /** @var User $user */
+        $user = User::factory()->create();
+        UserLedgerEntry::factory()->create(
+            [
+                'status' => UserLedgerEntry::STATUS_PROCESSING,
+                'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                'txid' => 'NP:payment_2',
+                'user_id' => $user->id,
+            ]
+        );
+
+        $result = $nowPayments->exchange(
+            $user,
+            ['orderId' => 'order_1', 'paymentId' => 'payment_2', 'targetAmount' => $targetAmount]
+        );
+
+        self::assertTrue($result);
+        Mail::assertQueued(function (DepositProcessed $mail) use ($currency, $expectedAmount) {
+            return $currency === $mail->getCurrency() && $expectedAmount === $mail->getAmount();
+        });
+    }
+
     public function exchangeCurrencyProvider(): array
     {
         return [
