@@ -221,20 +221,17 @@ final class NowPayments
         }
 
         $clicks = AdsConverter::adsToClicks($amount);
-        /** @var Currency $appCurrency */
-        if (Currency::ADS !== ($appCurrency = config('app.currency'))) {
-            $clicks = $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)->fromClick($clicks);
-        }
+        $clicksInAppCurrency = $this->computeClicksInAppCurrency($clicks);
         $status = $processed ? UserLedgerEntry::STATUS_ACCEPTED : UserLedgerEntry::STATUS_PROCESSING;
         if ($entry === null) {
             $entry = UserLedgerEntry::construct(
                 $user->id,
-                $clicks,
+                $clicksInAppCurrency,
                 $status,
                 UserLedgerEntry::TYPE_DEPOSIT
             )->processed($ledgerTxId);
         } else {
-            $entry->amount = $clicks;
+            $entry->amount = $clicksInAppCurrency;
             $entry->status = $status;
         }
 
@@ -374,5 +371,16 @@ final class NowPayments
         }
 
         return $amount * $rate;
+    }
+
+    private function computeClicksInAppCurrency(int $clicks): int
+    {
+        /** @var Currency $appCurrency */
+        $appCurrency = config('app.currency');
+
+        return match ($appCurrency) {
+            Currency::ADS => $clicks,
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)->fromClick($clicks),
+        };
     }
 }
