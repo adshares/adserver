@@ -23,10 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Services;
 
-use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
-use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkImpression;
@@ -36,16 +33,16 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Config as SystemConfig;
 
 final class PaymentDetailsProcessorTest extends TestCase
 {
     private const LICENSE_FEE = 0.01;
-
     private const OPERATOR_FEE = 0.01;
 
     public function testProcessingEmptyDetails(): void
@@ -59,18 +56,6 @@ final class PaymentDetailsProcessorTest extends TestCase
         $this->assertCount(0, NetworkPayment::all());
     }
 
-    public function testProcessingMissingConfigurationOfOperatorFee(): void
-    {
-        DB::delete('DELETE FROM configs WHERE `key` = ?', [Config::OPERATOR_RX_FEE]);
-
-        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
-
-        $adsPayment = $this->createAdsPayment(10000);
-
-        self::expectException(MissingInitialConfigurationException::class);
-        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
-    }
-
     public function testProcessingDetails(): void
     {
         $totalPayment = 10000;
@@ -82,6 +67,7 @@ final class PaymentDetailsProcessorTest extends TestCase
         $user = User::factory()->create();
         $userUuid = $user->uuid;
 
+        /** @var NetworkImpression $networkImpression */
         $networkImpression = NetworkImpression::factory()->create();
         $networkCases = NetworkCase::factory()->times($paidEventsCount)->create(
             ['network_impression_id' => $networkImpression->id, 'publisher_id' => $userUuid]
@@ -119,8 +105,12 @@ final class PaymentDetailsProcessorTest extends TestCase
         $this->assertEquals($expectedAdIncome, NetworkCasePayment::sum('paid_amount'));
     }
 
-    public function testAddAdIncomeToUserLedger(): void
+    /**
+     * @dataProvider currencyProvider
+     */
+    public function testAddAdIncomeToUserLedger(Currency $currency): void
     {
+        SystemConfig::set('app.currency', $currency);
         $adsPayment = $this->createAdsPayment(100_000_000_000);
         /** @var User $user */
         $user = User::factory()->create();
@@ -128,18 +118,36 @@ final class PaymentDetailsProcessorTest extends TestCase
         $networkCase = NetworkCase::factory()->create([
             'publisher_id' => $user->uuid,
         ]);
-        /** @var NetworkCasePayment $networkCasePayment */
-        $networkCasePayment = NetworkCasePayment::factory()->create([
-            'network_case_id' => $networkCase->id,
-            'ads_payment_id' => $adsPayment->id,
-        ]);
-        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
 
+        $paidAmount = 100_000_000;
+        $rate = 5.0;
+        $paidAmountCurrency = (int)floor($paidAmount * $rate);
+        NetworkCasePayment::factory()->create([
+            'ads_payment_id' => $adsPayment->id,
+            'exchange_rate' => $rate,
+            'license_fee' => 0,
+            'network_case_id' => $networkCase->id,
+            'operator_fee' => 0,
+            'paid_amount' => $paidAmount,
+            'paid_amount_currency' => $paidAmountCurrency,
+            'total_amount' => $paidAmount,
+        ]);
+        $expectedPaidAmount = Currency::ADS === $currency ? $paidAmount : $paidAmountCurrency;
+
+        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
         $paymentDetailsProcessor->addAdIncomeToUserLedger($adsPayment);
 
         $entries = UserLedgerEntry::all();
         self::assertCount(1, $entries);
-        self::assertEquals($networkCasePayment->paid_amount, $entries->first()->amount);
+        self::assertEquals($expectedPaidAmount, $entries->first()->amount);
+    }
+
+    public function currencyProvider(): array
+    {
+        return [
+            'ADS' => [Currency::ADS],
+            'USD' => [Currency::USD],
+        ];
     }
 
     public function testAddAdIncomeToUserLedgerWhenNoUser(): void

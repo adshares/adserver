@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -56,5 +56,10 @@ class WithdrawalSuccess extends Mailable
             'network' => $this->address->getNetwork(),
         ];
         return $this->markdown('emails.withdrawal-success')->with($variables);
+    }
+
+    public function getAmount(): int
+    {
+        return $this->amount;
     }
 }

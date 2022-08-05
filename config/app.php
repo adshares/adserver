@@ -30,7 +30,7 @@ return [
     'refresh_testing_database' => env('APP_REFRESH_TESTING_DATABASE', false),
     'setup' => (int)env('APP_SETUP', 0),
     'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
-    'currency' => Currency::from(env('APP_CURRENCY', 'ADS')),
+    'currency' => Currency::from(env('APP_CURRENCY', Currency::ADS->value)),
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
 

@@ -228,6 +228,8 @@ class Config extends Model
         self::NOW_PAYMENTS_FEE => ConfigTypes::Float,
         self::NOW_PAYMENTS_MAX_AMOUNT => ConfigTypes::Integer,
         self::NOW_PAYMENTS_MIN_AMOUNT => ConfigTypes::Integer,
+        self::OPERATOR_RX_FEE => ConfigTypes::Float,
+        self::OPERATOR_TX_FEE => ConfigTypes::Float,
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,

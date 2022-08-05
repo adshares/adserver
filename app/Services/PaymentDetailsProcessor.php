@@ -23,10 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Services;
 
-use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
-use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\User;
@@ -48,17 +45,6 @@ class PaymentDetailsProcessor
     ) {
     }
 
-    private static function fetchOperatorFee(): float
-    {
-        try {
-            $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        } catch (ConfigException $exception) {
-            throw new MissingInitialConfigurationException('No config entry for operator fee.');
-        }
-
-        return $operatorFee;
-    }
-
     public function processPaidEvents(
         AdsPayment $adsPayment,
         DateTime $transactionTime,
@@ -67,8 +53,8 @@ class PaymentDetailsProcessor
     ): PaymentProcessingResult {
         $adsPaymentId = $adsPayment->id;
 
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), self::fetchOperatorFee());
+        $exchangeRate = $this->fetchExchangeRate();
+        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), $this->fetchOperatorFee());
         $totalLicenseFee = 0;
         $totalEventValue = 0;
 
@@ -111,12 +97,11 @@ class PaymentDetailsProcessor
         $adServerAddress = config('app.adshares_address');
         /** @var Currency $appCurrency */
         $appCurrency = config('app.currency');
-        $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
-
-        $exchangeRate = match ($appCurrency) {
-            Currency::ADS => ExchangeRate::ONE(),
-            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
-        };
+        $usePaidAmountCurrency = Currency::ADS !== $appCurrency;
+        $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByAdsPaymentId(
+            $adsPayment->id,
+            $usePaidAmountCurrency
+        );
 
         foreach ($splitPayments as $splitPayment) {
             if (null === ($user = User::fetchByUuid($splitPayment->publisher_id))) {
@@ -135,7 +120,7 @@ class PaymentDetailsProcessor
             $amount = (int)$splitPayment->paid_amount;
             UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
-                $exchangeRate->fromClick($amount),
+                $amount,
                 UserLedgerEntry::STATUS_ACCEPTED,
                 UserLedgerEntry::TYPE_AD_INCOME,
                 $adsPayment->address,
@@ -143,6 +128,15 @@ class PaymentDetailsProcessor
                 $adsPayment->txid
             )->save();
         }
+    }
+
+    private function fetchExchangeRate(): ExchangeRate
+    {
+        /** @var Currency $appCurrency */
+        $appCurrency = config('app.currency');
+        $currency = Currency::ADS === $appCurrency ? Currency::USD : $appCurrency;
+
+        return $this->exchangeRateReader->fetchExchangeRate(null, $currency->value);
     }
 
     private function fetchLicenseFee(): float
@@ -158,5 +152,10 @@ class PaymentDetailsProcessor
         }
 
         return NetworkCase::fetchByCaseIds($caseIds);
+    }
+
+    private function fetchOperatorFee(): float
+    {
+        return config('app.payment_rx_fee');
     }
 }
