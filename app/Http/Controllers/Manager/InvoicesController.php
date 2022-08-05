@@ -67,7 +67,7 @@ class InvoicesController extends Controller
 
         $input['user_id'] = $user->id;
         Validator::make($input, Invoice::$rules)->validate();
-        if (!in_array($input['currency'] ?? '', explode(',', Config::fetchStringOrFail(Config::INVOICE_CURRENCIES)))) {
+        if (!in_array($input['currency'] ?? '', config('app.invoice_currencies'))) {
             throw new UnprocessableEntityHttpException('Unsupported currency');
         }
         $invoice = Invoice::createProforma($input);

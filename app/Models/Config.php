@@ -221,6 +221,7 @@ class Config extends Model
         self::HOT_WALLET_MIN_VALUE => ConfigTypes::Integer,
         self::INVENTORY_EXPORT_WHITELIST => ConfigTypes::Array,
         self::INVENTORY_IMPORT_WHITELIST => ConfigTypes::Array,
+        self::INVOICE_CURRENCIES => ConfigTypes::Array,
         self::INVOICE_ENABLED => ConfigTypes::Bool,
         self::MAX_PAGE_ZONES => ConfigTypes::Integer,
         self::NETWORK_DATA_CACHE_TTL => ConfigTypes::Integer,

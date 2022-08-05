@@ -574,6 +574,20 @@ class WalletControllerTest extends TestCase
         $this->assertNotFalse(strpos($message, $user->uuid));
     }
 
+    public function testDepositInfoWithFiat(): void
+    {
+        Config::updateAdminSettings([Config::INVOICE_ENABLED => '1']);
+        $this->login();
+        $response = $this->get('/api/deposit-info');
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['fiat' => [
+            'minAmount' => 2000,
+            'maxAmount' => 100000,
+            'currencies' => ['EUR', 'USD'],
+        ]]);
+    }
+
     public function testHistory(): void
     {
         $user = $this->login();

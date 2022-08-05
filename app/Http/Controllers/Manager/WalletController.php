@@ -513,7 +513,7 @@ class WalletController extends Controller
         $fiatDeposit = Config::isTrueOnly(Config::INVOICE_ENABLED) ? [
             'minAmount' => config('app.fiat_deposit_min_amount'),
             'maxAmount' => config('app.fiat_deposit_max_amount'),
-            'currencies' => explode(',', Config::fetchStringOrFail(Config::INVOICE_CURRENCIES)),
+            'currencies' => config('app.invoice_currencies'),
         ] : null;
 
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
