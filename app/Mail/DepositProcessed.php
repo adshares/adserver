@@ -43,8 +43,12 @@ class DepositProcessed extends Mailable
 
     public function build(): self
     {
+        $amount = AdsConverter::clicksToAds($this->amount);
+        if (Currency::ADS !== $this->currency) {
+            $amount = substr($amount, 0, strpos($amount, '.') + 3);
+        }
         $variables = [
-            'amount' => AdsConverter::clicksToAds($this->amount),
+            'amount' => $amount,
             'currency' => $this->currency->value,
         ];
 

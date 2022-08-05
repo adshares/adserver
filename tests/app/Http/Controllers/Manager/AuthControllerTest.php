@@ -35,12 +35,14 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\RegistrationMode;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use DateTime;
+use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -220,10 +222,14 @@ class AuthControllerTest extends TestCase
         $this->assertNull($user->refLink);
     }
 
-    public function testEmailActivateWithBonus(): void
+    /**
+     * @dataProvider emailActivateWithBonusProvider
+     */
+    public function testEmailActivateWithBonus(Currency $currency, int $definedBonus, int $expectedBonusIncome): void
     {
+        SystemConfig::set('app.currency', $currency);
         /** @var RefLink $refLink */
-        $refLink = RefLink::factory()->create(['bonus' => 100, 'refund' => 0.5]);
+        $refLink = RefLink::factory()->create(['bonus' => $definedBonus, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
 
         self::assertSame(
@@ -238,7 +244,7 @@ class AuthControllerTest extends TestCase
         $this->activateUser($user);
 
         self::assertSame(
-            [300, 300, 0],
+            [$expectedBonusIncome, $expectedBonusIncome, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
@@ -250,9 +256,60 @@ class AuthControllerTest extends TestCase
             ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
             ->firstOrFail();
 
-        $this->assertEquals(300, $entry->amount);
+        $this->assertEquals($expectedBonusIncome, $entry->amount);
         $this->assertNotNull($entry->refLink);
         $this->assertEquals($refLink->id, $entry->refLink->id);
+    }
+
+    public function emailActivateWithBonusProvider(): array
+    {
+        return [
+            'ADS' => [
+                Currency::ADS,
+                1_000_000_000_000,// defined bonus in currency
+                3_000_300_030_003,// accounted bonus is ADS, = x / 0.3333
+            ],
+            'USD' => [
+                Currency::USD,
+                1_000_000_000_000,// defined bonus in currency
+                1_000_000_000_000,// accounted bonus in currency
+            ],
+        ];
+    }
+
+    public function testEmailActivateWhileExchangeRateUnavailable(): void
+    {
+        $this->app->bind(ExchangeRateRepository::class, function () {
+            $mock = self::createMock(ExchangeRateRepository::class);
+            $mock->method('fetchExchangeRate')->willThrowException(new ExchangeRateNotAvailableException());
+            return $mock;
+        });
+
+        /** @var RefLink $refLink */
+        $refLink = RefLink::factory()->create(['bonus' => 1_000_000_000_000, 'refund' => 0.5]);
+        $user = $this->registerUser($refLink->token);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $this->activateUser($user);
+
+        self::assertSame(
+            [0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        self::assertDatabaseMissing(UserLedgerEntry::class, ['type' => UserLedgerEntry::TYPE_BONUS_INCOME]);
     }
 
     public function testEmailActivateNoBonus(): void
@@ -569,6 +626,15 @@ class AuthControllerTest extends TestCase
             'network' => 'ads',
             'address' => '0001-00000001-8B4E',
             'signature' => '0x1231231231'
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testInvalidWallet(): void
+    {
+        $response = $this->post(self::WALLET_LOGIN_URI, [
+            'network' => 'invalid',
+            'address' => 'invalid',
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }

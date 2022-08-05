@@ -68,6 +68,7 @@ use function config;
 
 class WalletController extends Controller
 {
+    private const APP_CURRENCY = 'app.currency';
     private const FIELD_ADDRESS = 'address';
     private const FIELD_AMOUNT = 'amount';
     private const FIELD_BTC = 'btc';
@@ -101,7 +102,7 @@ class WalletController extends Controller
             $rate = 0;
             try {
                 /** @var Currency $appCurrency */
-                $appCurrency = config('app.currency');
+                $appCurrency = config(self::APP_CURRENCY);
                 $rateToAds = match ($appCurrency) {
                     Currency::ADS => ExchangeRate::ONE()->getValue(),
                     default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)->getValue(),
@@ -263,7 +264,7 @@ class WalletController extends Controller
             }
         } else {
             /** @var Currency $appCurrency */
-            $appCurrency = config('app.currency');
+            $appCurrency = config(self::APP_CURRENCY);
             $exchangeRate = match ($appCurrency) {
                 Currency::ADS => ExchangeRate::ONE(),
                 default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
@@ -370,7 +371,7 @@ class WalletController extends Controller
         )->addressed($addressFrom, $addressTo);
 
         /** @var Currency $appCurrency */
-        $appCurrency = config('app.currency');
+        $appCurrency = config(self::APP_CURRENCY);
         $exchangeRate = match ($appCurrency) {
             Currency::ADS => ExchangeRate::ONE(),
             default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
