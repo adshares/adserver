@@ -35,7 +35,7 @@ class DepositProcessed extends Mailable
     private $amount;
     private $currency;
 
-    public function __construct(int $amount, Currency $currency = Currency::ADS)
+    public function __construct(int $amount, Currency $currency)
     {
         $this->amount = $amount;
         $this->currency = $currency;
@@ -53,5 +53,15 @@ class DepositProcessed extends Mailable
         ];
 
         return $this->markdown('emails.deposit-processed')->with($variables);
+    }
+
+    public function getAmount(): int
+    {
+        return $this->amount;
+    }
+
+    public function getCurrency(): Currency
+    {
+        return $this->currency;
     }
 }
