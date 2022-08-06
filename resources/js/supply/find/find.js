@@ -738,14 +738,14 @@ domReady(function () {
                                 if (dwmthURLS[request.url]) {
                                     return;
                                 }
-                                var iframe = addTrackingIframe(request.url);
+                                var iframe = addAnalyticsIframe(request.url);
                                 dwmthACL.push(iframe.contentWindow);
                                 dwmthURLS[request.url] = 1;
                             } else if (request.type == 'img') {
                                 if (dwmthURLS[request.url]) {
                                     return;
                                 }
-                                addTrackingImage(request.url);
+                                addAnalyticsImage(request.url);
                                 dwmthACL.push(null);
                                 dwmthURLS[request.url] = 1;
                             }
@@ -757,7 +757,7 @@ domReady(function () {
     })
 });
 
-var addTrackingIframe = function (url) {
+var addAnalyticsIframe = function (url) {
     if (!url) return;
     var iframe = createIframeFromUrl(url, topdoc);
     topdoc.body.appendChild(iframe);
@@ -767,7 +767,7 @@ var addTrackingIframe = function (url) {
     return iframe;
 };
 
-var addTrackingImage = function (url) {
+var addAnalyticsImage = function (url) {
     if (!url) return;
     var img = new Image();
     img.setAttribute('style', 'display:none');
@@ -884,7 +884,7 @@ var fetchBanner = function (banner, context, zone_options) {
             var timer = setInterval(function () {
                 if (isVisible(element)) {
                     clearInterval(timer);
-                    dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
+                    dwmthACL.push(addAnalyticsIframe(context.view_url).contentWindow);
                 }
             }, 1000);
         };
@@ -913,7 +913,7 @@ var fetchBanner = function (banner, context, zone_options) {
                             $pick(zone_options.interval, 1),
                             $pick(zone_options.burst, 1),
                             function () {
-                                dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
+                                dwmthACL.push(addAnalyticsIframe(context.view_url).contentWindow);
                             }], banner.rpm
                         );
                     } else {
