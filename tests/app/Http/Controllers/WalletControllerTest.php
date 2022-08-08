@@ -400,12 +400,6 @@ class WalletControllerTest extends TestCase
      */
     public function testWithdrawBtcApprovalMail(Currency $currency, int $amount, float $expectedAmountInAds): void
     {
-        Config::updateAdminSettings(
-            [
-                Config::BTC_WITHDRAW_MAX_AMOUNT => 10000,
-                Config::BTC_WITHDRAW_MIN_AMOUNT => 100,
-            ]
-        );
         $this->app->bind(
             AdsExchange::class,
             function () use ($expectedAmountInAds) {

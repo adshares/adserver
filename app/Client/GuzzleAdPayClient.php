@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -37,23 +37,14 @@ use Symfony\Component\HttpFoundation\Response;
 class GuzzleAdPayClient implements AdPay
 {
     private const URI_BID_STRATEGIES = '/api/v1/bid-strategies';
-
     private const URI_CAMPAIGNS = '/api/v1/campaigns';
-
     private const URI_PAYMENTS_TEMPLATE = '/api/v1/payments/%d';
-
     private const URI_VIEWS = '/api/v1/events/views';
-
     private const URI_CLICKS = '/api/v1/events/clicks';
-
     private const URI_CONVERSIONS = '/api/v1/events/conversions';
 
-    /** @var Client */
-    private $client;
-
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
     }
 
     public function updateBidStrategies(array $bidStrategies): void
@@ -207,12 +198,10 @@ class GuzzleAdPayClient implements AdPay
             switch ($code = $exception->getCode()) {
                 case Response::HTTP_NOT_FOUND:
                     throw new AdPayReportNotReadyException(sprintf('Report for %d is not ready', $timestamp));
-                    break;
                 case Response::HTTP_UNPROCESSABLE_ENTITY:
                     throw new AdPayReportMissingEventsException(
                         sprintf('Missing events for %d', $timestamp)
                     );
-                    break;
                 default:
                     throw new UnexpectedClientResponseException(
                         sprintf(
@@ -223,7 +212,6 @@ class GuzzleAdPayClient implements AdPay
                         $code,
                         $exception
                     );
-                    break;
             }
         }
 

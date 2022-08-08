@@ -415,8 +415,8 @@ class WalletController extends Controller
 
     private function withdrawBtc(Request $request): JsonResponse
     {
-        $minAmount = 1e11 * config('app.btc_withdraw_min_amount');
-        $maxAmount = 1e11 * config('app.btc_withdraw_max_amount');
+        $minAmount = config('app.btc_withdraw_min_amount');
+        $maxAmount = config('app.btc_withdraw_max_amount');
 
         Validator::make(
             $request->all(),
