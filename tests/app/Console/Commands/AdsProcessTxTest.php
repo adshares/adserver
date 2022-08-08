@@ -57,28 +57,27 @@ class AdsProcessTxTest extends ConsoleTestCase
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
     private const TX_ID_SEND_ONE = '0001:00000083:0001';
 
-    public function testAdsProcessValidUserDeposit(): void
+    /**
+     * @dataProvider depositProvider
+     */
+    public function testDeposit(Currency $currency, int $expectedBalance): void
     {
-        $depositAmount = 100000000000;
-        $this->insertAdsPaymentSingle($depositAmount);
-        $user = $this->setupUser();
-
-        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
-        $this->assertEquals(AdsPayment::STATUS_USER_DEPOSIT, AdsPayment::all()->first()->status);
-        $this->assertEquals($depositAmount, $user->getBalance());
-    }
-
-    public function testAdsProcessValidUserDepositWhenAppCurrencyIsUsd(): void
-    {
-        SystemConfig::set('app.currency', Currency::USD);
-        $expectedBalance = 33330000000;
-        $depositAmount = 100000000000;
+        SystemConfig::set('app.currency', $currency);
+        $depositAmount = 100_000_000_000;
         $this->insertAdsPaymentSingle($depositAmount);
         $user = $this->setupUser();
 
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_USER_DEPOSIT, AdsPayment::all()->first()->status);
         $this->assertEquals($expectedBalance, $user->getBalance());
+    }
+
+    public function depositProvider(): array
+    {
+        return [
+            'ADS' => [Currency::ADS, 100_000_000_000],
+            'USD' => [Currency::USD, 33_330_000_000],
+        ];
     }
 
     public function testAdsProcessDepositWithoutUser(): void
@@ -297,10 +296,13 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
     }
 
-    public function testReactivateCampaign(): void
+    /**
+     * @dataProvider reactivateCampaignProvider
+     */
+    public function testReactivateCampaign(Currency $currency, int $budget, int $expectedStatus): void
     {
-        $depositAmount = 100000000000;//ADS
-        $budget = 30000000000;//USD
+        SystemConfig::set('app.currency', $currency);
+        $depositAmount = 100_000_000_000;//ADS
         $this->insertAdsPaymentSingle($depositAmount);
         $user = $this->setupUser();
         /** @var Campaign $campaign */
@@ -314,27 +316,17 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertSuccessful();
         $campaign->refresh();
-        $this->assertEquals(Campaign::STATUS_ACTIVE, $campaign->status);
+        $this->assertEquals($expectedStatus, $campaign->status);
     }
 
-    public function testReactivateCampaignInsufficient(): void
+    public function reactivateCampaignProvider(): array
     {
-        $depositAmount = 100000000000;//ADS
-        $budget = 33333333334;//USD
-        $this->insertAdsPaymentSingle($depositAmount);
-        $user = $this->setupUser();
-        /** @var Campaign $campaign */
-        $campaign = Campaign::factory()->create(
-            [
-                'budget' => $budget,
-                'status' => Campaign::STATUS_SUSPENDED,
-                'user_id' => $user->id,
-            ]
-        );
-
-        $this->artisan(self::COMMAND)->assertSuccessful();
-        $campaign->refresh();
-        $this->assertEquals(Campaign::STATUS_SUSPENDED, $campaign->status);
+        return [
+            'ADS, sufficient budget' => [Currency::ADS, 30_000_000_000, Campaign::STATUS_ACTIVE],
+            'ADS, insufficient budget' => [Currency::ADS, 33_333_333_334, Campaign::STATUS_SUSPENDED],
+            'USD, sufficient budget' => [Currency::USD, 30_000_000_000, Campaign::STATUS_ACTIVE],
+            'USD, insufficient budget' => [Currency::USD, 33_333_333_334, Campaign::STATUS_SUSPENDED],
+        ];
     }
 
     protected function setUp(): void

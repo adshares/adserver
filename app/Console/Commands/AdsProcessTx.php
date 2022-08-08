@@ -35,12 +35,12 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Common\AdsLogReader;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use InvalidArgumentException;
 
 class AdsProcessTx extends BaseCommand
 {
@@ -281,7 +281,12 @@ class AdsProcessTx extends BaseCommand
 
     private function reactivateSuspendedCampaigns(User $user): int
     {
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+        /** @var Currency $appCurrency */
+        $appCurrency = config('app.currency');
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
+            default => ExchangeRate::ONE(),
+        };
 
         $balance = $user->getBalance();
         $campaigns = $user->campaigns;
