@@ -44,12 +44,13 @@ use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -130,11 +131,7 @@ class CampaignsController extends Controller
 
     public function add(Request $request): JsonResponse
     {
-        try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-        } catch (ExchangeRateNotAvailableException $exception) {
-            throw new ServiceUnavailableHttpException();
-        }
+        $exchangeRate = $this->fetchExchangeRateOrFail();
 
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
@@ -317,11 +314,7 @@ class CampaignsController extends Controller
 
     public function edit(Request $request, int $campaignId): JsonResponse
     {
-        try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-        } catch (ExchangeRateNotAvailableException $exception) {
-            return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
-        }
+        $exchangeRate = $this->fetchExchangeRateOrFail();
 
         $this->validateRequestObject(
             $request,
@@ -506,11 +499,7 @@ class CampaignsController extends Controller
 
     private function changeCampaignStatus(Campaign $campaign, int $status): JsonResponse
     {
-        try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-        } catch (ExchangeRateNotAvailableException $exception) {
-            return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
-        }
+        $exchangeRate = $this->fetchExchangeRateOrFail();
 
         if (!$campaign->changeStatus($status, $exchangeRate)) {
             return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
@@ -675,5 +664,20 @@ class CampaignsController extends Controller
                 new CampaignCreated($user->uuid, $user->email, $campaign)
             );
         }
+    }
+
+    private function fetchExchangeRateOrFail(): ExchangeRate
+    {
+        if (Currency::ADS !== config('app.currency')) {
+            return ExchangeRate::ONE();
+        }
+
+        try {
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+        } catch (ExchangeRateNotAvailableException $exception) {
+            Log::error(sprintf('Exchange rate is not available (%s)', $exception->getMessage()));
+            throw new ServiceUnavailableHttpException();
+        }
+        return $exchangeRate;
     }
 }

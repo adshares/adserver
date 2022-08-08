@@ -575,7 +575,7 @@ MSG;
             try {
                 $exchangeRate = match (config('app.currency')) {
                     Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
-                    Currency::USD => ExchangeRate::ONE(),
+                    default => ExchangeRate::ONE(),
                 };
                 $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
             } catch (ExchangeRateNotAvailableException $exception) {
