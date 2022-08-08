@@ -40,7 +40,6 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\RegistrationMode;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
 use DateTime;
 use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
@@ -435,20 +434,28 @@ class AuthControllerTest extends TestCase
         $this->assertEquals($refLink->id, $entry->refLink->id);
     }
 
-    public function testCheck(): void
+    /**
+     * @dataProvider currencyProvider
+     */
+    public function testCheck(Currency $currency, float $expectedRate): void
     {
-        $this->app->bind(
-            ExchangeRateRepository::class,
-            function () {
-                return new DummyExchangeRateRepository();
-            }
-        );
-
-        $this->actingAs(User::factory()->create(), 'api');
+        SystemConfig::set('app.currency', $currency);
+        $this->login();
 
         $response = $this->getJson(self::CHECK_URI);
 
-        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::STRUCTURE_CHECK);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::STRUCTURE_CHECK);
+        $rate = json_decode($response->getContent())->exchangeRate->value;
+        self::assertEquals($expectedRate, $rate);
+    }
+
+    public function currencyProvider(): array
+    {
+        return [
+            'ADS' => [Currency::ADS, 0.3333],
+            'USD' => [Currency::USD, 1.0],
+        ];
     }
 
     public function testCheckWithoutExchangeRate(): void
@@ -457,15 +464,13 @@ class AuthControllerTest extends TestCase
         $repository->expects($this->once())->method('fetchExchangeRate')->willThrowException(
             new ExchangeRateNotAvailableException()
         );
-
         $this->app->bind(
             ExchangeRateRepository::class,
             function () use ($repository) {
                 return $repository;
             }
         );
-
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = $this->getJson(self::CHECK_URI);
 

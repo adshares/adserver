@@ -299,7 +299,10 @@ class AuthController extends Controller
     public function check(int $code = Response::HTTP_OK): JsonResponse
     {
         try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->toArray();
+            $exchangeRate = (match (config('app.currency')) {
+                Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
+                default => ExchangeRate::ONE(),
+            })->toArray();
         } catch (ExchangeRateNotAvailableException $exception) {
             Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
             $exchangeRate = null;
