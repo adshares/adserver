@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
@@ -239,11 +240,19 @@ class WalletController extends Controller
         $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
         $userLedgerEntry->save();
 
+        /** @var Currency $appCurrency */
+        $appCurrency = config(self::APP_CURRENCY);
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => ExchangeRate::ONE(),
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+        };
+        $amountInClicks = $exchangeRate->toClick($token['payload']['request']['amount']);
+
         $currency = $token['payload']['request']['currency'] ?? 'ADS';
         if ($currency === 'BTC') {
             if (
                 $exchange->transfer(
-                    $token['payload']['request']['amount'],
+                    (float)AdsConverter::clicksToAds($amountInClicks),
                     $currency,
                     $token['payload']['request']['to'],
                     SecureUrl::change(route('withdraw.exchange')),
@@ -263,17 +272,10 @@ class WalletController extends Controller
                 $userLedgerEntry->save();
             }
         } else {
-            /** @var Currency $appCurrency */
-            $appCurrency = config(self::APP_CURRENCY);
-            $exchangeRate = match ($appCurrency) {
-                Currency::ADS => ExchangeRate::ONE(),
-                default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
-            };
-
             AdsSendOne::dispatch(
                 $userLedgerEntry,
                 $token['payload']['request']['to'],
-                $exchangeRate->toClick($token['payload']['request']['amount']),
+                $amountInClicks,
                 $token['payload']['request']['memo'] ?? ''
             );
             $fee = AdsUtils::calculateFee(

@@ -33,6 +33,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -247,6 +248,7 @@ class WalletControllerTest extends TestCase
     public function testWithdrawApprovalMail(Currency $currency, int $amount, int $expectedAmountInClicks): void
     {
         SystemConfig::set('app.currency', $currency);
+        /** @var User $user */
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200_000_000_000);
 
@@ -322,6 +324,7 @@ class WalletControllerTest extends TestCase
     public function testWithdrawAdsWallet(Currency $currency, int $amount, int $expectedAmountInClicks): void
     {
         SystemConfig::set('app.currency', $currency);
+        /** @var User $user */
         $user = User::factory()->create([
             'email_confirmed_at' => now(),
             'admin_confirmed_at' => now(),
@@ -390,6 +393,90 @@ class WalletControllerTest extends TestCase
         $this->assertEquals(UserLedgerEntry::STATUS_PENDING, $userLedgerEntry->status);
         $this->assertEquals(-100050000000, $userLedgerEntry->amount);
         Queue::assertPushed(AdsSendOne::class, 1);
+    }
+
+    /**
+     * @dataProvider withdrawBtcWalletProvider
+     */
+    public function testWithdrawBtcApprovalMail(Currency $currency, int $amount, float $expectedAmountInAds): void
+    {
+        Config::updateAdminSettings(
+            [
+                Config::BTC_WITHDRAW_MAX_AMOUNT => 10000,
+                Config::BTC_WITHDRAW_MIN_AMOUNT => 100,
+            ]
+        );
+        $this->app->bind(
+            AdsExchange::class,
+            function () use ($expectedAmountInAds) {
+                $mock = self::createMock(AdsExchange::class);
+                $mock->expects(self::once())->method('transfer')->with(
+                    self::equalTo($expectedAmountInAds),
+                    self::equalTo('BTC'),
+                    self::equalTo('1a123456789a123456789abcdef'),
+                    self::anything(),
+                    self::anything(),
+                    self::anything(),
+                )->willReturn(true);
+                return $mock;
+            }
+        );
+        SystemConfig::set('app.currency', $currency);
+        /** @var User $user */
+        $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
+        $this->generateUserIncome($user->id, 20_000_000_000_000);
+        $this->actingAs($user, 'api');
+
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => $amount,
+                'currency' => 'BTC',
+                'to' => '1a123456789a123456789abcdef',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $tokens = Token::all();
+        self::assertCount(1, $tokens);
+        Mail::assertQueued(WithdrawalApproval::class);
+        Queue::assertNotPushed(AdsSendOne::class);
+
+        /** @var Token $firstToken */
+        $firstToken = $tokens->first();
+        $userLedgerEntry = UserLedgerEntry::find($firstToken->payload['ledgerEntry']);
+
+        self::assertSame(UserLedgerEntry::STATUS_AWAITING_APPROVAL, $userLedgerEntry->status);
+
+        $response2 = $this->postJson(
+            '/api/wallet/confirm-withdrawal',
+            [
+                'token' => $firstToken->uuid,
+            ]
+        );
+
+        $response2->assertStatus(Response::HTTP_OK);
+        self::assertSame(UserLedgerEntry::STATUS_PENDING, UserLedgerEntry::find($userLedgerEntry->id)->status);
+        Mail::assertQueued(function (WithdrawalSuccess $mail) use ($amount) {
+            return $amount === $mail->getAmount();
+        });
+        Queue::assertNotPushed(AdsSendOne::class);
+    }
+
+    public function withdrawBtcWalletProvider(): array
+    {
+        return [
+            'ADS' => [
+                Currency::ADS,
+                10_000_000_000_000,// withdraw amount in currency
+                100.0,// sent amount in ADS
+            ],
+            'USD' => [
+                Currency::USD,
+                10_000_000_000_000,// withdraw amount in currency
+                300.03000300030,// sent amount in ADS, = x / 0.3333 / 1e11
+            ],
+        ];
     }
 
     public function testWithdrawUnsupportedWalletNetwork(): void
