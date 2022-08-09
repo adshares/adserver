@@ -184,10 +184,10 @@ class WalletController extends Controller
     private function getAdServerAdsAddress(): AccountId
     {
         try {
-            return new AccountId(config('app.adshares_address'));
-        } catch (InvalidArgumentException $e) {
-            Log::error(sprintf('Invalid ADS address is set: %s', $e->getMessage()));
-            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new AccountId(config('app.adshares_address') ?? '');
+        } catch (InvalidArgumentException $exception) {
+            Log::error(sprintf('Invalid ADS address is set: %s', $exception->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'ADS account is not set');
         }
     }
 
