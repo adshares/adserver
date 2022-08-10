@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Services;
 
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkImpression;
@@ -32,13 +33,13 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
-use Illuminate\Support\Facades\Config as SystemConfig;
 
 final class PaymentDetailsProcessorTest extends TestCase
 {
@@ -110,7 +111,9 @@ final class PaymentDetailsProcessorTest extends TestCase
      */
     public function testAddAdIncomeToUserLedger(Currency $currency): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+
         $adsPayment = $this->createAdsPayment(100_000_000_000);
         /** @var User $user */
         $user = User::factory()->create();

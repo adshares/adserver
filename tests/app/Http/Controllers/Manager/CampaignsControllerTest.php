@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -38,7 +39,6 @@ use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
@@ -259,7 +259,7 @@ final class CampaignsControllerTest extends TestCase
     /** @dataProvider campaignStatusChangeBlockadesProvider */
     public function testCampaignStatusChangeBlockades(Currency $currency, int $expectedBlockade): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         $user = $this->createUser();
 
         /** @var Campaign $campaign */

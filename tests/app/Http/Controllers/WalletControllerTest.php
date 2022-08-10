@@ -39,7 +39,6 @@ use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Symfony\Component\HttpFoundation\Response;
@@ -247,7 +246,7 @@ class WalletControllerTest extends TestCase
      */
     public function testWithdrawApprovalMail(Currency $currency, int $amount, int $expectedAmountInClicks): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         /** @var User $user */
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 200_000_000_000);
@@ -323,7 +322,7 @@ class WalletControllerTest extends TestCase
      */
     public function testWithdrawAdsWallet(Currency $currency, int $amount, int $expectedAmountInClicks): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         /** @var User $user */
         $user = User::factory()->create([
             'email_confirmed_at' => now(),
@@ -415,7 +414,7 @@ class WalletControllerTest extends TestCase
                 return $mock;
             }
         );
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         /** @var User $user */
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $this->generateUserIncome($user->id, 20_000_000_000_000);
@@ -1207,7 +1206,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawalInfoWhenUsdWithdrawalAvailable(): void
     {
-        SystemConfig::set('app.currency', Currency::USD);
+        Config::updateAdminSettings([Config::CURRENCY => Currency::USD->value]);
         $expectedRate = 1.0;
         Config::updateAdminSettings([Config::BTC_WITHDRAW => '1', Config::BTC_WITHDRAW_FEE => '0']);
         $this->login();

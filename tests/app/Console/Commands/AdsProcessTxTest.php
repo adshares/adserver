@@ -46,7 +46,6 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Client\DummyDemandClient;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
 
@@ -62,7 +61,7 @@ class AdsProcessTxTest extends ConsoleTestCase
      */
     public function testDeposit(Currency $currency, int $expectedBalance): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         $depositAmount = 100_000_000_000;
         $this->insertAdsPaymentSingle($depositAmount);
         $user = $this->setupUser();
@@ -301,7 +300,7 @@ class AdsProcessTxTest extends ConsoleTestCase
      */
     public function testReactivateCampaign(Currency $currency, int $budget, int $expectedStatus): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         $depositAmount = 100_000_000_000;//ADS
         $this->insertAdsPaymentSingle($depositAmount);
         $user = $this->setupUser();

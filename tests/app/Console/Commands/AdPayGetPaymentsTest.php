@@ -29,6 +29,7 @@ use Adshares\Adserver\Exceptions\Demand\AdPayReportMissingEventsException;
 use Adshares\Adserver\Exceptions\Demand\AdPayReportNotReadyException;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -41,7 +42,6 @@ use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Config as SystemConfig;
 
 use function json_decode;
 use function random_int;
@@ -226,7 +226,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
      */
     public function testCurrency(Currency $currency, int $valueInCurrency, float $rate, int $expectedValue): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
 
         /** @var User $user */
         $user = User::factory()->create();

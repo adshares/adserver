@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Utilities\ConfigTypes;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Config\RegistrationMode;
@@ -84,6 +85,7 @@ class Config extends Model
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
+    public const CURRENCY = 'currency';
     public const EXCHANGE_API_KEY = 'exchange-api-key';
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
@@ -479,6 +481,7 @@ class Config extends Model
             self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
             self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
             self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
+            self::CURRENCY => Currency::ADS->value,
             self::EMAIL_VERIFICATION_REQUIRED => '0',
             self::EXCHANGE_API_KEY => '',
             self::EXCHANGE_API_SECRET => '',

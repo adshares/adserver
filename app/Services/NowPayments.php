@@ -319,7 +319,8 @@ final class NowPayments
         if ($this->saveDeposit(true, $user, $amount, $orderId, $paymentId)) {
             if (null !== $user->email) {
                 $amountInAppCurrency = $this->computeClicksInAppCurrency(AdsConverter::adsToClicks($amount));
-                Mail::to($user)->queue(new DepositProcessed($amountInAppCurrency, config('app.currency')));
+                Mail::to($user)
+                    ->queue(new DepositProcessed($amountInAppCurrency, Currency::from(config('app.currency'))));
             }
             return true;
         }
@@ -376,8 +377,7 @@ final class NowPayments
 
     private function computeClicksInAppCurrency(int $clicks): int
     {
-        /** @var Currency $appCurrency */
-        $appCurrency = config('app.currency');
+        $appCurrency = Currency::from(config('app.currency'));
 
         return match ($appCurrency) {
             Currency::ADS => $clicks,

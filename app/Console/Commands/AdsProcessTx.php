@@ -233,8 +233,7 @@ class AdsProcessTx extends BaseCommand
                 DB::beginTransaction();
 
                 $senderAddress = $transaction->getSenderAddress();
-                /** @var Currency $appCurrency */
-                $appCurrency = config('app.currency');
+                $appCurrency = Currency::from(config('app.currency'));
                 $amount = $transaction->getAmount();
                 if (Currency::ADS !== $appCurrency) {
                     $amount = $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)
@@ -281,9 +280,7 @@ class AdsProcessTx extends BaseCommand
 
     private function reactivateSuspendedCampaigns(User $user): int
     {
-        /** @var Currency $appCurrency */
-        $appCurrency = config('app.currency');
-        $exchangeRate = match ($appCurrency) {
+        $exchangeRate = match (Currency::from(config('app.currency'))) {
             Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
             default => ExchangeRate::ONE(),
         };

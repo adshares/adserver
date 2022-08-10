@@ -19,8 +19,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Common\Application\Model\Currency;
-
 return [
     'name' => env('APP_NAME', 'AdServer'),
     'version' => (string)env('APP_VERSION', '#'),
@@ -30,7 +28,6 @@ return [
     'refresh_testing_database' => env('APP_REFRESH_TESTING_DATABASE', false),
     'setup' => (int)env('APP_SETUP', 0),
     'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
-    'currency' => Currency::from(env('APP_CURRENCY', Currency::ADS->value)),
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
 

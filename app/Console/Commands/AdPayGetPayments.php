@@ -157,7 +157,7 @@ class AdPayGetPayments extends BaseCommand
 
     private function getExchangeRate(ExchangeRateReader $exchangeRateReader, DateTime $dateTime): ExchangeRate
     {
-        $exchangeRate = match (config('app.currency')) {
+        $exchangeRate = match (Currency::from(config('app.currency'))) {
             Currency::ADS => $exchangeRateReader->fetchExchangeRate($dateTime),
             default => ExchangeRate::ONE(),
         };

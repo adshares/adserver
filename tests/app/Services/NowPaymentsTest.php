@@ -31,7 +31,6 @@ use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Application\Model\Currency;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
 
 final class NowPaymentsTest extends TestCase
@@ -63,7 +62,7 @@ final class NowPaymentsTest extends TestCase
      */
     public function testExchange(Currency $currency, string $targetAmount, int $expectedAmount): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         $nowPayments = $this->setupNowPayments();
         $user = User::factory()->create();
 
@@ -83,7 +82,7 @@ final class NowPaymentsTest extends TestCase
      */
     public function testExchangeWhileLedgerExists(Currency $currency, string $targetAmount, int $expectedAmount): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         $nowPayments = $this->setupNowPayments();
         /** @var User $user */
         $user = User::factory()->create();

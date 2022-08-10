@@ -29,7 +29,6 @@ use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use PDOException;
 
 final class FetchExchangeRateCommandTest extends ConsoleTestCase
@@ -44,8 +43,10 @@ final class FetchExchangeRateCommandTest extends ConsoleTestCase
         string $exchangeCurrencies,
         int $expectedStoreCallsCount
     ): void {
-        SystemConfig::set('app.currency', $appCurrency);
-        Config::updateAdminSettings([Config::EXCHANGE_CURRENCIES => $exchangeCurrencies]);
+        Config::updateAdminSettings([
+            Config::CURRENCY => $appCurrency->value,
+            Config::EXCHANGE_CURRENCIES => $exchangeCurrencies,
+        ]);
         $mockRepository = $this->createMock(EloquentExchangeRateRepository::class);
         $mockRepository->expects($this->exactly($expectedStoreCallsCount))->method('storeExchangeRate');
 

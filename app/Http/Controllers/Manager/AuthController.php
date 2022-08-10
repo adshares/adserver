@@ -299,7 +299,7 @@ class AuthController extends Controller
     public function check(int $code = Response::HTTP_OK): JsonResponse
     {
         try {
-            $exchangeRate = (match (config('app.currency')) {
+            $exchangeRate = (match (Currency::from(config('app.currency'))) {
                 Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
                 default => ExchangeRate::ONE(),
             })->toArray();
@@ -576,7 +576,7 @@ MSG;
     {
         if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
             try {
-                $exchangeRate = match (config('app.currency')) {
+                $exchangeRate = match (Currency::from(config('app.currency'))) {
                     Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
                     default => ExchangeRate::ONE(),
                 };

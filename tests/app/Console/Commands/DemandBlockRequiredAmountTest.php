@@ -27,6 +27,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Mail\CampaignSuspension;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -38,7 +39,6 @@ use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
 
 class DemandBlockRequiredAmountTest extends ConsoleTestCase
@@ -92,7 +92,7 @@ class DemandBlockRequiredAmountTest extends ConsoleTestCase
      */
     public function testBlockByCurrency(Currency $currency, int $expectedBalance): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         /** @var User $user */
         $user = User::factory()->create();
 

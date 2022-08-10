@@ -58,7 +58,7 @@ class FetchExchangeRateCommand extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
         $currencies = config('app.exchange_currencies');
-        if (Currency::ADS !== ($appCurrency = config('app.currency'))) {
+        if (Currency::ADS !== ($appCurrency = Currency::from(config('app.currency')))) {
             $currencies[] = $appCurrency->value;
             $currencies = array_unique($currencies);
         }

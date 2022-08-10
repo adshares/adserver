@@ -41,7 +41,6 @@ use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\RegistrationMode;
 use DateTime;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -226,7 +225,7 @@ class AuthControllerTest extends TestCase
      */
     public function testEmailActivateWithBonus(Currency $currency, int $definedBonus, int $expectedBonusIncome): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         /** @var RefLink $refLink */
         $refLink = RefLink::factory()->create(['bonus' => $definedBonus, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
@@ -439,7 +438,7 @@ class AuthControllerTest extends TestCase
      */
     public function testCheck(Currency $currency, float $expectedRate): void
     {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         $this->login();
 
         $response = $this->getJson(self::CHECK_URI);

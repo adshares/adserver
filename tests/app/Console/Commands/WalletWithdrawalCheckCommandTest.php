@@ -24,12 +24,12 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalSuccess;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Illuminate\Support\Facades\Config as SystemConfig;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 
@@ -120,7 +120,7 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
         int $expectedBaseAmount,
         int $expectedAmountInClicks
     ): void {
-        SystemConfig::set('app.currency', $currency);
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
         /** @var User $user */
         $user = User::factory()->create([
             'auto_withdrawal' => 0,

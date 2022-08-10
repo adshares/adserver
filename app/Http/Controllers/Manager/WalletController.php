@@ -102,8 +102,7 @@ class WalletController extends Controller
             $fee = config('app.btc_withdraw_fee');
             $rate = 0;
             try {
-                /** @var Currency $appCurrency */
-                $appCurrency = config(self::APP_CURRENCY);
+                $appCurrency = Currency::from(config(self::APP_CURRENCY));
                 $rateToAds = match ($appCurrency) {
                     Currency::ADS => ExchangeRate::ONE()->getValue(),
                     default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)->getValue(),
@@ -240,8 +239,7 @@ class WalletController extends Controller
         $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
         $userLedgerEntry->save();
 
-        /** @var Currency $appCurrency */
-        $appCurrency = config(self::APP_CURRENCY);
+        $appCurrency = Currency::from(config(self::APP_CURRENCY));
         $exchangeRate = match ($appCurrency) {
             Currency::ADS => ExchangeRate::ONE(),
             default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
@@ -372,8 +370,7 @@ class WalletController extends Controller
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed($addressFrom, $addressTo);
 
-        /** @var Currency $appCurrency */
-        $appCurrency = config(self::APP_CURRENCY);
+        $appCurrency = Currency::from(config(self::APP_CURRENCY));
         $exchangeRate = match ($appCurrency) {
             Currency::ADS => ExchangeRate::ONE(),
             default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),

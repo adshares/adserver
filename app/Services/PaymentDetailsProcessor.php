@@ -95,9 +95,7 @@ class PaymentDetailsProcessor
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
     {
         $adServerAddress = config('app.adshares_address');
-        /** @var Currency $appCurrency */
-        $appCurrency = config('app.currency');
-        $usePaidAmountCurrency = Currency::ADS !== $appCurrency;
+        $usePaidAmountCurrency = Currency::ADS !== Currency::from(config('app.currency'));
         $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByAdsPaymentId(
             $adsPayment->id,
             $usePaidAmountCurrency
@@ -132,8 +130,7 @@ class PaymentDetailsProcessor
 
     private function fetchExchangeRate(): ExchangeRate
     {
-        /** @var Currency $appCurrency */
-        $appCurrency = config('app.currency');
+        $appCurrency = Currency::from(config('app.currency'));
         $currency = Currency::ADS === $appCurrency ? Currency::USD : $appCurrency;
 
         return $this->exchangeRateReader->fetchExchangeRate(null, $currency->value);
