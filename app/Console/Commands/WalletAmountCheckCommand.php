@@ -28,6 +28,9 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Mail\WalletFundsEmail;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
 use DateTime;
 use Illuminate\Support\Facades\Mail;
@@ -37,15 +40,13 @@ class WalletAmountCheckCommand extends BaseCommand
     private const SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS = 1800;
 
     protected $signature = 'ops:wallet:transfer:check';
-
     protected $description = 'Check and inform operator about insufficient funds on the account.';
 
-    private WalletFundsChecker $hotWalletCheckerService;
-
-    public function __construct(Locker $locker, WalletFundsChecker $hotWalletCheckerService)
-    {
-        $this->hotWalletCheckerService = $hotWalletCheckerService;
-
+    public function __construct(
+        Locker $locker,
+        private readonly ExchangeRateReader $exchangeRateReader,
+        private readonly WalletFundsChecker $hotWalletCheckerService
+    ) {
         parent::__construct($locker);
     }
 
@@ -53,7 +54,6 @@ class WalletAmountCheckCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
@@ -61,18 +61,24 @@ class WalletAmountCheckCommand extends BaseCommand
 
         if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {
             $this->info('[Wallet] Cold wallet feature is disabled.');
-
             return;
         }
 
+        $appCurrency = Currency::from(config('app.currency'));
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => ExchangeRate::ONE(),
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+        };
         $waitingPayments = UserLedgerEntry::waitingPayments();
         $allUsersBalance = UserLedgerEntry::getBalanceForAllUsers();
 
-        $transferValue = $this->hotWalletCheckerService->calculateTransferValue($waitingPayments, $allUsersBalance);
+        $transferValue = $this->hotWalletCheckerService->calculateTransferValue(
+            $exchangeRate->toClick($waitingPayments),
+            $exchangeRate->toClick($allUsersBalance)
+        );
 
         if (0 === $transferValue) {
             $this->info('[Wallet] No need to transfer clicks from Cold Wallet.');
-
             return;
         }
 
@@ -91,10 +97,9 @@ class WalletAmountCheckCommand extends BaseCommand
                 config('app.cold_wallet_address'),
                 config('app.adshares_address')
             );
+            $this->info($message);
 
             Config::upsertDateTime(Config::OPERATOR_WALLET_EMAIL_LAST_TIME, new DateTime());
-
-            $this->info($message);
 
             return;
         }
