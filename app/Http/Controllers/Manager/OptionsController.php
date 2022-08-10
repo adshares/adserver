@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Request;
@@ -167,6 +168,16 @@ class OptionsController extends Controller
     public function languages(): JsonResponse
     {
         return self::json(Simulator::getAvailableLanguages());
+    }
+
+    public function server(): JsonResponse
+    {
+        return self::json(
+            [
+                'app_currency' => Currency::from(config('app.currency'))->value,
+                'display_currency' => 'USD',
+            ]
+        );
     }
 
     public function zones(): JsonResponse
