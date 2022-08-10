@@ -24,6 +24,8 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
@@ -81,6 +83,7 @@ class ServerConfigurationController extends Controller
         Config::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_SITE_ADDED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => 'nullable|email',
+        Config::CURRENCY => 'nullable|appCurrency',
         Config::EMAIL_VERIFICATION_REQUIRED => 'nullable|boolean',
         Config::EXCHANGE_API_KEY => 'nullable',
         Config::EXCHANGE_API_SECRET => 'nullable',
@@ -202,6 +205,16 @@ class ServerConfigurationController extends Controller
     {
         if (!AccountId::isValid($value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an account ID', $field));
+        }
+    }
+
+    private static function validateAppCurrency(string $field, string $value): void
+    {
+        if (null === Currency::tryFrom($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a currency', $field));
+        }
+        if ((new UserLedgerEntry())->count() > 0) {
+            throw new UnprocessableEntityHttpException('App currency cannot be changed');
         }
     }
 

@@ -23,7 +23,9 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Model\Currency;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -193,6 +195,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid value length' => [[Config::SUPPORT_EMAIL => str_repeat('a', 65536)]],
             'invalid email format' => [[Config::SUPPORT_EMAIL => 'invalid']],
             'invalid account ID' => [[Config::ADSHARES_ADDRESS => 'invalid']],
+            'invalid app currency' => [[Config::CURRENCY => 'EUR']],
             'invalid boolean format' => [[Config::COLD_WALLET_IS_ACTIVE => '23']],
             'invalid click amount (not integer)' => [[Config::HOT_WALLET_MIN_VALUE => '1234a']],
             'invalid click amount (negative)' => [[Config::HOT_WALLET_MIN_VALUE => '-1']],
@@ -222,6 +225,33 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid mailer' => [[Config::MAIL_MAILER => 'invalid']],
             'invalid country' => [[Config::INVOICE_COMPANY_COUNTRY => 'invalid']],
         ];
+    }
+
+    public function testStoreAppCurrencyWhileUserLedgerEntryIsEmpty(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->patchJson(
+            self::URI_CONFIG,
+            [Config::CURRENCY => Currency::USD->value],
+            $this->getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testStoreAppCurrencyWhileUserLedgerEntryIsNotEmpty(): void
+    {
+        $admin = User::factory()->admin()->create();
+        UserLedgerEntry::factory()->create();
+
+        $response = $this->patchJson(
+            self::URI_CONFIG,
+            [Config::CURRENCY => Currency::USD->value],
+            $this->getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function getHeaders($user): array
