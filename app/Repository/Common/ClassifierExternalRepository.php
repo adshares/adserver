@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Repository\Common;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+use Illuminate\Support\Facades\Crypt;
 
 class ClassifierExternalRepository
 {
@@ -42,7 +43,9 @@ class ClassifierExternalRepository
             $publicKey = config('app.classifier_external_public_key') ?: null;
             $baseUrl = config('app.classifier_external_base_url') ?: null;
             $apiKeyName = config('app.classifier_external_api_key_name') ?: null;
-            $apiKeySecret = config('app.classifier_external_api_key_secret') ?: null;
+            $apiKeySecret = config('app.classifier_external_api_key_secret')
+                ? Crypt::decryptString(config('app.classifier_external_api_key_secret'))
+                : null;
 
             if (null !== $publicKey && null !== $baseUrl && null !== $apiKeyName && null !== $apiKeySecret) {
                 return new ClassifierExternal($name, $publicKey, $baseUrl, $apiKeyName, $apiKeySecret);
