@@ -299,9 +299,10 @@ class AuthController extends Controller
     public function check(int $code = Response::HTTP_OK): JsonResponse
     {
         try {
-            $exchangeRate = (match (Currency::from(config('app.currency'))) {
+            $appCurrency = Currency::from(config('app.currency'));
+            $exchangeRate = (match ($appCurrency) {
                 Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
-                default => ExchangeRate::ONE(),
+                default => ExchangeRate::ONE($appCurrency),
             })->toArray();
         } catch (ExchangeRateNotAvailableException $exception) {
             Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
@@ -576,9 +577,10 @@ MSG;
     {
         if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
             try {
-                $exchangeRate = match (Currency::from(config('app.currency'))) {
+                $appCurrency = Currency::from(config('app.currency'));
+                $exchangeRate = match ($appCurrency) {
                     Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
-                    default => ExchangeRate::ONE(),
+                    default => ExchangeRate::ONE($appCurrency),
                 };
                 $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
             } catch (ExchangeRateNotAvailableException $exception) {

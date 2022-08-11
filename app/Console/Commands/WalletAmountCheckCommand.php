@@ -66,7 +66,7 @@ class WalletAmountCheckCommand extends BaseCommand
 
         $appCurrency = Currency::from(config('app.currency'));
         $exchangeRate = match ($appCurrency) {
-            Currency::ADS => ExchangeRate::ONE(),
+            Currency::ADS => ExchangeRate::ONE($appCurrency),
             default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
         };
         $waitingPayments = UserLedgerEntry::waitingPayments();

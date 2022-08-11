@@ -103,10 +103,10 @@ class WalletController extends Controller
             $rate = 0;
             try {
                 $appCurrency = Currency::from(config(self::APP_CURRENCY));
-                $rateToAds = match ($appCurrency) {
-                    Currency::ADS => ExchangeRate::ONE()->getValue(),
-                    default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)->getValue(),
-                };
+                $rateToAds = (match ($appCurrency) {
+                    Currency::ADS => ExchangeRate::ONE($appCurrency),
+                    default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+                })->getValue();
 
                 $rate = $this->exchangeRateReader->fetchExchangeRate(null, 'BTC')->getValue() / $rateToAds;
             } catch (ExchangeRateNotAvailableException $exception) {
@@ -241,7 +241,7 @@ class WalletController extends Controller
 
         $appCurrency = Currency::from(config(self::APP_CURRENCY));
         $exchangeRate = match ($appCurrency) {
-            Currency::ADS => ExchangeRate::ONE(),
+            Currency::ADS => ExchangeRate::ONE($appCurrency),
             default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
         };
         $amountInClicks = $exchangeRate->toClick($token['payload']['request']['amount']);
@@ -372,7 +372,7 @@ class WalletController extends Controller
 
         $appCurrency = Currency::from(config(self::APP_CURRENCY));
         $exchangeRate = match ($appCurrency) {
-            Currency::ADS => ExchangeRate::ONE(),
+            Currency::ADS => ExchangeRate::ONE($appCurrency),
             default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
         };
 

@@ -57,9 +57,10 @@ class DemandBlockRequiredAmount extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
-        $exchangeRate = match (Currency::from(config('app.currency'))) {
+        $appCurrency = Currency::from(config('app.currency'));
+        $exchangeRate = match ($appCurrency) {
             Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
-            default => ExchangeRate::ONE(),
+            default => ExchangeRate::ONE($appCurrency),
         };
 
         DB::beginTransaction();

@@ -64,7 +64,7 @@ class WalletWithdrawalCheckCommand extends BaseCommand
         $this->appCurrency = Currency::from(config('app.currency'));
         $exchangeRate = match ($this->appCurrency) {
             Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
-            default => ExchangeRate::ONE(),
+            default => ExchangeRate::ONE($this->appCurrency),
         };
 
         $count = 0;

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Dto;
 
+use Adshares\Common\Application\Model\Currency;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
@@ -79,8 +80,8 @@ class ExchangeRate implements Arrayable
         ];
     }
 
-    public static function ONE(): self
+    public static function ONE(Currency $currency): self
     {
-        return new self(new DateTime(), 1.0, '---');
+        return new self(new DateTime(), 1.0, $currency->value);
     }
 }

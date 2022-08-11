@@ -280,9 +280,10 @@ class AdsProcessTx extends BaseCommand
 
     private function reactivateSuspendedCampaigns(User $user): int
     {
-        $exchangeRate = match (Currency::from(config('app.currency'))) {
+        $appCurrency = Currency::from(config('app.currency'));
+        $exchangeRate = match ($appCurrency) {
             Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
-            default => ExchangeRate::ONE(),
+            default => ExchangeRate::ONE($appCurrency),
         };
 
         $balance = $user->getBalance();

@@ -669,7 +669,7 @@ class CampaignsController extends Controller
     private function fetchExchangeRateOrFail(): ExchangeRate
     {
         if (Currency::ADS !== Currency::from(config('app.currency'))) {
-            return ExchangeRate::ONE();
+            return ExchangeRate::ONE(Currency::ADS);
         }
 
         try {
