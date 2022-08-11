@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2022-08-11
+### Fixed
+- AdClassify key decryption
+
 ## [2.0.1] - 2022-08-04
 ### Added
 - MySQL stored procedures clearing tables
@@ -673,7 +677,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.0.1...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.0.2...develop
+[2.0.2]: https://github.com/adshares/adserver/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/adshares/adserver/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/adshares/adserver/compare/v1.18.7...v2.0.0
 [1.18.7]: https://github.com/adshares/adserver/compare/v1.18.6...v1.18.7
