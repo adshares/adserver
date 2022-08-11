@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Services\Cdn;
 
+use Illuminate\Support\Facades\Crypt;
 use RuntimeException;
 
 final class CdnProviderFactory
@@ -38,7 +39,7 @@ final class CdnProviderFactory
             case self::SKYNET_PROVIDER:
                 return new SkynetCdn(
                     config('app.skynet_api_url'),
-                    config('app.skynet_api_key'),
+                    config('app.skynet_api_key') ? Crypt::decryptString(config('app.skynet_api_key')) : '',
                     config('app.skynet_cdn_url')
                 );
             default:
