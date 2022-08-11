@@ -72,7 +72,9 @@ final class Info
         ?Email $supportEmail,
         array $capabilities,
         string $registrationMode,
-        string $appMode
+        string $appMode,
+        private readonly ?UrlInterface $advertiserApplyFormUrl = null,
+        private readonly ?UrlInterface $publisherApplyFormUrl = null,
     ) {
         $this->validateCapabilities($capabilities);
 
@@ -168,6 +170,14 @@ final class Info
 
         if (null !== $this->statistics) {
             $data['statistics'] = $this->statistics->toArray();
+        }
+
+        if (null !== $this->advertiserApplyFormUrl) {
+            $data['advertiserApplyFormUrl'] = $this->advertiserApplyFormUrl->toString();
+        }
+
+        if (null !== $this->publisherApplyFormUrl) {
+            $data['publisherApplyFormUrl'] = $this->publisherApplyFormUrl->toString();
         }
 
         return $data;

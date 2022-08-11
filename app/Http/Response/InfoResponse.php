@@ -81,7 +81,9 @@ final class InfoResponse implements Arrayable
                 new Email(config('app.support_email')),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
                 config('app.registration_mode'),
-                AppMode::getAppMode()
+                AppMode::getAppMode(),
+                config('app.advertiser_apply_form_url') ? new SecureUrl(config('app.advertiser_apply_form_url')) : null,
+                config('app.publisher_apply_form_url') ? new SecureUrl(config('app.publisher_apply_form_url')) : null,
             )
         );
     }

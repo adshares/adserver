@@ -176,6 +176,9 @@ class OptionsController extends Controller
             [
                 'app_currency' => Currency::from(config('app.currency'))->value,
                 'display_currency' => 'USD',
+                'support_chat' => config('app.support_chat'),
+                'support_email' => config('app.support_email'),
+                'support_telegram' => config('app.support_telegram'),
             ]
         );
     }
