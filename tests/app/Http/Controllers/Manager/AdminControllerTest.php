@@ -616,8 +616,8 @@ final class AdminControllerTest extends TestCase
     private function settings(): array
     {
         return [
-            'hotwalletMinValue' => 2000000000000000,
-            'hotwalletMaxValue' => 50000000000000000,
+            'hotwalletMinValue' => 100000000000000,
+            'hotwalletMaxValue' => 1000000000000000,
             'coldWalletIsActive' => 0,
             'coldWalletAddress' => '',
             'adserverName' => 'AdServer',

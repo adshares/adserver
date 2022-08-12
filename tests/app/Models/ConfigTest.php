@@ -162,8 +162,8 @@ class ConfigTest extends TestCase
         $expectedSettings = [
             'payment-tx-fee' => '0.01',
             'payment-rx-fee' => '0.01',
-            'hotwallet-min-value' => '2000000000000000',
-            'hotwallet-max-value' => '50000000000000000',
+            'hotwallet-min-value' => 1_000_000_000_000_00,
+            'hotwallet-max-value' => 10_000_000_000_000_00,
             'cold-wallet-address' => '',
             'cold-wallet-is-active' => false,
             'adserver-name' => 'AdServer',
