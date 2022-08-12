@@ -641,15 +641,6 @@ var getActiveZones = function(call_func, retryNo) {
     fn();
 }
 
-var extraBannerCheck = function(banner, code)
-{
-    try {
-        return (new topwin.Function('banner', code))(banner);
-    } catch(e) {
-        return false;
-    }
-}
-
 var bannersToLoad = 0;
 var bannerLoaded = function() {
     bannersToLoad--;
@@ -684,13 +675,6 @@ domReady(function () {
                     if (!banner || typeof banner != 'object') {
                         insertBackfill(zone.destElement, zone.backfill);
                         return;
-                    }
-
-                    if (banner.extra_check) {
-                        if (!extraBannerCheck(banner, banner.extra_check)) {
-                            insertBackfill(zone.destElement, zone.backfill);
-                            return;
-                        }
                     }
 
                     banner.destElement = zone.destElement;
