@@ -21,7 +21,6 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
@@ -65,7 +64,7 @@ final class OptionsControllerTest extends TestCase
             'uploadLimitVideo',
             'uploadLimitZip',
         ];
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::getJson('/api/options/banners');
         $response->assertStatus(200)
@@ -84,7 +83,7 @@ final class OptionsControllerTest extends TestCase
             'minCpm',
             'minCpa',
         ];
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::getJson('/api/options/campaigns');
         $response->assertStatus(200)
@@ -96,13 +95,33 @@ final class OptionsControllerTest extends TestCase
         }
     }
 
+    public function testServer(): void
+    {
+        $expectedStructure = [
+            'appCurrency' => 'ADS',
+            'displayCurrency' => 'USD',
+            'supportChat' => null,
+            'supportEmail' => 'mail@example.com',
+            'supportTelegram' => null,
+        ];
+        $this->login();
+
+        $response = $this->get('/api/options/server');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(array_keys($expectedStructure));
+        foreach ($expectedStructure as $key => $expectedValue) {
+            $response->assertJsonPath($key, $expectedValue);
+        }
+    }
+
     public function testSites(): void
     {
         $expectedFields = [
             'classifierLocalBanners',
             'acceptBannersManually',
         ];
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = $this->get('/api/options/sites');
 
@@ -132,7 +151,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testFiltering(): void
     {
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::getJson('/api/options/sites/filtering');
         $response->assertStatus(200)
@@ -151,7 +170,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMedia(): void
     {
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::get('/api/options/campaigns/media');
         $response->assertStatus(200);
@@ -160,7 +179,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMedium(): void
     {
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::get('/api/options/campaigns/media/web');
         $response->assertStatus(200);
@@ -170,7 +189,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMediumExcludeQuality(): void
     {
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::get('/api/options/campaigns/media/web?e=1');
         $response->assertStatus(200);
@@ -179,7 +198,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testMetaverseVendors(): void
     {
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::get('/api/options/campaigns/media/metaverse/vendors');
         $response->assertStatus(200);
@@ -188,7 +207,7 @@ final class OptionsControllerTest extends TestCase
 
     public function testWebVendors(): void
     {
-        self::actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = self::get('/api/options/campaigns/media/web/vendors');
         $response->assertStatus(200);

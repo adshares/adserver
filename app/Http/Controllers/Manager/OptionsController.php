@@ -175,7 +175,7 @@ class OptionsController extends Controller
         return self::json(
             [
                 'app_currency' => Currency::from(config('app.currency'))->value,
-                'display_currency' => 'USD',
+                'display_currency' => Currency::USD->value,
                 'support_chat' => config('app.support_chat'),
                 'support_email' => config('app.support_email'),
                 'support_telegram' => config('app.support_telegram'),
