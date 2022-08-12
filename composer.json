@@ -11,6 +11,7 @@
         "ext-json": "*",
         "ext-libxml": "*",
         "ext-openssl": "*",
+        "ext-pdo": "*",
         "ext-pdo_mysql": "*",
         "ext-sodium": "*",
         "ext-zip": "*",
