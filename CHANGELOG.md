@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
-- Decrypt encrypted API keys
+- Default config values
 
 ## [2.0.2] - 2022-08-11
 ### Fixed
-- AdClassify key decryption
+- Decrypt encrypted API keys
 
 ## [2.0.1] - 2022-08-04
 ### Added

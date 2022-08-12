@@ -31,11 +31,11 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PDOException;
 use Throwable;
 
 /**
@@ -228,16 +228,18 @@ class Config extends Model
         self::HOT_WALLET_MIN_VALUE => ConfigTypes::Integer,
         self::INVENTORY_EXPORT_WHITELIST => ConfigTypes::Array,
         self::INVENTORY_IMPORT_WHITELIST => ConfigTypes::Array,
+        self::INVENTORY_WHITELIST => ConfigTypes::Array,
         self::INVOICE_CURRENCIES => ConfigTypes::Array,
         self::INVOICE_ENABLED => ConfigTypes::Bool,
         self::MAX_PAGE_ZONES => ConfigTypes::Integer,
+        self::MAIL_SMTP_PORT => ConfigTypes::Integer,
         self::NETWORK_DATA_CACHE_TTL => ConfigTypes::Integer,
         self::NOW_PAYMENTS_EXCHANGE => ConfigTypes::Bool,
         self::NOW_PAYMENTS_FEE => ConfigTypes::Float,
         self::NOW_PAYMENTS_MAX_AMOUNT => ConfigTypes::Integer,
         self::NOW_PAYMENTS_MIN_AMOUNT => ConfigTypes::Integer,
-        self::OPERATOR_RX_FEE => ConfigTypes::Float,
         self::OPERATOR_TX_FEE => ConfigTypes::Float,
+        self::OPERATOR_RX_FEE => ConfigTypes::Float,
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
@@ -371,22 +373,20 @@ class Config extends Model
 
     public static function fetchAdminSettings(bool $withSecrets = false): array
     {
-        $adminSettings = Cache::remember('config.admin', 10 * 60, function () {
-            try {
+        try {
+            $adminSettings = Cache::remember('config.admin', 10 * 60, function () {
                 $fetched = self::all()
                     ->pluck('value', 'key')
                     ->toArray();
-            } catch (QueryException $exception) {
-                Log::error(sprintf('Fetching admin settings from DB failed. %s', $exception->getMessage()));
-                $fetched = [];
-            }
-            $merged = array_merge(self::getDefaultAdminSettings($fetched), $fetched);
-            foreach ($merged as $key => $value) {
-                $merged[$key] = self::mapValueType($key, $value);
-            }
-
-            return $merged;
-        });
+                foreach ($fetched as $key => $value) {
+                    $fetched[$key] = self::mapValueType($key, $value);
+                }
+                return array_merge(self::getDefaultAdminSettings($fetched), $fetched);
+            });
+        } catch (PDOException $exception) {
+            Log::error(sprintf('Fetching admin settings from DB failed. %s', $exception->getMessage()));
+            $adminSettings = self::getDefaultAdminSettings();
+        }
 
         if (!$withSecrets) {
             foreach (self::SECRETS as $secretKey) {
@@ -436,7 +436,7 @@ class Config extends Model
         Cache::forget('config.admin');
     }
 
-    private static function getDefaultAdminSettings(array $fetched): array
+    private static function getDefaultAdminSettings(array $fetched = []): array
     {
         return [
             self::ADPANEL_URL => 'http://localhost:8080',
@@ -449,7 +449,7 @@ class Config extends Model
             self::ADSHARES_LICENSE_KEY => '',
             self::ADSHARES_LICENSE_SERVER_URL => 'https://account.adshares.pl/',
             self::ADSHARES_NODE_HOST => '',
-            self::ADSHARES_NODE_PORT => '6511',
+            self::ADSHARES_NODE_PORT => 6511,
             self::ADSHARES_SECRET => null,
             self::ADUSER_BASE_URL => '',
             self::ADUSER_INFO_URL =>
@@ -457,49 +457,49 @@ class Config extends Model
                     ? ($fetched[self::ADUSER_BASE_URL] . '/panel.html?rated=1&url={domain}') : '',
             self::ADUSER_INTERNAL_URL => $fetched[self::ADUSER_BASE_URL] ?? '',
             self::ADUSER_SERVE_SUBDOMAIN => '',
-            self::ALLOW_ZONE_IN_IFRAME => '1',
-            self::AUTO_CONFIRMATION_ENABLED => '0',
-            self::AUTO_REGISTRATION_ENABLED => '0',
-            self::AUTO_WITHDRAWAL_LIMIT_ADS => (string)1_000_000_00,
-            self::AUTO_WITHDRAWAL_LIMIT_BSC => (string)1_000_000_000_00,
-            self::AUTO_WITHDRAWAL_LIMIT_BTC => (string)1_000_000_000_000_00,
-            self::AUTO_WITHDRAWAL_LIMIT_ETH => (string)1_000_000_000_000_00,
-            self::BANNER_FORCE_HTTPS => '1',
-            self::BTC_WITHDRAW => '0',
-            self::BTC_WITHDRAW_FEE => '0.05',
-            self::BTC_WITHDRAW_MAX_AMOUNT => '1000000000000000',
-            self::BTC_WITHDRAW_MIN_AMOUNT => '10000000000000',
-            self::CAMPAIGN_MIN_BUDGET => '5000000000',
-            self::CAMPAIGN_MIN_CPA => '1000000000',
-            self::CAMPAIGN_MIN_CPM => '5000000000',
+            self::ALLOW_ZONE_IN_IFRAME => true,
+            self::AUTO_CONFIRMATION_ENABLED => false,
+            self::AUTO_REGISTRATION_ENABLED => false,
+            self::AUTO_WITHDRAWAL_LIMIT_ADS => 1_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_BSC => 1_000_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_BTC => 1_000_000_000_000_00,
+            self::AUTO_WITHDRAWAL_LIMIT_ETH => 1_000_000_000_000_00,
+            self::BANNER_FORCE_HTTPS => true,
+            self::BTC_WITHDRAW => false,
+            self::BTC_WITHDRAW_FEE => 0.05,
+            self::BTC_WITHDRAW_MAX_AMOUNT => 1000000000000000,
+            self::BTC_WITHDRAW_MIN_AMOUNT => 10000000000000,
+            self::CAMPAIGN_MIN_BUDGET => 5000000000,
+            self::CAMPAIGN_MIN_CPA => 1000000000,
+            self::CAMPAIGN_MIN_CPM => 5000000000,
             self::CAMPAIGN_TARGETING_EXCLUDE => '',
             self::CAMPAIGN_TARGETING_REQUIRE => '',
             self::CDN_PROVIDER => '',
-            self::CHECK_ZONE_DOMAIN => '1',
+            self::CHECK_ZONE_DOMAIN => true,
             self::CLASSIFIER_EXTERNAL_API_KEY_NAME => '',
             self::CLASSIFIER_EXTERNAL_API_KEY_SECRET => '',
             self::CLASSIFIER_EXTERNAL_BASE_URL => 'https://adclassify.adshares.net',
             self::CLASSIFIER_EXTERNAL_NAME => '0001000000081a67',
             self::CLASSIFIER_EXTERNAL_PUBLIC_KEY => 'FE736A82F91247B022953A58744EAEA18C477468831E680EEDFB49A29F6F7088',
             self::COLD_WALLET_ADDRESS => '',
-            self::COLD_WALLET_IS_ACTIVE => '0',
+            self::COLD_WALLET_IS_ACTIVE => false,
             self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
             self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
             self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
             self::CURRENCY => Currency::ADS->value,
             self::DISPLAY_CURRENCY => Currency::USD->value,
-            self::EMAIL_VERIFICATION_REQUIRED => '0',
+            self::EMAIL_VERIFICATION_REQUIRED => true,
             self::EXCHANGE_API_KEY => '',
             self::EXCHANGE_API_SECRET => '',
             self::EXCHANGE_API_URL => '',
-            self::EXCHANGE_CURRENCIES => 'USD,BTC',
-            self::FIAT_DEPOSIT_MAX_AMOUNT => '100000',
-            self::FIAT_DEPOSIT_MIN_AMOUNT => '2000',
-            self::HOT_WALLET_MAX_VALUE => '50000000000000000',
-            self::HOT_WALLET_MIN_VALUE => '2000000000000000',
-            self::INVENTORY_EXPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? '',
-            self::INVENTORY_IMPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? '',
-            self::INVENTORY_WHITELIST => '',
+            self::EXCHANGE_CURRENCIES => ['USD', 'BTC'],
+            self::FIAT_DEPOSIT_MAX_AMOUNT => 100000,
+            self::FIAT_DEPOSIT_MIN_AMOUNT => 2000,
+            self::HOT_WALLET_MAX_VALUE => 10_000_000_000_000_00,
+            self::HOT_WALLET_MIN_VALUE => 1_000_000_000_000_00,
+            self::INVENTORY_EXPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? [],
+            self::INVENTORY_IMPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? [],
+            self::INVENTORY_WHITELIST => [],
             self::INVOICE_COMPANY_ADDRESS => '',
             self::INVOICE_COMPANY_BANK_ACCOUNTS => '',
             self::INVOICE_COMPANY_CITY => '',
@@ -507,8 +507,8 @@ class Config extends Model
             self::INVOICE_COMPANY_NAME => '',
             self::INVOICE_COMPANY_POSTAL_CODE => '',
             self::INVOICE_COMPANY_VAT_ID => '',
-            self::INVOICE_CURRENCIES => '',
-            self::INVOICE_ENABLED => '0',
+            self::INVOICE_CURRENCIES => [],
+            self::INVOICE_ENABLED => false,
             self::INVOICE_NUMBER_FORMAT => '',
             self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
             self::MAIL_FROM_NAME => 'Adshares AdServer',
@@ -516,26 +516,26 @@ class Config extends Model
             self::MAIL_SMTP_ENCRYPTION => 'tls',
             self::MAIL_SMTP_HOST => 'localhost',
             self::MAIL_SMTP_PASSWORD => '',
-            self::MAIL_SMTP_PORT => '587',
+            self::MAIL_SMTP_PORT => 587,
             self::MAIL_SMTP_USERNAME => '',
             self::MAIN_JS_BASE_URL => $fetched[self::URL] ?? '',
             self::MAIN_JS_TLD => '',
-            self::MAX_PAGE_ZONES => '4',
-            self::NETWORK_DATA_CACHE_TTL => '60',
+            self::MAX_PAGE_ZONES => 4,
+            self::NETWORK_DATA_CACHE_TTL => 60,
             self::NOW_PAYMENTS_API_KEY => '',
             self::NOW_PAYMENTS_CURRENCY => 'USD',
-            self::NOW_PAYMENTS_EXCHANGE => '0',
-            self::NOW_PAYMENTS_FEE => '0.05',
+            self::NOW_PAYMENTS_EXCHANGE => false,
+            self::NOW_PAYMENTS_FEE => 0.05,
             self::NOW_PAYMENTS_IPN_SECRET => '',
-            self::NOW_PAYMENTS_MAX_AMOUNT => '1000',
-            self::NOW_PAYMENTS_MIN_AMOUNT => '25',
-            self::OPERATOR_RX_FEE => '0.01',
-            self::OPERATOR_TX_FEE => '0.01',
+            self::NOW_PAYMENTS_MAX_AMOUNT => 1000,
+            self::NOW_PAYMENTS_MIN_AMOUNT => 25,
+            self::OPERATOR_RX_FEE => 0.01,
+            self::OPERATOR_TX_FEE => 0.01,
             self::REFERRAL_REFUND_COMMISSION => '',
-            self::REFERRAL_REFUND_ENABLED => '0',
+            self::REFERRAL_REFUND_ENABLED => false,
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
             self::SERVE_BASE_URL => $fetched[self::URL] ?? '',
-            self::SITE_ACCEPT_BANNERS_MANUALLY => '0',
+            self::SITE_ACCEPT_BANNERS_MANUALLY => false,
             self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
             self::SITE_FILTERING_EXCLUDE => '',
             self::SITE_FILTERING_REQUIRE => '',
@@ -544,10 +544,10 @@ class Config extends Model
             self::SKYNET_CDN_URL => '',
             self::SUPPORT_EMAIL => 'mail@example.com',
             self::TECHNICAL_EMAIL => 'mail@example.com',
-            self::UPLOAD_LIMIT_IMAGE => (string)(512 * 1024),
-            self::UPLOAD_LIMIT_MODEL => (string)(1024 * 1024),
-            self::UPLOAD_LIMIT_VIDEO => (string)(1024 * 1024),
-            self::UPLOAD_LIMIT_ZIP => (string)(512 * 1024),
+            self::UPLOAD_LIMIT_IMAGE => 512 * 1024,
+            self::UPLOAD_LIMIT_MODEL => 1024 * 1024,
+            self::UPLOAD_LIMIT_VIDEO => 1024 * 1024,
+            self::UPLOAD_LIMIT_ZIP => 512 * 1024,
             self::URL => '',
         ];
     }
