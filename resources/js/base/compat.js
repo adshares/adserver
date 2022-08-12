@@ -19,7 +19,7 @@
 
 if (typeof Array.prototype.forEach != 'function') {
     Array.prototype.forEach = function(callback){
-        for (var i = 0; i < this.length; i++){
+        for (let i = 0; i < this.length; i++){
             callback.apply(this, [this[i], i, this]);
         }
     };
@@ -28,7 +28,7 @@ if (typeof Array.prototype.forEach != 'function') {
 
 if (!Function.prototype.bind) {
 	Function.prototype.bind = function(oThis) {
-		var aArgs = Array.prototype.slice.call(arguments, 1), fToBind = this, fNOP = function() {
+		let aArgs = Array.prototype.slice.call(arguments, 1), fToBind = this, fNOP = function() {
 		}, fBound = function() {
 			return fToBind.apply(this instanceof fNOP && oThis ? this : oThis,
 					aArgs.concat(Array.prototype.slice.call(arguments)));
@@ -41,7 +41,7 @@ if (!Function.prototype.bind) {
 	};
 }
 
-var addListener = function (element, event, handler, phase) {
+let addListener = function (element, event, handler, phase) {
     if (element.addEventListener) {
         return element.addEventListener(event, handler, phase);
     } else {
@@ -49,7 +49,7 @@ var addListener = function (element, event, handler, phase) {
     }
 };
 
-var removeListener = function (element, event, handler, phase) {
+let removeListener = function (element, event, handler, phase) {
     if (element.removeEventListener) {
         return element.removeEventListener(event, handler, phase);
     } else {

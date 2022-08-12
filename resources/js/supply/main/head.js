@@ -24,7 +24,7 @@
                 if(prev === null)
                 {
                     set = chars[0].concat(chars[1]);
-                } else if(prev == 1) {
+                } else if(prev === 1) {
                     set = chars[0];
                     prev = 0;
                 } else {
@@ -34,7 +34,7 @@
                 let _char = set[Math.floor(next()*set.length)];
                 tmp.push(_char);
                 if(prev === null) {
-                    prev = chars[0].indexOf(_char) != -1 ? 0 : 1;
+                    prev = chars[0].indexOf(_char) !== -1 ? 0 : 1;
                 }
             }
             tmp.push("." + tld);

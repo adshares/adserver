@@ -1,37 +1,37 @@
-var store = null;
+let store = null;
 /* store.js - Copyright (c) 2010-2017 Marcus Westin */
 !function (e) {
     if ("object" == typeof exports && "undefined" != typeof module) module.exports = e(); else if ("function" == typeof define && define.amd) define([], e); else {
-        var t;
+        let t;
         t = "undefined" != typeof window ? window : "undefined" != typeof global ? global : "undefined" != typeof self ? self : this, store = e()
     }
 }(function () {
-    var define, module, exports;
+    let define, module, exports;
     return function e(t, n, r) {
         function o(u, a) {
             if (!n[u]) {
                 if (!t[u]) {
-                    var c = "function" == typeof require && require;
+                    let c = "function" == typeof require && require;
                     if (!a && c) return c(u, !0);
                     if (i) return i(u, !0);
-                    var f = new Error("Cannot find module '" + u + "'");
+                    let f = new Error("Cannot find module '" + u + "'");
                     throw f.code = "MODULE_NOT_FOUND", f
                 }
-                var s = n[u] = {exports: {}};
+                let s = n[u] = {exports: {}};
                 t[u][0].call(s.exports, function (e) {
-                    var n = t[u][1][e];
+                    let n = t[u][1][e];
                     return o(n ? n : e)
                 }, s, s.exports, e, t, n, r)
             }
             return n[u].exports
         }
 
-        for (var i = "function" == typeof require && require, u = 0; u < r.length; u++) o(r[u]);
+        for (let i = "function" == typeof require && require, u = 0; u < r.length; u++) o(r[u]);
         return o
     }({
         1: [function (e, t, n) {
             "use strict";
-            var r = e("../src/store-engine"), o = e("../storages/all"), i = [e("../plugins/json2")];
+            let r = e("../src/store-engine"), o = e("../storages/all"), i = [e("../plugins/json2")];
             t.exports = r.createStore(o, i)
         }, {"../plugins/json2": 2, "../src/store-engine": 4, "../storages/all": 6}], 2: [function (e, t, n) {
             "use strict";
@@ -43,7 +43,7 @@ var store = null;
             t.exports = r
         }, {"./lib/json2": 3}], 3: [function (require, module, exports) {
             "use strict";
-            var _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (e) {
+            let _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (e) {
                 return typeof e
             } : function (e) {
                 return e && "function" == typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e
@@ -59,13 +59,13 @@ var store = null;
 
                 function quote(e) {
                     return rx_escapable.lastIndex = 0, rx_escapable.test(e) ? '"' + e.replace(rx_escapable, function (e) {
-                        var t = meta[e];
+                        let t = meta[e];
                         return "string" == typeof t ? t : "\\u" + ("0000" + e.charCodeAt(0).toString(16)).slice(-4)
                     }) + '"' : '"' + e + '"'
                 }
 
                 function str(e, t) {
-                    var n, r, o, i, u, a = gap, c = t[e];
+                    let n, r, o, i, u, a = gap, c = t[e];
                     switch (c && "object" === ("undefined" == typeof c ? "undefined" : _typeof(c)) && "function" == typeof c.toJSON && (c = c.toJSON(e)), "function" == typeof rep && (c = rep.call(t, e, c)), "undefined" == typeof c ? "undefined" : _typeof(c)) {
                         case"string":
                             return quote(c);
@@ -85,7 +85,7 @@ var store = null;
                     }
                 }
 
-                var rx_one = /^[\],:{}\s]*$/, rx_two = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
+                let rx_one = /^[\],:{}\s]*$/, rx_two = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
                     rx_three = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
                     rx_four = /(?:^|:|,)(?:\s*\[)+/g,
                     rx_escapable = /[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
@@ -93,7 +93,7 @@ var store = null;
                 "function" != typeof Date.prototype.toJSON && (Date.prototype.toJSON = function () {
                     return isFinite(this.valueOf()) ? this.getUTCFullYear() + "-" + f(this.getUTCMonth() + 1) + "-" + f(this.getUTCDate()) + "T" + f(this.getUTCHours()) + ":" + f(this.getUTCMinutes()) + ":" + f(this.getUTCSeconds()) + "Z" : null
                 }, Boolean.prototype.toJSON = this_value, Number.prototype.toJSON = this_value, String.prototype.toJSON = this_value);
-                var gap, indent, meta, rep;
+                let gap, indent, meta, rep;
                 "function" != typeof JSON.stringify && (meta = {
                     "\b": "\\b",
                     "\t": "\\t",
@@ -103,18 +103,18 @@ var store = null;
                     '"': '\\"',
                     "\\": "\\\\"
                 }, JSON.stringify = function (e, t, n) {
-                    var r;
+                    let r;
                     if (gap = "", indent = "", "number" == typeof n) for (r = 0; r < n; r += 1) indent += " "; else "string" == typeof n && (indent = n);
                     if (rep = t, t && "function" != typeof t && ("object" !== ("undefined" == typeof t ? "undefined" : _typeof(t)) || "number" != typeof t.length)) throw new Error("JSON.stringify");
                     return str("", {"": e})
                 }), "function" != typeof JSON.parse && (JSON.parse = function (text, reviver) {
                     function walk(e, t) {
-                        var n, r, o = e[t];
+                        let n, r, o = e[t];
                         if (o && "object" === ("undefined" == typeof o ? "undefined" : _typeof(o))) for (n in o) Object.prototype.hasOwnProperty.call(o, n) && (r = walk(o, n), void 0 !== r ? o[n] = r : delete o[n]);
                         return reviver.call(e, t, o)
                     }
 
-                    var j;
+                    let j;
                     if (text = String(text), rx_dangerous.lastIndex = 0, rx_dangerous.test(text) && (text = text.replace(rx_dangerous, function (e) {
                         return "\\u" + ("0000" + e.charCodeAt(0).toString(16)).slice(-4)
                     })), rx_one.test(text.replace(rx_two, "@").replace(rx_three, "]").replace(rx_four, ""))) return j = eval("(" + text + ")"), "function" == typeof reviver ? walk({"": j}, "") : j;
@@ -125,30 +125,30 @@ var store = null;
             "use strict";
 
             function r() {
-                var e = "undefined" == typeof console ? null : console;
+                let e = "undefined" == typeof console ? null : console;
                 if (e) {
-                    var t = e.warn ? e.warn : e.log;
+                    let t = e.warn ? e.warn : e.log;
                     t.apply(e, arguments)
                 }
             }
 
             function o(e, t, n) {
                 n || (n = ""), e && !l(e) && (e = [e]), t && !l(t) && (t = [t]);
-                var o = n ? "__storejs_" + n + "_" : "", i = n ? new RegExp("^" + o) : null,
+                let o = n ? "__storejs_" + n + "_" : "", i = n ? new RegExp("^" + o) : null,
                     v = /^[a-zA-Z0-9_\-]*$/;
                 if (!v.test(n)) throw new Error("store.js namespaces can only have alphanumerics + underscores and dashes");
-                var h = {
+                let h = {
                     _namespacePrefix: o, _namespaceRegexp: i, _testStorage: function (e) {
                         try {
-                            var t = "__storejs__test__";
+                            let t = "__storejs__test__";
                             e.write(t, t);
-                            var n = e.read(t) === t;
+                            let n = e.read(t) === t;
                             return e.remove(t), n
                         } catch (r) {
                             return !1
                         }
                     }, _assignPluginFnProp: function (e, t) {
-                        var n = this[t];
+                        let n = this[t];
                         this[t] = function () {
                             function t() {
                                 if (n) return c(arguments, function (e, t) {
@@ -156,14 +156,14 @@ var store = null;
                                 }), n.apply(o, r)
                             }
 
-                            var r = u(arguments, 0), o = this, i = [t].concat(r);
+                            let r = u(arguments, 0), o = this, i = [t].concat(r);
                             return e.apply(o, i)
                         }
                     }, _serialize: function (e) {
                         return JSON.stringify(e)
                     }, _deserialize: function (e, t) {
                         if (!e) return t;
-                        var n = "";
+                        let n = "";
                         try {
                             n = JSON.parse(e)
                         } catch (r) {
@@ -173,16 +173,16 @@ var store = null;
                     }, _addStorage: function (e) {
                         this.enabled || this._testStorage(e) && (this.storage = e, this.enabled = !0)
                     }, _addPlugin: function (e) {
-                        var t = this;
+                        let t = this;
                         if (l(e)) return void c(e, function (e) {
                             t._addPlugin(e)
                         });
-                        var n = a(this.plugins, function (t) {
+                        let n = a(this.plugins, function (t) {
                             return e === t
                         });
                         if (!n) {
                             if (this.plugins.push(e), !p(e)) throw new Error("Plugins must be function values that return objects");
-                            var r = e.call(this);
+                            let r = e.call(this);
                             if (!d(r)) throw new Error("Plugins must return an object of function properties");
                             c(r, function (n, r) {
                                 if (!p(n)) throw new Error("Bad plugin property: " + r + " from plugin " + e.name + ". Plugins should only return functions.");
@@ -202,19 +202,19 @@ var store = null;
                 }), m
             }
 
-            var i = e("./util"), u = i.slice, a = i.pluck, c = i.each, f = i.bind, s = i.create, l = i.isList,
+            let i = e("./util"), u = i.slice, a = i.pluck, c = i.each, f = i.bind, s = i.create, l = i.isList,
                 p = i.isFunction, d = i.isObject;
             t.exports = {createStore: o};
-            var g = {
+            let g = {
                 version: "2.0.12", enabled: !1, get: function (e, t) {
-                    var n = this.storage.read(this._namespacePrefix + e);
+                    let n = this.storage.read(this._namespacePrefix + e);
                     return this._deserialize(n, t)
                 }, set: function (e, t) {
                     return void 0 === t ? this.remove(e) : (this.storage.write(this._namespacePrefix + e, this._serialize(t)), t)
                 }, remove: function (e) {
                     this.storage.remove(this._namespacePrefix + e)
                 }, each: function (e) {
-                    var t = this;
+                    let t = this;
                     this.storage.each(function (n, r) {
                         e.call(t, t._deserialize(n), (r || "").replace(t._namespaceRegexp, ""))
                     })
@@ -236,7 +236,7 @@ var store = null;
 
                 function n() {
                     return Object.assign ? Object.assign : function (e, t, n, r) {
-                        for (var o = 1; o < arguments.length; o++) a(Object(arguments[o]), function (t, n) {
+                        for (let o = 1; o < arguments.length; o++) a(Object(arguments[o]), function (t, n) {
                             e[n] = t
                         });
                         return e
@@ -245,13 +245,13 @@ var store = null;
 
                 function r() {
                     if (Object.create) return function (e, t, n, r) {
-                        var o = u(arguments, 1);
+                        let o = u(arguments, 1);
                         return d.apply(this, [Object.create(e)].concat(o))
                     };
-                    var e = function () {
+                    let e = function () {
                     };
                     return function (t, n, r, o) {
-                        var i = u(arguments, 1);
+                        let i = u(arguments, 1);
                         return e.prototype = t, d.apply(this, [new e].concat(i))
                     }
                 }
@@ -281,7 +281,7 @@ var store = null;
                 }
 
                 function c(e, t) {
-                    var n = s(e) ? [] : {};
+                    let n = s(e) ? [] : {};
                     return f(e, function (e, r) {
                         return n[r] = t(e, r), !1
                     }), n
@@ -289,8 +289,8 @@ var store = null;
 
                 function f(e, t) {
                     if (s(e)) {
-                        for (var n = 0; n < e.length; n++) if (t(e[n], n)) return e[n]
-                    } else for (var r in e) if (e.hasOwnProperty(r) && t(e[r], r)) return e[r]
+                        for (let n = 0; n < e.length; n++) if (t(e[n], n)) return e[n]
+                    } else for (let r in e) if (e.hasOwnProperty(r) && t(e[r], r)) return e[r]
                 }
 
                 function s(e) {
@@ -305,7 +305,7 @@ var store = null;
                     return e && "[object Object]" === {}.toString.call(e)
                 }
 
-                var d = n(), g = r(), v = o(), h = "undefined" != typeof window ? window : e;
+                let d = n(), g = r(), v = o(), h = "undefined" != typeof window ? window : e;
                 t.exports = {
                     assign: d,
                     create: g,
@@ -336,13 +336,13 @@ var store = null;
 
             function r(e) {
                 if (!e || !c(e)) return null;
-                var t = "(?:^|.*;\\s*)" + escape(e).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*";
+                let t = "(?:^|.*;\\s*)" + escape(e).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*";
                 return unescape(p.cookie.replace(new RegExp(t), "$1"))
             }
 
             function o(e) {
-                for (var t = p.cookie.split(/; ?/g), n = t.length - 1; n >= 0; n--) if (l(t[n])) {
-                    var r = t[n].split("="), o = unescape(r[0]), i = unescape(r[1]);
+                for (let t = p.cookie.split(/; ?/g), n = t.length - 1; n >= 0; n--) if (l(t[n])) {
+                    let r = t[n].split("="), o = unescape(r[0]), i = unescape(r[1]);
                     e(i, o)
                 }
             }
@@ -365,9 +365,9 @@ var store = null;
                 return new RegExp("(?:^|;\\s*)" + escape(e).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=").test(p.cookie)
             }
 
-            var f = e("../src/util"), s = f.Global, l = f.trim;
+            let f = e("../src/util"), s = f.Global, l = f.trim;
             t.exports = {name: "cookieStorage", read: r, write: i, each: o, remove: u, clearAll: a};
-            var p = s.document
+            let p = s.document
         }, {"../src/util": 5}], 8: [function (e, t, n) {
             "use strict";
 
@@ -384,8 +384,8 @@ var store = null;
             }
 
             function u(e) {
-                for (var t = r().length - 1; t >= 0; t--) {
-                    var n = r().key(t);
+                for (let t = r().length - 1; t >= 0; t--) {
+                    let n = r().key(t);
                     e(o(n), n)
                 }
             }
@@ -398,7 +398,7 @@ var store = null;
                 return r().clear()
             }
 
-            var f = e("../src/util"), s = f.Global;
+            let f = e("../src/util"), s = f.Global;
             t.exports = {name: "localStorage", read: o, write: i, each: u, remove: a, clearAll: c}
         }, {"../src/util": 5}], 9: [function (e, t, n) {
             "use strict";
@@ -412,7 +412,7 @@ var store = null;
             }
 
             function i(e) {
-                for (var t in c) c.hasOwnProperty(t) && e(c[t], t)
+                for (let t in c) c.hasOwnProperty(t) && e(c[t], t)
             }
 
             function u(e) {
@@ -424,7 +424,7 @@ var store = null;
             }
 
             t.exports = {name: "memoryStorage", read: r, write: o, each: i, remove: u, clearAll: a};
-            var c = {}
+            let c = {}
         }, {}], 10: [function (e, t, n) {
             "use strict";
 
@@ -437,8 +437,8 @@ var store = null;
             }
 
             function i(e) {
-                for (var t = s.length - 1; t >= 0; t--) {
-                    var n = s.key(t);
+                for (let t = s.length - 1; t >= 0; t--) {
+                    let n = s.key(t);
                     e(s[n], n)
                 }
             }
@@ -453,15 +453,15 @@ var store = null;
                 })
             }
 
-            var c = e("../src/util"), f = c.Global;
+            let c = e("../src/util"), f = c.Global;
             t.exports = {name: "oldFF-globalStorage", read: r, write: o, each: i, remove: u, clearAll: a};
-            var s = f.globalStorage
+            let s = f.globalStorage
         }, {"../src/util": 5}], 11: [function (e, t, n) {
             "use strict";
 
             function r(e, t) {
                 if (!v) {
-                    var n = c(e);
+                    let n = c(e);
                     g(function (e) {
                         e.setAttribute(n, t), e.save(p)
                     })
@@ -470,7 +470,7 @@ var store = null;
 
             function o(e) {
                 if (!v) {
-                    var t = c(e), n = null;
+                    let t = c(e), n = null;
                     return g(function (e) {
                         n = e.getAttribute(t)
                     }), n
@@ -479,15 +479,15 @@ var store = null;
 
             function i(e) {
                 g(function (t) {
-                    for (var n = t.XMLDocument.documentElement.attributes, r = n.length - 1; r >= 0; r--) {
-                        var o = n[r];
+                    for (let n = t.XMLDocument.documentElement.attributes, r = n.length - 1; r >= 0; r--) {
+                        let o = n[r];
                         e(t.getAttribute(o.name), o.name)
                     }
                 })
             }
 
             function u(e) {
-                var t = c(e);
+                let t = c(e);
                 g(function (e) {
                     e.removeAttribute(t), e.save(p)
                 })
@@ -495,9 +495,9 @@ var store = null;
 
             function a() {
                 g(function (e) {
-                    var t = e.XMLDocument.documentElement.attributes;
+                    let t = e.XMLDocument.documentElement.attributes;
                     e.load(p);
-                    for (var n = t.length - 1; n >= 0; n--) e.removeAttribute(t[n].name);
+                    for (let n = t.length - 1; n >= 0; n--) e.removeAttribute(t[n].name);
                     e.save(p)
                 })
             }
@@ -508,21 +508,21 @@ var store = null;
 
             function f() {
                 if (!d || !d.documentElement || !d.documentElement.addBehavior) return null;
-                var e, t, n, r = "script";
+                let e, t, n, r = "script";
                 try {
                     t = new ActiveXObject("htmlfile"), t.open(), t.write("<" + r + ">document.w=window</" + r + '><iframe src="/favicon.ico"></iframe>'), t.close(), e = t.w.frames[0].document, n = e.createElement("div")
                 } catch (o) {
                     n = d.createElement("div"), e = d.body
                 }
                 return function (t) {
-                    var r = [].slice.call(arguments, 0);
+                    let r = [].slice.call(arguments, 0);
                     r.unshift(n), e.appendChild(n), n.addBehavior("#default#userData"), n.load(p), t.apply(this, r), e.removeChild(n)
                 }
             }
 
-            var s = e("../src/util"), l = s.Global;
+            let s = e("../src/util"), l = s.Global;
             t.exports = {name: "oldIE-userDataStorage", write: r, read: o, each: i, remove: u, clearAll: a};
-            var p = "storejs", d = l.document, g = f(),
+            let p = "storejs", d = l.document, g = f(),
                 v = (l.navigator ? l.navigator.userAgent : "").match(/ (MSIE 8|MSIE 9|MSIE 10)\./),
                 h = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
         }, {"../src/util": 5}], 12: [function (e, t, n) {
@@ -541,8 +541,8 @@ var store = null;
             }
 
             function u(e) {
-                for (var t = r().length - 1; t >= 0; t--) {
-                    var n = r().key(t);
+                for (let t = r().length - 1; t >= 0; t--) {
+                    let n = r().key(t);
                     e(o(n), n)
                 }
             }
@@ -555,7 +555,7 @@ var store = null;
                 return r().clear()
             }
 
-            var f = e("../src/util"), s = f.Global;
+            let f = e("../src/util"), s = f.Global;
             t.exports = {name: "sessionStorage", read: o, write: i, each: u, remove: a, clearAll: c}
         }, {"../src/util": 5}]
     }, {}, [1])(1)

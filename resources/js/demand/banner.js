@@ -18,18 +18,18 @@
  */
 
 domReady(function() {
-    var onlyStrings = false;
-    var target = parent;
+    let onlyStrings = false;
+    let target = parent;
 
-    var handler = function(e) {
-        var msg = {
+    let handler = function(e) {
+        let msg = {
             dwmthClick : 1
         };
         target.postMessage(onlyStrings ? JSON.stringify(msg) : msg, '*');
         e.preventDefault();
     };
 
-    var links = document.getElementsByTagName('a');
+    let links = document.getElementsByTagName('a');
     addListener(document.body, 'click', handler, true);
 
     try {
@@ -41,8 +41,8 @@ domReady(function() {
     } catch (e) {
 
     }
-    var fn = function(event) {
-        var msg;
+    let fn = function(event) {
+        let msg;
 
         try {
             if (typeof event.data == 'string') {
@@ -51,10 +51,10 @@ domReady(function() {
                 msg = event.data;
             }
             if (msg.dwmthLoad) {
-                var data = msg.data;
+                let data = msg.data;
 
                 if (data.click_url) {
-                    for (var i = 0; i < links.length; i++) {
+                    for (let i = 0; i < links.length; i++) {
                         links[i].href = data.click_url;
                     }
                 }
@@ -63,7 +63,7 @@ domReady(function() {
     };
     window.addEventListener ? addEventListener('message', fn) : attachEvent(
         'onmessage', fn);
-    msg = {
+    let msg = {
         dwmthLoad : 1
     };
     target.postMessage(onlyStrings ? JSON.stringify(msg) : msg , '*');

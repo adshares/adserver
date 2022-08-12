@@ -1,7 +1,7 @@
 (function () {
-    var DwmthPlugin = function () {
+    let DwmthPlugin = function () {
     };
-    var s = DwmthPlugin;
+    let s = DwmthPlugin;
 
     s.getPreloadHandlers = function () {
         return {
@@ -13,14 +13,14 @@
 
     s.preloadHandler = function (loadItem, queue) {
         if(loadItem.type === "text") {
-            var match = loadItem.src.match(/data:([a-z]+)\/[a-z]+/i);
+            let match = loadItem.src.match(/data:([a-z]+)\/[a-z]+/i);
             if(match) {
                 loadItem.type = match[1];
             }
         }
 
-        var src = loadItem.src;
-        var org = document.querySelector('[data-asset-org="' + src + '"]');
+        let src = loadItem.src;
+        let org = document.querySelector('[data-asset-org="' + src + '"]');
         if(!org) {
             org = document.querySelector('[data-asset-org$="' + src + '"]');
         }
@@ -33,7 +33,7 @@
     };
     createjs.DwmthPlugin = DwmthPlugin;
 
-    var fn = createjs.LoadQueue.prototype.init;
+    let fn = createjs.LoadQueue.prototype.init;
     createjs.LoadQueue.prototype.init = function() {
         fn.apply(this, arguments);
         this.installPlugin(DwmthPlugin);

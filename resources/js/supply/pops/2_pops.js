@@ -1,16 +1,18 @@
-var addPop;
-var checkPopLimits;
+let addPop;
+let addPopCandidate;
+let checkPopLimits;
+let selectPopCandidate;
 
 (function() {
 
-    var orgWindowOpen = window.open;
+    let orgWindowOpen = window.open;
 
-    var popQueue = [];
-    var currentPop = null;
-    var preparePop, executePop, executeProxy, executeProxyTimer;
-    var executeCount = 0;
+    let popQueue = [];
+    let currentPop = null;
+    let preparePop, executePop, executeProxy, executeProxyTimer;
+    let executeCount = 0;
 
-    var saveLog = function (popLog) {
+    let saveLog = function (popLog) {
         let minTimestamp = (new Date()).getTime() / 1000 - 48 * 3600;
         let valid = [];
         for (let i = 0, n = popLog.length; i < n; i++) {
@@ -22,14 +24,14 @@ var checkPopLimits;
         store.set('dwmth-pops' + selectorClass, valid);
     };
 
-    var loadLog = function () {
+    let loadLog = function () {
         return store.get('dwmth-pops' + selectorClass) || [];
     }
 
     executeProxy = function (e) {
         let target = e.target;
-        while(target && target != document.body) {
-            if(target.tagName == 'A') {
+        while(target && target !== document.body) {
+            if(target.tagName === 'A') {
                 if (!executeProxyTimer) {
                     executeProxyTimer = setTimeout(executePop, 1);
                 }
@@ -37,6 +39,29 @@ var checkPopLimits;
             target = target.parentElement;
         }
     };
+
+
+    let popCandidates = [];
+    addPopCandidate = function(args, rpm)
+    {
+        popCandidates.push({args: args, rpm: rpm});
+    }
+
+    selectPopCandidate = function() {
+        let hasNulls = popCandidates.some(function(x) {
+            return x.rpm === null;
+        });
+        if(hasNulls) {
+            shuffle(popCandidates);
+        } else {
+            popCandidates.sort(function (x, y) {
+                return hasNulls ? (Math.random() > 0.5 ? -1 : 1) : (x.rpm >= y.rpm ? -1 : 1);
+            });
+        }
+        popCandidates.forEach(function(item) {
+            addPop.apply(this, item.args);
+        });
+    }
 
     /**
      *

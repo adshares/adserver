@@ -1,7 +1,7 @@
-var insertBackfill = (function() {
+let insertBackfill = (function() {
 
 // https://html.spec.whatwg.org/multipage/scripting.html
-    var runScriptTypes = [
+    let runScriptTypes = [
         'application/javascript',
         'application/ecmascript',
         'application/x-ecmascript',
@@ -20,13 +20,13 @@ var insertBackfill = (function() {
         'text/x-javascript'
     ];
 
-    var seq = function (arr, callback, index) {
+    let seq = function (arr, callback, index) {
         // first call, without an index
         if (typeof index === 'undefined') {
             index = 0
         }
 
-        if(arr.length == 0) {
+        if(arr.length === 0) {
             callback();
             return;
         }
@@ -41,14 +41,14 @@ var insertBackfill = (function() {
         })
     }
 
-    var scriptsDone = function () {
-        var DOMContentLoadedEvent = document.createEvent('Event')
+    let scriptsDone = function () {
+        let DOMContentLoadedEvent = document.createEvent('Event')
         DOMContentLoadedEvent.initEvent('DOMContentLoaded', true, true)
         document.dispatchEvent(DOMContentLoadedEvent)
     }
 
-    var insertScript = function ($script, callback) {
-        var s = document.createElement('script')
+    let insertScript = function ($script, callback) {
+        let s = document.createElement('script')
         s.type = 'text/javascript'
         if ($script.src) {
             s.onload = callback
@@ -65,9 +65,9 @@ var insertBackfill = (function() {
         }
     }
 
-    var runScripts = function ($scripts) {
-        var runList = []
-        var typeAttr
+    let runScripts = function ($scripts) {
+        let runList = []
+        let typeAttr
 
         [].forEach.call($scripts, function ($script) {
             typeAttr = $script.getAttribute('type')
@@ -86,16 +86,16 @@ var insertBackfill = (function() {
 
     return function(element, htmlContent) {
         if(!htmlContent) return;
-        var frag = document.createDocumentFragment();
+        let frag = document.createDocumentFragment();
 
-        var div = document.createElement('div');
+        let div = document.createElement('div');
         div.innerHTML = htmlContent.trim();
 
-        if(div.childNodes.length == 1 && div.firstChild.nodeType === 8) {
+        if(div.childNodes.length === 1 && div.firstChild.nodeType === 8) {
             div.innerHTML = div.firstChild.textContent;
         }
 
-        var $scripts = div.querySelectorAll('script')
+        let $scripts = div.querySelectorAll('script')
 
         while(div.firstChild) {
             frag.appendChild(div.firstChild);

@@ -1,11 +1,11 @@
-var BlockDetector = function (options) {
+let BlockDetector = function (options) {
     this._options = {
         loopCheckTime: 50,
         loopMaxNumber: 5,
         baitClass: 'pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links',
         baitStyle: 'width: 1px !important; height: 1px !important; position: absolute !important; left: -10000px !important; top: -1000px !important;',
     }
-    this._var = {
+    this._let = {
         bait: null,
         checking: false,
         loop: null,
@@ -18,21 +18,21 @@ var BlockDetector = function (options) {
     }
 }
 BlockDetector.prototype._options = null
-BlockDetector.prototype._var = null
+BlockDetector.prototype._let = null
 BlockDetector.prototype._bait = null
 BlockDetector.prototype.setOption = function (options, value) {
     if (value !== undefined) {
-        var key = options
+        let key = options
         options = {}
         options[key] = value
     }
-    for (var option in options) {
+    for (let option in options) {
         this._options[option] = options[option]
     }
     return this
 }
 BlockDetector.prototype._creatBait = function () {
-    var bait = document.createElement('div')
+    let bait = document.createElement('div')
     bait.setAttribute('class', this._options.baitClass)
     bait.setAttribute('style', this._options.baitStyle)
     this._var.bait = window.document.body.appendChild(bait)
@@ -52,7 +52,7 @@ BlockDetector.prototype.check = function (loop) {
     if (this._var.bait === null) {
         this._creatBait()
     }
-    var self = this
+    let self = this
     this._var.loopNumber = 0
     if (loop === true) {
         this._var.loop = setInterval(function () {
@@ -65,7 +65,7 @@ BlockDetector.prototype.check = function (loop) {
     return true
 }
 BlockDetector.prototype._checkBait = function (loop) {
-    var detected = false
+    let detected = false
     if (this._var.bait === null) {
         this._creatBait()
     }
@@ -80,7 +80,7 @@ BlockDetector.prototype._checkBait = function (loop) {
         detected = true
     }
     if (window.getComputedStyle !== undefined) {
-        var baitTemp = window.getComputedStyle(this._var.bait, null)
+        let baitTemp = window.getComputedStyle(this._var.bait, null)
         if (baitTemp && (baitTemp.getPropertyValue('display') == 'none' || baitTemp.getPropertyValue('visibility') == 'hidden')) {
             detected = true
         }
@@ -114,8 +114,8 @@ BlockDetector.prototype._stopLoop = function (detected) {
     this._var.loopNumber = 0
 }
 BlockDetector.prototype.emitEvent = function (detected) {
-    var fns = this._var.event[(detected === true ? 'detected' : 'notDetected')]
-    for (var i in fns) {
+    let fns = this._var.event[(detected === true ? 'detected' : 'notDetected')]
+    for (let i in fns) {
         if (fns.hasOwnProperty(i)) {
             fns[i]()
         }

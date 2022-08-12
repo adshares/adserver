@@ -18,28 +18,28 @@
  */
 
 // Internet Explorer 8-11
-var isIE = !!document.documentMode;
+let isIE = !!document.documentMode;
 // Edge 20+
-var isEdge = !isIE && !!window.StyleMedia;
+let isEdge = !isIE && !!window.StyleMedia;
 // Chrome on iOs has bug with blob url in iframe.src
-var isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match('CriOS');
+let isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match('CriOS');
 
-var __ua = navigator.userAgent.toLowerCase();
-var isFirefox = __ua.indexOf('firefox') > -1;
+let __ua = navigator.userAgent.toLowerCase();
+let isFirefox = __ua.indexOf('firefox') > -1;
 
-var isIphoneSafari = __ua.indexOf('iphone') && __ua.indexOf('safari');
-var iOSVersion = (function () {
-    var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
+let isIphoneSafari = __ua.indexOf('iphone') && __ua.indexOf('safari');
+let iOSVersion = (function () {
+    let v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
     return v ? [parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)] : [0];
 })();
 
-var tmp = new XMLHttpRequest();
+let tmp = new XMLHttpRequest();
 supportBinaryFetch = !isIE || tmp.upload;
 
 // IE does not accept blob url for iframe
-var iframeDataUri = !isIE && !isEdge;
+let iframeDataUri = !isIE && !isEdge;
 
-var requestBlob = !(isIphoneSafari && iOSVersion[0] >= 14) && window.Blob && window.FileReader && FileReader.prototype.hasOwnProperty('readAsBinaryString')
+let requestBlob = !(isIphoneSafari && iOSVersion[0] >= 14) && window.Blob && window.FileReader && FileReader.prototype.hasOwnProperty('readAsBinaryString')
         && (FileReader.prototype.hasOwnProperty('readAsDataURL') || window.URL && URL.createObjectURL);
 
 function getDataURI(data, callback) {
@@ -47,7 +47,7 @@ function getDataURI(data, callback) {
         if (!isCriOS && URL && URL.createObjectURL) {
             callback(URL.createObjectURL(data.blob));
         } else if (window.FileReader) {
-            var reader = new FileReader();
+            let reader = new FileReader();
             reader.onload = function (e) {
                 callback(reader.result);
             };
@@ -58,7 +58,7 @@ function getDataURI(data, callback) {
     callback('data:' + data.type + ';base64,' + btoa(data.bytes));
 }
 
-var prepareIframe = function (element) {
+let prepareIframe = function (element) {
     element.setAttribute('width', '100%');
     element.setAttribute('height', '100%');
     element.setAttribute('marginwidth', '0');
@@ -70,14 +70,14 @@ var prepareIframe = function (element) {
     element.setAttribute('frameborder', '0');
 };
 
-var proxyScript = '' +
-    'var isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match(\'CriOS\');' +
+let proxyScript = '' +
+    'let isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match(\'CriOS\');' +
     'function getDataURI(data, callback) {\n' +
     '    if (window.Blob && data.blob instanceof window.Blob) {\n' +
     '        if (!isCriOS && URL && URL.createObjectURL) {\n' +
     '            callback(URL.createObjectURL(data.blob));\n' +
     '        } else if (window.FileReader) {\n' +
-    '            var reader = new FileReader();\n' +
+    '            let reader = new FileReader();\n' +
     '            reader.onload = function (e) {\n' +
     '                callback(reader.result);\n' +
     '            }\n' +
@@ -87,7 +87,7 @@ var proxyScript = '' +
     '    }\n' +
     '    callback(\'data:\' + data.type + \';base64,\' + btoa(data.bytes));\n' +
     '}' +
-    'var addListener = function (element, event, handler, phase) {' +
+    'let addListener = function (element, event, handler, phase) {' +
     '    if (element.addEventListener) {' +
     '        return element.addEventListener(event, handler, phase);' +
     '    } else {' +
@@ -95,15 +95,15 @@ var proxyScript = '' +
     '    }' +
     '};' +
     'addListener(window, "message", function (event) {' +
-    '    var iframe = document.getElementById("frame");' +
+    '    let iframe = document.getElementById("frame");' +
     '    if(iframe.src == "about:blank")  {' +
     '       getDataURI(event.data, function(dataUri) {' +
     '           iframe.src = dataUri;' +
     '       });' +
     '       return;' +
     '    }' +
-    '    var targets = [iframe.contentWindow, parent];' +
-    '    var target;' +
+    '    let targets = [iframe.contentWindow, parent];' +
+    '    let target;' +
     '    if (event.source == targets[0]) {' +
     '        target = targets[1];' +
     '    }' +
@@ -116,7 +116,7 @@ var proxyScript = '' +
     '});';
 
 function createIframeFromSrc(data, domInsertCallback) {
-    var iframe = document.createElement('iframe');
+    let iframe = document.createElement('iframe');
     iframe.setAttribute('sandbox', "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation");
     prepareIframe(iframe);
     iframe.src = data.iframe_src;
@@ -124,20 +124,20 @@ function createIframeFromSrc(data, domInsertCallback) {
 }
 
 function createIframeFromData(data, domInsertCallback) {
-    var iframe = document.createElement('iframe');
+    let iframe = document.createElement('iframe');
     if (!iframeDataUri) {
         iframe.src = 'about:blank';
         iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
 
         iframe.onload = function() {
-            var fn = function (contents) {
-                var doc = iframe.contentWindow.document;
-                var doc_iframe = doc.createElement('iframe');
+            let fn = function (contents) {
+                let doc = iframe.contentWindow.document;
+                let doc_iframe = doc.createElement('iframe');
                 doc_iframe.setAttribute('id', 'frame');
                 doc_iframe.src = 'about:blank';
                 prepareIframe(doc_iframe);
 
-                var csp = doc.createElement('meta');
+                let csp = doc.createElement('meta');
                 csp.setAttribute('http-equiv', "Content-Security-Policy");
                 csp.setAttribute('content', "frame-src data: blob:; child-src data: blob:; default-src 'unsafe-inline' data: blob:");
 
@@ -156,7 +156,7 @@ function createIframeFromData(data, domInsertCallback) {
 
             if (requestBlob && data instanceof Blob) // blob
             {
-                var reader = new FileReader();
+                let reader = new FileReader();
 
                 reader.onload = function (e) {
 
@@ -176,8 +176,8 @@ function createIframeFromData(data, domInsertCallback) {
     } else {
         iframe.setAttribute('sandbox', "allow-scripts" + (isFirefox ? "" : " allow-same-origin"));
 
-        var fn = function(frame_src) {
-            var blob = new Blob(['<html>' +
+        let fn = function(frame_src) {
+            let blob = new Blob(['<html>' +
             '<head>' +
             '<meta http-equiv="Content-Security-Policy" content="frame-src blob: data: \'self\' \'unsafe-inline\'; child-src blob: data: \'self\' \'unsafe-inline\'; default-src \'unsafe-inline\' data: blob:"></head>' +
             '<body>' +
@@ -208,7 +208,7 @@ function createLinkFromData(data, callback)
 {
     if (requestBlob && data instanceof Blob) // blob
     {
-        var reader = new FileReader();
+        let reader = new FileReader();
 
         reader.onload = function (e) {
             callback(reader.result);
@@ -224,7 +224,7 @@ function createLinkFromData(data, callback)
 }
 
 function createImageFromData(data, domInsertCallback) {
-    var image = new Image();
+    let image = new Image();
     getDataURI(data, function (dataUri) {
         if (data.originalUrl && dataUri.length > 32000) {
             image.onerror = function () {
@@ -244,7 +244,7 @@ function createImageFromData(data, domInsertCallback) {
 }
 
 function createVideoFromData(data, domInsertCallback) {
-    var video = document.createElement('video');
+    let video = document.createElement('video');
     video.autoplay = true
     // video.loop = true
     video.muted = true;
@@ -258,7 +258,7 @@ function createVideoFromData(data, domInsertCallback) {
 
 function getOrigin(a) {
     if (typeof a == "string") {
-        var x = document.createElement('a');
+        let x = document.createElement('a');
         x.href = a;
         a = x;
     }
@@ -266,23 +266,23 @@ function getOrigin(a) {
 }
 
 function fetchURL(url, options) {
-    var options = options || {};
+    options = options || {};
 
-    var xhr = new XMLHttpRequest(), xdr;
+    let xhr = new XMLHttpRequest(), xdr;
 
     if (!supportBinaryFetch) {
-        if (getOrigin(url) != getOrigin(window.location)) {
+        if (getOrigin(url) !== getOrigin(window.location)) {
             xhr = new XDomainRequest();
             xdr = true;
-            var orgUrl = url;
-            var qPos = url.indexOf('?');
-            url += qPos == -1 ? '?xdr' : (qPos == url.length - 1 ? 'xdr' : '&xdr');
+            let orgUrl = url;
+            let qPos = url.indexOf('?');
+            url += qPos === -1 ? '?xdr' : (qPos === url.length - 1 ? 'xdr' : '&xdr');
 
             xhr.__parseHeaders = function(headers) {
                 this.__responseHeaders = {};
-                var headers = headers.split('\n');
-                for(var i=0;i<headers.length;i++) {
-                    var pos = headers[i].indexOf(':');
+                headers = headers.split('\n');
+                for(let i=0;i<headers.length;i++) {
+                    let pos = headers[i].indexOf(':');
                     this.__responseHeaders[headers[i].substring(0, pos)] = headers[i].substr(pos+1);
                 }
             };
@@ -308,7 +308,7 @@ function fetchURL(url, options) {
         } catch (e) {
             requestBlob = false;
         }
-        if (xhr.responseType != 'blob') {
+        if (xhr.responseType !== 'blob') {
             requestBlob = false;
         }
     }
@@ -319,7 +319,7 @@ function fetchURL(url, options) {
 
     fetchURL.timeout && (xhr.timeout = fetchURL.timeout);
 
-    var ok, fail;
+    let ok, fail;
     xhr.ontimeout = function (event) {
         fail && fail();
     };
@@ -332,14 +332,14 @@ function fetchURL(url, options) {
     if (xdr) {
         xhr.onerror = xhr.ontimeout;
         xhr.onload = function () {
-            var data = {
+            let data = {
                 bytes : xhr.responseText,
                 type : xhr.contentType
             };
-            if (data.type.indexOf('text/base64') != -1) {
+            if (data.type.indexOf('text/base64') !== -1) {
                 data.type = data.type.split(',')[1];
-                var headerEnd = data.bytes.indexOf('\n\n');
-                if(headerEnd != -1) {
+                let headerEnd = data.bytes.indexOf('\n\n');
+                if(headerEnd !== -1) {
                     xhr.__parseHeaders(data.bytes.substring(0, headerEnd));
                     data.bytes = atob(data.bytes.substr(headerEnd+2));
                 } else {
@@ -356,14 +356,14 @@ function fetchURL(url, options) {
         }
     } else {
         xhr.onreadystatechange = function () {
-            if (xhr.readyState == 4) {
-                var callback = (xhr.status >= 200 && xhr.status < 400) ? ok : fail;
+            if (xhr.readyState === 4) {
+                let callback = (xhr.status >= 200 && xhr.status < 400) ? ok : fail;
                 if (callback) {
-                    var data;
+                    let data;
                     if (options.binary) {
                         try {
                             if (requestBlob) {
-                                var reader = new FileReader();
+                                let reader = new FileReader();
 
                                 reader.onload = function (e) {
                                     data = {
@@ -380,14 +380,14 @@ function fetchURL(url, options) {
                                     reader.readAsText(xhr.response);
                                 return;
                             } else {
-                                var arr;
+                                let arr;
                                 try {
                                     arr = xhr.responseBody.toArray();
                                 } catch (e) {
                                 }
                                 if (arr) {
-                                    var i = 0, n = arr.length;
-                                    var parts = [];
+                                    let i = 0, n = arr.length;
+                                    let parts = [];
                                     while (i < n) {
                                         parts.push(String.fromCharCode.apply(String, arr.slice(i, i + 10000)));
                                         i += 10000;

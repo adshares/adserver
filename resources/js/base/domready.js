@@ -22,19 +22,19 @@
  * clearInterval: false, document: false, self: false, setInterval: false
  */
 
-var domReady = (function () {
-    var isTop, testDiv, scrollIntervalId, isBrowser = typeof window !== "undefined" && window.document, isPageLoaded = !isBrowser, doc = isBrowser ? document
+let domReady = (function () {
+    let isTop, testDiv, scrollIntervalId, isBrowser = typeof window !== "undefined" && window.document, isPageLoaded = !isBrowser, doc = isBrowser ? document
             : null, readyCalls = [];
 
     function runCallbacks(callbacks) {
-        var i;
+        let i;
         for (i = 0; i < callbacks.length; i += 1) {
             callbacks[i](doc);
         }
     }
 
     function callReady() {
-        var callbacks = readyCalls;
+        let callbacks = readyCalls;
 
         if (isPageLoaded) {
             // Call the DOM ready callbacks

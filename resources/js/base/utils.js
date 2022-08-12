@@ -1,19 +1,19 @@
-var UrlSafeBase64Encode = function (data) {
+let UrlSafeBase64Encode = function (data) {
     return btoa(window.unescape(window.encodeURIComponent(data))).replace(/=|\+|\//g, function (x) {
         return x == '+' ? '-' : (x == '/' ? '_' : '')
     });
 };
 
-var addUrlParam = function (url, names, value) {
+let addUrlParam = function (url, names, value) {
     if (typeof names != 'object') {
-        var tmp = names;
+        let tmp = names;
         names = {};
         names[tmp] = value;
     }
-    for (var name in names) {
+    for (let name in names) {
         value = names[name];
-        var param = name + '=' + encodeURIComponent(value);
-        var qPos = url.indexOf('?');
+        let param = name + '=' + encodeURIComponent(value);
+        let qPos = url.indexOf('?');
         if (qPos > -1) {
             url += (qPos < url.length ? '&' : '') + param;
         } else {
@@ -24,11 +24,11 @@ var addUrlParam = function (url, names, value) {
 };
 
 
-var $isset = function (value) {
+let $isset = function (value) {
     return value !== null && value !== undefined;
 };
 
-var $pick = function (value, ifnull) {
+let $pick = function (value, ifnull) {
     return $isset(value) ? value : ifnull;
 };
 

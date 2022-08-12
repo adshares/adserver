@@ -17,10 +17,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-var getBrowserContext = function() {
+let getBrowserContext = function() {
   const metamask = (typeof window.ethereum !== 'undefined') || (typeof window.web3 !== 'undefined');
   return {
-        frame : (parent == top ? 0 : 1),
+        frame : (parent === top ? 0 : 1),
         width : window.screen.width,
         height : window.screen.height,
         url : (parent !== window) ? document.referrer : document.location.href,
@@ -31,7 +31,7 @@ var getBrowserContext = function() {
 
 window.demandLogContext = function(url) {
 	url = addUrlParam(url, 'k', UrlSafeBase64Encode(JSON.stringify(getBrowserContext())));
-	var img = new Image();
+	let img = new Image();
 	img.src = url;
 
 	document.body.appendChild(img);

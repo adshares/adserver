@@ -17,15 +17,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
-  var InvalidCharacterError = function (message) {
+  let InvalidCharacterError = function (message) {
     this.message = message;
   }
   InvalidCharacterError.prototype = new Error;
   InvalidCharacterError.prototype.name = 'InvalidCharacterError';
 
-  var btoa,atob;
+  let btoa,atob;
 
   try {
       btoa = window.btoa;
@@ -35,10 +35,10 @@ var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
       // encoder
       // [https://gist.github.com/999166] by [https://github.com/nignag]
       btoa = function (input) {
-          var str = String(input);
+          let str = String(input);
           for (
               // initialize result and counter
-              var block, charCode, idx = 0, map = chars, output = '';
+              let block, charCode, idx = 0, map = chars, output = '';
               // if the next str index does not exist:
               // change the mapping table to "="
               // check if d has no fractional digits
@@ -58,13 +58,13 @@ var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
       // decoder
       // [https://gist.github.com/1020396] by [https://github.com/atk]
       atob = function (input) {
-          var str = String(input).replace(/=+$/, '');
+          let str = String(input).replace(/=+$/, '');
           if (str.length % 4 == 1) {
               throw new InvalidCharacterError("'atob' failed: The string to be decoded is not correctly encoded.");
           }
           for (
               // initialize result and counters
-              var bc = 0, bs, buffer, idx = 0, output = '';
+              let bc = 0, bs, buffer, idx = 0, output = '';
               // get next character
               buffer = str.charAt(idx++);
               // character found in table? initialize bit storage and add its ascii

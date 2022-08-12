@@ -17,14 +17,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-var serverOrigin = '{{ ORIGIN }}';
+let serverOrigin = '{{ ORIGIN }}';
 
-var getRandId = function(bytes) {
-    var d = new Date().getTime();
+let getRandId = function(bytes) {
+    let d = new Date().getTime();
 
-    var chars = [];
-    for (var i = 0; i < bytes; i++) {
-        var r = (d + Math.random() * 256) % 256 | 0;
+    let chars = [];
+    for (let i = 0; i < bytes; i++) {
+        let r = (d + Math.random() * 256) % 256 | 0;
         d = Math.floor(d / 256);
         chars.push(String.fromCharCode(r));
     }
@@ -32,10 +32,10 @@ var getRandId = function(bytes) {
     return chars.join('');
 }
 
-var getCid = function() {
-    var i, l, n;
-    var s = getRandId(15) + '\0';
-    var o = '';
+let getCid = function() {
+    let i, l, n;
+    let s = getRandId(15) + '\0';
+    let o = '';
     for (i = 0, l = s.length; i < l; i++) {
         n = s.charCodeAt(i)
             .toString(16)
@@ -44,22 +44,22 @@ var getCid = function() {
     return o;
 }
 
-var UrlSafeBase64Encode = function (data) {
+let UrlSafeBase64Encode = function (data) {
     return btoa(unescape(encodeURIComponent(data))).replace(/=|\+|\//g, function (x) {
         return x == '+' ? '-' : (x == '/' ? '_' : '')
     });
 };
 
-var addUrlParam = function (url, names, value) {
+let addUrlParam = function (url, names, value) {
     if (typeof names != 'object') {
-        var tmp = names;
+        let tmp = names;
         names = {};
         names[tmp] = value;
     }
-    for (var name in names) {
+    for (let name in names) {
         value = names[name];
-        var param = name + '=' + encodeURIComponent(value);
-        var qPos = url.indexOf('?');
+        let param = name + '=' + encodeURIComponent(value);
+        let qPos = url.indexOf('?');
         if (qPos > -1) {
             url += (qPos < url.length ? '&' : '') + param;
         } else {
@@ -69,20 +69,20 @@ var addUrlParam = function (url, names, value) {
     return url;
 };
 
-var getImpressionId = function() {
+let getImpressionId = function() {
     if(!lastImpressionId) {
         lastImpressionId = UrlSafeBase64Encode(getRandId(16))
     }
     return lastImpressionId;
 }
 
-var refreshTime = 10000;
-var cid = getCid();
+let refreshTime = 10000;
+let cid = getCid();
 
-var lastImpressionTime = null;
-var lastImpressionId = null;
-var banner;
-var context;
+let lastImpressionTime = null;
+let lastImpressionId = null;
+let banner;
+let context;
 
 let loadedAdusers = {};
 
