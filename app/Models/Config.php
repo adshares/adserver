@@ -87,6 +87,7 @@ class Config extends Model
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
     public const CURRENCY = 'currency';
+    public const DISPLAY_CURRENCY = 'display-currency';
     public const EXCHANGE_API_KEY = 'exchange-api-key';
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
@@ -486,6 +487,7 @@ class Config extends Model
             self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
             self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
             self::CURRENCY => Currency::ADS->value,
+            self::DISPLAY_CURRENCY => Currency::USD->value,
             self::EMAIL_VERIFICATION_REQUIRED => '0',
             self::EXCHANGE_API_KEY => '',
             self::EXCHANGE_API_SECRET => '',
