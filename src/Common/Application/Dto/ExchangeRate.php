@@ -30,15 +30,11 @@ use Illuminate\Contracts\Support\Arrayable;
 
 class ExchangeRate implements Arrayable
 {
-    private DateTime $dateTime;
-    private float $value;
-    private string $currency;
-
-    public function __construct(DateTime $dateTime, float $value, string $currency)
-    {
-        $this->dateTime = $dateTime;
-        $this->value = $value;
-        $this->currency = $currency;
+    public function __construct(
+        private readonly DateTime $dateTime,
+        private readonly float $value,
+        private readonly string $currency
+    ) {
     }
 
     public function getDateTime(): DateTime
