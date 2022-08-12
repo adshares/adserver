@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Possibility to set application currency other than ADS
+### Fixed
+- Do not expose SMTP password in config API
 
 ## [2.0.3] - 2022-08-16
 ### Fixed
