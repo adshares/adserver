@@ -92,7 +92,7 @@ SQL;
 
         $volumeCoefficient = 1 - $totalFee;
 
-        $query = str_replace('#volume_coefficient', $volumeCoefficient, self::QUERY_STATISTICS);
+        $query = str_replace('#volume_coefficient', (string)$volumeCoefficient, self::QUERY_STATISTICS);
 
         return DB::select($query);
     }

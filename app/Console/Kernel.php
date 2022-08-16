@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -60,9 +60,7 @@ class Kernel extends ConsoleKernel
     public function bootstrap()
     {
         parent::bootstrap();
-
         try {
-            DB::connection()->getPdo();
             DatabaseConfigReader::overwriteAdministrationConfig();
             DB::statement('SET SESSION wait_timeout = 30000');
         } catch (Exception $exception) {
