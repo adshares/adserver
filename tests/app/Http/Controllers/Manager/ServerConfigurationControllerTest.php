@@ -155,19 +155,22 @@ final class ServerConfigurationControllerTest extends TestCase
     public function testStore(): void
     {
         $admin = User::factory()->admin()->create();
+        $data = [
+            Config::REGISTRATION_USER_TYPES => 'advertiser',
+            Config::SUPPORT_EMAIL => 'sup@example.com',
+            Config::TECHNICAL_EMAIL => 'tech@example.com',
+        ];
 
         $response = $this->patchJson(
             self::URI_CONFIG,
-            [
-                'support-email' => 'sup@example.com',
-                'technical-email' => 'tech@example.com',
-            ],
+            $data,
             $this->getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        self::assertDatabaseHas(Config::class, ['value' => 'sup@example.com']);
-        self::assertDatabaseHas(Config::class, ['value' => 'tech@example.com']);
+        foreach ($data as $key => $value) {
+            self::assertDatabaseHas(Config::class, ['key' => $key, 'value' => $value]);
+        }
     }
 
     /**
@@ -224,6 +227,8 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid license key' => [[Config::ADSHARES_LICENSE_KEY => 'invalid']],
             'invalid mailer' => [[Config::MAIL_MAILER => 'invalid']],
             'invalid country' => [[Config::INVOICE_COMPANY_COUNTRY => 'invalid']],
+            'invalid registration user type (empty)' => [[Config::REGISTRATION_USER_TYPES => '']],
+            'invalid registration user type (invalid)' => [[Config::REGISTRATION_USER_TYPES => 'invalid']],
         ];
     }
 

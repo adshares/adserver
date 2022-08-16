@@ -29,6 +29,7 @@ use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
+use Adshares\Config\RegistrationUserType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -132,6 +133,7 @@ class ServerConfigurationController extends Controller
         Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
         Config::REFERRAL_REFUND_ENABLED => 'boolean',
         Config::REGISTRATION_MODE => 'registrationMode',
+        Config::REGISTRATION_USER_TYPES => 'nullable|registrationUserTypeList',
         Config::SERVE_BASE_URL => 'nullable|url',
         Config::SITE_ACCEPT_BANNERS_MANUALLY => 'boolean',
         Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'siteClassifierLocalBanners',
@@ -402,6 +404,25 @@ class ServerConfigurationController extends Controller
                     implode(', ', RegistrationMode::cases())
                 )
             );
+        }
+    }
+
+    private static function validateRegistrationUserTypeList(string $field, string $value): void
+    {
+        if (empty($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` is cannot be empty', $field));
+        }
+
+        foreach (explode(',', $value) as $type) {
+            if (!in_array($type, RegistrationUserType::cases())) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf(
+                        'Field `%s` must be one of %s',
+                        $field,
+                        implode(', ', RegistrationUserType::cases())
+                    )
+                );
+            }
         }
     }
 

@@ -26,6 +26,7 @@ use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Config\RegistrationMode;
+use Adshares\Config\RegistrationUserType;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -163,6 +164,7 @@ class Config extends Model
     public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
     public const REGISTRATION_MODE = 'registration-mode';
+    public const REGISTRATION_USER_TYPES = 'registration-user-types';
     public const AUTO_REGISTRATION_ENABLED = 'auto-registration-enabled';
     public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
     public const EMAIL_VERIFICATION_REQUIRED = 'email-verification-required';
@@ -241,6 +243,7 @@ class Config extends Model
         self::OPERATOR_TX_FEE => ConfigTypes::Float,
         self::OPERATOR_RX_FEE => ConfigTypes::Float,
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
+        self::REGISTRATION_USER_TYPES => ConfigTypes::Array,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
@@ -534,6 +537,7 @@ class Config extends Model
             self::REFERRAL_REFUND_COMMISSION => '',
             self::REFERRAL_REFUND_ENABLED => false,
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
+            self::REGISTRATION_USER_TYPES => [RegistrationUserType::ADVERTISER, RegistrationUserType::PUBLISHER],
             self::SERVE_BASE_URL => $fetched[self::URL] ?? '',
             self::SITE_ACCEPT_BANNERS_MANUALLY => false,
             self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
