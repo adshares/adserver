@@ -8,7 +8,7 @@
     <arg name="colors"/>
     <arg name="extensions" value="php"/>
 
-    <!--<rule ref="PHPCompatibility"/>-->
+    <rule ref="PHPCompatibility"/>
     <rule ref="PSR12"/>
     <!--<rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
         <properties>
