@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -39,14 +39,8 @@ class AdSelectCaseExporter
 {
     private const PACKAGE_SIZE = 2000;
 
-    private $adSelectClient;
-
-    private $output;
-
-    public function __construct(AdSelect $adSelectClient, ConsoleOutput $output)
+    public function __construct(private readonly AdSelect $adSelectClient, private readonly ConsoleOutput $output)
     {
-        $this->adSelectClient = $adSelectClient;
-        $this->output = $output;
     }
 
     /**
@@ -70,7 +64,7 @@ class AdSelectCaseExporter
         $totalEstimate = $maxId - $caseIdFrom + 1;
 
         do {
-            $caseCandidates = NetworkCase::fetchCasesToExport($caseIdFrom, self::PACKAGE_SIZE, 0);
+            $caseCandidates = NetworkCase::fetchCasesToExport($caseIdFrom, self::PACKAGE_SIZE);
             $cases = new Collection();
             foreach ($caseCandidates as $case) {
                 if ($case->network_impression_id < $impressionIdMax) {
