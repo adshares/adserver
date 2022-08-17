@@ -19,30 +19,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests\Mail;
 
-namespace Adshares\Adserver\Tests\Repository\Supply;
+use Adshares\Adserver\Mail\DepositProcessed;
+use Adshares\Common\Application\Model\Currency;
 
-use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
-use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Exception\RuntimeException;
-
-final class MySqlSupplyServerStatisticsRepositoryTest extends TestCase
+class DepositProcessedTest extends MailTestCase
 {
-    public function testFetchStatisticsEmpty(): void
+    /**
+     * @dataProvider currencyProvider
+     */
+    public function testBuild(Currency $currency, $expectedAmount): void
     {
-        $repository = new MySqlSupplyServerStatisticsRepository();
+        $mailable = new DepositProcessed(12_345_678_900_000, $currency);
 
-        $result = $repository->fetchStatistics(0);
-
-        self::assertEmpty($result);
+        $mailable->assertSeeInText($expectedAmount);
     }
 
-    public function testFetchStatisticsInvalidFee(): void
+    public function currencyProvider(): array
     {
-        $repository = new MySqlSupplyServerStatisticsRepository();
-        self::expectException(RuntimeException::class);
-
-        $repository->fetchStatistics(1);
+        return [
+            'ADS' => [Currency::ADS, '123.45678900000 ADS'],
+            'USD' => [Currency::USD, '123.45 USD'],
+        ];
     }
 }

@@ -22,9 +22,7 @@
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\AdsPayment;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkCasePayment;
@@ -33,18 +31,13 @@ use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
-use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyDemandClient;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
-use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Queue;
 
 class SupplyProcessPaymentsTest extends ConsoleTestCase
 {
@@ -174,13 +167,6 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             }
         );
 
-        $this->app->bind(
-            AdSelect::class,
-            function () {
-                return new DummyAdSelectClient();
-            }
-        );
-
         $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
@@ -266,13 +252,6 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 );
 
                 return $demandClient;
-            }
-        );
-
-        $this->app->bind(
-            AdSelect::class,
-            function () {
-                return new DummyAdSelectClient();
             }
         );
 

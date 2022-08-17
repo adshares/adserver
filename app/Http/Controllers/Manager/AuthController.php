@@ -34,6 +34,8 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -60,11 +62,8 @@ class AuthController extends Controller
 {
     private const ERROR_MESSAGE_INVALID_TOKEN = 'Invalid or outdated token';
 
-    private ExchangeRateReader $exchangeRateReader;
-
-    public function __construct(ExchangeRateReader $exchangeRateReader)
+    public function __construct(private readonly ExchangeRateReader $exchangeRateReader)
     {
-        $this->exchangeRateReader = $exchangeRateReader;
     }
 
     private function checkRegisterMode(?string $referralToken = null): ?RefLink
@@ -297,7 +296,7 @@ class AuthController extends Controller
     public function check(int $code = Response::HTTP_OK): JsonResponse
     {
         try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->toArray();
+            $exchangeRate = $this->getAppToDisplayExchangeRate()->toArray();
         } catch (ExchangeRateNotAvailableException $exception) {
             Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
             $exchangeRate = null;
@@ -571,12 +570,21 @@ MSG;
     {
         if (null !== $user->refLink && null !== $user->refLink->bonus && $user->refLink->bonus > 0) {
             try {
-                $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+                $exchangeRate = $this->getAppToDisplayExchangeRate();
                 $user->awardBonus($exchangeRate->toClick($user->refLink->bonus), $user->refLink);
             } catch (ExchangeRateNotAvailableException $exception) {
                 Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
             }
         }
+    }
+
+    private function getAppToDisplayExchangeRate(): ExchangeRate
+    {
+        $appCurrency = Currency::from(config('app.currency'));
+        return match ($appCurrency) {
+            Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
+            default => ExchangeRate::ONE($appCurrency),
+        };
     }
 
     private function sendCrmMailOnUserRegistered(User $user): void

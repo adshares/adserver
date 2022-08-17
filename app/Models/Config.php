@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Utilities\ConfigTypes;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Config\RegistrationMode;
@@ -62,6 +63,7 @@ class Config extends Model
     public const ADUSER_INFO_URL = 'aduser-info-url';
     public const ADUSER_INTERNAL_URL = 'aduser-internal-url';
     public const ADUSER_SERVE_SUBDOMAIN = 'aduser-serve-subdomain';
+    public const ADVERTISER_APPLY_FORM_URL = 'advertiser-apply-form-url';
     public const ALLOW_ZONE_IN_IFRAME = 'allow_zone-in-iframe';
     public const AUTO_WITHDRAWAL_LIMIT_ADS = 'auto-withdrawal-limit-ads';
     public const AUTO_WITHDRAWAL_LIMIT_BSC = 'auto-withdrawal-limit-bsc';
@@ -84,6 +86,8 @@ class Config extends Model
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
+    public const CURRENCY = 'currency';
+    public const DISPLAY_CURRENCY = 'display-currency';
     public const EXCHANGE_API_KEY = 'exchange-api-key';
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
@@ -114,6 +118,7 @@ class Config extends Model
     public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
+    public const PUBLISHER_APPLY_FORM_URL = 'publisher-apply-form-url';
     public const SERVE_BASE_URL = 'serve-base-url';
     public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
     public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
@@ -149,7 +154,9 @@ class Config extends Model
     public const COLD_WALLET_IS_ACTIVE = 'cold-wallet-is-active';
     public const ADSERVER_NAME = 'adserver-name';
     public const TECHNICAL_EMAIL = 'technical-email';
+    public const SUPPORT_CHAT = 'support-chat';
     public const SUPPORT_EMAIL = 'support-email';
+    public const SUPPORT_TELEGRAM = 'support-telegram';
     public const PANEL_PLACEHOLDER_NOTIFICATION_TIME = 'panel-placeholder-notification-time';
     public const PANEL_PLACEHOLDER_UPDATE_TIME = 'panel-placeholder-update-time';
     public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
@@ -479,6 +486,8 @@ class Config extends Model
             self::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => '',
             self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
             self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
+            self::CURRENCY => Currency::ADS->value,
+            self::DISPLAY_CURRENCY => Currency::USD->value,
             self::EMAIL_VERIFICATION_REQUIRED => true,
             self::EXCHANGE_API_KEY => '',
             self::EXCHANGE_API_SECRET => '',

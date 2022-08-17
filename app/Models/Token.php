@@ -33,6 +33,7 @@ use Throwable;
 /**
  * @mixin Builder
  * @property string uuid
+ * @property array payload
  */
 class Token extends Model
 {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,6 +29,8 @@ use Adshares\Adserver\Mail\WithdrawalSuccess;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
@@ -40,13 +42,14 @@ class WalletWithdrawalCheckCommand extends BaseCommand
 {
     protected $signature = 'ops:wallet:withdrawal:check';
     protected $description = 'Check if there is withdrawals to auto send.';
-    private ExchangeRateReader $exchangeRateReader;
-    private AdsRpcClient $rpcClient;
 
-    public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader, AdsRpcClient $rpcClient)
-    {
-        $this->exchangeRateReader = $exchangeRateReader;
-        $this->rpcClient = $rpcClient;
+    private Currency $appCurrency;
+
+    public function __construct(
+        Locker $locker,
+        private readonly ExchangeRateReader $exchangeRateReader,
+        private readonly AdsRpcClient $rpcClient
+    ) {
         parent::__construct($locker);
     }
 
@@ -57,7 +60,12 @@ class WalletWithdrawalCheckCommand extends BaseCommand
             return;
         }
         $this->info('[Wallet] Start command ' . $this->signature);
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->getValue();
+
+        $this->appCurrency = Currency::from(config('app.currency'));
+        $exchangeRate = match ($this->appCurrency) {
+            Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
+            default => ExchangeRate::ONE($this->appCurrency),
+        };
 
         $count = 0;
         $users = User::findByAutoWithdrawal();
@@ -65,7 +73,7 @@ class WalletWithdrawalCheckCommand extends BaseCommand
         foreach ($users as $user) {
             /** @var User $user */
             $balance = $user->getWalletBalance();
-            if ($balance * $exchangeRate >= $user->auto_withdrawal_limit) {
+            if ($exchangeRate->fromClick($balance) >= $user->auto_withdrawal_limit) {
                 try {
                     $this->withdraw($user, $balance);
                     $this->info(sprintf('[Wallet] A withdrawal has been requested for %s', $user->label));
@@ -78,7 +86,7 @@ class WalletWithdrawalCheckCommand extends BaseCommand
         $this->info(sprintf('[Wallet] %d withdrawals has been requested', $count));
     }
 
-    public function withdraw(User $user, int $amount): void
+    private function withdraw(User $user, int $amount): void
     {
         $addressFrom = new AccountId(config('app.adshares_address'));
 
@@ -104,7 +112,11 @@ class WalletWithdrawalCheckCommand extends BaseCommand
                 );
         }
 
-        $baseAmount = AdsUtils::calculateAmount((string)$addressFrom, $addressTo, $amount);
+        $amountInClicks = match ($this->appCurrency) {
+            Currency::ADS => $amount,
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $this->appCurrency->value)->toClick($amount),
+        };
+        $baseAmountInClicks = AdsUtils::calculateAmount((string)$addressFrom, $addressTo, $amountInClicks);
         $ledgerEntry = UserLedgerEntry::construct(
             $user->id,
             -$amount,
@@ -116,15 +128,16 @@ class WalletWithdrawalCheckCommand extends BaseCommand
         AdsSendOne::dispatch(
             $ledgerEntry,
             $addressTo,
-            $baseAmount,
+            $baseAmountInClicks,
             $message
         );
         if (null !== $user->email) {
+            $baseAmount = AdsUtils::calculateAmount((string)$addressFrom, $addressTo, $amount);
             $fee = AdsUtils::calculateFee((string)$addressFrom, $addressTo, $baseAmount);
             Mail::to($user)->queue(
                 new WithdrawalSuccess(
                     $baseAmount,
-                    'ADS',
+                    $this->appCurrency->value,
                     $fee,
                     $user->wallet_address
                 )
