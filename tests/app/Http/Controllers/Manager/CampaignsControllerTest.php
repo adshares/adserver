@@ -26,11 +26,13 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -238,13 +240,14 @@ final class CampaignsControllerTest extends TestCase
     {
         $user = $this->createUser();
 
+        /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create([
             'user_id' => $user->id,
             'budget' => $campaignBudget,
         ]);
 
         $response = $this->putJson(
-            self::URI . "/{$campaign->id}/status",
+            self::buildCampaignStatusUri($campaign->id),
             [
                 'campaign' => ['status' => Campaign::STATUS_ACTIVE],
             ]
@@ -253,18 +256,56 @@ final class CampaignsControllerTest extends TestCase
         $response->assertStatus($expectedResponseCode);
     }
 
+    /** @dataProvider campaignStatusChangeBlockadesProvider */
+    public function testCampaignStatusChangeBlockades(Currency $currency, int $expectedBlockade): void
+    {
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
+        $user = $this->createUser();
+
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'user_id' => $user->id,
+            'budget' => 1e11,
+        ]);
+
+        $response = $this->putJson(
+            self::buildCampaignStatusUri($campaign->id),
+            [
+                'campaign' => ['status' => Campaign::STATUS_ACTIVE],
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertDatabaseHas(UserLedgerEntry::class, ['amount' => $expectedBlockade]);
+    }
+
+    public function campaignStatusChangeBlockadesProvider(): array
+    {
+        return [
+            'ADS' => [
+                Currency::ADS,
+                -300_030_003_000,// blockade in clicks, x / 0.3333
+            ],
+            'USD' => [
+                Currency::USD,
+                -100_000_000_000,// blockade in currency
+            ],
+        ];
+    }
+
     public function testCampaignWithConversionStatusChange(): void
     {
         $user = $this->createUser();
 
+        /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create([
             'user_id' => $user->id,
-            'budget' => 10 * 10e9,
+            'budget' => 1e11,
         ]);
         $conversionDefinition = Conversiondefinition::factory()->create(['campaign_id' => $campaign->id]);
 
         $this->putJson(
-            self::URI . "/{$campaign->id}/status",
+            self::buildCampaignStatusUri($campaign->id),
             [
                 'campaign' => ['status' => Campaign::STATUS_ACTIVE],
             ]
@@ -330,11 +371,10 @@ final class CampaignsControllerTest extends TestCase
 
     private function createUser(): User
     {
-        $userBalance = 50 * 10e9;
+        $userBalance = 5 * 1e11;
 
-        $user = User::factory()->create();
+        $user = $this->login();
         UserLedgerEntry::factory()->create(['user_id' => $user->id, 'amount' => $userBalance]);
-        $this->actingAs($user, 'api');
 
         return $user;
     }
@@ -406,8 +446,7 @@ final class CampaignsControllerTest extends TestCase
             [UserLedgerEntry::TYPE_BONUS_INCOME, $bonus, UserLedgerEntry::STATUS_ACCEPTED],
         ];
 
-        /** @var User $user */
-        $user = User::factory()->create();
+        $user = $this->login();
         foreach ($entries as $entry) {
             UserLedgerEntry::factory()->create([
                 'type' => $entry[0],
@@ -428,8 +467,6 @@ final class CampaignsControllerTest extends TestCase
                 return $mock;
             }
         );
-
-        $this->actingAs($user, 'api');
 
         $campaignInputData = $this->campaignInputData();
         $campaignInputData['basicInformation']['budget'] = $budget;
@@ -495,8 +532,7 @@ final class CampaignsControllerTest extends TestCase
      */
     public function testUpdateBidStrategyInvalid(array $bidStrategyData): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $this->login();
 
         $campaignInputData = $this->campaignInputData();
         $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
@@ -528,16 +564,16 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddCampaignExchangeRateNotAvailable(): void
     {
-        $exchangeRateRepository = self::createMock(ExchangeRateRepository::class);
-        $exchangeRateRepository->method('fetchExchangeRate')
-            ->willThrowException(new ExchangeRateNotAvailableException('test'));
         $this->app->bind(
             ExchangeRateRepository::class,
-            static function () use ($exchangeRateRepository) {
-                return $exchangeRateRepository;
+            function () {
+                $mock = self::createMock(ExchangeRateRepository::class);
+                $mock->method('fetchExchangeRate')
+                    ->willThrowException(new ExchangeRateNotAvailableException('test'));
+                return $mock;
             }
         );
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
         $response->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE);
@@ -545,7 +581,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddCampaignInvalidSetupMissingDefaultBidStrategy(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         DB::delete('DELETE FROM bid_strategy WHERE 1=1');
 
@@ -555,8 +591,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneNoneExistsCampaign(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->login();
 
         $campaign1 = $this->createCampaignForUser($user);
         $campaign2 = $this->createCampaignForUser(User::factory()->create());
@@ -571,8 +606,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCloneEmptyCampaign(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->login();
 
         $campaign = $this->createCampaignForUser(
             $user,
@@ -766,8 +800,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testCampaignEditMedium(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
+        $user = $this->login();
         /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
             [
@@ -775,12 +808,16 @@ final class CampaignsControllerTest extends TestCase
                 'user_id' => $user->id,
             ]
         );
-        $this->actingAs($user, 'api');
 
         $response = $this->patchJson(
             self::URI . '/' . $campaign->id,
             ['campaign' => ['basic_information' => ['medium' => 'invalid']]]
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    private static function buildCampaignStatusUri(int $campaignId): string
+    {
+        return sprintf('%s/%d/status', self::URI, $campaignId);
     }
 }

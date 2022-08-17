@@ -29,7 +29,6 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Status;
@@ -38,13 +37,6 @@ class AdSelectTest extends TestCase
 {
     public function testFindBanners(): void
     {
-        $this->app->bind(
-            AdSelect::class,
-            function () {
-                return new DummyAdSelectClient();
-            }
-        );
-
         /** @var User $user */
         $user = User::factory()->create();
         /** @var Site $site */

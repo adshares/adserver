@@ -23,68 +23,69 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\GetBlockIdsCommand;
+use Adshares\Ads\Command\GetLogCommand;
+use Adshares\Ads\Command\GetTransactionCommand;
+use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\GetBlockIdsResponse;
 use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\NullUrl;
-use Adshares\Mock\Client\DummyAdSelectClient;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Client\DummyDemandClient;
-use Adshares\Supply\Application\Service\AdSelect;
-use Adshares\Supply\Application\Service\DemandClient;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
 
 class AdsProcessTxTest extends ConsoleTestCase
 {
+    private const COMMAND = 'ads:process-tx';
     private const TX_ID_CONNECTION = '0001:00000608:0002';
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
     private const TX_ID_SEND_ONE = '0001:00000083:0001';
 
-    public function testAdsProcessValidUserDeposit(): void
+    /**
+     * @dataProvider depositProvider
+     */
+    public function testDeposit(Currency $currency, int $expectedBalance): void
     {
-        $depositAmount = 100000000000;
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
+        $depositAmount = 100_000_000_000;
+        $this->insertAdsPaymentSingle($depositAmount);
+        $user = $this->setupUser();
 
-        $adsTx = new AdsPayment();
-        $adsTx->txid = self::TX_ID_SEND_ONE;
-        $adsTx->amount = $depositAmount;
-        $adsTx->address = '0001-00000000-9B6F';
-        $adsTx->save();
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        $user->uuid = '00000000000000000000000000000123';
-        $user->save();
-
-        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
-
-        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
-
+        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_USER_DEPOSIT, AdsPayment::all()->first()->status);
-        $this->assertEquals($depositAmount, $user->getBalance());
+        $this->assertEquals($expectedBalance, $user->getBalance());
+    }
+
+    public function depositProvider(): array
+    {
+        return [
+            'ADS' => [Currency::ADS, 100_000_000_000],
+            'USD' => [Currency::USD, 33_330_000_000],
+        ];
     }
 
     public function testAdsProcessDepositWithoutUser(): void
     {
-        $depositAmount = 100000000000;
-
-        $adsTx = new AdsPayment();
-        $adsTx->txid = self::TX_ID_SEND_ONE;
-        $adsTx->amount = $depositAmount;
-        $adsTx->address = '0001-00000000-9B6F';
-        $adsTx->save();
+        $this->insertAdsPaymentSingle(100000000000);
 
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
-        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
-
+        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
 
@@ -129,54 +130,29 @@ class AdsProcessTxTest extends ConsoleTestCase
         $adsTx->address = $networkHost->address;
         $adsTx->save();
 
-        $this->app->bind(
-            DemandClient::class,
-            function () {
-                return new DummyDemandClient();
-            }
-        );
-
-        $this->app->bind(
-            AdSelect::class,
-            function () {
-                return new DummyAdSelectClient();
-            }
-        );
-
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
-        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
-
+        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
 
     public function testAdsProcessValidSendMany(): void
     {
-        $adsTx = new AdsPayment();
-        $adsTx->txid = self::TX_ID_SEND_MANY;
-        $adsTx->amount = 300000000000;
-        $adsTx->address = '0001-00000000-9B6F';
-        $adsTx->save();
+        $this->insertAdsPaymentMulti();
 
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
-        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
-
+        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
 
     public function testAdsProcessConnectionTx(): void
     {
-        $adsTx = new AdsPayment();
-        $adsTx->txid = self::TX_ID_CONNECTION;
-        $adsTx->amount = 300000000000;
-        $adsTx->address = '0001-00000000-9B6F';
-        $adsTx->save();
+        $this->insertAdsPaymentConnection();
 
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
-        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
-
+        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
     }
 
@@ -195,23 +171,204 @@ class AdsProcessTxTest extends ConsoleTestCase
             }
         );
 
-        $adsTx = new AdsPayment();
-        $adsTx->txid = self::TX_ID_SEND_ONE;
-        $adsTx->amount = 100000000000;
-        $adsTx->address = '0001-00000000-9B6F';
-        $adsTx->save();
+        $this->insertAdsPaymentSingle(100000000000);
 
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
-        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_CANNOT_GET_BLOCK_IDS);
-
+        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_CANNOT_GET_BLOCK_IDS);
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
+    }
+
+    public function testAdsProcessGetBlockIdsRecoverableError(): void
+    {
+        $this->app->bind(
+            AdsClient::class,
+            function () {
+                $mock = self::createMock(AdsClient::class);
+                $exception = new CommandException(
+                    new GetBlockIdsCommand('0', '5B400000'),
+                    'Test exception',
+                    CommandError::GET_SIGNATURE_UNAVAILABLE
+                );
+                $mock->method('getBlockIds')->willReturnOnConsecutiveCalls(
+                    $this->getBlockIds1(),
+                    $this->throwException($exception),
+                    $this->getBlockIds2(),
+                );
+
+                return $mock;
+            }
+        );
+
+        $this->insertAdsPaymentSingle(100000000000);
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+    }
+
+    public function testLock(): void
+    {
+        $lockerMock = $this->createMock(Locker::class);
+        $lockerMock->expects(self::once())->method('lock')->willReturn(false);
+        $this->instance(Locker::class, $lockerMock);
+
+        $this->artisan(self::COMMAND)->assertExitCode(2);
+    }
+
+    public function testLogError(): void
+    {
+        $this->app->bind(
+            AdsLogReader::class,
+            function (Application $app) {
+                $mock = self::createMock(AdsLogReader::class);
+                $mock->method('parseLog')
+                    ->willThrowException(new CommandException(new GetLogCommand(null), 'Text Exception'));
+                return $mock;
+            }
+        );
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+    }
+
+    public function testCommandExceptionOnProcessingPayment(): void
+    {
+        $this->app->bind(
+            AdsClient::class,
+            function () {
+                $mock = self::createMock(AdsClient::class);
+                $mock->method('getTransaction')
+                    ->willThrowException(
+                        new CommandException(new GetTransactionCommand(self::TX_ID_SEND_ONE), 'Text Exception')
+                    );
+
+                return $mock;
+            }
+        );
+        $this->insertAdsPaymentSingle(100000000000);
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+    }
+
+    public function testUnexpectedExceptionOnProcessingPayment(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->never();
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->app->bind(
+            AdsClient::class,
+            function () {
+                $mock = self::createMock(AdsClient::class);
+                $mock->method('getTransaction')->willThrowException(new RuntimeException('test-exception'));
+
+                return $mock;
+            }
+        );
+        $this->insertAdsPaymentSingle(100000000000);
+        $this->expectException(RuntimeException::class);
+
+        $this->artisan(self::COMMAND);
+    }
+
+    public function testProcessTransferFromColdWallet(): void
+    {
+        Config::updateAdminSettings([Config::COLD_WALLET_ADDRESS => '0001-00000000-9B6F']);
+        $this->insertAdsPaymentSingle(100000000000);
+
+        $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
+        $this->assertEquals(AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET, AdsPayment::all()->first()->status);
+    }
+
+    public function testAdsProcessSendOneToDifferentAddress(): void
+    {
+        Config::updateAdminSettings([Config::ADSHARES_ADDRESS => '0000-00000000-XXXX']);
+        $this->insertAdsPaymentSingle(100000000000);
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+        $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
+    }
+
+    public function testAdsProcessSendManyToDifferentAddress(): void
+    {
+        Config::updateAdminSettings([Config::ADSHARES_ADDRESS => '0000-00000000-XXXX']);
+        $this->insertAdsPaymentMulti();
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+        $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
+    }
+
+    /**
+     * @dataProvider reactivateCampaignProvider
+     */
+    public function testReactivateCampaign(Currency $currency, int $budget, int $expectedStatus): void
+    {
+        Config::updateAdminSettings([Config::CURRENCY => $currency->value]);
+        $depositAmount = 100_000_000_000;//ADS
+        $this->insertAdsPaymentSingle($depositAmount);
+        $user = $this->setupUser();
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create(
+            [
+                'budget' => $budget,
+                'status' => Campaign::STATUS_SUSPENDED,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+        $campaign->refresh();
+        $this->assertEquals($expectedStatus, $campaign->status);
+    }
+
+    public function reactivateCampaignProvider(): array
+    {
+        return [
+            'ADS, sufficient budget' => [Currency::ADS, 30_000_000_000, Campaign::STATUS_ACTIVE],
+            'ADS, insufficient budget' => [Currency::ADS, 33_333_333_334, Campaign::STATUS_SUSPENDED],
+            'USD, sufficient budget' => [Currency::USD, 30_000_000_000, Campaign::STATUS_ACTIVE],
+            'USD, insufficient budget' => [Currency::USD, 33_333_333_334, Campaign::STATUS_SUSPENDED],
+        ];
     }
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->mockAdsClient();
+    }
+
+    private function insertAdsPaymentSingle(int $depositAmount): void
+    {
+        $adsTx = new AdsPayment();
+        $adsTx->txid = self::TX_ID_SEND_ONE;
+        $adsTx->amount = $depositAmount;
+        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->save();
+    }
+
+    private function insertAdsPaymentMulti(): void
+    {
+        $adsTx = new AdsPayment();
+        $adsTx->txid = self::TX_ID_SEND_MANY;
+        $adsTx->amount = 300000000000;
+        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->save();
+    }
+
+    private function insertAdsPaymentConnection(): void
+    {
+        $adsTx = new AdsPayment();
+        $adsTx->txid = self::TX_ID_CONNECTION;
+        $adsTx->amount = 300000000000;
+        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->save();
+    }
+
+    private function setupUser(): User
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $user->uuid = '00000000000000000000000000000123';
+        $user->save();
+
+        return $user;
     }
 
     private function mockAdsClient(): void

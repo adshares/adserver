@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,21 +36,12 @@ class AdPayPaymentReportProcessor
 {
     public const STATUS_PAYMENT_ACCEPTED = 0;
 
-    /** @var ExchangeRate */
-    private $exchangeRate;
+    private float $exchangeRateValue;
+    private array $advertisers = [];
+    private array $conversionDefinitions = [];
 
-    /** @var float */
-    private $exchangeRateValue;
-
-    /** @var array */
-    private $advertisers = [];
-
-    /** @var array */
-    private $conversionDefinitions = [];
-
-    public function __construct(ExchangeRate $exchangeRate)
+    public function __construct(private readonly ExchangeRate $exchangeRate)
     {
-        $this->exchangeRate = $exchangeRate;
         $this->exchangeRateValue = $exchangeRate->getValue();
     }
 

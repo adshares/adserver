@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,11 +22,10 @@
 namespace Adshares\Adserver\Mail;
 
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Common\Application\Model\Currency;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-
-use function config;
 
 class DepositProcessed extends Mailable
 {
@@ -34,18 +33,35 @@ class DepositProcessed extends Mailable
     use SerializesModels;
 
     private $amount;
+    private $currency;
 
-    public function __construct(int $amount)
+    public function __construct(int $amount, Currency $currency)
     {
         $this->amount = $amount;
+        $this->currency = $currency;
     }
 
     public function build(): self
     {
+        $formattedAmount = AdsConverter::clicksToAds($this->amount);
+        if (Currency::ADS !== $this->currency) {
+            $formattedAmount = substr($formattedAmount, 0, strpos($formattedAmount, '.') + 3);
+        }
         $variables = [
-            'amount' => AdsConverter::clicksToAds($this->amount),
+            'amount' => $formattedAmount,
+            'currency' => $this->currency->value,
         ];
 
         return $this->markdown('emails.deposit-processed')->with($variables);
+    }
+
+    public function getAmount(): int
+    {
+        return $this->amount;
+    }
+
+    public function getCurrency(): Currency
+    {
+        return $this->currency;
     }
 }

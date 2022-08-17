@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
@@ -37,6 +38,8 @@ use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -66,55 +69,46 @@ use function config;
 
 class WalletController extends Controller
 {
+    private const APP_CURRENCY = 'app.currency';
     private const FIELD_ADDRESS = 'address';
-
     private const FIELD_AMOUNT = 'amount';
-
-    private const FIELD_DATE_FROM = 'date_from';
-
-    private const FIELD_DATE_TO = 'date_to';
-
-    private const FIELD_ERROR = 'error';
-
-    private const FIELD_FEE = 'fee';
-
-    private const FIELD_RECEIVE = 'receive';
-
-    private const FIELD_LIMIT = 'limit';
-
-    private const FIELD_MEMO = 'memo';
-
-    private const FIELD_MESSAGE = 'message';
-
-    private const FIELD_OFFSET = 'offset';
-
-    private const FIELD_TO = 'to';
-
-    private const FIELD_TOTAL = 'total';
-
-    private const FIELD_TYPES = 'types';
-
     private const FIELD_BTC = 'btc';
-
-    private const FIELD_NOW_PAYMENTS = 'now_payments';
-
-    private const FIELD_UNWRAPPERS = 'unwrappers';
-
-    private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
-
+    private const FIELD_DATE_FROM = 'date_from';
+    private const FIELD_DATE_TO = 'date_to';
+    private const FIELD_ERROR = 'error';
+    private const FIELD_FEE = 'fee';
     private const FIELD_FIAT = 'fiat';
-
+    private const FIELD_LIMIT = 'limit';
+    private const FIELD_MEMO = 'memo';
+    private const FIELD_MESSAGE = 'message';
+    private const FIELD_NOW_PAYMENTS = 'now_payments';
+    private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
+    private const FIELD_OFFSET = 'offset';
+    private const FIELD_RECEIVE = 'receive';
+    private const FIELD_TO = 'to';
+    private const FIELD_TOTAL = 'total';
+    private const FIELD_TYPES = 'types';
+    private const FIELD_UNWRAPPERS = 'unwrappers';
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
-    public function withdrawalInfo(ExchangeRateReader $exchangeRateReader): JsonResponse
+    public function __construct(private readonly ExchangeRateReader $exchangeRateReader)
+    {
+    }
+
+    public function withdrawalInfo(): JsonResponse
     {
         $btcInfo = null;
         if (config('app.btc_withdraw')) {
             $fee = config('app.btc_withdraw_fee');
             $rate = 0;
             try {
-                $exchangeRate = $exchangeRateReader->fetchExchangeRate(null, 'BTC')->toArray();
-                $rate = (float)$exchangeRate['value'];
+                $appCurrency = Currency::from(config(self::APP_CURRENCY));
+                $rateToAds = (match ($appCurrency) {
+                    Currency::ADS => ExchangeRate::ONE($appCurrency),
+                    default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+                })->getValue();
+
+                $rate = $this->exchangeRateReader->fetchExchangeRate(null, 'BTC')->getValue() / $rateToAds;
             } catch (ExchangeRateNotAvailableException $exception) {
                 Log::error(sprintf('[NowPayments] Cannot fetch exchange rate: %s', $exception->getMessage()));
             }
@@ -189,10 +183,10 @@ class WalletController extends Controller
     private function getAdServerAdsAddress(): AccountId
     {
         try {
-            return new AccountId(config('app.adshares_address'));
-        } catch (InvalidArgumentException $e) {
-            Log::error(sprintf('Invalid ADS address is set: %s', $e->getMessage()));
-            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new AccountId(config('app.adshares_address') ?? '');
+        } catch (InvalidArgumentException $exception) {
+            Log::error(sprintf('Invalid ADS address is set: %s', $exception->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'ADS account is not set');
         }
     }
 
@@ -245,11 +239,18 @@ class WalletController extends Controller
         $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
         $userLedgerEntry->save();
 
+        $appCurrency = Currency::from(config(self::APP_CURRENCY));
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => ExchangeRate::ONE($appCurrency),
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+        };
+        $amountInClicks = $exchangeRate->toClick($token['payload']['request']['amount']);
+
         $currency = $token['payload']['request']['currency'] ?? 'ADS';
         if ($currency === 'BTC') {
             if (
                 $exchange->transfer(
-                    $token['payload']['request']['amount'],
+                    (float)AdsConverter::clicksToAds($amountInClicks),
                     $currency,
                     $token['payload']['request']['to'],
                     SecureUrl::change(route('withdraw.exchange')),
@@ -272,7 +273,7 @@ class WalletController extends Controller
             AdsSendOne::dispatch(
                 $userLedgerEntry,
                 $token['payload']['request']['to'],
-                $token['payload']['request']['amount'],
+                $amountInClicks,
                 $token['payload']['request']['memo'] ?? ''
             );
             $fee = AdsUtils::calculateFee(
@@ -283,7 +284,7 @@ class WalletController extends Controller
             Mail::to($userLedgerEntry->user)->queue(
                 new WithdrawalSuccess(
                     $token['payload']['request']['amount'],
-                    $currency,
+                    $appCurrency->value,
                     $fee,
                     new WalletAddress(WalletAddress::NETWORK_ADS, $token['payload']['request']['to'])
                 )
@@ -369,6 +370,12 @@ class WalletController extends Controller
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed($addressFrom, $addressTo);
 
+        $appCurrency = Currency::from(config(self::APP_CURRENCY));
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => ExchangeRate::ONE($appCurrency),
+            default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
+        };
+
         DB::beginTransaction();
 
         if (!$ledgerEntry->save()) {
@@ -385,7 +392,7 @@ class WalletController extends Controller
                 new WithdrawalApproval(
                     Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
                     $amount,
-                    'ADS',
+                    $appCurrency->value,
                     $adsFee,
                     new WalletAddress(WalletAddress::NETWORK_ADS, (string)$addressTo)
                 )
@@ -394,7 +401,7 @@ class WalletController extends Controller
             AdsSendOne::dispatch(
                 $ledgerEntry,
                 $addressTo,
-                $amount,
+                $exchangeRate->toClick($amount),
                 $this->getWalletAdsMessage($rpcClient, $address)
             );
         }
@@ -405,8 +412,8 @@ class WalletController extends Controller
 
     private function withdrawBtc(Request $request): JsonResponse
     {
-        $minAmount = 1e11 * config('app.btc_withdraw_min_amount');
-        $maxAmount = 1e11 * config('app.btc_withdraw_max_amount');
+        $minAmount = config('app.btc_withdraw_min_amount');
+        $maxAmount = config('app.btc_withdraw_max_amount');
 
         Validator::make(
             $request->all(),
@@ -517,13 +524,13 @@ class WalletController extends Controller
                 [
                     'chain_id' => 1,
                     'network_name' => 'Ethereum',
-                    // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
+                    // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ],
                 [
                     'chain_id' => 56,
                     'network_name' => 'Binance Smart Chain',
-                    // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
+                    // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ]
             ],
@@ -535,6 +542,7 @@ class WalletController extends Controller
 
     public function nowPaymentsInit(NowPayments $nowPayments, Request $request): JsonResponse
     {
+        /** @var User $user */
         $user = Auth::user();
         $amount = (float)$request->get('amount', 10);
 

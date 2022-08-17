@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -41,17 +41,11 @@ use Illuminate\Database\Eloquent\Model;
 class AdsPayment extends Model
 {
     public const STATUS_INVALID = -1;
-
     public const STATUS_NEW = 0;
-
     public const STATUS_USER_DEPOSIT = 1;
-
     public const STATUS_EVENT_PAYMENT = 2;
-
     public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
-
     public const STATUS_EVENT_PAYMENT_CANDIDATE = 4;
-
     public const STATUS_RESERVED = 64;
 
     protected $casts = [
@@ -74,6 +68,10 @@ class AdsPayment extends Model
         return $adsPayment;
     }
 
+    /**
+     * @param int $status
+     * @return Collection<AdsPayment>
+     */
     public static function fetchByStatus(int $status): Collection
     {
         return self::where('status', $status)->get();

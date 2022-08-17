@@ -21,28 +21,10 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Tests\Repository\Supply;
+namespace Adshares\Common\Application\Model;
 
-use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
-use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Exception\RuntimeException;
-
-final class MySqlSupplyServerStatisticsRepositoryTest extends TestCase
+enum Currency: string
 {
-    public function testFetchStatisticsEmpty(): void
-    {
-        $repository = new MySqlSupplyServerStatisticsRepository();
-
-        $result = $repository->fetchStatistics(0);
-
-        self::assertEmpty($result);
-    }
-
-    public function testFetchStatisticsInvalidFee(): void
-    {
-        $repository = new MySqlSupplyServerStatisticsRepository();
-        self::expectException(RuntimeException::class);
-
-        $repository->fetchStatistics(1);
-    }
+    case ADS = 'ADS';
+    case USD = 'USD';
 }

@@ -24,6 +24,8 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
@@ -52,6 +54,7 @@ class ServerConfigurationController extends Controller
         Config::ADUSER_INFO_URL => 'nullable|url',
         Config::ADUSER_INTERNAL_URL => 'nullable|url',
         Config::ADUSER_SERVE_SUBDOMAIN => 'nullable|host',
+        Config::ADVERTISER_APPLY_FORM_URL => 'nullable|url',
         Config::ALLOW_ZONE_IN_IFRAME => 'nullable|boolean',
         Config::AUTO_CONFIRMATION_ENABLED => 'nullable|boolean',
         Config::AUTO_REGISTRATION_ENABLED => 'nullable|boolean',
@@ -81,6 +84,7 @@ class ServerConfigurationController extends Controller
         Config::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_SITE_ADDED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => 'nullable|email',
+        Config::CURRENCY => 'nullable|appCurrency',
         Config::EMAIL_VERIFICATION_REQUIRED => 'nullable|boolean',
         Config::EXCHANGE_API_KEY => 'nullable',
         Config::EXCHANGE_API_SECRET => 'nullable',
@@ -124,6 +128,7 @@ class ServerConfigurationController extends Controller
         Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|positiveInteger',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
+        Config::PUBLISHER_APPLY_FORM_URL => 'nullable|url',
         Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
         Config::REFERRAL_REFUND_ENABLED => 'boolean',
         Config::REGISTRATION_MODE => 'registrationMode',
@@ -135,7 +140,9 @@ class ServerConfigurationController extends Controller
         Config::SKYNET_API_KEY => 'nullable|notEmpty',
         Config::SKYNET_API_URL => 'nullable|url',
         Config::SKYNET_CDN_URL => 'nullable|url',
+        Config::SUPPORT_CHAT => 'nullable|url',
         Config::SUPPORT_EMAIL => 'email',
+        Config::SUPPORT_TELEGRAM => 'nullable|notEmpty',
         Config::TECHNICAL_EMAIL => 'email',
         Config::UPLOAD_LIMIT_IMAGE => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_MODEL => 'nullable|positiveInteger',
@@ -202,6 +209,16 @@ class ServerConfigurationController extends Controller
     {
         if (!AccountId::isValid($value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an account ID', $field));
+        }
+    }
+
+    private static function validateAppCurrency(string $field, string $value): void
+    {
+        if (null === Currency::tryFrom($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a currency', $field));
+        }
+        if ((new UserLedgerEntry())->count() > 0) {
+            throw new UnprocessableEntityHttpException('App currency cannot be changed');
         }
     }
 

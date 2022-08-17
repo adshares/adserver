@@ -30,15 +30,18 @@ use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Mock\Client\DummyAdsClient;
+use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 abstract class TestCase extends BaseTestCase
@@ -54,6 +57,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         Mail::fake();
+        Queue::fake();
         Storage::fake(self::DISK);
         $this->faker = Factory::create();
 
@@ -91,6 +95,12 @@ abstract class TestCase extends BaseTestCase
             AdsRpcClient::class,
             static function () {
                 return new DummyAdsRpcClient();
+            }
+        );
+        $this->app->bind(
+            AdSelect::class,
+            function () {
+                return new DummyAdSelectClient();
             }
         );
         $this->app->bind(

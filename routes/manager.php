@@ -129,6 +129,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
         Route::get('options/sites/languages', [OptionsController::class, 'languages']);
         Route::get('options/sites/zones', [OptionsController::class, 'zones']);
+        Route::get('options/server', [OptionsController::class, 'server']);
 
         // settings
         Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
