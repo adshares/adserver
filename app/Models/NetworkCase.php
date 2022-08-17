@@ -163,7 +163,7 @@ SQL;
     public static function fetchCasesToExport(
         int $idFrom,
         int $limit,
-        int $offset
+        int $offset = 0
     ): Collection {
         return self::select(
             [
