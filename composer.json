@@ -76,7 +76,7 @@
     "scripts": {
         "qa-check": [
             "parallel-lint --no-colors --blame --exclude vendor --exclude bin .",
-            "phpcs"
+            "phpcs -s"
         ],
         "test": [
             "phpunit"
