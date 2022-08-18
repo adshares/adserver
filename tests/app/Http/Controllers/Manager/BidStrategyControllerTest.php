@@ -442,7 +442,7 @@ class BidStrategyControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $bidStrategy = BidStrategy::register('test', $user->id, 'web', null);
         $bidStrategyPublicId = $bidStrategy->uuid;
-        $file = new UploadedFile(base_path('tests/mock/empty.zip'), 'empty.zip');
+        $file = new UploadedFile(base_path('tests/mock/Files/Banners/empty.zip'), 'empty.zip');
 
         $response = $this->post(self::buildUriPostBidStrategySpreadsheet($bidStrategyPublicId), ['file' => $file]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

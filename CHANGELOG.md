@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Possibility to set application currency other than ADS
+### Fixed
+- Remove deprecated zip* functions
 
 ## [2.0.4] - 2022-09-05
 ### Fixed
