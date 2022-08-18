@@ -256,6 +256,7 @@ class Config extends Model
         self::ADSHARES_SECRET,
         self::CLASSIFIER_EXTERNAL_API_KEY_SECRET,
         self::EXCHANGE_API_SECRET,
+        self::MAIL_SMTP_PASSWORD,
         self::NOW_PAYMENTS_IPN_SECRET,
         self::SKYNET_API_KEY,
     ];

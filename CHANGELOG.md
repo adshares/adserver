@@ -6,10 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
 - Possibility to set application currency other than ADS
 ### Changed
 - Split user access for advertisers and publishers
+### Fixed
+- Do not expose SMTP password in config API
+- Remove deprecated zip* functions
 
 ## [2.0.3] - 2022-08-16
 ### Fixed

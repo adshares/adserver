@@ -21,19 +21,10 @@
 
 namespace Adshares\Lib;
 
+use Adshares\Common\Exception\RuntimeException;
 use DOMXPath;
 use finfo;
-use RuntimeException;
-
-use function sprintf;
-use function zip_close;
-use function zip_entry_close;
-use function zip_entry_filesize;
-use function zip_entry_name;
-use function zip_entry_open;
-use function zip_entry_read;
-use function zip_open;
-use function zip_read;
+use ZipArchive;
 
 class ZipToHtml
 {
@@ -43,25 +34,18 @@ class ZipToHtml
         'code.createjs.com',
         '2mdn.net',
     ];
-
     private const MAX_ZIPPED_SIZE = 512 * 1024;
-
     private const MAX_UNZIPPED_SIZE = self::MAX_ZIPPED_SIZE * 5;
 
-    private $filename;
+    private array $assets = [];
+    private ?string $htmlFile;
+    private ?string $htmlFileContents;
 
-    private $assets = [];
-
-    private $html_file;
-
-    private $html_file_contents;
-
-    public function __construct($filename)
+    public function __construct(private readonly string $filename)
     {
-        $this->filename = $filename;
     }
 
-    private function isWhitelisted($href)
+    private function isWhitelisted($href): bool
     {
         $domain = parse_url($href, PHP_URL_HOST);
         foreach (self::DOMAIN_WHITELIST as $allow) {
@@ -73,24 +57,24 @@ class ZipToHtml
         return false;
     }
 
-    public function getHtml()
+    public function getHtml(): string
     {
         $this->assets = [];
-        $this->html_file = null;
-        $this->html_file_contents = null;
+        $this->htmlFile = null;
+        $this->htmlFileContents = null;
         $this->loadFile();
 
         return $this->flattenHtml();
     }
 
-    private function loadFile()
+    private function loadFile(): void
     {
-        $zipped_size = filesize($this->filename);
-        if ($zipped_size >= self::MAX_ZIPPED_SIZE) {
+        $zippedSize = filesize($this->filename);
+        if ($zippedSize >= self::MAX_ZIPPED_SIZE) {
             throw new RuntimeException(
                 sprintf(
                     "Zip file max size exceeded (%d KB > %d KB)  ",
-                    $zipped_size / 1024,
+                    $zippedSize / 1024,
                     self::MAX_ZIPPED_SIZE / 1024
                 )
             );
@@ -98,38 +82,38 @@ class ZipToHtml
 
         $finfo = new finfo(FILEINFO_MIME_TYPE);
 
-        $unzipped_size = 0;
-        $zip = zip_open($this->filename);
+        $unzippedSize = 0;
+        $zip = new ZipArchive();
 
-        if ($zip) {
-            while ($zip_entry = zip_read($zip)) {
-                $size = zip_entry_filesize($zip_entry);
-                $unzipped_size += $size;
-                if ($unzipped_size >= self::MAX_UNZIPPED_SIZE) {
+        if (true === $zip->open($this->filename)) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $statistics = $zip->statIndex($i);
+                $size = $statistics['size'];
+                $unzippedSize += $size;
+                if ($unzippedSize >= self::MAX_UNZIPPED_SIZE) {
                     throw new RuntimeException(
                         sprintf(
                             "Zip file max uncompressed size exceeded (%d KB > %d KB)",
-                            $unzipped_size / 1024,
+                            $unzippedSize / 1024,
                             self::MAX_UNZIPPED_SIZE / 1024
                         )
                     );
                 }
 
-                $name = zip_entry_name($zip_entry);
+                $name = $statistics['name'];
                 if (preg_match("#(/|^)(__|\.)#", $name)) {
                     continue;
                 }
                 $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
-                if ($size > 0 && zip_entry_open($zip, $zip_entry, "r")) {
+                if ($size > 0 && false !== ($contents = $zip->getFromIndex($i))) {
                     if ($ext === 'html' || $ext === 'htm') {
-                        if ($this->html_file) {
+                        if ($this->htmlFile) {
                             throw new RuntimeException("Zip file must contain only one html file");
                         }
-                        $this->html_file = $name;
-                        $this->html_file_contents = zip_entry_read($zip_entry, $size);
+                        $this->htmlFile = $name;
+                        $this->htmlFileContents = $contents;
                     } else {
-                        $contents = zip_entry_read($zip_entry, $size);
                         $this->assets[$name] = [
                             'contents' => $contents,
                             'type' => $ext,
@@ -137,14 +121,12 @@ class ZipToHtml
                             'data_uri' => null,
                         ];
                     }
-
-                    zip_entry_close($zip_entry);
                 }
             }
 
-            zip_close($zip);
+            $zip->close();
 
-            if (!$this->html_file) {
+            if (!$this->htmlFile) {
                 throw new RuntimeException("Zip file must contain a html file");
             }
         }
@@ -154,7 +136,7 @@ class ZipToHtml
     {
         libxml_use_internal_errors(true);
         $doc = new DOMDocumentSafe();
-        $doc->loadHTML(mb_convert_encoding($this->html_file_contents, 'HTML-ENTITIES', 'UTF-8'));
+        $doc->loadHTML(mb_convert_encoding($this->htmlFileContents, 'HTML-ENTITIES', 'UTF-8'));
 
         $xpath = new DOMXPath($doc);
 
@@ -193,16 +175,16 @@ class ZipToHtml
                     continue;
                 }
             } else {
-                $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
+                $file = $this->normalizePath(dirname($this->htmlFile) . '/' . $href);
             }
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
-                $css_text = $this->replaceCssUrls($this->assets[$file]['contents'], dirname($file));
-                $new_tag = $doc->createElement('style');
-                $new_tag->textContent = $css_text;
-                $new_tag->setAttribute('data-inject', "1");
-                $new_tag->setAttribute('data-href', $file);
-                $sheet->parentNode->replaceChild($new_tag, $sheet);
+                $cssText = $this->replaceCssUrls($this->assets[$file]['contents'], dirname($file));
+                $newTag = $doc->createElement('style');
+                $newTag->textContent = $cssText;
+                $newTag->setAttribute('data-inject', "1");
+                $newTag->setAttribute('data-href', $file);
+                $sheet->parentNode->replaceChild($newTag, $sheet);
             } else {
                 $sheet->parentNode->removeChild($sheet);
             }
@@ -223,21 +205,21 @@ class ZipToHtml
                 }
                 $file = $this->getAssetDataUriExternal($href);
             } else {
-                $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
+                $file = $this->normalizePath(dirname($this->htmlFile) . '/' . $href);
             }
 
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
-                $script_text = $this->assets[$file]['contents'];
-                $new_tag = $doc->createElement('script');
+                $scriptText = $this->assets[$file]['contents'];
+                $newTag = $doc->createElement('script');
 
-                $new_tag->textContent = $script_text;
+                $newTag->textContent = $scriptText;
 
-                $new_tag->setAttribute('data-inject', "1");
-                $new_tag->setAttribute('data-href', $file);
-                $script->parentNode->replaceChild($new_tag, $script);
+                $newTag->setAttribute('data-inject', "1");
+                $newTag->setAttribute('data-href', $file);
+                $script->parentNode->replaceChild($newTag, $script);
 
-                $this->includeCreateJsFix($new_tag, $script_text);
+                $this->includeCreateJsFix($newTag, $scriptText);
             } else {
                 $script->parentNode->removeChild($script);
             }
@@ -263,7 +245,7 @@ class ZipToHtml
                 }
             }
 
-            $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
+            $file = $this->normalizePath(dirname($this->htmlFile) . '/' . $href);
             if (isset($this->assets[$file])) {
                 if (isset($this->assets[$file]['used'])) {
                     $tag->removeAttribute($attr);
@@ -294,7 +276,7 @@ class ZipToHtml
                             );
                         }
                     }
-                    $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
+                    $file = $this->normalizePath(dirname($this->htmlFile) . '/' . $href);
                     if (isset($this->assets[$file])) {
                         if (isset($this->assets[$file]['used'])) {
                             return 'asset-src:' . $file . $match[2] . ($match[3] ?? '');
@@ -330,15 +312,15 @@ class ZipToHtml
             }
         }
 
-        $fix_script = $doc->createElement('script');
-        $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/fixscript.js'));
-        $fix_script->setAttribute('data-inject', '1');
-        $body->appendChild($fix_script);
+        $fixScript = $doc->createElement('script');
+        $fixScript->textContent = file_get_contents(resource_path('js/demand/ziptohtml/fixscript.js'));
+        $fixScript->setAttribute('data-inject', '1');
+        $body->appendChild($fixScript);
 
-        $banner_script = $doc->createElement('script');
-        $banner_script->textContent = file_get_contents(public_path('-/banner.js'));
-        $banner_script->setAttribute('data-inject', '1');
-        $body->insertBefore($banner_script, $body->firstChild);
+        $bannerScript = $doc->createElement('script');
+        $bannerScript->textContent = file_get_contents(public_path('-/banner.js'));
+        $bannerScript->setAttribute('data-inject', '1');
+        $body->insertBefore($bannerScript, $body->firstChild);
 
         return $doc->saveHTML();
     }
@@ -381,12 +363,12 @@ class ZipToHtml
         return $url;
     }
 
-    private function replaceCssUrls($css_text, $basedir)
+    private function replaceCssUrls($cssText, $basedir)
     {
-        $uri_chars = preg_quote('-._~:/?#[]@!$&\'()*+,;=', '#');
+        $uriChars = preg_quote('-._~:/?#[]@!$&\'()*+,;=', '#');
 
         return preg_replace_callback(
-            '#url\(\s*[\'"]?([0-9a-z' . $uri_chars . ']+?)[\'"]?\s*\)#im',
+            '#url\(\s*[\'"]?([0-9a-z' . $uriChars . ']+?)[\'"]?\s*\)#im',
             function ($match) use ($basedir) {
                 $href = $match[1];
                 $scheme = parse_url($href, PHP_URL_SCHEME);
@@ -408,7 +390,7 @@ class ZipToHtml
 
                 return '/*{asset-src:' . $file . '}*/';
             },
-            $css_text
+            $cssText
         );
     }
 
@@ -448,13 +430,13 @@ class ZipToHtml
         return $name;
     }
 
-    private function includeCreateJsFix($element, $text)
+    private function includeCreateJsFix($element, $text): void
     {
-        if (strstr($text, 'createjs.com')) {
-            $fix_script = $element->ownerDocument->createElement('script');
-            $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/createjs_fix.js'));
+        if (str_contains($text, 'createjs.com')) {
+            $fixScript = $element->ownerDocument->createElement('script');
+            $fixScript->textContent = file_get_contents(resource_path('js/demand/ziptohtml/createjs_fix.js'));
 
-            $element->parentNode->insertBefore($fix_script, $element->nextSibling);
+            $element->parentNode->insertBefore($fixScript, $element->nextSibling);
         }
     }
 }
