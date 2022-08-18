@@ -68,7 +68,7 @@ class AuthController extends Controller
 
     private function checkRegisterMode(?string $referralToken = null): ?RefLink
     {
-        $registrationMode = Config::fetchStringOrFail(Config::REGISTRATION_MODE);
+        $registrationMode = config('app.registration_mode');
         if (RegistrationMode::PRIVATE === $registrationMode) {
             throw new AccessDeniedHttpException('Private registration enabled');
         }

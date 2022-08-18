@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Possibility to set application currency other than ADS
+### Changed
+- Split user access for advertisers and publishers
 ### Fixed
 - Do not expose SMTP password in config API
 - Remove deprecated zip* functions
