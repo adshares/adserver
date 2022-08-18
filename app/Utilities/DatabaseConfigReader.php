@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Utilities;
 
 use Adshares\Adserver\Models\Config;
 use Illuminate\Support\Facades\Config as SystemConfig;
+use Illuminate\Support\Facades\Crypt;
 
 class DatabaseConfigReader
 {
@@ -41,6 +42,9 @@ class DatabaseConfigReader
     {
         $settings = Config::fetchAdminSettings(true);
         foreach ($settings as $key => $value) {
+            if (Config::MAIL_SMTP_PASSWORD === $key && !empty($value)) {
+                $value = Crypt::decryptString($value);
+            }
             SystemConfig::set(self::mapKey($key), $value);
         }
     }
