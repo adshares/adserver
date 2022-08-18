@@ -36,6 +36,7 @@ final class StatsControllerTest extends TestCase
 {
     private const ADVERTISER_CHART_URI = '/api/campaigns/stats/chart';
     private const ADVERTISER_STATS_URI = '/api/campaigns/stats/table2';
+    private const PUBLISHER_STATS_URI = '/api/sites/stats/table2';
 
     public function testAdvertiserChartWhenViewTypeAndHourResolutionAndDateEndIsEarlierThanDateStart(): void
     {
@@ -126,6 +127,17 @@ final class StatsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
+    public function testPublisherStatsWhenUserIsOnlyAdvertiser(): void
+    {
+        $user = $this->login(User::factory()->create(['is_publisher' => false]));
+        Campaign::factory()->create(['user_id' => $user->id]);
+
+        $url = $this->buildPublisherStatsUri(new DateTime(), new DateTime());
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     public function providerDataForAdvertiserChart(): array
     {
         return [
@@ -148,6 +160,16 @@ final class StatsControllerTest extends TestCase
         return sprintf(
             '%s/%s/%s',
             self::ADVERTISER_STATS_URI,
+            $dateStart->format(DateTimeInterface::ATOM),
+            $dateEnd->format(DateTimeInterface::ATOM)
+        );
+    }
+
+    private function buildPublisherStatsUri(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): string
+    {
+        return sprintf(
+            '%s/%s/%s',
+            self::PUBLISHER_STATS_URI,
             $dateStart->format(DateTimeInterface::ATOM),
             $dateEnd->format(DateTimeInterface::ATOM)
         );
