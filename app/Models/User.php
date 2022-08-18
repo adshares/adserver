@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Config\RegistrationUserType;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -394,12 +395,25 @@ class User extends Authenticatable implements JWTSubject
 
     public static function registerWithEmail(string $email, string $password, ?RefLink $refLink = null): User
     {
-        return self::register([
-            'email' => $email,
-            'password' => $password,
-            'is_advertiser' => true,
-            'is_publisher' => true,
-        ], $refLink);
+        return self::register(
+            array_merge(
+                [
+                    'email' => $email,
+                    'password' => $password,
+                ],
+                self::getUserTypes()
+            ),
+            $refLink
+        );
+    }
+
+    private static function getUserTypes(): array
+    {
+        $registrationUserTypes = config('app.registration_user_types');
+        return [
+            'is_advertiser' => in_array(RegistrationUserType::ADVERTISER, $registrationUserTypes),
+            'is_publisher' => in_array(RegistrationUserType::PUBLISHER, $registrationUserTypes),
+        ];
     }
 
     protected static function register(array $data, ?RefLink $refLink = null): User
@@ -420,14 +434,18 @@ class User extends Authenticatable implements JWTSubject
         bool $autoWithdrawal = false,
         ?RefLink $refLink = null
     ): User {
-        return self::register([
-            'wallet_address' => $address,
-            'auto_withdrawal' => $autoWithdrawal
-                ? config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()))
-                : null,
-            'is_advertiser' => true,
-            'is_publisher' => true,
-        ], $refLink);
+        return self::register(
+            array_merge(
+                [
+                    'wallet_address' => $address,
+                    'auto_withdrawal' => $autoWithdrawal
+                        ? config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()))
+                        : null,
+                ],
+                self::getUserTypes()
+            ),
+            $refLink
+        );
     }
 
     public static function registerAdmin(string $email, string $name, string $password): User

@@ -44,6 +44,55 @@ Route::middleware([Kernel::JSON_API])->group(
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
     function () {
+        // actions
+        Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
+        Route::get('countries', [ConfigController::class, 'countries']);
+        Route::get('notifications', [NotificationsController::class, 'read']);
+        Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
+
+        Route::get('ref-links', [RefLinksController::class, 'browse']);
+        Route::post('ref-links', [RefLinksController::class, 'add']);
+        Route::get('invoices', [InvoicesController::class, 'browse']);
+        Route::post('invoices', [InvoicesController::class, 'add']);
+
+        Route::get('options/banners', [OptionsController::class, 'banners']);
+        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
+        Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
+        Route::get('options/sites', [OptionsController::class, 'sites']);
+        Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
+        Route::get('options/sites/languages', [OptionsController::class, 'languages']);
+        Route::get('options/sites/zones', [OptionsController::class, 'zones']);
+        Route::get('options/server', [OptionsController::class, 'server']);
+
+        // settings
+        Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
+        Route::patch('wallet/auto-withdrawal', [SettingsController::class, 'autoWithdrawal']);
+
+        // withdraw / deposit
+        Route::get('withdrawal-info', [WalletController::class, 'withdrawalInfo']);
+        Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);
+        Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
+        Route::get('deposit-info', [WalletController::class, 'depositInfo']);
+        Route::get('wallet/history', [WalletController::class, 'history']);
+        Route::post('wallet/confirm-withdrawal', [WalletController::class, 'confirmWithdrawal'])
+            ->name('wallet.confirm-withdrawal');
+        Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
+            ->name('wallet.cancel-withdrawal');
+        Route::get('now-payments/init', [WalletController::class, 'nowPaymentsInit']);
+        Route::get('wallet/connect/init', [WalletController::class, 'connectInit']);
+        Route::patch('wallet/connect', [WalletController::class, 'connect']);
+        Route::post('wallet/connect/confirm/{token}', [WalletController::class, 'connectConfirm']);
+
+        Route::get('stats/report/list', [StatsController::class, 'reportList']);
+        Route::get('stats/report/{uuid}', [StatsController::class, 'reportDownload']);
+
+        Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
+        Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);
+    }
+);
+
+Route::middleware([Kernel::ADVERTISER_ACCESS, Kernel::JSON_API])->group(
+    function () {
         Route::get(
             'campaigns/bid-strategy/{bid_strategy_public_id}/spreadsheet',
             [BidStrategyController::class, 'getBidStrategySpreadsheet']
@@ -91,6 +140,29 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::post('campaigns/{campaign_id}/clone', [CampaignsController::class, 'clone'])
             ->name('app.campaigns.clone');
 
+        // statistics
+        Route::get(
+            'campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}',
+            [StatsController::class, 'advertiserChart']
+        );
+        Route::get(
+            'campaigns/stats/table2/{date_start}/{date_end}',
+            [StatsController::class, 'advertiserStatsWithTotal']
+        );
+        Route::get(
+            'campaigns/stats/kw/{date_start}/{date_end}',
+            [StatsController::class, 'advertiserStatsConversions']
+        );
+        Route::get(
+            'stats/report/campaigns/{date_start}/{date_end}',
+            [StatsController::class, 'advertiserReportFileCreate']
+        );
+        Route::get('campaigns/stats/report/{date_start}/{date_end}', [StatsController::class, 'advertiserReport']);
+    }
+);
+
+Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(
+    function () {
         Route::post('sites/domain/validate', [SitesController::class, 'verifyDomain']);
         Route::post('sites', [SitesController::class, 'create'])
             ->name('app.sites.add');
@@ -111,77 +183,14 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
             ->name('app.sites.code');
         Route::get('sites/cryptovoxels/code', [SitesController::class, 'sitesCryptovoxelsCode']);
 
-        // actions
-        Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
-        Route::get('countries', [ConfigController::class, 'countries']);
-        Route::get('notifications', [NotificationsController::class, 'read']);
-        Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
-
-        Route::get('ref-links', [RefLinksController::class, 'browse']);
-        Route::post('ref-links', [RefLinksController::class, 'add']);
-        Route::get('invoices', [InvoicesController::class, 'browse']);
-        Route::post('invoices', [InvoicesController::class, 'add']);
-
-        Route::get('options/banners', [OptionsController::class, 'banners']);
-        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
-        Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
-        Route::get('options/sites', [OptionsController::class, 'sites']);
-        Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
-        Route::get('options/sites/languages', [OptionsController::class, 'languages']);
-        Route::get('options/sites/zones', [OptionsController::class, 'zones']);
-        Route::get('options/server', [OptionsController::class, 'server']);
-
-        // settings
-        Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
-        Route::patch('wallet/auto-withdrawal', [SettingsController::class, 'autoWithdrawal']);
-
-        // withdraw / deposit
-        Route::get('withdrawal-info', [WalletController::class, 'withdrawalInfo']);
-        Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);
-        Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
-        Route::get('deposit-info', [WalletController::class, 'depositInfo']);
-        Route::get('wallet/history', [WalletController::class, 'history']);
-        Route::post('wallet/confirm-withdrawal', [WalletController::class, 'confirmWithdrawal'])
-            ->name('wallet.confirm-withdrawal');
-        Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
-            ->name('wallet.cancel-withdrawal');
-        Route::get('now-payments/init', [WalletController::class, 'nowPaymentsInit']);
-        Route::get('wallet/connect/init', [WalletController::class, 'connectInit']);
-        Route::patch('wallet/connect', [WalletController::class, 'connect']);
-        Route::post('wallet/connect/confirm/{token}', [WalletController::class, 'connectConfirm']);
-
         // statistics
-        Route::get(
-            'campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}',
-            [StatsController::class, 'advertiserChart']
-        );
-        Route::get(
-            'campaigns/stats/table2/{date_start}/{date_end}',
-            [StatsController::class, 'advertiserStatsWithTotal']
-        );
-        Route::get(
-            'campaigns/stats/kw/{date_start}/{date_end}',
-            [StatsController::class, 'advertiserStatsConversions']
-        );
         Route::get(
             'sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}',
             [StatsController::class, 'publisherChart']
         );
         Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
-
         Route::get('stats/report/sites/{date_start}/{date_end}', [StatsController::class, 'publisherReportFileCreate']);
-        Route::get(
-            'stats/report/campaigns/{date_start}/{date_end}',
-            [StatsController::class, 'advertiserReportFileCreate']
-        );
-        Route::get('stats/report/list', [StatsController::class, 'reportList']);
-        Route::get('stats/report/{uuid}', [StatsController::class, 'reportDownload']);
-
         Route::get('sites/stats/report/{date_start}/{date_end}', [StatsController::class, 'publisherReport']);
-        Route::get('campaigns/stats/report/{date_start}/{date_end}', [StatsController::class, 'advertiserReport']);
-
-        Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
-        Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);
     }
 );
 

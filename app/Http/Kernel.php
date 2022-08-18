@@ -24,9 +24,11 @@ namespace Adshares\Adserver\Http;
 use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
 use Adshares\Adserver\Http\Middleware\Impersonation;
 use Adshares\Adserver\Http\Middleware\RequireAdminAccess;
+use Adshares\Adserver\Http\Middleware\RequireAdvertiserAccess;
 use Adshares\Adserver\Http\Middleware\RequireAgencyAccess;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\RequireModeratorAccess;
+use Adshares\Adserver\Http\Middleware\RequirePublisherAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
@@ -45,19 +47,14 @@ class Kernel extends HttpKernel
     private const AUTH = 'auth';
 
     public const USER_ACCESS = 'only-authenticated-users';
-
     public const ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION = 'only-authenticated-users-except-impersonation';
-
     public const ADMIN_ACCESS = 'only-admin-users';
-
     public const ADMIN_JWT_ACCESS = 'jwt-admin-users';
-
     public const MODERATOR_ACCESS = 'only-moderator-users';
-
     public const AGENCY_ACCESS = 'only-agency-users';
-
     public const GUEST_ACCESS = 'only-guest-users';
-
+    public const ADVERTISER_ACCESS = 'only-advertisers';
+    public const PUBLISHER_ACCESS = 'only-publishers';
     public const JSON_API = 'api';
 
     public const JSON_API_NO_TRANSFORM = 'api-no-transform';
@@ -72,6 +69,16 @@ class Kernel extends HttpKernel
         self::USER_ACCESS => [
             self::AUTH . ':api',
             Impersonation::class,
+        ],
+        self::ADVERTISER_ACCESS => [
+            self::AUTH . ':api',
+            Impersonation::class,
+            RequireAdvertiserAccess::class,
+        ],
+        self::PUBLISHER_ACCESS => [
+            self::AUTH . ':api',
+            Impersonation::class,
+            RequirePublisherAccess::class,
         ],
         self::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION => [
             self::AUTH . ':api',
