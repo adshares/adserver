@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 
 class RefLinkTest extends TestCase
 {
@@ -129,6 +130,7 @@ class RefLinkTest extends TestCase
     public function testCalculateRefundAmount(): void
     {
         Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
 
         /** @var RefLink $refLink */
         $refLink = RefLink::factory()->create();
@@ -156,6 +158,7 @@ class RefLinkTest extends TestCase
     public function testCalculateBonusAmount(): void
     {
         Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.1]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
 
         /** @var RefLink $refLink */
         $refLink = RefLink::factory()->create();
