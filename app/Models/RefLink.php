@@ -126,13 +126,13 @@ class RefLink extends Model
 
     public function calculateRefund(int $amount): int
     {
-        $refund = $this->refund ?? Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION);
+        $refund = $this->refund ?? config('app.referral_refund_commission');
         return (int)floor($amount * $refund) - $this->calculateBonus($amount);
     }
 
     public function calculateBonus(int $amount): int
     {
-        $refund = $this->refund ?? Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION);
+        $refund = $this->refund ?? config('app.referral_refund_commission');
         return (int)round(floor($amount * $refund) * (1.0 - $this->kept_refund));
     }
 

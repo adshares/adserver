@@ -310,8 +310,8 @@ class AuthController extends Controller
                 $user->toArray(),
                 [
                     'exchange_rate' => $exchangeRate,
-                    'referral_refund_enabled' => Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED),
-                    'referral_refund_commission' => Config::fetchFloatOrFail(Config::REFERRAL_REFUND_COMMISSION),
+                    'referral_refund_enabled' => config('app.referral_refund_enabled'),
+                    'referral_refund_commission' => config('app.referral_refund_commission'),
                 ]
             ),
             $code
