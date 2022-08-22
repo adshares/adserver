@@ -156,6 +156,10 @@ final class ServerConfigurationControllerTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $data = [
+            Config::ADSHARES_ADDRESS => '0001-00000003-AB0C',
+            Config::EXCHANGE_CURRENCIES => 'EUR,USD',
+            Config::INVENTORY_EXPORT_WHITELIST => '0001-00000003-AB0C,0001-00000005-CBCA',
+            Config::INVOICE_CURRENCIES => 'EUR',
             Config::REGISTRATION_USER_TYPES => 'advertiser',
             Config::SUPPORT_EMAIL => 'sup@example.com',
             Config::TECHNICAL_EMAIL => 'tech@example.com',
@@ -198,6 +202,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid value length' => [[Config::SUPPORT_EMAIL => str_repeat('a', 65536)]],
             'invalid email format' => [[Config::SUPPORT_EMAIL => 'invalid']],
             'invalid account ID' => [[Config::ADSHARES_ADDRESS => 'invalid']],
+            'invalid account ID list' => [[Config::INVENTORY_EXPORT_WHITELIST => 'invalid']],
             'invalid app currency' => [[Config::CURRENCY => 'EUR']],
             'invalid boolean format' => [[Config::COLD_WALLET_IS_ACTIVE => '23']],
             'invalid click amount (not integer)' => [[Config::HOT_WALLET_MIN_VALUE => '1234a']],
