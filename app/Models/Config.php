@@ -161,8 +161,8 @@ class Config extends Model
     public const PANEL_PLACEHOLDER_NOTIFICATION_TIME = 'panel-placeholder-notification-time';
     public const PANEL_PLACEHOLDER_UPDATE_TIME = 'panel-placeholder-update-time';
     public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
-    public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
+    public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
     public const REGISTRATION_MODE = 'registration-mode';
     public const REGISTRATION_USER_TYPES = 'registration-user-types';
     public const AUTO_REGISTRATION_ENABLED = 'auto-registration-enabled';
@@ -242,6 +242,7 @@ class Config extends Model
         self::NOW_PAYMENTS_MIN_AMOUNT => ConfigTypes::Integer,
         self::OPERATOR_TX_FEE => ConfigTypes::Float,
         self::OPERATOR_RX_FEE => ConfigTypes::Float,
+        self::REFERRAL_REFUND_COMMISSION => ConfigTypes::Float,
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
         self::REGISTRATION_USER_TYPES => ConfigTypes::Array,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
@@ -535,7 +536,7 @@ class Config extends Model
             self::NOW_PAYMENTS_MIN_AMOUNT => 25,
             self::OPERATOR_RX_FEE => 0.01,
             self::OPERATOR_TX_FEE => 0.01,
-            self::REFERRAL_REFUND_COMMISSION => '',
+            self::REFERRAL_REFUND_COMMISSION => 0,
             self::REFERRAL_REFUND_ENABLED => false,
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
             self::REGISTRATION_USER_TYPES => [RegistrationUserType::ADVERTISER, RegistrationUserType::PUBLISHER],
