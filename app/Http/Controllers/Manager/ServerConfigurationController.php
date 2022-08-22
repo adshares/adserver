@@ -90,14 +90,14 @@ class ServerConfigurationController extends Controller
         Config::EXCHANGE_API_KEY => 'nullable',
         Config::EXCHANGE_API_SECRET => 'nullable',
         Config::EXCHANGE_API_URL => 'nullable|url',
-        Config::EXCHANGE_CURRENCIES => 'nullable|currenciesList',
+        Config::EXCHANGE_CURRENCIES => 'nullable|notEmpty|list:currency',
         Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|positiveInteger',
         Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|positiveInteger',
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
-        Config::INVENTORY_EXPORT_WHITELIST => 'nullable|json',
-        Config::INVENTORY_IMPORT_WHITELIST => 'nullable|json',
-        Config::INVENTORY_WHITELIST => 'nullable|json',
+        Config::INVENTORY_EXPORT_WHITELIST => 'nullable|list:accountId',
+        Config::INVENTORY_IMPORT_WHITELIST => 'nullable|list:accountId',
+        Config::INVENTORY_WHITELIST => 'nullable|list:accountId',
         Config::INVOICE_COMPANY_ADDRESS => 'nullable|notEmpty',
         Config::INVOICE_COMPANY_BANK_ACCOUNTS => 'nullable|notEmpty|json',
         Config::INVOICE_COMPANY_CITY => 'nullable|notEmpty',
@@ -105,7 +105,7 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_COMPANY_NAME => 'nullable|notEmpty',
         Config::INVOICE_COMPANY_POSTAL_CODE => 'nullable|notEmpty',
         Config::INVOICE_COMPANY_VAT_ID => 'nullable|notEmpty',
-        Config::INVOICE_CURRENCIES => 'nullable|currenciesList',
+        Config::INVOICE_CURRENCIES => 'nullable|notEmpty|list:currency',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
         Config::MAIL_SMTP_ENCRYPTION => 'nullable|notEmpty',
@@ -327,17 +327,6 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validateCurrenciesList(string $field, string $value): void
-    {
-        if (empty($value)) {
-            return;
-        }
-
-        if (1 !== preg_match('/^[A-Z]{3,}((,[A-Z]{3,})+)?$/', $value)) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be in valid format', $field));
-        }
-    }
-
     private static function validateCurrency(string $field, string $value): void
     {
         if (1 !== preg_match('/^[A-Z]{3,}$/', $value)) {
@@ -370,6 +359,18 @@ class ServerConfigurationController extends Controller
     {
         if (1 !== preg_match('/^(COM|SRV)-[\da-z]{6}-[\da-z]{5}-[\da-z]{5}-[\da-z]{4}-[\da-z]{4}$/i', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a license key', $field));
+        }
+    }
+
+    private static function validateList(string $field, string $value, string $type): void
+    {
+        foreach (explode(',', $value) as $item) {
+            $signature = Str::camel('validate_' . $type);
+            try {
+                self::{$signature}($field, $item);
+            } catch (UnprocessableEntityHttpException) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a list of %s', $field, $type));
+            }
         }
     }
 
