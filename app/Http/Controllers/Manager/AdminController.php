@@ -65,13 +65,6 @@ class AdminController extends Controller
 {
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
 
-    private LicenseVault $licenseVault;
-
-    public function __construct(LicenseVault $licenseVault)
-    {
-        $this->licenseVault = $licenseVault;
-    }
-
     public function listSettings(): SettingsResponse
     {
         $settings = Config::fetchAdminSettings();
@@ -126,10 +119,10 @@ class AdminController extends Controller
         ]);
     }
 
-    public function getLicense(): LicenseResponse
+    public function getLicense(LicenseVault $licenseVault): LicenseResponse
     {
         try {
-            $license = $this->licenseVault->read();
+            $license = $licenseVault->read();
         } catch (RuntimeException $exception) {
             throw new NotFoundHttpException($exception->getMessage());
         }
@@ -210,13 +203,12 @@ class AdminController extends Controller
                     ->bcc(config('app.support_email'))
                     ->later($emailSendDateTime, new PanelPlaceholdersChange());
             }
+            DB::commit();
         } catch (Exception $exception) {
             DB::rollBack();
 
             throw $exception;
         }
-
-        DB::commit();
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }

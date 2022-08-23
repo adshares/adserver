@@ -24,12 +24,14 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
 use Adshares\Config\RegistrationUserType;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -169,10 +171,27 @@ class ServerConfigurationController extends Controller
         return self::json($data);
     }
 
+    public function fetchPlaceholders(string $key = null): JsonResponse
+    {
+        if (null !== $key) {
+            self::validatePlaceholderKey($key);
+            $placeholder = PanelPlaceholder::fetchByType($key);
+            if (null === $placeholder) {
+                return self::json([$key => null]);
+            }
+            $data = new Collection();
+            $data->add($placeholder);
+        } else {
+            $data = PanelPlaceholder::fetchByTypes(PanelPlaceholder::TYPES_ALLOWED);
+        }
+
+        return self::json($data->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE));
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->input();
-        $this->validateData($data);
+        self::validateData($data);
         $this->storeData($data);
 
         return self::json();
@@ -181,9 +200,15 @@ class ServerConfigurationController extends Controller
     public function storeOne(string $key, Request $request): JsonResponse
     {
         $data = [$key => $request->input('value')];
-        $this->validateData($data);
+        self::validateData($data);
         $this->storeData($data);
 
+        return self::json();
+    }
+
+    public function storePlaceholders(AdminController $adminController, Request $request): JsonResponse
+    {
+        $adminController->patchPanelPlaceholders($request);
         return self::json();
     }
 
@@ -196,7 +221,7 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private function validateData(array $data): void
+    private static function validateData(array $data): void
     {
         if (!$data) {
             throw new UnprocessableEntityHttpException('Data is required');
@@ -351,6 +376,13 @@ class ServerConfigurationController extends Controller
     private static function validateKey(string $key): void
     {
         if (!isset(self::ALLOWED_KEYS[$key])) {
+            throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
+        }
+    }
+
+    private static function validatePlaceholderKey(string $key): void
+    {
+        if (!in_array($key, PanelPlaceholder::TYPES_ALLOWED, true)) {
             throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
         }
     }
