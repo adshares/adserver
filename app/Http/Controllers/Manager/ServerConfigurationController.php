@@ -417,7 +417,11 @@ class ServerConfigurationController extends Controller
 
     private static function validateList(string $field, string $value, string $type): void
     {
-        foreach (array_filter(explode(',', $value)) as $item) {
+        if ('' === $value) {
+            return;
+        }
+
+        foreach (explode(',', $value) as $item) {
             $signature = Str::camel('validate_' . $type);
             try {
                 self::{$signature}($field, $item);
