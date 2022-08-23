@@ -225,7 +225,7 @@ class ServerConfigurationController extends Controller
     {
         try {
             if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
-                SitesRejectedDomain::storeDomains(explode(',', $data[self::REJECTED_DOMAINS] ?? ''));
+                SitesRejectedDomain::storeDomains(array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? '')));
                 unset($data[self::REJECTED_DOMAINS]);
             }
             Config::updateAdminSettings($data);
@@ -417,7 +417,7 @@ class ServerConfigurationController extends Controller
 
     private static function validateList(string $field, string $value, string $type): void
     {
-        foreach (explode(',', $value) as $item) {
+        foreach (array_filter(explode(',', $value)) as $item) {
             $signature = Str::camel('validate_' . $type);
             try {
                 self::{$signature}($field, $item);

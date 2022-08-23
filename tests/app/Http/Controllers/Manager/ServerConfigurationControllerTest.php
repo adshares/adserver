@@ -215,6 +215,21 @@ final class ServerConfigurationControllerTest extends TestCase
         self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
     }
 
+    public function testStoreRejectedDomainsEmpty(): void
+    {
+        SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
+        $data = ['rejected-domains' => ''];
+
+        $response = $this->patchJson(
+            self::URI_CONFIG,
+            $data,
+            $this->getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertEmpty(SitesRejectedDomain::all());
+    }
+
     /**
      * @dataProvider storeInvalidDataProvider
      */
