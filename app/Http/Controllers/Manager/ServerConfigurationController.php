@@ -25,7 +25,9 @@ use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
@@ -34,6 +36,7 @@ use Adshares\Config\RegistrationUserType;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
@@ -153,8 +156,10 @@ class ServerConfigurationController extends Controller
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
         Config::URL => 'url',
+        self::REJECTED_DOMAINS => 'nullable|list:domain',
     ];
     private const MAX_VALUE_LENGTH = 65535;
+    private const REJECTED_DOMAINS = 'rejected-domains';
     private const RULE_NULLABLE = 'nullable';
 
     public function fetch(string $key = null): JsonResponse
@@ -166,6 +171,10 @@ class ServerConfigurationController extends Controller
             ];
         } else {
             $data = Config::fetchAdminSettings();
+        }
+
+        if (null === $key || self::REJECTED_DOMAINS === $key) {
+            $data[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
         }
 
         return self::json($data);
@@ -215,8 +224,13 @@ class ServerConfigurationController extends Controller
     private function storeData(array $data): void
     {
         try {
+            if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
+                SitesRejectedDomain::storeDomains(explode(',', $data[self::REJECTED_DOMAINS] ?? ''));
+                unset($data[self::REJECTED_DOMAINS]);
+            }
             Config::updateAdminSettings($data);
         } catch (Throwable $exception) {
+            Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
             throw new RuntimeException('Cannot store configuration');
         }
     }
@@ -356,6 +370,13 @@ class ServerConfigurationController extends Controller
     {
         if (1 !== preg_match('/^[A-Z]{3,}$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a currency', $field));
+        }
+    }
+
+    private static function validateDomain(string $field, string $value): void
+    {
+        if (!SiteValidator::isDomainValid($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a domain', $field));
         }
     }
 

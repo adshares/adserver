@@ -222,7 +222,7 @@ final class AdminControllerTest extends TestCase
     {
         $domains = ['example1.com', 'example2.com'];
         foreach ($domains as $domain) {
-            SitesRejectedDomain::upsert($domain);
+            SitesRejectedDomain::factory()->create(['domain' => $domain]);
         }
         $this->actingAs(User::factory()->admin()->create(), 'api');
 
@@ -240,35 +240,23 @@ final class AdminControllerTest extends TestCase
      * @dataProvider invalidRejectedDomainsProvider
      *
      * @param array $data
-     * @param int $expectedStatus
      */
-    public function testRejectedDomainsPutInvalid(array $data, int $expectedStatus): void
+    public function testRejectedDomainsPutInvalid(array $data): void
     {
         $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->putJson(self::URI_REJECTED_DOMAINS, $data);
-        $response->assertStatus($expectedStatus);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function invalidRejectedDomainsProvider(): array
     {
         return [
-            [
-                [],
-                Response::HTTP_BAD_REQUEST,
-            ],
-            [
-                ['domains' => 'example.com'],
-                Response::HTTP_BAD_REQUEST,
-            ],
-            [
-                ['domains' => ['']],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
-            [
-                ['domains' => [1]],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
+            'no data' => [[]],
+            'no array' => [['domains' => 'example.com']],
+            'empty string' => [['domains' => ['']]],
+            'integer' => [['domains' => [1]]],
         ];
     }
 
@@ -288,7 +276,7 @@ final class AdminControllerTest extends TestCase
         $initDomains = ['example1.com', 'example2.com'];
         $inputDomains = ['example2.com', 'example3.com'];
         foreach ($initDomains as $domain) {
-            SitesRejectedDomain::upsert($domain);
+            SitesRejectedDomain::factory()->create(['domain' => $domain]);
         }
         $this->actingAs(User::factory()->admin()->create(), 'api');
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,9 +21,12 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Facades\DB;
 use DateTime;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -38,6 +41,7 @@ use Illuminate\Support\Carbon;
  */
 class SitesRejectedDomain extends Model
 {
+    use HasFactory;
     use SoftDeletes;
 
     protected $fillable = [
@@ -48,7 +52,7 @@ class SitesRejectedDomain extends Model
         'domain',
     ];
 
-    public static function upsert(string $domain): void
+    private static function upsert(string $domain): void
     {
         $model = self::where('domain', $domain)->first();
         if (null === $model) {
@@ -59,14 +63,36 @@ class SitesRejectedDomain extends Model
         $model->save();
     }
 
-    public static function deleteByIds(array $ids): void
+    /**
+     * @return array<string>
+     */
+    public static function fetchAll(): array
     {
-        self::whereIn('id', $ids)->delete();
+        return self::all()->pluck('domain')->toArray();
     }
 
-    public static function fetchAll(): Collection
+    public static function storeDomains(array $domains): void
     {
-        return self::all();
+        /** @var Collection<self> $databaseDomains */
+        $databaseDomains = self::all();
+        $idsToDelete = [];
+        foreach ($databaseDomains as $databaseDomain) {
+            if (!in_array($databaseDomain->domain, $domains)) {
+                $idsToDelete[] = $databaseDomain->id;
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            self::whereIn('id', $idsToDelete)->delete();
+            foreach ($domains as $domain) {
+                SitesRejectedDomain::upsert((string)$domain);
+            }
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
     }
 
     public static function isDomainRejected(string $domain): bool

@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
@@ -170,17 +171,12 @@ final class ServerConfigurationControllerTest extends TestCase
         $response->assertJson([$nullableKey => $defaultValueOfNullableKey]);
     }
 
-    public function testStore(): void
+    /**
+     * @dataProvider storeDataProvider
+     */
+    public function testStore(string $key, string $value): void
     {
-        $data = [
-            Config::ADSHARES_ADDRESS => '0001-00000003-AB0C',
-            Config::EXCHANGE_CURRENCIES => 'EUR,USD',
-            Config::INVENTORY_EXPORT_WHITELIST => '0001-00000003-AB0C,0001-00000005-CBCA',
-            Config::INVOICE_CURRENCIES => 'EUR',
-            Config::REGISTRATION_USER_TYPES => 'advertiser',
-            Config::SUPPORT_EMAIL => 'sup@example.com',
-            Config::TECHNICAL_EMAIL => 'tech@example.com',
-        ];
+        $data = [$key => $value];
 
         $response = $this->patchJson(
             self::URI_CONFIG,
@@ -189,9 +185,34 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        foreach ($data as $key => $value) {
-            self::assertDatabaseHas(Config::class, ['key' => $key, 'value' => $value]);
-        }
+        self::assertDatabaseHas(Config::class, ['key' => $key, 'value' => $value]);
+    }
+
+    public function storeDataProvider(): array
+    {
+        return [
+            [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
+            [Config::EXCHANGE_CURRENCIES, 'EUR,USD'],
+            [Config::INVENTORY_EXPORT_WHITELIST, '0001-00000003-AB0C,0001-00000005-CBCA'],
+            [Config::INVOICE_CURRENCIES, 'EUR'],
+            [Config::REGISTRATION_USER_TYPES, 'advertiser'],
+            [Config::SUPPORT_EMAIL, 'sup@example.com'],
+            [Config::TECHNICAL_EMAIL, 'tech@example.com'],
+        ];
+    }
+
+    public function testStoreRejectedDomains(): void
+    {
+        $data = ['rejected-domains' => 'example.com'];
+
+        $response = $this->patchJson(
+            self::URI_CONFIG,
+            $data,
+            $this->getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
     }
 
     /**
@@ -249,6 +270,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid country' => [[Config::INVOICE_COMPANY_COUNTRY => 'invalid']],
             'invalid registration user type (empty)' => [[Config::REGISTRATION_USER_TYPES => '']],
             'invalid registration user type (invalid)' => [[Config::REGISTRATION_USER_TYPES => 'invalid']],
+            'invalid rejected domains' => [['rejected-domains' => 'a,b']],
         ];
     }
 

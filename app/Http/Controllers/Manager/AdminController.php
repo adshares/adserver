@@ -223,7 +223,7 @@ class AdminController extends Controller
 
     public function getRejectedDomains(): JsonResponse
     {
-        return self::json(['domains' => SitesRejectedDomain::fetchAll()->pluck('domain')]);
+        return self::json(['domains' => SitesRejectedDomain::fetchAll()]);
     }
 
     public function putRejectedDomains(Request $request): JsonResponse
@@ -231,7 +231,7 @@ class AdminController extends Controller
         $domains = $request->get('domains');
 
         if (!is_array($domains)) {
-            throw new BadRequestHttpException('Field `domains` must be an array');
+            throw new UnprocessableEntityHttpException('Field `domains` must be an array');
         }
 
         foreach ($domains as $domain) {
@@ -240,25 +240,9 @@ class AdminController extends Controller
             }
         }
 
-        $databaseDomains = SitesRejectedDomain::fetchAll();
-        $databaseDomainsToDeleteIds = [];
-        /** @var SitesRejectedDomain $databaseDomain */
-        foreach ($databaseDomains as $databaseDomain) {
-            if (!in_array($databaseDomain->domain, $domains)) {
-                $databaseDomainsToDeleteIds[] = $databaseDomain->id;
-            }
-        }
-
-        DB::beginTransaction();
-
         try {
-            SitesRejectedDomain::deleteByIds($databaseDomainsToDeleteIds);
-            foreach ($domains as $domain) {
-                SitesRejectedDomain::upsert((string)$domain);
-            }
-            DB::commit();
+            SitesRejectedDomain::storeDomains($domains);
         } catch (Exception $exception) {
-            DB::rollBack();
             Log::info(sprintf('Domains cannot be rejected (%s).', $exception->getMessage()));
 
             throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add domains');
