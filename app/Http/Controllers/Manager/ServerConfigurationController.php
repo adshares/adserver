@@ -24,14 +24,19 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
 use Adshares\Config\RegistrationUserType;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
@@ -151,8 +156,10 @@ class ServerConfigurationController extends Controller
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
         Config::URL => 'url',
+        self::REJECTED_DOMAINS => 'nullable|list:domain',
     ];
     private const MAX_VALUE_LENGTH = 65535;
+    private const REJECTED_DOMAINS = 'rejected-domains';
     private const RULE_NULLABLE = 'nullable';
 
     public function fetch(string $key = null): JsonResponse
@@ -166,13 +173,34 @@ class ServerConfigurationController extends Controller
             $data = Config::fetchAdminSettings();
         }
 
+        if (null === $key || self::REJECTED_DOMAINS === $key) {
+            $data[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
+        }
+
         return self::json($data);
+    }
+
+    public function fetchPlaceholders(string $key = null): JsonResponse
+    {
+        if (null !== $key) {
+            self::validatePlaceholderKey($key);
+            $placeholder = PanelPlaceholder::fetchByType($key);
+            if (null === $placeholder) {
+                return self::json([$key => null]);
+            }
+            $data = new Collection();
+            $data->add($placeholder);
+        } else {
+            $data = PanelPlaceholder::fetchByTypes(PanelPlaceholder::TYPES_ALLOWED);
+        }
+
+        return self::json($data->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE));
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $request->input();
-        $this->validateData($data);
+        self::validateData($data);
         $this->storeData($data);
 
         return self::json();
@@ -181,22 +209,33 @@ class ServerConfigurationController extends Controller
     public function storeOne(string $key, Request $request): JsonResponse
     {
         $data = [$key => $request->input('value')];
-        $this->validateData($data);
+        self::validateData($data);
         $this->storeData($data);
 
+        return self::json();
+    }
+
+    public function storePlaceholders(AdminController $adminController, Request $request): JsonResponse
+    {
+        $adminController->patchPanelPlaceholders($request);
         return self::json();
     }
 
     private function storeData(array $data): void
     {
         try {
+            if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
+                SitesRejectedDomain::storeDomains(array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? '')));
+                unset($data[self::REJECTED_DOMAINS]);
+            }
             Config::updateAdminSettings($data);
         } catch (Throwable $exception) {
+            Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
             throw new RuntimeException('Cannot store configuration');
         }
     }
 
-    private function validateData(array $data): void
+    private static function validateData(array $data): void
     {
         if (!$data) {
             throw new UnprocessableEntityHttpException('Data is required');
@@ -334,6 +373,13 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validateDomain(string $field, string $value): void
+    {
+        if (!SiteValidator::isDomainValid($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a domain', $field));
+        }
+    }
+
     private static function validateHost(string $field, string $value): void
     {
         if (false === filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
@@ -355,6 +401,13 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validatePlaceholderKey(string $key): void
+    {
+        if (!in_array($key, PanelPlaceholder::TYPES_ALLOWED, true)) {
+            throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
+        }
+    }
+
     private static function validateLicenseKey(string $field, string $value): void
     {
         if (1 !== preg_match('/^(COM|SRV)-[\da-z]{6}-[\da-z]{5}-[\da-z]{5}-[\da-z]{4}-[\da-z]{4}$/i', $value)) {
@@ -364,6 +417,10 @@ class ServerConfigurationController extends Controller
 
     private static function validateList(string $field, string $value, string $type): void
     {
+        if ('' === $value) {
+            return;
+        }
+
         foreach (explode(',', $value) as $item) {
             $signature = Str::camel('validate_' . $type);
             try {
