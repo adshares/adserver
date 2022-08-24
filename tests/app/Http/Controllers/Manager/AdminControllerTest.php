@@ -41,8 +41,13 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\LicenseVault;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\Commission;
+use Adshares\Common\Domain\ValueObject\License;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\RuntimeException;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -51,22 +56,16 @@ use function json_decode;
 
 final class AdminControllerTest extends TestCase
 {
+    private const URI_LICENSE = '/admin/license';
     private const URI_TERMS = '/admin/terms';
-
     private const URI_PRIVACY_POLICY = '/admin/privacy';
-
     private const URI_SETTINGS = '/admin/settings';
-
     private const URI_SITE_SETTINGS = '/admin/site-settings';
-
     private const URI_REJECTED_DOMAINS = '/admin/rejected-domains';
-
     private const URI_WALLET = '/admin/wallet';
-
     private const REGULATION_RESPONSE_STRUCTURE = [
         'content',
     ];
-
     private const REJECTED_DOMAINS_STRUCTURE = [
         'domains',
     ];
@@ -223,7 +222,7 @@ final class AdminControllerTest extends TestCase
     {
         $domains = ['example1.com', 'example2.com'];
         foreach ($domains as $domain) {
-            SitesRejectedDomain::upsert($domain);
+            SitesRejectedDomain::factory()->create(['domain' => $domain]);
         }
         $this->actingAs(User::factory()->admin()->create(), 'api');
 
@@ -241,35 +240,23 @@ final class AdminControllerTest extends TestCase
      * @dataProvider invalidRejectedDomainsProvider
      *
      * @param array $data
-     * @param int $expectedStatus
      */
-    public function testRejectedDomainsPutInvalid(array $data, int $expectedStatus): void
+    public function testRejectedDomainsPutInvalid(array $data): void
     {
         $this->actingAs(User::factory()->admin()->create(), 'api');
 
         $response = $this->putJson(self::URI_REJECTED_DOMAINS, $data);
-        $response->assertStatus($expectedStatus);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function invalidRejectedDomainsProvider(): array
     {
         return [
-            [
-                [],
-                Response::HTTP_BAD_REQUEST,
-            ],
-            [
-                ['domains' => 'example.com'],
-                Response::HTTP_BAD_REQUEST,
-            ],
-            [
-                ['domains' => ['']],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
-            [
-                ['domains' => [1]],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
+            'no data' => [[]],
+            'no array' => [['domains' => 'example.com']],
+            'empty string' => [['domains' => ['']]],
+            'integer' => [['domains' => [1]]],
         ];
     }
 
@@ -289,7 +276,7 @@ final class AdminControllerTest extends TestCase
         $initDomains = ['example1.com', 'example2.com'];
         $inputDomains = ['example2.com', 'example3.com'];
         foreach ($initDomains as $domain) {
-            SitesRejectedDomain::upsert($domain);
+            SitesRejectedDomain::factory()->create(['domain' => $domain]);
         }
         $this->actingAs(User::factory()->admin()->create(), 'api');
 
@@ -611,6 +598,42 @@ final class AdminControllerTest extends TestCase
         $content = json_decode($response->content(), true);
         self::assertEquals(2468, $content['wallet']['balance']);
         self::assertEquals(470, $content['wallet']['unusedBonuses']);
+    }
+
+    public function testGetLicenseSuccess(): void
+    {
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $licenseVault = self::createMock(LicenseVault::class);
+        $licenseVault->expects(self::once())->method('read')->willReturn(
+            new License(
+                'COM-aBcD02',
+                'COM',
+                1,
+                new DateTimeImmutable('@1658764323'),
+                new DateTimeImmutable('@1690300323'),
+                'AdServer',
+                new AccountId('0001-00000024-FF89'),
+                new Commission(0.0),
+                new Commission(0.01),
+                new Commission(0.02),
+                true
+            )
+        );
+        $this->app->bind(LicenseVault::class, fn() => $licenseVault);
+
+        $response = $this->get(self::URI_LICENSE);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['id' => 'COM-aBcD02']);
+    }
+
+    public function testGetLicenseFail(): void
+    {
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+
+        $response = $this->get(self::URI_LICENSE);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     private function settings(): array
