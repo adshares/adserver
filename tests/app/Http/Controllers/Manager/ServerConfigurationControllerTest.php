@@ -195,6 +195,8 @@ final class ServerConfigurationControllerTest extends TestCase
             [Config::EXCHANGE_CURRENCIES, 'EUR,USD'],
             [Config::INVENTORY_EXPORT_WHITELIST, '0001-00000003-AB0C,0001-00000005-CBCA'],
             [Config::INVOICE_CURRENCIES, 'EUR'],
+            [Config::REFERRAL_REFUND_COMMISSION, '0'],
+            [Config::REFERRAL_REFUND_ENABLED, '1'],
             [Config::REGISTRATION_USER_TYPES, 'advertiser'],
             [Config::SUPPORT_EMAIL, 'sup@example.com'],
             [Config::TECHNICAL_EMAIL, 'tech@example.com'],
