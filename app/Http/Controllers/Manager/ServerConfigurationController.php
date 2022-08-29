@@ -328,7 +328,7 @@ class ServerConfigurationController extends Controller
 
     private static function validateNotEmpty(string $field, string $value): void
     {
-        if (empty($value)) {
+        if ('' === $value) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` cannot be empty', $field));
         }
     }
