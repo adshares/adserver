@@ -49,13 +49,13 @@ class ServerConfigurationController extends Controller
         Config::ADS_OPERATOR_SERVER_URL => 'nullable|url',
         Config::ADS_RPC_URL => 'nullable|url',
         Config::ADSELECT_URL => 'nullable|url',
+        Config::ADSERVER_NAME => 'notEmpty',
         Config::ADSHARES_ADDRESS => 'accountId',
         Config::ADSHARES_LICENSE_KEY => 'nullable|licenseKey',
         Config::ADSHARES_LICENSE_SERVER_URL => 'nullable|url',
         Config::ADSHARES_NODE_HOST => 'host',
         Config::ADSHARES_NODE_PORT => 'nullable|port',
         Config::ADSHARES_SECRET => 'hex:64',
-        Config::ADSERVER_NAME => 'notEmpty',
         Config::ADUSER_BASE_URL => 'nullable|url',
         Config::ADUSER_INFO_URL => 'nullable|url',
         Config::ADUSER_INTERNAL_URL => 'nullable|url',
@@ -201,38 +201,52 @@ class ServerConfigurationController extends Controller
     {
         $data = $request->input();
         self::validateData($data);
-        $this->storeData($data);
+        $result = $this->storeData($data);
 
-        return self::json();
+        return self::json($result);
     }
 
     public function storeOne(string $key, Request $request): JsonResponse
     {
         $data = [$key => $request->input('value')];
         self::validateData($data);
-        $this->storeData($data);
+        $result = $this->storeData($data);
 
-        return self::json();
+        return self::json($result);
     }
 
     public function storePlaceholders(AdminController $adminController, Request $request): JsonResponse
     {
         $adminController->patchPanelPlaceholders($request);
-        return self::json();
+
+        $types = array_keys($request->all());
+        $result = PanelPlaceholder::fetchByTypes($types)
+            ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE);
+
+        return self::json($result);
     }
 
-    private function storeData(array $data): void
+    private function storeData(array $data): array
     {
+        $appendRejectedDomains = false;
         try {
             if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
                 SitesRejectedDomain::storeDomains(array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? '')));
                 unset($data[self::REJECTED_DOMAINS]);
+                $appendRejectedDomains = true;
             }
             Config::updateAdminSettings($data);
         } catch (Throwable $exception) {
             Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
             throw new RuntimeException('Cannot store configuration');
         }
+
+        $settings = Config::fetchAdminSettings();
+        if ($appendRejectedDomains) {
+            $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
+        }
+
+        return array_intersect_key($settings, $data);
     }
 
     private static function validateData(array $data): void

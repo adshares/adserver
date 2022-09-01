@@ -159,6 +159,13 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::FOUND_BANNERS_WITH_CREATION_STRUCTURE);
         self::assertEquals('Decentraland (0, -10)', Site::first()->name);
+        self::assertDatabaseHas(
+            User::class,
+            [
+                'auto_withdrawal' => '100000000',
+                'wallet_address' => 'ads:0001-00000001-8B4E',
+            ]
+        );
     }
 
     public function testFindJsonNoData(): void
