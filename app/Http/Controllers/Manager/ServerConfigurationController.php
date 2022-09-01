@@ -241,12 +241,12 @@ class ServerConfigurationController extends Controller
             throw new RuntimeException('Cannot store configuration');
         }
 
-        $settings = Config::fetchAdminSettings();
+        $settings = array_intersect_key(Config::fetchAdminSettings(), $data);
         if ($appendRejectedDomains) {
             $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
         }
 
-        return array_intersect_key($settings, $data);
+        return $settings;
     }
 
     private static function validateData(array $data): void

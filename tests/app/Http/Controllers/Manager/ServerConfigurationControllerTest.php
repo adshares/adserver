@@ -244,6 +244,7 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['rejected-domains' => ['example.com']]);
         self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
     }
 
