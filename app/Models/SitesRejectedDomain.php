@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Facades\DB;
-use DateTime;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -54,11 +53,12 @@ class SitesRejectedDomain extends Model
 
     private static function upsert(string $domain): void
     {
-        $model = self::where('domain', $domain)->first();
+        /** @var self $model */
+        $model = self::withTrashed()->where('domain', $domain)->first();
         if (null === $model) {
             $model = new self(['domain' => $domain]);
         } else {
-            $model->updated_at = new DateTime();
+            $model->restore();
         }
         $model->save();
     }

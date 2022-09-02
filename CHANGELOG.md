@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AdPanel's placeholders to config API
 ### Changed
 - Split user access for advertisers and publishers
+- Config API returns data after store
 ### Fixed
 - Do not expose SMTP password in config API
 - Remove deprecated zip* functions

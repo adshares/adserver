@@ -121,7 +121,11 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        self::assertDatabaseHas(Config::class, ['value' => 'sup@example.com']);
+        $response->assertJson(['support-email' => 'sup@example.com']);
+        self::assertDatabaseHas(Config::class, [
+            'key' => 'support-email',
+            'value' => 'sup@example.com',
+        ]);
     }
 
     public function testStoreError(): void
@@ -160,6 +164,7 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([$nullableKey => $defaultValueOfNullableKey]);
         self::assertDatabaseMissing(Config::class, ['key' => $nullableKey]);
 
         $response = $this->getJson(
@@ -185,6 +190,7 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([$key => $value]);
         self::assertDatabaseHas(Config::class, ['key' => $key, 'value' => $value]);
     }
 
@@ -192,14 +198,38 @@ final class ServerConfigurationControllerTest extends TestCase
     {
         return [
             [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
+            [Config::REFERRAL_REFUND_COMMISSION, '0'],
+            [Config::REFERRAL_REFUND_ENABLED, '1'],
+            [Config::SUPPORT_EMAIL, 'sup@example.com'],
+            [Config::TECHNICAL_EMAIL, 'tech@example.com'],
+        ];
+    }
+
+    /**
+     * @dataProvider storeArrayDataProvider
+     */
+    public function testStoreArray(string $key, string $value): void
+    {
+        $data = [$key => $value];
+
+        $response = $this->patchJson(
+            self::URI_CONFIG,
+            $data,
+            $this->getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([$key => explode(',', $value)]);
+        self::assertDatabaseHas(Config::class, ['key' => $key, 'value' => $value]);
+    }
+
+    public function storeArrayDataProvider(): array
+    {
+        return [
             [Config::EXCHANGE_CURRENCIES, 'EUR,USD'],
             [Config::INVENTORY_EXPORT_WHITELIST, '0001-00000003-AB0C,0001-00000005-CBCA'],
             [Config::INVOICE_CURRENCIES, 'EUR'],
-            [Config::REFERRAL_REFUND_COMMISSION, '0'],
-            [Config::REFERRAL_REFUND_ENABLED, '1'],
             [Config::REGISTRATION_USER_TYPES, 'advertiser'],
-            [Config::SUPPORT_EMAIL, 'sup@example.com'],
-            [Config::TECHNICAL_EMAIL, 'tech@example.com'],
         ];
     }
 
@@ -214,6 +244,7 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['rejected-domains' => ['example.com']]);
         self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
     }
 
