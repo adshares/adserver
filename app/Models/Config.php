@@ -49,11 +49,17 @@ class Config extends Model
     use HasFactory;
 
     public const ADPANEL_URL = 'adpanel-url';
+    public const ADPAY_BID_STRATEGY_EXPORT_TIME = 'adpay-bid-strategy-export';
+    public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
+    public const ADPAY_LAST_EXPORTED_CONVERSION_TIME = 'adpay-last-conversion-time';
+    public const ADPAY_LAST_EXPORTED_EVENT_TIME = 'adpay-last-event-time';
     public const ADPAY_URL = 'adpay-url';
     public const ADS_LOG_START = 'ads-log-start';
     public const ADS_OPERATOR_SERVER_URL = 'ads-operator-server-url';
     public const ADS_RPC_URL = 'ads-rpc-url';
+    public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
     public const ADSELECT_URL = 'adselect-url';
+    public const ADSERVER_NAME = 'adserver-name';
     public const ADSHARES_ADDRESS = 'adshares-address';
     public const ADSHARES_LICENSE_KEY = 'adshares-license-key';
     public const ADSHARES_LICENSE_SERVER_URL = 'adshares-license-server-url';
@@ -66,6 +72,8 @@ class Config extends Model
     public const ADUSER_SERVE_SUBDOMAIN = 'aduser-serve-subdomain';
     public const ADVERTISER_APPLY_FORM_URL = 'advertiser-apply-form-url';
     public const ALLOW_ZONE_IN_IFRAME = 'allow_zone-in-iframe';
+    public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
+    public const AUTO_REGISTRATION_ENABLED = 'auto-registration-enabled';
     public const AUTO_WITHDRAWAL_LIMIT_ADS = 'auto-withdrawal-limit-ads';
     public const AUTO_WITHDRAWAL_LIMIT_BSC = 'auto-withdrawal-limit-bsc';
     public const AUTO_WITHDRAWAL_LIMIT_BTC = 'auto-withdrawal-limit-btc';
@@ -75,6 +83,9 @@ class Config extends Model
     public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
     public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
     public const BTC_WITHDRAW_MIN_AMOUNT = 'btc-withdraw-min-amount';
+    public const CAMPAIGN_MIN_BUDGET = 'campaign-min-budget';
+    public const CAMPAIGN_MIN_CPA = 'campaign-min-cpa';
+    public const CAMPAIGN_MIN_CPM = 'campaign-min-cpm';
     public const CAMPAIGN_TARGETING_EXCLUDE = 'campaign-targeting-exclude';
     public const CAMPAIGN_TARGETING_REQUIRE = 'campaign-targeting-require';
     public const CDN_PROVIDER = 'cdn-provider';
@@ -84,20 +95,36 @@ class Config extends Model
     public const CLASSIFIER_EXTERNAL_BASE_URL = 'classifier-external-base-url';
     public const CLASSIFIER_EXTERNAL_NAME = 'classifier-external-name';
     public const CLASSIFIER_EXTERNAL_PUBLIC_KEY = 'classifier-external-public-key';
+    public const COLD_WALLET_ADDRESS = 'cold-wallet-address';
+    public const COLD_WALLET_IS_ACTIVE = 'cold-wallet-is-active';
     public const CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED = 'crm-mail-address-on-campaign-created';
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
     public const CURRENCY = 'currency';
     public const DISPLAY_CURRENCY = 'display-currency';
+    public const EMAIL_VERIFICATION_REQUIRED = 'email-verification-required';
     public const EXCHANGE_API_KEY = 'exchange-api-key';
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
     public const EXCHANGE_API_URL = 'exchange-api-url';
     public const EXCHANGE_CURRENCIES = 'exchange-currencies';
     public const FIAT_DEPOSIT_MAX_AMOUNT = 'fiat-deposit-max-amount';
     public const FIAT_DEPOSIT_MIN_AMOUNT = 'fiat-deposit-min-amount';
+    public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
+    public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
     public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
     public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
     public const INVENTORY_WHITELIST = 'inventory-whitelist';
+    public const INVOICE_COMPANY_ADDRESS = 'invoice-company-address';
+    public const INVOICE_COMPANY_BANK_ACCOUNTS = 'invoice-company-bank-accounts';
+    public const INVOICE_COMPANY_CITY = 'invoice-company-city';
+    public const INVOICE_COMPANY_COUNTRY = 'invoice-company-country';
+    public const INVOICE_COMPANY_NAME = 'invoice-company-name';
+    public const INVOICE_COMPANY_POSTAL_CODE = 'invoice-company-postal-code';
+    public const INVOICE_COMPANY_VAT_ID = 'invoice-company-vat-id';
+    public const INVOICE_CURRENCIES = 'invoice-currencies';
+    public const INVOICE_ENABLED = 'invoice-enabled';
+    public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
+    public const LAST_UPDATED_IMPRESSION_ID = 'last-updated-impression-id';
     public const MAIL_FROM_ADDRESS = 'mail-from-address';
     public const MAIL_FROM_NAME = 'mail-from-name';
     public const MAIL_MAILER = 'mail-mailer';
@@ -117,69 +144,44 @@ class Config extends Model
     public const NOW_PAYMENTS_IPN_SECRET = 'now-payments-ipn-secret';
     public const NOW_PAYMENTS_MAX_AMOUNT = 'now-payments-max-amount';
     public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
-    public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
+    public const OPERATOR_TX_FEE = 'payment-tx-fee';
+    public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
+    public const PANEL_PLACEHOLDER_NOTIFICATION_TIME = 'panel-placeholder-notification-time';
+    public const PANEL_PLACEHOLDER_UPDATE_TIME = 'panel-placeholder-update-time';
     public const PUBLISHER_APPLY_FORM_URL = 'publisher-apply-form-url';
+    public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
+    public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
+    public const REGISTRATION_MODE = 'registration-mode';
+    public const REGISTRATION_USER_TYPES = 'registration-user-types';
     public const SERVE_BASE_URL = 'serve-base-url';
+    public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
+    public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
     public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
     public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
+    public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
     public const SKYNET_API_KEY = 'skynet-api-key';
     public const SKYNET_API_URL = 'skynet-api-url';
     public const SKYNET_CDN_URL = 'skynet-cdn-url';
+    public const SUPPORT_CHAT = 'support-chat';
+    public const SUPPORT_EMAIL = 'support-email';
+    public const SUPPORT_TELEGRAM = 'support-telegram';
+    public const TECHNICAL_EMAIL = 'technical-email';
     public const UPLOAD_LIMIT_IMAGE = 'upload-limit-image';
     public const UPLOAD_LIMIT_MODEL = 'upload-limit-model';
     public const UPLOAD_LIMIT_VIDEO = 'upload-limit-video';
     public const UPLOAD_LIMIT_ZIP = 'upload-limit-zip';
     public const URL = 'url';
-    /** @deprecated fee should be read from {@see LicenseReader} */
-    public const LICENCE_TX_FEE = 'licence-tx-fee';
-    /** @deprecated fee should be read from {@see LicenseReader} */
-    public const LICENCE_RX_FEE = 'licence-rx-fee';
-    /** @deprecated account ID should be read from {@see LicenseReader} */
-    public const LICENCE_ACCOUNT = 'licence-account';
+
     /** @deprecated default uuid is stored in DB in bid_strategy table */
     public const BID_STRATEGY_UUID_DEFAULT = 'bid-strategy-uuid-default';
-    public const ADPAY_BID_STRATEGY_EXPORT_TIME = 'adpay-bid-strategy-export';
-    public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
-    public const ADPAY_LAST_EXPORTED_CONVERSION_TIME = 'adpay-last-conversion-time';
-    public const ADPAY_LAST_EXPORTED_EVENT_TIME = 'adpay-last-event-time';
-    public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
-    public const LAST_UPDATED_IMPRESSION_ID = 'last-updated-impression-id';
-    public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
-    public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
-    public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
-    public const CAMPAIGN_MIN_BUDGET = 'campaign-min-budget';
-    public const CAMPAIGN_MIN_CPA = 'campaign-min-cpa';
-    public const CAMPAIGN_MIN_CPM = 'campaign-min-cpm';
-    public const COLD_WALLET_ADDRESS = 'cold-wallet-address';
-    public const COLD_WALLET_IS_ACTIVE = 'cold-wallet-is-active';
-    public const ADSERVER_NAME = 'adserver-name';
-    public const TECHNICAL_EMAIL = 'technical-email';
-    public const SUPPORT_CHAT = 'support-chat';
-    public const SUPPORT_EMAIL = 'support-email';
-    public const SUPPORT_TELEGRAM = 'support-telegram';
-    public const PANEL_PLACEHOLDER_NOTIFICATION_TIME = 'panel-placeholder-notification-time';
-    public const PANEL_PLACEHOLDER_UPDATE_TIME = 'panel-placeholder-update-time';
-    public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
-    public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
-    public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
-    public const REGISTRATION_MODE = 'registration-mode';
-    public const REGISTRATION_USER_TYPES = 'registration-user-types';
-    public const AUTO_REGISTRATION_ENABLED = 'auto-registration-enabled';
-    public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
-    public const EMAIL_VERIFICATION_REQUIRED = 'email-verification-required';
-    public const INVOICE_ENABLED = 'invoice-enabled';
-    public const INVOICE_CURRENCIES = 'invoice-currencies';
-    public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
-    public const INVOICE_COMPANY_NAME = 'invoice-company-name';
-    public const INVOICE_COMPANY_ADDRESS = 'invoice-company-address';
-    public const INVOICE_COMPANY_POSTAL_CODE = 'invoice-company-postal-code';
-    public const INVOICE_COMPANY_CITY = 'invoice-company-city';
-    public const INVOICE_COMPANY_COUNTRY = 'invoice-company-country';
-    public const INVOICE_COMPANY_VAT_ID = 'invoice-company-vat-id';
-    public const INVOICE_COMPANY_BANK_ACCOUNTS = 'invoice-company-bank-accounts';
-    public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
-    public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
+    /** @deprecated account ID should be read from {@see LicenseReader} */
+    public const LICENCE_ACCOUNT = 'licence-account';
+    /** @deprecated fee should be read from {@see LicenseReader} */
+    public const LICENCE_RX_FEE = 'licence-rx-fee';
+    /** @deprecated fee should be read from {@see LicenseReader} */
+    public const LICENCE_TX_FEE = 'licence-tx-fee';
+
     public const ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS = [
         self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
         self::CLASSIFIER_LOCAL_BANNERS_LOCAL_BY_DEFAULT,
@@ -462,6 +464,7 @@ class Config extends Model
                     ? ($fetched[self::ADUSER_BASE_URL] . '/panel.html?rated=1&url={domain}') : '',
             self::ADUSER_INTERNAL_URL => $fetched[self::ADUSER_BASE_URL] ?? '',
             self::ADUSER_SERVE_SUBDOMAIN => '',
+            self::ADVERTISER_APPLY_FORM_URL => null,
             self::ALLOW_ZONE_IN_IFRAME => true,
             self::AUTO_CONFIRMATION_ENABLED => false,
             self::AUTO_REGISTRATION_ENABLED => false,
@@ -536,6 +539,7 @@ class Config extends Model
             self::NOW_PAYMENTS_MIN_AMOUNT => 25,
             self::OPERATOR_RX_FEE => 0.01,
             self::OPERATOR_TX_FEE => 0.01,
+            self::PUBLISHER_APPLY_FORM_URL => null,
             self::REFERRAL_REFUND_COMMISSION => 0,
             self::REFERRAL_REFUND_ENABLED => false,
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
@@ -548,7 +552,9 @@ class Config extends Model
             self::SKYNET_API_KEY => '',
             self::SKYNET_API_URL => 'https://siasky.net',
             self::SKYNET_CDN_URL => '',
+            self::SUPPORT_CHAT => null,
             self::SUPPORT_EMAIL => 'mail@example.com',
+            self::SUPPORT_TELEGRAM => null,
             self::TECHNICAL_EMAIL => 'mail@example.com',
             self::UPLOAD_LIMIT_IMAGE => 512 * 1024,
             self::UPLOAD_LIMIT_MODEL => 1024 * 1024,
