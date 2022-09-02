@@ -33,7 +33,6 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
 use Adshares\Config\RegistrationUserType;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -185,16 +184,21 @@ class ServerConfigurationController extends Controller
         if (null !== $key) {
             self::validatePlaceholderKey($key);
             $placeholder = PanelPlaceholder::fetchByType($key);
-            if (null === $placeholder) {
-                return self::json([$key => null]);
-            }
-            $data = new Collection();
-            $data->add($placeholder);
-        } else {
-            $data = PanelPlaceholder::fetchByTypes(PanelPlaceholder::TYPES_ALLOWED);
+            return self::json([$key => $placeholder?->content]);
         }
 
-        return self::json($data->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE));
+        $data = [];
+        foreach (PanelPlaceholder::TYPES_ALLOWED as $type) {
+            $data[$type] = null;
+        }
+        $data = array_merge(
+            $data,
+            PanelPlaceholder::fetchByTypes(PanelPlaceholder::TYPES_ALLOWED)
+                ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE)
+                ->toArray()
+        );
+
+        return self::json($data);
     }
 
     public function store(Request $request): JsonResponse
