@@ -387,7 +387,8 @@ class Utils
             return $tid;
         }
 
-        if ($request->get('stid')) {
+        $stid = $request->get('stid');
+        if ($stid && 'null' !== $stid && 'undefined' !== $stid) {
             $base = substr(sha1($request->get('stid'), true), 0, 16);
         } else {
             $base = self::binUserId($impressionId);
