@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Possibility to set application currency other than ADS
 - AdPanel's placeholders to config API
-- Monitoring API
+
 ### Changed
 - Split user access for advertisers and publishers
 - Config API returns data after store
@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not expose SMTP password in config API
 - Remove deprecated zip* functions
 - Types, validators in config API
+
+## [2.0.4] - 2022-09-05
+### Fixed
+- Handle undefined stid
 
 ## [2.0.3] - 2022-08-16
 ### Fixed
@@ -695,7 +699,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.0.3...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.0.4...develop
+[2.0.4]: https://github.com/adshares/adserver/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/adshares/adserver/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/adshares/adserver/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/adshares/adserver/compare/v2.0.0...v2.0.1

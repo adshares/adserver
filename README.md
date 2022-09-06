@@ -27,7 +27,7 @@ AdServer is the core software behind the ecosystem.
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=security_rating)](https://sonarcloud.io/dashboard?id=adshares-adserver)
 [![Build Status](https://app.travis-ci.com/adshares/adserver.svg?branch=master)](https://app.travis-ci.com/github/adshares/adserver)
 
-For **Quick Start** see [INSTALLER](https://github.com/adshares/installer) Project.
+For **Quick Start** see [wiki](https://github.com/adshares/adserver/wiki/How-to-start-adserver).
 
 ## Documentation
 
@@ -43,8 +43,8 @@ For **Quick Start** see [INSTALLER](https://github.com/adshares/installer) Proje
 - [AdSelect](https://github.com/adshares/adselect)
 - [AdPay](https://github.com/adshares/adpay)
 - [AdPanel](https://github.com/adshares/adpanel)
+- [AdController](https://github.com/adshares/adcontroller)
 - [ADS](https://github.com/adshares/ads)
-- [INSTALLER](https://github.com/adshares/installer)
 
 ## License
 
