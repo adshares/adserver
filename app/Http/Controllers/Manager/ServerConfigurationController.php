@@ -33,6 +33,7 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
 use Adshares\Config\RegistrationUserType;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -201,6 +202,23 @@ class ServerConfigurationController extends Controller
         return self::json($data);
     }
 
+    public function fetchPlaceholders(string $key = null): JsonResponse
+    {
+        if (null !== $key) {
+            self::validatePlaceholderKey($key);
+            $placeholder = PanelPlaceholder::fetchByType($key);
+            if (null === $placeholder) {
+                return self::json([$key => null]);
+            }
+            $data = new Collection();
+            $data->add($placeholder);
+        } else {
+            $data = PanelPlaceholder::fetchByTypes(PanelPlaceholder::TYPES_ALLOWED);
+        }
+
+        return self::json($data->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE));
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->input();
@@ -215,6 +233,17 @@ class ServerConfigurationController extends Controller
         $data = [$key => $request->input('value')];
         self::validateData($data);
         $result = $this->storeData($data);
+
+        return self::json($result);
+    }
+
+    public function storePlaceholders(AdminController $adminController, Request $request): JsonResponse
+    {
+        $adminController->patchPanelPlaceholders($request);
+
+        $types = array_keys($request->all());
+        $result = PanelPlaceholder::fetchByTypes($types)
+            ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE);
 
         return self::json($result);
     }
