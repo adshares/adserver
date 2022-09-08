@@ -358,8 +358,13 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([
+            PanelPlaceholder::TYPE_INDEX_DESCRIPTION => null,
             PanelPlaceholder::TYPE_INDEX_KEYWORDS => 'ads',
+            PanelPlaceholder::TYPE_INDEX_META_TAGS => null,
             PanelPlaceholder::TYPE_INDEX_TITLE => 'title',
+            PanelPlaceholder::TYPE_ROBOTS_TXT => null,
+            PanelPlaceholder::TYPE_PRIVACY_POLICY => null,
+            PanelPlaceholder::TYPE_TERMS => null,
         ]);
     }
 
