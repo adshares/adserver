@@ -9,7 +9,7 @@
     ·
     <a href="https://github.com/adshares/adserver/issues/new?template=feature_request.md&labels=New%20Feature">Request feature</a>
     ·
-    <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
+    <a href="https://docs.adshares.net/adserver/">Docs</a>
 </p>
 <p align="center">
     <a href="https://app.travis-ci.com/github/adshares/adserver" title="Build Status" target="_blank">
@@ -31,7 +31,7 @@ For **Quick Start** see [INSTALLER](https://github.com/adshares/installer) Proje
 
 ## Documentation
 
-- [Wiki](https://github.com/adshares/adserver/wiki)
+- [Docs](https://docs.adshares.net/adserver/)
 - [Changelog](CHANGELOG.md)
 - [Contributing Guidelines](docs/CONTRIBUTING.md)
 - [Authors](https://github.com/adshares/adserver/contributors)
