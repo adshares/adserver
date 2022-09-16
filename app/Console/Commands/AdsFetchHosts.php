@@ -81,7 +81,7 @@ class AdsFetchHosts extends BaseCommand
         $progressBar->start();
         while ($timeBlock <= $timeNow - self::BLOCK_TIME) {
             $blockId = dechex($timeBlock);
-//            $this->handleBlock($adsClient, $blockId);
+            $this->handleBlock($adsClient, $blockId);
             $timeBlock += self::BLOCK_TIME;
             $progressBar->advance();
         }
