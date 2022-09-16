@@ -24,8 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
 use DateTimeInterface;
@@ -92,25 +92,6 @@ class ConfigTest extends TestCase
         self::assertSame($value, Config::fetchInt(self::TEST_KEY));
     }
 
-    public function testFetchFloatOrFail(): void
-    {
-        $value = 5.5;
-
-        Config::factory()->create([
-            'key' => self::TEST_KEY,
-            'value' => $value,
-        ]);
-
-        self::assertSame($value, Config::fetchFloatOrFail(self::TEST_KEY));
-    }
-
-    public function testFetchFloatOrFailNotInDatabase(): void
-    {
-        $this->expectException(ConfigException::class);
-
-        Config::fetchFloatOrFail(self::TEST_KEY);
-    }
-
     public function testUpsertInt(): void
     {
         $value = 9;
@@ -120,41 +101,21 @@ class ConfigTest extends TestCase
         self::assertSame($value, Config::fetchInt(self::TEST_KEY));
     }
 
-    public function testFetchStringOrFail(): void
-    {
-        $value = 'test-string';
-
-        Config::factory()->create([
-            'key' => self::TEST_KEY,
-            'value' => $value,
-        ]);
-
-        self::assertSame($value, Config::fetchStringOrFail(self::TEST_KEY));
-    }
-
-    public function testFetchStringOrFailNotInDatabase(): void
-    {
-        $this->expectException(ConfigException::class);
-
-        Config::fetchStringOrFail(self::TEST_KEY);
-    }
-
     /**
      * @dataProvider boolDataProvider
      */
     public function testIsTrueOnly(string $value, bool $result): void
     {
-        Config::factory()->create([
-            'key' => self::TEST_KEY,
-            'value' => $value,
+        Config::updateAdminSettings([
+            Config::COLD_WALLET_IS_ACTIVE => $value
         ]);
-
-        self::assertSame($result, Config::isTrueOnly(self::TEST_KEY));
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        self::assertSame($result, config('app.cold_wallet_is_active'));
     }
 
     public function testIsTrueOnlyNotInDatabase(): void
     {
-        self::assertFalse(Config::isTrueOnly(self::TEST_KEY));
+        self::assertNotTrue(config('app.test_key'));
     }
 
     public function testFetchAdminSettings(): void

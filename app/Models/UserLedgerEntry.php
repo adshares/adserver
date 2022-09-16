@@ -333,7 +333,7 @@ class UserLedgerEntry extends Model
 
         if (
             self::STATUS_ACCEPTED === $status
-            && Config::isTrueOnly(Config::REFERRAL_REFUND_ENABLED)
+            && config('app.referral_refund_enabled')
             && null !== ($refLink = User::find($userId)->refLink)
             && $refLink->refund_active
         ) {

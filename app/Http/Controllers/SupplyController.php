@@ -123,7 +123,7 @@ class SupplyController extends Controller
         $user = User::fetchByWalletAddress($payoutAddress);
 
         if (!$user) {
-            if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
+            if (config('app.auto_registration_enabled')) {
                 $user = User::registerWithWallet($payoutAddress, true);
             } else {
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
@@ -244,7 +244,7 @@ class SupplyController extends Controller
                         $user = User::fetchByWalletAddress($payoutAddress);
 
                         if (!$user) {
-                            if (Config::isTrueOnly(Config::AUTO_REGISTRATION_ENABLED)) {
+                            if (config('app.auto_registration_enabled')) {
                                 $user = User::registerWithWallet($payoutAddress, true);
                             } else {
                                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());

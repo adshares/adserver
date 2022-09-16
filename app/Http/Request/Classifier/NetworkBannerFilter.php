@@ -64,9 +64,7 @@ class NetworkBannerFilter
 
         $this->sizes = json_decode($request->get('sizes', '[]'), true);
         $this->type = $request->get('type');
-        $this->local =
-            Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS)
-            === Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY
+        $this->local = config('app.site_classifier_local_banners') === Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY
             || $request->get('local', false);
 
         $this->userId = $userId;

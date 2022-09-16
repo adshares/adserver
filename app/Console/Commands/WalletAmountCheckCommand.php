@@ -59,7 +59,7 @@ class WalletAmountCheckCommand extends BaseCommand
 
         $this->info('[Wallet] Start command ' . $this->signature);
 
-        if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {
+        if (!config('app.cold_wallet_is_active')) {
             $this->info('[Wallet] Cold wallet feature is disabled.');
             return;
         }
