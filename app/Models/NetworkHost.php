@@ -23,22 +23,16 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
-use Adshares\Common\Domain\ValueObject\EmptyAccountId;
-use Adshares\Common\Domain\ValueObject\NullUrl;
-use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\ValueObject\Status;
-use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-use function json_decode;
-use function json_encode;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property int id
@@ -56,6 +50,7 @@ class NetworkHost extends Model
 {
     use AutomateMutators;
     use HasFactory;
+    use SoftDeletes;
 
     private const FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED = 10;
 
@@ -84,20 +79,34 @@ class NetworkHost extends Model
         return self::where('host', $host)->first();
     }
 
+    public static function fetchBroadcastedAfter(DateTimeInterface $date): Collection
+    {
+        return self::where('last_broadcast', '>', $date)->get();
+    }
+
+    public static function deleteBroadcastedBefore(DateTimeInterface $date): int
+    {
+        $hosts = self::where('last_broadcast', '<', $date);
+        $counter = $hosts->count();
+        $hosts->delete();
+        return $counter;
+    }
+
     public static function registerHost(
         string $address,
         Info $info,
-        ?\DateTime $lastBroadcast = null
+        ?DateTimeInterface $lastBroadcast = null
     ): NetworkHost {
-        $networkHost = self::where('address', $address)->first();
+        $networkHost = self::withTrashed()->where('address', $address)->first();
 
         if (empty($networkHost)) {
             $networkHost = new self();
             $networkHost->address = $address;
         }
 
+        $networkHost->deleted_at = null;
         $networkHost->host = $info->getServerUrl();
-        $networkHost->last_broadcast = $lastBroadcast ?? new DateTime();
+        $networkHost->last_broadcast = $lastBroadcast ?? new DateTimeImmutable();
         $networkHost->failed_connection = 0;
         $networkHost->info = $info;
 
@@ -159,7 +168,8 @@ class NetworkHost extends Model
         $query = $self
             ->select(['network_campaigns.source_address as address'])
             ->rightJoin('network_campaigns', function ($join) {
-                $join->on('network_hosts.address', '=', 'network_campaigns.source_address');
+                $join->on('network_hosts.address', '=', 'network_campaigns.source_address')
+                    ->whereNull('network_hosts.deleted_at');
             })
             ->where(
                 function ($query) use ($whitelist) {

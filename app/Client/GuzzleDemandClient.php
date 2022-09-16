@@ -45,15 +45,11 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use DateTimeInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Psr\Http\Client\ClientExceptionInterface;
 use Symfony\Component\HttpFoundation\Response;
-
-use function GuzzleHttp\json_decode;
-use function json_encode;
 
 final class GuzzleDemandClient implements DemandClient
 {
@@ -67,24 +63,14 @@ final class GuzzleDemandClient implements DemandClient
     ];
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     . '?limit={limit}&offset={offset}';
-    private ClassifierExternalRepository $classifierRepository;
-    private ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier;
-    private SignatureVerifier $signatureVerifier;
-    private AdsAuthenticator $adsAuthenticator;
-    private int $timeout;
 
     public function __construct(
-        ClassifierExternalRepository $classifierRepository,
-        ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier,
-        SignatureVerifier $signatureVerifier,
-        AdsAuthenticator $adsAuthenticator,
-        int $timeout
+        private readonly ClassifierExternalRepository $classifierRepository,
+        private readonly ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier,
+        private readonly SignatureVerifier $signatureVerifier,
+        private readonly AdsAuthenticator $adsAuthenticator,
+        private readonly int $timeout
     ) {
-        $this->classifierRepository = $classifierRepository;
-        $this->classifierExternalSignatureVerifier = $classifierExternalSignatureVerifier;
-        $this->signatureVerifier = $signatureVerifier;
-        $this->adsAuthenticator = $adsAuthenticator;
-        $this->timeout = $timeout;
     }
 
     public function fetchAllInventory(
@@ -96,7 +82,7 @@ final class GuzzleDemandClient implements DemandClient
 
         try {
             $response = $client->get($inventoryUrl);
-        } catch (RequestException $exception) {
+        } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Could not connect to %s host (%s).', $sourceHost, $exception->getMessage()),
                 $exception->getCode(),
@@ -174,7 +160,7 @@ final class GuzzleDemandClient implements DemandClient
 
         try {
             $response = $client->get($endpoint);
-        } catch (ClientException $exception) {
+        } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Transaction not found: %s.', $exception->getMessage()),
                 $exception->getCode()
@@ -194,7 +180,7 @@ final class GuzzleDemandClient implements DemandClient
 
         try {
             $response = $client->get((string)$infoUrl);
-        } catch (RequestException $exception) {
+        } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Could not connect to %s (%s).', $infoUrl->toString(), $exception->getMessage()),
                 $exception->getCode(),
@@ -239,7 +225,6 @@ final class GuzzleDemandClient implements DemandClient
         if ($statusCode !== Response::HTTP_OK) {
             throw new UnexpectedClientResponseException(sprintf('Unexpected response code `%s`.', $statusCode));
         }
-
         if (empty($body)) {
             throw new EmptyInventoryException('Empty list');
         }
@@ -249,10 +234,9 @@ final class GuzzleDemandClient implements DemandClient
     {
         try {
             $decoded = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException) {
             throw new DomainRuntimeException('Invalid json data.');
         }
-
         return $decoded;
     }
 

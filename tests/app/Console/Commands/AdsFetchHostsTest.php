@@ -32,6 +32,7 @@ use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
 class AdsFetchHostsTest extends ConsoleTestCase
@@ -53,10 +54,64 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $this->setupDemandClientInfo(self::getInfoData());
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
-        self::assertDatabaseHas(
-            NetworkHost::class,
-            ['address' => '0001-00000001-8B4E', 'host' => 'https://app.example.com/']
+        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
+        $this->assertNotNull($host);
+        $this->assertEquals('https://app.example.com/', $host->host);
+    }
+
+    public function testUpdatingHosts(): void
+    {
+        $this->setupAdsClient();
+        $this->setupDemandClientInfo(self::getInfoData());
+
+        NetworkHost::factory()->create(['address' => '0001-00000002-BB2D', 'host' => 'https://old.example.com/']);
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
+        $this->assertNotNull($host);
+        $this->assertEquals('https://app.example.com/', $host->host);
+    }
+
+    public function testRestoringHosts(): void
+    {
+        $this->setupAdsClient();
+        $this->setupDemandClientInfo(self::getInfoData());
+
+        NetworkHost::factory()->create(
+            [
+                'address' => '0001-00000001-8B4E',
+                'host' => 'https://app.example.com/',
+                'deleted_at' => new DateTimeImmutable()
+            ]
         );
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
+        $this->assertNotNull($host);
+        $this->assertEquals('https://app.example.com/', $host->host);
+    }
+
+    public function testDeletingOldHosts(): void
+    {
+        $this->setupAdsClient();
+        $this->setupDemandClientInfo(self::getInfoData());
+
+        NetworkHost::factory()->create(
+            [
+                'address' => '0001-00000003-AB0C',
+                'host' => 'https://two.example.com/',
+                'last_broadcast' => new DateTimeImmutable('-3 days')
+            ]
+        );
+        NetworkHost::factory()->create(['address' => '0001-00000002-BB2D', 'host' => 'https://app.example.com/']);
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+
+        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
+        $this->assertNotNull($host);
+        $this->assertEquals('https://app.example.com/', $host->host);
+        $this->assertNull(NetworkHost::fetchByAddress('0001-00000003-AB0C'));
+//        $this->assertNull(NetworkHost::fetchByAddress('0001-00000002-BB2D'));
     }
 
     public function testFetchingHostsDemandClientException(): void
@@ -117,10 +172,10 @@ class AdsFetchHostsTest extends ConsoleTestCase
                             function () use (&$i) {
                                 if (0 === $i++) {
                                     $data = $this->getRawBroadcastData();
+                                    $data['broadcast'][0]['time'] = (string)time();
                                 } else {
                                     $data = $this->getRawEmptyBroadcastData();
                                 }
-
                                 return new GetBroadcastResponse($data);
                             }
                         )

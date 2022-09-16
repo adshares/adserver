@@ -517,7 +517,7 @@ class Config extends Model
             self::INVOICE_COMPANY_VAT_ID => '',
             self::INVOICE_CURRENCIES => [],
             self::INVOICE_ENABLED => false,
-            self::INVOICE_NUMBER_FORMAT => '',
+            self::INVOICE_NUMBER_FORMAT => 'INV NNNN/MM/YYYY',
             self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
             self::MAIL_FROM_NAME => 'Adshares AdServer',
             self::MAIL_MAILER => 'smtp',
