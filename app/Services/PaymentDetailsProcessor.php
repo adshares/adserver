@@ -150,9 +150,4 @@ class PaymentDetailsProcessor
 
         return NetworkCase::fetchByCaseIds($caseIds);
     }
-
-    private function fetchOperatorFee(): float
-    {
-        return config('app.payment_rx_fee');
-    }
 }
