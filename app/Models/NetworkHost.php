@@ -154,7 +154,8 @@ class NetworkHost extends Model
         $query = $self
             ->select(['network_campaigns.source_address as address'])
             ->rightJoin('network_campaigns', function ($join) {
-                $join->on('network_hosts.address', '=', 'network_campaigns.source_address');
+                $join->on('network_hosts.address', '=', 'network_campaigns.source_address')
+                    ->whereNull('network_hosts.deleted_at');
             })
             ->where(
                 function ($query) use ($whitelist) {
