@@ -627,8 +627,9 @@ final class AdminControllerTest extends TestCase
             'publisherCommission' => 0.01,
             'referralRefundEnabled' => 0,
             'referralRefundCommission' => 0,
-            'registrationMode' => 'public',
-            'autoConfirmationEnabled' => 1,
+            'registrationMode' => 'private',
+            'autoConfirmationEnabled' => 0,
+            'autoRegistrationEnabled' => 0,
         ];
     }
 
