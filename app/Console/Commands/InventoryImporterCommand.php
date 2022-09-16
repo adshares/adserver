@@ -34,11 +34,9 @@ class InventoryImporterCommand extends BaseCommand
 {
     protected $signature = 'ops:demand:inventory:import';
     protected $description = 'Import data from all defined inventories';
-    private InventoryImporter $inventoryImporterService;
 
-    public function __construct(Locker $locker, InventoryImporter $inventoryImporterService)
+    public function __construct(Locker $locker, private readonly InventoryImporter $inventoryImporterService)
     {
-        $this->inventoryImporterService = $inventoryImporterService;
         parent::__construct($locker);
     }
 
@@ -103,7 +101,7 @@ class InventoryImporterCommand extends BaseCommand
                         )
                     );
                 }
-            } catch (EmptyInventoryException $exception) {
+            } catch (EmptyInventoryException) {
                 $this->inventoryImporterService->clearInventoryForHostAddress($address);
 
                 $this->info(

@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\Status;
+use DateTimeImmutable;
 
 final class InventoryImporterCommandTest extends ConsoleTestCase
 {
@@ -34,6 +35,7 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
     {
         NetworkHost::factory()->create(['address' => '0001-00000002-BB2D']);
         NetworkHost::factory()->create(['address' => '0001-00000003-AB0C']);
+        NetworkHost::factory()->create(['address' => '0001-00000004-DBEB', 'deleted_at' => new DateTimeImmutable()]);
         NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
 
         $this->artisan('ops:demand:inventory:import')
