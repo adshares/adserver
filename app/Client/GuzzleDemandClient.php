@@ -45,14 +45,10 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use DateTimeInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Psr\Http\Client\ClientExceptionInterface;
 use Symfony\Component\HttpFoundation\Response;
-
-use function GuzzleHttp\json_decode;
-use function json_encode;
 
 final class GuzzleDemandClient implements DemandClient
 {
@@ -95,7 +91,7 @@ final class GuzzleDemandClient implements DemandClient
 
         try {
             $response = $client->get($inventoryUrl);
-        } catch (RequestException $exception) {
+        } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Could not connect to %s host (%s).', $sourceHost, $exception->getMessage()),
                 $exception->getCode(),
@@ -173,7 +169,7 @@ final class GuzzleDemandClient implements DemandClient
 
         try {
             $response = $client->get($endpoint);
-        } catch (ClientException $exception) {
+        } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Transaction not found: %s.', $exception->getMessage()),
                 $exception->getCode()
@@ -193,7 +189,7 @@ final class GuzzleDemandClient implements DemandClient
 
         try {
             $response = $client->get((string)$infoUrl);
-        } catch (RequestException $exception) {
+        } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Could not connect to %s (%s).', $infoUrl->toString(), $exception->getMessage()),
                 $exception->getCode(),

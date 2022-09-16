@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.18.10] - 2022-09-16
+### Fixed
+- Handle inventory import timeout
+- Do not import campaigns from deleted servers
 
 ## [1.18.9] - 2022-09-05
 ### Fixed
@@ -677,7 +680,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.9...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.18.10...develop
+[1.18.10]: https://github.com/adshares/adserver/compare/v1.18.9...v1.18.10
 [1.18.9]: https://github.com/adshares/adserver/compare/v1.18.8...v1.18.9
 [1.18.8]: https://github.com/adshares/adserver/compare/v1.18.7...v1.18.8
 [1.18.7]: https://github.com/adshares/adserver/compare/v1.18.6...v1.18.7

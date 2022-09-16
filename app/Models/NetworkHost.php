@@ -23,12 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
-use Adshares\Common\Domain\ValueObject\EmptyAccountId;
-use Adshares\Common\Domain\ValueObject\NullUrl;
-use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
@@ -112,7 +107,7 @@ class NetworkHost extends Model
             'failed_connection',
             '<',
             self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED
-        );
+        )->whereNull('deleted_at');
         if (!empty($whitelist)) {
             $query->whereIn('address', $whitelist);
         }
