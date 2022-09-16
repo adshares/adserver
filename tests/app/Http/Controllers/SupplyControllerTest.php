@@ -173,6 +173,7 @@ final class SupplyControllerTest extends TestCase
 
     public function testFindJsonNoAutoRegistration(): void
     {
+        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '0']);
         $this->mockAdSelect();
         $data = [
             'pay_to' => 'ADS:0001-00000001-8B4E',

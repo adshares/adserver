@@ -186,7 +186,7 @@ class ConfigTest extends TestCase
             'invoice-company-city' => 'FooCity',
             'invoice-company-country' => 'GB',
             'invoice-company-vat-id' => '123123123123',
-            'invoice-company-bank-accounts' => '{}',
+            'invoice-company-bank-accounts' => ['EUR' => ['number' => '11 2222 333 4444', 'name' => 'test bank']],
             'site-accept-banners-manually' => false,
             'site-classifier-local-banners' => 'all-by-default',
         ];
@@ -216,7 +216,7 @@ class ConfigTest extends TestCase
             'invoice-company-city' => 'FooCity',
             'invoice-company-country' => 'GB',
             'invoice-company-vat-id' => '123123123123',
-            'invoice-company-bank-accounts' => '{}',
+            'invoice-company-bank-accounts' => '{"EUR":{"number":"11 2222 333 4444","name":"test bank"}}',
             'site-accept-banners-manually' => '0',
             'site-classifier-local-banners' => 'all-by-default',
         ];
