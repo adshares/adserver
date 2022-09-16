@@ -56,7 +56,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -64,13 +63,6 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class AdminController extends Controller
 {
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
-
-    private LicenseVault $licenseVault;
-
-    public function __construct(LicenseVault $licenseVault)
-    {
-        $this->licenseVault = $licenseVault;
-    }
 
     public function listSettings(): SettingsResponse
     {
@@ -126,10 +118,10 @@ class AdminController extends Controller
         ]);
     }
 
-    public function getLicense(): LicenseResponse
+    public function getLicense(LicenseVault $licenseVault): LicenseResponse
     {
         try {
-            $license = $this->licenseVault->read();
+            $license = $licenseVault->read();
         } catch (RuntimeException $exception) {
             throw new NotFoundHttpException($exception->getMessage());
         }
@@ -210,13 +202,12 @@ class AdminController extends Controller
                     ->bcc(config('app.support_email'))
                     ->later($emailSendDateTime, new PanelPlaceholdersChange());
             }
+            DB::commit();
         } catch (Exception $exception) {
             DB::rollBack();
 
             throw $exception;
         }
-
-        DB::commit();
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
@@ -231,7 +222,7 @@ class AdminController extends Controller
 
     public function getRejectedDomains(): JsonResponse
     {
-        return self::json(['domains' => SitesRejectedDomain::fetchAll()->pluck('domain')]);
+        return self::json(['domains' => SitesRejectedDomain::fetchAll()]);
     }
 
     public function putRejectedDomains(Request $request): JsonResponse
@@ -239,7 +230,7 @@ class AdminController extends Controller
         $domains = $request->get('domains');
 
         if (!is_array($domains)) {
-            throw new BadRequestHttpException('Field `domains` must be an array');
+            throw new UnprocessableEntityHttpException('Field `domains` must be an array');
         }
 
         foreach ($domains as $domain) {
@@ -248,25 +239,9 @@ class AdminController extends Controller
             }
         }
 
-        $databaseDomains = SitesRejectedDomain::fetchAll();
-        $databaseDomainsToDeleteIds = [];
-        /** @var SitesRejectedDomain $databaseDomain */
-        foreach ($databaseDomains as $databaseDomain) {
-            if (!in_array($databaseDomain->domain, $domains)) {
-                $databaseDomainsToDeleteIds[] = $databaseDomain->id;
-            }
-        }
-
-        DB::beginTransaction();
-
         try {
-            SitesRejectedDomain::deleteByIds($databaseDomainsToDeleteIds);
-            foreach ($domains as $domain) {
-                SitesRejectedDomain::upsert((string)$domain);
-            }
-            DB::commit();
+            SitesRejectedDomain::storeDomains($domains);
         } catch (Exception $exception) {
-            DB::rollBack();
             Log::info(sprintf('Domains cannot be rejected (%s).', $exception->getMessage()));
 
             throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add domains');

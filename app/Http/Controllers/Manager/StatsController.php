@@ -57,28 +57,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class StatsController extends Controller
 {
-    /** @var AdvertiserChartDataProvider */
-    private $advertiserChartDataProvider;
-
-    /** @var AdvertiserStatsDataProvider */
-    private $advertiserStatsDataProvider;
-
-    /** @var PublisherChartDataProvider */
-    private $publisherChartDataProvider;
-
-    /** @var PublisherStatsDataProvider */
-    private $publisherStatsDataProvider;
-
     public function __construct(
-        AdvertiserChartDataProvider $advertiserChartDataProvider,
-        AdvertiserStatsDataProvider $advertiserStatsDataProvider,
-        PublisherChartDataProvider $publisherChartDataProvider,
-        PublisherStatsDataProvider $publisherStatsDataProvider
+        private readonly AdvertiserChartDataProvider $advertiserChartDataProvider,
+        private readonly AdvertiserStatsDataProvider $advertiserStatsDataProvider,
+        private readonly PublisherChartDataProvider $publisherChartDataProvider,
+        private readonly PublisherStatsDataProvider $publisherStatsDataProvider,
     ) {
-        $this->advertiserChartDataProvider = $advertiserChartDataProvider;
-        $this->advertiserStatsDataProvider = $advertiserStatsDataProvider;
-        $this->publisherChartDataProvider = $publisherChartDataProvider;
-        $this->publisherStatsDataProvider = $publisherStatsDataProvider;
     }
 
     public function advertiserChart(
@@ -96,7 +80,6 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsAdvertiser($user);
 
         try {
             $input = new AdvertiserChartInput(
@@ -131,7 +114,6 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsPublisher($user);
 
         try {
             $input = new PublisherChartInput(
@@ -205,7 +187,6 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsAdvertiser($user);
 
         try {
             $input = new AdvertiserStatsInput(
@@ -241,7 +222,6 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsAdvertiser($user);
 
         try {
             $input = new ConversionDataInput(
@@ -280,7 +260,6 @@ class StatsController extends Controller
             $publisherIds = $user->getReferralUuids();
             $publisherIds[] = $user->uuid;
         } elseif (!$isModerator) {
-            $this->validateUserAsPublisher($user);
             $publisherIds = [$user->uuid];
         }
 
@@ -330,7 +309,6 @@ class StatsController extends Controller
             $advertiserIds = $user->getReferralUuids();
             $advertiserIds[] = $user->uuid;
         } elseif (!$isModerator) {
-            $this->validateUserAsAdvertiser($user);
             $advertiserIds = [$user->uuid];
         }
 
@@ -378,7 +356,6 @@ class StatsController extends Controller
             $advertiserIds = $user->getReferralUuids();
             $advertiserIds[] = $user->uuid;
         } elseif (!$isModerator) {
-            $this->validateUserAsAdvertiser($user);
             $advertiserIds = [$user->uuid];
         }
 
@@ -436,7 +413,6 @@ class StatsController extends Controller
             $publisherIds = $user->getReferralUuids();
             $publisherIds[] = $user->uuid;
         } elseif (!$isModerator) {
-            $this->validateUserAsPublisher($user);
             $publisherIds = [$user->uuid];
         }
 
@@ -540,7 +516,6 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsPublisher($user);
 
         try {
             $input = new PublisherStatsInput(
@@ -578,30 +553,6 @@ class StatsController extends Controller
         }
 
         return $site;
-    }
-
-    private function validateUserAsPublisher(User $user): void
-    {
-        if (!$user->isPublisher()) {
-            throw new AccessDeniedHttpException(
-                sprintf(
-                    'User %s is not authorized to access this resource.',
-                    $user->label
-                )
-            );
-        }
-    }
-
-    private function validateUserAsAdvertiser(User $user): void
-    {
-        if (!$user->isAdvertiser()) {
-            throw new AccessDeniedHttpException(
-                sprintf(
-                    'User %s is not authorized to access this resource.',
-                    $user->label
-                )
-            );
-        }
     }
 
     private function formatReportName(DateTimeInterface $from, DateTimeInterface $to): string

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,28 +32,20 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use Illuminate\Support\Collection;
 
-use function count;
-use function hex2bin;
-use function in_array;
-use function now;
-use function sprintf;
-
 class AdPayGetPayments extends BaseCommand
 {
     public const COMMAND_SIGNATURE = 'ops:adpay:payments:get';
 
     public const STATUS_OK = 0;
-
     public const STATUS_LOCKED = 1;
-
     public const STATUS_CLIENT_EXCEPTION = 2;
-
     public const STATUS_REQUEST_FAILED = 3;
 
     protected $signature = self::COMMAND_SIGNATURE . '
@@ -61,14 +53,12 @@ class AdPayGetPayments extends BaseCommand
                             {--f|force}
                             {--r|recalculate}
                             {--c|chunkSize=10000}';
-
     protected $description = 'Updates events with payment data fetched from adpay';
 
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
-
             return self::STATUS_LOCKED;
         }
 
@@ -167,7 +157,11 @@ class AdPayGetPayments extends BaseCommand
 
     private function getExchangeRate(ExchangeRateReader $exchangeRateReader, DateTime $dateTime): ExchangeRate
     {
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate($dateTime);
+        $appCurrency = Currency::from(config('app.currency'));
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => $exchangeRateReader->fetchExchangeRate($dateTime),
+            default => ExchangeRate::ONE($appCurrency),
+        };
         $this->info(sprintf('Exchange rate for %s is %f', $dateTime->format('Y-m-d H:i:s'), $exchangeRate->getValue()));
 
         return $exchangeRate;
@@ -200,6 +194,6 @@ class AdPayGetPayments extends BaseCommand
     {
         $timestamp = $this->option('timestamp');
 
-        return $timestamp === null ? now()->subHour(1)->getTimestamp() : (int)$timestamp;
+        return $timestamp === null ? now()->subHour()->getTimestamp() : (int)$timestamp;
     }
 }

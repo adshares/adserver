@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use DateTimeImmutable;
 
 final class UserLedgerEntryTest extends TestCase
@@ -191,8 +192,11 @@ final class UserLedgerEntryTest extends TestCase
 
     public function testRefundAndBonus(): void
     {
-        Config::updateAdminSettings([Config::REFERRAL_REFUND_ENABLED => 1]);
-        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.2]);
+        Config::updateAdminSettings([
+            Config::REFERRAL_REFUND_COMMISSION => 0.2,
+            Config::REFERRAL_REFUND_ENABLED => 1,
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
 
         /** @var User $user1 */
         $user1 = User::factory()->create();
@@ -265,8 +269,11 @@ final class UserLedgerEntryTest extends TestCase
 
     public function testRefundAndBonusAfterDeadline(): void
     {
-        Config::updateAdminSettings([Config::REFERRAL_REFUND_ENABLED => 1]);
-        Config::updateAdminSettings([Config::REFERRAL_REFUND_COMMISSION => 0.2]);
+        Config::updateAdminSettings([
+            Config::REFERRAL_REFUND_COMMISSION => 0.2,
+            Config::REFERRAL_REFUND_ENABLED => 1,
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
 
         /** @var User $user1 */
         $user1 = User::factory()->create();

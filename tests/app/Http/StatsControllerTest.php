@@ -35,14 +35,12 @@ use Symfony\Component\HttpFoundation\Response;
 final class StatsControllerTest extends TestCase
 {
     private const ADVERTISER_CHART_URI = '/api/campaigns/stats/chart';
-
     private const ADVERTISER_STATS_URI = '/api/campaigns/stats/table2';
+    private const PUBLISHER_STATS_URI = '/api/sites/stats/table2';
 
     public function testAdvertiserChartWhenViewTypeAndHourResolutionAndDateEndIsEarlierThanDateStart(): void
     {
-        $user = User::factory()->create();
-        $user->is_advertiser = 1;
-        $this->actingAs($user, 'api');
+        $this->login();
 
         $dateStart = (new DateTime())->format(DateTimeInterface::ATOM);
         $dateEnd = (new DateTime())->modify('-1 hour')->format(DateTimeInterface::ATOM);
@@ -56,15 +54,12 @@ final class StatsControllerTest extends TestCase
      * @param string $type
      * @param array $resolutions
      *
-     * @throws \Exception
      * @dataProvider providerDataForAdvertiserChart
      */
     public function testAdvertiserChartWhenViewTypeAndHourResolution(string $type, array $resolutions): void
     {
         $repository = new DummyStatsRepository();
-        $user = User::factory()->create();
-        $user->is_advertiser = 1;
-        $this->actingAs($user, 'api');
+        $user = $this->login();
 
         $dateStart = new DateTime();
         $dateEnd = new DateTime();
@@ -105,21 +100,12 @@ final class StatsControllerTest extends TestCase
     public function testAdvertiserStats(): void
     {
         $repository = new DummyStatsRepository();
-        $user = User::factory()->create(['email' => DummyStatsRepository::USER_EMAIL]);
-        $user->is_advertiser = 1;
-        $this->actingAs($user, 'api');
-
+        $user = $this->login(User::factory()->create(['email' => DummyStatsRepository::USER_EMAIL]));
         Campaign::factory()->create(['user_id' => $user->id]);
 
         $dateStart = new DateTime();
         $dateEnd = new DateTime();
-
-        $url = sprintf(
-            '%s/%s/%s',
-            self::ADVERTISER_STATS_URI,
-            $dateStart->format(DateTimeInterface::ATOM),
-            $dateEnd->format(DateTimeInterface::ATOM)
-        );
+        $url = $this->buildAdvertiserStatsUri($dateStart, $dateEnd);
 
         $response = $this->getJson($url);
         $response->assertStatus(Response::HTTP_OK);
@@ -128,6 +114,28 @@ final class StatsControllerTest extends TestCase
             'total' => $repository->fetchStatsTotal($user->uuid, $dateStart, $dateEnd)->toArray(),
             'data' => $repository->fetchStats($user->uuid, $dateStart, $dateEnd)->toArray(),
         ]);
+    }
+
+    public function testAdvertiserStatsWhenUserIsOnlyPublisher(): void
+    {
+        $user = $this->login(User::factory()->create(['is_advertiser' => false]));
+        Campaign::factory()->create(['user_id' => $user->id]);
+
+        $url = $this->buildAdvertiserStatsUri(new DateTime(), new DateTime());
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testPublisherStatsWhenUserIsOnlyAdvertiser(): void
+    {
+        $user = $this->login(User::factory()->create(['is_publisher' => false]));
+        Campaign::factory()->create(['user_id' => $user->id]);
+
+        $url = $this->buildPublisherStatsUri(new DateTime(), new DateTime());
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function providerDataForAdvertiserChart(): array
@@ -145,6 +153,26 @@ final class StatsControllerTest extends TestCase
             ['sum', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['ctr', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
         ];
+    }
+
+    private function buildAdvertiserStatsUri(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): string
+    {
+        return sprintf(
+            '%s/%s/%s',
+            self::ADVERTISER_STATS_URI,
+            $dateStart->format(DateTimeInterface::ATOM),
+            $dateEnd->format(DateTimeInterface::ATOM)
+        );
+    }
+
+    private function buildPublisherStatsUri(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): string
+    {
+        return sprintf(
+            '%s/%s/%s',
+            self::PUBLISHER_STATS_URI,
+            $dateStart->format(DateTimeInterface::ATOM),
+            $dateEnd->format(DateTimeInterface::ATOM)
+        );
     }
 
     protected function setUp(): void

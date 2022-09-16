@@ -910,7 +910,7 @@ JSON
     public function testVerifyDomain(array $data, int $expectedStatus, string $expectedMessage): void
     {
         $this->setupUser();
-        SitesRejectedDomain::upsert('rejected.com');
+        SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
 
         $response = $this->postJson(self::URI_DOMAIN_VERIFY, $data);
         $response->assertStatus($expectedStatus)->assertJsonStructure(self::DOMAIN_VERIFY_STRUCTURE);

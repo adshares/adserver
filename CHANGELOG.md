@@ -1,3 +1,4 @@
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -6,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Possibility to set application currency other than ADS
+- AdPanel's placeholders to config API
+### Changed
+- Split user access for advertisers and publishers
+- Config API returns data after store
+### Fixed
+- Do not expose SMTP password in config API
+- Remove deprecated zip* functions
+- Types, validators in config API
 
 ## [2.0.5] - 2022-09-16
 ### Fixed

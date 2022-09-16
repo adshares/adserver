@@ -55,13 +55,11 @@ class NetworkCasePayment extends Model
 
     public $timestamps = false;
 
-    /** @var array */
     protected $dates = [
         'created_at',
         'pay_time',
     ];
 
-    /** @var array */
     protected $fillable = [
         'pay_time',
         'ads_payment_id',
@@ -73,7 +71,6 @@ class NetworkCasePayment extends Model
         'paid_amount_currency',
     ];
 
-    /** @var array */
     protected $visible = [];
 
     /**
@@ -115,12 +112,15 @@ class NetworkCasePayment extends Model
         );
     }
 
-    public static function fetchPaymentsForPublishersByAdsPaymentId(int $adsPaymentId): Collection
-    {
+    public static function fetchPaymentsForPublishersByAdsPaymentId(
+        int $adsPaymentId,
+        bool $usePaidAmountCurrency
+    ): Collection {
+        $paidAmountColumn = $usePaidAmountCurrency ? 'paid_amount_currency' : 'paid_amount';
         return self::select(
             [
                 'publisher_id',
-                DB::raw('SUM(paid_amount) AS paid_amount'),
+                DB::raw(sprintf('SUM(%s) AS paid_amount', $paidAmountColumn)),
             ]
         )->join(
             'network_cases',
