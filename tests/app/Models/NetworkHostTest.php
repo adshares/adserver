@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Supply\Domain\ValueObject\Status;
+use DateTimeImmutable;
 
 class NetworkHostTest extends TestCase
 {
@@ -32,9 +33,14 @@ class NetworkHostTest extends TestCase
     {
         NetworkHost::factory()->create(['address' => '0001-00000001-8B4E']);
         NetworkHost::factory()->create(['address' => '0001-00000002-BB2D']);
+        NetworkHost::factory()->create(['address' => '0001-00000003-AB0C', 'deleted_at' => new DateTimeImmutable()]);
 
         NetworkCampaign::factory()->create([
             'source_address' => '0001-00000001-8B4E',
+            'status' => Status::STATUS_ACTIVE
+        ]);
+        NetworkCampaign::factory()->create([
+            'source_address' => '0001-00000003-AB0C',
             'status' => Status::STATUS_ACTIVE
         ]);
         NetworkCampaign::factory()->create([
@@ -47,7 +53,7 @@ class NetworkHostTest extends TestCase
         ]);
 
         $addresses = NetworkHost::findNonExistentHostsAddresses();
-        $this->assertEquals(['0001-00000004-DBEB'], $addresses);
+        $this->assertEquals(['0001-00000003-AB0C', '0001-00000004-DBEB'], $addresses);
     }
 
     public function testWhitelistedAddresses(): void
