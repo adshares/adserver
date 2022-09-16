@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle inventory import timeout
 - Do not import campaigns from deleted servers
 - Remove campaigns from deleted servers
+- Remove outdated servers
 
 ## [2.0.4] - 2022-09-05
 ### Fixed
