@@ -636,6 +636,62 @@ final class AdminControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
+    public function testGrantAdvertiserRights(): void
+    {
+        $this->login(User::factory()->admin()->create());
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_advertiser' => false]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, 'grantAdvertising'));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['isAdvertiser' => 1]);
+        self::assertTrue(User::find($user->id)->isAdvertiser());
+    }
+
+    public function testDenyAdvertiserRights(): void
+    {
+        $this->login(User::factory()->admin()->create());
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_advertiser' => true]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, 'denyAdvertising'));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['isAdvertiser' => 0]);
+        self::assertFalse(User::find($user->id)->isAdvertiser());
+    }
+
+    public function testGrantPublishingRights(): void
+    {
+        $this->login(User::factory()->create(['is_moderator' => true]));
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_publisher' => false]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, 'grantPublishing'));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['isPublisher' => 1]);
+        self::assertTrue(User::find($user->id)->isPublisher());
+    }
+
+    public function testDenyPublishingRights(): void
+    {
+        $this->login(User::factory()->create(['is_moderator' => true]));
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_publisher' => true]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, 'denyPublishing'));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['isPublisher' => 0]);
+        self::assertFalse(User::find($user->id)->isPublisher());
+    }
+
     private function settings(): array
     {
         return [
@@ -669,5 +725,10 @@ final class AdminControllerTest extends TestCase
     private static function buildUriDelete($userId): string
     {
         return sprintf('/admin/users/%d/delete', $userId);
+    }
+
+    private static function buildUriUserRights(int $userId, string $operation): string
+    {
+        return sprintf('/admin/users/%d/%s', $userId, $operation);
     }
 }
