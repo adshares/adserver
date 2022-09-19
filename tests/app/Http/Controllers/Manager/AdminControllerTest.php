@@ -643,7 +643,7 @@ final class AdminControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create(['is_advertiser' => false]);
 
-        $response = $this->post(self::buildUriUserRights($user->id, true, true));
+        $response = $this->post(self::buildUriUserRights($user->id, 'grantAdvertising'));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['isAdvertiser' => 1]);
@@ -657,10 +657,9 @@ final class AdminControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create(['is_advertiser' => true]);
 
-        $response = $this->post(self::buildUriUserRights($user->id, false, true));
+        $response = $this->post(self::buildUriUserRights($user->id, 'denyAdvertising'));
 
         $response->assertStatus(Response::HTTP_OK);
-        $c  =$response->getContent();
         $response->assertJsonFragment(['isAdvertiser' => 0]);
         self::assertFalse(User::find($user->id)->isAdvertiser());
     }
@@ -672,7 +671,7 @@ final class AdminControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create(['is_publisher' => false]);
 
-        $response = $this->post(self::buildUriUserRights($user->id, true, false));
+        $response = $this->post(self::buildUriUserRights($user->id, 'grantPublishing'));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['isPublisher' => 1]);
@@ -686,7 +685,7 @@ final class AdminControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create(['is_publisher' => true]);
 
-        $response = $this->post(self::buildUriUserRights($user->id, false, false));
+        $response = $this->post(self::buildUriUserRights($user->id, 'denyPublishing'));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['isPublisher' => 0]);
@@ -728,13 +727,8 @@ final class AdminControllerTest extends TestCase
         return sprintf('/admin/users/%d/delete', $userId);
     }
 
-    private static function buildUriUserRights(int $userId, bool $isGrant, bool $isAdvertiser): string
+    private static function buildUriUserRights(int $userId, string $operation): string
     {
-        return sprintf(
-            '/admin/users/%d/%s%s',
-            $userId,
-            $isGrant ? 'grant' : 'deny',
-            $isAdvertiser ? 'Advertising' : 'Publishing'
-        );
+        return sprintf('/admin/users/%d/%s', $userId, $operation);
     }
 }
