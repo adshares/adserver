@@ -25,28 +25,28 @@ namespace Adshares\Tests\Config;
 
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Config\RegistrationUserType;
+use Adshares\Config\UserRole;
 
-class RegistrationUserTypeTest extends TestCase
+class UserRoleTest extends TestCase
 {
     public function testDirectCreationFail(): void
     {
         self::expectException(RuntimeException::class);
 
-        new RegistrationUserType();
+        new UserRole();
     }
 
     public function testValidateValid(): void
     {
         self::expectNotToPerformAssertions();
 
-        RegistrationUserType::validate('advertiser');
+        UserRole::validate('advertiser');
     }
 
     public function testValidateInvalid(): void
     {
         self::expectException(RuntimeException::class);
 
-        RegistrationUserType::validate('invalid');
+        UserRole::validate('invalid');
     }
 }

@@ -26,7 +26,7 @@ use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Config\RegistrationMode;
-use Adshares\Config\RegistrationUserType;
+use Adshares\Config\UserRole;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -101,6 +101,7 @@ class Config extends Model
     public const CRM_MAIL_ADDRESS_ON_SITE_ADDED = 'crm-mail-address-on-site-added';
     public const CRM_MAIL_ADDRESS_ON_USER_REGISTERED = 'crm-mail-address-on-user-registered';
     public const CURRENCY = 'currency';
+    public const DEFAULT_USER_ROLES = 'default-user-roles';
     public const DISPLAY_CURRENCY = 'display-currency';
     public const EMAIL_VERIFICATION_REQUIRED = 'email-verification-required';
     public const EXCHANGE_API_KEY = 'exchange-api-key';
@@ -153,7 +154,6 @@ class Config extends Model
     public const REFERRAL_REFUND_COMMISSION = 'referral-refund-commission';
     public const REFERRAL_REFUND_ENABLED = 'referral-refund-enabled';
     public const REGISTRATION_MODE = 'registration-mode';
-    public const REGISTRATION_USER_TYPES = 'registration-user-types';
     public const SERVE_BASE_URL = 'serve-base-url';
     public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
     public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
@@ -224,6 +224,7 @@ class Config extends Model
         self::CAMPAIGN_MIN_CPM => ConfigTypes::Integer,
         self::CHECK_ZONE_DOMAIN => ConfigTypes::Bool,
         self::COLD_WALLET_IS_ACTIVE => ConfigTypes::Bool,
+        self::DEFAULT_USER_ROLES => ConfigTypes::Array,
         self::EMAIL_VERIFICATION_REQUIRED => ConfigTypes::Bool,
         self::EXCHANGE_CURRENCIES => ConfigTypes::Array,
         self::FIAT_DEPOSIT_MAX_AMOUNT => ConfigTypes::Integer,
@@ -247,7 +248,6 @@ class Config extends Model
         self::OPERATOR_RX_FEE => ConfigTypes::Float,
         self::REFERRAL_REFUND_COMMISSION => ConfigTypes::Float,
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
-        self::REGISTRATION_USER_TYPES => ConfigTypes::Array,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
@@ -461,6 +461,7 @@ class Config extends Model
             self::CRM_MAIL_ADDRESS_ON_SITE_ADDED => '',
             self::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => '',
             self::CURRENCY => Currency::ADS->value,
+            self::DEFAULT_USER_ROLES => [UserRole::ADVERTISER, UserRole::PUBLISHER],
             self::DISPLAY_CURRENCY => Currency::USD->value,
             self::EMAIL_VERIFICATION_REQUIRED => true,
             self::EXCHANGE_API_KEY => '',
@@ -509,7 +510,6 @@ class Config extends Model
             self::REFERRAL_REFUND_COMMISSION => 0,
             self::REFERRAL_REFUND_ENABLED => false,
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
-            self::REGISTRATION_USER_TYPES => [RegistrationUserType::ADVERTISER, RegistrationUserType::PUBLISHER],
             self::SERVE_BASE_URL => $fetched[self::URL] ?? '',
             self::SITE_ACCEPT_BANNERS_MANUALLY => false,
             self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,

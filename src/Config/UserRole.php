@@ -23,7 +23,7 @@ namespace Adshares\Config;
 
 use Adshares\Common\Exception\RuntimeException;
 
-final class RegistrationUserType
+final class UserRole
 {
     public const ADVERTISER = 'advertiser';
     public const PUBLISHER = 'publisher';

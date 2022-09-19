@@ -44,7 +44,7 @@ class UserTest extends TestCase
     public function testRegisterAdvertiserWithEmail(): void
     {
         Config::updateAdminSettings([
-            Config::REGISTRATION_USER_TYPES => 'advertiser',
+            Config::DEFAULT_USER_ROLES => 'advertiser',
         ]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $user = User::registerWithEmail('test@test.pl', '123123');
@@ -74,7 +74,7 @@ class UserTest extends TestCase
         $this->assertNull($user->password);
 
         Config::updateAdminSettings([
-            Config::REGISTRATION_USER_TYPES => 'publisher',
+            Config::DEFAULT_USER_ROLES => 'publisher',
         ]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000002-BB2D');

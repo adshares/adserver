@@ -32,7 +32,7 @@ use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
-use Adshares\Config\RegistrationUserType;
+use Adshares\Config\UserRole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -90,6 +90,7 @@ class ServerConfigurationController extends Controller
         Config::CRM_MAIL_ADDRESS_ON_SITE_ADDED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => 'nullable|email',
         Config::CURRENCY => 'nullable|appCurrency',
+        Config::DEFAULT_USER_ROLES => 'nullable|notEmpty|list:userRole',
         Config::EMAIL_VERIFICATION_REQUIRED => 'nullable|boolean',
         Config::EXCHANGE_API_KEY => 'nullable',
         Config::EXCHANGE_API_SECRET => 'nullable',
@@ -137,7 +138,6 @@ class ServerConfigurationController extends Controller
         Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
         Config::REFERRAL_REFUND_ENABLED => 'boolean',
         Config::REGISTRATION_MODE => 'registrationMode',
-        Config::REGISTRATION_USER_TYPES => 'nullable|registrationUserTypeList',
         Config::SERVE_BASE_URL => 'nullable|url',
         Config::SITE_ACCEPT_BANNERS_MANUALLY => 'boolean',
         Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'siteClassifierLocalBanners',
@@ -483,25 +483,6 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validateRegistrationUserTypeList(string $field, string $value): void
-    {
-        if (empty($value)) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` is cannot be empty', $field));
-        }
-
-        foreach (explode(',', $value) as $type) {
-            if (!in_array($type, RegistrationUserType::cases())) {
-                throw new UnprocessableEntityHttpException(
-                    sprintf(
-                        'Field `%s` must be one of %s',
-                        $field,
-                        implode(', ', RegistrationUserType::cases())
-                    )
-                );
-            }
-        }
-    }
-
     private static function validateSiteClassifierLocalBanners(string $field, string $value): void
     {
         if (!in_array($value, Config::ALLOWED_CLASSIFIER_LOCAL_BANNERS_OPTIONS, true)) {
@@ -519,6 +500,19 @@ class ServerConfigurationController extends Controller
     {
         if (false === filter_var($value, FILTER_VALIDATE_URL)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a url', $field));
+        }
+    }
+
+    private static function validateUserRole(string $field, string $value): void
+    {
+        if (!in_array($value, UserRole::cases())) {
+            throw new UnprocessableEntityHttpException(
+                sprintf(
+                    'Field `%s` must be one of %s',
+                    $field,
+                    implode(', ', UserRole::cases())
+                )
+            );
         }
     }
 }

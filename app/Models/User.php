@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Config\RegistrationUserType;
+use Adshares\Config\UserRole;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -401,18 +401,18 @@ class User extends Authenticatable implements JWTSubject
                     'email' => $email,
                     'password' => $password,
                 ],
-                self::getUserTypes()
+                self::getUserRoles()
             ),
             $refLink
         );
     }
 
-    private static function getUserTypes(): array
+    private static function getUserRoles(): array
     {
-        $registrationUserTypes = config('app.registration_user_types');
+        $defaultUserRoles = config('app.default_user_roles');
         return [
-            'is_advertiser' => in_array(RegistrationUserType::ADVERTISER, $registrationUserTypes),
-            'is_publisher' => in_array(RegistrationUserType::PUBLISHER, $registrationUserTypes),
+            'is_advertiser' => in_array(UserRole::ADVERTISER, $defaultUserRoles),
+            'is_publisher' => in_array(UserRole::PUBLISHER, $defaultUserRoles),
         ];
     }
 
@@ -442,7 +442,7 @@ class User extends Authenticatable implements JWTSubject
                         ? config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()))
                         : null,
                 ],
-                self::getUserTypes()
+                self::getUserRoles()
             ),
             $refLink
         );
