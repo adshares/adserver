@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Possibility to set application currency other than ADS
 - AdPanel's placeholders to config API
+- Possibility to change user rights
 ### Changed
 - Split user access for advertisers and publishers
 - Config API returns data after store

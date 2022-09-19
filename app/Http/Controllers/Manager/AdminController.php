@@ -335,14 +335,7 @@ class AdminController extends Controller
             throw new UnprocessableEntityHttpException('Invalid reason');
         }
 
-        /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
-        if ($user->isAdmin()) {
-            throw new UnprocessableEntityHttpException('Administrator cannot be banned');
-        }
+        $user = $this->getRegularUserById($userId);
 
         DB::beginTransaction();
         try {
@@ -357,6 +350,7 @@ class AdminController extends Controller
             DB::commit();
         } catch (Exception $exception) {
             DB::rollBack();
+            Log::error(sprintf('Exception during user ban: (%s)', $exception->getMessage()));
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -367,12 +361,7 @@ class AdminController extends Controller
 
     public function unbanUser(int $userId): JsonResponse
     {
-        /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
-
+        $user = $this->getRegularUserById($userId);
         $user->unban();
 
         return self::json($user->toArray());
@@ -380,14 +369,7 @@ class AdminController extends Controller
 
     public function deleteUser(int $userId, CampaignRepository $campaignRepository): JsonResponse
     {
-        /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
-        if ($user->isAdmin()) {
-            throw new UnprocessableEntityHttpException('Administrator cannot be deleted');
-        }
+        $user = $this->getRegularUserById($userId);
 
         DB::beginTransaction();
         try {
@@ -416,9 +398,56 @@ class AdminController extends Controller
             DB::commit();
         } catch (Exception $exception) {
             DB::rollBack();
+            Log::error(sprintf('Exception during user deletion: (%s)', $exception->getMessage()));
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function grantAdvertising(int $userId): JsonResponse
+    {
+        $user = $this->getRegularUserById($userId);
+        $user->is_advertiser = true;
+        $user->save();
+        return self::json();
+    }
+
+    public function denyAdvertising(int $userId): JsonResponse
+    {
+        $user = $this->getRegularUserById($userId);
+        $user->is_advertiser = false;
+        $user->save();
+        return self::json();
+    }
+
+    public function grantPublishing(int $userId): JsonResponse
+    {
+        $user = $this->getRegularUserById($userId);
+        $user->is_publisher = true;
+        $user->save();
+        return self::json();
+    }
+
+    public function denyPublishing(int $userId): JsonResponse
+    {
+        $user = $this->getRegularUserById($userId);
+        $user->is_publisher = false;
+        $user->save();
+        return self::json();
+    }
+
+    private function getRegularUserById(int $userId): User
+    {
+        /** @var User $user */
+        $user = (new User())->find($userId);
+        if (empty($user)) {
+            throw new NotFoundHttpException();
+        }
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator account cannot be changed');
+        }
+
+        return $user;
     }
 }

@@ -636,6 +636,58 @@ final class AdminControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
+    public function testGrantAdvertiserRights(): void
+    {
+        $this->login(User::factory()->admin()->create());
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_advertiser' => false]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, true, true));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertTrue(User::find($user->id)->isAdvertiser());
+    }
+
+    public function testDenyAdvertiserRights(): void
+    {
+        $this->login(User::factory()->admin()->create());
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_advertiser' => true]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, false, true));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertFalse(User::find($user->id)->isAdvertiser());
+    }
+
+    public function testGrantPublishingRights(): void
+    {
+        $this->login(User::factory()->create(['is_moderator' => true]));
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_publisher' => false]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, true, false));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertTrue(User::find($user->id)->isPublisher());
+    }
+
+    public function testDenyPublishingRights(): void
+    {
+        $this->login(User::factory()->create(['is_moderator' => true]));
+
+        /** @var User $user */
+        $user = User::factory()->create(['is_publisher' => true]);
+
+        $response = $this->post(self::buildUriUserRights($user->id, false, false));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertFalse(User::find($user->id)->isPublisher());
+    }
+
     private function settings(): array
     {
         return [
@@ -669,5 +721,15 @@ final class AdminControllerTest extends TestCase
     private static function buildUriDelete($userId): string
     {
         return sprintf('/admin/users/%d/delete', $userId);
+    }
+
+    private static function buildUriUserRights(int $userId, bool $isGrant, bool $isAdvertiser): string
+    {
+        return sprintf(
+            '/admin/users/%d/%s%s',
+            $userId,
+            $isGrant ? 'grant' : 'deny',
+            $isAdvertiser ? 'Advertising' : 'Publishing'
+        );
     }
 }
