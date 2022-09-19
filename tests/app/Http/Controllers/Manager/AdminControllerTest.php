@@ -646,6 +646,7 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriUserRights($user->id, true, true));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['isAdvertiser' => 1]);
         self::assertTrue(User::find($user->id)->isAdvertiser());
     }
 
@@ -659,6 +660,8 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriUserRights($user->id, false, true));
 
         $response->assertStatus(Response::HTTP_OK);
+        $c  =$response->getContent();
+        $response->assertJsonFragment(['isAdvertiser' => 0]);
         self::assertFalse(User::find($user->id)->isAdvertiser());
     }
 
@@ -672,6 +675,7 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriUserRights($user->id, true, false));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['isPublisher' => 1]);
         self::assertTrue(User::find($user->id)->isPublisher());
     }
 
@@ -685,6 +689,7 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriUserRights($user->id, false, false));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['isPublisher' => 0]);
         self::assertFalse(User::find($user->id)->isPublisher());
     }
 

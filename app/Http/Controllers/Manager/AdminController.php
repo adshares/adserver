@@ -410,7 +410,8 @@ class AdminController extends Controller
         $user = $this->getRegularUserById($userId);
         $user->is_advertiser = true;
         $user->save();
-        return self::json();
+        $user->refresh();
+        return self::json($user->toArray());
     }
 
     public function denyAdvertising(int $userId): JsonResponse
@@ -418,7 +419,8 @@ class AdminController extends Controller
         $user = $this->getRegularUserById($userId);
         $user->is_advertiser = false;
         $user->save();
-        return self::json();
+        $user->refresh();
+        return self::json($user->toArray());
     }
 
     public function grantPublishing(int $userId): JsonResponse
@@ -426,7 +428,8 @@ class AdminController extends Controller
         $user = $this->getRegularUserById($userId);
         $user->is_publisher = true;
         $user->save();
-        return self::json();
+        $user->refresh();
+        return self::json($user->toArray());
     }
 
     public function denyPublishing(int $userId): JsonResponse
@@ -434,7 +437,8 @@ class AdminController extends Controller
         $user = $this->getRegularUserById($userId);
         $user->is_publisher = false;
         $user->save();
-        return self::json();
+        $user->refresh();
+        return self::json($user->toArray());
     }
 
     private function getRegularUserById(int $userId): User
