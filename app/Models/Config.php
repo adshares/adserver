@@ -233,6 +233,7 @@ class Config extends Model
         self::INVENTORY_EXPORT_WHITELIST => ConfigTypes::Array,
         self::INVENTORY_IMPORT_WHITELIST => ConfigTypes::Array,
         self::INVENTORY_WHITELIST => ConfigTypes::Array,
+        self::INVOICE_COMPANY_BANK_ACCOUNTS => ConfigTypes::Json,
         self::INVOICE_CURRENCIES => ConfigTypes::Array,
         self::INVOICE_ENABLED => ConfigTypes::Bool,
         self::MAX_PAGE_ZONES => ConfigTypes::Integer,
@@ -282,17 +283,6 @@ class Config extends Model
         return self::whereKey($key)->first();
     }
 
-    private static function fetchByKeyOrFail(string $key): self
-    {
-        $object = self::fetchByKey($key);
-
-        if ($object === null) {
-            throw ConfigException::missingEntry($key);
-        }
-
-        return $object;
-    }
-
     private static function fetchByKeyOrDefault(string $key, string $default = ''): string
     {
         $config = self::fetchByKey($key);
@@ -330,21 +320,6 @@ class Config extends Model
         return (int)self::fetchByKeyOrDefault($key, (string)$default);
     }
 
-    public static function fetchFloatOrFail(string $key): float
-    {
-        return (float)self::fetchByKeyOrFail($key)->value;
-    }
-
-    public static function fetchStringOrFail(string $key): string
-    {
-        return self::fetchByKeyOrFail($key)->value;
-    }
-
-    public static function fetchJsonOrFail(string $key): array
-    {
-        return json_decode(self::fetchStringOrFail($key), true);
-    }
-
     public static function upsertByKey(string $key, string $value): void
     {
         $config = self::fetchByKey($key);
@@ -366,16 +341,6 @@ class Config extends Model
     public static function upsertInt(string $key, int $value): void
     {
         self::upsertByKey($key, (string)$value);
-    }
-
-    public static function upsertFloat(string $key, float $value): void
-    {
-        self::upsertByKey($key, (string)$value);
-    }
-
-    public static function isTrueOnly(string $key): bool
-    {
-        return self::fetchByKeyOrDefault($key) === '1';
     }
 
     public static function fetchAdminSettings(bool $withSecrets = false): array
@@ -415,6 +380,7 @@ class Config extends Model
             ConfigTypes::Bool => '1' === $value,
             ConfigTypes::Float => (float)$value,
             ConfigTypes::Integer => (int)$value,
+            ConfigTypes::Json => json_decode($value, true),
             default => $value,
         };
     }

@@ -13,7 +13,7 @@ cache:
 env:
   global:
     - APP_ENV=testing
-    - APP_DEBUG=true
+    - APP_DEBUG=false
     - DB_HOST=127.0.0.1
     - DB_PORT=3306
     - DB_DATABASE=adserver_test

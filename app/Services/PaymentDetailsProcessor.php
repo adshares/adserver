@@ -54,7 +54,7 @@ class PaymentDetailsProcessor
         $adsPaymentId = $adsPayment->id;
 
         $exchangeRate = $this->fetchExchangeRate();
-        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), $this->fetchOperatorFee());
+        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), config('app.payment_rx_fee'));
         $totalLicenseFee = 0;
         $totalEventValue = 0;
 
@@ -149,10 +149,5 @@ class PaymentDetailsProcessor
         }
 
         return NetworkCase::fetchByCaseIds($caseIds);
-    }
-
-    private function fetchOperatorFee(): float
-    {
-        return config('app.payment_rx_fee');
     }
 }

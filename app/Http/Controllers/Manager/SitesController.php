@@ -94,7 +94,7 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
 
-        $siteClassifierSetting = Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS);
+        $siteClassifierSetting = config('app.site_classifier_local_banners');
         if (Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY === $siteClassifierSetting) {
             $onlyAcceptedBanners = true;
         } else {
@@ -199,7 +199,7 @@ class SitesController extends Controller
             if (!is_bool($input['only_accepted_banners'])) {
                 throw new UnprocessableEntityHttpException('Field `only_accepted_banners` must be a boolean');
             }
-            $siteClassifierSetting = Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS);
+            $siteClassifierSetting = config('app.site_classifier_local_banners');
             if (
                 Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY === $siteClassifierSetting
                 && !$input['only_accepted_banners']

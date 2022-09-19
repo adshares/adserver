@@ -82,7 +82,7 @@ class DemandPreparePayments extends BaseCommand
 
         $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
         $demandLicenseFeeCoefficient = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
-        $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+        $demandOperatorFeeCoefficient = config('app.payment_tx_fee');
 
         $conversions = Conversion::fetchUnpaidConversions($from, $to);
         $conversionCount = count($conversions);

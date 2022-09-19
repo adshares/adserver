@@ -95,13 +95,13 @@ class AuthController extends Controller
 
         DB::beginTransaction();
         $user = User::registerWithEmail($data['email'], $data['password'], $refLink);
-        if (Config::isTrueOnly(Config::EMAIL_VERIFICATION_REQUIRED)) {
+        if (config('app.email_verification_required')) {
             $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
             $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
             Mail::to($user)->queue($mailable);
         } else {
             $this->confirmEmail($user);
-            if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+            if (config('app.auto_confirmation_enabled')) {
                 $this->confirmAdmin($user);
             }
             $user->saveOrFail();
@@ -130,7 +130,7 @@ class AuthController extends Controller
         }
 
         $this->confirmEmail($user);
-        if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+        if (config('app.auto_confirmation_enabled')) {
             $this->confirmAdmin($user);
         }
         $user->save();
@@ -400,7 +400,7 @@ MSG;
             DB::beginTransaction();
             $refLink = $this->checkRegisterMode($request->input('referral_token') ?? null);
             $user = User::registerWithWallet($address, false, $refLink);
-            if (Config::isTrueOnly(Config::AUTO_CONFIRMATION_ENABLED)) {
+            if (config('app.auto_confirmation_enabled')) {
                 $this->confirmAdmin($user);
             }
             $user->saveOrFail();

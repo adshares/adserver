@@ -154,7 +154,7 @@ class Invoice extends Model
 
     public function getBankAccountAttribute(): array
     {
-        $accounts = Config::fetchJsonOrFail(Config::INVOICE_COMPANY_BANK_ACCOUNTS);
+        $accounts = config('app.invoice_company_bank_accounts');
         if (!array_key_exists($this->currency, $accounts)) {
             return [
                 'number' => null,

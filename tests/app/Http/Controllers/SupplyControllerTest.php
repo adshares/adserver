@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
@@ -140,6 +141,7 @@ final class SupplyControllerTest extends TestCase
 
     public function testFindJson(): void
     {
+        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '1']);
         $this->mockAdSelect();
         $data = [
             'pay_to' => 'ADS:0001-00000001-8B4E',
@@ -166,12 +168,33 @@ final class SupplyControllerTest extends TestCase
                 'wallet_address' => 'ads:0001-00000001-8B4E',
             ]
         );
+        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => null]);
+    }
+
+    public function testFindJsonNoAutoRegistration(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '0']);
+        $this->mockAdSelect();
+        $data = [
+            'pay_to' => 'ADS:0001-00000001-8B4E',
+            'view_id' => '0123456789ABCDEF0123456789ABCDEF',
+            'width' => 300,
+            'height' => 250,
+            'context' => [
+                'user' => ['language' => 'en'],
+                'device' => ['os' => 'Windows'],
+                'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
+            ],
+            'medium' => 'metaverse',
+            'vendor' => 'decentraland',
+        ];
+        $response = self::post(self::SUPPLY_ANON_URI, $data);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFindJsonNoData(): void
     {
         $response = self::post(self::SUPPLY_ANON_URI);
-
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 

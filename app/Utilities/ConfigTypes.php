@@ -27,5 +27,6 @@ enum ConfigTypes
     case Bool;
     case Float;
     case Integer;
+    case Json;
     case String;
 }

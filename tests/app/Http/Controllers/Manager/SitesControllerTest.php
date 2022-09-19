@@ -402,7 +402,9 @@ JSON
 
     public function testCreateSiteWhenOnlyLocalBannersAreAllowed(): void
     {
-        Config::upsertByKey(Config::SITE_CLASSIFIER_LOCAL_BANNERS, Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY);
+        Config::updateAdminSettings(
+            [Config::SITE_CLASSIFIER_LOCAL_BANNERS => Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY]
+        );
         $this->setupUser();
         $siteData = self::simpleSiteData(['onlyAcceptedBanners' => false]);
 
@@ -469,7 +471,9 @@ JSON
 
     public function testUpdateSiteOnlyAcceptedBannersWhenOnlyLocalAllowed(): void
     {
-        Config::upsertByKey(Config::SITE_CLASSIFIER_LOCAL_BANNERS, Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY);
+        Config::updateAdminSettings(
+            [Config::SITE_CLASSIFIER_LOCAL_BANNERS => Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY]
+        );
         $user = $this->setupUser();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id, 'only_accepted_banners' => 1]);

@@ -40,7 +40,7 @@ class TotalFeeReader
     public function getTotalFeeDemand(): float
     {
         $licenseFee = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
-        $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+        $operatorFee = config('app.payment_tx_fee');
 
         return $this->computeTotalFee($licenseFee, $operatorFee);
     }
@@ -48,7 +48,7 @@ class TotalFeeReader
     public function getTotalFeeSupply(): float
     {
         $licenseFee = $this->licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
-        $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+        $operatorFee = config('app.payment_rx_fee');
 
         return $this->computeTotalFee($licenseFee, $operatorFee);
     }
