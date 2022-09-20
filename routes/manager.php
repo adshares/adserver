@@ -63,6 +63,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('options/sites/languages', [OptionsController::class, 'languages']);
         Route::get('options/sites/zones', [OptionsController::class, 'zones']);
         Route::get('options/server', [OptionsController::class, 'server']);
+        Route::get('options/server/default-user-roles', [OptionsController::class, 'defaultUserRoles']);
 
         // settings
         Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);

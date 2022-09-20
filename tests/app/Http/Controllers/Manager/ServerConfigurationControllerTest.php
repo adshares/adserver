@@ -226,10 +226,10 @@ final class ServerConfigurationControllerTest extends TestCase
     public function storeArrayDataProvider(): array
     {
         return [
+            [Config::DEFAULT_USER_ROLES, 'advertiser'],
             [Config::EXCHANGE_CURRENCIES, 'EUR,USD'],
             [Config::INVENTORY_EXPORT_WHITELIST, '0001-00000003-AB0C,0001-00000005-CBCA'],
             [Config::INVOICE_CURRENCIES, 'EUR'],
-            [Config::REGISTRATION_USER_TYPES, 'advertiser'],
         ];
     }
 
@@ -316,8 +316,8 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid license key' => [[Config::ADSHARES_LICENSE_KEY => 'invalid']],
             'invalid mailer' => [[Config::MAIL_MAILER => 'invalid']],
             'invalid country' => [[Config::INVOICE_COMPANY_COUNTRY => 'invalid']],
-            'invalid registration user type (empty)' => [[Config::REGISTRATION_USER_TYPES => '']],
-            'invalid registration user type (invalid)' => [[Config::REGISTRATION_USER_TYPES => 'invalid']],
+            'invalid user role (empty)' => [[Config::DEFAULT_USER_ROLES => '']],
+            'invalid user role (invalid)' => [[Config::DEFAULT_USER_ROLES => 'invalid']],
             'invalid rejected domains' => [['rejected-domains' => 'a,b']],
         ];
     }

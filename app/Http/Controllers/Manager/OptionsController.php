@@ -183,6 +183,15 @@ class OptionsController extends Controller
         );
     }
 
+    public function defaultUserRoles(): JsonResponse
+    {
+        return self::json(
+            [
+                'default_user_roles' => config('app.default_user_roles'),
+            ]
+        );
+    }
+
     public function zones(): JsonResponse
     {
         try {

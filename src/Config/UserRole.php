@@ -19,28 +19,32 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Config;
 
-namespace Database\Factories;
+use Adshares\Common\Exception\RuntimeException;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-class UserFactory extends Factory
+final class UserRole
 {
-    public function definition(): array
+    public const ADVERTISER = 'advertiser';
+    public const PUBLISHER = 'publisher';
+
+    public function __construct()
+    {
+        throw new RuntimeException();
+    }
+
+    public static function cases(): array
     {
         return [
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => $this->faker->password(8),
-            'uuid' => $this->faker->md5,
-            'is_advertiser' => 1,
-            'is_publisher' => 1,
-            'is_admin' => false,
+            self::ADVERTISER,
+            self::PUBLISHER,
         ];
     }
 
-    public function admin(): self
+    public static function validate(string $value): void
     {
-        return $this->state(['is_admin' => true]);
+        if (!in_array($value, self::cases())) {
+            throw new RuntimeException(sprintf('Given value %s is not correct.', $value));
+        }
     }
 }

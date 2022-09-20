@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Config\RegistrationUserType;
+use Adshares\Config\UserRole;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -64,8 +64,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property bool is_admin
  * @property bool is_moderator
  * @property bool is_agency
- * @property bool is_advertiser
- * @property bool is_publisher
+ * @property int is_advertiser
+ * @property int is_publisher
  * @property WalletAddress|null wallet_address
  * @property int|null auto_withdrawal
  * @property bool is_auto_withdrawal
@@ -401,18 +401,18 @@ class User extends Authenticatable implements JWTSubject
                     'email' => $email,
                     'password' => $password,
                 ],
-                self::getUserTypes()
+                self::getUserRoles()
             ),
             $refLink
         );
     }
 
-    private static function getUserTypes(): array
+    private static function getUserRoles(): array
     {
-        $registrationUserTypes = config('app.registration_user_types');
+        $defaultUserRoles = config('app.default_user_roles');
         return [
-            'is_advertiser' => in_array(RegistrationUserType::ADVERTISER, $registrationUserTypes),
-            'is_publisher' => in_array(RegistrationUserType::PUBLISHER, $registrationUserTypes),
+            'is_advertiser' => in_array(UserRole::ADVERTISER, $defaultUserRoles) ? 1 : 0,
+            'is_publisher' => in_array(UserRole::PUBLISHER, $defaultUserRoles) ? 1 : 0,
         ];
     }
 
@@ -421,6 +421,11 @@ class User extends Authenticatable implements JWTSubject
         $user = User::create($data);
         $user->password = $data['password'] ?? null;
         if (null !== $refLink) {
+            if (null !== $refLink->user_roles) {
+                $userRoles = explode(',', $refLink->user_roles);
+                $user->is_advertiser = in_array(UserRole::ADVERTISER, $userRoles) ? 1 : 0;
+                $user->is_publisher = in_array(UserRole::PUBLISHER, $userRoles) ? 1 : 0;
+            }
             $user->ref_link_id = $refLink->id;
             $refLink->used = true;
             $refLink->saveOrFail();
@@ -442,7 +447,7 @@ class User extends Authenticatable implements JWTSubject
                         ? config('app.auto_withdrawal_limit_' . strtolower($address->getNetwork()))
                         : null,
                 ],
-                self::getUserTypes()
+                self::getUserRoles()
             ),
             $refLink
         );

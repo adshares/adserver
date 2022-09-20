@@ -19,32 +19,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Config;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Adshares\Common\Exception\RuntimeException;
-
-final class RegistrationUserType
-{
-    public const ADVERTISER = 'advertiser';
-    public const PUBLISHER = 'publisher';
-
-    public function __construct()
+return new class extends Migration {
+    public function up(): void
     {
-        throw new RuntimeException();
+        Schema::table('ref_links', function (Blueprint $table) {
+            $table->string('user_roles')
+                ->after('refund_valid_until')
+                ->nullable();
+        });
     }
 
-    public static function cases(): array
+    public function down(): void
     {
-        return [
-            self::ADVERTISER,
-            self::PUBLISHER,
-        ];
+        Schema::table('ref_links', function (Blueprint $table) {
+            $table->dropColumn('user_roles');
+        });
     }
-
-    public static function validate(string $value): void
-    {
-        if (!in_array($value, self::cases())) {
-            throw new RuntimeException(sprintf('Given value %s is not correct.', $value));
-        }
-    }
-}
+};

@@ -641,7 +641,7 @@ final class AdminControllerTest extends TestCase
         $this->login(User::factory()->admin()->create());
 
         /** @var User $user */
-        $user = User::factory()->create(['is_advertiser' => false]);
+        $user = User::factory()->create(['is_advertiser' => 0]);
 
         $response = $this->post(self::buildUriUserRights($user->id, 'grantAdvertising'));
 
@@ -655,7 +655,7 @@ final class AdminControllerTest extends TestCase
         $this->login(User::factory()->admin()->create());
 
         /** @var User $user */
-        $user = User::factory()->create(['is_advertiser' => true]);
+        $user = User::factory()->create(['is_advertiser' => 1]);
 
         $response = $this->post(self::buildUriUserRights($user->id, 'denyAdvertising'));
 
@@ -669,7 +669,7 @@ final class AdminControllerTest extends TestCase
         $this->login(User::factory()->create(['is_moderator' => true]));
 
         /** @var User $user */
-        $user = User::factory()->create(['is_publisher' => false]);
+        $user = User::factory()->create(['is_publisher' => 0]);
 
         $response = $this->post(self::buildUriUserRights($user->id, 'grantPublishing'));
 
@@ -683,7 +683,7 @@ final class AdminControllerTest extends TestCase
         $this->login(User::factory()->create(['is_moderator' => true]));
 
         /** @var User $user */
-        $user = User::factory()->create(['is_publisher' => true]);
+        $user = User::factory()->create(['is_publisher' => 1]);
 
         $response = $this->post(self::buildUriUserRights($user->id, 'denyPublishing'));
 
