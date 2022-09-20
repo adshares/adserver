@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
@@ -48,6 +49,23 @@ class UserTest extends TestCase
         ]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $user = User::registerWithEmail('test@test.pl', '123123');
+
+        $this->assertNotNull($user->uuid);
+        $this->assertNull($user->wallet_address);
+        $this->assertNull($user->auto_withdrawal);
+        $this->assertEquals('test@test.pl', $user->email);
+        $this->assertFalse($user->isAdmin());
+        $this->assertFalse($user->isPublisher());
+        $this->assertTrue($user->isAdvertiser());
+        $this->assertNotNull($user->password);
+    }
+
+    public function testRegisterAdvertiserWithRefLink(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $refLink = RefLink::factory()->create(['user_id' => $admin->id, 'user_roles' => 'advertiser']);
+
+        $user = User::registerWithEmail('test@test.pl', '123123', $refLink);
 
         $this->assertNotNull($user->uuid);
         $this->assertNull($user->wallet_address);

@@ -421,6 +421,11 @@ class User extends Authenticatable implements JWTSubject
         $user = User::create($data);
         $user->password = $data['password'] ?? null;
         if (null !== $refLink) {
+            if (null !== $refLink->user_roles) {
+                $userRoles = explode(',', $refLink->user_roles);
+                $user->is_advertiser = in_array(UserRole::ADVERTISER, $userRoles) ? 1 : 0;
+                $user->is_publisher = in_array(UserRole::PUBLISHER, $userRoles) ? 1 : 0;
+            }
             $user->ref_link_id = $refLink->id;
             $refLink->used = true;
             $refLink->saveOrFail();
