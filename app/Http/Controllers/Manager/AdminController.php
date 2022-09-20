@@ -408,36 +408,32 @@ class AdminController extends Controller
     public function grantAdvertising(int $userId): JsonResponse
     {
         $user = $this->getRegularUserById($userId);
-        $user->is_advertiser = true;
+        $user->is_advertiser = 1;
         $user->save();
-        $user->refresh();
         return self::json($user->toArray());
     }
 
     public function denyAdvertising(int $userId): JsonResponse
     {
         $user = $this->getRegularUserById($userId);
-        $user->is_advertiser = false;
+        $user->is_advertiser = 0;
         $user->save();
-        $user->refresh();
         return self::json($user->toArray());
     }
 
     public function grantPublishing(int $userId): JsonResponse
     {
         $user = $this->getRegularUserById($userId);
-        $user->is_publisher = true;
+        $user->is_publisher = 1;
         $user->save();
-        $user->refresh();
         return self::json($user->toArray());
     }
 
     public function denyPublishing(int $userId): JsonResponse
     {
         $user = $this->getRegularUserById($userId);
-        $user->is_publisher = false;
+        $user->is_publisher = 0;
         $user->save();
-        $user->refresh();
         return self::json($user->toArray());
     }
 

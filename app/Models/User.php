@@ -64,8 +64,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property bool is_admin
  * @property bool is_moderator
  * @property bool is_agency
- * @property bool is_advertiser
- * @property bool is_publisher
+ * @property int is_advertiser
+ * @property int is_publisher
  * @property WalletAddress|null wallet_address
  * @property int|null auto_withdrawal
  * @property bool is_auto_withdrawal
@@ -411,8 +411,8 @@ class User extends Authenticatable implements JWTSubject
     {
         $defaultUserRoles = config('app.default_user_roles');
         return [
-            'is_advertiser' => in_array(UserRole::ADVERTISER, $defaultUserRoles),
-            'is_publisher' => in_array(UserRole::PUBLISHER, $defaultUserRoles),
+            'is_advertiser' => in_array(UserRole::ADVERTISER, $defaultUserRoles) ? 1 : 0,
+            'is_publisher' => in_array(UserRole::PUBLISHER, $defaultUserRoles) ? 1 : 0,
         ];
     }
 

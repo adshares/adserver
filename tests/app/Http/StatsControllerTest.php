@@ -118,7 +118,7 @@ final class StatsControllerTest extends TestCase
 
     public function testAdvertiserStatsWhenUserIsOnlyPublisher(): void
     {
-        $user = $this->login(User::factory()->create(['is_advertiser' => false]));
+        $user = $this->login(User::factory()->create(['is_advertiser' => 0]));
         Campaign::factory()->create(['user_id' => $user->id]);
 
         $url = $this->buildAdvertiserStatsUri(new DateTime(), new DateTime());
@@ -129,7 +129,7 @@ final class StatsControllerTest extends TestCase
 
     public function testPublisherStatsWhenUserIsOnlyAdvertiser(): void
     {
-        $user = $this->login(User::factory()->create(['is_publisher' => false]));
+        $user = $this->login(User::factory()->create(['is_publisher' => 0]));
         Campaign::factory()->create(['user_id' => $user->id]);
 
         $url = $this->buildPublisherStatsUri(new DateTime(), new DateTime());
