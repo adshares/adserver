@@ -33,6 +33,8 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Supply\Application\Service\AdSelect;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
@@ -132,6 +134,89 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure([self::FOUND_BANNERS_STRUCTURE]);
     }
 
+    public function testFindWithZonePayToExistingUserWhichIsAdvertiserOnly(): void
+    {
+        $this->mockAdSelect();
+        /** @var User $user */
+        $user = User::factory()->create([
+            'api_token' => '1234',
+            'auto_withdrawal' => 1e11,
+            'is_publisher' => 0,
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+        ]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site->id]);
+        $data = [
+            'page' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+            'zones' => [
+                ['zone' => $zone->uuid, 'pay-to' => 'ADS:0001-00000001-8B4E']
+            ],
+        ];
+        $content = Utils::urlSafeBase64Encode(json_encode($data));
+
+        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testFindWithZonePayToNonExistingUser(): void
+    {
+        $this->mockAdSelect();
+        $data = [
+            'page' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+            'zones' => [
+                [
+                    'width' => 300,
+                    'height' => 250,
+                    'pay-to' => 'ADS:0001-00000001-8B4E',
+                    'zone' => 'test-zone',
+                ]
+            ],
+        ];
+        $content = Utils::urlSafeBase64Encode(json_encode($data));
+
+        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure([self::FOUND_BANNERS_STRUCTURE]);
+    }
+
+    public function testFindWithZonePayToNonExistingUserWhenDefaultUserRoleDoesNotContainPublisher(): void
+    {
+        Config::updateAdminSettings([
+            Config::AUTO_REGISTRATION_ENABLED => '1',
+            Config::DEFAULT_USER_ROLES => 'advertiser',
+        ]);
+        $this->mockAdSelect();
+        $data = [
+            'page' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+            'zones' => [
+                [
+                    'width' => 300,
+                    'height' => 250,
+                    'pay-to' => 'ADS:0001-00000001-8B4E',
+                    'zone' => 'test-zone',
+                ]
+            ],
+        ];
+        $content = Utils::urlSafeBase64Encode(json_encode($data));
+
+        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     public function testFindNoData(): void
     {
         $response = self::post(self::BANNER_FIND_URI);
@@ -143,20 +228,7 @@ final class SupplyControllerTest extends TestCase
     {
         Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '1']);
         $this->mockAdSelect();
-        $data = [
-            'pay_to' => 'ADS:0001-00000001-8B4E',
-            'view_id' => '0123456789ABCDEF0123456789ABCDEF',
-            'width' => 300,
-            'height' => 250,
-            'context' => [
-                'user' => ['language' => 'en'],
-                'device' => ['os' => 'Windows'],
-                'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
-            ],
-            'medium' => 'metaverse',
-            'vendor' => 'decentraland',
-        ];
-        $response = self::post(self::SUPPLY_ANON_URI, $data);
+        $response = self::post(self::SUPPLY_ANON_URI, self::findJsonData());
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::FOUND_BANNERS_WITH_CREATION_STRUCTURE);
@@ -168,16 +240,52 @@ final class SupplyControllerTest extends TestCase
                 'wallet_address' => 'ads:0001-00000001-8B4E',
             ]
         );
-        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => null]);
+    }
+
+    public function testFindJsonWhenDefaultUserRoleDoesNotContainPublisher(): void
+    {
+        Config::updateAdminSettings([
+            Config::AUTO_REGISTRATION_ENABLED => '1',
+            Config::DEFAULT_USER_ROLES => 'advertiser',
+        ]);
+        $this->mockAdSelect();
+        $response = self::post(self::SUPPLY_ANON_URI, self::findJsonData());
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testFindJsonExistingUserIsAdvertiserOnly(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '1']);
+        User::factory()->create([
+            'is_publisher' => 0,
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+        ]);
+        $this->mockAdSelect();
+        $response = self::post(self::SUPPLY_ANON_URI, self::findJsonData());
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testFindJsonNoAutoRegistration(): void
     {
         Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '0']);
         $this->mockAdSelect();
-        $data = [
+        $response = self::post(self::SUPPLY_ANON_URI, self::findJsonData());
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFindJsonNoData(): void
+    {
+        $response = self::post(self::SUPPLY_ANON_URI);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    private static function findJsonData(): array
+    {
+        return [
             'pay_to' => 'ADS:0001-00000001-8B4E',
             'view_id' => '0123456789ABCDEF0123456789ABCDEF',
+            'type' => 'image',
             'width' => 300,
             'height' => 250,
             'context' => [
@@ -188,14 +296,6 @@ final class SupplyControllerTest extends TestCase
             'medium' => 'metaverse',
             'vendor' => 'decentraland',
         ];
-        $response = self::post(self::SUPPLY_ANON_URI, $data);
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testFindJsonNoData(): void
-    {
-        $response = self::post(self::SUPPLY_ANON_URI);
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function mockAdSelect(): void

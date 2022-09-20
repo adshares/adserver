@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not expose SMTP password in config API
 - Remove deprecated zip* functions
 - Types, validators in config API
+- Block find if publisher cannot be determined
 
 ## [2.0.5] - 2022-09-16
 ### Fixed

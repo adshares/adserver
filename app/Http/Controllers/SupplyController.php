@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
@@ -46,6 +45,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Config\UserRole;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Size;
@@ -66,6 +66,7 @@ use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -74,7 +75,7 @@ class SupplyController extends Controller
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
     private const TTL_ONE_HOUR = 3600;
 
-    private static $adserverId;
+    private static string $adserverId;
 
     public function __construct()
     {
@@ -87,7 +88,6 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
         ConfigurationRepository $configurationRepository
     ) {
-
         $type = $request->get('type');
         if (isset($type) && !is_array($type)) {
             $request->offsetSet('type', array($type));
@@ -124,10 +124,16 @@ class SupplyController extends Controller
 
         if (!$user) {
             if (config('app.auto_registration_enabled')) {
+                if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
+                    throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                }
                 $user = User::registerWithWallet($payoutAddress, true);
             } else {
                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
             }
+        }
+        if (!$user->isPublisher()) {
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
         }
         $site = Site::fetchOrCreate(
             $user->id,
@@ -195,7 +201,7 @@ class SupplyController extends Controller
                     $type => $message
                 ]
             ],
-            422
+            Response::HTTP_UNPROCESSABLE_ENTITY
         );
     }
 
@@ -245,10 +251,16 @@ class SupplyController extends Controller
 
                         if (!$user) {
                             if (config('app.auto_registration_enabled')) {
+                                if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
+                                    throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                                }
                                 $user = User::registerWithWallet($payoutAddress, true);
                             } else {
                                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
                             }
+                        }
+                        if (!$user->isPublisher()) {
+                            throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
                         }
                         $site = Site::fetchOrCreate(
                             $user->id,
