@@ -23,10 +23,8 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdClassify;
-use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Mock\Client\DummyAdClassifyClient;
-use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 
 final class OptionsControllerTest extends TestCase
@@ -34,13 +32,6 @@ final class OptionsControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->app->bind(
-            AdUser::class,
-            static function () {
-                return new DummyAdUserClient();
-            }
-        );
 
         $this->app->bind(
             AdClassify::class,
@@ -203,6 +194,16 @@ final class OptionsControllerTest extends TestCase
         $response = self::get('/api/options/campaigns/media/metaverse/vendors');
         $response->assertStatus(200);
         $response->assertJsonFragment(['decentraland' => 'Decentraland']);
+    }
+
+    public function testUserRoles(): void
+    {
+        $this->login();
+
+        $response = self::get('/api/options/server/default-user-roles');
+
+        $response->assertStatus(200);
+        $response->assertExactJson(['defaultUserRoles' => ['advertiser', 'publisher']]);
     }
 
     public function testWebVendors(): void
