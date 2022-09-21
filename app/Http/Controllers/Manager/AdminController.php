@@ -25,29 +25,20 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Requests\UpdateAdminSettings;
-use Adshares\Adserver\Http\Requests\UpdateRegulation;
 use Adshares\Adserver\Http\Response\LicenseResponse;
-use Adshares\Adserver\Http\Response\SettingsResponse;
-use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Repository\CampaignRepository;
-use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
-use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -62,21 +53,13 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AdminController extends Controller
 {
-    private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
-
-    public function listSettings(): SettingsResponse
+    public function getSettings(): JsonResponse
     {
-        $settings = Config::fetchAdminSettings();
-
-        return SettingsResponse::fromConfigModel($settings);
-    }
-
-    public function updateSettings(UpdateAdminSettings $request): JsonResponse
-    {
-        $input = $request->toConfigFormat();
-        Config::updateAdminSettings($input);
-
-        return new JsonResponse([], Response::HTTP_NO_CONTENT);
+        return self::json([
+            'settings' => [
+                'ad_user_info_url' => config('app.aduser_info_url'),
+            ],
+        ]);
     }
 
     public function getLicense(LicenseVault $licenseVault): LicenseResponse
@@ -88,51 +71,6 @@ class AdminController extends Controller
         }
 
         return new LicenseResponse($license);
-    }
-
-    public function patchPanelPlaceholders(Request $request): JsonResponse
-    {
-        $input = $request->all();
-        if (!$input) {
-            throw new UnprocessableEntityHttpException('Missing data');
-        }
-        $regulations = [];
-        foreach ($input as $type => $content) {
-            if (!in_array($type, PanelPlaceholder::TYPES_ALLOWED, true)) {
-                throw new UnprocessableEntityHttpException(sprintf('Invalid type (%s)', $type));
-            }
-            if (!is_string($content) || strlen($content) > PanelPlaceholder::MAXIMUM_CONTENT_LENGTH) {
-                throw new UnprocessableEntityHttpException(sprintf('Invalid content for type (%s)', $type));
-            }
-
-            $regulations[] = PanelPlaceholder::construct($type, $content);
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $registerDateTime = new DateTimeImmutable();
-            $previousEmailSendDateTime = Config::fetchDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME);
-
-            PanelPlaceholder::register($regulations);
-            Config::upsertDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME, $registerDateTime);
-
-            if ($previousEmailSendDateTime <= $registerDateTime) {
-                $emailSendDateTime =
-                    $registerDateTime->modify(sprintf('+%d minutes', self::EMAIL_NOTIFICATION_DELAY_IN_MINUTES));
-                Config::upsertDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME, $emailSendDateTime);
-                Mail::to(config('app.technical_email'))
-                    ->bcc(config('app.support_email'))
-                    ->later($emailSendDateTime, new PanelPlaceholdersChange());
-            }
-            DB::commit();
-        } catch (Exception $exception) {
-            DB::rollBack();
-
-            throw $exception;
-        }
-
-        return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
 
     public function getIndexUpdateTime(): JsonResponse
@@ -279,7 +217,7 @@ class AdminController extends Controller
             }
             $sites->delete();
 
-            RefLink::fetchByUser($userId)->each(fn (RefLink $refLink) => $refLink->delete());
+            RefLink::fetchByUser($userId)->each(fn(RefLink $refLink) => $refLink->delete());
             Token::deleteByUserId($userId);
             Classification::deleteByUserId($userId);
             UserSettings::deleteByUserId($userId);

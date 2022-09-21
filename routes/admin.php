@@ -29,13 +29,10 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
-    Route::get('settings', [AdminController::class, 'listSettings']);
-    Route::put('settings', [AdminController::class, 'updateSettings']);
-
+    Route::get('settings', [AdminController::class, 'getSettings']);
     Route::get('license', [AdminController::class, 'getLicense']);
 
     Route::get('index/update-time', [AdminController::class, 'getIndexUpdateTime']);
-    Route::patch('panel-placeholders', [AdminController::class, 'patchPanelPlaceholders']);
     Route::patch(
         'campaigns/bid-strategy/media/{medium}/uuid-default',
         [BidStrategyController::class, 'patchBidStrategyUuidDefault']

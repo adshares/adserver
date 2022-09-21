@@ -52,12 +52,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 
-use function json_decode;
-
 final class AdminControllerTest extends TestCase
 {
     private const URI_LICENSE = '/admin/license';
     private const URI_SETTINGS = '/admin/settings';
+    private const SETTINGS_STRUCTURE = [
+        'settings' => ['adUserInfoUrl']
+    ];
 
     public function testSettingsStructureUnauthorized(): void
     {
@@ -73,52 +74,7 @@ final class AdminControllerTest extends TestCase
 
         $response = $this->get(self::URI_SETTINGS);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson([
-            'settings' => $this->settings(),
-        ]);
-    }
-
-    public function testSettingsModification(): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $updatedValues = [
-            'settings' =>
-                [
-                    'hotwalletMinValue' => 200,
-                    'hotwalletMaxValue' => 500,
-                    'coldWalletIsActive' => 1,
-                    'coldWalletAddress' => '0000-00000000-XXXX',
-                    'adserverName' => 'AdServer2',
-                    'technicalEmail' => 'mail@example.com2',
-                    'supportEmail' => 'mail@example.com3',
-                    'advertiserCommission' => 0.05,
-                    'publisherCommission' => 0.06,
-                    'referralRefundEnabled' => 1,
-                    'referralRefundCommission' => 0.5,
-                    'registrationMode' => 'private',
-                    'autoConfirmationEnabled' => 0,
-                    'autoRegistrationEnabled' => 0,
-                    'emailVerificationRequired' => 0,
-                ],
-        ];
-
-        $response = $this->putJson(self::URI_SETTINGS, $updatedValues);
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
-
-        $response = $this->get(self::URI_SETTINGS);
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson($updatedValues);
-    }
-
-    public function testInvalidRegistrationMode(): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-        $settings = $this->settings();
-        $settings['registrationMode'] = 'dummy';
-
-        $response = $this->putJson(self::URI_SETTINGS, ['settings' => $settings]);
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonStructure(self::SETTINGS_STRUCTURE);
     }
 
     public function testBanUser(): void
@@ -451,26 +407,6 @@ final class AdminControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['isPublisher' => 0]);
         self::assertFalse(User::find($user->id)->isPublisher());
-    }
-
-    private function settings(): array
-    {
-        return [
-            'hotwalletMinValue' => 100000000000000,
-            'hotwalletMaxValue' => 1000000000000000,
-            'coldWalletIsActive' => 0,
-            'coldWalletAddress' => '',
-            'adserverName' => 'AdServer',
-            'technicalEmail' => 'mail@example.com',
-            'supportEmail' => 'mail@example.com',
-            'advertiserCommission' => 0.01,
-            'publisherCommission' => 0.01,
-            'referralRefundEnabled' => 0,
-            'referralRefundCommission' => 0,
-            'registrationMode' => 'public',
-            'autoConfirmationEnabled' => 1,
-            'autoRegistrationEnabled' => 1,
-        ];
     }
 
     private static function buildUriBan($userId): string
