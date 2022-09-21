@@ -100,44 +100,6 @@ class AdminController extends Controller
         return new LicenseResponse($license);
     }
 
-    public function getPrivacyPolicy(): JsonResponse
-    {
-        return $this->getRegulation(PanelPlaceholder::TYPE_PRIVACY_POLICY);
-    }
-
-    public function getTerms(): JsonResponse
-    {
-        return $this->getRegulation(PanelPlaceholder::TYPE_TERMS);
-    }
-
-    private function getRegulation(string $type): JsonResponse
-    {
-        $regulation = PanelPlaceholder::fetchByType($type);
-
-        if (null === $regulation) {
-            return new JsonResponse([], Response::HTTP_NOT_FOUND);
-        }
-
-        return new JsonResponse($regulation);
-    }
-
-    public function putPrivacyPolicy(UpdateRegulation $request): JsonResponse
-    {
-        return $this->putRegulation(PanelPlaceholder::TYPE_PRIVACY_POLICY, $request);
-    }
-
-    public function putTerms(UpdateRegulation $request): JsonResponse
-    {
-        return $this->putRegulation(PanelPlaceholder::TYPE_TERMS, $request);
-    }
-
-    private function putRegulation(string $type, UpdateRegulation $request): JsonResponse
-    {
-        PanelPlaceholder::register(PanelPlaceholder::construct($type, $request->toString()));
-
-        return new JsonResponse([], Response::HTTP_NO_CONTENT);
-    }
-
     public function patchPanelPlaceholders(Request $request): JsonResponse
     {
         $input = $request->all();

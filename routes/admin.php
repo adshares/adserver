@@ -35,11 +35,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('wallet', [AdminController::class, 'wallet']);
     Route::get('license', [AdminController::class, 'getLicense']);
 
-    Route::get('terms', [AdminController::class, 'getTerms']);
-    Route::put('terms', [AdminController::class, 'putTerms']);
-    Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
-    Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
-
     Route::get('index/update-time', [AdminController::class, 'getIndexUpdateTime']);
     Route::patch('panel-placeholders', [AdminController::class, 'patchPanelPlaceholders']);
     Route::patch(
