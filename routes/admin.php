@@ -32,7 +32,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('settings', [AdminController::class, 'listSettings']);
     Route::put('settings', [AdminController::class, 'updateSettings']);
 
-    Route::get('wallet', [AdminController::class, 'wallet']);
     Route::get('license', [AdminController::class, 'getLicense']);
 
     Route::get('index/update-time', [AdminController::class, 'getIndexUpdateTime']);

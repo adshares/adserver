@@ -58,7 +58,6 @@ final class AdminControllerTest extends TestCase
 {
     private const URI_LICENSE = '/admin/license';
     private const URI_SETTINGS = '/admin/settings';
-    private const URI_WALLET = '/admin/wallet';
 
     public function testSettingsStructureUnauthorized(): void
     {
@@ -360,46 +359,6 @@ final class AdminControllerTest extends TestCase
         $response = $this->post(self::buildUriDelete($user->id));
 
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
-    }
-
-    public function testWallet(): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-        UserLedgerEntry::factory()->create([
-            'amount' => 2000,
-            'status' => UserLedgerEntry::STATUS_ACCEPTED,
-            'type' => UserLedgerEntry::TYPE_DEPOSIT,
-        ]);
-        UserLedgerEntry::factory()->create([
-            'amount' => -2,
-            'status' => UserLedgerEntry::STATUS_ACCEPTED,
-            'type' => UserLedgerEntry::TYPE_AD_EXPENSE,
-        ]);
-        UserLedgerEntry::factory()->create([
-            'amount' => 500,
-            'status' => UserLedgerEntry::STATUS_ACCEPTED,
-            'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
-        ]);
-        UserLedgerEntry::factory()->create([
-            'amount' => -30,
-            'status' => UserLedgerEntry::STATUS_ACCEPTED,
-            'type' => UserLedgerEntry::TYPE_BONUS_EXPENSE,
-        ]);
-
-        $response = $this->get(self::URI_WALLET);
-
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(
-            [
-                'wallet' => [
-                    'balance',
-                    'unusedBonuses',
-                ]
-            ]
-        );
-        $content = json_decode($response->content(), true);
-        self::assertEquals(2468, $content['wallet']['balance']);
-        self::assertEquals(470, $content['wallet']['unusedBonuses']);
     }
 
     public function testGetLicenseSuccess(): void

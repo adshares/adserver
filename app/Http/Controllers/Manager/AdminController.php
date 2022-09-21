@@ -79,16 +79,6 @@ class AdminController extends Controller
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
 
-    public function wallet(): JsonResponse
-    {
-        return self::json([
-            'wallet' => [
-                'balance' => UserLedgerEntry::getBalanceForAllUsers(),
-                'unused_bonuses' => UserLedgerEntry::getBonusBalanceForAllUsers(),
-            ]
-        ]);
-    }
-
     public function getLicense(LicenseVault $licenseVault): LicenseResponse
     {
         try {
