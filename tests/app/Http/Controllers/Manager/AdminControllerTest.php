@@ -61,7 +61,6 @@ final class AdminControllerTest extends TestCase
     private const URI_PRIVACY_POLICY = '/admin/privacy';
     private const URI_SETTINGS = '/admin/settings';
     private const URI_SITE_SETTINGS = '/admin/site-settings';
-    private const URI_REJECTED_DOMAINS = '/admin/rejected-domains';
     private const URI_WALLET = '/admin/wallet';
     private const REGULATION_RESPONSE_STRUCTURE = [
         'content',
@@ -216,79 +215,6 @@ final class AdminControllerTest extends TestCase
 
         $response = $this->putJson(self::URI_SETTINGS, ['settings' => $settings]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testRejectedDomainsGet(): void
-    {
-        $domains = ['example1.com', 'example2.com'];
-        foreach ($domains as $domain) {
-            SitesRejectedDomain::factory()->create(['domain' => $domain]);
-        }
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $response = $this->getJson(self::URI_REJECTED_DOMAINS);
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::REJECTED_DOMAINS_STRUCTURE);
-
-        $responseDomains = $response->json(['domains']);
-
-        self::assertCount(2, $responseDomains);
-        self::assertEquals($domains, $responseDomains);
-    }
-
-    /**
-     * @dataProvider invalidRejectedDomainsProvider
-     *
-     * @param array $data
-     */
-    public function testRejectedDomainsPutInvalid(array $data): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $response = $this->putJson(self::URI_REJECTED_DOMAINS, $data);
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function invalidRejectedDomainsProvider(): array
-    {
-        return [
-            'no data' => [[]],
-            'no array' => [['domains' => 'example.com']],
-            'empty string' => [['domains' => ['']]],
-            'integer' => [['domains' => [1]]],
-        ];
-    }
-
-    public function testRejectedDomainsPutDbConnectionError(): void
-    {
-        DB::shouldReceive('beginTransaction')->andReturnUndefined();
-        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
-        DB::shouldReceive('rollback')->andReturnUndefined();
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $response = $this->putJson(self::URI_REJECTED_DOMAINS, ['domains' => []]);
-        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
-    }
-
-    public function testRejectedDomainsPutValid(): void
-    {
-        $initDomains = ['example1.com', 'example2.com'];
-        $inputDomains = ['example2.com', 'example3.com'];
-        foreach ($initDomains as $domain) {
-            SitesRejectedDomain::factory()->create(['domain' => $domain]);
-        }
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $response = $this->putJson(self::URI_REJECTED_DOMAINS, ['domains' => $inputDomains]);
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
-
-        $databaseDomains = SitesRejectedDomain::all();
-        self::assertCount(2, $databaseDomains);
-        self::assertEquals($inputDomains, $databaseDomains->pluck('domain')->all());
-        $deletedDomains = SitesRejectedDomain::onlyTrashed()->get();
-        self::assertCount(1, $deletedDomains);
-        self::assertEquals('example1.com', $deletedDomains->first()->domain);
     }
 
     public function testSiteSettings(): void

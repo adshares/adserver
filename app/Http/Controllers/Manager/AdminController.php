@@ -220,36 +220,6 @@ class AdminController extends Controller
         ]);
     }
 
-    public function getRejectedDomains(): JsonResponse
-    {
-        return self::json(['domains' => SitesRejectedDomain::fetchAll()]);
-    }
-
-    public function putRejectedDomains(Request $request): JsonResponse
-    {
-        $domains = $request->get('domains');
-
-        if (!is_array($domains)) {
-            throw new UnprocessableEntityHttpException('Field `domains` must be an array');
-        }
-
-        foreach ($domains as $domain) {
-            if (!SiteValidator::isDomainValid($domain)) {
-                throw new UnprocessableEntityHttpException("Invalid domain ($domain)");
-            }
-        }
-
-        try {
-            SitesRejectedDomain::storeDomains($domains);
-        } catch (Exception $exception) {
-            Log::info(sprintf('Domains cannot be rejected (%s).', $exception->getMessage()));
-
-            throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add domains');
-        }
-
-        return self::json([], JsonResponse::HTTP_NO_CONTENT);
-    }
-
     public function switchUserToModerator(int $userId): JsonResponse
     {
         /** @var User $logged */

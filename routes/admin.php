@@ -48,9 +48,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
         [BidStrategyController::class, 'patchBidStrategyUuidDefault']
     );
 
-    Route::get('rejected-domains', [AdminController::class, 'getRejectedDomains']);
-    Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);
-
     Route::post('users/{id}/switchToModerator', [AdminController::class, 'switchUserToModerator']);
     Route::post('users/{id}/ban', [AdminController::class, 'banUser']);
     Route::post('users/{id}/unban', [AdminController::class, 'unbanUser']);
