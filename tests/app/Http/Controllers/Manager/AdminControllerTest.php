@@ -60,7 +60,6 @@ final class AdminControllerTest extends TestCase
     private const URI_TERMS = '/admin/terms';
     private const URI_PRIVACY_POLICY = '/admin/privacy';
     private const URI_SETTINGS = '/admin/settings';
-    private const URI_SITE_SETTINGS = '/admin/site-settings';
     private const URI_WALLET = '/admin/wallet';
     private const REGULATION_RESPONSE_STRUCTURE = [
         'content',
@@ -214,35 +213,6 @@ final class AdminControllerTest extends TestCase
         $settings['registrationMode'] = 'dummy';
 
         $response = $this->putJson(self::URI_SETTINGS, ['settings' => $settings]);
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testSiteSettings(): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $response = $this->patch(
-            self::URI_SITE_SETTINGS,
-            [
-                'classifierLocalBanners' => 'all-by-default',
-                'acceptBannersManually' => '1',
-            ]
-        );
-
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
-    }
-
-    public function testSiteSettingsClassifierLocalBannersInvalid(): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $response = $this->patch(
-            self::URI_SITE_SETTINGS,
-            [
-                'classifierLocalBanners' => '999',
-            ]
-        );
-
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 

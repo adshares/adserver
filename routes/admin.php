@@ -31,7 +31,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('settings', [AdminController::class, 'listSettings']);
     Route::put('settings', [AdminController::class, 'updateSettings']);
-    Route::patch('site-settings', [AdminController::class, 'updateSiteSettings']);
 
     Route::get('wallet', [AdminController::class, 'wallet']);
     Route::get('license', [AdminController::class, 'getLicense']);
