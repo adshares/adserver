@@ -79,10 +79,25 @@ class InfoControllerTest extends TestCase
         $this->assertEquals(RegistrationMode::PRIVATE, $response->json('registrationMode'));
     }
 
+    public function testGetPanelPlaceholdersLoginWhenNotSet(): void
+    {
+        $response = $this->getJson(self::URI_PANEL_PLACEHOLDERS_LOGIN);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson([
+            'loginInfo' => null,
+            'advertiserApplyFormUrl' => null,
+            'publisherApplyFormUrl' => null,
+        ]);
+    }
+
     public function testGetPanelPlaceholdersLogin(): void
     {
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_LOGIN_INFO, '<div>Hello</div>'));
-        Config::updateAdminSettings([Config::ADVERTISER_APPLY_FORM_URL => 'https://example.com/advertisers']);
+        Config::updateAdminSettings([
+            Config::ADVERTISER_APPLY_FORM_URL => 'https://example.com/advertisers',
+            Config::PUBLISHER_APPLY_FORM_URL => 'https://example.com/publishers',
+        ]);
 
         $response = $this->getJson(self::URI_PANEL_PLACEHOLDERS_LOGIN);
 
@@ -90,7 +105,7 @@ class InfoControllerTest extends TestCase
         $response->assertExactJson([
             'loginInfo' => '<div>Hello</div>',
             'advertiserApplyFormUrl' => 'https://example.com/advertisers',
-            'publisherApplyFormUrl' => null,
+            'publisherApplyFormUrl' => 'https://example.com/publishers',
         ]);
     }
 }
