@@ -29,27 +29,14 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
-    Route::get('settings', [AdminController::class, 'listSettings']);
-    Route::put('settings', [AdminController::class, 'updateSettings']);
-    Route::patch('site-settings', [AdminController::class, 'updateSiteSettings']);
-
-    Route::get('wallet', [AdminController::class, 'wallet']);
+    Route::get('settings', [AdminController::class, 'getSettings']);
     Route::get('license', [AdminController::class, 'getLicense']);
 
-    Route::get('terms', [AdminController::class, 'getTerms']);
-    Route::put('terms', [AdminController::class, 'putTerms']);
-    Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
-    Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
-
     Route::get('index/update-time', [AdminController::class, 'getIndexUpdateTime']);
-    Route::patch('panel-placeholders', [AdminController::class, 'patchPanelPlaceholders']);
     Route::patch(
         'campaigns/bid-strategy/media/{medium}/uuid-default',
         [BidStrategyController::class, 'patchBidStrategyUuidDefault']
     );
-
-    Route::get('rejected-domains', [AdminController::class, 'getRejectedDomains']);
-    Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);
 
     Route::post('users/{id}/switchToModerator', [AdminController::class, 'switchUserToModerator']);
     Route::post('users/{id}/ban', [AdminController::class, 'banUser']);

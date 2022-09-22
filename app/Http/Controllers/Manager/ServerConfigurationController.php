@@ -22,7 +22,9 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -33,9 +35,12 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
 use Adshares\Config\UserRole;
+use DateTimeImmutable;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
@@ -157,6 +162,7 @@ class ServerConfigurationController extends Controller
         Config::URL => 'url',
         self::REJECTED_DOMAINS => 'nullable|list:domain',
     ];
+    private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
     private const MAX_VALUE_LENGTH = 65535;
     private const REJECTED_DOMAINS = 'rejected-domains';
     private const RULE_NULLABLE = 'nullable';
@@ -219,15 +225,63 @@ class ServerConfigurationController extends Controller
         return self::json($result);
     }
 
-    public function storePlaceholders(AdminController $adminController, Request $request): JsonResponse
+    public function storePlaceholders(Request $request): JsonResponse
     {
-        $adminController->patchPanelPlaceholders($request);
-
-        $types = array_keys($request->all());
-        $result = PanelPlaceholder::fetchByTypes($types)
-            ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE);
+        $data = $request->all();
+        self::validatePlaceholdersData($data);
+        $result = $this->storePlaceholdersData($data);
 
         return self::json($result);
+    }
+
+    private static function validatePlaceholdersData(array $data): void
+    {
+        if (!$data) {
+            throw new UnprocessableEntityHttpException('Data is required');
+        }
+        foreach ($data as $type => $content) {
+            if (!in_array($type, PanelPlaceholder::TYPES_ALLOWED, true)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid type (%s)', $type));
+            }
+            if (!is_string($content) || strlen($content) > PanelPlaceholder::MAXIMUM_CONTENT_LENGTH) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid content for type (%s)', $type));
+            }
+        }
+    }
+
+    private function storePlaceholdersData(array $data): array
+    {
+        $placeholders = [];
+        foreach ($data as $type => $content) {
+            $placeholders[] = PanelPlaceholder::construct($type, $content);
+        }
+        $registerDateTime = new DateTimeImmutable();
+        $previousEmailSendDateTime = Config::fetchDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME);
+
+        DB::beginTransaction();
+        try {
+            PanelPlaceholder::register($placeholders);
+            Config::upsertDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME, $registerDateTime);
+
+            if ($previousEmailSendDateTime <= $registerDateTime) {
+                $emailSendDateTime =
+                    $registerDateTime->modify(sprintf('+%d minutes', self::EMAIL_NOTIFICATION_DELAY_IN_MINUTES));
+                Config::upsertDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME, $emailSendDateTime);
+                Mail::to(config('app.technical_email'))
+                    ->bcc(config('app.support_email'))
+                    ->later($emailSendDateTime, new PanelPlaceholdersChange());
+            }
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error(sprintf('Cannot store placeholders: (%s)', $exception->getMessage()));
+            throw new RuntimeException();
+        }
+
+        $types = array_keys($data);
+        return PanelPlaceholder::fetchByTypes($types)
+            ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE)
+            ->toArray();
     }
 
     private function storeData(array $data): array
