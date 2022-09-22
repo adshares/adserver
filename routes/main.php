@@ -51,6 +51,7 @@ Route::get('/stats/server/{date}', [StatisticsGlobalController::class, 'fetchSer
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy'])->name('privacy-url');
 Route::get('/policies/terms.html', [InfoController::class, 'terms'])->name('terms-url');
 Route::get('/panel/placeholders', [InfoController::class, 'getPanelPlaceholders']);
+Route::get('/panel/placeholders/login', [InfoController::class, 'getPanelPlaceholdersLogin']);
 
 Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name(
     'newsletter-unsubscribe'

@@ -79,8 +79,6 @@ final class InfoResponse implements Arrayable
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
                 config('app.registration_mode'),
                 AppMode::getAppMode(),
-                config('app.advertiser_apply_form_url') ? new SecureUrl(config('app.advertiser_apply_form_url')) : null,
-                config('app.publisher_apply_form_url') ? new SecureUrl(config('app.publisher_apply_form_url')) : null,
             )
         );
     }
