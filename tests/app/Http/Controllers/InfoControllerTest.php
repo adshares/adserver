@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Config\RegistrationMode;
 use Illuminate\Http\Response;
@@ -29,6 +30,7 @@ use Illuminate\Http\Response;
 class InfoControllerTest extends TestCase
 {
     private const URI_INFO = '/info';
+    private const URI_PANEL_PLACEHOLDERS_LOGIN = '/panel/placeholders/login';
 
     public function testDefaultInfo(): void
     {
@@ -94,5 +96,20 @@ class InfoControllerTest extends TestCase
         $response = $this->getJson(self::URI_INFO);
         $response->assertStatus(Response::HTTP_OK);
         $this->assertEquals(RegistrationMode::PRIVATE, $response->json('registrationMode'));
+    }
+
+    public function testGetPanelPlaceholdersLogin(): void
+    {
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_LOGIN_INFO, '<div>Hello</div>'));
+        Config::updateAdminSettings([Config::ADVERTISER_APPLY_FORM_URL => 'https://example.com/advertisers']);
+
+        $response = $this->getJson(self::URI_PANEL_PLACEHOLDERS_LOGIN);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson([
+            'loginInfo' => '<div>Hello</div>',
+            'advertiserApplyFormUrl' => 'https://example.com/advertisers',
+            'publisherApplyFormUrl' => null,
+        ]);
     }
 }

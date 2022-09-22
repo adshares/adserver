@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,18 +36,10 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class InfoController extends Controller
 {
-    /** @var MySqlServerStatisticsRepository */
-    private $adserverStatisticsRepository;
-
-    /** @var TotalFeeReader */
-    private $totalFeeReader;
-
     public function __construct(
-        MySqlServerStatisticsRepository $adserverStatisticsRepository,
-        TotalFeeReader $totalFeeReader
+        private readonly MySqlServerStatisticsRepository $adserverStatisticsRepository,
+        private readonly TotalFeeReader $totalFeeReader
     ) {
-        $this->adserverStatisticsRepository = $adserverStatisticsRepository;
-        $this->totalFeeReader = $totalFeeReader;
     }
 
     public function info(): InfoResponse
@@ -98,5 +90,16 @@ class InfoController extends Controller
         $regulations = PanelPlaceholder::fetchByTypes($types)->keyBy(PanelPlaceholder::FIELD_TYPE)->toArray();
 
         return self::json($regulations);
+    }
+
+    public function getPanelPlaceholdersLogin(): JsonResponse
+    {
+        $data = [
+            'loginInfo' => PanelPlaceholder::fetchByType(PanelPlaceholder::TYPE_LOGIN_INFO)?->content,
+            'advertiserApplyFormUrl' => config('app.advertiser_apply_form_url'),
+            'publisherApplyFormUrl' => config('app.publisher_apply_form_url'),
+        ];
+
+        return self::json($data);
     }
 }

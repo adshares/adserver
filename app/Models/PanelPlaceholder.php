@@ -51,6 +51,7 @@ class PanelPlaceholder extends Model
         self::TYPE_INDEX_KEYWORDS,
         self::TYPE_INDEX_META_TAGS,
         self::TYPE_INDEX_TITLE,
+        self::TYPE_LOGIN_INFO,
         self::TYPE_ROBOTS_TXT,
         self::TYPE_PRIVACY_POLICY,
         self::TYPE_TERMS,
@@ -60,6 +61,7 @@ class PanelPlaceholder extends Model
     public const TYPE_INDEX_KEYWORDS = 'index-keywords';
     public const TYPE_INDEX_META_TAGS = 'index-meta-tags';
     public const TYPE_INDEX_TITLE = 'index-title';
+    public const TYPE_LOGIN_INFO = 'login-info';
     public const TYPE_ROBOTS_TXT = 'robots-txt';
     public const TYPE_PRIVACY_POLICY = 'privacy-policy';
     public const TYPE_TERMS = 'terms';
