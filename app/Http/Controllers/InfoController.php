@@ -28,6 +28,7 @@ use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Repository\Common\MySqlServerStatisticsRepository;
 use Adshares\Adserver\Repository\Common\TotalFeeReader;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -96,8 +97,10 @@ class InfoController extends Controller
     {
         $data = [
             'loginInfo' => PanelPlaceholder::fetchByType(PanelPlaceholder::TYPE_LOGIN_INFO)?->content,
-            'advertiserApplyFormUrl' => config('app.advertiser_apply_form_url'),
-            'publisherApplyFormUrl' => config('app.publisher_apply_form_url'),
+            'advertiserApplyFormUrl' => config('app.advertiser_apply_form_url')
+                ? (new SecureUrl(config('app.advertiser_apply_form_url')))->toString() : null,
+            'publisherApplyFormUrl' => config('app.publisher_apply_form_url')
+                ? (new SecureUrl(config('app.publisher_apply_form_url')))->toString() : null,
         ];
 
         return self::json($data);

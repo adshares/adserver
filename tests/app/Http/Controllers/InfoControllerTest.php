@@ -66,25 +66,6 @@ class InfoControllerTest extends TestCase
         );
     }
 
-    public function testFormUrls(): void
-    {
-        $response = self::getJson(self::URI_INFO);
-        $response->assertStatus(Response::HTTP_OK);
-        self::assertNull($response->json('advertiserApplyFormUrl'));
-        self::assertNull($response->json('publisherApplyFormUrl'));
-
-        Config::updateAdminSettings([
-            Config::ADVERTISER_APPLY_FORM_URL => 'https://example.com/advertisers',
-            Config::PUBLISHER_APPLY_FORM_URL => 'https://example.com/publishers',
-        ]);
-
-        $response = self::getJson(self::URI_INFO);
-        $c = $response->getContent();
-        $response->assertStatus(Response::HTTP_OK);
-        self::assertEquals('https://example.com/advertisers', $response->json('advertiserApplyFormUrl'));
-        self::assertEquals('https://example.com/publishers', $response->json('publisherApplyFormUrl'));
-    }
-
     public function testRegistrationModeInfo(): void
     {
         $response = $this->getJson(self::URI_INFO);

@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Split user access for advertisers and publishers
 - Config API returns data after store
+### Removed
+- Registration forms URLs from info
 ### Fixed
 - Do not expose SMTP password in config API
 - Remove deprecated zip* functions
