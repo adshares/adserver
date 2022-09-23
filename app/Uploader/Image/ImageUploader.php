@@ -43,11 +43,8 @@ class ImageUploader implements Uploader
     private const IMAGE_DISK = 'banners';
     private const FORMAT_TYPE_IMAGE = 'image';
 
-    private Request $request;
-
-    public function __construct(Request $request)
+    public function __construct(private readonly Request $request)
     {
-        $this->request = $request;
     }
 
     public function upload(Medium $medium): UploadedFile
@@ -107,7 +104,7 @@ class ImageUploader implements Uploader
         $size = Size::fromDimensions($width, $height);
         foreach ($medium->getFormats() as $format) {
             if (self::FORMAT_TYPE_IMAGE === $format->getType() && in_array($size, array_keys($format->getScopes()))) {
-                return ;
+                return;
             }
         }
 

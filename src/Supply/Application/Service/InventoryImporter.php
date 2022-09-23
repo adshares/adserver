@@ -34,28 +34,13 @@ use Adshares\Supply\Domain\ValueObject\Classification;
 
 class InventoryImporter
 {
-    private MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService;
-
-    private CampaignRepository $campaignRepository;
-
-    private DemandClient $client;
-
-    private TransactionManager $transactionManager;
-
-    private BannerClassifier $classifyClient;
-
     public function __construct(
-        MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
-        CampaignRepository $campaignRepository,
-        DemandClient $client,
-        BannerClassifier $classifyClient,
-        TransactionManager $transactionManager
+        private readonly MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
+        private readonly CampaignRepository $campaignRepository,
+        private readonly DemandClient $client,
+        private readonly BannerClassifier $classifyClient,
+        private readonly TransactionManager $transactionManager,
     ) {
-        $this->client = $client;
-        $this->campaignRepository = $campaignRepository;
-        $this->transactionManager = $transactionManager;
-        $this->markedCampaignsAsDeletedService = $markedCampaignsAsDeletedService;
-        $this->classifyClient = $classifyClient;
     }
 
     public function import(AccountId $sourceAddress, string $sourceHost, string $inventoryHost): void

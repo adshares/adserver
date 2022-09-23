@@ -68,24 +68,13 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class CampaignsController extends Controller
 {
-    private CampaignRepository $campaignRepository;
-    private ConfigurationRepository $configurationRepository;
-    private ExchangeRateReader $exchangeRateReader;
-    private BannerClassificationCreator $bannerClassificationCreator;
-    private ClassifierExternalRepository $classifierExternalRepository;
-
     public function __construct(
-        CampaignRepository $campaignRepository,
-        ConfigurationRepository $configurationRepository,
-        ExchangeRateReader $exchangeRateReader,
-        BannerClassificationCreator $bannerClassificationCreator,
-        ClassifierExternalRepository $classifierExternalRepository
+        private readonly CampaignRepository $campaignRepository,
+        private readonly ConfigurationRepository $configurationRepository,
+        private readonly ExchangeRateReader $exchangeRateReader,
+        private readonly BannerClassificationCreator $bannerClassificationCreator,
+        private readonly ClassifierExternalRepository $classifierExternalRepository
     ) {
-        $this->campaignRepository = $campaignRepository;
-        $this->configurationRepository = $configurationRepository;
-        $this->exchangeRateReader = $exchangeRateReader;
-        $this->bannerClassificationCreator = $bannerClassificationCreator;
-        $this->classifierExternalRepository = $classifierExternalRepository;
     }
 
     public function upload(Request $request): UploadedFile

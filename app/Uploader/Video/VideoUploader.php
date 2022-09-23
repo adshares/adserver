@@ -42,11 +42,8 @@ class VideoUploader implements Uploader
     private const VIDEO_DISK = 'banners';
     private const FORMAT_TYPE_VIDEO = 'video';
 
-    private Request $request;
-
-    public function __construct(Request $request)
+    public function __construct(private readonly Request $request)
     {
-        $this->request = $request;
     }
 
     public function upload(Medium $medium): UploadedFile
