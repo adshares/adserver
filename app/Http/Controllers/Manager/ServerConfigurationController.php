@@ -193,18 +193,23 @@ class ServerConfigurationController extends Controller
             return self::json([$key => $placeholder?->content]);
         }
 
+        $data = $this->getPanelPlaceholdersWithNulls(PanelPlaceholder::TYPES_ALLOWED);
+
+        return self::json($data);
+    }
+
+    private function getPanelPlaceholdersWithNulls(array $types): array
+    {
         $data = [];
-        foreach (PanelPlaceholder::TYPES_ALLOWED as $type) {
+        foreach ($types as $type) {
             $data[$type] = null;
         }
-        $data = array_merge(
+        return array_merge(
             $data,
-            PanelPlaceholder::fetchByTypes(PanelPlaceholder::TYPES_ALLOWED)
+            PanelPlaceholder::fetchByTypes($types)
                 ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE)
                 ->toArray()
         );
-
-        return self::json($data);
     }
 
     public function store(Request $request): JsonResponse
@@ -243,6 +248,9 @@ class ServerConfigurationController extends Controller
             if (!in_array($type, PanelPlaceholder::TYPES_ALLOWED, true)) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid type (%s)', $type));
             }
+            if (null === $content) {
+                return;
+            }
             if (!is_string($content) || strlen($content) > PanelPlaceholder::MAXIMUM_CONTENT_LENGTH) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid content for type (%s)', $type));
             }
@@ -251,16 +259,26 @@ class ServerConfigurationController extends Controller
 
     private function storePlaceholdersData(array $data): array
     {
+        $typesToDelete = [];
         $placeholders = [];
         foreach ($data as $type => $content) {
-            $placeholders[] = PanelPlaceholder::construct($type, $content);
+            if (null === $content) {
+                $typesToDelete[] = $type;
+            } else {
+                $placeholders[] = PanelPlaceholder::construct($type, $content);
+            }
         }
         $registerDateTime = new DateTimeImmutable();
         $previousEmailSendDateTime = Config::fetchDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME);
 
         DB::beginTransaction();
         try {
-            PanelPlaceholder::register($placeholders);
+            if (!empty($typesToDelete)) {
+                PanelPlaceholder::deleteByTypes($typesToDelete);
+            }
+            if (!empty($placeholders)) {
+                PanelPlaceholder::register($placeholders);
+            }
             Config::upsertDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME, $registerDateTime);
 
             if ($previousEmailSendDateTime <= $registerDateTime) {
@@ -279,9 +297,8 @@ class ServerConfigurationController extends Controller
         }
 
         $types = array_keys($data);
-        return PanelPlaceholder::fetchByTypes($types)
-            ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE)
-            ->toArray();
+
+        return $this->getPanelPlaceholdersWithNulls($types);
     }
 
     private function storeData(array $data): array
