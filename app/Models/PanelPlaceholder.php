@@ -80,6 +80,11 @@ class PanelPlaceholder extends Model
         return new self([self::FIELD_TYPE => $type, self::FIELD_CONTENT => $content]);
     }
 
+    public static function deleteByTypes(array $types): void
+    {
+        (new PanelPlaceholder())->whereIn(self::FIELD_TYPE, $types)->delete();
+    }
+
     public static function register($regulations): void
     {
         if (!is_array($regulations)) {
@@ -97,8 +102,7 @@ class PanelPlaceholder extends Model
         DB::beginTransaction();
 
         try {
-            self::whereIn(self::FIELD_TYPE, $types)->delete();
-
+            self::deleteByTypes($types);
             foreach ($regulations as $regulation) {
                 $regulation->save();
             }

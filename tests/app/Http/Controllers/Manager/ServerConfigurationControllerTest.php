@@ -471,10 +471,23 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertDatabaseMissing(PanelPlaceholder::class, [
-            PanelPlaceholder::FIELD_CONTENT => 'title',
-            PanelPlaceholder::FIELD_TYPE => PanelPlaceholder::TYPE_INDEX_TITLE,
+    }
+
+    public function testStorePlaceholdersDeleting(): void
+    {
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_LOGIN_INFO, '<div>Hello</div>'));
+
+        $response = $this->patchJson(
+            self::URI_PLACEHOLDERS,
+            [PanelPlaceholder::TYPE_LOGIN_INFO => null],
+            $this->getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson([
+            PanelPlaceholder::TYPE_LOGIN_INFO => null,
         ]);
+        self::assertEmpty(PanelPlaceholder::fetchByTypes([PanelPlaceholder::TYPE_LOGIN_INFO]));
     }
 
     private function getHeaders($user = null): array
