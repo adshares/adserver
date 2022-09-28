@@ -40,13 +40,27 @@ use Symfony\Component\HttpFoundation\Response;
 
 class GuzzleDemandClientTest extends TestCase
 {
+    public function testFetchInfo(): void
+    {
+        $responseMock = self::createMock(ResponseInterface::class);
+        $responseMock->method('getStatusCode')->willReturn(Response::HTTP_OK);
+        $responseMock->method('getBody')->willReturn(self::getInfoJson());
+        /** @var ResponseInterface $responseMock */
+        $client = $this->getClientMock($responseMock);
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        $info = $demandClient->fetchInfo(new Url('https://example.com/info.json'));
+
+        self::assertEquals('adserver', $info->getModule());
+        self::assertEquals('0001-00000005-CBCA', $info->getAdsAddress());
+    }
+
     public function testFetchInfoExceptionDueToInvalidStatusOfResponse(): void
     {
         $responseMock = self::createMock(ResponseInterface::class);
         $responseMock->method('getStatusCode')->willReturn(Response::HTTP_NOT_FOUND);
         /** @var ResponseInterface $responseMock */
         $client = $this->getClientMock($responseMock);
-
         $demandClient = $this->createGuzzleDemandClient($client);
 
         self::expectException(UnexpectedClientResponseException::class);
@@ -60,7 +74,6 @@ class GuzzleDemandClientTest extends TestCase
         $responseMock->method('getBody')->willReturn('');
         /** @var ResponseInterface $responseMock */
         $client = $this->getClientMock($responseMock);
-
         $demandClient = $this->createGuzzleDemandClient($client);
 
         self::expectException(UnexpectedClientResponseException::class);
@@ -74,10 +87,22 @@ class GuzzleDemandClientTest extends TestCase
         $responseMock->method('getBody')->willReturn('{"mo');
         /** @var ResponseInterface $responseMock */
         $client = $this->getClientMock($responseMock);
-
         $demandClient = $this->createGuzzleDemandClient($client);
 
         self::expectException(RuntimeException::class);
+        $demandClient->fetchInfo(new Url('https://example.com/info.json'));
+    }
+
+    public function testFetchInfoExceptionDueToMissingFields(): void
+    {
+        $responseMock = self::createMock(ResponseInterface::class);
+        $responseMock->method('getStatusCode')->willReturn(Response::HTTP_OK);
+        $responseMock->method('getBody')->willReturn('[]');
+        /** @var ResponseInterface $responseMock */
+        $client = $this->getClientMock($responseMock);
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        self::expectException(UnexpectedClientResponseException::class);
         $demandClient->fetchInfo(new Url('https://example.com/info.json'));
     }
 
@@ -89,7 +114,6 @@ class GuzzleDemandClientTest extends TestCase
             ->willThrowException(
                 new RequestException('test exception', new Request('GET', 'https://example.com/info.json'))
             );
-
         /** @var Client $client */
         $demandClient = $this->createGuzzleDemandClient($client);
 
@@ -112,6 +136,11 @@ class GuzzleDemandClientTest extends TestCase
             $adsAuthenticator,
             15,
         );
+    }
+
+    private static function getInfoJson(): string
+    {
+        return file_get_contents('tests/mock/info.json');
     }
 
     private function getClientMock(ResponseInterface $responseMock): Client

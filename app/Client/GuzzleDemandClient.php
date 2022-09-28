@@ -195,7 +195,6 @@ final class GuzzleDemandClient implements DemandClient
 
         $this->validateResponse($statusCode, $body);
         $data = $this->createDecodedResponseFromBody($body);
-
         $this->validateFetchInfoResponse($data);
 
         return Info::fromArray($data);
@@ -328,32 +327,22 @@ final class GuzzleDemandClient implements DemandClient
     public function validateFetchInfoResponse(array $data): void
     {
         $expectedKeys = [
+            'capabilities',
+            'inventoryUrl',
+            'module',
             'name',
-            'serverUrl',
             'panelUrl',
             'privacyUrl',
+            'serverUrl',
             'termsUrl',
-            'inventoryUrl',
+            'version',
         ];
 
         foreach ($expectedKeys as $key) {
             if (!isset($data[$key])) {
                 Log::debug(__METHOD__ . ' Invalid info.json: ' . json_encode($data));
-
                 throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
             }
-        }
-
-        if (!isset($data['version']) && !isset($data['softwareVersion'])) {
-            throw new UnexpectedClientResponseException('Field `version` (deprecated: `softwareVersion`) is required.');
-        }
-
-        if (!isset($data['module']) && !isset($data['serviceType'])) {
-            throw new UnexpectedClientResponseException('Field `module` (deprecated: `serviceType`) is required.');
-        }
-
-        if (!isset($data['capabilities']) && !isset($data['supported'])) {
-            throw new UnexpectedClientResponseException('Field `capabilities` (deprecated: `supported`) is required.');
         }
     }
 
