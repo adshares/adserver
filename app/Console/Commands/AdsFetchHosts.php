@@ -35,7 +35,6 @@ use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use DateTime;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
@@ -45,22 +44,16 @@ class AdsFetchHosts extends BaseCommand
      * Length of block in seconds
      */
     private const BLOCK_TIME = 512;
-
     /**
      * Period in seconds which will be searched for broadcast
      */
     private const BROADCAST_PERIOD = 12 * 3600; //12 hours
 
     protected $signature = 'ads:fetch-hosts';
-
     protected $description = 'Fetches Demand AdServers';
 
-    private DemandClient $client;
-
-    public function __construct(Locker $locker, DemandClient $client)
+    public function __construct(Locker $locker, private readonly DemandClient $client)
     {
-        $this->client = $client;
-
         parent::__construct($locker);
     }
 
@@ -68,7 +61,6 @@ class AdsFetchHosts extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
@@ -131,7 +123,7 @@ class AdsFetchHosts extends BaseCommand
     private function handleBroadcast(Broadcast $broadcast): void
     {
         $address = $broadcast->getAddress();
-        $time = new DateTime('@' . $broadcast->getTime()->getTimestamp());
+        $time = new DateTimeImmutable('@' . $broadcast->getTime()->getTimestamp());
 
         try {
             $url = BroadcastableUrl::fromHex($broadcast->getMessage());
