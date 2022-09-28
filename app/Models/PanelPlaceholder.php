@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,9 +43,7 @@ class PanelPlaceholder extends Model
     use SoftDeletes;
 
     public const MAXIMUM_CONTENT_LENGTH = 16777210;
-
     public const FIELD_CONTENT = 'content';
-
     public const FIELD_TYPE = 'type';
 
     public const TYPES_ALLOWED = [
@@ -53,23 +51,19 @@ class PanelPlaceholder extends Model
         self::TYPE_INDEX_KEYWORDS,
         self::TYPE_INDEX_META_TAGS,
         self::TYPE_INDEX_TITLE,
+        self::TYPE_LOGIN_INFO,
         self::TYPE_ROBOTS_TXT,
         self::TYPE_PRIVACY_POLICY,
         self::TYPE_TERMS,
     ];
 
     public const TYPE_INDEX_DESCRIPTION = 'index-description';
-
     public const TYPE_INDEX_KEYWORDS = 'index-keywords';
-
     public const TYPE_INDEX_META_TAGS = 'index-meta-tags';
-
     public const TYPE_INDEX_TITLE = 'index-title';
-
+    public const TYPE_LOGIN_INFO = 'login-info';
     public const TYPE_ROBOTS_TXT = 'robots-txt';
-
     public const TYPE_PRIVACY_POLICY = 'privacy-policy';
-
     public const TYPE_TERMS = 'terms';
 
     protected $fillable = [
@@ -84,6 +78,11 @@ class PanelPlaceholder extends Model
     public static function construct(string $type, string $content): self
     {
         return new self([self::FIELD_TYPE => $type, self::FIELD_CONTENT => $content]);
+    }
+
+    public static function deleteByTypes(array $types): void
+    {
+        (new PanelPlaceholder())->whereIn(self::FIELD_TYPE, $types)->delete();
     }
 
     public static function register($regulations): void
@@ -103,8 +102,7 @@ class PanelPlaceholder extends Model
         DB::beginTransaction();
 
         try {
-            self::whereIn(self::FIELD_TYPE, $types)->delete();
-
+            self::deleteByTypes($types);
             foreach ($regulations as $regulation) {
                 $regulation->save();
             }

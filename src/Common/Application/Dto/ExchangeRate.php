@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,26 +23,18 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Dto;
 
+use Adshares\Common\Application\Model\Currency;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
 
 class ExchangeRate implements Arrayable
 {
-    /** @var DateTime */
-    private $dateTime;
-
-    /** @var float */
-    private $value;
-
-    /** @var string */
-    private $currency;
-
-    public function __construct(DateTime $dateTime, float $value, string $currency)
-    {
-        $this->dateTime = $dateTime;
-        $this->value = $value;
-        $this->currency = $currency;
+    public function __construct(
+        private readonly DateTime $dateTime,
+        private readonly float $value,
+        private readonly string $currency
+    ) {
     }
 
     public function getDateTime(): DateTime
@@ -82,5 +74,10 @@ class ExchangeRate implements Arrayable
             'value' => $this->value,
             'currency' => $this->currency,
         ];
+    }
+
+    public static function ONE(Currency $currency): self
+    {
+        return new self(new DateTime(), 1.0, $currency->value);
     }
 }

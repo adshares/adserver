@@ -38,11 +38,8 @@ class ModelUploader implements Uploader
     public const MODEL_FILE = 'model';
     private const DISK = 'banners';
 
-    private Request $request;
-
-    public function __construct(Request $request)
+    public function __construct(private readonly Request $request)
     {
-        $this->request = $request;
     }
 
     public function upload(Medium $medium): UploadedFile

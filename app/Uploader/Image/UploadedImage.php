@@ -28,17 +28,12 @@ use Adshares\Supply\Domain\ValueObject\Size;
 
 class UploadedImage implements UploadedFile
 {
-    private string $name;
-    private string $previewUrl;
-    private int $width;
-    private int $height;
-
-    public function __construct(string $name, string $previewUrl, int $width, int $height)
-    {
-        $this->name = $name;
-        $this->previewUrl = $previewUrl;
-        $this->width = $width;
-        $this->height = $height;
+    public function __construct(
+        private readonly string $name,
+        private readonly string $previewUrl,
+        private readonly int $width,
+        private readonly int $height,
+    ) {
     }
 
     public function toArray(): array

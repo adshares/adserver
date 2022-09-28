@@ -51,8 +51,8 @@ class MockDataUsersSeeder extends Seeder
             $user->email = $row->email;
             $user->password = $row->password;
             $user->is_admin = $row->isAdmin ?? false;
-            $user->is_advertiser = $row->isAdvertiser ?? true;
-            $user->is_publisher = $row->isPublisher ?? true;
+            $user->is_advertiser = $row->isAdvertiser ?? 1;
+            $user->is_publisher = $row->isPublisher ?? 1;
             if ($row->isConfirmed ?? false) {
                 $user->confirmEmail();
             }

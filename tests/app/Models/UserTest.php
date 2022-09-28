@@ -21,8 +21,11 @@
 
 namespace Adshares\Adserver\Tests\Models;
 
+use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 
 class UserTest extends TestCase
@@ -39,15 +42,37 @@ class UserTest extends TestCase
         $this->assertEquals($user->id, $dbUser->id);
     }
 
-    public function testRegisterWithEmail(): void
+    public function testRegisterAdvertiserWithEmail(): void
     {
+        Config::updateAdminSettings([
+            Config::DEFAULT_USER_ROLES => 'advertiser',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
         $user = User::registerWithEmail('test@test.pl', '123123');
+
         $this->assertNotNull($user->uuid);
         $this->assertNull($user->wallet_address);
         $this->assertNull($user->auto_withdrawal);
         $this->assertEquals('test@test.pl', $user->email);
         $this->assertFalse($user->isAdmin());
-        $this->assertTrue($user->isPublisher());
+        $this->assertFalse($user->isPublisher());
+        $this->assertTrue($user->isAdvertiser());
+        $this->assertNotNull($user->password);
+    }
+
+    public function testRegisterAdvertiserWithRefLink(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $refLink = RefLink::factory()->create(['user_id' => $admin->id, 'user_roles' => 'advertiser']);
+
+        $user = User::registerWithEmail('test@test.pl', '123123', $refLink);
+
+        $this->assertNotNull($user->uuid);
+        $this->assertNull($user->wallet_address);
+        $this->assertNull($user->auto_withdrawal);
+        $this->assertEquals('test@test.pl', $user->email);
+        $this->assertFalse($user->isAdmin());
+        $this->assertFalse($user->isPublisher());
         $this->assertTrue($user->isAdvertiser());
         $this->assertNotNull($user->password);
     }
@@ -66,6 +91,10 @@ class UserTest extends TestCase
         $this->assertTrue($user->isAdvertiser());
         $this->assertNull($user->password);
 
+        Config::updateAdminSettings([
+            Config::DEFAULT_USER_ROLES => 'publisher',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
         $address = new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000002-BB2D');
         $user = User::registerWithWallet($address, true);
 
@@ -76,7 +105,7 @@ class UserTest extends TestCase
         $this->assertEquals(100000000, $user->auto_withdrawal);
         $this->assertFalse($user->isAdmin());
         $this->assertTrue($user->isPublisher());
-        $this->assertTrue($user->isAdvertiser());
+        $this->assertFalse($user->isAdvertiser());
         $this->assertNull($user->password);
     }
 

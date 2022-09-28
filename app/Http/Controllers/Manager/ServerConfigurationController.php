@@ -22,13 +22,25 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Utilities\SiteValidator;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\RegistrationMode;
+use Adshares\Config\UserRole;
+use DateTimeImmutable;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
@@ -41,17 +53,18 @@ class ServerConfigurationController extends Controller
         Config::ADS_OPERATOR_SERVER_URL => 'nullable|url',
         Config::ADS_RPC_URL => 'nullable|url',
         Config::ADSELECT_URL => 'nullable|url',
+        Config::ADSERVER_NAME => 'notEmpty',
         Config::ADSHARES_ADDRESS => 'accountId',
         Config::ADSHARES_LICENSE_KEY => 'nullable|licenseKey',
         Config::ADSHARES_LICENSE_SERVER_URL => 'nullable|url',
         Config::ADSHARES_NODE_HOST => 'host',
         Config::ADSHARES_NODE_PORT => 'nullable|port',
         Config::ADSHARES_SECRET => 'hex:64',
-        Config::ADSERVER_NAME => 'notEmpty',
         Config::ADUSER_BASE_URL => 'nullable|url',
         Config::ADUSER_INFO_URL => 'nullable|url',
         Config::ADUSER_INTERNAL_URL => 'nullable|url',
         Config::ADUSER_SERVE_SUBDOMAIN => 'nullable|host',
+        Config::ADVERTISER_APPLY_FORM_URL => 'nullable|url',
         Config::ALLOW_ZONE_IN_IFRAME => 'nullable|boolean',
         Config::AUTO_CONFIRMATION_ENABLED => 'nullable|boolean',
         Config::AUTO_REGISTRATION_ENABLED => 'nullable|boolean',
@@ -81,18 +94,20 @@ class ServerConfigurationController extends Controller
         Config::CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_SITE_ADDED => 'nullable|email',
         Config::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => 'nullable|email',
+        Config::CURRENCY => 'nullable|appCurrency',
+        Config::DEFAULT_USER_ROLES => 'nullable|notEmpty|list:userRole',
         Config::EMAIL_VERIFICATION_REQUIRED => 'nullable|boolean',
         Config::EXCHANGE_API_KEY => 'nullable',
         Config::EXCHANGE_API_SECRET => 'nullable',
         Config::EXCHANGE_API_URL => 'nullable|url',
-        Config::EXCHANGE_CURRENCIES => 'nullable|currenciesList',
+        Config::EXCHANGE_CURRENCIES => 'nullable|notEmpty|list:currency',
         Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|positiveInteger',
         Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|positiveInteger',
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
-        Config::INVENTORY_EXPORT_WHITELIST => 'nullable|json',
-        Config::INVENTORY_IMPORT_WHITELIST => 'nullable|json',
-        Config::INVENTORY_WHITELIST => 'nullable|json',
+        Config::INVENTORY_EXPORT_WHITELIST => 'nullable|list:accountId',
+        Config::INVENTORY_IMPORT_WHITELIST => 'nullable|list:accountId',
+        Config::INVENTORY_WHITELIST => 'nullable|list:accountId',
         Config::INVOICE_COMPANY_ADDRESS => 'nullable|notEmpty',
         Config::INVOICE_COMPANY_BANK_ACCOUNTS => 'nullable|notEmpty|json',
         Config::INVOICE_COMPANY_CITY => 'nullable|notEmpty',
@@ -100,7 +115,7 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_COMPANY_NAME => 'nullable|notEmpty',
         Config::INVOICE_COMPANY_POSTAL_CODE => 'nullable|notEmpty',
         Config::INVOICE_COMPANY_VAT_ID => 'nullable|notEmpty',
-        Config::INVOICE_CURRENCIES => 'nullable|currenciesList',
+        Config::INVOICE_CURRENCIES => 'nullable|notEmpty|list:currency',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
         Config::MAIL_SMTP_ENCRYPTION => 'nullable|notEmpty',
@@ -124,6 +139,7 @@ class ServerConfigurationController extends Controller
         Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|positiveInteger',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
+        Config::PUBLISHER_APPLY_FORM_URL => 'nullable|url',
         Config::REFERRAL_REFUND_COMMISSION => 'notEmpty|commission',
         Config::REFERRAL_REFUND_ENABLED => 'boolean',
         Config::REGISTRATION_MODE => 'registrationMode',
@@ -135,15 +151,20 @@ class ServerConfigurationController extends Controller
         Config::SKYNET_API_KEY => 'nullable|notEmpty',
         Config::SKYNET_API_URL => 'nullable|url',
         Config::SKYNET_CDN_URL => 'nullable|url',
+        Config::SUPPORT_CHAT => 'nullable|url',
         Config::SUPPORT_EMAIL => 'email',
+        Config::SUPPORT_TELEGRAM => 'nullable|notEmpty',
         Config::TECHNICAL_EMAIL => 'email',
         Config::UPLOAD_LIMIT_IMAGE => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_MODEL => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
         Config::URL => 'url',
+        self::REJECTED_DOMAINS => 'nullable|list:domain',
     ];
+    private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
     private const MAX_VALUE_LENGTH = 65535;
+    private const REJECTED_DOMAINS = 'rejected-domains';
     private const RULE_NULLABLE = 'nullable';
 
     public function fetch(string $key = null): JsonResponse
@@ -157,37 +178,153 @@ class ServerConfigurationController extends Controller
             $data = Config::fetchAdminSettings();
         }
 
+        if (null === $key || self::REJECTED_DOMAINS === $key) {
+            $data[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
+        }
+
         return self::json($data);
+    }
+
+    public function fetchPlaceholders(string $key = null): JsonResponse
+    {
+        if (null !== $key) {
+            self::validatePlaceholderKey($key);
+            $placeholder = PanelPlaceholder::fetchByType($key);
+            return self::json([$key => $placeholder?->content]);
+        }
+
+        $data = $this->getPanelPlaceholdersWithNulls(PanelPlaceholder::TYPES_ALLOWED);
+
+        return self::json($data);
+    }
+
+    private function getPanelPlaceholdersWithNulls(array $types): array
+    {
+        $data = [];
+        foreach ($types as $type) {
+            $data[$type] = null;
+        }
+        return array_merge(
+            $data,
+            PanelPlaceholder::fetchByTypes($types)
+                ->pluck(PanelPlaceholder::FIELD_CONTENT, PanelPlaceholder::FIELD_TYPE)
+                ->toArray()
+        );
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $request->input();
-        $this->validateData($data);
-        $this->storeData($data);
+        self::validateData($data);
+        $result = $this->storeData($data);
 
-        return self::json();
+        return self::json($result);
     }
 
     public function storeOne(string $key, Request $request): JsonResponse
     {
         $data = [$key => $request->input('value')];
-        $this->validateData($data);
-        $this->storeData($data);
+        self::validateData($data);
+        $result = $this->storeData($data);
 
-        return self::json();
+        return self::json($result);
     }
 
-    private function storeData(array $data): void
+    public function storePlaceholders(Request $request): JsonResponse
     {
-        try {
-            Config::updateAdminSettings($data);
-        } catch (Throwable $exception) {
-            throw new RuntimeException('Cannot store configuration');
+        $data = $request->all();
+        self::validatePlaceholdersData($data);
+        $result = $this->storePlaceholdersData($data);
+
+        return self::json($result);
+    }
+
+    private static function validatePlaceholdersData(array $data): void
+    {
+        if (!$data) {
+            throw new UnprocessableEntityHttpException('Data is required');
+        }
+        foreach ($data as $type => $content) {
+            if (!in_array($type, PanelPlaceholder::TYPES_ALLOWED, true)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid type (%s)', $type));
+            }
+            if (null === $content) {
+                return;
+            }
+            if (!is_string($content) || strlen($content) > PanelPlaceholder::MAXIMUM_CONTENT_LENGTH) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid content for type (%s)', $type));
+            }
         }
     }
 
-    private function validateData(array $data): void
+    private function storePlaceholdersData(array $data): array
+    {
+        $typesToDelete = [];
+        $placeholders = [];
+        foreach ($data as $type => $content) {
+            if (null === $content) {
+                $typesToDelete[] = $type;
+            } else {
+                $placeholders[] = PanelPlaceholder::construct($type, $content);
+            }
+        }
+        $registerDateTime = new DateTimeImmutable();
+        $previousEmailSendDateTime = Config::fetchDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME);
+
+        DB::beginTransaction();
+        try {
+            if (!empty($typesToDelete)) {
+                PanelPlaceholder::deleteByTypes($typesToDelete);
+            }
+            if (!empty($placeholders)) {
+                PanelPlaceholder::register($placeholders);
+            }
+            Config::upsertDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME, $registerDateTime);
+
+            if ($previousEmailSendDateTime <= $registerDateTime) {
+                $emailSendDateTime =
+                    $registerDateTime->modify(sprintf('+%d minutes', self::EMAIL_NOTIFICATION_DELAY_IN_MINUTES));
+                Config::upsertDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME, $emailSendDateTime);
+                Mail::to(config('app.technical_email'))
+                    ->bcc(config('app.support_email'))
+                    ->later($emailSendDateTime, new PanelPlaceholdersChange());
+            }
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error(sprintf('Cannot store placeholders: (%s)', $exception->getMessage()));
+            throw new RuntimeException();
+        }
+
+        $types = array_keys($data);
+
+        return $this->getPanelPlaceholdersWithNulls($types);
+    }
+
+    private function storeData(array $data): array
+    {
+        $appendRejectedDomains = false;
+        try {
+            if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
+                SitesRejectedDomain::storeDomains(array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? '')));
+                unset($data[self::REJECTED_DOMAINS]);
+                $appendRejectedDomains = true;
+            }
+            Config::updateAdminSettings($data);
+        } catch (Throwable $exception) {
+            Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
+            throw new RuntimeException('Cannot store configuration');
+        }
+
+        $settings = array_intersect_key(Config::fetchAdminSettings(), $data);
+        if ($appendRejectedDomains) {
+            $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
+        }
+
+        return $settings;
+    }
+
+    private static function validateData(array $data): void
     {
         if (!$data) {
             throw new UnprocessableEntityHttpException('Data is required');
@@ -202,6 +339,16 @@ class ServerConfigurationController extends Controller
     {
         if (!AccountId::isValid($value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an account ID', $field));
+        }
+    }
+
+    private static function validateAppCurrency(string $field, string $value): void
+    {
+        if (null === Currency::tryFrom($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a currency', $field));
+        }
+        if ((new UserLedgerEntry())->count() > 0) {
+            throw new UnprocessableEntityHttpException('App currency cannot be changed');
         }
     }
 
@@ -270,7 +417,7 @@ class ServerConfigurationController extends Controller
 
     private static function validateNotEmpty(string $field, string $value): void
     {
-        if (empty($value)) {
+        if ('' === $value) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` cannot be empty', $field));
         }
     }
@@ -308,21 +455,17 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validateCurrenciesList(string $field, string $value): void
-    {
-        if (empty($value)) {
-            return;
-        }
-
-        if (1 !== preg_match('/^[A-Z]{3,}((,[A-Z]{3,})+)?$/', $value)) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be in valid format', $field));
-        }
-    }
-
     private static function validateCurrency(string $field, string $value): void
     {
         if (1 !== preg_match('/^[A-Z]{3,}$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a currency', $field));
+        }
+    }
+
+    private static function validateDomain(string $field, string $value): void
+    {
+        if (!SiteValidator::isDomainValid($value)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a domain', $field));
         }
     }
 
@@ -347,10 +490,33 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validatePlaceholderKey(string $key): void
+    {
+        if (!in_array($key, PanelPlaceholder::TYPES_ALLOWED, true)) {
+            throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
+        }
+    }
+
     private static function validateLicenseKey(string $field, string $value): void
     {
         if (1 !== preg_match('/^(COM|SRV)-[\da-z]{6}-[\da-z]{5}-[\da-z]{5}-[\da-z]{4}-[\da-z]{4}$/i', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a license key', $field));
+        }
+    }
+
+    private static function validateList(string $field, string $value, string $type): void
+    {
+        if ('' === $value) {
+            return;
+        }
+
+        foreach (explode(',', $value) as $item) {
+            $signature = Str::camel('validate_' . $type);
+            try {
+                self::{$signature}($field, $item);
+            } catch (UnprocessableEntityHttpException) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a list of %s', $field, $type));
+            }
         }
     }
 
@@ -405,6 +571,19 @@ class ServerConfigurationController extends Controller
     {
         if (false === filter_var($value, FILTER_VALIDATE_URL)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a url', $field));
+        }
+    }
+
+    private static function validateUserRole(string $field, string $value): void
+    {
+        if (!in_array($value, UserRole::cases())) {
+            throw new UnprocessableEntityHttpException(
+                sprintf(
+                    'Field `%s` must be one of %s',
+                    $field,
+                    implode(', ', UserRole::cases())
+                )
+            );
         }
     }
 }

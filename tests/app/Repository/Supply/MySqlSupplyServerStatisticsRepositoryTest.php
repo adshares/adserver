@@ -45,5 +45,4 @@ final class MySqlSupplyServerStatisticsRepositoryTest extends TestCase
 
         $repository->fetchStatistics(1);
     }
-
 }

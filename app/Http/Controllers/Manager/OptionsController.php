@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Request;
@@ -78,8 +79,8 @@ class OptionsController extends Controller
     {
         return self::json(
             [
-                'acceptBannersManually' => Config::fetchInt(Config::SITE_ACCEPT_BANNERS_MANUALLY),
-                'classifierLocalBanners' => Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS),
+                'acceptBannersManually' => config('app.site_accept_banners_manually'),
+                'classifierLocalBanners' => config('app.site_classifier_local_banners'),
             ]
         );
     }
@@ -167,6 +168,28 @@ class OptionsController extends Controller
     public function languages(): JsonResponse
     {
         return self::json(Simulator::getAvailableLanguages());
+    }
+
+    public function server(): JsonResponse
+    {
+        return self::json(
+            [
+                'app_currency' => Currency::from(config('app.currency'))->value,
+                'display_currency' => Currency::from(config('app.display_currency'))->value,
+                'support_chat' => config('app.support_chat'),
+                'support_email' => config('app.support_email'),
+                'support_telegram' => config('app.support_telegram'),
+            ]
+        );
+    }
+
+    public function defaultUserRoles(): JsonResponse
+    {
+        return self::json(
+            [
+                'default_user_roles' => config('app.default_user_roles'),
+            ]
+        );
     }
 
     public function zones(): JsonResponse

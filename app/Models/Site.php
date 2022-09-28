@@ -288,7 +288,7 @@ class Site extends Model
 
             $onlyAcceptedBanners =
                 Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT
-                !== Config::fetchStringOrFail(Config::SITE_CLASSIFIER_LOCAL_BANNERS);
+                !== config('app.site_classifier_local_banners');
             $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners);
         }
 

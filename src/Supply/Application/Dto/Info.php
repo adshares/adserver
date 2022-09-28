@@ -42,53 +42,26 @@ final class Info
         self::CAPABILITY_ADVERTISER,
     ];
 
-    private string $module;
-    private string $name;
-    private string $version;
-    private array $capabilities;
-    private UrlInterface $panelUrl;
-    private UrlInterface $privacyUrl;
-    private UrlInterface $termsUrl;
-    private UrlInterface $inventoryUrl;
-    private UrlInterface $serverUrl;
-    private Id $adsAddress;
-    private ?Email $supportEmail;
     private ?float $demandFee = null;
     private ?float $supplyFee = null;
-    private string $registrationMode;
-    private string $appMode;
     private ?InfoStatistics $statistics = null;
 
     public function __construct(
-        string $module,
-        string $name,
-        string $version,
-        UrlInterface $serverUrl,
-        UrlInterface $panelUrl,
-        UrlInterface $privacyUrl,
-        UrlInterface $termsUrl,
-        UrlInterface $inventoryUrl,
-        Id $adsAddress,
-        ?Email $supportEmail,
-        array $capabilities,
-        string $registrationMode,
-        string $appMode
+        private readonly string $module,
+        private readonly string $name,
+        private readonly string $version,
+        private readonly UrlInterface $serverUrl,
+        private readonly UrlInterface $panelUrl,
+        private readonly UrlInterface $privacyUrl,
+        private readonly UrlInterface $termsUrl,
+        private readonly UrlInterface $inventoryUrl,
+        private readonly Id $adsAddress,
+        private readonly ?Email $supportEmail,
+        private readonly array $capabilities,
+        private readonly string $registrationMode,
+        private readonly string $appMode,
     ) {
         $this->validateCapabilities($capabilities);
-
-        $this->module = $module;
-        $this->name = $name;
-        $this->version = $version;
-        $this->capabilities = $capabilities;
-        $this->panelUrl = $panelUrl;
-        $this->privacyUrl = $privacyUrl;
-        $this->termsUrl = $termsUrl;
-        $this->inventoryUrl = $inventoryUrl;
-        $this->serverUrl = $serverUrl;
-        $this->adsAddress = $adsAddress;
-        $this->supportEmail = $supportEmail;
-        $this->registrationMode = $registrationMode;
-        $this->appMode = $appMode;
     }
 
     public function validateCapabilities(array $values): void

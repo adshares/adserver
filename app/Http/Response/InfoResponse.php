@@ -35,13 +35,10 @@ use Illuminate\Contracts\Support\Arrayable;
 
 final class InfoResponse implements Arrayable
 {
-    private Info $info;
-
     public const ADSHARES_MODULE_NAME = 'adserver';
 
-    public function __construct(Info $info)
+    public function __construct(private readonly Info $info)
     {
-        $this->info = $info;
     }
 
     public function updateWithDemandFee(float $fee): void
@@ -81,7 +78,7 @@ final class InfoResponse implements Arrayable
                 new Email(config('app.support_email')),
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
                 config('app.registration_mode'),
-                AppMode::getAppMode()
+                AppMode::getAppMode(),
             )
         );
     }

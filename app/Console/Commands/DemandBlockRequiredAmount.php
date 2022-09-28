@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -40,15 +41,10 @@ use InvalidArgumentException;
 class DemandBlockRequiredAmount extends BaseCommand
 {
     protected $signature = 'ops:demand:payments:block';
-
     protected $description = 'Reserves user funds for payment for campaign events';
 
-    private ExchangeRateReader $exchangeRateReader;
-
-    public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader)
+    public function __construct(Locker $locker, private readonly ExchangeRateReader $exchangeRateReader)
     {
-        $this->exchangeRateReader = $exchangeRateReader;
-
         parent::__construct($locker);
     }
 
@@ -61,7 +57,11 @@ class DemandBlockRequiredAmount extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+        $appCurrency = Currency::from(config('app.currency'));
+        $exchangeRate = match ($appCurrency) {
+            Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
+            default => ExchangeRate::ONE($appCurrency),
+        };
 
         DB::beginTransaction();
 

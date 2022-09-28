@@ -29,7 +29,7 @@ use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 
-final class AdsExchange
+class AdsExchange
 {
     private string $apiUrl;
     private string $apiKey;

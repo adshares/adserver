@@ -143,7 +143,7 @@ class AdsFetchHosts extends BaseCommand
 
             $host = NetworkHost::registerHost($address, $info, $time);
             Log::debug(sprintf('Stored %s as #%d', $url->toString(), $host->id));
-        } catch (RuntimeException|UnexpectedClientResponseException $exception) {
+        } catch (RuntimeException | UnexpectedClientResponseException $exception) {
             Log::debug(sprintf('[%s] {%s}', $url ?? '', $exception->getMessage()));
         }
     }

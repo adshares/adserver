@@ -1,3 +1,4 @@
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -6,6 +7,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.1.0] - 2022-09-28
+### Added
+- Possibility to set application currency other than ADS
+- AdPanel's placeholders to config API
+- Allow change user roles
+- Login info to panel placeholders
+### Changed
+- Split user access for advertisers and publishers
+- Config API returns data after store
+### Removed
+- Registration forms URLs from info
+### Fixed
+- Do not expose SMTP password in config API
+- Remove deprecated zip* functions
+- Types, validators in config API
+- Block find if publisher cannot be determined
 
 ## [2.0.5] - 2022-09-16
 ### Fixed
@@ -693,7 +711,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.0.5...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.1.0...develop
+[2.1.0]: https://github.com/adshares/adserver/compare/v2.0.5...v2.1.0
 [2.0.5]: https://github.com/adshares/adserver/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/adshares/adserver/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/adshares/adserver/compare/v2.0.2...v2.0.3

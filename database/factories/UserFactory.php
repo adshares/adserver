@@ -33,8 +33,8 @@ class UserFactory extends Factory
             'email' => $this->faker->unique()->safeEmail,
             'password' => $this->faker->password(8),
             'uuid' => $this->faker->md5,
-            'is_advertiser' => true,
-            'is_publisher' => true,
+            'is_advertiser' => 1,
+            'is_publisher' => 1,
             'is_admin' => false,
         ];
     }

@@ -40,7 +40,7 @@ class InvoicesController extends Controller
 {
     public function browse(): JsonResponse
     {
-        if (!Config::isTrueOnly(Config::INVOICE_ENABLED)) {
+        if (!config('app.invoice_enabled')) {
             throw new NotFoundHttpException();
         }
 
@@ -55,7 +55,7 @@ class InvoicesController extends Controller
 
     public function add(Request $request): JsonResponse
     {
-        if (!Config::isTrueOnly(Config::INVOICE_ENABLED)) {
+        if (!config('app.invoice_enabled')) {
             throw new NotFoundHttpException();
         }
 

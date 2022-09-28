@@ -527,7 +527,7 @@ SQL;
     public function inventoryList(Request $request): JsonResponse
     {
         $licenceTxFee = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
-        $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+        $operatorTxFee = config('app.payment_tx_fee');
 
         $campaigns = [];
 

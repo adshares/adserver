@@ -27,13 +27,8 @@ use Adshares\Adserver\Uploader\UploadedFile;
 
 class UploadedZip implements UploadedFile
 {
-    private string $name;
-    private string $previewUrl;
-
-    public function __construct(string $name, string $previewUrl)
+    public function __construct(private readonly string $name, private readonly string $previewUrl)
     {
-        $this->name = $name;
-        $this->previewUrl = $previewUrl;
     }
 
     public function toArray(): array

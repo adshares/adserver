@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,9 +25,9 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\RefLink;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -62,7 +62,10 @@ class RefLinksController extends Controller
             $input = [];
         }
 
-        if (!$user->isModerator() && !empty(array_diff(array_keys($input), ['token', 'comment', 'kept_refund']))) {
+        if (
+            !$user->isModerator() &&
+            !empty(array_diff(array_keys($input), ['token', 'comment', 'kept_refund', 'user_roles']))
+        ) {
             throw new UnprocessableEntityHttpException('Insufficient permissions');
         }
 

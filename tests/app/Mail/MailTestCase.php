@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,18 +19,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests\Mail;
 
-namespace Adshares\Common;
+use Adshares\Adserver\Tests\CreatesApplication;
+use Adshares\Adserver\Tests\RefreshDatabase;
+use Illuminate\Foundation\Testing\TestCase;
 
-use Adshares\Adserver\Models\Config;
-
-final class Feature
+class MailTestCase extends TestCase
 {
-    public const REFERRAL_REFUND = 'referral-refund';
-
-    public static function enabled(string $feature): bool
-    {
-        return Config::isTrueOnly("$feature-enabled");
-    }
+    use CreatesApplication;
+    use RefreshDatabase;
 }

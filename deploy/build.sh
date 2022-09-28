@@ -26,8 +26,9 @@ function artisanCommand {
 }
 
 mkdir -p storage/app/invoices
-mkdir -p storage/app/public/banners
+mkdir -p storage/app/public/{banners,reports}
 mkdir -p storage/framework/{cache,sessions,views}
+mkdir -p storage/wallet
 chmod 777 storage -R
 
 echo 'user_id;network_banner_uuid' > storage/app/reported-ads.txt

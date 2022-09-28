@@ -39,11 +39,9 @@ class ZipUploader implements Uploader
 {
     public const ZIP_FILE = 'zip';
     private const ZIP_DISK = 'banners';
-    private Request $request;
 
-    public function __construct(Request $request)
+    public function __construct(private readonly Request $request)
     {
-        $this->request = $request;
     }
 
     public function upload(Medium $medium): UploadedFile

@@ -21,38 +21,33 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Tests\Common;
+namespace Adshares\Lib\Tests;
 
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Feature;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Lib\ZipToHtml;
 
-class FeatureTest extends TestCase
+class ZipToHtmlTest extends TestCase
 {
-    private const FEATURE_KEY = 'feature';
-
-    public function testEnabled(): void
+    /**
+     * @dataProvider invalidFilesProvider
+     */
+    public function testInvalidFile(string $filename): void
     {
-        Config::factory()->create([
-            'key' => self::FEATURE_KEY . '-enabled',
-            'value' => '1',
-        ]);
+        $path = base_path('tests/mock/Files/Banners/' . $filename);
 
-        self::assertTrue(Feature::enabled(self::FEATURE_KEY));
+        self::expectException(RuntimeException::class);
+
+        (new ZipToHtml($path))->getHtml();
     }
 
-    public function testEnabledNotInDatabase(): void
+    public function invalidFilesProvider(): array
     {
-        self::assertFalse(Feature::enabled(self::FEATURE_KEY));
-    }
-
-    public function testEnabledFalse(): void
-    {
-        Config::factory()->create([
-            'key' => self::FEATURE_KEY . '-enabled',
-            'value' => '0',
-        ]);
-
-        self::assertFalse(Feature::enabled(self::FEATURE_KEY));
+        return [
+            'empty' => ['empty.zip'],
+            'two html files' => ['2xhtml.zip'],
+            'too big unzipped' => ['too_big_unzipped.zip'],
+            'too big zipped' => ['too_big_zipped.zip'],
+        ];
     }
 }
