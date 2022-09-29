@@ -27,8 +27,8 @@ class AddLogsTablesClearingProcedures extends Migration
     public function up(): void
     {
         $this->dropProcedures();
-        DB::statement(self::CLEAN_LOGS_PROCEDURE);
-        DB::statement(self::CLEAN_NETWORK_LOGS_PROCEDURE);
+        DB::unprepared(self::CLEAN_LOGS_PROCEDURE);
+        DB::unprepared(self::CLEAN_NETWORK_LOGS_PROCEDURE);
     }
 
     public function down(): void
@@ -120,7 +120,7 @@ XXXX;
     private function dropProcedures(): void
     {
         foreach ([self::CLEAN_LOGS_PROCEDURE_NAME, self::CLEAN_NETWORK_LOGS_PROCEDURE_NAME] as $procedureName) {
-            DB::statement(sprintf('DROP PROCEDURE IF EXISTS %s;', $procedureName));
+            DB::unprepared(sprintf('DROP PROCEDURE IF EXISTS %s;', $procedureName));
         }
     }
 }
