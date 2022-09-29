@@ -131,6 +131,21 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure([self::FOUND_BANNERS_STRUCTURE]);
     }
 
+    public function testFindWithoutZones(): void
+    {
+        $data = [
+            'page' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+        ];
+        $content = Utils::urlSafeBase64Encode(json_encode($data));
+
+        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testFindNoData(): void
     {
         $response = self::post(self::BANNER_FIND_URI);
