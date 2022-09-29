@@ -33,7 +33,6 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Supply\Application\Service\AdSelect;
 use GuzzleHttp\Client;
@@ -132,6 +131,21 @@ final class SupplyControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure([self::FOUND_BANNERS_STRUCTURE]);
+    }
+
+    public function testFindWithoutZones(): void
+    {
+        $data = [
+            'page' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+        ];
+        $content = Utils::urlSafeBase64Encode(json_encode($data));
+
+        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFindWithZonePayToExistingUserWhichIsAdvertiserOnly(): void
