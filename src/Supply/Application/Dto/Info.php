@@ -208,4 +208,9 @@ final class Info
     {
         $this->statistics = $statistics;
     }
+
+    public function getAppMode(): string
+    {
+        return $this->appMode;
+    }
 }

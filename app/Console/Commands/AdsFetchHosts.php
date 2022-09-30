@@ -31,6 +31,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Config\AppMode;
 use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -130,33 +131,37 @@ class AdsFetchHosts extends BaseCommand
             Log::debug(sprintf('Fetching %s', $url->toString()));
 
             $info = $this->client->fetchInfo($url);
-            $this->validateInfo($info, $address);
+            $this->validateInfoModule($info);
             Log::debug(sprintf('Got %s', $url->toString()));
 
-            $host = NetworkHost::registerHost($address, $info, $time);
+            $error = $this->getErrorFromInfo($info, $address);
+            $host = NetworkHost::registerHost($address, $url->toString(), $info, $time, $error);
             Log::debug(sprintf('Stored %s as #%d', $url->toString(), $host->id));
         } catch (RuntimeException | UnexpectedClientResponseException $exception) {
             Log::debug(sprintf('[%s] {%s}', $url ?? '', $exception->getMessage()));
         }
     }
 
-    private function validateInfo(Info $info, string $address): void
+    private function validateInfoModule(Info $info): void
     {
         if (InfoResponse::ADSHARES_MODULE_NAME !== $info->getModule()) {
             throw new RuntimeException(sprintf('Info for invalid module: %s', $info->getModule()));
         }
+    }
 
+    private function getErrorFromInfo(Info $info, string $address): ?string
+    {
         $adsAddress = $info->getAdsAddress();
-
         if (!$adsAddress) {
-            throw new RuntimeException('Info has empty address');
+            return 'Info has empty address';
         }
-
         if ($adsAddress !== $address) {
-            throw new RuntimeException(
-                sprintf('Info has different address than broadcast: %s !== %s', $adsAddress, $address)
-            );
+            return 'Info address does not match broadcast';
         }
+        if (AppMode::INITIALIZATION === $info->getAppMode()) {
+            return 'Ad server is in initialization mode';
+        }
+        return null;
     }
 
     private function removeOldHosts(): int

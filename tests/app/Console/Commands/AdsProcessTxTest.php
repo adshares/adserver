@@ -92,10 +92,9 @@ class AdsProcessTxTest extends ConsoleTestCase
     public function testAdsProcessEventPayment(): void
     {
         $demandClient = new DummyDemandClient();
-
-        $info = $demandClient->fetchInfo(new NullUrl());
-        $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
-
+        /** @var NetworkHost $networkHost */
+        $networkHost = NetworkHost::factory()->create();
+        /** @var NetworkImpression $networkImpression */
         $networkImpression = NetworkImpression::factory()->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
 

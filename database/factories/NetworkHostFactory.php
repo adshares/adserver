@@ -77,6 +77,7 @@ class NetworkHostFactory extends Factory
             'created_at' => new DateTimeImmutable(),
             'failed_connection' => 0,
             'info' => $info,
+            'info_url' => $info->getServerUrl() . '/info.json',
             'status' => HostStatus::Operational,
         ];
     }

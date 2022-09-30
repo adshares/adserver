@@ -31,6 +31,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('network_hosts', function (Blueprint $table) {
+            $table->string('info_url')->default('');
             $allowedStatuses = array_map(fn($status) => $status->value, HostStatus::cases());
             $table->enum('status', $allowedStatuses)->default(HostStatus::Initialization->value)->index();
             $table->string('error')->nullable();
@@ -47,7 +48,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('network_hosts', function (Blueprint $table) {
-            $table->dropColumn(['status', 'error']);
+            $table->dropColumn(['info_url', 'status', 'error']);
         });
     }
 };

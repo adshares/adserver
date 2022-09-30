@@ -29,7 +29,7 @@ use Adshares\Config\AppMode;
 use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
-use DateTime;
+use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 
 class MockDataNetworkHostsSeeder extends Seeder
@@ -58,6 +58,11 @@ class MockDataNetworkHostsSeeder extends Seeder
         $info->setSupplyFee(0.01);
         $info->setStatistics(new InfoStatistics(1, 1, 1));
 
-        NetworkHost::registerHost($info->getAdsAddress(), $info, new DateTime());
+        NetworkHost::factory()->create([
+            'address' => $info->getAdsAddress(),
+            'info' => $info,
+            'info_url' => $info->getServerUrl() . 'info.json',
+            'last_broadcast' => new DateTimeImmutable(),
+        ]);
     }
 }

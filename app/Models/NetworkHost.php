@@ -46,6 +46,7 @@ use Illuminate\Support\Carbon;
  * @property int last_broadcast
  * @property int failed_connection
  * @property Info info
+ * @property string info_url
  * @property HostStatus status
  * @property string|null error
  * @mixin Builder
@@ -97,8 +98,10 @@ class NetworkHost extends Model
 
     public static function registerHost(
         string $address,
+        string $infoUrl,
         Info $info,
-        ?DateTimeInterface $lastBroadcast = null
+        ?DateTimeInterface $lastBroadcast = null,
+        ?string $error = null,
     ): NetworkHost {
         $networkHost = self::withTrashed()->where('address', $address)->first();
 
@@ -112,7 +115,9 @@ class NetworkHost extends Model
         $networkHost->last_broadcast = $lastBroadcast ?? new DateTimeImmutable();
         $networkHost->failed_connection = 0;
         $networkHost->info = $info;
-        $networkHost->status = HostStatus::Initialization;
+        $networkHost->info_url = $infoUrl;
+        $networkHost->status = null === $error ? HostStatus::Initialization : HostStatus::Failure;
+        $networkHost->error = $error;
         $networkHost->save();
 
         return $networkHost;
