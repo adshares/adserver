@@ -67,30 +67,28 @@ class GuzzleDemandClientTest extends TestCase
         $demandClient->fetchInfo(new Url('https://example.com/info.json'));
     }
 
-    public function testFetchInfoExceptionDueToEmptyResponseContent(): void
+    /**
+     * @dataProvider invalidContentProvider
+     */
+    public function testFetchInfoExceptionDueToInvalidResponseContent($content): void
     {
         $responseMock = self::createMock(ResponseInterface::class);
         $responseMock->method('getStatusCode')->willReturn(Response::HTTP_OK);
-        $responseMock->method('getBody')->willReturn('');
-        /** @var ResponseInterface $responseMock */
-        $client = $this->getClientMock($responseMock);
-        $demandClient = $this->createGuzzleDemandClient($client);
-
-        self::expectException(UnexpectedClientResponseException::class);
-        $demandClient->fetchInfo(new Url('https://example.com/info.json'));
-    }
-
-    public function testFetchInfoExceptionDueToMalformedResponseContent(): void
-    {
-        $responseMock = self::createMock(ResponseInterface::class);
-        $responseMock->method('getStatusCode')->willReturn(Response::HTTP_OK);
-        $responseMock->method('getBody')->willReturn('{"mo');
+        $responseMock->method('getBody')->willReturn($content);
         /** @var ResponseInterface $responseMock */
         $client = $this->getClientMock($responseMock);
         $demandClient = $this->createGuzzleDemandClient($client);
 
         self::expectException(RuntimeException::class);
         $demandClient->fetchInfo(new Url('https://example.com/info.json'));
+    }
+
+    public function invalidContentProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'malformed' => ['{"mo'],
+        ];
     }
 
     public function testFetchInfoExceptionDueToMissingFields(): void

@@ -197,11 +197,13 @@ final class ServerConfigurationControllerTest extends TestCase
     public function storeDataProvider(): array
     {
         return [
-            [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
-            [Config::REFERRAL_REFUND_COMMISSION, '0'],
-            [Config::REFERRAL_REFUND_ENABLED, '1'],
-            [Config::SUPPORT_EMAIL, 'sup@example.com'],
-            [Config::TECHNICAL_EMAIL, 'tech@example.com'],
+            'ADSHARES_ADDRESS' => [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
+            'INVENTORY_FAILED_CONNECTION_LIMIT #1' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '0'],
+            'INVENTORY_FAILED_CONNECTION_LIMIT #2' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '8'],
+            'REFERRAL_REFUND_COMMISSION' => [Config::REFERRAL_REFUND_COMMISSION, '0'],
+            'REFERRAL_REFUND_ENABLED' => [Config::REFERRAL_REFUND_ENABLED, '1'],
+            'SUPPORT_EMAIL' => [Config::SUPPORT_EMAIL, 'sup@example.com'],
+            'TECHNICAL_EMAIL' => [Config::TECHNICAL_EMAIL, 'tech@example.com'],
         ];
     }
 
@@ -226,10 +228,11 @@ final class ServerConfigurationControllerTest extends TestCase
     public function storeArrayDataProvider(): array
     {
         return [
-            [Config::DEFAULT_USER_ROLES, 'advertiser'],
-            [Config::EXCHANGE_CURRENCIES, 'EUR,USD'],
-            [Config::INVENTORY_EXPORT_WHITELIST, '0001-00000003-AB0C,0001-00000005-CBCA'],
-            [Config::INVOICE_CURRENCIES, 'EUR'],
+            'DEFAULT_USER_ROLES' => [Config::DEFAULT_USER_ROLES, 'advertiser'],
+            'EXCHANGE_CURRENCIES' => [Config::EXCHANGE_CURRENCIES, 'EUR,USD'],
+            'INVENTORY_EXPORT_WHITELIST' =>
+                [Config::INVENTORY_EXPORT_WHITELIST, '0001-00000003-AB0C,0001-00000005-CBCA'],
+            'INVOICE_CURRENCIES' => [Config::INVOICE_CURRENCIES, 'EUR'],
         ];
     }
 
@@ -319,6 +322,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid user role (empty)' => [[Config::DEFAULT_USER_ROLES => '']],
             'invalid user role (invalid)' => [[Config::DEFAULT_USER_ROLES => 'invalid']],
             'invalid rejected domains' => [['rejected-domains' => 'a,b']],
+            'invalid inventory failed connection limit' => [[Config::INVENTORY_FAILED_CONNECTION_LIMIT => '-1']],
         ];
     }
 

@@ -191,9 +191,11 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         $statusCode = $response->getStatusCode();
-        $body = (string)$response->getBody();
+        if ($statusCode !== Response::HTTP_OK) {
+            throw new UnexpectedClientResponseException(sprintf('Unexpected response code `%s`', $statusCode));
+        }
 
-        $this->validateResponse($statusCode, $body);
+        $body = (string)$response->getBody();
         $data = $this->createDecodedResponseFromBody($body);
         $this->validateFetchInfoResponse($data);
 
