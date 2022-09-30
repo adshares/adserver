@@ -18,7 +18,7 @@
         "adshares/ads-client": "^1",
         "adshares/php-ecrecover": "dev-master",
         "aws/aws-sdk-php": "~3.0",
-        "doctrine/collections": " v1.6.8",
+        "doctrine/collections": "^1.0.0",
         "doctrine/dbal": "^3.3.7",
         "fruitcake/laravel-cors": "^3.0",
         "guzzlehttp/guzzle": "^7.4.0",
