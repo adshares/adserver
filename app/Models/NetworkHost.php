@@ -127,7 +127,7 @@ class NetworkHost extends Model
     {
         $query = self::whereIn(
             'status',
-            [HostStatus::Initialization->value, HostStatus::Operational->value],
+            [HostStatus::Initialization, HostStatus::Operational],
         );
         if (!empty($whitelist)) {
             $query->whereIn('address', $whitelist);
