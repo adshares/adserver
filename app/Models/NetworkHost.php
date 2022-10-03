@@ -44,6 +44,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property int last_broadcast
+ * @property Carbon|null last_synchronization
  * @property int failed_connection
  * @property Info info
  * @property string info_url
@@ -71,6 +72,10 @@ class NetworkHost extends Model
     protected $casts = [
         'info' => 'json',
         'status' => HostStatus::class,
+    ];
+
+    protected $dates = [
+        'last_synchronization',
     ];
 
     public static function fetchByAddress(string $address): ?self
@@ -137,6 +142,7 @@ class NetworkHost extends Model
 
     public function connectionSuccessful(): void
     {
+        $this->last_synchronization = new Carbon();
         $this->failed_connection = 0;
         $this->status = HostStatus::Operational;
         $this->update();

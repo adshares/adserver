@@ -31,6 +31,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('network_hosts', function (Blueprint $table) {
+            $table->timestamp('last_synchronization')->after('last_broadcast')->nullable()->default(null);
             $table->string('info_url')->default('');
             $allowedStatuses = array_map(fn($status) => $status->value, HostStatus::cases());
             $table->enum('status', $allowedStatuses)->default(HostStatus::Initialization->value)->index();
@@ -48,7 +49,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('network_hosts', function (Blueprint $table) {
-            $table->dropColumn(['info_url', 'status', 'error']);
+            $table->dropColumn(['last_synchronization', 'info_url', 'status', 'error']);
         });
     }
 };

@@ -38,6 +38,7 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
 {
     public function testImport(): void
     {
+        $testStartTime = new DateTimeImmutable();
         NetworkHost::factory()->create(['address' => '0001-00000002-BB2D', 'status' => HostStatus::Initialization]);
         NetworkHost::factory()->create(['address' => '0001-00000003-AB0C']);
         NetworkHost::factory()->create(['address' => '0001-00000004-DBEB', 'deleted_at' => new DateTimeImmutable()]);
@@ -56,6 +57,9 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
                 'status' => HostStatus::Operational,
             ]
         );
+        $host = NetworkHost::fetchByAddress('0001-00000002-BB2D');
+        self::assertNotNull($host->last_synchronization);
+        self::assertGreaterThanOrEqual($testStartTime->getTimestamp(), $host->last_synchronization->getTimestamp());
     }
 
     public function testWhitelistImport(): void
