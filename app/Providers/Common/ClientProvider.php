@@ -126,6 +126,7 @@ final class ClientProvider extends ServiceProvider
                 return new GuzzleDemandClient(
                     $app->make(ClassifierExternalRepository::class),
                     $app->make(ClassifierExternalSignatureVerifier::class),
+                    new Client(),
                     $app->make(SignatureVerifier::class),
                     $app->make(AdsAuthenticator::class),
                     $timeoutForDemandService

@@ -113,6 +113,7 @@ class Config extends Model
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
     public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
+    public const INVENTORY_FAILED_CONNECTION_LIMIT = 'inventory-failed-connection-limit';
     public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
     public const INVENTORY_WHITELIST = 'inventory-whitelist';
     public const INVOICE_COMPANY_ADDRESS = 'invoice-company-address';
@@ -232,6 +233,7 @@ class Config extends Model
         self::HOT_WALLET_MAX_VALUE => ConfigTypes::Integer,
         self::HOT_WALLET_MIN_VALUE => ConfigTypes::Integer,
         self::INVENTORY_EXPORT_WHITELIST => ConfigTypes::Array,
+        self::INVENTORY_FAILED_CONNECTION_LIMIT => ConfigTypes::Integer,
         self::INVENTORY_IMPORT_WHITELIST => ConfigTypes::Array,
         self::INVENTORY_WHITELIST => ConfigTypes::Array,
         self::INVOICE_COMPANY_BANK_ACCOUNTS => ConfigTypes::Json,
@@ -473,6 +475,7 @@ class Config extends Model
             self::HOT_WALLET_MAX_VALUE => 10_000_000_000_000_00,
             self::HOT_WALLET_MIN_VALUE => 1_000_000_000_000_00,
             self::INVENTORY_EXPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? [],
+            self::INVENTORY_FAILED_CONNECTION_LIMIT => 10,
             self::INVENTORY_IMPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? [],
             self::INVENTORY_WHITELIST => [],
             self::INVOICE_COMPANY_ADDRESS => '',

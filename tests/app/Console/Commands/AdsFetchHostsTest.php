@@ -29,9 +29,11 @@ use Adshares\Ads\Response\GetBroadcastResponse;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Config\AppMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Domain\ValueObject\HostStatus;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
@@ -111,7 +113,6 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $this->assertNotNull($host);
         $this->assertEquals('https://app.example.com/', $host->host);
         $this->assertNull(NetworkHost::fetchByAddress('0001-00000003-AB0C'));
-//        $this->assertNull(NetworkHost::fetchByAddress('0001-00000002-BB2D'));
     }
 
     public function testFetchingHostsDemandClientException(): void
@@ -123,6 +124,23 @@ class AdsFetchHostsTest extends ConsoleTestCase
         self::assertDatabaseCount(NetworkHost::class, 0);
     }
 
+    public function testFetchingHostsDemandClientInvalidInfoModule(): void
+    {
+        $this->setupAdsClient();
+        $this->setupDemandClientInfo(self::getInfoData(['module' => 'invalid']));
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        self::assertDatabaseCount(NetworkHost::class, 0);
+    }
+
+    public function invalidInfoDataProvider(): array
+    {
+        return [
+            'no module' => [self::getInfoData([], 'module')],
+            'invalid module' => [],
+        ];
+    }
+
     /**
      * @dataProvider invalidInfoProvider
      */
@@ -132,7 +150,22 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $this->setupDemandClientInfo($infoData);
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
-        self::assertDatabaseCount(NetworkHost::class, 0);
+        self::assertDatabaseHas(
+            NetworkHost::class,
+            [
+                'address' => '0001-00000001-8B4E',
+                'status' => HostStatus::Failure,
+            ],
+        );
+    }
+
+    public function invalidInfoProvider(): array
+    {
+        return [
+            'no address' => [self::getInfoData([], 'adsAddress')],
+            'invalid address' => [self::getInfoData(['adsAddress' => '0001-00000002-BB2D'])],
+            'invalid ad server mode' => [self::getInfoData(['mode' => AppMode::INITIALIZATION])],
+        ];
     }
 
     public function testBroadcastNotReady(): void
@@ -333,14 +366,5 @@ class AdsFetchHostsTest extends ConsoleTestCase
     private static function getInfo(): Info
     {
         return Info::fromArray(self::getInfoData());
-    }
-
-    public function invalidInfoProvider(): array
-    {
-        return [
-            'invalid module' => [self::getInfoData(['module' => 'invalid'])],
-            'no account' => [self::getInfoData([], 'adsAddress')],
-            'invalid account' => [self::getInfoData(['adsAddress' => '0001-00000002-BB2D'])],
-        ];
     }
 }

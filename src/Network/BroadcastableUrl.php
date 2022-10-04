@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,8 +31,7 @@ use function strtoupper;
 
 final class BroadcastableUrl implements Broadcastable, UrlInterface
 {
-    /** @var Url */
-    private $url;
+    private UrlInterface $url;
 
     public function __construct(UrlInterface $url)
     {
