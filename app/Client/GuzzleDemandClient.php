@@ -45,9 +45,9 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use DateTimeInterface;
 use GuzzleHttp\Client;
+use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -67,6 +67,7 @@ final class GuzzleDemandClient implements DemandClient
     public function __construct(
         private readonly ClassifierExternalRepository $classifierRepository,
         private readonly ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier,
+        private readonly Client $client,
         private readonly SignatureVerifier $signatureVerifier,
         private readonly AdsAuthenticator $adsAuthenticator,
         private readonly int $timeout
@@ -176,10 +177,11 @@ final class GuzzleDemandClient implements DemandClient
 
     public function fetchInfo(UrlInterface $infoUrl): Info
     {
-        $client = new Client($this->requestParameters());
-
         try {
-            $response = $client->get((string)$infoUrl);
+            $response = $this->client->get(
+                (string)$infoUrl,
+                $this->requestParameters()
+            );
         } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Could not connect to %s (%s).', $infoUrl->toString(), $exception->getMessage()),
@@ -189,11 +191,12 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         $statusCode = $response->getStatusCode();
+        if ($statusCode !== Response::HTTP_OK) {
+            throw new UnexpectedClientResponseException(sprintf('Unexpected response code `%s`', $statusCode));
+        }
+
         $body = (string)$response->getBody();
-
-        $this->validateResponse($statusCode, $body);
         $data = $this->createDecodedResponseFromBody($body);
-
         $this->validateFetchInfoResponse($data);
 
         return Info::fromArray($data);
@@ -202,7 +205,7 @@ final class GuzzleDemandClient implements DemandClient
     private function requestParameters(?string $baseUrl = null): array
     {
         $params = [
-            'headers' => [
+            RequestOptions::HEADERS => [
                 'Content-Type' => 'application/json',
                 'Cache-Control' => 'no-cache',
                 'Authorization' => $this->adsAuthenticator->getHeader(
@@ -210,7 +213,7 @@ final class GuzzleDemandClient implements DemandClient
                     Crypt::decryptString(config('app.adshares_secret'))
                 ),
             ],
-            'timeout' => $this->timeout,
+            RequestOptions::TIMEOUT => $this->timeout,
         ];
 
         if ($baseUrl) {
@@ -232,9 +235,8 @@ final class GuzzleDemandClient implements DemandClient
 
     private function createDecodedResponseFromBody(string $body): array
     {
-        try {
-            $decoded = json_decode($body, true);
-        } catch (InvalidArgumentException) {
+        $decoded = json_decode($body, true);
+        if (!is_array($decoded)) {
             throw new DomainRuntimeException('Invalid json data.');
         }
         return $decoded;
@@ -327,32 +329,22 @@ final class GuzzleDemandClient implements DemandClient
     public function validateFetchInfoResponse(array $data): void
     {
         $expectedKeys = [
+            'capabilities',
+            'inventoryUrl',
+            'module',
             'name',
-            'serverUrl',
             'panelUrl',
             'privacyUrl',
+            'serverUrl',
             'termsUrl',
-            'inventoryUrl',
+            'version',
         ];
 
         foreach ($expectedKeys as $key) {
             if (!isset($data[$key])) {
                 Log::debug(__METHOD__ . ' Invalid info.json: ' . json_encode($data));
-
                 throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
             }
-        }
-
-        if (!isset($data['version']) && !isset($data['softwareVersion'])) {
-            throw new UnexpectedClientResponseException('Field `version` (deprecated: `softwareVersion`) is required.');
-        }
-
-        if (!isset($data['module']) && !isset($data['serviceType'])) {
-            throw new UnexpectedClientResponseException('Field `module` (deprecated: `serviceType`) is required.');
-        }
-
-        if (!isset($data['capabilities']) && !isset($data['supported'])) {
-            throw new UnexpectedClientResponseException('Field `capabilities` (deprecated: `supported`) is required.');
         }
     }
 

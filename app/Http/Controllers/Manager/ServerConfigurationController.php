@@ -106,6 +106,7 @@ class ServerConfigurationController extends Controller
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
         Config::INVENTORY_EXPORT_WHITELIST => 'nullable|list:accountId',
+        Config::INVENTORY_FAILED_CONNECTION_LIMIT => 'nullable|positiveInteger',
         Config::INVENTORY_IMPORT_WHITELIST => 'nullable|list:accountId',
         Config::INVENTORY_WHITELIST => 'nullable|list:accountId',
         Config::INVOICE_COMPANY_ADDRESS => 'nullable|notEmpty',
@@ -355,7 +356,7 @@ class ServerConfigurationController extends Controller
     private static function validatePositiveInteger(string $field, string $value): void
     {
         if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an positive integer', $field));
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a positive integer', $field));
         }
     }
 

@@ -30,6 +30,7 @@ use Adshares\Config\AppMode;
 use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
+use Adshares\Supply\Domain\ValueObject\HostStatus;
 use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -70,12 +71,14 @@ class NetworkHostFactory extends Factory
         $info->setStatistics(new InfoStatistics(1, 1, 1));
 
         return [
-            'address' => $this->faker->randomElement($addresses),
+            'address' => $this->faker->randomElement($addresses)->toString(),
             'host' => $host,
             'last_broadcast' => new DateTimeImmutable(),
             'created_at' => new DateTimeImmutable(),
             'failed_connection' => 0,
             'info' => $info,
+            'info_url' => $info->getServerUrl() . '/info.json',
+            'status' => HostStatus::Operational,
         ];
     }
 }

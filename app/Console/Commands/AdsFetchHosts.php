@@ -31,11 +31,11 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Config\AppMode;
 use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use DateTime;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
@@ -45,22 +45,16 @@ class AdsFetchHosts extends BaseCommand
      * Length of block in seconds
      */
     private const BLOCK_TIME = 512;
-
     /**
      * Period in seconds which will be searched for broadcast
      */
     private const BROADCAST_PERIOD = 12 * 3600; //12 hours
 
     protected $signature = 'ads:fetch-hosts';
-
     protected $description = 'Fetches Demand AdServers';
 
-    private DemandClient $client;
-
-    public function __construct(Locker $locker, DemandClient $client)
+    public function __construct(Locker $locker, private readonly DemandClient $client)
     {
-        $this->client = $client;
-
         parent::__construct($locker);
     }
 
@@ -68,7 +62,6 @@ class AdsFetchHosts extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
@@ -131,40 +124,44 @@ class AdsFetchHosts extends BaseCommand
     private function handleBroadcast(Broadcast $broadcast): void
     {
         $address = $broadcast->getAddress();
-        $time = new DateTime('@' . $broadcast->getTime()->getTimestamp());
+        $time = new DateTimeImmutable('@' . $broadcast->getTime()->getTimestamp());
 
         try {
             $url = BroadcastableUrl::fromHex($broadcast->getMessage());
             Log::debug(sprintf('Fetching %s', $url->toString()));
 
             $info = $this->client->fetchInfo($url);
-            $this->validateInfo($info, $address);
+            $this->validateInfoModule($info);
             Log::debug(sprintf('Got %s', $url->toString()));
 
-            $host = NetworkHost::registerHost($address, $info, $time);
+            $error = $this->getErrorFromInfo($info, $address);
+            $host = NetworkHost::registerHost($address, $url->toString(), $info, $time, $error);
             Log::debug(sprintf('Stored %s as #%d', $url->toString(), $host->id));
         } catch (RuntimeException | UnexpectedClientResponseException $exception) {
             Log::debug(sprintf('[%s] {%s}', $url ?? '', $exception->getMessage()));
         }
     }
 
-    private function validateInfo(Info $info, string $address): void
+    private function validateInfoModule(Info $info): void
     {
         if (InfoResponse::ADSHARES_MODULE_NAME !== $info->getModule()) {
             throw new RuntimeException(sprintf('Info for invalid module: %s', $info->getModule()));
         }
+    }
 
+    private function getErrorFromInfo(Info $info, string $address): ?string
+    {
         $adsAddress = $info->getAdsAddress();
-
         if (!$adsAddress) {
-            throw new RuntimeException('Info has empty address');
+            return 'Info has empty address';
         }
-
         if ($adsAddress !== $address) {
-            throw new RuntimeException(
-                sprintf('Info has different address than broadcast: %s !== %s', $adsAddress, $address)
-            );
+            return 'Info address does not match broadcast';
         }
+        if (AppMode::INITIALIZATION === $info->getAppMode()) {
+            return 'Ad server is in initialization mode';
+        }
+        return null;
     }
 
     private function removeOldHosts(): int

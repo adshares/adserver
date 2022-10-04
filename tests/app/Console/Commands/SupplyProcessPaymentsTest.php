@@ -50,8 +50,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessOutdated(): void
     {
         $demandClient = new DummyDemandClient();
-        $info = $demandClient->fetchInfo(new NullUrl());
-        $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
+        $networkHost = self::registerHost($demandClient);
 
         $adsPayment = new AdsPayment();
         $createdAt = new DateTimeImmutable('-30 hours');
@@ -86,8 +85,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessDepositWithoutUser(): void
     {
         $demandClient = new DummyDemandClient();
-        $info = $demandClient->fetchInfo(new NullUrl());
-        $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
+        $networkHost = self::registerHost($demandClient);
 
         $adsPayment = new AdsPayment();
         $adsPayment->txid = self::TX_ID_SEND_ONE;
@@ -117,9 +115,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessEventPayment(): void
     {
         $demandClient = new DummyDemandClient();
-
-        $info = $demandClient->fetchInfo(new NullUrl());
-        $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
+        $networkHost = self::registerHost($demandClient);
 
         $networkImpression = NetworkImpression::factory()->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
@@ -178,8 +174,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessEventPaymentWithServerError(): void
     {
         $demandClient = new DummyDemandClient();
-        $info = $demandClient->fetchInfo(new NullUrl());
-        $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
+        $networkHost = self::registerHost($demandClient);
 
         $networkImpression = NetworkImpression::factory()->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
@@ -272,5 +267,15 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->instance(Locker::class, $lockerMock);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+    }
+
+    private function registerHost(DummyDemandClient $demandClient): NetworkHost
+    {
+        $info = $demandClient->fetchInfo(new NullUrl());
+        return NetworkHost::factory()->create([
+            'address' => '0001-00000000-9B6F',
+            'info' => $info,
+            'info_url' => $info->getServerUrl() . 'info.json',
+        ]);
     }
 }

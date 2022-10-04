@@ -1,0 +1,25 @@
+{
+  "module": "adserver",
+  "name": "AdServer",
+  "version": "#",
+  "capabilities": [
+    "ADV",
+    "PUB"
+  ],
+  "serverUrl": "https://example.com",
+  "panelUrl": "http://adpanel",
+  "privacyUrl": "https://example.com/policies/privacy.html",
+  "termsUrl": "https://example.com/policies/terms.html",
+  "inventoryUrl": "https://example.com/adshares/inventory/list",
+  "adsAddress": "0001-00000005-CBCA",
+  "supportEmail": "mail@example.com",
+  "demandFee": 0.0199,
+  "supplyFee": 0.0199,
+  "registrationMode": "public",
+  "statistics": {
+    "users": 120,
+    "campaigns": 87,
+    "sites": 294
+  },
+  "mode": "operational"
+}

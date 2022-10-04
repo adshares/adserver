@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -33,17 +34,22 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int id
  * @property string address
  * @property string host
- * @property int created_at
- * @property int updated_at
- * @property int deleted_at
- * @property int last_broadcast
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
+ * @property Carbon last_broadcast
+ * @property Carbon|null last_synchronization
  * @property int failed_connection
  * @property Info info
+ * @property string info_url
+ * @property HostStatus status
+ * @property string|null error
  * @mixin Builder
  */
 class NetworkHost extends Model
@@ -51,8 +57,6 @@ class NetworkHost extends Model
     use AutomateMutators;
     use HasFactory;
     use SoftDeletes;
-
-    private const FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED = 10;
 
     /**
      * @var array
@@ -67,6 +71,12 @@ class NetworkHost extends Model
 
     protected $casts = [
         'info' => 'json',
+        'status' => HostStatus::class,
+    ];
+
+    protected $dates = [
+        'last_broadcast',
+        'last_synchronization',
     ];
 
     public static function fetchByAddress(string $address): ?self
@@ -94,8 +104,10 @@ class NetworkHost extends Model
 
     public static function registerHost(
         string $address,
+        string $infoUrl,
         Info $info,
-        ?DateTimeInterface $lastBroadcast = null
+        ?DateTimeInterface $lastBroadcast = null,
+        ?string $error = null,
     ): NetworkHost {
         $networkHost = self::withTrashed()->where('address', $address)->first();
 
@@ -109,7 +121,9 @@ class NetworkHost extends Model
         $networkHost->last_broadcast = $lastBroadcast ?? new DateTimeImmutable();
         $networkHost->failed_connection = 0;
         $networkHost->info = $info;
-
+        $networkHost->info_url = $infoUrl;
+        $networkHost->status = null === $error ? HostStatus::Initialization : HostStatus::Failure;
+        $networkHost->error = $error;
         $networkHost->save();
 
         return $networkHost;
@@ -117,10 +131,9 @@ class NetworkHost extends Model
 
     public static function fetchHosts(array $whitelist = []): Collection
     {
-        $query = self::where(
-            'failed_connection',
-            '<',
-            self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED
+        $query = self::whereIn(
+            'status',
+            [HostStatus::Initialization, HostStatus::Operational],
         );
         if (!empty($whitelist)) {
             $query->whereIn('address', $whitelist);
@@ -130,23 +143,31 @@ class NetworkHost extends Model
 
     public function connectionSuccessful(): void
     {
-        if ($this->failed_connection > 0) {
-            $this->failed_connection = 0;
-            $this->update();
-        }
+        $this->last_synchronization = new Carbon();
+        $this->failed_connection = 0;
+        $this->status = HostStatus::Operational;
+        $this->update();
     }
 
     public function connectionFailed(): void
     {
-        if ($this->failed_connection < self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED) {
-            ++$this->failed_connection;
-            $this->update();
+        ++$this->failed_connection;
+        if ($this->failed_connection >= config('app.inventory_failed_connection_limit')) {
+            $this->status = HostStatus::Unreachable;
         }
+        $this->update();
+    }
+
+    public function resetConnectionErrorCounter(): void
+    {
+        $this->failed_connection = 0;
+        $this->status = HostStatus::Initialization;
+        $this->update();
     }
 
     public function isInventoryToBeRemoved(): bool
     {
-        return $this->failed_connection >= self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED;
+        return HostStatus::Unreachable === $this->status;
     }
 
     public function getInfoAttribute(): Info
