@@ -207,6 +207,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
     private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string
     {
-        return sprintf('/api/monitoring/hosts/%d/error-counter', $hostId);
+        return sprintf('/api/monitoring/hosts/%d/connection-error', $hostId);
     }
 }
