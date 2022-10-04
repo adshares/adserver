@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.1.1] - 2022-10-04
 ### Added
 - Monitoring network hosts
 - Reset network host's connection error
@@ -14,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extended stored network hosts' data
 ### Fixed
 - Do not resend email activation while email is not set
+- Remove tracking context cache
 
 ## [2.1.0] - 2022-09-28
 ### Added
@@ -718,7 +721,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.1.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.1.1...develop
+[2.1.1]: https://github.com/adshares/adserver/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/adshares/adserver/compare/v2.0.5...v2.1.0
 [2.0.5]: https://github.com/adshares/adserver/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/adshares/adserver/compare/v2.0.3...v2.0.4
