@@ -30,7 +30,6 @@ use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Mail\UserPasswordChange;
 use Adshares\Adserver\Mail\UserPasswordChangeConfirm;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -167,6 +166,9 @@ class AuthController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        if (null === $user->email) {
+            throw new UnprocessableEntityHttpException('User does not have an email account');
+        }
 
         DB::beginTransaction();
 
