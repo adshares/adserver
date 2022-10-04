@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -154,34 +154,11 @@ class AdPayEventExportCommand extends BaseCommand
 
     private function userContext(AdUser $adUser, EventLog $event): UserContext
     {
-        static $userInfoCache = [];
-
         $impressionContext = ImpressionContext::fromEventData(
             $event->their_context,
             $event->tracking_id
         );
-        $trackingId = $impressionContext->trackingId();
-
-        if (isset($userInfoCache[$trackingId])) {
-            return $userInfoCache[$trackingId];
-        }
-
-        $userContext = $adUser->getUserContext($impressionContext);
-
-        Log::debug(
-            sprintf(
-                '%s {"userInfoCache":"MISS","humanScore":%s,"event":%s,"trackingId":%s,"context": %s}',
-                __FUNCTION__,
-                $userContext->humanScore(),
-                $event->id,
-                $event->tracking_id,
-                $userContext->toString()
-            )
-        );
-
-        $userInfoCache[$trackingId] = $userContext;
-
-        return $userContext;
+        return $adUser->getUserContext($impressionContext);
     }
 
     private function exportEvents(
