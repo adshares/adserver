@@ -60,6 +60,7 @@ class ServerMonitoringController extends Controller
                 'name' => $info->getName(),
                 'url' => $host->host,
                 'walletAddress' => $host->address,
+                'lastBroadcast' => $host->last_broadcast->format(DateTimeInterface::ATOM),
                 'lastSynchronization' => $host->last_synchronization?->format(DateTimeInterface::ATOM),
                 'campaignCount' => $statistics['campaigns'] ?? 0,
                 'siteCount' => $statistics['sites'] ?? 0,
@@ -80,7 +81,7 @@ class ServerMonitoringController extends Controller
         ];
     }
 
-    public function resetErrorCounter(int $hostId): JsonResponse
+    public function resetHost(int $hostId): JsonResponse
     {
         $host = NetworkHost::find($hostId);
         if (null === $host) {

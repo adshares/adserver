@@ -43,7 +43,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
- * @property int last_broadcast
+ * @property Carbon last_broadcast
  * @property Carbon|null last_synchronization
  * @property int failed_connection
  * @property Info info
@@ -75,6 +75,7 @@ class NetworkHost extends Model
     ];
 
     protected $dates = [
+        'last_broadcast',
         'last_synchronization',
     ];
 

@@ -34,5 +34,5 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->gr
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 
     Route::get('monitoring/{key}', [ServerMonitoringController::class, 'fetch']);
-    Route::put('monitoring/hosts/{hostId}/connection-error', [ServerMonitoringController::class, 'resetErrorCounter']);
+    Route::patch('monitoring/hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
 });

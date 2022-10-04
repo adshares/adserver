@@ -43,6 +43,7 @@ final class ServerMonitoringControllerTest extends TestCase
                 'name',
                 'url',
                 'walletAddress',
+                'lastBroadcast',
                 'lastSynchronization',
                 'campaignCount',
                 'siteCount',
@@ -161,7 +162,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'failed_connection' => 10,
         ]);
 
-        $response = $this->putJson(
+        $response = $this->patchJson(
             self::buildUriForResetHostConnectionErrorCounter($host->id),
             [],
             self::getHeaders()
@@ -175,7 +176,7 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $nonExistingHostId = 1;
 
-        $response = $this->putJson(
+        $response = $this->patchJson(
             self::buildUriForResetHostConnectionErrorCounter($nonExistingHostId),
             [],
             self::getHeaders()
@@ -207,6 +208,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
     private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string
     {
-        return sprintf('/api/monitoring/hosts/%d/connection-error', $hostId);
+        return sprintf('/api/monitoring/hosts/%d/reset', $hostId);
     }
 }
