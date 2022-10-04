@@ -157,6 +157,13 @@ class NetworkHost extends Model
         $this->update();
     }
 
+    public function resetConnectionErrorCounter(): void
+    {
+        $this->failed_connection = 0;
+        $this->status = HostStatus::Initialization;
+        $this->update();
+    }
+
     public function isInventoryToBeRemoved(): bool
     {
         return HostStatus::Unreachable === $this->status;

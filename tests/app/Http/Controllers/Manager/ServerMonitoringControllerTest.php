@@ -21,16 +21,36 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Supply\Domain\ValueObject\HostStatus;
+use DateTimeInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Testing\TestResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 final class ServerMonitoringControllerTest extends TestCase
 {
-    private const URI = '/api/monitoring';
+    private const MONITORING_URI = '/api/monitoring';
+    private const HOSTS_STRUCTURE = [
+        'hosts' => [
+            '*' => [
+                'id',
+                'status',
+                'name',
+                'url',
+                'walletAddress',
+                'lastSynchronization',
+                'campaignCount',
+                'siteCount',
+                'connectionErrorCount',
+                'infoJson',
+            ],
+        ]
+    ];
 
     public function testAccessAdminNoJwt(): void
     {
@@ -60,7 +80,37 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testFetchByWalletKey(): void
+    public function testFetchHosts(): void
+    {
+        NetworkHost::factory()->create([
+            'address' => '0001-00000001-8B4E',
+            'status' => HostStatus::Initialization,
+            'last_synchronization' => null,
+        ]);
+        $carbon = (new Carbon())->subMinutes(10);
+        NetworkHost::factory()->create([
+            'address' => '0001-00000002-BB2D',
+            'status' => HostStatus::Operational,
+            'last_synchronization' => $carbon,
+        ]);
+
+        $response = $this->getResponseForKey('hosts');
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::HOSTS_STRUCTURE);
+        $response->assertJsonFragment([
+            'walletAddress' => '0001-00000001-8B4E',
+            'status' => HostStatus::Initialization,
+            'lastSynchronization' => null,
+        ]);
+        $response->assertJsonFragment([
+            'walletAddress' => '0001-00000002-BB2D',
+            'status' => HostStatus::Operational,
+            'lastSynchronization' => $carbon->format(DateTimeInterface::ATOM),
+        ]);
+    }
+
+    public function testFetchWallet(): void
     {
         UserLedgerEntry::factory()->create([
             'amount' => 2000,
@@ -103,6 +153,37 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testHostConnectionErrorCounterReset(): void
+    {
+        /** @var NetworkHost $host */
+        $host = NetworkHost::factory()->create([
+            'status' => HostStatus::Unreachable,
+            'failed_connection' => 10,
+        ]);
+
+        $response = $this->putJson(
+            self::buildUriForResetHostConnectionErrorCounter($host->id),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertDatabaseHas(NetworkHost::class, ['failed_connection' => 0]);
+    }
+
+    public function testHostConnectionErrorCounterFailWhenHostDoesNotExist(): void
+    {
+        $nonExistingHostId = 1;
+
+        $response = $this->putJson(
+            self::buildUriForResetHostConnectionErrorCounter($nonExistingHostId),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     private function getResponseForKey(string $key): TestResponse
     {
         return $this->getJson(
@@ -121,6 +202,11 @@ final class ServerMonitoringControllerTest extends TestCase
 
     private static function buildUriForKey(string $key): string
     {
-        return self::URI . '/' . $key;
+        return self::MONITORING_URI . '/' . $key;
+    }
+
+    private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string
+    {
+        return sprintf('/api/monitoring/hosts/%d/error-counter', $hostId);
     }
 }

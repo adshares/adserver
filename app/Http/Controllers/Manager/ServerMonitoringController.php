@@ -22,7 +22,9 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -30,6 +32,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class ServerMonitoringController extends Controller
 {
     private const ALLOWED_KEYS = [
+        'hosts',
         'wallet',
     ];
 
@@ -45,6 +48,28 @@ class ServerMonitoringController extends Controller
         return self::json($data);
     }
 
+    private function handleHosts(): array
+    {
+        $hosts = NetworkHost::all()->map(function ($host) {
+            /** @var NetworkHost $host */
+            $info = $host->info;
+            $statistics = $info->getStatistics()?->toArray() ?? [];
+            return [
+                'id' => $host->id,
+                'status' => $host->status,
+                'name' => $info->getName(),
+                'url' => $host->host,
+                'walletAddress' => $host->address,
+                'lastSynchronization' => $host->last_synchronization?->format(DateTimeInterface::ATOM),
+                'campaignCount' => $statistics['campaigns'] ?? 0,
+                'siteCount' => $statistics['sites'] ?? 0,
+                'connectionErrorCount' => $host->failed_connection,
+                'infoJson' => $info->toArray(),
+            ];
+        })->all();
+        return ['hosts' => $hosts];
+    }
+
     private function handleWallet(): array
     {
         return [
@@ -53,5 +78,17 @@ class ServerMonitoringController extends Controller
                 'unusedBonuses' => UserLedgerEntry::getBonusBalanceForAllUsers(),
             ]
         ];
+    }
+
+    public function resetErrorCounter(int $hostId): JsonResponse
+    {
+        $host = NetworkHost::find($hostId);
+        if (null === $host) {
+            throw new UnprocessableEntityHttpException('Invalid id');
+        }
+
+        $host->resetConnectionErrorCounter();
+
+        return self::json();
     }
 }

@@ -209,6 +209,11 @@ final class Info
         $this->statistics = $statistics;
     }
 
+    public function getStatistics(): ?InfoStatistics
+    {
+        return $this->statistics;
+    }
+
     public function getAppMode(): string
     {
         return $this->appMode;
