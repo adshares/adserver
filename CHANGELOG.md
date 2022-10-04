@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reset network host's connection error
 ### Changed
 - Extended stored network hosts' data
+### Fixed
+- Do not resend email activation while email is not set
 
 ## [2.1.0] - 2022-09-28
 ### Added

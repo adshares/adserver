@@ -52,6 +52,7 @@ class AuthControllerTest extends TestCase
     private const PASSWORD_URI = '/auth/password';
     private const EMAIL_ACTIVATE_URI = '/auth/email/activate';
     private const EMAIL_URI = '/auth/email';
+    private const EMAIL_ACTIVATE_RESEND_URI = '/auth/email/activate/resend';
     private const LOG_IN_URI = '/auth/login';
     private const LOG_OUT_URI = '/auth/logout';
     private const REGISTER_USER = '/auth/register';
@@ -1043,6 +1044,17 @@ class AuthControllerTest extends TestCase
             ]
         );
 
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testEmailActivateResend(): void
+    {
+        $user = $this->walletRegisterUser();
+        $this->actingAs($user, 'api');
+
+        $response = $this->post(self::EMAIL_ACTIVATE_RESEND_URI, [
+            'uri' => '/auth/email-activation/',
+        ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
