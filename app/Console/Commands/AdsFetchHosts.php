@@ -81,9 +81,13 @@ class AdsFetchHosts extends BaseCommand
         $progressBar->finish();
         $this->newLine();
 
-        $this->comment('Cleaning old hosts...');
+        $this->comment('Cleaning up old hosts...');
         $removed = $this->removeOldHosts();
-        $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to clean');
+        $marked = $this->markHostsWhichDoesNotBroadcast();
+        if ($marked) {
+            $this->info(sprintf('Marked %d hosts which does not broadcast', $marked));
+        }
+        $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to remove');
 
         $this->info('Finished command ' . $this->signature);
     }
@@ -164,9 +168,15 @@ class AdsFetchHosts extends BaseCommand
         return null;
     }
 
-    private function removeOldHosts(): int
+    private function markHostsWhichDoesNotBroadcast(): int
     {
         $period = new DateTimeImmutable('-24 hours');
+        return NetworkHost::failHostsBroadcastedBefore($period);
+    }
+
+    private function removeOldHosts(): int
+    {
+        $period = new DateTimeImmutable('-7 days');
         return NetworkHost::deleteBroadcastedBefore($period);
     }
 }
