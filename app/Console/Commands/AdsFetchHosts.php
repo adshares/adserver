@@ -48,7 +48,7 @@ class AdsFetchHosts extends BaseCommand
     /**
      * Period in seconds which will be searched for broadcast
      */
-    private const BROADCAST_PERIOD = 12 * 3600; //12 hours
+    private const BROADCAST_PERIOD = 24 * 3600;
 
     protected $signature = 'ads:fetch-hosts';
     protected $description = 'Fetches Demand AdServers';
@@ -170,7 +170,7 @@ class AdsFetchHosts extends BaseCommand
 
     private function markHostsWhichDoesNotBroadcast(): int
     {
-        $period = new DateTimeImmutable('-24 hours');
+        $period = new DateTimeImmutable(sprintf('-%d seconds', self::BROADCAST_PERIOD));
         return NetworkHost::failHostsBroadcastedBefore($period);
     }
 
