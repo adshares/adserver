@@ -198,6 +198,7 @@ final class ServerConfigurationControllerTest extends TestCase
     {
         return [
             'ADSHARES_ADDRESS' => [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
+            'HOURS_UNTIL_INACTIVE_HOST_REMOVAL' => [Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL, '168'],
             'INVENTORY_FAILED_CONNECTION_LIMIT #1' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '0'],
             'INVENTORY_FAILED_CONNECTION_LIMIT #2' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '8'],
             'REFERRAL_REFUND_COMMISSION' => [Config::REFERRAL_REFUND_COMMISSION, '0'],
@@ -323,6 +324,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid user role (invalid)' => [[Config::DEFAULT_USER_ROLES => 'invalid']],
             'invalid rejected domains' => [['rejected-domains' => 'a,b']],
             'invalid inventory failed connection limit' => [[Config::INVENTORY_FAILED_CONNECTION_LIMIT => '-1']],
+            'invalid inactive host removal period' => [[Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => '0']],
         ];
     }
 

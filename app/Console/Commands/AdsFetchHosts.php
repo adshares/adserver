@@ -176,7 +176,7 @@ class AdsFetchHosts extends BaseCommand
 
     private function removeOldHosts(): int
     {
-        $period = new DateTimeImmutable('-7 days');
+        $period = new DateTimeImmutable(sprintf('-%d hours', config('app.hours_until_inactive_host_removal')));
         return NetworkHost::deleteBroadcastedBefore($period);
     }
 }

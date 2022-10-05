@@ -112,6 +112,7 @@ class Config extends Model
     public const FIAT_DEPOSIT_MIN_AMOUNT = 'fiat-deposit-min-amount';
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
+    public const HOURS_UNTIL_INACTIVE_HOST_REMOVAL = 'hours-until-inactive-host-removal';
     public const INVENTORY_EXPORT_WHITELIST = 'inventory-export-whitelist';
     public const INVENTORY_FAILED_CONNECTION_LIMIT = 'inventory-failed-connection-limit';
     public const INVENTORY_IMPORT_WHITELIST = 'inventory-import-whitelist';
@@ -232,6 +233,7 @@ class Config extends Model
         self::FIAT_DEPOSIT_MIN_AMOUNT => ConfigTypes::Integer,
         self::HOT_WALLET_MAX_VALUE => ConfigTypes::Integer,
         self::HOT_WALLET_MIN_VALUE => ConfigTypes::Integer,
+        self::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => ConfigTypes::Integer,
         self::INVENTORY_EXPORT_WHITELIST => ConfigTypes::Array,
         self::INVENTORY_FAILED_CONNECTION_LIMIT => ConfigTypes::Integer,
         self::INVENTORY_IMPORT_WHITELIST => ConfigTypes::Array,
@@ -474,6 +476,7 @@ class Config extends Model
             self::FIAT_DEPOSIT_MIN_AMOUNT => 2000,
             self::HOT_WALLET_MAX_VALUE => 10_000_000_000_000_00,
             self::HOT_WALLET_MIN_VALUE => 1_000_000_000_000_00,
+            self::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => 7 * 24,
             self::INVENTORY_EXPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? [],
             self::INVENTORY_FAILED_CONNECTION_LIMIT => 10,
             self::INVENTORY_IMPORT_WHITELIST => $fetched[self::INVENTORY_WHITELIST] ?? [],
