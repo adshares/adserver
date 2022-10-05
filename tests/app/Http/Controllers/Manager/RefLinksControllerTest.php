@@ -111,7 +111,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinksWhenNoRefLinks(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
@@ -120,8 +120,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinks(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->login();
 
         RefLink::factory()->create(
             [
@@ -167,8 +166,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinksWithUsage(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->login();
 
         $refLink = RefLink::factory()->create(['user_id' => $user->id]);
 
@@ -185,8 +183,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testBrowseRefLinksWithRefund(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->login();
 
         $refLink = RefLink::factory()->create(['user_id' => $user->id]);
 
@@ -224,7 +221,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLink(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = $this->postJson(self::URI, []);
         $response->assertStatus(Response::HTTP_CREATED);
@@ -245,7 +242,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithCustomAttributes(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
         $response = $this->postJson(
             self::URI,
             [
@@ -270,8 +267,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithDuplicatedToken(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $this->login();
 
         RefLink::factory()->create(['token' => 'dummy-token']);
 
@@ -284,8 +280,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithDuplicatedDeletedToken(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
+        $user = $this->login();
 
         RefLink::factory()->create(['user_id' => $user->id, 'token' => 'dummy-token', 'deleted_at' => now()]);
 
@@ -298,7 +293,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkWithForbiddenAttributes(): void
     {
-        $this->actingAs(User::factory()->create(), 'api');
+        $this->login();
 
         $response = $this->postJson(self::URI, ['refLink' => ['validUntil' => '2021-01-01 01:00:00']]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -318,7 +313,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkAsAdmin(): void
     {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $this->login(User::factory()->admin()->create());
 
         $response = $this->postJson(
             self::URI,
@@ -354,7 +349,7 @@ class RefLinksControllerTest extends TestCase
 
     public function testAddRefLinkValidation(): void
     {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
+        $this->login(User::factory()->admin()->create());
 
         $response = $this->postJson(
             self::URI,
@@ -380,5 +375,46 @@ class RefLinksControllerTest extends TestCase
         $this->assertArrayHasKey('refund', $errors);
         $this->assertArrayHasKey('keptRefund', $errors);
         $this->assertArrayHasKey('refundValidUntil', $errors);
+    }
+
+    public function testDeleteUsed(): void
+    {
+        $user = $this->login();
+        /** @var RefLink $refLink */
+        $refLink = RefLink::factory()->create(
+            [
+                'used' => true,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $response = $this->delete(self::buildDeleteUri($refLink->id));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $refLink->refresh();
+        self::assertNull($refLink->deleted_at);
+    }
+
+    public function testDeleteNotUsed(): void
+    {
+        $user = $this->login();
+        /** @var RefLink $refLink */
+        $refLink = RefLink::factory()->create(
+            [
+                'used' => true,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $response = $this->delete(self::buildDeleteUri($refLink->id));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $refLink->refresh();
+        self::assertNotNull($refLink->deleted_at);
+    }
+
+    private static function buildDeleteUri(int $refLinkId): string
+    {
+        return sprintf('%s/%d', self::URI, $refLinkId);
     }
 }
