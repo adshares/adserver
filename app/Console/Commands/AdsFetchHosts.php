@@ -48,7 +48,7 @@ class AdsFetchHosts extends BaseCommand
     /**
      * Period in seconds which will be searched for broadcast
      */
-    private const BROADCAST_PERIOD = 12 * 3600; //12 hours
+    private const BROADCAST_PERIOD = 24 * 3600;
 
     protected $signature = 'ads:fetch-hosts';
     protected $description = 'Fetches Demand AdServers';
@@ -81,9 +81,13 @@ class AdsFetchHosts extends BaseCommand
         $progressBar->finish();
         $this->newLine();
 
-        $this->comment('Cleaning old hosts...');
+        $this->comment('Cleaning up old hosts...');
         $removed = $this->removeOldHosts();
-        $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to clean');
+        $marked = $this->markHostsWhichDoesNotBroadcast();
+        if ($marked) {
+            $this->info(sprintf('Marked %d hosts which does not broadcast', $marked));
+        }
+        $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to remove');
 
         $this->info('Finished command ' . $this->signature);
     }
@@ -164,9 +168,15 @@ class AdsFetchHosts extends BaseCommand
         return null;
     }
 
+    private function markHostsWhichDoesNotBroadcast(): int
+    {
+        $period = new DateTimeImmutable(sprintf('-%d seconds', self::BROADCAST_PERIOD));
+        return NetworkHost::failHostsBroadcastedBefore($period);
+    }
+
     private function removeOldHosts(): int
     {
-        $period = new DateTimeImmutable('-24 hours');
+        $period = new DateTimeImmutable(sprintf('-%d hours', config('app.hours_until_inactive_host_removal')));
         return NetworkHost::deleteBroadcastedBefore($period);
     }
 }

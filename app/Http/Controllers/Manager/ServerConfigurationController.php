@@ -68,10 +68,10 @@ class ServerConfigurationController extends Controller
         Config::ALLOW_ZONE_IN_IFRAME => 'nullable|boolean',
         Config::AUTO_CONFIRMATION_ENABLED => 'nullable|boolean',
         Config::AUTO_REGISTRATION_ENABLED => 'nullable|boolean',
-        Config::AUTO_WITHDRAWAL_LIMIT_ADS => 'nullable|positiveInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_BSC => 'nullable|positiveInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_BTC => 'nullable|positiveInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_ETH => 'nullable|positiveInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_ADS => 'nullable|nonNegativeInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_BSC => 'nullable|nonNegativeInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_BTC => 'nullable|nonNegativeInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_ETH => 'nullable|nonNegativeInteger',
         Config::BANNER_FORCE_HTTPS => 'nullable|boolean',
         Config::BTC_WITHDRAW => 'nullable|boolean',
         Config::BTC_WITHDRAW_FEE => 'nullable|commission',
@@ -101,10 +101,11 @@ class ServerConfigurationController extends Controller
         Config::EXCHANGE_API_SECRET => 'nullable',
         Config::EXCHANGE_API_URL => 'nullable|url',
         Config::EXCHANGE_CURRENCIES => 'nullable|notEmpty|list:currency',
-        Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|positiveInteger',
-        Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|positiveInteger',
+        Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|nonNegativeInteger',
+        Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|nonNegativeInteger',
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
+        Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => 'nullable|positiveInteger',
         Config::INVENTORY_EXPORT_WHITELIST => 'nullable|list:accountId',
         Config::INVENTORY_FAILED_CONNECTION_LIMIT => 'nullable|positiveInteger',
         Config::INVENTORY_IMPORT_WHITELIST => 'nullable|list:accountId',
@@ -129,15 +130,15 @@ class ServerConfigurationController extends Controller
         Config::MAIL_SMTP_USERNAME => 'nullable',
         Config::MAIN_JS_BASE_URL => 'nullable|url',
         Config::MAIN_JS_TLD => 'nullable|host',
-        Config::MAX_PAGE_ZONES => 'nullable|positiveInteger',
-        Config::NETWORK_DATA_CACHE_TTL => 'nullable|positiveInteger',
+        Config::MAX_PAGE_ZONES => 'nullable|nonNegativeInteger',
+        Config::NETWORK_DATA_CACHE_TTL => 'nullable|nonNegativeInteger',
         Config::NOW_PAYMENTS_API_KEY => 'nullable',
         Config::NOW_PAYMENTS_CURRENCY => 'nullable|currency',
         Config::NOW_PAYMENTS_EXCHANGE => 'nullable|boolean',
         Config::NOW_PAYMENTS_FEE => 'nullable|commission',
         Config::NOW_PAYMENTS_IPN_SECRET => 'nullable',
-        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|positiveInteger',
-        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|positiveInteger',
+        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|nonNegativeInteger',
+        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|nonNegativeInteger',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
         Config::PUBLISHER_APPLY_FORM_URL => 'nullable|url',
@@ -156,10 +157,10 @@ class ServerConfigurationController extends Controller
         Config::SUPPORT_EMAIL => 'email',
         Config::SUPPORT_TELEGRAM => 'nullable|notEmpty',
         Config::TECHNICAL_EMAIL => 'email',
-        Config::UPLOAD_LIMIT_IMAGE => 'nullable|positiveInteger',
-        Config::UPLOAD_LIMIT_MODEL => 'nullable|positiveInteger',
-        Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
-        Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
+        Config::UPLOAD_LIMIT_IMAGE => 'nullable|nonNegativeInteger',
+        Config::UPLOAD_LIMIT_MODEL => 'nullable|nonNegativeInteger',
+        Config::UPLOAD_LIMIT_VIDEO => 'nullable|nonNegativeInteger',
+        Config::UPLOAD_LIMIT_ZIP => 'nullable|nonNegativeInteger',
         Config::URL => 'url',
         self::REJECTED_DOMAINS => 'nullable|list:domain',
     ];
@@ -353,13 +354,6 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validatePositiveInteger(string $field, string $value): void
-    {
-        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a positive integer', $field));
-        }
-    }
-
     private static function validateBoolean(string $field, string $value): void
     {
         if (!in_array($value, ['0', '1'])) {
@@ -529,6 +523,13 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validateNonNegativeInteger(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a non-negative integer', $field));
+        }
+    }
+
     private static function validatePort(string $field, string $value): void
     {
         if (
@@ -539,6 +540,13 @@ class ServerConfigurationController extends Controller
             )
         ) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a port number', $field));
+        }
+    }
+
+    private static function validatePositiveInteger(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a positive integer', $field));
         }
     }
 
