@@ -377,7 +377,7 @@ class RefLinksControllerTest extends TestCase
         $this->assertArrayHasKey('refundValidUntil', $errors);
     }
 
-    public function testDeleteUsed(): void
+    public function testDeleteUsedRefLink(): void
     {
         $user = $this->login();
         /** @var RefLink $refLink */
@@ -395,13 +395,26 @@ class RefLinksControllerTest extends TestCase
         self::assertNull($refLink->deleted_at);
     }
 
-    public function testDeleteNotUsed(): void
+    public function testDeleteOtherUserRefLink(): void
+    {
+        $this->login();
+        /** @var RefLink $refLink */
+        $refLink = RefLink::factory()->create(['used' => false]);
+
+        $response = $this->delete(self::buildDeleteUri($refLink->id));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        $refLink->refresh();
+        self::assertNull($refLink->deleted_at);
+    }
+
+    public function testDeleteNotUsedRefLink(): void
     {
         $user = $this->login();
         /** @var RefLink $refLink */
         $refLink = RefLink::factory()->create(
             [
-                'used' => true,
+                'used' => false,
                 'user_id' => $user->id,
             ]
         );
