@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Deleting referral links
+### Changed
+- Host which does not broadcast is marked as failed before deleting
 
 ## [2.1.1] - 2022-10-04
 ### Added

@@ -89,9 +89,15 @@ class NetworkHost extends Model
         return self::where('host', $host)->first();
     }
 
-    public static function fetchBroadcastedAfter(DateTimeInterface $date): Collection
+    public static function failHostsBroadcastedBefore(DateTimeInterface $date): int
     {
-        return self::where('last_broadcast', '>', $date)->get();
+        $hosts = self::where('last_broadcast', '<', $date);
+        $counter = $hosts->count();
+        $hosts->update([
+            'error' => 'No broadcast',
+            'status' => HostStatus::Failure,
+        ]);
+        return $counter;
     }
 
     public static function deleteBroadcastedBefore(DateTimeInterface $date): int
