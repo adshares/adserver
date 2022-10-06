@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\RefLink;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,14 +45,11 @@ class RefLinksController extends Controller
         ]);
     }
 
-    public function browse(): JsonResponse
+    public function browse(): LengthAwarePaginator
     {
-        return self::json(
-            RefLink::fetchByUser(Auth::user()->id)
-                ->sortByDesc('id')
-                ->values()
-                ->toArray()
-        );
+        return RefLink::getRefLinkByUserBuilder(Auth::user()->id)
+            ->orderByDesc('id')
+            ->paginate(10);
     }
 
     public function add(Request $request): JsonResponse

@@ -115,7 +115,7 @@ class RefLinksControllerTest extends TestCase
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonCount(0);
+        $response->assertJsonCount(0, 'data');
     }
 
     public function testBrowseRefLinks(): void
@@ -148,8 +148,49 @@ class RefLinksControllerTest extends TestCase
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonCount(4);
-        $data = $response->json()[3];
+        $response->assertJsonStructure([
+            'currentPage',
+            'data' => [
+                '*' => [
+                    'bonus',
+                    'comment',
+                    'createdAt',
+                    'deletedAt',
+                    'id',
+                    'keptRefund',
+                    'refund',
+                    'refundValidUntil',
+                    'refunded',
+                    'singleUse',
+                    'token',
+                    'updatedAt',
+                    'usageCount',
+                    'used',
+                    'userId',
+                    'userRoles',
+                    'validUntil',
+                ],
+            ],
+            'firstPageUrl',
+            'from',
+            'lastPage',
+            'lastPageUrl',
+            'links' => [
+                '*' => [
+                    'active',
+                    'label',
+                    'url',
+                ],
+            ],
+            'nextPageUrl',
+            'path',
+            'perPage',
+            'prevPageUrl',
+            'to',
+            'total',
+        ]);
+        $response->assertJsonCount(4, 'data');
+        $data = $response->json('data')[3];
 
         $this->assertEquals('my-token', $data['token']);
         $this->assertEquals('test comment', $data['comment']);
@@ -175,8 +216,8 @@ class RefLinksControllerTest extends TestCase
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonCount(1);
-        $data = $response->json()[0];
+        $response->assertJsonCount(1, 'data');
+        $data = $response->json('data')[0];
 
         $this->assertEquals(2, $data['usageCount']);
     }
@@ -213,8 +254,8 @@ class RefLinksControllerTest extends TestCase
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonCount(1);
-        $data = $response->json()[0];
+        $response->assertJsonCount(1, 'data');
+        $data = $response->json('data')[0];
 
         $this->assertEquals(1200, $data['refunded']);
     }
@@ -231,9 +272,9 @@ class RefLinksControllerTest extends TestCase
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonCount(2);
-        $data1 = $response->json()[0];
-        $data2 = $response->json()[1];
+        $response->assertJsonCount(2, 'data');
+        $data1 = $response->json('data')[0];
+        $data2 = $response->json('data')[1];
 
         $this->assertNull($data1['comment']);
         $this->assertEquals(1, $data1['keptRefund']);
@@ -257,8 +298,8 @@ class RefLinksControllerTest extends TestCase
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonCount(1);
-        $data = $response->json()[0];
+        $response->assertJsonCount(1, 'data');
+        $data = $response->json('data')[0];
 
         $this->assertEquals('dummy-token', $data['token']);
         $this->assertEquals('test comment', $data['comment']);
@@ -334,8 +375,9 @@ class RefLinksControllerTest extends TestCase
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonCount(1);
-        $data = $response->json()[0];
+
+        $response->assertJsonCount(1, 'data');
+        $data = $response->json('data')[0];
 
         $this->assertEquals('dummy-token', $data['token']);
         $this->assertEquals('test comment', $data['comment']);
