@@ -79,4 +79,16 @@ class RefLinksController extends Controller
 
         return self::json($refLink, Response::HTTP_CREATED);
     }
+
+    public function delete(int $refLinkId): JsonResponse
+    {
+        if (null === ($refLink = RefLink::find($refLinkId))) {
+            throw new NotFoundHttpException(sprintf('No referral link found for id: %d', $refLinkId));
+        }
+        if ($refLink->used) {
+            throw new UnprocessableEntityHttpException('Referral link was used and cannot be deleted');
+        }
+        $refLink->delete();
+        return self::json();
+    }
 }
