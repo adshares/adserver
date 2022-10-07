@@ -540,11 +540,11 @@ var getActiveZones = function(call_func, retryNo) {
     };
 
     var tags = [];
-    for(var i=0;i<n;i++) {
+    for (var i = 0; i < n; i++) {
         tags[i] = _tags[i];
     }
 
-    if (n == 0) {
+    if (0 === n) {
         retryFn();
         return;
     }
@@ -585,9 +585,9 @@ var getActiveZones = function(call_func, retryNo) {
             };
 
             //popups
-            if($isset(zone.options.count) && $isset(zone.options.interval)) {
+            if ($isset(zone.options.count) && $isset(zone.options.interval)) {
                 // Do not ask for popups if over limit
-                if(!checkPopLimits(zone.options.count, zone.options.interval)) {
+                if (!checkPopLimits(zone.options.count, zone.options.interval)) {
                     zone.__invalid = true;
                     param.__invalid = true;
                 }
@@ -623,18 +623,21 @@ var getActiveZones = function(call_func, retryNo) {
         }
     });
 
-    if(valid == 0) {
+    if (0 === valid) {
         retryFn();
         return;
     }
 
     var fn;
-    fn = function(){
-        if(waiting > 0) {
+    fn = function() {
+        if (waiting > 0) {
             setTimeout(fn, 50);
         } else {
             var filter = function(x) { return !x.__invalid; };
-            call_func(zones.filter(filter), params.filter(filter));
+            zones = zones.filter(filter);
+            if (zones.length > 0) {
+                call_func(zones, params.filter(filter));
+            }
             retryFn();
         }
     }
@@ -652,6 +655,9 @@ var bannerLoaded = function() {
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
+            console.log('zones #2', zones)
+            console.log('params #2', params)
+
             var data = encodeZones(params);
 
             var url = serverOrigin + '/supply/find';
