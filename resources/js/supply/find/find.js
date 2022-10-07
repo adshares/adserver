@@ -655,9 +655,6 @@ var bannerLoaded = function() {
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
-            console.log('zones #2', zones)
-            console.log('params #2', params)
-
             var data = encodeZones(params);
 
             var url = serverOrigin + '/supply/find';
