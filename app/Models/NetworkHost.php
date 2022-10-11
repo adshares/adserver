@@ -54,6 +54,8 @@ use Illuminate\Support\Carbon;
  */
 class NetworkHost extends Model
 {
+    private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+
     use AutomateMutators;
     use HasFactory;
     use SoftDeletes;
@@ -91,12 +93,14 @@ class NetworkHost extends Model
 
     public static function failHostsBroadcastedBefore(DateTimeInterface $date): int
     {
-        $hosts = self::where('last_broadcast', '<', $date);
+        $hosts = self::where('last_broadcast', '<', $date)->get();
         $counter = $hosts->count();
-        $hosts->update([
-            'error' => 'No broadcast',
-            'status' => HostStatus::Failure,
-        ]);
+        /** @var NetworkHost $host */
+        foreach ($hosts as $host) {
+            $host->error = sprintf('No broadcast since %s', $host->last_broadcast->format(self::DATETIME_FORMAT));
+            $host->status = HostStatus::Failure;
+            $host->save();
+        }
         return $counter;
     }
 
@@ -112,7 +116,7 @@ class NetworkHost extends Model
         string $address,
         string $infoUrl,
         Info $info,
-        ?DateTimeInterface $lastBroadcast = null,
+        DateTimeInterface $lastBroadcast,
         ?string $error = null,
     ): NetworkHost {
         $networkHost = self::withTrashed()->where('address', $address)->first();
@@ -124,7 +128,7 @@ class NetworkHost extends Model
 
         $networkHost->deleted_at = null;
         $networkHost->host = $info->getServerUrl();
-        $networkHost->last_broadcast = $lastBroadcast ?? new DateTimeImmutable();
+        $networkHost->last_broadcast = $lastBroadcast;
         $networkHost->failed_connection = 0;
         $networkHost->info = $info;
         $networkHost->info_url = $infoUrl;
