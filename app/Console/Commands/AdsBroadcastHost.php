@@ -30,24 +30,12 @@ use Adshares\Common\UrlInterface;
 use Adshares\Network\Broadcast;
 use Adshares\Network\BroadcastableUrl;
 
-use function route;
-
 class AdsBroadcastHost extends BaseCommand
 {
-    /**
-     * @var string
-     */
     protected $signature = 'ads:broadcast-host';
-
-    /**
-     * @var string
-     */
     protected $description = 'Sends AdServer host address as broadcast message to blockchain';
 
-    /**
-     * @var UrlInterface
-     */
-    private $infoApiUrl;
+    private UrlInterface $infoApiUrl;
 
     public function __construct(Locker $locker)
     {
@@ -60,7 +48,6 @@ class AdsBroadcastHost extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
@@ -68,9 +55,7 @@ class AdsBroadcastHost extends BaseCommand
 
         $url = new BroadcastableUrl($this->infoApiUrl);
         $command = new Broadcast($url);
-
         $response = $adsClient->runTransaction($command);
-
         $txId = $response->getTx()->getId();
 
         $this->info("Url ($url) broadcast successfully. TxId: $txId");
