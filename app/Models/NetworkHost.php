@@ -27,7 +27,6 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Adshares\Supply\Domain\ValueObject\Status;
-use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -54,15 +53,12 @@ use Illuminate\Support\Carbon;
  */
 class NetworkHost extends Model
 {
-    private const DATETIME_FORMAT = 'Y-m-d H:i:s';
-
     use AutomateMutators;
     use HasFactory;
     use SoftDeletes;
 
-    /**
-     * @var array
-     */
+    private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+
     protected $fillable = [
         'address',
         'host',
@@ -120,19 +116,25 @@ class NetworkHost extends Model
         ?string $error = null,
     ): NetworkHost {
         $networkHost = self::withTrashed()->where('address', $address)->first();
-
-        if (empty($networkHost)) {
+        $newHost = null === $networkHost;
+        if ($newHost) {
             $networkHost = new self();
             $networkHost->address = $address;
         }
 
-        $networkHost->deleted_at = null;
+        if ($newHost || HostStatus::Failure === $networkHost->status || $networkHost->deleted_at !== null) {
+            $networkHost->deleted_at = null;
+            $networkHost->failed_connection = 0;
+            $networkHost->status = HostStatus::Initialization;
+        }
+
         $networkHost->host = $info->getServerUrl();
         $networkHost->last_broadcast = $lastBroadcast;
-        $networkHost->failed_connection = 0;
         $networkHost->info = $info;
         $networkHost->info_url = $infoUrl;
-        $networkHost->status = null === $error ? HostStatus::Initialization : HostStatus::Failure;
+        if (null !== $error) {
+            $networkHost->status = HostStatus::Failure;
+        }
         $networkHost->error = $error;
         $networkHost->save();
 
