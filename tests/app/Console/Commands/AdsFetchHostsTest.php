@@ -386,9 +386,4 @@ class AdsFetchHostsTest extends ConsoleTestCase
 
         return $data;
     }
-
-    private static function getInfo(): Info
-    {
-        return Info::fromArray(self::getInfoData());
-    }
 }

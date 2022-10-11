@@ -11,8 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting referral links
 - Referral links pagination
 ### Changed
-- Host which does not broadcast is marked as failed before deleting
+- Network host which does not broadcast is marked as failed before deleting
 - Do not request banners when zones are invalid
+### Fixed
+- Changing network host state after incoming broadcast
 
 ## [2.1.1] - 2022-10-04
 ### Added
