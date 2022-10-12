@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\ServerEvent;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
@@ -34,6 +35,16 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 final class ServerMonitoringControllerTest extends TestCase
 {
+    private const EVENTS_URI = '/api/monitoring/events';
+    private const EVENTS_STRUCTURE = [
+        'events' => [
+            '*' => [
+                'createdAt',
+                'properties',
+                'type',
+            ],
+        ],
+    ];
     private const MONITORING_URI = '/api/monitoring';
     private const HOSTS_STRUCTURE = [
         'hosts' => [
@@ -185,6 +196,31 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testFetch(): void
+    {
+        self::seedServerEvents();
+
+        $response = $this->getJson(self::EVENTS_URI, self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        $json = $response->json('events');
+        self::assertEquals(2, count($json));
+
+        $response = $this->getJson(self::EVENTS_URI . '?limit=1', self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('events')));
+        $response->assertJsonFragment(['type' => 'b']);
+    }
+
+    public function testFetchByType(): void
+    {
+        self::seedServerEvents();
+
+        $response = $this->getJson(self::buildUriForEventsByType('a'), self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('events')));
+        $response->assertJsonFragment(['type' => 'a']);
+    }
+
     private function getResponseForKey(string $key): TestResponse
     {
         return $this->getJson(
@@ -206,8 +242,19 @@ final class ServerMonitoringControllerTest extends TestCase
         return self::MONITORING_URI . '/' . $key;
     }
 
+    private static function buildUriForEventsByType(string $type): string
+    {
+        return sprintf('%s/type/%s', self::EVENTS_URI, $type);
+    }
+
     private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string
     {
         return sprintf('/api/monitoring/hosts/%d/reset', $hostId);
+    }
+
+    private static function seedServerEvents(): void
+    {
+        ServerEvent::factory()->create(['type' => 'a']);
+        ServerEvent::factory()->create(['type' => 'b']);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,35 +19,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Adshares\Common\Exception\RuntimeException;
-
-/**
- * json columns
- */
-trait JsonValue
-{
-    public function jsonValueMutator($key, $value)
+return new class extends Migration {
+    public function up(): void
     {
-        $this->attributes[$key] = $this->processValue($value);
+        Schema::create('server_events', function (Blueprint $table) {
+            $table->id();
+            $table->timestamp('created_at')->useCurrent();
+            $table->string('type');
+            $table->json('properties');
+
+            $table->index('created_at', 'server_events_created_at_index');
+        });
     }
 
-    public function jsonValueAccessor($value)
+    public function down(): void
     {
-        return $value === null ? null : json_decode($value);
+        Schema::dropIfExists('server_events');
     }
-
-    private function processValue($value): ?string
-    {
-        if (null === $value) {
-            return null;
-        }
-
-        if (false === ($jsonEncode = json_encode($value))) {
-            throw new RuntimeException('Json value cannot be saved');
-        }
-
-        return $jsonEncode;
-    }
-}
+};

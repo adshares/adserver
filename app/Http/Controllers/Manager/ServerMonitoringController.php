@@ -22,10 +22,13 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\ServerEventsResponse;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\ServerEvent;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -79,6 +82,24 @@ class ServerMonitoringController extends Controller
                 'unusedBonuses' => UserLedgerEntry::getBonusBalanceForAllUsers(),
             ]
         ];
+    }
+
+    public function fetchEvents(Request $request, string $type = null): JsonResponse
+    {
+        $limit = $request->query('limit', 10);
+        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
+        }
+
+        if (null === $type) {
+            $events = ServerEvent::fetchLatest($limit);
+        } else {
+            $events = ServerEvent::fetchLatestByType($type, $limit);
+        }
+
+        $response = new ServerEventsResponse($events);
+
+        return self::json($response->toArray());
     }
 
     public function resetHost(int $hostId): JsonResponse
