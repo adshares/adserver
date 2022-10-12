@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use Adshares\Adserver\Models\ServerEvent;
+use Adshares\Adserver\Models\ServerEventLog;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ServerEvent>
+ * @extends Factory<ServerEventLog>
  */
 class ServerEventFactory extends Factory
 {

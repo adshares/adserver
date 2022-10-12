@@ -23,16 +23,16 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Response;
 
-use Adshares\Adserver\Models\ServerEvent;
+use Adshares\Adserver\Models\ServerEventLog;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Collection;
 use stdClass;
 
-class ServerEventsResponse implements Arrayable
+class ServerEventLogsResponse implements Arrayable
 {
     /**
-     * @param Collection<ServerEvent> $serverEvents
+     * @param Collection<ServerEventLog> $serverEvents
      */
     public function __construct(private readonly Collection $serverEvents)
     {

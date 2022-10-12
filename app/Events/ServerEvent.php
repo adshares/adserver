@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,17 +19,30 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Providers;
+namespace Adshares\Adserver\Events;
 
-use Adshares\Adserver\Events\ServerEvent;
-use Adshares\Adserver\Listeners\ServerEventListener;
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Adshares\Adserver\ViewModel\ServerEventType;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
-class EventServiceProvider extends ServiceProvider
+class ServerEvent
 {
-    protected $listen = [
-        ServerEvent::class => [
-            ServerEventListener::class,
-        ],
-    ];
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
+
+    public function __construct(private readonly ServerEventType $type, private readonly array $properties = [])
+    {
+    }
+
+    public function getType(): ServerEventType
+    {
+        return $this->type;
+    }
+
+    public function getProperties(): array
+    {
+        return $this->properties;
+    }
 }

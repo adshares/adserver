@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,17 +19,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Providers;
+declare(strict_types=1);
 
-use Adshares\Adserver\Events\ServerEvent;
-use Adshares\Adserver\Listeners\ServerEventListener;
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+namespace Adshares\Adserver\ViewModel;
 
-class EventServiceProvider extends ServiceProvider
+enum ServerEventType: string
 {
-    protected $listen = [
-        ServerEvent::class => [
-            ServerEventListener::class,
-        ],
-    ];
+    case HostBroadcastProcessed = 'HostBroadcastProcessed';
 }

@@ -22,9 +22,9 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Response\ServerEventsResponse;
+use Adshares\Adserver\Http\Response\ServerEventLogsResponse;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Models\ServerEvent;
+use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
@@ -92,12 +92,12 @@ class ServerMonitoringController extends Controller
         }
 
         if (null === $type) {
-            $events = ServerEvent::fetchLatest($limit);
+            $events = ServerEventLog::fetchLatest($limit);
         } else {
-            $events = ServerEvent::fetchLatestByType($type, $limit);
+            $events = ServerEventLog::fetchLatestByType($type, $limit);
         }
 
-        $response = new ServerEventsResponse($events);
+        $response = new ServerEventLogsResponse($events);
 
         return self::json($response->toArray());
     }

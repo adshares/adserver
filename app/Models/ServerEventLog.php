@@ -2,6 +2,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,21 +12,26 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property Carbon created_at
- * @property string type
+ * @property ServerEventType type
  * @property array properties
  * @mixin Builder
  */
-class ServerEvent extends Model
+class ServerEventLog extends Model
 {
     use HasFactory;
 
     public const UPDATED_AT = null;
+
+    protected $casts = [
+        'type' => ServerEventType::class,
+    ];
+
     protected $fillable = [
         'properties',
         'type',
     ];
 
-    public static function register(string $type, array $properties = []): void
+    public static function register(ServerEventType $type, array $properties = []): void
     {
         $event = new self();
         $event->type = $type;

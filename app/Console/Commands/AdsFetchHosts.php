@@ -28,8 +28,10 @@ use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\AppMode;
 use Adshares\Network\BroadcastableUrl;
@@ -84,6 +86,7 @@ class AdsFetchHosts extends BaseCommand
         $this->comment('Cleaning up old hosts...');
         $removed = $this->removeOldHosts();
         $marked = $this->markHostsWhichDoesNotBroadcast();
+        ServerEvent::dispatch(ServerEventType::HostBroadcastProcessed, ['marked' => $marked, 'removed' => $removed]);
         if ($marked) {
             $this->info(sprintf('Marked %d hosts which does not broadcast', $marked));
         }

@@ -22,7 +22,7 @@
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Models\ServerEvent;
+use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
@@ -254,7 +254,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     private static function seedServerEvents(): void
     {
-        ServerEvent::factory()->create(['type' => 'a']);
-        ServerEvent::factory()->create(['type' => 'b']);
+        ServerEventLog::factory()->create(['type' => 'a']);
+        ServerEventLog::factory()->create(['type' => 'b']);
     }
 }
