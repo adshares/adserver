@@ -3,23 +3,22 @@
 namespace Database\Factories;
 
 use Adshares\Adserver\Models\ServerEventLog;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<ServerEventLog>
  */
-class ServerEventFactory extends Factory
+class ServerEventLogFactory extends Factory
 {
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
             'properties' => [],
-            'type' => 'test',
+            'type' => $this->faker->randomElement(ServerEventType::cases()),
         ];
     }
 }

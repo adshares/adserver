@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
@@ -208,17 +209,20 @@ final class ServerMonitoringControllerTest extends TestCase
         $response = $this->getJson(self::EVENTS_URI . '?limit=1', self::getHeaders());
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(1, count($response->json('events')));
-        $response->assertJsonFragment(['type' => 'b']);
+        $response->assertJsonFragment(['type' => ServerEventType::InventorySynchronized]);
     }
 
     public function testFetchByType(): void
     {
         self::seedServerEvents();
 
-        $response = $this->getJson(self::buildUriForEventsByType('a'), self::getHeaders());
+        $response = $this->getJson(
+            self::buildUriForEventsByType(ServerEventType::HostBroadcastProcessed),
+            self::getHeaders()
+        );
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(1, count($response->json('events')));
-        $response->assertJsonFragment(['type' => 'a']);
+        $response->assertJsonFragment(['type' => ServerEventType::HostBroadcastProcessed]);
     }
 
     private function getResponseForKey(string $key): TestResponse
@@ -242,9 +246,9 @@ final class ServerMonitoringControllerTest extends TestCase
         return self::MONITORING_URI . '/' . $key;
     }
 
-    private static function buildUriForEventsByType(string $type): string
+    private static function buildUriForEventsByType(ServerEventType $type): string
     {
-        return sprintf('%s/type/%s', self::EVENTS_URI, $type);
+        return sprintf('%s/type/%s', self::EVENTS_URI, $type->value);
     }
 
     private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string
@@ -254,7 +258,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     private static function seedServerEvents(): void
     {
-        ServerEventLog::factory()->create(['type' => 'a']);
-        ServerEventLog::factory()->create(['type' => 'b']);
+        ServerEventLog::factory()->create(['type' => ServerEventType::HostBroadcastProcessed]);
+        ServerEventLog::factory()->create(['type' => ServerEventType::InventorySynchronized]);
     }
 }

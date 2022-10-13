@@ -26,4 +26,5 @@ namespace Adshares\Adserver\ViewModel;
 enum ServerEventType: string
 {
     case HostBroadcastProcessed = 'HostBroadcastProcessed';
+    case InventorySynchronized = 'InventorySynchronized';
 }
