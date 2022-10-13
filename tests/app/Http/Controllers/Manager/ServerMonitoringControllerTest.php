@@ -48,7 +48,7 @@ final class ServerMonitoringControllerTest extends TestCase
     ];
     private const MONITORING_URI = '/api/monitoring';
     private const HOSTS_STRUCTURE = [
-        'hosts' => [
+        'data' => [
             '*' => [
                 'id',
                 'status',
@@ -121,6 +121,16 @@ final class ServerMonitoringControllerTest extends TestCase
             'status' => HostStatus::Operational,
             'lastSynchronization' => $carbon->format(DateTimeInterface::ATOM),
         ]);
+    }
+
+    public function testFetchHostsValidateLimit(): void
+    {
+        $response = $this->getJson(
+            self::buildUriForKey('hosts') . '?limit=no',
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFetchWallet(): void

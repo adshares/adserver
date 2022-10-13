@@ -33,7 +33,6 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(
     Route::patch('config', [ServerConfigurationController::class, 'store']);
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 
-    Route::get('monitoring/events', [ServerMonitoringController::class, 'fetchEvents']);
     Route::get('monitoring/{key}', [ServerMonitoringController::class, 'fetch']);
     Route::patch('monitoring/hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
 });

@@ -28,7 +28,6 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeImmutable;
 use DateTimeInterface;
-use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -37,6 +36,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class ServerMonitoringController extends Controller
 {
     private const ALLOWED_KEYS = [
+        'events',
         'hosts',
         'wallet',
     ];
@@ -53,7 +53,7 @@ class ServerMonitoringController extends Controller
         return self::json($data);
     }
 
-    public function fetchEvents(Request $request): CursorPaginator
+    public function handleEvents(Request $request): array
     {
         $limit = $request->query('limit', 10);
         $types = $request->query('types', []);
@@ -91,12 +91,21 @@ class ServerMonitoringController extends Controller
 
         return ServerEventLog::getBuilderForFetching($types, $from, $to)
             ->cursorPaginate($limit)
-            ->withQueryString();
+            ->withQueryString()
+            ->toArray();
     }
 
     private function handleHosts(Request $request): array
     {
-        $hosts = NetworkHost::all()->map(function ($host) {
+        $limit = $request->query('limit', 10);
+        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
+        }
+
+        $paginator = NetworkHost::orderBy('id')
+            ->cursorPaginate($limit)
+            ->withQueryString();
+        $collection = $paginator->getCollection()->map(function ($host) {
             /** @var NetworkHost $host */
             $info = $host->info;
             $statistics = $info->getStatistics()?->toArray() ?? [];
@@ -113,8 +122,9 @@ class ServerMonitoringController extends Controller
                 'connectionErrorCount' => $host->failed_connection,
                 'infoJson' => $info->toArray(),
             ];
-        })->all();
-        return ['hosts' => $hosts];
+        });
+        $paginator->setCollection($collection);
+        return $paginator->toArray();
     }
 
     private function handleWallet(Request $request): array
