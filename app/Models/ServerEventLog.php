@@ -39,14 +39,13 @@ class ServerEventLog extends Model
         $event->save();
     }
 
-    public static function fetchLatest(int $limit): Collection
+    public static function fetchLatest(array $types, int $limit = 10): Collection
     {
-        return self::orderBy('created_at', 'desc')->limit($limit)->get();
-    }
-
-    public static function fetchLatestByType(string $type, int $limit): Collection
-    {
-        return self::where('type', $type)->orderBy('created_at', 'desc')->limit($limit)->get();
+        $builder = self::orderBy('created_at', 'desc')->limit($limit);
+        if ($types) {
+            $builder->whereIn('type', $types);
+        }
+        return $builder->get();
     }
 
     public function getPropertiesAttribute(): array

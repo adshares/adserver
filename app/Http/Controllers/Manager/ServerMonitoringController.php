@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Response\ServerEventLogsResponse;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,23 +36,46 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class ServerMonitoringController extends Controller
 {
     private const ALLOWED_KEYS = [
+        'events',
         'hosts',
         'wallet',
     ];
 
-    public function fetch(string $key): JsonResponse
+    public function fetch(Request $request, string $key): JsonResponse
     {
         if (!in_array($key, self::ALLOWED_KEYS)) {
             throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
         }
 
         $signature = Str::camel('handle_' . $key);
-        $data = $this->{$signature}();
+        $data = $this->{$signature}($request);
 
         return self::json($data);
     }
 
-    private function handleHosts(): array
+    public function handleEvents(Request $request): array
+    {
+        $limit = $request->query('limit', 10);
+        $types = $request->query('types', []);
+        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
+        }
+        if (!is_array($types)) {
+            throw new UnprocessableEntityHttpException('Types must be an array');
+        }
+        foreach ($types as $type) {
+            if (!is_string($type) || null === ServerEventType::tryFrom($type)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid type `%s`', $type));
+            }
+        }
+
+        $events = ServerEventLog::fetchLatest($types, $limit);
+        $response = new ServerEventLogsResponse($events);
+
+        return $response->toArray();
+    }
+
+    private function handleHosts(Request $request): array
     {
         $hosts = NetworkHost::all()->map(function ($host) {
             /** @var NetworkHost $host */
@@ -74,7 +98,7 @@ class ServerMonitoringController extends Controller
         return ['hosts' => $hosts];
     }
 
-    private function handleWallet(): array
+    private function handleWallet(Request $request): array
     {
         return [
             'wallet' => [
@@ -82,24 +106,6 @@ class ServerMonitoringController extends Controller
                 'unusedBonuses' => UserLedgerEntry::getBonusBalanceForAllUsers(),
             ]
         ];
-    }
-
-    public function fetchEvents(Request $request, string $type = null): JsonResponse
-    {
-        $limit = $request->query('limit', 10);
-        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
-        }
-
-        if (null === $type) {
-            $events = ServerEventLog::fetchLatest($limit);
-        } else {
-            $events = ServerEventLog::fetchLatestByType($type, $limit);
-        }
-
-        $response = new ServerEventLogsResponse($events);
-
-        return self::json($response->toArray());
     }
 
     public function resetHost(int $hostId): JsonResponse
