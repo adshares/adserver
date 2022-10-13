@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Network host which does not broadcast is marked as failed before deleting
 - Do not request banners when zones are invalid
+- Configuration and monitoring API in camel case
 ### Fixed
 - Changing network host state after incoming broadcast
 
@@ -30,18 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0] - 2022-09-28
 ### Added
 - Possibility to set application currency other than ADS
-- AdPanel's placeholders to config API
+- AdPanel's placeholders to configuration API
 - Allow change user roles
 - Login info to panel placeholders
 ### Changed
 - Split user access for advertisers and publishers
-- Config API returns data after store
+- Configuration API returns data after store
 ### Removed
 - Registration forms URLs from info
 ### Fixed
-- Do not expose SMTP password in config API
+- Do not expose SMTP password in configuration API
 - Remove deprecated zip* functions
-- Types, validators in config API
+- Types, validators in configuration API
 - Block find if publisher cannot be determined
 
 ## [2.0.5] - 2022-09-16

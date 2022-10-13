@@ -197,7 +197,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testFetch(): void
+    public function testFetchEvents(): void
     {
         self::seedServerEvents();
 
@@ -213,7 +213,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertJsonFragment(['type' => ServerEventType::InventorySynchronized]);
     }
 
-    public function testFetchByType(): void
+    public function testFetchEventsByType(): void
     {
         self::seedServerEvents();
 
@@ -225,6 +225,84 @@ final class ServerMonitoringControllerTest extends TestCase
             ->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(1, count($response->json('data')));
         $response->assertJsonFragment(['type' => ServerEventType::HostBroadcastProcessed]);
+    }
+
+    public function testFetchEventsValidationLimit(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?limit=no',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventsValidationTypeNotArray(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?types=' . ServerEventType::HostBroadcastProcessed->value,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventsValidationTypeInvalid(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?types[]=invalid',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * @dataProvider invalidDateProvider
+     */
+    public function testFetchEventsValidationFrom(string $from): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from=' . $from,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * @dataProvider invalidDateProvider
+     */
+    public function testFetchEventsValidationTo(string $to): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?to=' . $to,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function invalidDateProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'text' => ['now'],
+            'number' => ['2022'],
+        ];
+    }
+
+    public function testFetchEventsValidationFromArray(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from[]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventsValidationToArray(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?to[]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function getResponseForKey(string $key): TestResponse
