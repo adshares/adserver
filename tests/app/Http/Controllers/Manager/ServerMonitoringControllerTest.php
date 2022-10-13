@@ -38,7 +38,7 @@ final class ServerMonitoringControllerTest extends TestCase
 {
     private const EVENTS_URI = '/api/monitoring/events';
     private const EVENTS_STRUCTURE = [
-        'events' => [
+        'data' => [
             '*' => [
                 'createdAt',
                 'properties',
@@ -203,12 +203,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->getJson(self::EVENTS_URI, self::getHeaders());
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
-        $json = $response->json('events');
+        $json = $response->json('data');
         self::assertEquals(2, count($json));
 
         $response = $this->getJson(self::EVENTS_URI . '?limit=1', self::getHeaders());
-        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
-        self::assertEquals(1, count($response->json('events')));
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
         $response->assertJsonFragment(['type' => ServerEventType::InventorySynchronized]);
     }
 
@@ -217,11 +218,12 @@ final class ServerMonitoringControllerTest extends TestCase
         self::seedServerEvents();
 
         $response = $this->getJson(
-            self::buildUriForEventsByType(ServerEventType::HostBroadcastProcessed),
+            self::EVENTS_URI . '?types[]=' . ServerEventType::HostBroadcastProcessed->value,
             self::getHeaders()
         );
-        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
-        self::assertEquals(1, count($response->json('events')));
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
         $response->assertJsonFragment(['type' => ServerEventType::HostBroadcastProcessed]);
     }
 
@@ -244,11 +246,6 @@ final class ServerMonitoringControllerTest extends TestCase
     private static function buildUriForKey(string $key): string
     {
         return self::MONITORING_URI . '/' . $key;
-    }
-
-    private static function buildUriForEventsByType(ServerEventType $type): string
-    {
-        return sprintf('%s/type/%s', self::EVENTS_URI, $type->value);
     }
 
     private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string

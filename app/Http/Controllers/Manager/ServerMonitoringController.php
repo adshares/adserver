@@ -22,13 +22,13 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Response\ServerEventLogsResponse;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -37,7 +37,6 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class ServerMonitoringController extends Controller
 {
     private const ALLOWED_KEYS = [
-        'events',
         'hosts',
         'wallet',
     ];
@@ -54,7 +53,7 @@ class ServerMonitoringController extends Controller
         return self::json($data);
     }
 
-    public function handleEvents(Request $request): array
+    public function fetchEvents(Request $request): CursorPaginator
     {
         $limit = $request->query('limit', 10);
         $types = $request->query('types', []);
@@ -90,10 +89,9 @@ class ServerMonitoringController extends Controller
             }
         }
 
-        $events = ServerEventLog::fetch($types, $from, $to, $limit);
-        $response = new ServerEventLogsResponse($events);
-
-        return $response->toArray();
+        return ServerEventLog::getBuilderForFetching($types, $from, $to)
+            ->cursorPaginate($limit)
+            ->withQueryString();
     }
 
     private function handleHosts(Request $request): array

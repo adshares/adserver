@@ -5,7 +5,6 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -15,7 +14,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon created_at
  * @property ServerEventType type
  * @property array properties
- * @mixin Builder
  */
 class ServerEventLog extends Model
 {
@@ -40,13 +38,12 @@ class ServerEventLog extends Model
         $event->save();
     }
 
-    public static function fetch(
+    public static function getBuilderForFetching(
         array $types = [],
         DateTimeInterface $from = null,
         DateTimeInterface $to = null,
-        int $limit = 10
-    ): Collection {
-        $builder = self::orderBy('created_at', 'desc')->limit($limit);
+    ): Builder {
+        $builder = self::orderBy('id', 'desc');
         if ($types) {
             $builder->whereIn('type', $types);
         }
@@ -56,7 +53,7 @@ class ServerEventLog extends Model
         if (null !== $to) {
             $builder->where('created_at', '<=', $to);
         }
-        return $builder->get();
+        return $builder;
     }
 
     public function getPropertiesAttribute(): array
