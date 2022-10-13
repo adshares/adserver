@@ -25,6 +25,7 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Response\TransactionResponse;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 
 class AdsBroadcastHostTest extends ConsoleTestCase
 {
@@ -40,6 +41,7 @@ class AdsBroadcastHostTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND_SIGNATURE)
             ->expectsOutput('Url (https://example.com/info.json) broadcast successfully. TxId: 0001:00000002:0001');
+        self::assertServerEventDispatched(ServerEventType::BroadcastSent);
     }
 
     public function testLock(): void

@@ -25,6 +25,8 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\UrlInterface;
 use Adshares\Network\Broadcast;
@@ -57,6 +59,7 @@ class AdsBroadcastHost extends BaseCommand
         $command = new Broadcast($url);
         $response = $adsClient->runTransaction($command);
         $txId = $response->getTx()->getId();
+        ServerEvent::dispatch(ServerEventType::BroadcastSent, ['txId' => $txId]);
 
         $this->info("Url ($url) broadcast successfully. TxId: $txId");
     }
