@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,6 +58,8 @@ class ServerMonitoringController extends Controller
     {
         $limit = $request->query('limit', 10);
         $types = $request->query('types', []);
+        $from = $request->query('from');
+        $to = $request->query('to');
         if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
             throw new UnprocessableEntityHttpException('Limit must be a positive integer');
         }
@@ -68,8 +71,26 @@ class ServerMonitoringController extends Controller
                 throw new UnprocessableEntityHttpException(sprintf('Invalid type `%s`', $type));
             }
         }
+        if (null !== $from) {
+            if (!is_string($from)) {
+                throw new UnprocessableEntityHttpException('`from` must be a string in ISO 8601 format');
+            }
+            $from = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $from);
+            if (false === $from) {
+                throw new UnprocessableEntityHttpException('`from` must be in ISO 8601 format');
+            }
+        }
+        if (null !== $to) {
+            if (!is_string($to)) {
+                throw new UnprocessableEntityHttpException('`to` must be a string in ISO 8601 format');
+            }
+            $to = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $to);
+            if (false === $to) {
+                throw new UnprocessableEntityHttpException('`to` must be in ISO 8601 format');
+            }
+        }
 
-        $events = ServerEventLog::fetchLatest($types, $limit);
+        $events = ServerEventLog::fetch($types, $from, $to, $limit);
         $response = new ServerEventLogsResponse($events);
 
         return $response->toArray();

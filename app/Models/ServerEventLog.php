@@ -3,6 +3,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\ViewModel\ServerEventType;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,11 +40,21 @@ class ServerEventLog extends Model
         $event->save();
     }
 
-    public static function fetchLatest(array $types, int $limit = 10): Collection
-    {
+    public static function fetch(
+        array $types = [],
+        DateTimeInterface $from = null,
+        DateTimeInterface $to = null,
+        int $limit = 10
+    ): Collection {
         $builder = self::orderBy('created_at', 'desc')->limit($limit);
         if ($types) {
             $builder->whereIn('type', $types);
+        }
+        if (null !== $from) {
+            $builder->where('created_at', '>=', $from);
+        }
+        if (null !== $to) {
+            $builder->where('created_at', '<=', $to);
         }
         return $builder->get();
     }
