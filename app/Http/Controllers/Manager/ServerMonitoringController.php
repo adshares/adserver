@@ -124,6 +124,7 @@ class ServerMonitoringController extends Controller
                 'siteCount' => $statistics['sites'] ?? 0,
                 'connectionErrorCount' => $host->failed_connection,
                 'infoJson' => $info->toArray(),
+                'error' => $host->error,
             ];
         });
         $paginator->setCollection($collection);

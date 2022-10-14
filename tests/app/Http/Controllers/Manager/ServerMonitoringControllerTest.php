@@ -62,6 +62,7 @@ final class ServerMonitoringControllerTest extends TestCase
                 'siteCount',
                 'connectionErrorCount',
                 'infoJson',
+                'error',
             ],
         ]
     ];
