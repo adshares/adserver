@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Mock\Client\DummyAdClassifyClient;
 
@@ -32,15 +33,11 @@ class UpdateFilteringOptionsTest extends ConsoleTestCase
 {
     public function testFilteringOptionsUpdate(): void
     {
-        $this->app->bind(
-            AdClassify::class,
-            function () {
-                return new DummyAdClassifyClient();
-            }
-        );
+        $this->app->bind(AdClassify::class, DummyAdClassifyClient::class);
 
         $this->artisan('ops:filtering-options:update')
             ->assertExitCode(0);
+        self::assertServerEventDispatched(ServerEventType::FilteringUpdated);
     }
 
     public function testLock(): void

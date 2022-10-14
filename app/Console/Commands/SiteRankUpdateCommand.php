@@ -24,11 +24,13 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Mail\SiteVerified;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -42,27 +44,16 @@ use Illuminate\Support\Facades\Mail;
 class SiteRankUpdateCommand extends BaseCommand
 {
     private const CHUNK_SIZE = 200;
-
     private const EMAIL_NOTIFICATION_RANK_MINIMAL = 0.1;
 
     protected $signature = 'ops:supply:site-rank:update {--A|all : Update all sites}';
-
     protected $description = "Updates sites' rank";
 
-    /** @var AdUser */
-    private $adUser;
-
-    /** @var SiteCategoriesValidator */
-    private $siteCategoriesValidator;
-
-    /** @var string */
-    private $siteBaseUrl;
-
-    /** @var array */
-    private $mails = [];
-
-    /** @var DateTime */
-    private $notificationDateTimeThreshold;
+    private AdUser $adUser;
+    private SiteCategoriesValidator $siteCategoriesValidator;
+    private string $siteBaseUrl;
+    private array $mails = [];
+    private DateTime $notificationDateTimeThreshold;
 
     public function __construct(Locker $locker, AdUser $adUser, SiteCategoriesValidator $siteCategoriesValidator)
     {
@@ -76,7 +67,6 @@ class SiteRankUpdateCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->name . ' already running');
-
             return;
         }
 
@@ -88,6 +78,7 @@ class SiteRankUpdateCommand extends BaseCommand
         $this->notificationDateTimeThreshold =
             Config::fetchDateTime(Config::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD);
 
+        $processedSiteCount = 0;
         do {
             if ($isOptionAll) {
                 $sites = Site::fetchAll($lastId, self::CHUNK_SIZE);
@@ -98,9 +89,11 @@ class SiteRankUpdateCommand extends BaseCommand
             $this->update($sites);
 
             $lastId = $sites->last()->id ?? 0;
+            $processedSiteCount += $sites->count();
         } while ($sites->count() === self::CHUNK_SIZE);
 
         $this->sendEmails();
+        ServerEvent::dispatch(ServerEventType::SiteRankUpdated, ['processedSiteCount' => $processedSiteCount]);
 
         $this->info('Finish command ' . $this->name);
     }

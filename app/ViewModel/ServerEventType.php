@@ -26,6 +26,10 @@ namespace Adshares\Adserver\ViewModel;
 enum ServerEventType: string
 {
     case BroadcastSent = 'BroadcastSent';
+    case ExchangeRatesFetched = 'ExchangeRatesFetched';
+    case FilteringUpdated = 'FilteringUpdated';
     case HostBroadcastProcessed = 'HostBroadcastProcessed';
     case InventorySynchronized = 'InventorySynchronized';
+    case SiteRankUpdated = 'SiteRankUpdated';
+    case TargetingUpdated = 'TargetingUpdated';
 }
