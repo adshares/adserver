@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property int $id
@@ -54,6 +55,22 @@ class ServerEventLog extends Model
             $builder->where('created_at', '<=', $to);
         }
         return $builder;
+    }
+
+    public static function getBuilderForFetchingLatest(array $types = []): Builder
+    {
+        $latestEvents = self::select(DB::raw('MAX(id) as id'))
+            ->groupBy('type');
+        if ($types) {
+            $latestEvents->whereIn('type', $types);
+        }
+
+        return self::select(DB::raw('s.*'))
+            ->from('server_event_logs AS s')
+            ->orderBy('id', 'desc')
+            ->joinSub($latestEvents, 'le', function ($join) {
+                $join->on('s.id', '=', 'le.id');
+            });
     }
 
     public function getPropertiesAttribute(): array

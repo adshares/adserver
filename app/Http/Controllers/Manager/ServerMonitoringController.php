@@ -38,6 +38,7 @@ class ServerMonitoringController extends Controller
     private const ALLOWED_KEYS = [
         'events',
         'hosts',
+        'latest-events',
         'wallet',
     ];
 
@@ -59,17 +60,8 @@ class ServerMonitoringController extends Controller
         $types = $request->query('types', []);
         $from = $request->query('from');
         $to = $request->query('to');
-        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
-        }
-        if (!is_array($types)) {
-            throw new UnprocessableEntityHttpException('Types must be an array');
-        }
-        foreach ($types as $type) {
-            if (!is_string($type) || null === ServerEventType::tryFrom($type)) {
-                throw new UnprocessableEntityHttpException(sprintf('Invalid type `%s`', $type));
-            }
-        }
+        self::validateLimit($limit);
+        self::validateTypes($types);
         if (null !== $from) {
             if (!is_string($from)) {
                 throw new UnprocessableEntityHttpException('`from` must be a string in ISO 8601 format');
@@ -101,9 +93,7 @@ class ServerMonitoringController extends Controller
     private function handleHosts(Request $request): array
     {
         $limit = $request->query('limit', 10);
-        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
-        }
+        $this->validateLimit($limit);
 
         $paginator = NetworkHost::orderBy('id')
             ->cursorPaginate($limit)
@@ -131,6 +121,19 @@ class ServerMonitoringController extends Controller
         return $paginator->toArray();
     }
 
+    public function handleLatestEvents(Request $request): array
+    {
+        $limit = $request->query('limit', 10);
+        $types = $request->query('types', []);
+        $this->validateLimit($limit);
+        self::validateTypes($types);
+
+        return ServerEventLog::getBuilderForFetchingLatest($types)
+            ->cursorPaginate($limit)
+            ->withQueryString()
+            ->toArray();
+    }
+
     private function handleWallet(Request $request): array
     {
         return [
@@ -151,5 +154,24 @@ class ServerMonitoringController extends Controller
         $host->resetConnectionErrorCounter();
 
         return self::json();
+    }
+
+    private static function validateLimit(array|string|null $limit): void
+    {
+        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
+        }
+    }
+
+    private static function validateTypes(array|string|null $types): void
+    {
+        if (!is_array($types)) {
+            throw new UnprocessableEntityHttpException('Types must be an array');
+        }
+        foreach ($types as $type) {
+            if (!is_string($type) || null === ServerEventType::tryFrom($type)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid type `%s`', $type));
+            }
+        }
     }
 }

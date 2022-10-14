@@ -359,6 +359,49 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testFetchLatestEventsByType(): void
+    {
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-8 minutes'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 1],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-6 minutes'),
+            'type' => ServerEventType::HostBroadcastProcessed,
+            'properties' => ['test' => 2],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-4 minutes'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 3],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-2 minutes'),
+            'type' => ServerEventType::BroadcastSent,
+            'properties' => ['test' => 4],
+        ]);
+
+        $response = $this->getJson(
+            self::buildUriForKey('latest-events')
+            . '?types[]=' . ServerEventType::HostBroadcastProcessed->value
+            . '&types[]=' . ServerEventType::InventorySynchronized->value,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(2, count($response->json('data')));
+
+        $response->assertJsonFragment([
+            'type' => ServerEventType::HostBroadcastProcessed,
+            'properties' => ['test' => 2],
+        ]);
+        $response->assertJsonFragment([
+            'type' => ServerEventType::HostBroadcastProcessed,
+            'properties' => ['test' => 3],
+        ]);
+    }
+
     private function getResponseForKey(string $key): TestResponse
     {
         return $this->getJson(
