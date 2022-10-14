@@ -19,15 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Listeners;
+declare(strict_types=1);
+
+namespace Adshares\Adserver\Tests\Listener;
 
 use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\Listeners\ServerEventListener;
 use Adshares\Adserver\Models\ServerEventLog;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 
-class ServerEventListener
+class ServerEventListenerTest extends TestCase
 {
-    public function handle(ServerEvent $event): void
+    public function testHandle(): void
     {
-        ServerEventLog::register($event->getType(), $event->getProperties());
+        $event = new ServerEvent(ServerEventType::InventorySynchronized, ['test' => 'OK']);
+
+        (new ServerEventListener())->handle($event);
+
+        self::assertDatabaseHas(ServerEventLog::class, [
+            'type' => ServerEventType::InventorySynchronized,
+        ]);
+        self::assertEquals(['test' => 'OK'], ServerEventLog::first()->properties);
     }
 }

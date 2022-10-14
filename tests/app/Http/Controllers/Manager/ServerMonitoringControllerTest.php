@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Testing\TestResponse;
@@ -237,6 +238,37 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertJsonFragment(['type' => ServerEventType::HostBroadcastProcessed]);
     }
 
+    public function testFetchEventsByDate(): void
+    {
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-1 month'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 1],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable(),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 2],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('+1 month'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 3],
+        ]);
+
+        $from = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
+        $to = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from=' . urlencode($from) . '&to=' . urlencode($to),
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonFragment(['type' => ServerEventType::InventorySynchronized]);
+        $response->assertJsonFragment(['test' => 2]);
+    }
+
     public function testFetchEventsValidationLimit(): void
     {
         $response = $this->getJson(
@@ -310,6 +342,17 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $response = $this->getJson(
             self::EVENTS_URI . '?to[]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventValidationDateRange(): void
+    {
+        $from = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
+        $to = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from=' . urlencode($from) . '&to=' . urlencode($to),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

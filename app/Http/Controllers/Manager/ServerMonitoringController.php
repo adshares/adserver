@@ -88,6 +88,9 @@ class ServerMonitoringController extends Controller
                 throw new UnprocessableEntityHttpException('`to` must be in ISO 8601 format');
             }
         }
+        if (null !== $from && null !== $to && $from > $to) {
+            throw new UnprocessableEntityHttpException('Invalid time range: `from` must be earlier than `to`');
+        }
 
         return ServerEventLog::getBuilderForFetching($types, $from, $to)
             ->cursorPaginate($limit)
