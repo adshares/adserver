@@ -30,8 +30,10 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Domain\ValueObject\NullUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -42,9 +44,7 @@ use Illuminate\Http\Response;
 class SupplyProcessPaymentsTest extends ConsoleTestCase
 {
     private const SIGNATURE = 'ops:supply:payments:process';
-
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
-
     private const TX_ID_SEND_ONE = '0001:00000083:0001';
 
     public function testAdsProcessOutdated(): void
@@ -52,15 +52,13 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $demandClient = new DummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
-        $adsPayment = new AdsPayment();
         $createdAt = new DateTimeImmutable('-30 hours');
-        $adsPayment->created_at = $createdAt;
-        $adsPayment->txid = self::TX_ID_SEND_ONE;
-        $adsPayment->amount = 100000000000;
-        $adsPayment->address = $networkHost->address;
-        $adsPayment->status = AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE;
-        $adsPayment->tx_time = $createdAt->modify('-8 minutes');
-        $adsPayment->save();
+        AdsPayment::factory()->create([
+            'created_at' => $createdAt,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+            'tx_time' => $createdAt->modify('-8 minutes'),
+        ]);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
@@ -69,13 +67,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessMissingHost(): void
     {
-        $adsPayment = new AdsPayment();
-        $adsPayment->txid = self::TX_ID_SEND_ONE;
-        $adsPayment->amount = 100000000000;
-        $adsPayment->address = '0001-00000000-9B6F';
-        $adsPayment->status = AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE;
-        $adsPayment->tx_time = new DateTimeImmutable('-8 minutes');
-        $adsPayment->save();
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_ONE,
+            'amount' => 100000000000,
+            'address' => '0001-00000000-9B6F',
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
@@ -87,13 +84,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $demandClient = new DummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
-        $adsPayment = new AdsPayment();
-        $adsPayment->txid = self::TX_ID_SEND_ONE;
-        $adsPayment->amount = 100000000000;
-        $adsPayment->address = $networkHost->address;
-        $adsPayment->status = AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE;
-        $adsPayment->tx_time = new DateTimeImmutable('-8 minutes');
-        $adsPayment->save();
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_ONE,
+            'amount' => 100000000000,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
 
         $this->app->bind(
             DemandClient::class,
@@ -148,20 +144,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             }
         }
 
-        $adsPayment = new AdsPayment();
-        $adsPayment->txid = self::TX_ID_SEND_MANY;
-        $adsPayment->amount = $totalAmount;
-        $adsPayment->address = $networkHost->address;
-        $adsPayment->status = AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE;
-        $adsPayment->tx_time = new DateTimeImmutable('-8 minutes');
-        $adsPayment->save();
-
-        $this->app->bind(
-            DemandClient::class,
-            function () {
-                return new DummyDemandClient();
-            }
-        );
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => $totalAmount,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
 
         $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
 
@@ -169,6 +157,38 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+    }
+
+    public function testAdsProcessEventPaymentWithPaymentProcessorError(): void
+    {
+        $paymentDetailsProcessor = self::createMock(PaymentDetailsProcessor::class);
+        $paymentDetailsProcessor->method('processPaidEvents')->willThrowException(new RuntimeException());
+        $this->app->bind(PaymentDetailsProcessor::class, fn() => $paymentDetailsProcessor);
+
+        $demandClient = new DummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+        $networkImpression = NetworkImpression::factory()->create();
+        $paymentDetail = $demandClient->fetchPaymentDetails('', '', 1, 0)[0];
+
+        NetworkCase::factory()->create([
+            'case_id' => $paymentDetail['case_id'],
+            'network_impression_id' => $networkImpression->id,
+            'publisher_id' => $paymentDetail['publisher_id'],
+        ]);
+
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => (int)$paymentDetail['event_value'],
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        self::artisan(self::SIGNATURE)->assertExitCode(0);
+
+        self::assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
+        self::assertEquals(0, NetworkCasePayment::sum('total_amount'));
+        self::assertEquals(0, NetworkPayment::sum('amount'));
+        self::assertEquals(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
     }
 
     public function testAdsProcessEventPaymentWithServerError(): void
@@ -211,13 +231,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             User::factory()->create(['uuid' => $publisherId]);
         }
 
-        $adsPayment = new AdsPayment();
-        $adsPayment->txid = self::TX_ID_SEND_MANY;
-        $adsPayment->amount = $totalAmount;
-        $adsPayment->address = $networkHost->address;
-        $adsPayment->status = AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE;
-        $adsPayment->tx_time = new DateTimeImmutable('-8 minutes');
-        $adsPayment->save();
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => $totalAmount,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
 
         $this->app->bind(
             DemandClient::class,

@@ -65,41 +65,22 @@ FROM
 SQL;
 
     protected $signature = 'ops:supply:payments:process {--c|chunkSize=5000}';
-
     protected $description = 'Processes payments for events';
-
-    /** @var AdsClient */
-    private $adsClient;
-
-    /** @var DemandClient $demandClient */
-    private $demandClient;
-
-    /** @var LicenseReader */
-    private $licenseReader;
-
-    /** @var PaymentDetailsProcessor */
-    private $paymentDetailsProcessor;
 
     public function __construct(
         Locker $locker,
-        AdsClient $adsClient,
-        DemandClient $demandClient,
-        LicenseReader $licenseReader,
-        PaymentDetailsProcessor $paymentDetailsProcessor
+        private readonly AdsClient $adsClient,
+        private readonly DemandClient $demandClient,
+        private readonly LicenseReader $licenseReader,
+        private readonly PaymentDetailsProcessor $paymentDetailsProcessor
     ) {
         parent::__construct($locker);
-
-        $this->adsClient = $adsClient;
-        $this->demandClient = $demandClient;
-        $this->licenseReader = $licenseReader;
-        $this->paymentDetailsProcessor = $paymentDetailsProcessor;
     }
 
     public function handle(): void
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->getName() . ' already running');
-
             return;
         }
 
@@ -115,7 +96,6 @@ SQL;
             if ($adsPayment->created_at < $earliestTryOutDateTime) {
                 $adsPayment->status = AdsPayment::STATUS_RESERVED;
                 $adsPayment->save();
-
                 continue;
             }
 

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Models;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -40,6 +41,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AdsPayment extends Model
 {
+    use HasFactory;
+
     public const STATUS_INVALID = -1;
     public const STATUS_NEW = 0;
     public const STATUS_USER_DEPOSIT = 1;
