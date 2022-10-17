@@ -26,12 +26,15 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Adserver\Console\Commands\AdPayGetPayments;
 use Adshares\Adserver\Console\Commands\DemandSendPayments;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Mock\Console\Kernel as KernelMock;
 use DateTime;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\Event;
 use Symfony\Component\Console\Exception\LogicException;
 
 class DemandProcessPaymentsTest extends ConsoleTestCase
@@ -41,6 +44,7 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
     public function testNoExportedEvents(): void
     {
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        Event::assertNotDispatched(ServerEvent::class);
     }
 
     public function testLock(): void
@@ -50,6 +54,7 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
         $this->instance(Locker::class, $lockerMock);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        Event::assertNotDispatched(ServerEvent::class);
     }
 
     /**
@@ -57,15 +62,25 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
      *
      * @param array $commandReturnValues
      * @param int $expectedPaymentReportStatus
+     * @param bool $sentPayment
      */
-    public function testReportStatus(array $commandReturnValues, int $expectedPaymentReportStatus): void
-    {
+    public function testReportStatus(
+        array $commandReturnValues,
+        int $expectedPaymentReportStatus,
+        bool $sentPayment
+    ): void {
         self::setupExportTime();
         $this->setupConsoleKernel($commandReturnValues);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
         self::assertEquals($expectedPaymentReportStatus, PaymentReport::first()->status);
+
+        if ($sentPayment) {
+            self::assertServerEventDispatched(ServerEventType::OutgoingAdPaymentProcessed);
+        } else {
+            Event::assertNotDispatched(ServerEvent::class);
+        }
     }
 
     public function reportStatusProvider(): array
@@ -74,34 +89,42 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
             'all ok' => [
                 self::commandValues(),
                 PaymentReport::STATUS_DONE,
+                true,
             ],
             'get locked' => [
                 self::commandValues(['ops:adpay:payments:get' => new LogicException('text-exception')]),
                 PaymentReport::STATUS_NEW,
+                false,
             ],
             'get client exception' => [
                 self::commandValues(['ops:adpay:payments:get' => AdPayGetPayments::STATUS_CLIENT_EXCEPTION]),
                 PaymentReport::STATUS_NEW,
+                false,
             ],
             'get failed' => [
                 self::commandValues(['ops:adpay:payments:get' => AdPayGetPayments::STATUS_REQUEST_FAILED]),
                 PaymentReport::STATUS_ERROR,
+                false,
             ],
             'prepare locked' => [
                 self::commandValues(['ops:demand:payments:prepare' => new LogicException('text-exception')]),
                 PaymentReport::STATUS_UPDATED,
+                false,
             ],
             'send ads error' => [
                 self::commandValues(['ops:demand:payments:send' => DemandSendPayments::STATUS_ERROR_ADS]),
                 PaymentReport::STATUS_PREPARED,
+                false,
             ],
             'send locked' => [
                 self::commandValues(['ops:demand:payments:send' => new LogicException('text-exception')]),
                 PaymentReport::STATUS_PREPARED,
+                false,
             ],
             'aggregate locked' => [
                 self::commandValues(['ops:stats:aggregate:advertiser' => new LogicException('text-exception')]),
                 PaymentReport::STATUS_DONE,
+                true,
             ],
         ];
     }
