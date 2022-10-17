@@ -25,20 +25,28 @@ namespace Database\Factories;
 
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class UserLedgerEntryFactory extends Factory
 {
     public function definition(): array
     {
+        $addresses = [
+            '0001-00000001-8B4E',
+            '0001-00000002-BB2D',
+            '0001-00000003-AB0C',
+            '0001-00000004-DBEB',
+            '0001-00000005-CBCA',
+            '0001-00000006-FBA9',
+        ];
+
         return [
             'user_id' => User::factory(),
             'amount' => $this->faker->numberBetween(0, 3800000000000000000),
             'status' => UserLedgerEntry::STATUS_ACCEPTED,
             'type' => UserLedgerEntry::TYPE_DEPOSIT,
-            'address_from' => AccountId::fromIncompleteString($this->faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
-            'address_to' => AccountId::fromIncompleteString($this->faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'address_from' => $this->faker->randomElement($addresses),
+            'address_to' => $this->faker->randomElement($addresses),
             'txid' => $this->faker->regexify('[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}'),
         ];
     }

@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
@@ -37,6 +38,7 @@ use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
@@ -69,6 +71,7 @@ use function config;
 class WalletController extends Controller
 {
     private const APP_CURRENCY = 'app.currency';
+    private const CURRENCY_BTC = 'BTC';
     private const FIELD_ADDRESS = 'address';
     private const FIELD_AMOUNT = 'amount';
     private const FIELD_BTC = 'btc';
@@ -107,7 +110,7 @@ class WalletController extends Controller
                     default => $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value),
                 })->getValue();
 
-                $rate = $this->exchangeRateReader->fetchExchangeRate(null, 'BTC')->getValue() / $rateToAds;
+                $rate = $this->exchangeRateReader->fetchExchangeRate(null, self::CURRENCY_BTC)->getValue() / $rateToAds;
             } catch (ExchangeRateNotAvailableException $exception) {
                 Log::error(sprintf('[NowPayments] Cannot fetch exchange rate: %s', $exception->getMessage()));
             }
@@ -246,7 +249,7 @@ class WalletController extends Controller
         $amountInClicks = $exchangeRate->toClick($token['payload']['request']['amount']);
 
         $currency = $token['payload']['request']['currency'] ?? 'ADS';
-        if ($currency === 'BTC') {
+        if ($currency === self::CURRENCY_BTC) {
             if (
                 $exchange->transfer(
                     (float)AdsConverter::clicksToAds($amountInClicks),
@@ -256,6 +259,14 @@ class WalletController extends Controller
                     $token['payload']['ledgerEntry']
                 )
             ) {
+                ServerEvent::dispatch(
+                    ServerEventType::UserWithdrawalProcessed,
+                    [
+                        'amount' => $amountInClicks,
+                        'txid' => null,
+                        'userId' => $userLedgerEntry->user_id,
+                    ]
+                );
                 Mail::to($userLedgerEntry->user)->queue(
                     new WithdrawalSuccess(
                         $token['payload']['request']['amount'],
@@ -321,7 +332,7 @@ class WalletController extends Controller
             return self::json(['message' => 'Confirm account to withdraw funds'], JsonResponse::HTTP_FORBIDDEN);
         }
 
-        if ($request->get('currency') === 'BTC') {
+        if ($request->get('currency') === self::CURRENCY_BTC) {
             return $this->withdrawBtc($request);
         }
 
@@ -442,7 +453,7 @@ class WalletController extends Controller
             UserLedgerEntry::STATUS_AWAITING_APPROVAL,
             UserLedgerEntry::TYPE_WITHDRAWAL,
             null,
-            'BTC'
+            self::CURRENCY_BTC
         )->addressed(null, $addressTo);
 
         DB::beginTransaction();
@@ -460,7 +471,7 @@ class WalletController extends Controller
             new WithdrawalApproval(
                 Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
                 $amount,
-                'BTC',
+                self::CURRENCY_BTC,
                 0,
                 new WalletAddress(WalletAddress::NETWORK_BTC, (string)$addressTo)
             )

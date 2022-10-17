@@ -26,8 +26,10 @@ use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Util\AdsValidator;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Exceptions\JobException;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -140,15 +142,22 @@ class AdsSendOne implements ShouldQueue
         if (!$txid || !AdsValidator::isTransactionIdValid($txid)) {
             $this->userLedger->status = UserLedgerEntry::STATUS_SYS_ERROR;
             $this->userLedger->save();
-
             Log::error(sprintf('[AdsSendOne] Invalid txid: (%s)', $txid));
-
             return;
         }
 
         $this->userLedger->status = UserLedgerEntry::STATUS_ACCEPTED;
         $this->userLedger->txid = $txid;
         $this->userLedger->save();
+
+        ServerEvent::dispatch(
+            ServerEventType::UserWithdrawalProcessed,
+            [
+                'amount' => $this->amount,
+                'txid' => $txid,
+                'userId' => $this->userLedger->user_id,
+            ]
+        );
     }
 
     private function rejectTransactionDueToNegativeBalance(): void
