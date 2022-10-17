@@ -132,7 +132,7 @@ SQL;
         foreach ($timestamps as $timestamp) {
             NetworkCaseLogsHourlyMeta::invalidate($timestamp);
         }
-        ServerEvent::dispatch(ServerEventType::AdPaymentProcessed, [
+        ServerEvent::dispatch(ServerEventType::IncomingAdPaymentProcessed, [
             'adsPaymentCount' => $processedPaymentsForAds,
             'totalPaymentCount' => $processedPaymentsTotal,
         ]);

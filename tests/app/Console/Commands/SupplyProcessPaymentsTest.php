@@ -307,7 +307,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     private static function assertAdPaymentProcessedEventDispatched(int $count = 0): void
     {
-        self::assertServerEventDispatched(ServerEventType::AdPaymentProcessed, [
+        self::assertServerEventDispatched(ServerEventType::IncomingAdPaymentProcessed, [
             'adsPaymentCount' => $count,
         ]);
     }

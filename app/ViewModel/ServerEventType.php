@@ -25,12 +25,16 @@ namespace Adshares\Adserver\ViewModel;
 
 enum ServerEventType: string
 {
-    case AdPaymentProcessed = 'AdPaymentProcessed';
     case BroadcastSent = 'BroadcastSent';
     case ExchangeRatesFetched = 'ExchangeRatesFetched';
     case FilteringUpdated = 'FilteringUpdated';
     case HostBroadcastProcessed = 'HostBroadcastProcessed';
+    case IncomingAdPaymentProcessed = 'IncomingAdPaymentProcessed';
+    case IncomingTransactionProcessed = 'IncomingTransactionProcessed';
     case InventorySynchronized = 'InventorySynchronized';
+    case OutgoingAdPaymentProcessed = 'OutgoingAdPaymentProcessed';
     case SiteRankUpdated = 'SiteRankUpdated';
     case TargetingUpdated = 'TargetingUpdated';
+    case UserDepositProcessed = 'UserDepositProcessed';
+    case UserWithdrawalProcessed = 'UserWithdrawalProcessed';
 }
