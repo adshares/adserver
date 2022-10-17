@@ -29,7 +29,6 @@ use Adshares\Adserver\Mail\WalletConnectConfirm;
 use Adshares\Adserver\Mail\WalletConnected;
 use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Mail\WithdrawalSuccess;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -394,7 +393,7 @@ class WalletController extends Controller
                     $amount,
                     $appCurrency->value,
                     $adsFee,
-                    new WalletAddress(WalletAddress::NETWORK_ADS, (string)$addressTo)
+                    new WalletAddress(WalletAddress::NETWORK_ADS, $addressTo)
                 )
             );
         } else {

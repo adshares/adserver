@@ -28,7 +28,6 @@ use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Exceptions\JobException;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Models\UserLedgerException;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -100,15 +99,8 @@ class AdsSendOne implements ShouldQueue
             return;
         }
 
-        try {
-            if ($this->userLedger->user->getWalletBalance() < 0) {
-                $this->rejectTransactionDueToNegativeBalance();
-
-                return;
-            }
-        } catch (UserLedgerException $userLedgerException) {
+        if ($this->userLedger->user->getWalletBalance() < 0) {
             $this->rejectTransactionDueToNegativeBalance();
-
             return;
         }
 
@@ -156,7 +148,6 @@ class AdsSendOne implements ShouldQueue
 
         $this->userLedger->status = UserLedgerEntry::STATUS_ACCEPTED;
         $this->userLedger->txid = $txid;
-
         $this->userLedger->save();
     }
 
