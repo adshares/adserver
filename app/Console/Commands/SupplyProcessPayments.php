@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
@@ -30,6 +31,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Adserver\Services\LicenseFeeSender;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -90,12 +92,15 @@ SQL;
 
         $earliestTryOutDateTime = new DateTimeImmutable(self::TRY_OUT_PERIOD_FOR_EVENT_PAYMENT);
         $processedAdsPaymentIds = [];
+        $processedPaymentsTotal = 0;
+        $processedPaymentsForAds = 0;
 
         /** @var AdsPayment $adsPayment */
         foreach ($adsPayments as $adsPayment) {
             if ($adsPayment->created_at < $earliestTryOutDateTime) {
                 $adsPayment->status = AdsPayment::STATUS_RESERVED;
                 $adsPayment->save();
+                ++$processedPaymentsTotal;
                 continue;
             }
 
@@ -106,6 +111,10 @@ SQL;
 
                 DB::commit();
 
+                if (AdsPayment::STATUS_EVENT_PAYMENT === $adsPayment->status) {
+                    ++$processedPaymentsForAds;
+                }
+                ++$processedPaymentsTotal;
                 $processedAdsPaymentIds[] = $adsPayment->id;
             } catch (Throwable $throwable) {
                 DB::rollBack();
@@ -123,6 +132,10 @@ SQL;
         foreach ($timestamps as $timestamp) {
             NetworkCaseLogsHourlyMeta::invalidate($timestamp);
         }
+        ServerEvent::dispatch(ServerEventType::AdPaymentProcessed, [
+            'adsPaymentCount' => $processedPaymentsForAds,
+            'totalPaymentCount' => $processedPaymentsTotal,
+        ]);
 
         $this->info('End command ' . $this->getName());
     }

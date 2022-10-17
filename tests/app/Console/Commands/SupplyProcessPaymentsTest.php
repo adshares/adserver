@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
@@ -63,6 +64,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_RESERVED, AdsPayment::all()->first()->status);
+        self::assertAdPaymentProcessedEventDispatched();
     }
 
     public function testAdsProcessMissingHost(): void
@@ -77,6 +79,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
+        self::assertAdPaymentProcessedEventDispatched();
     }
 
     public function testAdsProcessDepositWithoutUser(): void
@@ -106,6 +109,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
+        self::assertAdPaymentProcessedEventDispatched();
     }
 
     public function testAdsProcessEventPayment(): void
@@ -157,6 +161,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched(1);
     }
 
     public function testAdsProcessEventPaymentWithPaymentProcessorError(): void
@@ -189,6 +194,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         self::assertEquals(0, NetworkCasePayment::sum('total_amount'));
         self::assertEquals(0, NetworkPayment::sum('amount'));
         self::assertEquals(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched();
     }
 
     public function testAdsProcessEventPaymentWithServerError(): void
@@ -277,6 +283,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched();
     }
 
     public function testLock(): void
@@ -295,6 +302,13 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             'address' => '0001-00000000-9B6F',
             'info' => $info,
             'info_url' => $info->getServerUrl() . 'info.json',
+        ]);
+    }
+
+    private static function assertAdPaymentProcessedEventDispatched(int $count = 0): void
+    {
+        self::assertServerEventDispatched(ServerEventType::AdPaymentProcessed, [
+            'adsPaymentCount' => $count,
         ]);
     }
 }

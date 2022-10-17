@@ -25,6 +25,7 @@ namespace Adshares\Adserver\ViewModel;
 
 enum ServerEventType: string
 {
+    case AdPaymentProcessed = 'AdPaymentProcessed';
     case BroadcastSent = 'BroadcastSent';
     case ExchangeRatesFetched = 'ExchangeRatesFetched';
     case FilteringUpdated = 'FilteringUpdated';

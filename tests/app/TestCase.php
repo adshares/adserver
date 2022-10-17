@@ -135,7 +135,7 @@ abstract class TestCase extends BaseTestCase
         Event::assertDispatched(
             fn (ServerEvent $event) =>
                 $type === $event->getType() &&
-                (null === $properties || array_intersect($event->getProperties(), $properties) === $properties)
+                (null === $properties || array_intersect_assoc($event->getProperties(), $properties) === $properties)
         );
     }
 }
