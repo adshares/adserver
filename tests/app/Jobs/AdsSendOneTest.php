@@ -169,7 +169,7 @@ class AdsSendOneTest extends TestCase
     {
         $amount = 1.2e11;
         /** @var UserLedgerEntry $userLedgerEntry */
-        $userLedgerEntry = UserLedgerEntry::factory()->create(['amount' => $amount]);
+        $userLedgerEntry = UserLedgerEntry::factory()->create(['amount' => -$amount]);
 
         $job = new AdsSendOne($userLedgerEntry, $userLedgerEntry->address_to, -$userLedgerEntry->amount);
 

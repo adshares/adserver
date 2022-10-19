@@ -225,6 +225,33 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertJsonFragment(['type' => ServerEventType::InventorySynchronized]);
     }
 
+    public function testFetchEventsEmpty(): void
+    {
+        $response = $this->getJson(self::EVENTS_URI, self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        $json = $response->json('data');
+        self::assertEquals(0, count($json));
+    }
+
+    public function testFetchEventsPagination(): void
+    {
+        self::seedServerEvents();
+        self::seedServerEvents();
+
+        $response = $this->getJson(self::EVENTS_URI . '?limit=3', self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(3, count($response->json('data')));
+        self::assertNull($response->json('prevPageUrl'));
+        self::assertNotNull($response->json('nextPageUrl'));
+
+        $url = $response->json('nextPageUrl');
+        $response = $this->getJson($url, self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        self::assertNotNull($response->json('prevPageUrl'));
+        self::assertNull($response->json('nextPageUrl'));
+    }
+
     public function testFetchEventsByType(): void
     {
         self::seedServerEvents();

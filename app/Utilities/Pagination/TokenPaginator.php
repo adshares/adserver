@@ -23,23 +23,21 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Utilities\Pagination;
 
-use Closure;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Arr;
 
 class TokenPaginator extends CursorPaginator
 {
-    protected static Closure $currentPageResolver;
     protected int $currentPage;
     protected int $lastPage;
     protected int $total;
 
-    public function __construct($items, $perPage, $cursor = null, $currentPage = null, array $options = [])
+    public function __construct($items, int $perPage, int $currentPage, ?Cursor $cursor = null, array $options = [])
     {
         parent::__construct($items, $perPage, $cursor, $options);
+        $this->currentPage = $currentPage;
         $this->total = $this->options['total'];
-        $this->currentPage = $this->setCurrentPage($currentPage, $this->options['pageName']);
         $this->lastPage = max((int)ceil($this->total / $perPage), 1);
     }
 
@@ -64,6 +62,9 @@ class TokenPaginator extends CursorPaginator
 
     public function cursor(): ?Cursor
     {
+        if ($this->items->isEmpty()) {
+            return null;
+        }
         return is_null($this->cursor) ? $this->getCursorForItem($this->items->first()) : $this->cursor;
     }
 
@@ -107,31 +108,5 @@ class TokenPaginator extends CursorPaginator
     public function lastItem(): ?int
     {
         return count($this->items) > 0 ? $this->firstItem() + $this->count() - 1 : null;
-    }
-
-    public static function resolveCurrentPage($pageName = 'page', $default = 1)
-    {
-        if (isset(static::$currentPageResolver)) {
-            return (int)call_user_func(static::$currentPageResolver, $pageName);
-        }
-
-        return $default;
-    }
-
-    public static function currentPageResolver(Closure $resolver): void
-    {
-        static::$currentPageResolver = $resolver;
-    }
-
-    protected function setCurrentPage(?int $currentPage, ?string $pageName): int
-    {
-        $currentPage = $currentPage ?: static::resolveCurrentPage($pageName);
-
-        return $this->isValidPageNumber($currentPage) ? (int)$currentPage : 1;
-    }
-
-    protected function isValidPageNumber($page): bool
-    {
-        return $page >= 1 && filter_var($page, FILTER_VALIDATE_INT) !== false;
     }
 }

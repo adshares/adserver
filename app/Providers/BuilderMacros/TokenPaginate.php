@@ -40,8 +40,8 @@ class TokenPaginate
             array|string $columns = ['*'],
             string $cursorName = 'cursor',
             Cursor|string|null $cursor = null,
-            $pageName = 'page',
-            $page = null,
+            string $pageName = 'page',
+            int|null $page = null,
         ): CursorPaginator {
             $perPage = (int)($perPage ?: $this->model->getPerPage());
             $page = $page ?: Paginator::resolveCurrentPage($pageName);
@@ -157,7 +157,7 @@ class TokenPaginate
             $items = $total
                 ? $this->forPage($page, $perPage)->get($columns)
                 : $this->model->newCollection();
-            return new TokenPaginator($items, $perPage, $cursor, $page, [
+            return new TokenPaginator($items, $perPage, $page, $cursor, [
                 'path' => Paginator::resolveCurrentPath(),
                 'cursorName' => $cursorName,
                 'pageName' => $pageName,
