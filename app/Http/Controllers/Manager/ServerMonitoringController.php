@@ -84,15 +84,10 @@ class ServerMonitoringController extends Controller
             throw new UnprocessableEntityHttpException('Invalid time range: `from` must be earlier than `to`');
         }
 
-        $builder = ServerEventLog::getBuilderForFetching($types, $from, $to);
-        $total = $builder->count();
-
-        $result = $builder
-            ->cursorPaginate($limit)
+        return ServerEventLog::getBuilderForFetching($types, $from, $to)
+            ->tokenPaginate($limit)
             ->withQueryString()
             ->toArray();
-        $result['total'] = $total;
-        return $result;
     }
 
     private function handleHosts(Request $request): array
@@ -100,10 +95,8 @@ class ServerMonitoringController extends Controller
         $limit = $request->query('limit', 10);
         $this->validateLimit($limit);
 
-        $builder = NetworkHost::orderBy('id');
-        $total = $builder->count();
-        $paginator = $builder
-            ->cursorPaginate($limit)
+        $paginator = NetworkHost::orderBy('id')
+            ->tokenPaginate($limit)
             ->withQueryString();
         $collection = $paginator->getCollection()->map(function ($host) {
             /** @var NetworkHost $host */
@@ -126,9 +119,7 @@ class ServerMonitoringController extends Controller
         });
         $paginator->setCollection($collection);
 
-        $result = $paginator->toArray();
-        $result['total'] = $total;
-        return $result;
+        return $paginator->toArray();
     }
 
     public function handleLatestEvents(Request $request): array
@@ -138,15 +129,10 @@ class ServerMonitoringController extends Controller
         $this->validateLimit($limit);
         self::validateTypes($types);
 
-        $builder = ServerEventLog::getBuilderForFetchingLatest($types);
-        $total = $builder->count();
-
-        $result = $builder
-            ->cursorPaginate($limit)
+        return ServerEventLog::getBuilderForFetchingLatest($types)
+            ->tokenPaginate($limit)
             ->withQueryString()
             ->toArray();
-        $result['total'] = $total;
-        return $result;
     }
 
     private function handleWallet(Request $request): array
