@@ -49,6 +49,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property string email
  * @property string label
  * @property Carbon|null created_at
+ * @property Carbon|null updated_at
+ * @property Carbon|null deleted_at
  * @property DateTime|null email_confirmed_at
  * @property DateTime|null admin_confirmed_at
  * @property string uuid
@@ -72,6 +74,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int auto_withdrawal_limit
  * @property bool is_banned
  * @property string ban_reason
+ * @property array roles
  * @mixin Builder
  */
 class User extends Authenticatable implements JWTSubject
@@ -229,6 +232,19 @@ class User extends Authenticatable implements JWTSubject
     public function getAutoWithdrawalLimitAttribute(): int
     {
         return (int)$this->auto_withdrawal;
+    }
+
+    public function getRolesAttribute(): array
+    {
+        $roles = [
+            'admin' => $this->isAdmin(),
+            'advertiser' => $this->isAdvertiser(),
+            'agency' => $this->isAgency(),
+            'moderator' => $this->isModerator(),
+            'publisher' => $this->isPublisher(),
+        ];
+
+        return array_keys(array_filter($roles));
     }
 
     public function setPasswordAttribute($value): void

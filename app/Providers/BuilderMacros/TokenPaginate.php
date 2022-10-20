@@ -161,7 +161,7 @@ class TokenPaginate
                 'path' => Paginator::resolveCurrentPath(),
                 'cursorName' => $cursorName,
                 'pageName' => $pageName,
-                'parameters' => $orders->pluck('column')->toArray(),
+                'parameters' => ['id'],
                 'total' => $total,
             ]);
         };

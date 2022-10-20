@@ -22,14 +22,18 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -39,6 +43,7 @@ class ServerMonitoringController extends Controller
         'events',
         'hosts',
         'latest-events',
+        'users',
         'wallet',
     ];
 
@@ -135,6 +140,110 @@ class ServerMonitoringController extends Controller
             ->toArray();
     }
 
+    private function handleUsers(Request $request): array
+    {
+        $limit = $request->query('limit', 10);
+        $orderBy = $request->query('orderBy');
+        $direction = $request->query('direction', 'asc');
+        $this->validateLimit($limit);
+        $this->validateDirection($direction);
+        if (null !== $orderBy) {
+            if (
+                !in_array(
+                    $orderBy,
+                    [
+                        'bonusBalance',
+                        'campaignCount',
+                        'connectedWallet',
+                        'email',
+                        'lastLoginAt',
+                        'siteCount',
+                        'walletBalance',
+                    ]
+                )
+            ) {
+                throw new UnprocessableEntityHttpException(sprintf('Sorting by `%s` is not supported', $orderBy));
+            }
+        }
+
+        $builder = User::query();
+
+        if ($orderBy) {
+            if ('bonusBalance' === $orderBy) {
+                $set = UserLedgerEntry::queryForEntriesRelevantForBonusBalance()
+                    ->select(DB::raw('user_id, SUM(amount) as bonus_balance'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('bonus_balance', $direction)
+                    ->select(['*', DB::raw('IFNULL(bonus_balance, 0) AS bonus_balance')]);
+            } elseif ('campaignCount' === $orderBy) {
+                $set = Campaign::where('status', Campaign::STATUS_ACTIVE)
+                    ->where(function ($subBuilder) {
+                        $subBuilder->where('time_end', '>', new DateTimeImmutable())->orWhere('time_end', null);
+                    })
+                    ->select(DB::raw('user_id, COUNT(*) as campaign_count'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('campaign_count', $direction)
+                    ->select(['*', DB::raw('IFNULL(campaign_count, 0) AS campaign_count')]);
+            } elseif ('connectedWallet' === $orderBy) {
+                $builder->orderBy('wallet_address', $direction);
+            } elseif ('lastLoginAt' === $orderBy) {
+                $builder->orderBy('updated_at', $direction);
+            } elseif ('siteCount' === $orderBy) {
+                $set = Site::where('status', Site::STATUS_ACTIVE)
+                    ->select(DB::raw('user_id, COUNT(*) as site_count'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('site_count', $direction)
+                    ->select(['*', DB::raw('IFNULL(site_count, 0) AS site_count')]);
+            } elseif ('walletBalance' === $orderBy) {
+                $set = UserLedgerEntry::queryForEntriesRelevantForWalletBalance()
+                    ->select(DB::raw('user_id, SUM(amount) as wallet_balance'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('wallet_balance', $direction)
+                    ->select(['*', DB::raw('IFNULL(wallet_balance, 0) AS wallet_balance')]);
+            } else {
+                $builder->orderBy($orderBy, $direction);
+            }
+        }
+
+        $paginator = $builder->orderBy('id')
+            ->tokenPaginate($limit)
+            ->withQueryString();
+        $collection = $paginator->getCollection()->map(function ($user) {
+            /** @var User $user */
+            return [
+                'id' => $user->id,
+                'email' => $user->email,
+                'adsharesWallet' => [
+                    'walletBalance' => null !== $user->wallet_balance
+                        ? (int)$user->wallet_balance : $user->getWalletBalance(),
+                    'bonusBalance' => null !== $user->bonus_balance
+                        ? (int)$user->bonus_balance : $user->getBonusBalance(),
+                ],
+                'connectedWallet' => [
+                    'address' => $user->wallet_address?->getAddress(),
+                    'network' => $user->wallet_address?->getNetwork(),
+                ],
+                'roles' => $user->roles,
+                'campaignCount' => null !== $user->campaign_count
+                    ? (int)$user->campaign_count : $user->campaigns()->count(),
+                'siteCount' => null !== $user->site_count
+                    ? (int)$user->site_count : $user->sites()->count(),
+                'lastLoginAt' => $user->updated_at->format(DateTimeInterface::ATOM),
+            ];
+        });
+        $paginator->setCollection($collection);
+
+        return $paginator->toArray();
+    }
+
     private function handleWallet(Request $request): array
     {
         return [
@@ -155,6 +264,16 @@ class ServerMonitoringController extends Controller
         $host->resetConnectionErrorCounter();
 
         return self::json();
+    }
+
+    private function validateDirection(array|string|null $direction): void
+    {
+        $allowedDirections = ['asc', 'desc'];
+        if (!in_array($direction, $allowedDirections)) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Limit must be any of %s', join(', ', $allowedDirections))
+            );
+        }
     }
 
     private static function validateLimit(array|string|null $limit): void
