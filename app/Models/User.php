@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\ViewModel\Role;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\UserRole;
 use DateTime;
@@ -237,11 +238,11 @@ class User extends Authenticatable implements JWTSubject
     public function getRolesAttribute(): array
     {
         $roles = [
-            'admin' => $this->isAdmin(),
-            'advertiser' => $this->isAdvertiser(),
-            'agency' => $this->isAgency(),
-            'moderator' => $this->isModerator(),
-            'publisher' => $this->isPublisher(),
+            Role::Admin->value => $this->isAdmin(),
+            Role::Advertiser->value => $this->isAdvertiser(),
+            Role::Agency->value => $this->isAgency(),
+            Role::Moderator->value => $this->isModerator(),
+            Role::Publisher->value => $this->isPublisher(),
         ];
 
         return array_keys(array_filter($roles));

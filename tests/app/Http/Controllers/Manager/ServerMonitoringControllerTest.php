@@ -21,12 +21,16 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -35,6 +39,7 @@ use Illuminate\Testing\TestResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
+// phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 final class ServerMonitoringControllerTest extends TestCase
 {
     private const EVENTS_URI = '/api/monitoring/events';
@@ -65,6 +70,26 @@ final class ServerMonitoringControllerTest extends TestCase
                 'error',
             ],
         ]
+    ];
+    private const USERS_STRUCTURE = [
+        'data' => [
+            '*' => [
+                'id',
+                'email',
+                'adsharesWallet' => [
+                    'walletBalance',
+                    'bonusBalance',
+                ],
+                'connectedWallet' => [
+                    'address',
+                    'network',
+                ],
+                'roles',
+                'campaignCount',
+                'siteCount',
+                'lastLogin',
+            ],
+        ],
     ];
 
     public function testAccessAdminNoJwt(): void
@@ -429,6 +454,139 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
     }
 
+    public function testFetchUsers(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users'),
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(3, count($response->json('data')));
+        $data = $response->json('data');
+        $adminData = $data[0];
+        self::assertEquals('admin@example.com', $adminData['email']);
+        self::assertEquals(0, $adminData['adsharesWallet']['walletBalance']);
+        self::assertEquals(0, $adminData['adsharesWallet']['bonusBalance']);
+        self::assertNull($adminData['connectedWallet']['address']);
+        self::assertNull($adminData['connectedWallet']['network']);
+        self::assertEquals(0, $adminData['campaignCount']);
+        self::assertEquals(0, $adminData['siteCount']);
+        self::assertContains(Role::Admin->value, $adminData['roles']);
+        $user1 = $data[1];
+        self::assertEquals('user1@example.com', $user1['email']);
+        self::assertEquals(1e5, $user1['adsharesWallet']['walletBalance']);
+        self::assertEquals(2e9, $user1['adsharesWallet']['bonusBalance']);
+        self::assertNull($user1['connectedWallet']['address']);
+        self::assertNull($user1['connectedWallet']['network']);
+        self::assertEquals(1, $user1['campaignCount']);
+        self::assertEquals(1, $user1['siteCount']);
+        self::assertNotContains(Role::Admin->value, $user1['roles']);
+        self::assertContains(Role::Advertiser->value, $user1['roles']);
+        self::assertContains(Role::Publisher->value, $user1['roles']);
+        $user2 = $data[2];
+        self::assertEquals('user2@example.com', $user2['email']);
+        self::assertEquals(3e11, $user2['adsharesWallet']['walletBalance']);
+        self::assertEquals(0, $user2['adsharesWallet']['bonusBalance']);
+        self::assertEquals('0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb', $user2['connectedWallet']['address']);
+        self::assertEquals(WalletAddress::NETWORK_BSC, $user2['connectedWallet']['network']);
+        self::assertEquals(0, $user2['campaignCount']);
+        self::assertEquals(2, $user2['siteCount']);
+        self::assertNotContains(Role::Admin->value, $user2['roles']);
+        self::assertContains(Role::Advertiser->value, $user2['roles']);
+        self::assertContains(Role::Publisher->value, $user2['roles']);
+    }
+
+    public function testFetchUsersLimit(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?limit=1',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonPath('data.0.email', 'admin@example.com');
+    }
+
+    public function testFetchUsersOrderByInvalidCategory(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?orderBy=id',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchUsersOrderByArray(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?orderBy[]=email',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchUsersOrderByInvalidDirection(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?orderBy=email&direction=up',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * @dataProvider fetchUsersOrderByProvider
+     */
+    public function testFetchUsersOrderBy(string $orderBy, string $expectedEmailOfFirst): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?orderBy=' . $orderBy . '&direction=desc',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        $response->assertJsonPath('data.0.email', $expectedEmailOfFirst);
+    }
+
+    public function fetchUsersOrderByProvider(): array
+    {
+        return [
+            'bonusBalance' => ['bonusBalance', 'user1@example.com'],
+            'campaignCount' => ['campaignCount', 'user1@example.com'],
+            'connectedWallet' => ['connectedWallet', 'user2@example.com'],
+            'email' => ['email', 'user2@example.com'],
+            'lastLogin' => ['lastLogin', 'admin@example.com'],
+            'siteCount' => ['siteCount', 'user2@example.com'],
+            'walletBalance' => ['walletBalance', 'user2@example.com'],
+        ];
+    }
+
     private function getResponseForKey(string $key): TestResponse
     {
         return $this->getJson(
@@ -459,5 +617,47 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         ServerEventLog::factory()->create(['type' => ServerEventType::HostBroadcastProcessed]);
         ServerEventLog::factory()->create(['type' => ServerEventType::InventorySynchronized]);
+    }
+
+    private static function seedUsers(): void
+    {
+        /** @var User $admin */
+        User::factory()->admin()->create([
+            'email' => 'admin@example.com',
+            'updated_at' => new DateTimeImmutable('+10 minutes'),
+        ]);
+
+        /** @var User $user1 */
+        $user1 = User::factory()->create(['email' => 'user1@example.com']);
+        Campaign::factory()->create([
+            'user_id' => $user1->id,
+            'status' => Campaign::STATUS_ACTIVE,
+        ]);
+        Site::factory()->create(['user_id' => $user1->id]);
+        UserLedgerEntry::factory()->create([
+            'user_id' => $user1->id,
+            'type' => UserLedgerEntry::TYPE_AD_INCOME,
+            'amount' => 1e5,
+        ]);
+        UserLedgerEntry::factory()->create([
+            'user_id' => $user1->id,
+            'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
+            'amount' => 2e9,
+        ]);
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create([
+            'email' => 'user2@example.com',
+            'wallet_address' => new WalletAddress(
+                WalletAddress::NETWORK_BSC,
+                '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb'
+            ),
+        ]);
+        Site::factory()->count(2)->create(['user_id' => $user2->id]);
+        UserLedgerEntry::factory()->create([
+            'user_id' => $user2->id,
+            'type' => UserLedgerEntry::TYPE_AD_INCOME,
+            'amount' => 3e11,
+        ]);
     }
 }

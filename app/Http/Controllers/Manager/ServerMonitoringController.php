@@ -146,25 +146,8 @@ class ServerMonitoringController extends Controller
         $orderBy = $request->query('orderBy');
         $direction = $request->query('direction', 'asc');
         $this->validateLimit($limit);
+        $this->validateUserOrderBy($orderBy);
         $this->validateDirection($direction);
-        if (null !== $orderBy) {
-            if (
-                !in_array(
-                    $orderBy,
-                    [
-                        'bonusBalance',
-                        'campaignCount',
-                        'connectedWallet',
-                        'email',
-                        'lastLoginAt',
-                        'siteCount',
-                        'walletBalance',
-                    ]
-                )
-            ) {
-                throw new UnprocessableEntityHttpException(sprintf('Sorting by `%s` is not supported', $orderBy));
-            }
-        }
 
         $builder = User::query();
 
@@ -190,7 +173,7 @@ class ServerMonitoringController extends Controller
                     ->select(['*', DB::raw('IFNULL(campaign_count, 0) AS campaign_count')]);
             } elseif ('connectedWallet' === $orderBy) {
                 $builder->orderBy('wallet_address', $direction);
-            } elseif ('lastLoginAt' === $orderBy) {
+            } elseif ('lastLogin' === $orderBy) {
                 $builder->orderBy('updated_at', $direction);
             } elseif ('siteCount' === $orderBy) {
                 $set = Site::where('status', Site::STATUS_ACTIVE)
@@ -236,7 +219,7 @@ class ServerMonitoringController extends Controller
                     ? (int)$user->campaign_count : $user->campaigns()->count(),
                 'siteCount' => null !== $user->site_count
                     ? (int)$user->site_count : $user->sites()->count(),
-                'lastLoginAt' => $user->updated_at->format(DateTimeInterface::ATOM),
+                'lastLogin' => $user->updated_at->format(DateTimeInterface::ATOM),
             ];
         });
         $paginator->setCollection($collection);
@@ -292,6 +275,32 @@ class ServerMonitoringController extends Controller
             if (!is_string($type) || null === ServerEventType::tryFrom($type)) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid type `%s`', $type));
             }
+        }
+    }
+
+    private function validateUserOrderBy(array|string|null $orderBy): void
+    {
+        if (null === $orderBy) {
+            return;
+        }
+        if (!is_string($orderBy)) {
+            throw new UnprocessableEntityHttpException('Sorting only by single category is supported');
+        }
+        if (
+            !in_array(
+                $orderBy,
+                [
+                    'bonusBalance',
+                    'campaignCount',
+                    'connectedWallet',
+                    'email',
+                    'lastLogin',
+                    'siteCount',
+                    'walletBalance',
+                ]
+            )
+        ) {
+            throw new UnprocessableEntityHttpException(sprintf('Sorting by `%s` is not supported', $orderBy));
         }
     }
 }
