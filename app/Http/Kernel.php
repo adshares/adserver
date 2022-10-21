@@ -51,6 +51,7 @@ class Kernel extends HttpKernel
     public const ADMIN_ACCESS = 'only-admin-users';
     public const ADMIN_JWT_ACCESS = 'jwt-admin-users';
     public const MODERATOR_ACCESS = 'only-moderator-users';
+    public const MODERATOR_JWT_ACCESS = 'jwt-moderator-users';
     public const AGENCY_ACCESS = 'only-agency-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const ADVERTISER_ACCESS = 'only-advertisers';
@@ -96,6 +97,10 @@ class Kernel extends HttpKernel
         ],
         self::MODERATOR_ACCESS => [
             self::AUTH . ':api',
+            RequireModeratorAccess::class,
+        ],
+        self::MODERATOR_JWT_ACCESS => [
+            self::AUTH . ':jwt',
             RequireModeratorAccess::class,
         ],
         self::AGENCY_ACCESS => [

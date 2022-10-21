@@ -35,4 +35,24 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(
 
     Route::get('monitoring/{key}', [ServerMonitoringController::class, 'fetch']);
     Route::patch('monitoring/hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
+    Route::patch('monitoring/users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
+    Route::patch(
+        'monitoring/users/{userId}/switchToModerator',
+        [ServerMonitoringController::class, 'switchUserToModerator']
+    );
+    Route::patch('monitoring/users/{userId}/unban', [ServerMonitoringController::class, 'unbanUser']);
+    Route::delete('monitoring/users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
+});
+
+Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(function () {
+    Route::patch('monitoring/users/{userId}/confirm', [ServerMonitoringController::class, 'confirmUser']);
+    Route::patch('monitoring/users/{userId}/denyAdvertising', [ServerMonitoringController::class, 'denyAdvertising']);
+    Route::patch('monitoring/users/{userId}/denyPublishing', [ServerMonitoringController::class, 'denyPublishing']);
+    Route::patch('monitoring/users/{userId}/grantAdvertising', [ServerMonitoringController::class, 'grantAdvertising']);
+    Route::patch('monitoring/users/{userId}/grantPublishing', [ServerMonitoringController::class, 'grantPublishing']);
+    Route::patch('monitoring/users/{userId}/switchToAgency', [ServerMonitoringController::class, 'switchUserToAgency']);
+    Route::patch(
+        'monitoring/users/{userId}/switchToRegular',
+        [ServerMonitoringController::class, 'switchUserToRegular']
+    );
 });

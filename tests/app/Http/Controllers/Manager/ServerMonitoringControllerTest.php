@@ -71,26 +71,28 @@ final class ServerMonitoringControllerTest extends TestCase
             ],
         ]
     ];
+    private const USER_STRUCTURE = [
+        'id',
+        'email',
+        'adsharesWallet' => [
+            'walletBalance',
+            'bonusBalance',
+        ],
+        'connectedWallet' => [
+            'address',
+            'network',
+        ],
+        'roles',
+        'campaignCount',
+        'siteCount',
+        'lastLogin',
+    ];
     private const USERS_STRUCTURE = [
         'data' => [
-            '*' => [
-                'id',
-                'email',
-                'adsharesWallet' => [
-                    'walletBalance',
-                    'bonusBalance',
-                ],
-                'connectedWallet' => [
-                    'address',
-                    'network',
-                ],
-                'roles',
-                'campaignCount',
-                'siteCount',
-                'lastLogin',
-            ],
+            '*' => self::USER_STRUCTURE,
         ],
     ];
+    private const USERS_URI = '/api/monitoring/users';
 
     public function testAccessAdminNoJwt(): void
     {
@@ -587,6 +589,356 @@ final class ServerMonitoringControllerTest extends TestCase
         ];
     }
 
+    public function testPatchUserBan(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_banned' => 0, 'ban_reason' => null]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            ['reason' => 'suspicious activity'],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        $user = $user->refresh();
+        self::assertEquals(1, $user->is_banned);
+        self::assertEquals('suspicious activity', $user->ban_reason);
+    }
+
+    public function testPatchUserConfirm(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['admin_confirmed_at' => null]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'confirm'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertNotNull($user->refresh()->admin_confirmed_at);
+    }
+
+    public function testPatchUserDelete(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->delete(
+            sprintf('%s/%d', self::USERS_URI, $user->id),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertNotNull($user->refresh()->deleted_at);
+    }
+
+    public function testPatchUserDenyAdvertising(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_advertiser' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'denyAdvertising'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertFalse($user->refresh()->isAdvertiser());
+    }
+
+    public function testPatchUserDenyPublishing(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_publisher' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'denyPublishing'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertFalse($user->refresh()->isPublisher());
+    }
+
+    public function testPatchUserGrantAdvertising(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_advertiser' => 0]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'grantAdvertising'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertTrue($user->refresh()->isAdvertiser());
+    }
+
+    public function testPatchUserGrantPublishing(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_publisher' => 0]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'grantPublishing'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertTrue($user->refresh()->isPublisher());
+    }
+
+    public function testPatchUserSwitchUserToAgency(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_agency' => 0]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToAgency'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertTrue($user->refresh()->isAgency());
+    }
+
+    public function testPatchUserSwitchUserToAgencyByRegularUser(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_agency' => 0]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToAgency'),
+            [],
+            self::getHeaders($user)
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        self::assertFalse($user->refresh()->isAgency());
+    }
+
+    public function testPatchUserSwitchUserToAgencyWhileUserIsAgency(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_agency' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToAgency'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertTrue($user->refresh()->isAgency());
+    }
+
+    public function testPatchUserSwitchUserToAgencyWhileUserDeleted(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'deleted_at' => new DateTimeImmutable('-1 minute'),
+            'is_agency' => 0,
+        ]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToAgency'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        self::assertFalse($user->refresh()->isAgency());
+    }
+
+    public function testPatchUserSwitchUserToModerator(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 0]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToModerator'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertTrue($user->refresh()->isModerator());
+    }
+
+    public function testPatchUserSwitchUserToModeratorByModerator(): void
+    {
+        $moderator = User::factory()->create(['is_moderator' => 1]);
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 0]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToModerator'),
+            [],
+            self::getHeaders($moderator)
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        self::assertFalse($user->refresh()->isModerator());
+    }
+
+    public function testPatchUserSwitchUserToModeratorWhileUserIsModerator(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToModerator'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertTrue($user->refresh()->isModerator());
+    }
+
+    public function testPatchUserSwitchUserToModeratorWhileUserDeleted(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'deleted_at' => new DateTimeImmutable('-1 minute'),
+            'is_moderator' => 0,
+        ]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToModerator'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        self::assertFalse($user->refresh()->isModerator());
+    }
+
+    public function testPatchUserSwitchUserToRegular(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToRegular'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertFalse($user->refresh()->isModerator());
+    }
+
+    public function testPatchUserSwitchUserToRegularByRegularUser(): void
+    {
+        $user = User::factory()->create();
+        /** @var User $moderator */
+        $moderator = User::factory()->create(['is_moderator' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($moderator->id, 'switchToRegular'),
+            [],
+            self::getHeaders($user)
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        self::assertTrue($moderator->refresh()->isModerator());
+    }
+
+    public function testPatchUserSwitchUserToRegularByModeratorWhileUserIsModerator(): void
+    {
+        $moderator = User::factory()->create(['is_moderator' => 1]);
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToRegular'),
+            [],
+            self::getHeaders($moderator)
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        self::assertTrue($user->refresh()->isModerator());
+    }
+
+    public function testPatchUserSwitchUserToRegularWhileUserDeleted(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'deleted_at' => new DateTimeImmutable('-1 minute'),
+            'is_moderator' => 1,
+        ]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToRegular'),
+            [],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        self::assertTrue($user->refresh()->isModerator());
+    }
+
+    public function testPatchUserUnban(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['is_banned' => 1, 'ban_reason' => 'suspicious activity']);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'unban'),
+            ['reason' => 'suspicious activity'],
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        $user = $user->refresh();
+        self::assertEquals(0, $user->is_banned);
+    }
+
+//    public function patchUserProvider(): array
+//    {
+//        return [
+//            'ban' => ['ban', 'banUser'],
+//            'delete' => ['delete', 'deleteUser'],
+//            'switchToModerator' => ['switchToModerator', 'switchUserToModerator'],
+//            'unban' => ['unban', 'unbanUser'],
+//            'switchToAgency' => ['switchToAgency', 'switchUserToAgency'],
+//            'switchToRegular' => ['switchToRegular', 'switchUserToRegular'],
+//        ];
+//    }
+
+    public function testPatchUserInvalidAction(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'invalid'),
+            [],
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     private function getResponseForKey(string $key): TestResponse
     {
         return $this->getJson(
@@ -608,9 +960,14 @@ final class ServerMonitoringControllerTest extends TestCase
         return self::MONITORING_URI . '/' . $key;
     }
 
-    private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string
+    private static function buildUriForResetHostConnectionErrorCounter(int $hostId): string
     {
         return sprintf('/api/monitoring/hosts/%d/reset', $hostId);
+    }
+
+    private static function buildUriForPatchUser(int $userId, string $action): string
+    {
+        return sprintf('%s/%d/%s', self::USERS_URI, $userId, $action);
     }
 
     private static function seedServerEvents(): void

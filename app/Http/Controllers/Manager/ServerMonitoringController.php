@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -199,29 +200,7 @@ class ServerMonitoringController extends Controller
         $paginator = $builder->orderBy('id')
             ->tokenPaginate($limit)
             ->withQueryString();
-        $collection = $paginator->getCollection()->map(function ($user) {
-            /** @var User $user */
-            return [
-                'id' => $user->id,
-                'email' => $user->email,
-                'adsharesWallet' => [
-                    'walletBalance' => null !== $user->wallet_balance
-                        ? (int)$user->wallet_balance : $user->getWalletBalance(),
-                    'bonusBalance' => null !== $user->bonus_balance
-                        ? (int)$user->bonus_balance : $user->getBonusBalance(),
-                ],
-                'connectedWallet' => [
-                    'address' => $user->wallet_address?->getAddress(),
-                    'network' => $user->wallet_address?->getNetwork(),
-                ],
-                'roles' => $user->roles,
-                'campaignCount' => null !== $user->campaign_count
-                    ? (int)$user->campaign_count : $user->campaigns()->count(),
-                'siteCount' => null !== $user->site_count
-                    ? (int)$user->site_count : $user->sites()->count(),
-                'lastLogin' => $user->updated_at->format(DateTimeInterface::ATOM),
-            ];
-        });
+        $collection = $paginator->getCollection()->map(fn($user) => $this->mapUser($user));
         $paginator->setCollection($collection);
 
         return $paginator->toArray();
@@ -234,6 +213,98 @@ class ServerMonitoringController extends Controller
                 'balance' => UserLedgerEntry::getBalanceForAllUsers(),
                 'unusedBonuses' => UserLedgerEntry::getBonusBalanceForAllUsers(),
             ]
+        ];
+    }
+
+    public function banUser(AdminController $adminController, Request $request, int $userId): JsonResponse
+    {
+        $adminController->banUser($userId, $request);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function confirmUser(AuthController $authController, int $userId): JsonResponse
+    {
+        $authController->confirm($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function deleteUser(
+        AdminController $adminController,
+        CampaignRepository $campaignRepository,
+        int $userId,
+    ): JsonResponse {
+        return $adminController->deleteUser($userId, $campaignRepository);
+    }
+
+    public function denyAdvertising(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->denyAdvertising($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function denyPublishing(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->denyPublishing($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function grantAdvertising(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->grantAdvertising($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function grantPublishing(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->grantPublishing($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function switchUserToAgency(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->switchUserToAgency($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function switchUserToModerator(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->switchUserToModerator($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function switchUserToRegular(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->switchUserToRegular($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    public function unbanUser(AdminController $adminController, int $userId): JsonResponse
+    {
+        $adminController->unbanUser($userId);
+        return self::json($this->mapUser(User::fetchById($userId)));
+    }
+
+    private function mapUser(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'email' => $user->email,
+            'adsharesWallet' => [
+                'walletBalance' => null !== $user->wallet_balance
+                    ? (int)$user->wallet_balance : $user->getWalletBalance(),
+                'bonusBalance' => null !== $user->bonus_balance
+                    ? (int)$user->bonus_balance : $user->getBonusBalance(),
+            ],
+            'connectedWallet' => [
+                'address' => $user->wallet_address?->getAddress(),
+                'network' => $user->wallet_address?->getNetwork(),
+            ],
+            'roles' => $user->roles,
+            'campaignCount' => null !== $user->campaign_count
+                ? (int)$user->campaign_count : $user->campaigns()->count(),
+            'siteCount' => null !== $user->site_count
+                ? (int)$user->site_count : $user->sites()->count(),
+            'lastLogin' => $user->updated_at->format(DateTimeInterface::ATOM),
         ];
     }
 

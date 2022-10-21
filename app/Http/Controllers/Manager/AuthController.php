@@ -54,6 +54,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -145,7 +146,7 @@ class AuthController extends Controller
         /** @var User $user */
         $user = User::find($userId);
         if (empty($user)) {
-            return self::json([], Response::HTTP_NOT_FOUND);
+            throw new NotFoundHttpException();
         }
 
         DB::beginTransaction();
