@@ -499,7 +499,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertEquals(0, $user2['campaignCount']);
         self::assertEquals(2, $user2['siteCount']);
         self::assertNotContains(Role::Admin->value, $user2['roles']);
-        self::assertContains(Role::Advertiser->value, $user2['roles']);
+        self::assertNotContains(Role::Advertiser->value, $user2['roles']);
         self::assertContains(Role::Publisher->value, $user2['roles']);
     }
 
@@ -587,6 +587,53 @@ final class ServerMonitoringControllerTest extends TestCase
             'siteCount' => ['siteCount', 'user2@example.com'],
             'walletBalance' => ['walletBalance', 'user2@example.com'],
         ];
+    }
+
+    /**
+     * @dataProvider fetchUsersFilterByProvider
+     */
+    public function testFetchUsersFilterBy(string $filterBy, int $filteredCount, ?string $expectedEmailOfFirst): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?filterBy=' . $filterBy,
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals($filteredCount, count($response->json('data')));
+        if ($filteredCount > 0) {
+            $response->assertJsonPath('data.0.email', $expectedEmailOfFirst);
+        }
+    }
+
+    public function fetchUsersFilterByProvider(): array
+    {
+        return [
+            'adminUnconfirmed' => ['adminUnconfirmed', 2, 'user1@example.com'],
+            'emailUnconfirmed' => ['emailUnconfirmed', 1, 'user2@example.com'],
+            Role::Admin->value => [Role::Admin->value, 1, 'admin@example.com'],
+            Role::Advertiser->value => [Role::Advertiser->value, 2, 'admin@example.com'],
+            Role::Agency->value => [Role::Agency->value, 0, null],
+            Role::Moderator->value => [Role::Moderator->value, 0, null],
+            Role::Publisher->value => [Role::Publisher->value, 3, 'admin@example.com'],
+        ];
+    }
+
+    public function testFetchUsersFilterByInvalidCategory(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?filterBy=id',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testPatchUserBan(): void
@@ -985,7 +1032,10 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
 
         /** @var User $user1 */
-        $user1 = User::factory()->create(['email' => 'user1@example.com']);
+        $user1 = User::factory()->create([
+            'email' => 'user1@example.com',
+            'email_confirmed_at' => new DateTimeImmutable('-10 minutes'),
+        ]);
         Campaign::factory()->create([
             'user_id' => $user1->id,
             'status' => Campaign::STATUS_ACTIVE,
@@ -1005,6 +1055,7 @@ final class ServerMonitoringControllerTest extends TestCase
         /** @var User $user2 */
         $user2 = User::factory()->create([
             'email' => 'user2@example.com',
+            'is_advertiser' => 0,
             'wallet_address' => new WalletAddress(
                 WalletAddress::NETWORK_BSC,
                 '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb'

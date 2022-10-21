@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -144,13 +145,33 @@ class ServerMonitoringController extends Controller
     private function handleUsers(Request $request): array
     {
         $limit = $request->query('limit', 10);
+        $filterBy = $request->query('filterBy');
         $orderBy = $request->query('orderBy');
         $direction = $request->query('direction', 'asc');
         $this->validateLimit($limit);
+        $this->validateUserFilterBy($filterBy);
         $this->validateUserOrderBy($orderBy);
         $this->validateDirection($direction);
 
         $builder = User::query();
+
+        if ($filterBy) {
+            if ('adminUnconfirmed' === $filterBy) {
+                $builder->whereNull('admin_confirmed_at');
+            } elseif ('emailUnconfirmed' === $filterBy) {
+                $builder->whereNull('email_confirmed_at');
+            } elseif (Role::Admin->value === $filterBy) {
+                $builder->where('is_admin', 1);
+            } elseif (Role::Advertiser->value === $filterBy) {
+                $builder->where('is_advertiser', 1);
+            } elseif (Role::Agency->value === $filterBy) {
+                $builder->where('is_agency', 1);
+            } elseif (Role::Moderator->value === $filterBy) {
+                $builder->where('is_moderator', 1);
+            } elseif (Role::Publisher->value === $filterBy) {
+                $builder->where('is_publisher', 1);
+            }
+        }
 
         if ($orderBy) {
             if ('bonusBalance' === $orderBy) {
@@ -355,7 +376,7 @@ class ServerMonitoringController extends Controller
             return;
         }
         if (!is_string($orderBy)) {
-            throw new UnprocessableEntityHttpException('Sorting only by single category is supported');
+            throw new UnprocessableEntityHttpException('Sorting is supported by single category only');
         }
         if (
             !in_array(
@@ -372,6 +393,28 @@ class ServerMonitoringController extends Controller
             )
         ) {
             throw new UnprocessableEntityHttpException(sprintf('Sorting by `%s` is not supported', $orderBy));
+        }
+    }
+
+    private function validateUserFilterBy(array|string|null $filterBy): void
+    {
+        if (null === $filterBy) {
+            return;
+        }
+        if (!is_string($filterBy)) {
+            throw new UnprocessableEntityHttpException('Filtering is supported by single category only');
+        }
+        if (
+            !in_array(
+                $filterBy,
+                [
+                    'adminUnconfirmed',
+                    'emailUnconfirmed',
+                    ...array_map(fn($role) => $role->value, Role::cases())
+                ]
+            )
+        ) {
+            throw new UnprocessableEntityHttpException(sprintf('Filtering by `%s` is not supported', $filterBy));
         }
     }
 }
