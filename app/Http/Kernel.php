@@ -30,6 +30,7 @@ use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\RequireModeratorAccess;
 use Adshares\Adserver\Http\Middleware\RequirePublisherAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
+use Adshares\Adserver\Http\Middleware\TrackUserActivity;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Fruitcake\Cors\HandleCors;
@@ -69,42 +70,51 @@ class Kernel extends HttpKernel
     protected $middlewareGroups = [
         self::USER_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             Impersonation::class,
         ],
         self::ADVERTISER_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             Impersonation::class,
             RequireAdvertiserAccess::class,
         ],
         self::PUBLISHER_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             Impersonation::class,
             RequirePublisherAccess::class,
         ],
         self::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
         ],
         self::GUEST_ACCESS => [
             RequireGuestAccess::class,
         ],
         self::ADMIN_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             RequireAdminAccess::class,
         ],
         self::ADMIN_JWT_ACCESS => [
             self::AUTH . ':jwt',
+            TrackUserActivity::class,
             RequireAdminAccess::class,
         ],
         self::MODERATOR_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             RequireModeratorAccess::class,
         ],
         self::MODERATOR_JWT_ACCESS => [
             self::AUTH . ':jwt',
+            TrackUserActivity::class,
             RequireModeratorAccess::class,
         ],
         self::AGENCY_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             RequireAgencyAccess::class,
         ],
         self::JSON_API => [

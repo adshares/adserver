@@ -75,6 +75,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int auto_withdrawal_limit
  * @property bool is_banned
  * @property string ban_reason
+ * @property Carbon|null last_active_at
  * @property array roles
  * @mixin Builder
  */
@@ -104,6 +105,7 @@ class User extends Authenticatable implements JWTSubject
         'deleted_at',
         'email_confirmed_at',
         'admin_confirmed_at',
+        'last_active_at',
     ];
 
     /**
@@ -273,6 +275,7 @@ class User extends Authenticatable implements JWTSubject
             $this->api_token = Str::random(60);
         } while ($this->where('api_token', $this->api_token)->exists());
 
+        $this->last_active_at = now();
         $this->save();
     }
 
