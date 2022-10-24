@@ -69,6 +69,7 @@ class AdsFetchHosts extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
+        $hostsCount = NetworkHost::all()->count();
         $timeNow = time();
         $timeBlock = $this->getTimeOfFirstBlock($timeNow);
 
@@ -84,9 +85,14 @@ class AdsFetchHosts extends BaseCommand
         $this->newLine();
 
         $this->comment('Cleaning up old hosts...');
+        $added = NetworkHost::all()->count() - $hostsCount;
         $removed = $this->removeOldHosts();
         $marked = $this->markHostsWhichDoesNotBroadcast();
-        ServerEvent::dispatch(ServerEventType::HostBroadcastProcessed, ['marked' => $marked, 'removed' => $removed]);
+        ServerEvent::dispatch(ServerEventType::HostBroadcastProcessed, [
+            'added' => $added,
+            'marked' => $marked,
+            'removed' => $removed,
+        ]);
         if ($marked) {
             $this->info(sprintf('Marked %d hosts which does not broadcast', $marked));
         }
