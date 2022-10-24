@@ -33,6 +33,7 @@ use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -216,6 +217,26 @@ class ServerMonitoringController extends Controller
             } else {
                 $builder->orderBy($orderBy, $direction);
             }
+        }
+
+        if ($query = $request->query('query')) {
+            $siteUserIds = Site::where('domain', 'LIKE', '%' . $query . '%')
+                ->whereNull('deleted_at')
+                ->select(['user_id']);
+            $campaignUserIds = Campaign::where('landing_url', 'LIKE', '%' . $query . '%')
+                ->whereNull('deleted_at')
+                ->select(['user_id']);
+            $set = $campaignUserIds->union($siteUserIds);
+
+            $builder->leftJoinSub($set, 'q', function ($join) {
+                $join->on('users.id', '=', 'q.user_id');
+            });
+
+            $builder->where(function (Builder $sub) use ($query) {
+                $sub->where('email', 'LIKE', '%' . $query . '%')
+                    ->orWhere('wallet_address', 'LIKE', '%' . $query . '%')
+                    ->orWhereNotNull('q.user_id');
+            });
         }
 
         $paginator = $builder->orderBy('id')

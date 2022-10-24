@@ -636,6 +636,72 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testFetchUsersQueryByEmail(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?query=user1',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonPath('data.0.email', 'user1@example.com');
+    }
+
+    public function testFetchUsersQueryByWalletAddress(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?query=ace8d62',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonPath('data.0.connectedWallet', [
+            'address' => '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb',
+            'network' => WalletAddress::NETWORK_BSC,
+        ]);
+    }
+
+    public function testFetchUsersQueryByCampaignLandingUrlWalletAddress(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?query=ads',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonPath('data.0.email', 'user1@example.com');
+    }
+
+    public function testFetchUsersQueryBySiteDomain(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users') . '?query=test',
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(2, count($response->json('data')));
+    }
+
     public function testPatchUserBan(): void
     {
         /** @var User $user */
@@ -1039,8 +1105,12 @@ final class ServerMonitoringControllerTest extends TestCase
         Campaign::factory()->create([
             'user_id' => $user1->id,
             'status' => Campaign::STATUS_ACTIVE,
+            'landing_url' => 'https://ads.example.com'
         ]);
-        Site::factory()->create(['user_id' => $user1->id]);
+        Site::factory()->create([
+            'user_id' => $user1->id,
+            'domain' => 'my-test.com',
+        ]);
         UserLedgerEntry::factory()->create([
             'user_id' => $user1->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
@@ -1061,7 +1131,10 @@ final class ServerMonitoringControllerTest extends TestCase
                 '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb'
             ),
         ]);
-        Site::factory()->count(2)->create(['user_id' => $user2->id]);
+        Site::factory()->count(2)->create([
+            'user_id' => $user2->id,
+            'domain' => 'test-domain.com',
+        ]);
         UserLedgerEntry::factory()->create([
             'user_id' => $user2->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
