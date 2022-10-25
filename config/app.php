@@ -128,6 +128,7 @@ return [
         Adshares\Adserver\Providers\AppServiceProvider::class,
         Adshares\Adserver\Providers\AuthServiceProvider::class,
         Adshares\Adserver\Providers\EventServiceProvider::class,
+        Adshares\Adserver\Providers\RepositoryServiceProvider::class,
         Adshares\Adserver\Providers\RouteServiceProvider::class,
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
         Adshares\Adserver\Providers\Common\ClientProvider::class,

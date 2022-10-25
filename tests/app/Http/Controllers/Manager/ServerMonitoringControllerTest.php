@@ -573,7 +573,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'campaignCount' => ['campaignCount', 'user1@example.com'],
             'connectedWallet' => ['connectedWallet', 'user2@example.com'],
             'email' => ['email', 'user2@example.com'],
-            'lastLogin' => ['lastLogin', 'admin@example.com'],
+            'lastActiveAt' => ['lastActiveAt', 'admin@example.com'],
             'siteCount' => ['siteCount', 'user2@example.com'],
             'walletBalance' => ['walletBalance', 'user2@example.com'],
         ];

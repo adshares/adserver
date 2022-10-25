@@ -62,7 +62,7 @@ class FilterFactory
                             sprintf('Filtering by `%s` requires boolean', $name)
                         );
                     }
-                    $filters[] = new BoolFilter($name, $value);
+                    $filters[$name] = new BoolFilter($name, $value);
                     break;
                 case FilterType::String:
                     if (!$queryValues) {
@@ -80,7 +80,7 @@ class FilterFactory
                             );
                         }
                     }
-                    $filters[] = new StringFilter($name, $queryValues);
+                    $filters[$name] = new StringFilter($name, $queryValues);
                     break;
             }
         }
