@@ -23,12 +23,20 @@ class ServerEventLog extends Model
     public const UPDATED_AT = null;
 
     protected $casts = [
+        'created_at' => 'date:' . DateTimeInterface::ATOM,
         'type' => ServerEventType::class,
     ];
 
     protected $fillable = [
         'properties',
         'type',
+    ];
+
+    protected $visible = [
+        'id',
+        'created_at',
+        'type',
+        'properties',
     ];
 
     public static function register(ServerEventType $type, array $properties = []): void
