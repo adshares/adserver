@@ -125,8 +125,7 @@ class AdsFetchHosts extends BaseCommand
             $broadcastArray = $response->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {
-                $wasHostFound = $this->handleBroadcast($broadcast);
-                if ($wasHostFound) {
+                if ($this->handleBroadcast($broadcast)) {
                     ++$foundHosts;
                 }
             }
