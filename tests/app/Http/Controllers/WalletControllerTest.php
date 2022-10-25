@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
@@ -453,6 +454,7 @@ class WalletControllerTest extends TestCase
         Mail::assertQueued(function (WithdrawalSuccess $mail) use ($amount) {
             return $amount === $mail->getAmount();
         });
+        self::assertServerEventDispatched(ServerEventType::UserWithdrawalProcessed);
         Queue::assertNotPushed(AdsSendOne::class);
     }
 

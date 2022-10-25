@@ -19,29 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Console\Commands;
+declare(strict_types=1);
+
+namespace Adshares\Adserver\Tests\Listener;
 
 use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\Listeners\ServerEventListener;
+use Adshares\Adserver\Models\ServerEventLog;
+use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
-use Adshares\Supply\Application\Service\FilteringOptionsImporter;
 
-class UpdateFilteringOptions extends BaseCommand
+class ServerEventListenerTest extends TestCase
 {
-    protected $signature = 'ops:filtering-options:update';
-    protected $description = 'Updates site filtering options';
-
-    public function handle(FilteringOptionsImporter $service): void
+    public function testHandle(): void
     {
-        if (!$this->lock()) {
-            $this->info('Command ' . $this->signature . ' already running');
-            return;
-        }
+        $event = new ServerEvent(ServerEventType::InventorySynchronized, ['test' => 'OK']);
 
-        $this->info('Start command ' . $this->signature);
+        (new ServerEventListener())->handle($event);
 
-        $service->import();
-        ServerEvent::dispatch(ServerEventType::FilteringUpdated);
-
-        $this->info('Finish command ' . $this->signature);
+        self::assertDatabaseHas(ServerEventLog::class, [
+            'type' => ServerEventType::InventorySynchronized,
+        ]);
+        self::assertEquals(['test' => 'OK'], ServerEventLog::first()->properties);
     }
 }

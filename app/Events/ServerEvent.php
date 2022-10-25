@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,35 +19,30 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+namespace Adshares\Adserver\Events;
 
-use Adshares\Common\Exception\RuntimeException;
+use Adshares\Adserver\ViewModel\ServerEventType;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
-/**
- * json columns
- */
-trait JsonValue
+class ServerEvent
 {
-    public function jsonValueMutator($key, $value)
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
+
+    public function __construct(private readonly ServerEventType $type, private readonly array $properties = [])
     {
-        $this->attributes[$key] = $this->processValue($value);
     }
 
-    public function jsonValueAccessor($value)
+    public function getType(): ServerEventType
     {
-        return $value === null ? null : json_decode($value);
+        return $this->type;
     }
 
-    private function processValue($value): ?string
+    public function getProperties(): array
     {
-        if (null === $value) {
-            return null;
-        }
-
-        if (false === ($jsonEncode = json_encode($value))) {
-            throw new RuntimeException('Json value cannot be saved');
-        }
-
-        return $jsonEncode;
+        return $this->properties;
     }
 }

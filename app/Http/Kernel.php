@@ -56,7 +56,7 @@ class Kernel extends HttpKernel
     public const ADVERTISER_ACCESS = 'only-advertisers';
     public const PUBLISHER_ACCESS = 'only-publishers';
     public const JSON_API = 'api';
-
+    public const JSON_API_CAMELIZE = 'api-camelize';
     public const JSON_API_NO_TRANSFORM = 'api-no-transform';
 
     protected $middleware = [
@@ -107,6 +107,13 @@ class Kernel extends HttpKernel
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
             SnakizeRequest::class,
+            SubstituteBindings::class,
+            #post-handle
+            SetCacheHeaders::class,
+            CamelizeJsonResponse::class,
+        ],
+        self::JSON_API_CAMELIZE => [
+            ValidatePostSize::class,
             SubstituteBindings::class,
             #post-handle
             SetCacheHeaders::class,

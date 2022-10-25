@@ -23,9 +23,11 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use DateTimeInterface;
@@ -39,14 +41,12 @@ class DemandProcessPayments extends BaseCommand
     protected $signature = 'ops:demand:payments:process
                             {--f|from= : Date from which reports will be processed}
                             {--ids= : Report ids to process}';
-
     protected $description = 'Fetches reports, sends payments and updates statistics';
 
     public function handle(): void
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->getName() . ' already running');
-
             return;
         }
 
@@ -57,7 +57,6 @@ class DemandProcessPayments extends BaseCommand
         $isRecalculationNeeded = null !== $this->option('ids');
         $reports = $this->fetchPaymentReports();
 
-        /** @var PaymentReport $report */
         foreach ($reports as $report) {
             $timestamp = $report->id;
             if ($timestamp > $lastAvailableTimestamp) {
@@ -115,22 +114,15 @@ class DemandProcessPayments extends BaseCommand
         }
 
         $this->sendPayments($reports);
-
-        try {
-            Artisan::call(
-                AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE,
-                [],
-                $this->getOutput()
-            );
-        } catch (LogicException $logicException) {
-            $this->warn(
-                sprintf('Command %s is locked', AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE)
-            );
-        }
+        $this->aggregateStatistics();
 
         $this->info('End command ' . $this->getName());
     }
 
+    /**
+     * @return Collection<PaymentReport>
+     * @throws ConsoleCommandException
+     */
     private function fetchPaymentReports(): Collection
     {
         if (null !== ($ids = $this->option('ids'))) {
@@ -205,12 +197,28 @@ class DemandProcessPayments extends BaseCommand
 
             if (DemandSendPayments::STATUS_OK === $sendStatus) {
                 DB::commit();
+                ServerEvent::dispatch(ServerEventType::OutgoingAdPaymentProcessed);
             } else {
                 DB::rollBack();
             }
         } catch (LogicException $logicException) {
             DB::rollBack();
             $this->warn(sprintf('Command %s is locked', DemandSendPayments::COMMAND_SIGNATURE));
+        }
+    }
+
+    private function aggregateStatistics(): void
+    {
+        try {
+            Artisan::call(
+                AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE,
+                [],
+                $this->getOutput()
+            );
+        } catch (LogicException $logicException) {
+            $this->warn(
+                sprintf('Command %s is locked', AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE)
+            );
         }
     }
 }

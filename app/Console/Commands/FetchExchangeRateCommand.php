@@ -24,8 +24,10 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Utilities\SqlUtils;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Illuminate\Database\QueryException;
@@ -82,6 +84,7 @@ class FetchExchangeRateCommand extends BaseCommand
                 throw $queryException;
             }
         }
+        ServerEvent::dispatch(ServerEventType::ExchangeRatesFetched, ['currencies' => $currencies]);
 
         $this->info('Exchange rates has been fetched and stored');
     }

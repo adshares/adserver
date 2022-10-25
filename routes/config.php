@@ -26,7 +26,7 @@ use Adshares\Adserver\Http\Controllers\Manager\ServerMonitoringController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(function () {
+Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(function () {
     Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
     Route::patch('config/placeholders', [ServerConfigurationController::class, 'storePlaceholders']);
     Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);

@@ -47,7 +47,7 @@ use Throwable;
 
 class ServerConfigurationController extends Controller
 {
-    private const ALLOWED_KEYS = [
+    private const VALIDATION_RULES = [
         Config::ADPANEL_URL => 'nullable|url',
         Config::ADPAY_URL => 'nullable|url',
         Config::ADS_OPERATOR_SERVER_URL => 'nullable|url',
@@ -162,11 +162,11 @@ class ServerConfigurationController extends Controller
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|nonNegativeInteger',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|nonNegativeInteger',
         Config::URL => 'url',
-        self::REJECTED_DOMAINS => 'nullable|list:domain',
+        'rejected-domains' => 'nullable|list:domain',
     ];
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
     private const MAX_VALUE_LENGTH = 65535;
-    private const REJECTED_DOMAINS = 'rejected-domains';
+    private const REJECTED_DOMAINS = 'rejectedDomains';
     private const RULE_NULLABLE = 'nullable';
 
     public function fetch(string $key = null): JsonResponse
@@ -174,7 +174,7 @@ class ServerConfigurationController extends Controller
         if (null !== $key) {
             self::validateKey($key);
             $data = [
-                $key => Config::fetchAdminSettings()[$key] ?? null,
+                $key => Config::fetchAdminSettings()[Str::kebab($key)] ?? null,
             ];
         } else {
             $data = Config::fetchAdminSettings();
@@ -191,7 +191,7 @@ class ServerConfigurationController extends Controller
     {
         if (null !== $key) {
             self::validatePlaceholderKey($key);
-            $placeholder = PanelPlaceholder::fetchByType($key);
+            $placeholder = PanelPlaceholder::fetchByType(Str::kebab($key));
             return self::json([$key => $placeholder?->content]);
         }
 
@@ -247,9 +247,7 @@ class ServerConfigurationController extends Controller
             throw new UnprocessableEntityHttpException('Data is required');
         }
         foreach ($data as $type => $content) {
-            if (!in_array($type, PanelPlaceholder::TYPES_ALLOWED, true)) {
-                throw new UnprocessableEntityHttpException(sprintf('Invalid type (%s)', $type));
-            }
+            self::validatePlaceholderKey($type);
             if (null === $content) {
                 return;
             }
@@ -261,9 +259,12 @@ class ServerConfigurationController extends Controller
 
     private function storePlaceholdersData(array $data): array
     {
+        $types = [];
         $typesToDelete = [];
         $placeholders = [];
         foreach ($data as $type => $content) {
+            $type = Str::kebab($type);
+            $types[] = $type;
             if (null === $content) {
                 $typesToDelete[] = $type;
             } else {
@@ -298,13 +299,12 @@ class ServerConfigurationController extends Controller
             throw new RuntimeException();
         }
 
-        $types = array_keys($data);
-
         return $this->getPanelPlaceholdersWithNulls($types);
     }
 
     private function storeData(array $data): array
     {
+        $mappedData = [];
         $appendRejectedDomains = false;
         try {
             if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
@@ -312,13 +312,16 @@ class ServerConfigurationController extends Controller
                 unset($data[self::REJECTED_DOMAINS]);
                 $appendRejectedDomains = true;
             }
-            Config::updateAdminSettings($data);
+            foreach ($data as $key => $value) {
+                $mappedData[Str::kebab($key)] = $value;
+            }
+            Config::updateAdminSettings($mappedData);
         } catch (Throwable $exception) {
             Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
             throw new RuntimeException('Cannot store configuration');
         }
 
-        $settings = array_intersect_key(Config::fetchAdminSettings(), $data);
+        $settings = array_intersect_key(Config::fetchAdminSettings(), $mappedData);
         if ($appendRejectedDomains) {
             $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
         }
@@ -384,7 +387,7 @@ class ServerConfigurationController extends Controller
     {
         self::validateKey($field);
 
-        $rules = explode('|', self::ALLOWED_KEYS[$field]);
+        $rules = self::getRulesForField($field);
 
         if (in_array(self::RULE_NULLABLE, $rules) && null === $value) {
             return;
@@ -408,6 +411,11 @@ class ServerConfigurationController extends Controller
             $parameters = explode(',', $ruleParts[1] ?? '');
             self::{$signature}($field, $value, ...$parameters);
         }
+    }
+
+    private static function getRulesForField(string $field): array
+    {
+        return explode('|', self::VALIDATION_RULES[Str::kebab($field)]);
     }
 
     private static function validateNotEmpty(string $field, string $value): void
@@ -480,14 +488,14 @@ class ServerConfigurationController extends Controller
 
     private static function validateKey(string $key): void
     {
-        if (!isset(self::ALLOWED_KEYS[$key])) {
+        if (!isset(self::VALIDATION_RULES[Str::kebab($key)])) {
             throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
         }
     }
 
     private static function validatePlaceholderKey(string $key): void
     {
-        if (!in_array($key, PanelPlaceholder::TYPES_ALLOWED, true)) {
+        if (!in_array(Str::kebab($key), PanelPlaceholder::TYPES_ALLOWED, true)) {
             throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
         }
     }

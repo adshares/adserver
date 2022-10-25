@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -60,6 +61,7 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
         $host = NetworkHost::fetchByAddress('0001-00000002-BB2D');
         self::assertNotNull($host->last_synchronization);
         self::assertGreaterThanOrEqual($testStartTime->getTimestamp(), $host->last_synchronization->getTimestamp());
+        self::assertServerEventDispatched(ServerEventType::InventorySynchronized);
     }
 
     public function testWhitelistImport(): void
@@ -136,6 +138,7 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
                 'status' => HostStatus::Unreachable,
             ]
         );
+        self::assertServerEventDispatched(ServerEventType::InventorySynchronized);
     }
 
     public function testImportEmptyInventory(): void
@@ -153,5 +156,6 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
                 '[Inventory Importer] Inventory (0001-00000004-DBEB) is empty. It has been removed from the database'
             )
             ->expectsOutputToContain('[Inventory Importer] Finished importing data from 0/1 inventories');
+        self::assertServerEventDispatched(ServerEventType::InventorySynchronized);
     }
 }

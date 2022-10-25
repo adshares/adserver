@@ -22,10 +22,13 @@
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Testing\TestResponse;
@@ -34,9 +37,19 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 final class ServerMonitoringControllerTest extends TestCase
 {
+    private const EVENTS_URI = '/api/monitoring/events';
+    private const EVENTS_STRUCTURE = [
+        'data' => [
+            '*' => [
+                'createdAt',
+                'properties',
+                'type',
+            ],
+        ],
+    ];
     private const MONITORING_URI = '/api/monitoring';
     private const HOSTS_STRUCTURE = [
-        'hosts' => [
+        'data' => [
             '*' => [
                 'id',
                 'status',
@@ -49,6 +62,7 @@ final class ServerMonitoringControllerTest extends TestCase
                 'siteCount',
                 'connectionErrorCount',
                 'infoJson',
+                'error',
             ],
         ]
     ];
@@ -109,6 +123,16 @@ final class ServerMonitoringControllerTest extends TestCase
             'status' => HostStatus::Operational,
             'lastSynchronization' => $carbon->format(DateTimeInterface::ATOM),
         ]);
+    }
+
+    public function testFetchHostsValidateLimit(): void
+    {
+        $response = $this->getJson(
+            self::buildUriForKey('hosts') . '?limit=no',
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFetchWallet(): void
@@ -185,6 +209,226 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testFetchEvents(): void
+    {
+        self::seedServerEvents();
+
+        $response = $this->getJson(self::EVENTS_URI, self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        $json = $response->json('data');
+        self::assertEquals(2, count($json));
+
+        $response = $this->getJson(self::EVENTS_URI . '?limit=1', self::getHeaders());
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonFragment(['type' => ServerEventType::InventorySynchronized]);
+    }
+
+    public function testFetchEventsEmpty(): void
+    {
+        $response = $this->getJson(self::EVENTS_URI, self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        $json = $response->json('data');
+        self::assertEquals(0, count($json));
+    }
+
+    public function testFetchEventsPagination(): void
+    {
+        self::seedServerEvents();
+        self::seedServerEvents();
+
+        $response = $this->getJson(self::EVENTS_URI . '?limit=3', self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(3, count($response->json('data')));
+        self::assertNull($response->json('prevPageUrl'));
+        self::assertNotNull($response->json('nextPageUrl'));
+
+        $url = $response->json('nextPageUrl');
+        $response = $this->getJson($url, self::getHeaders());
+        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        self::assertNotNull($response->json('prevPageUrl'));
+        self::assertNull($response->json('nextPageUrl'));
+    }
+
+    public function testFetchEventsByType(): void
+    {
+        self::seedServerEvents();
+
+        $response = $this->getJson(
+            self::EVENTS_URI . '?types[]=' . ServerEventType::HostBroadcastProcessed->value,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonFragment(['type' => ServerEventType::HostBroadcastProcessed]);
+    }
+
+    public function testFetchEventsByDate(): void
+    {
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-1 month'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 1],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable(),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 2],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('+1 month'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 3],
+        ]);
+
+        $from = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
+        $to = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from=' . urlencode($from) . '&to=' . urlencode($to),
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonFragment(['type' => ServerEventType::InventorySynchronized]);
+        $response->assertJsonFragment(['test' => 2]);
+    }
+
+    public function testFetchEventsValidationLimit(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?limit=no',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventsValidationTypeNotArray(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?types=' . ServerEventType::HostBroadcastProcessed->value,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventsValidationTypeInvalid(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?types[]=invalid',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * @dataProvider invalidDateProvider
+     */
+    public function testFetchEventsValidationFrom(string $from): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from=' . $from,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * @dataProvider invalidDateProvider
+     */
+    public function testFetchEventsValidationTo(string $to): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?to=' . $to,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function invalidDateProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'text' => ['now'],
+            'number' => ['2022'],
+        ];
+    }
+
+    public function testFetchEventsValidationFromArray(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from[]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventsValidationToArray(): void
+    {
+        $response = $this->getJson(
+            self::EVENTS_URI . '?to[]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchEventValidationDateRange(): void
+    {
+        $from = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
+        $to = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
+        $response = $this->getJson(
+            self::EVENTS_URI . '?from=' . urlencode($from) . '&to=' . urlencode($to),
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFetchLatestEventsByType(): void
+    {
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-8 minutes'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 1],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-6 minutes'),
+            'type' => ServerEventType::HostBroadcastProcessed,
+            'properties' => ['test' => 2],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-4 minutes'),
+            'type' => ServerEventType::InventorySynchronized,
+            'properties' => ['test' => 3],
+        ]);
+        ServerEventLog::factory()->create([
+            'created_at' => new DateTimeImmutable('-2 minutes'),
+            'type' => ServerEventType::BroadcastSent,
+            'properties' => ['test' => 4],
+        ]);
+
+        $response = $this->getJson(
+            self::buildUriForKey('latest-events')
+            . '?types[]=' . ServerEventType::HostBroadcastProcessed->value
+            . '&types[]=' . ServerEventType::InventorySynchronized->value,
+            self::getHeaders()
+        );
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
+        self::assertEquals(2, count($response->json('data')));
+
+        $response->assertJsonFragment([
+            'type' => ServerEventType::HostBroadcastProcessed,
+            'properties' => ['test' => 2],
+        ]);
+        $response->assertJsonFragment([
+            'type' => ServerEventType::HostBroadcastProcessed,
+            'properties' => ['test' => 3],
+        ]);
+    }
+
     private function getResponseForKey(string $key): TestResponse
     {
         return $this->getJson(
@@ -209,5 +453,11 @@ final class ServerMonitoringControllerTest extends TestCase
     private static function buildUriForResetHostConnectionErrorCounter(string $hostId): string
     {
         return sprintf('/api/monitoring/hosts/%d/reset', $hostId);
+    }
+
+    private static function seedServerEvents(): void
+    {
+        ServerEventLog::factory()->create(['type' => ServerEventType::HostBroadcastProcessed]);
+        ServerEventLog::factory()->create(['type' => ServerEventType::InventorySynchronized]);
     }
 }

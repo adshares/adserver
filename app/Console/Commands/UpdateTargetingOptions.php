@@ -21,12 +21,13 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Demand\Application\Service\TargetingOptionsImporter;
 
 class UpdateTargetingOptions extends BaseCommand
 {
     protected $signature = 'ops:targeting-options:update';
-
     protected $description = 'Updates campaign targeting options';
 
     public function handle(TargetingOptionsImporter $service): void
@@ -39,6 +40,7 @@ class UpdateTargetingOptions extends BaseCommand
         $this->info('Start command ' . $this->signature);
 
         $service->import();
+        ServerEvent::dispatch(ServerEventType::TargetingUpdated);
 
         $this->info('Finish command ' . $this->signature);
     }

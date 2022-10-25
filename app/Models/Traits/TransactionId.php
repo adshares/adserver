@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Models\Traits;
 use Adshares\Adserver\Utilities\AdsUtils;
 
 /**
- * binhex columns.
+ * transaction ID columns
  */
 trait TransactionId
 {

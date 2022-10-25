@@ -31,6 +31,7 @@ use Adshares\Ads\Response\GetBlockIdsResponse;
 use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
@@ -40,13 +41,14 @@ use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Model\Currency;
-use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Client\DummyDemandClient;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
 
 class AdsProcessTxTest extends ConsoleTestCase
@@ -69,6 +71,8 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_USER_DEPOSIT, AdsPayment::all()->first()->status);
         $this->assertEquals($expectedBalance, $user->getBalance());
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
+        self::assertServerEventDispatched(ServerEventType::UserDepositProcessed, ['amount' => $expectedBalance]);
     }
 
     public function depositProvider(): array
@@ -87,6 +91,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testAdsProcessEventPayment(): void
@@ -133,6 +138,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testAdsProcessValidSendMany(): void
@@ -143,6 +149,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testAdsProcessConnectionTx(): void
@@ -153,6 +160,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testAdsProcessGetBlockIdsError(): void
@@ -176,6 +184,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_CANNOT_GET_BLOCK_IDS);
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
+        Event::assertNotDispatched(ServerEvent::class);
     }
 
     public function testAdsProcessGetBlockIdsRecoverableError(): void
@@ -202,6 +211,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->insertAdsPaymentSingle(100000000000);
 
         $this->artisan(self::COMMAND)->assertSuccessful();
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testLock(): void
@@ -211,6 +221,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->instance(Locker::class, $lockerMock);
 
         $this->artisan(self::COMMAND)->assertExitCode(2);
+        Event::assertNotDispatched(ServerEvent::class);
     }
 
     public function testLogError(): void
@@ -226,6 +237,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         );
 
         $this->artisan(self::COMMAND)->assertSuccessful();
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testCommandExceptionOnProcessingPayment(): void
@@ -245,6 +257,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->insertAdsPaymentSingle(100000000000);
 
         $this->artisan(self::COMMAND)->assertSuccessful();
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testUnexpectedExceptionOnProcessingPayment(): void
@@ -265,6 +278,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->expectException(RuntimeException::class);
 
         $this->artisan(self::COMMAND);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testProcessTransferFromColdWallet(): void
@@ -274,6 +288,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
         $this->assertEquals(AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET, AdsPayment::all()->first()->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testAdsProcessSendOneToDifferentAddress(): void
@@ -283,6 +298,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertSuccessful();
         $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function testAdsProcessSendManyToDifferentAddress(): void
@@ -292,6 +308,7 @@ class AdsProcessTxTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND)->assertSuccessful();
         $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     /**
@@ -315,6 +332,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->artisan(self::COMMAND)->assertSuccessful();
         $campaign->refresh();
         $this->assertEquals($expectedStatus, $campaign->status);
+        self::assertServerEventDispatched(ServerEventType::IncomingTransactionProcessed);
     }
 
     public function reactivateCampaignProvider(): array

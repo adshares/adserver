@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,12 +19,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Listeners;
 
-namespace Adshares\Adserver\Models;
+use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\Models\ServerEventLog;
 
-use Adshares\Common\Exception\Exception;
-
-final class UserLedgerException extends Exception
+class ServerEventListener
 {
+    public function handle(ServerEvent $event): void
+    {
+        ServerEventLog::register($event->getType(), $event->getProperties());
+    }
 }
