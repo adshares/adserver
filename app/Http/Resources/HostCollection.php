@@ -4,7 +4,7 @@ namespace Adshares\Adserver\Http\Resources;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class UserResourceCollection extends ResourceCollection
+class HostCollection extends ResourceCollection
 {
     public function toArray($request): array
     {

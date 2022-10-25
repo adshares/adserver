@@ -25,8 +25,9 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Request\Filter\BoolFilter;
 use Adshares\Adserver\Http\Request\Filter\FilterFactory;
 use Adshares\Adserver\Http\Request\Filter\FilterType;
+use Adshares\Adserver\Http\Resources\HostCollection;
 use Adshares\Adserver\Http\Resources\UserResource;
-use Adshares\Adserver\Http\Resources\UserResourceCollection;
+use Adshares\Adserver\Http\Resources\UserCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
@@ -112,28 +113,8 @@ class ServerMonitoringController extends Controller
         $paginator = NetworkHost::orderBy('id')
             ->tokenPaginate($limit)
             ->withQueryString();
-        $collection = $paginator->getCollection()->map(function ($host) {
-            /** @var NetworkHost $host */
-            $info = $host->info;
-            $statistics = $info->getStatistics()?->toArray() ?? [];
-            return [
-                'id' => $host->id,
-                'status' => $host->status,
-                'name' => $info->getName(),
-                'url' => $host->host,
-                'walletAddress' => $host->address,
-                'lastBroadcast' => $host->last_broadcast->format(DateTimeInterface::ATOM),
-                'lastSynchronization' => $host->last_synchronization?->format(DateTimeInterface::ATOM),
-                'campaignCount' => $statistics['campaigns'] ?? 0,
-                'siteCount' => $statistics['sites'] ?? 0,
-                'connectionErrorCount' => $host->failed_connection,
-                'infoJson' => $info->toArray(),
-                'error' => $host->error,
-            ];
-        });
-        $paginator->setCollection($collection);
 
-        return $paginator->toArray();
+        return (new HostCollection($paginator))->toArray($request);
     }
 
     public function handleLatestEvents(Request $request): array
@@ -282,7 +263,7 @@ class ServerMonitoringController extends Controller
             ->tokenPaginate($limit)
             ->withQueryString();
 
-        return (new UserResourceCollection($paginator))->toArray($request);
+        return (new UserCollection($paginator))->toArray($request);
     }
 
     private function handleWallet(Request $request): array
