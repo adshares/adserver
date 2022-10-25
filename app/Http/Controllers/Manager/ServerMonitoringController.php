@@ -22,6 +22,9 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Request\Filter\BoolFilter;
+use Adshares\Adserver\Http\Request\Filter\FilterFactory;
+use Adshares\Adserver\Http\Request\Filter\FilterType;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
@@ -146,76 +149,109 @@ class ServerMonitoringController extends Controller
     private function handleUsers(Request $request): array
     {
         $limit = $request->query('limit', 10);
-        $filterBy = $request->query('filterBy');
+        $filters = FilterFactory::fromRequest($request, [
+            'adminConfirmed' => FilterType::Bool,
+            'emailConfirmed' => FilterType::Bool,
+            'role' => FilterType::String,
+        ]);
         $orderBy = $request->query('orderBy');
         $direction = $request->query('direction', 'asc');
         $this->validateLimit($limit);
-        $this->validateUserFilterBy($filterBy);
+        $this->validateUserFilters($filters);
         $this->validateUserOrderBy($orderBy);
         $this->validateDirection($direction);
 
         $builder = User::query();
 
-        if ($filterBy) {
-            if ('adminUnconfirmed' === $filterBy) {
-                $builder->whereNull('admin_confirmed_at');
-            } elseif ('emailUnconfirmed' === $filterBy) {
-                $builder->whereNull('email_confirmed_at');
-            } elseif (Role::Admin->value === $filterBy) {
-                $builder->where('is_admin', 1);
-            } elseif (Role::Advertiser->value === $filterBy) {
-                $builder->where('is_advertiser', 1);
-            } elseif (Role::Agency->value === $filterBy) {
-                $builder->where('is_agency', 1);
-            } elseif (Role::Moderator->value === $filterBy) {
-                $builder->where('is_moderator', 1);
-            } elseif (Role::Publisher->value === $filterBy) {
-                $builder->where('is_publisher', 1);
+        foreach ($filters as $filter) {
+            $name = $filter->getName();
+            switch ($name) {
+                case 'adminConfirmed':
+                    if ($filter instanceof BoolFilter) {
+                        if ($filter->isChecked()) {
+                            $builder->whereNotNull('admin_confirmed_at');
+                        } else {
+                            $builder->whereNull('admin_confirmed_at');
+                        }
+                    }
+                    break;
+                case 'emailConfirmed':
+                    if ($filter instanceof BoolFilter) {
+                        if ($filter->isChecked()) {
+                            $builder->whereNotNull('email_confirmed_at');
+                        } else {
+                            $builder->whereNull('email_confirmed_at');
+                        }
+                    }
+                    break;
+                case 'role':
+                    $roleToColumnMap = [
+                        Role::Admin->value => 'is_admin',
+                        Role::Advertiser->value => 'is_advertiser',
+                        Role::Agency->value => 'is_agency',
+                        Role::Moderator->value => 'is_moderator',
+                        Role::Publisher->value => 'is_publisher',
+                    ];
+                    $columns = array_map(fn($role) => $roleToColumnMap[$role], $filter->getValues());
+                    $builder->where(function (Builder $sub) use ($columns) {
+                        foreach ($columns as $column) {
+                            $sub->orwhere($column, '=', '1');
+                        }
+                    });
+                    break;
             }
         }
 
         if ($orderBy) {
-            if ('bonusBalance' === $orderBy) {
-                $set = UserLedgerEntry::queryForEntriesRelevantForBonusBalance()
-                    ->select(DB::raw('user_id, SUM(amount) as bonus_balance'))
-                    ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
-                })->orderBy('bonus_balance', $direction)
-                    ->select(['*', DB::raw('IFNULL(bonus_balance, 0) AS bonus_balance')]);
-            } elseif ('campaignCount' === $orderBy) {
-                $set = Campaign::where('status', Campaign::STATUS_ACTIVE)
-                    ->where(function ($subBuilder) {
-                        $subBuilder->where('time_end', '>', new DateTimeImmutable())->orWhere('time_end', null);
-                    })
-                    ->select(DB::raw('user_id, COUNT(*) as campaign_count'))
-                    ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
-                })->orderBy('campaign_count', $direction)
-                    ->select(['*', DB::raw('IFNULL(campaign_count, 0) AS campaign_count')]);
-            } elseif ('connectedWallet' === $orderBy) {
-                $builder->orderBy('wallet_address', $direction);
-            } elseif ('lastLogin' === $orderBy) {
-                $builder->orderBy('updated_at', $direction);
-            } elseif ('siteCount' === $orderBy) {
-                $set = Site::where('status', Site::STATUS_ACTIVE)
-                    ->select(DB::raw('user_id, COUNT(*) as site_count'))
-                    ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
-                })->orderBy('site_count', $direction)
-                    ->select(['*', DB::raw('IFNULL(site_count, 0) AS site_count')]);
-            } elseif ('walletBalance' === $orderBy) {
-                $set = UserLedgerEntry::queryForEntriesRelevantForWalletBalance()
-                    ->select(DB::raw('user_id, SUM(amount) as wallet_balance'))
-                    ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
-                })->orderBy('wallet_balance', $direction)
-                    ->select(['*', DB::raw('IFNULL(wallet_balance, 0) AS wallet_balance')]);
-            } else {
-                $builder->orderBy($orderBy, $direction);
+            switch ($orderBy) {
+                case 'bonusBalance':
+                    $set = UserLedgerEntry::queryForEntriesRelevantForBonusBalance()
+                        ->select(DB::raw('user_id, SUM(amount) as bonus_balance'))
+                        ->groupBy('user_id');
+                    $builder->leftJoinSub($set, 's', function ($join) {
+                        $join->on('users.id', '=', 's.user_id');
+                    })->orderBy('bonus_balance', $direction)
+                        ->select(['*', DB::raw('IFNULL(bonus_balance, 0) AS bonus_balance')]);
+                    break;
+                case 'campaignCount':
+                    $set = Campaign::where('status', Campaign::STATUS_ACTIVE)
+                        ->where(function ($subBuilder) {
+                            $subBuilder->where('time_end', '>', new DateTimeImmutable())->orWhere('time_end', null);
+                        })
+                        ->select(DB::raw('user_id, COUNT(*) as campaign_count'))
+                        ->groupBy('user_id');
+                    $builder->leftJoinSub($set, 's', function ($join) {
+                        $join->on('users.id', '=', 's.user_id');
+                    })->orderBy('campaign_count', $direction)
+                        ->select(['*', DB::raw('IFNULL(campaign_count, 0) AS campaign_count')]);
+                    break;
+                case 'connectedWallet':
+                    $builder->orderBy('wallet_address', $direction);
+                    break;
+                case 'lastLogin':
+                    $builder->orderBy('updated_at', $direction);
+                    break;
+                case 'siteCount':
+                    $set = Site::where('status', Site::STATUS_ACTIVE)
+                        ->select(DB::raw('user_id, COUNT(*) as site_count'))
+                        ->groupBy('user_id');
+                    $builder->leftJoinSub($set, 's', function ($join) {
+                        $join->on('users.id', '=', 's.user_id');
+                    })->orderBy('site_count', $direction)
+                        ->select(['*', DB::raw('IFNULL(site_count, 0) AS site_count')]);
+                    break;
+                case 'walletBalance':
+                    $set = UserLedgerEntry::queryForEntriesRelevantForWalletBalance()
+                        ->select(DB::raw('user_id, SUM(amount) as wallet_balance'))
+                        ->groupBy('user_id');
+                    $builder->leftJoinSub($set, 's', function ($join) {
+                        $join->on('users.id', '=', 's.user_id');
+                    })->orderBy('wallet_balance', $direction)
+                        ->select(['*', DB::raw('IFNULL(wallet_balance, 0) AS wallet_balance')]);
+                    break;
+                default:
+                    $builder->orderBy($orderBy, $direction);
+                    break;
             }
         }
 
@@ -346,7 +382,7 @@ class ServerMonitoringController extends Controller
                 ? (int)$user->campaign_count : $user->campaigns()->count(),
             'siteCount' => null !== $user->site_count
                 ? (int)$user->site_count : $user->sites()->count(),
-            'lastLogin' => $user->updated_at->format(DateTimeInterface::ATOM),
+            'lastActiveAt' => $user->last_active_at?->format(DateTimeInterface::ATOM),
         ];
     }
 
@@ -417,25 +453,20 @@ class ServerMonitoringController extends Controller
         }
     }
 
-    private function validateUserFilterBy(array|string|null $filterBy): void
+    private function validateUserFilters(array $filters): void
     {
-        if (null === $filterBy) {
-            return;
-        }
-        if (!is_string($filterBy)) {
-            throw new UnprocessableEntityHttpException('Filtering is supported by single category only');
-        }
-        if (
-            !in_array(
-                $filterBy,
-                [
-                    'adminUnconfirmed',
-                    'emailUnconfirmed',
-                    ...array_map(fn($role) => $role->value, Role::cases())
-                ]
-            )
-        ) {
-            throw new UnprocessableEntityHttpException(sprintf('Filtering by `%s` is not supported', $filterBy));
+        foreach ($filters as $filter) {
+            if ('role' === $filter->getName()) {
+                $availableRoles = array_map(fn($role) => $role->value, Role::cases());
+                foreach ($filter->getValues() as $role) {
+                    if (!in_array($role, $availableRoles)) {
+                        throw new UnprocessableEntityHttpException(
+                            sprintf('Filtering by role `%s` is not supported', $role)
+                        );
+                    }
+                }
+                break;
+            }
         }
     }
 }

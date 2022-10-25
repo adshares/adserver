@@ -85,7 +85,7 @@ final class ServerMonitoringControllerTest extends TestCase
         'roles',
         'campaignCount',
         'siteCount',
-        'lastLogin',
+        'lastActiveAt',
     ];
     private const USERS_STRUCTURE = [
         'data' => [
@@ -509,7 +509,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?limit=1',
+            self::buildUriForKey('users', ['limit' => 1]),
             self::getHeaders($admin)
         );
 
@@ -525,20 +525,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?orderBy=id',
-            self::getHeaders($admin)
-        );
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testFetchUsersOrderByArray(): void
-    {
-        self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
-
-        $response = $this->getJson(
-            self::buildUriForKey('users') . '?orderBy[]=email',
+            self::buildUriForKey('users', ['orderBy' => 'id']),
             self::getHeaders($admin)
         );
 
@@ -551,7 +538,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?orderBy=email&direction=up',
+            self::buildUriForKey('users', ['orderBy' => 'email', 'direction'=>'up']),
             self::getHeaders($admin)
         );
 
@@ -567,7 +554,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?orderBy=' . $orderBy . '&direction=desc',
+            self::buildUriForKey('users', ['orderBy' => $orderBy, 'direction'=>'desc']),
             self::getHeaders($admin)
         );
 
@@ -589,16 +576,29 @@ final class ServerMonitoringControllerTest extends TestCase
         ];
     }
 
+//    public function testFetchUsersOrderByArray(): void
+//    {
+//        self::seedUsers();
+//        $admin = User::where('is_admin', true)->first();
+//
+//        $response = $this->getJson(
+//            self::buildUriForKey('users', ['orderBy' => $orderBy, 'direction'=>'desc']) . '?orderBy[]=email',
+//            self::getHeaders($admin)
+//        );
+//
+//        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+//    }
+
     /**
      * @dataProvider fetchUsersFilterByProvider
      */
-    public function testFetchUsersFilterBy(string $filterBy, int $filteredCount, ?string $expectedEmailOfFirst): void
+    public function testFetchUsersFilterBy(array $filter, int $filteredCount, ?string $expectedEmailOfFirst): void
     {
         self::seedUsers();
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?filterBy=' . $filterBy,
+            self::buildUriForKey('users', ['filter' => $filter]),
             self::getHeaders($admin)
         );
 
@@ -613,27 +613,74 @@ final class ServerMonitoringControllerTest extends TestCase
     public function fetchUsersFilterByProvider(): array
     {
         return [
-            'adminUnconfirmed' => ['adminUnconfirmed', 2, 'user1@example.com'],
-            'emailUnconfirmed' => ['emailUnconfirmed', 1, 'user2@example.com'],
-            Role::Admin->value => [Role::Admin->value, 1, 'admin@example.com'],
-            Role::Advertiser->value => [Role::Advertiser->value, 2, 'admin@example.com'],
-            Role::Agency->value => [Role::Agency->value, 0, null],
-            Role::Moderator->value => [Role::Moderator->value, 0, null],
-            Role::Publisher->value => [Role::Publisher->value, 3, 'admin@example.com'],
+            'admin confirmed' => [['adminConfirmed' => true], 1, 'admin@example.com'],
+            'admin not confirmed' => [['adminConfirmed' => false], 2, 'user1@example.com'],
+            'email confirmed' => [['emailConfirmed' => true], 2, 'admin@example.com'],
+            'email not confirmed' => [['emailConfirmed' => false], 1, 'user2@example.com'],
+            Role::Admin->value => [['role' => Role::Admin->value], 1, 'admin@example.com'],
+            Role::Advertiser->value => [['role' => Role::Advertiser->value], 2, 'admin@example.com'],
+            Role::Agency->value => [['role' => Role::Agency->value], 0, null],
+            Role::Moderator->value => [['role' => Role::Moderator->value], 0, null],
+            Role::Publisher->value => [['role' => Role::Publisher->value], 3, 'admin@example.com'],
         ];
     }
 
-    public function testFetchUsersFilterByInvalidCategory(): void
+    public function testFetchUsersFilterByMultipleRoles(): void
+    {
+        User::factory()->admin()->create([
+            'email' => 'admin@example.com',
+        ]);
+        User::factory()->create([
+            'email' => 'advertiser@example.com',
+            'is_publisher' => 0,
+        ]);
+        User::factory()->create([
+            'email' => 'publisher@example.com',
+            'is_advertiser' => 0,
+            'wallet_address' => new WalletAddress(
+                WalletAddress::NETWORK_BSC,
+                '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb'
+            ),
+        ]);
+        $admin = User::where('is_admin', true)->first();
+        $query = ['filter' => ['role' => [Role::Advertiser->value, Role::Publisher->value]]];
+
+        $response = $this->getJson(
+            self::buildUriForKey('users', $query),
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(3, count($response->json('data')));
+    }
+
+    /**
+     * @dataProvider fetchUsersFilterByInvalidProvider
+     */
+    public function testFetchUsersFilterByInvalid(mixed $filter): void
     {
         self::seedUsers();
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?filterBy=id',
+            self::buildUriForKey('users', ['filter' => $filter]),
             self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function fetchUsersFilterByInvalidProvider(): array
+    {
+        return [
+            'array of array' => [['role' => [['advertiser']]]],
+            'category' => [['id' => 1]],
+            'empty string' => [['role' => '']],
+            'invalid bool' => [['adminConfirmed' => 'invalid']],
+            'role' => [['role' => 'user']],
+            'string' => ['role'],
+        ];
     }
 
     public function testFetchUsersQueryByEmail(): void
@@ -642,7 +689,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?query=user1',
+            self::buildUriForKey('users', ['query' => 'user1']),
             self::getHeaders($admin)
         );
 
@@ -658,7 +705,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?query=ace8d62',
+            self::buildUriForKey('users', ['query'=>'ace8d62']),
             self::getHeaders($admin)
         );
 
@@ -677,7 +724,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?query=ads',
+            self::buildUriForKey('users', ['query'=>'ads']),
             self::getHeaders($admin)
         );
 
@@ -693,7 +740,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users') . '?query=test',
+            self::buildUriForKey('users', ['query'=>'test']),
             self::getHeaders($admin)
         );
 
@@ -1068,9 +1115,15 @@ final class ServerMonitoringControllerTest extends TestCase
         return ['Authorization' => 'Bearer ' . JWTAuth::fromUser($user)];
     }
 
-    private static function buildUriForKey(string $key): string
+    private static function buildUriForKey(string $key, array $query = null): string
     {
-        return self::MONITORING_URI . '/' . $key;
+        $uri = self::MONITORING_URI . '/' . $key;
+
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+
+        return $uri;
     }
 
     private static function buildUriForResetHostConnectionErrorCounter(int $hostId): string
