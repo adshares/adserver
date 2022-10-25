@@ -25,6 +25,8 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Request\Filter\BoolFilter;
 use Adshares\Adserver\Http\Request\Filter\FilterFactory;
 use Adshares\Adserver\Http\Request\Filter\FilterType;
+use Adshares\Adserver\Http\Resources\UserResource;
+use Adshares\Adserver\Http\Resources\UserResourceCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
@@ -39,6 +41,7 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -278,10 +281,8 @@ class ServerMonitoringController extends Controller
         $paginator = $builder->orderBy('id')
             ->tokenPaginate($limit)
             ->withQueryString();
-        $collection = $paginator->getCollection()->map(fn($user) => $this->mapUser($user));
-        $paginator->setCollection($collection);
 
-        return $paginator->toArray();
+        return (new UserResourceCollection($paginator))->toArray($request);
     }
 
     private function handleWallet(Request $request): array
@@ -294,16 +295,16 @@ class ServerMonitoringController extends Controller
         ];
     }
 
-    public function banUser(AdminController $adminController, Request $request, int $userId): JsonResponse
+    public function banUser(AdminController $adminController, Request $request, int $userId): JsonResource
     {
         $adminController->banUser($userId, $request);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function confirmUser(AuthController $authController, int $userId): JsonResponse
+    public function confirmUser(AuthController $authController, int $userId): JsonResource
     {
         $authController->confirm($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
     public function deleteUser(
@@ -314,76 +315,52 @@ class ServerMonitoringController extends Controller
         return $adminController->deleteUser($userId, $campaignRepository);
     }
 
-    public function denyAdvertising(AdminController $adminController, int $userId): JsonResponse
+    public function denyAdvertising(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->denyAdvertising($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function denyPublishing(AdminController $adminController, int $userId): JsonResponse
+    public function denyPublishing(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->denyPublishing($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function grantAdvertising(AdminController $adminController, int $userId): JsonResponse
+    public function grantAdvertising(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->grantAdvertising($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function grantPublishing(AdminController $adminController, int $userId): JsonResponse
+    public function grantPublishing(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->grantPublishing($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function switchUserToAgency(AdminController $adminController, int $userId): JsonResponse
+    public function switchUserToAgency(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->switchUserToAgency($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function switchUserToModerator(AdminController $adminController, int $userId): JsonResponse
+    public function switchUserToModerator(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->switchUserToModerator($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function switchUserToRegular(AdminController $adminController, int $userId): JsonResponse
+    public function switchUserToRegular(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->switchUserToRegular($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
+        return new UserResource(User::fetchById($userId));
     }
 
-    public function unbanUser(AdminController $adminController, int $userId): JsonResponse
+    public function unbanUser(AdminController $adminController, int $userId): JsonResource
     {
         $adminController->unbanUser($userId);
-        return self::json($this->mapUser(User::fetchById($userId)));
-    }
-
-    private function mapUser(User $user): array
-    {
-        return [
-            'id' => $user->id,
-            'email' => $user->email,
-            'adsharesWallet' => [
-                'walletBalance' => null !== $user->wallet_balance
-                    ? (int)$user->wallet_balance : $user->getWalletBalance(),
-                'bonusBalance' => null !== $user->bonus_balance
-                    ? (int)$user->bonus_balance : $user->getBonusBalance(),
-            ],
-            'connectedWallet' => [
-                'address' => $user->wallet_address?->getAddress(),
-                'network' => $user->wallet_address?->getNetwork(),
-            ],
-            'roles' => $user->roles,
-            'campaignCount' => null !== $user->campaign_count
-                ? (int)$user->campaign_count : $user->campaigns()->count(),
-            'siteCount' => null !== $user->site_count
-                ? (int)$user->site_count : $user->sites()->count(),
-            'lastActiveAt' => $user->last_active_at?->format(DateTimeInterface::ATOM),
-        ];
+        return new UserResource(User::fetchById($userId));
     }
 
     public function resetHost(int $hostId): JsonResponse
