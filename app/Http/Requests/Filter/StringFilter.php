@@ -21,16 +21,11 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Http\Request\Filter;
+namespace Adshares\Adserver\Http\Requests\Filter;
 
-use DateTimeInterface;
-
-class DateFilter implements Filter
+class StringFilter implements Filter
 {
-    private ?DateTimeInterface $from = null;
-    private ?DateTimeInterface $to = null;
-
-    public function __construct(private readonly string $name)
+    public function __construct(private readonly string $name, private readonly array $values)
     {
     }
 
@@ -39,28 +34,11 @@ class DateFilter implements Filter
         return $this->name;
     }
 
+    /**
+     * @return array<string>
+     */
     public function getValues(): array
     {
-        return [$this->from, $this->to];
-    }
-
-    public function getFrom(): ?DateTimeInterface
-    {
-        return $this->from;
-    }
-
-    public function getTo(): ?DateTimeInterface
-    {
-        return $this->to;
-    }
-
-    public function setFrom(?DateTimeInterface $from): void
-    {
-        $this->from = $from;
-    }
-
-    public function setTo(?DateTimeInterface $to): void
-    {
-        $this->to = $to;
+        return $this->values;
     }
 }

@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Common;
 
-use Adshares\Adserver\Http\Request\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Illuminate\Pagination\CursorPaginator;
 
 interface ServerEventLogRepository

@@ -19,13 +19,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests\Http\Requests\Filter;
 
-namespace Adshares\Adserver\Http\Request\Filter;
+use Adshares\Adserver\Http\Requests\Filter\BoolFilter;
+use Adshares\Adserver\Tests\TestCase;
 
-enum FilterType
+final class BoolFilterTest extends TestCase
 {
-    case Bool;
-    case Date;
-    case String;
+    public function testBoolFilter(): void
+    {
+        $name = 'test-name';
+        $isChecked = true;
+
+        $filter = new BoolFilter($name, $isChecked);
+
+        self::assertEquals($name, $filter->getName());
+        self::assertTrue($filter->isChecked());
+        self::assertEquals([$isChecked], $filter->getValues());
+    }
 }

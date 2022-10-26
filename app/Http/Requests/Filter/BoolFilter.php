@@ -21,11 +21,11 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Http\Request\Filter;
+namespace Adshares\Adserver\Http\Requests\Filter;
 
-class StringFilter implements Filter
+class BoolFilter implements Filter
 {
-    public function __construct(private readonly string $name, private readonly array $values)
+    public function __construct(private readonly string $name, private readonly bool $isChecked)
     {
     }
 
@@ -34,11 +34,13 @@ class StringFilter implements Filter
         return $this->name;
     }
 
-    /**
-     * @return array<string>
-     */
+    public function isChecked(): bool
+    {
+        return $this->isChecked;
+    }
+
     public function getValues(): array
     {
-        return $this->values;
+        return [$this->isChecked];
     }
 }

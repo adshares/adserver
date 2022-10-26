@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Http\Request;
+namespace Adshares\Adserver\Http\Requests\Order;
 
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;

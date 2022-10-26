@@ -22,9 +22,9 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Request\Filter\FilterCollection;
-use Adshares\Adserver\Http\Request\Filter\FilterType;
-use Adshares\Adserver\Http\Request\OrderByCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterType;
+use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
 use Adshares\Adserver\Http\Resources\HostCollection;
 use Adshares\Adserver\Http\Resources\UserCollection;
 use Adshares\Adserver\Http\Resources\UserResource;

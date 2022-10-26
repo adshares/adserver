@@ -23,11 +23,11 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Common;
 
-use Adshares\Adserver\Http\Request\Filter\BoolFilter;
-use Adshares\Adserver\Http\Request\Filter\Filter;
-use Adshares\Adserver\Http\Request\Filter\FilterCollection;
-use Adshares\Adserver\Http\Request\OrderBy;
-use Adshares\Adserver\Http\Request\OrderByCollection;
+use Adshares\Adserver\Http\Requests\Filter\BoolFilter;
+use Adshares\Adserver\Http\Requests\Filter\Filter;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Order\OrderBy;
+use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;

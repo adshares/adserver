@@ -21,11 +21,16 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Http\Request\Filter;
+namespace Adshares\Adserver\Http\Requests\Filter;
 
-class BoolFilter implements Filter
+use DateTimeInterface;
+
+class DateFilter implements Filter
 {
-    public function __construct(private readonly string $name, private readonly bool $isChecked)
+    private ?DateTimeInterface $from = null;
+    private ?DateTimeInterface $to = null;
+
+    public function __construct(private readonly string $name)
     {
     }
 
@@ -34,13 +39,28 @@ class BoolFilter implements Filter
         return $this->name;
     }
 
-    public function isChecked(): bool
-    {
-        return $this->isChecked;
-    }
-
     public function getValues(): array
     {
-        return [$this->isChecked];
+        return [$this->from, $this->to];
+    }
+
+    public function getFrom(): ?DateTimeInterface
+    {
+        return $this->from;
+    }
+
+    public function getTo(): ?DateTimeInterface
+    {
+        return $this->to;
+    }
+
+    public function setFrom(?DateTimeInterface $from): void
+    {
+        $this->from = $from;
+    }
+
+    public function setTo(?DateTimeInterface $to): void
+    {
+        $this->to = $to;
     }
 }

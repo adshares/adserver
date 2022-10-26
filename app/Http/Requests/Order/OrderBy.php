@@ -21,18 +21,21 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Repository\Common;
+namespace Adshares\Adserver\Http\Requests\Order;
 
-use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
-use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
-use Illuminate\Pagination\CursorPaginator;
-
-interface UserRepository
+class OrderBy
 {
-    public function fetchUsers(
-        ?FilterCollection $filters = null,
-        ?string $query = null,
-        ?OrderByCollection $orderBy = null,
-        int $perPage = null,
-    ): CursorPaginator;
+    public function __construct(private readonly string $column, private readonly string $direction)
+    {
+    }
+
+    public function getColumn(): string
+    {
+        return $this->column;
+    }
+
+    public function getDirection(): string
+    {
+        return $this->direction;
+    }
 }

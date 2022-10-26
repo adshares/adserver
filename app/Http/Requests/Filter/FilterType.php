@@ -21,21 +21,11 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Http\Request;
+namespace Adshares\Adserver\Http\Requests\Filter;
 
-class OrderBy
+enum FilterType
 {
-    public function __construct(private readonly string $column, private readonly string $direction)
-    {
-    }
-
-    public function getColumn(): string
-    {
-        return $this->column;
-    }
-
-    public function getDirection(): string
-    {
-        return $this->direction;
-    }
+    case Bool;
+    case Date;
+    case String;
 }

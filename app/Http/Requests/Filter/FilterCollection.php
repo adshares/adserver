@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Http\Request\Filter;
+namespace Adshares\Adserver\Http\Requests\Filter;
 
 use DateTimeImmutable;
 use DateTimeInterface;
