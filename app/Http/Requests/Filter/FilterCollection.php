@@ -56,72 +56,81 @@ class FilterCollection
                     sprintf('Filtering by `%s` is not supported', $name)
                 );
             }
-            switch ($allowedFilters[$name]) {
-                case FilterType::Bool:
-                    if (
-                        null === ($value = filter_var(
-                            $queryValues,
-                            FILTER_VALIDATE_BOOLEAN,
-                            FILTER_NULL_ON_FAILURE
-                        ))
-                    ) {
-                        throw new UnprocessableEntityHttpException(
-                            sprintf('Filtering by `%s` requires boolean', $name)
-                        );
-                    }
-                    $filters[$name] = new BoolFilter($name, $value);
-                    break;
-                case FilterType::Date:
-                    $dateFilter = new DateFilter($name);
-                    if (null !== ($from = $queryValues['from'] ?? null)) {
-                        if (!is_string($from)) {
-                            throw new UnprocessableEntityHttpException('`from` must be a string in ISO 8601 format');
-                        }
-                        $from = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $from);
-                        if (false === $from) {
-                            throw new UnprocessableEntityHttpException('`from` must be in ISO 8601 format');
-                        }
-                        $dateFilter->setFrom($from);
-                    }
-                    if (null !== ($to = $queryValues['to'] ?? null)) {
-                        if (!is_string($to)) {
-                            throw new UnprocessableEntityHttpException('`to` must be a string in ISO 8601 format');
-                        }
-                        $to = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $to);
-                        if (false === $to) {
-                            throw new UnprocessableEntityHttpException('`to` must be in ISO 8601 format');
-                        }
-                        $dateFilter->setTo($to);
-                    }
-                    if (null !== $from && null !== $to && $from > $to) {
-                        throw new UnprocessableEntityHttpException(
-                            sprintf('Invalid time range for `%s` filter: `from` must be earlier than `to`', $name)
-                        );
-                    }
-                    $filters[$name] = $dateFilter;
-                    break;
-                case FilterType::String:
-                    if (!$queryValues) {
-                        throw new UnprocessableEntityHttpException(
-                            sprintf('Filtering by `%s` requires at least one string value', $name)
-                        );
-                    }
-                    if (!is_array($queryValues)) {
-                        $queryValues = [$queryValues];
-                    }
-                    foreach ($queryValues as $value) {
-                        if (!is_string($value)) {
-                            throw new UnprocessableEntityHttpException(
-                                sprintf('Filtering by `%s` requires array of strings', $name)
-                            );
-                        }
-                    }
-                    $filters[$name] = new StringFilter($name, $queryValues);
-                    break;
-            }
+            $filters[$name] = match ($allowedFilters[$name]) {
+                FilterType::Bool => self::createBoolFilter($name, $queryValues),
+                FilterType::Date => self::createDateFilter($name, $queryValues),
+                FilterType::String => self::createStringFilter($name, $queryValues),
+            };
         }
 
         return new self($filters);
+    }
+
+    private static function createBoolFilter(string $name, mixed $queryValues): Filter
+    {
+        if (
+            null === ($value = filter_var(
+                $queryValues,
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE
+            ))
+        ) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Filtering by `%s` requires boolean', $name)
+            );
+        }
+        return new BoolFilter($name, $value);
+    }
+
+    private static function createDateFilter(string $name, mixed $queryValues): Filter
+    {
+        $filter = new DateFilter($name);
+        if (null !== ($from = $queryValues['from'] ?? null)) {
+            if (!is_string($from)) {
+                throw new UnprocessableEntityHttpException('`from` must be a string in ISO 8601 format');
+            }
+            $from = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $from);
+            if (false === $from) {
+                throw new UnprocessableEntityHttpException('`from` must be in ISO 8601 format');
+            }
+            $filter->setFrom($from);
+        }
+        if (null !== ($to = $queryValues['to'] ?? null)) {
+            if (!is_string($to)) {
+                throw new UnprocessableEntityHttpException('`to` must be a string in ISO 8601 format');
+            }
+            $to = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $to);
+            if (false === $to) {
+                throw new UnprocessableEntityHttpException('`to` must be in ISO 8601 format');
+            }
+            $filter->setTo($to);
+        }
+        if (null !== $from && null !== $to && $from > $to) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Invalid time range for `%s` filter: `from` must be earlier than `to`', $name)
+            );
+        }
+        return $filter;
+    }
+
+    private static function createStringFilter(string $name, mixed $queryValues): Filter
+    {
+        if (!$queryValues) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Filtering by `%s` requires at least one string value', $name)
+            );
+        }
+        if (!is_array($queryValues)) {
+            $queryValues = [$queryValues];
+        }
+        foreach ($queryValues as $value) {
+            if (!is_string($value)) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Filtering by `%s` requires array of strings', $name)
+                );
+            }
+        }
+        return new StringFilter($name, $queryValues);
     }
 
     /**
