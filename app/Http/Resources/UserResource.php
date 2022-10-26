@@ -14,6 +14,8 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'email' => $this->email,
+            'adminConfirmed' => $this->is_admin_confirmed,
+            'emailConfirmed' => $this->is_email_confirmed,
             'adsharesWallet' => [
                 'walletBalance' => null !== $this->wallet_balance
                     ? (int)$this->wallet_balance : $this->getWalletBalance(),

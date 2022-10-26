@@ -74,6 +74,8 @@ final class ServerMonitoringControllerTest extends TestCase
     private const USER_DATA_STRUCTURE = [
         'id',
         'email',
+        'adminConfirmed',
+        'emailConfirmed',
         'adsharesWallet' => [
             'walletBalance',
             'bonusBalance',
