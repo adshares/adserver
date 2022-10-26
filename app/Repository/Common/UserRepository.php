@@ -23,13 +23,14 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Common;
 
+use Adshares\Adserver\Http\Request\Filter\FilterCollection;
 use Adshares\Adserver\Http\Request\OrderByCollection;
 use Illuminate\Pagination\CursorPaginator;
 
 interface UserRepository
 {
     public function fetchUsers(
-        array $filters,
+        ?FilterCollection $filters = null,
         ?string $query = null,
         ?OrderByCollection $orderBy = null,
         int $perPage = null,

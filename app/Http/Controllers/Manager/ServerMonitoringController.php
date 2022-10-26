@@ -22,7 +22,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Request\Filter\FilterFactory;
+use Adshares\Adserver\Http\Request\Filter\FilterCollection;
 use Adshares\Adserver\Http\Request\Filter\FilterType;
 use Adshares\Adserver\Http\Request\OrderByCollection;
 use Adshares\Adserver\Http\Resources\HostCollection;
@@ -129,7 +129,7 @@ class ServerMonitoringController extends Controller
     public function fetchUsers(Request $request, UserRepository $userRepository): JsonResource
     {
         $limit = $request->query('limit', 10);
-        $filters = FilterFactory::fromRequest($request, [
+        $filters = FilterCollection::fromRequest($request, [
             'adminConfirmed' => FilterType::Bool,
             'emailConfirmed' => FilterType::Bool,
             'role' => FilterType::String,
@@ -279,9 +279,12 @@ class ServerMonitoringController extends Controller
         }
     }
 
-    private function validateUserFilters(array $filters): void
+    private function validateUserFilters(?FilterCollection $filters): void
     {
-        if (null !== ($filter = $filters['role'] ?? null)) {
+        if (null === $filters) {
+            return;
+        }
+        if (null !== ($filter = $filters->getFilterByName('role'))) {
             $availableRoles = array_map(fn($role) => $role->value, Role::cases());
             foreach ($filter->getValues() as $role) {
                 if (!in_array($role, $availableRoles)) {

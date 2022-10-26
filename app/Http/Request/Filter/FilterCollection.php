@@ -26,22 +26,27 @@ namespace Adshares\Adserver\Http\Request\Filter;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
-class FilterFactory
+class FilterCollection
 {
+    private function __construct(private readonly array $filters)
+    {
+    }
+
     /**
      * @param Request $request
      * @param array<string, FilterType> $allowedFilters
-     * @return Filter[]
+     * @return FilterCollection|null
      */
-    public static function fromRequest(Request $request, array $allowedFilters): array
+    public static function fromRequest(Request $request, array $allowedFilters): ?self
     {
         $query = $request->query('filter');
         if (!$query) {
-            return [];
+            return null;
         }
         if (!is_array($query)) {
             throw new UnprocessableEntityHttpException('Filter must be an array');
         }
+
         $filters = [];
         foreach ($query as $name => $queryValues) {
             if (!isset($allowedFilters[$name])) {
@@ -85,6 +90,19 @@ class FilterFactory
             }
         }
 
-        return $filters;
+        return new self($filters);
+    }
+
+    /**
+     * @return array<string, Filter>
+     */
+    public function getFilters(): array
+    {
+        return $this->filters;
+    }
+
+    public function getFilterByName(string $name): ?Filter
+    {
+        return $this->filters[$name] ?? null;
     }
 }

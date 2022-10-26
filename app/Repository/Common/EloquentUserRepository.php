@@ -24,6 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Repository\Common;
 
 use Adshares\Adserver\Http\Request\Filter\BoolFilter;
+use Adshares\Adserver\Http\Request\Filter\Filter;
+use Adshares\Adserver\Http\Request\Filter\FilterCollection;
 use Adshares\Adserver\Http\Request\OrderBy;
 use Adshares\Adserver\Http\Request\OrderByCollection;
 use Adshares\Adserver\Models\Campaign;
@@ -39,48 +41,16 @@ use Illuminate\Support\Facades\DB;
 class EloquentUserRepository implements UserRepository
 {
     public function fetchUsers(
-        array $filters,
+        ?FilterCollection $filters = null,
         ?string $query = null,
         ?OrderByCollection $orderBy = null,
         int $perPage = null
     ): CursorPaginator {
         $builder = User::query();
 
-        foreach ($filters as $name => $filter) {
-            switch ($name) {
-                case 'adminConfirmed':
-                    if ($filter instanceof BoolFilter) {
-                        if ($filter->isChecked()) {
-                            $builder->whereNotNull('admin_confirmed_at');
-                        } else {
-                            $builder->whereNull('admin_confirmed_at');
-                        }
-                    }
-                    break;
-                case 'emailConfirmed':
-                    if ($filter instanceof BoolFilter) {
-                        if ($filter->isChecked()) {
-                            $builder->whereNotNull('email_confirmed_at');
-                        } else {
-                            $builder->whereNull('email_confirmed_at');
-                        }
-                    }
-                    break;
-                case 'role':
-                    $roleToColumnMap = [
-                        Role::Admin->value => 'is_admin',
-                        Role::Advertiser->value => 'is_advertiser',
-                        Role::Agency->value => 'is_agency',
-                        Role::Moderator->value => 'is_moderator',
-                        Role::Publisher->value => 'is_publisher',
-                    ];
-                    $columns = array_map(fn($role) => $roleToColumnMap[$role], $filter->getValues());
-                    $builder->where(function (Builder $sub) use ($columns) {
-                        foreach ($columns as $column) {
-                            $sub->orwhere($column, '=', '1');
-                        }
-                    });
-                    break;
+        if (null !== $filters) {
+            foreach ($filters->getFilters() as $filter) {
+                $builder = $this->appendFilter($builder, $filter);
             }
         }
 
@@ -97,6 +67,46 @@ class EloquentUserRepository implements UserRepository
         return $builder->orderBy('id')
             ->tokenPaginate($perPage)
             ->withQueryString();
+    }
+
+    private function appendFilter(Builder $builder, Filter $filter): Builder
+    {
+        switch ($filter->getName()) {
+            case 'adminConfirmed':
+                if ($filter instanceof BoolFilter) {
+                    if ($filter->isChecked()) {
+                        $builder->whereNotNull('admin_confirmed_at');
+                    } else {
+                        $builder->whereNull('admin_confirmed_at');
+                    }
+                }
+                break;
+            case 'emailConfirmed':
+                if ($filter instanceof BoolFilter) {
+                    if ($filter->isChecked()) {
+                        $builder->whereNotNull('email_confirmed_at');
+                    } else {
+                        $builder->whereNull('email_confirmed_at');
+                    }
+                }
+                break;
+            case 'role':
+                $roleToColumnMap = [
+                    Role::Admin->value => 'is_admin',
+                    Role::Advertiser->value => 'is_advertiser',
+                    Role::Agency->value => 'is_agency',
+                    Role::Moderator->value => 'is_moderator',
+                    Role::Publisher->value => 'is_publisher',
+                ];
+                $columns = array_map(fn($role) => $roleToColumnMap[$role], $filter->getValues());
+                $builder->where(function (Builder $sub) use ($columns) {
+                    foreach ($columns as $column) {
+                        $sub->orwhere($column, '=', '1');
+                    }
+                });
+                break;
+        }
+        return $builder;
     }
 
     private function appendOrderBy(Builder $builder, OrderBy $orderBy): Builder
