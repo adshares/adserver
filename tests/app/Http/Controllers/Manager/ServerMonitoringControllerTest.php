@@ -574,6 +574,19 @@ final class ServerMonitoringControllerTest extends TestCase
         ];
     }
 
+    public function testFetchUsersOrderByArray(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users', ['orderBy' => ['test1', 'test2']]),
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     /**
      * @dataProvider fetchUsersFilterByProvider
      */
