@@ -287,7 +287,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::seedServerEvents();
 
         $response = $this->getJson(
-            self::EVENTS_URI . '?types[]=' . ServerEventType::HostBroadcastProcessed->value,
+            self::EVENTS_URI . '?filter[type]=' . ServerEventType::HostBroadcastProcessed->value,
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
@@ -317,7 +317,9 @@ final class ServerMonitoringControllerTest extends TestCase
         $from = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
         $to = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
         $response = $this->getJson(
-            self::EVENTS_URI . '?from=' . urlencode($from) . '&to=' . urlencode($to),
+            self::EVENTS_URI .
+            '?filter[createdAt][from]=' . urlencode($from) .
+            '&filter[createdAt][to]=' . urlencode($to),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
@@ -336,19 +338,10 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testFetchEventsValidationTypeNotArray(): void
-    {
-        $response = $this->getJson(
-            self::EVENTS_URI . '?types=' . ServerEventType::HostBroadcastProcessed->value,
-            self::getHeaders()
-        );
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
     public function testFetchEventsValidationTypeInvalid(): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?types[]=invalid',
+            self::EVENTS_URI . '?filter[type]=invalid',
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -360,7 +353,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationFrom(string $from): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?from=' . $from,
+            self::EVENTS_URI . '?filter[createdAt][from]=' . $from,
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -372,7 +365,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationTo(string $to): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?to=' . $to,
+            self::EVENTS_URI . '?filter[createdAt][to]=' . $to,
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -390,7 +383,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationFromArray(): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?from[]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::EVENTS_URI . '?filter[createdAt][from][]=2022-10-12T02%3A00%3A00%2B00%3A00',
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -399,7 +392,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationToArray(): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?to[]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::EVENTS_URI . '?filter[createdAt][to][]=2022-10-12T02%3A00%3A00%2B00%3A00',
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -410,7 +403,9 @@ final class ServerMonitoringControllerTest extends TestCase
         $from = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
         $to = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
         $response = $this->getJson(
-            self::EVENTS_URI . '?from=' . urlencode($from) . '&to=' . urlencode($to),
+            self::EVENTS_URI .
+            '?filter[createdAt][from]=' . urlencode($from) .
+            '&filter[createdAt][to]=' . urlencode($to),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -441,8 +436,8 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->getJson(
             self::buildUriForKey('latest-events')
-            . '?types[]=' . ServerEventType::HostBroadcastProcessed->value
-            . '&types[]=' . ServerEventType::InventorySynchronized->value,
+            . '?filter[type][]=' . ServerEventType::HostBroadcastProcessed->value
+            . '&filter[type][]=' . ServerEventType::InventorySynchronized->value,
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
@@ -578,19 +573,6 @@ final class ServerMonitoringControllerTest extends TestCase
             'walletBalance' => ['walletBalance', 'user2@example.com'],
         ];
     }
-
-//    public function testFetchUsersOrderByArray(): void
-//    {
-//        self::seedUsers();
-//        $admin = User::where('is_admin', true)->first();
-//
-//        $response = $this->getJson(
-//            self::buildUriForKey('users', ['orderBy' => $orderBy, 'direction'=>'desc']) . '?orderBy[]=email',
-//            self::getHeaders($admin)
-//        );
-//
-//        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-//    }
 
     /**
      * @dataProvider fetchUsersFilterByProvider
@@ -750,6 +732,19 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USERS_STRUCTURE);
         self::assertEquals(2, count($response->json('data')));
+    }
+
+    public function testFetchUsersQueryByArray(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $response = $this->getJson(
+            self::buildUriForKey('users', ['query' => ['test1', 'test2']]),
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testPatchUserBan(): void

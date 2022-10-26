@@ -21,11 +21,20 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Http\Request\Filter;
+namespace Adshares\Adserver\Repository\Common;
 
-enum FilterType
+use Adshares\Adserver\Http\Request\Filter\FilterCollection;
+use Illuminate\Pagination\CursorPaginator;
+
+interface ServerEventLogRepository
 {
-    case Bool;
-    case Date;
-    case String;
+    public static function fetchServerEvents(
+        ?FilterCollection $filters = null,
+        int $perPage = null,
+    ): CursorPaginator;
+
+    public static function fetchLatestServerEvents(
+        ?FilterCollection $filters = null,
+        int $perPage = null,
+    ): CursorPaginator;
 }

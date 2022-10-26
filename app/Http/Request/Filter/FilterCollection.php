@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Request\Filter;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -68,6 +70,35 @@ class FilterCollection
                         );
                     }
                     $filters[$name] = new BoolFilter($name, $value);
+                    break;
+                case FilterType::Date:
+                    $dateFilter = new DateFilter($name);
+                    if (null !== ($from = $queryValues['from'] ?? null)) {
+                        if (!is_string($from)) {
+                            throw new UnprocessableEntityHttpException('`from` must be a string in ISO 8601 format');
+                        }
+                        $from = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $from);
+                        if (false === $from) {
+                            throw new UnprocessableEntityHttpException('`from` must be in ISO 8601 format');
+                        }
+                        $dateFilter->setFrom($from);
+                    }
+                    if (null !== ($to = $queryValues['to'] ?? null)) {
+                        if (!is_string($to)) {
+                            throw new UnprocessableEntityHttpException('`to` must be a string in ISO 8601 format');
+                        }
+                        $to = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $to);
+                        if (false === $to) {
+                            throw new UnprocessableEntityHttpException('`to` must be in ISO 8601 format');
+                        }
+                        $dateFilter->setTo($to);
+                    }
+                    if (null !== $from && null !== $to && $from > $to) {
+                        throw new UnprocessableEntityHttpException(
+                            sprintf('Invalid time range for `%s` filter: `from` must be earlier than `to`', $name)
+                        );
+                    }
+                    $filters[$name] = $dateFilter;
                     break;
                 case FilterType::String:
                     if (!$queryValues) {

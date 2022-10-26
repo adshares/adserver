@@ -29,15 +29,13 @@ use Adshares\Adserver\Http\Resources\HostCollection;
 use Adshares\Adserver\Http\Resources\UserCollection;
 use Adshares\Adserver\Http\Resources\UserResource;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Repository\Common\ServerEventLogRepository;
 use Adshares\Adserver\Repository\Common\UserRepository;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
-use DateTimeImmutable;
-use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -47,9 +45,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class ServerMonitoringController extends Controller
 {
     private const ALLOWED_KEYS = [
-        'events',
         'hosts',
-        'latest-events',
         'wallet',
     ];
 
@@ -65,46 +61,24 @@ class ServerMonitoringController extends Controller
         return self::json($data);
     }
 
-    public function handleEvents(Request $request): array
+    public function fetchEvents(Request $request, ServerEventLogRepository $repository): array
     {
         $limit = $request->query('limit', 10);
-        $types = $request->query('types', []);
-        $from = $request->query('from');
-        $to = $request->query('to');
+        $filters = FilterCollection::fromRequest($request, [
+            'createdAt' => FilterType::Date,
+            'type' => FilterType::String,
+        ]);
         self::validateLimit($limit);
-        self::validateTypes($types);
-        if (null !== $from) {
-            if (!is_string($from)) {
-                throw new UnprocessableEntityHttpException('`from` must be a string in ISO 8601 format');
-            }
-            $from = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $from);
-            if (false === $from) {
-                throw new UnprocessableEntityHttpException('`from` must be in ISO 8601 format');
-            }
-        }
-        if (null !== $to) {
-            if (!is_string($to)) {
-                throw new UnprocessableEntityHttpException('`to` must be a string in ISO 8601 format');
-            }
-            $to = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $to);
-            if (false === $to) {
-                throw new UnprocessableEntityHttpException('`to` must be in ISO 8601 format');
-            }
-        }
-        if (null !== $from && null !== $to && $from > $to) {
-            throw new UnprocessableEntityHttpException('Invalid time range: `from` must be earlier than `to`');
-        }
+        self::validateEventFilters($filters);
 
-        return ServerEventLog::getBuilderForFetching($types, $from, $to)
-            ->tokenPaginate($limit)
-            ->withQueryString()
+        return $repository->fetchServerEvents($filters, $limit)
             ->toArray();
     }
 
     private function handleHosts(Request $request): array
     {
         $limit = $request->query('limit', 10);
-        $this->validateLimit($limit);
+        self::validateLimit($limit);
 
         $paginator = NetworkHost::orderBy('id')
             ->tokenPaginate($limit)
@@ -113,16 +87,16 @@ class ServerMonitoringController extends Controller
         return (new HostCollection($paginator))->toArray($request);
     }
 
-    public function handleLatestEvents(Request $request): array
+    public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): array
     {
         $limit = $request->query('limit', 10);
-        $types = $request->query('types', []);
-        $this->validateLimit($limit);
-        self::validateTypes($types);
+        $filters = FilterCollection::fromRequest($request, [
+            'type' => FilterType::String,
+        ]);
+        self::validateLimit($limit);
+        self::validateEventFilters($filters);
 
-        return ServerEventLog::getBuilderForFetchingLatest($types)
-            ->tokenPaginate($limit)
-            ->withQueryString()
+        return $repository->fetchLatestServerEvents($filters, $limit)
             ->toArray();
     }
 
@@ -136,9 +110,9 @@ class ServerMonitoringController extends Controller
         ]);
         $orderBy = OrderByCollection::fromRequest($request);
         $query = self::queryFromRequest($request);
-        $this->validateLimit($limit);
-        $this->validateUserFilters($filters);
-        $this->validateUserOrderBy($orderBy);
+        self::validateLimit($limit);
+        self::validateUserFilters($filters);
+        self::validateUserOrderBy($orderBy);
 
         return new UserCollection($userRepository->fetchUsers($filters, $query, $orderBy, $limit));
     }
@@ -240,19 +214,23 @@ class ServerMonitoringController extends Controller
         }
     }
 
-    private static function validateTypes(array|string|null $types): void
+    private static function validateEventFilters(?FilterCollection $filters): void
     {
-        if (!is_array($types)) {
-            throw new UnprocessableEntityHttpException('Types must be an array');
+        if (null === $filters) {
+            return;
         }
-        foreach ($types as $type) {
-            if (!is_string($type) || null === ServerEventType::tryFrom($type)) {
-                throw new UnprocessableEntityHttpException(sprintf('Invalid type `%s`', $type));
+        if (null !== ($filter = $filters->getFilterByName('type'))) {
+            foreach ($filter->getValues() as $type) {
+                if (null === ServerEventType::tryFrom($type)) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('Filtering by type `%s` is not supported', $type)
+                    );
+                }
             }
         }
     }
 
-    private function validateUserOrderBy(?OrderByCollection $orderBy): void
+    private static function validateUserOrderBy(?OrderByCollection $orderBy): void
     {
         if (null === $orderBy) {
             return;
@@ -279,7 +257,7 @@ class ServerMonitoringController extends Controller
         }
     }
 
-    private function validateUserFilters(?FilterCollection $filters): void
+    private static function validateUserFilters(?FilterCollection $filters): void
     {
         if (null === $filters) {
             return;

@@ -23,9 +23,44 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Request\Filter;
 
-enum FilterType
+use DateTimeInterface;
+
+class DateFilter implements Filter
 {
-    case Bool;
-    case Date;
-    case String;
+    private ?DateTimeInterface $from = null;
+    private ?DateTimeInterface $to = null;
+
+    public function __construct(private readonly string $name)
+    {
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getValues(): array
+    {
+        return [$this->from, $this->to];
+    }
+
+    public function getFrom(): ?DateTimeInterface
+    {
+        return $this->from;
+    }
+
+    public function getTo(): ?DateTimeInterface
+    {
+        return $this->to;
+    }
+
+    public function setFrom(?DateTimeInterface $from): void
+    {
+        $this->from = $from;
+    }
+
+    public function setTo(?DateTimeInterface $to): void
+    {
+        $this->to = $to;
+    }
 }
