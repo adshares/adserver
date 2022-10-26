@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Request\Filter\FilterFactory;
 use Adshares\Adserver\Http\Request\Filter\FilterType;
+use Adshares\Adserver\Http\Request\OrderByCollection;
 use Adshares\Adserver\Http\Resources\HostCollection;
 use Adshares\Adserver\Http\Resources\UserCollection;
 use Adshares\Adserver\Http\Resources\UserResource;
@@ -133,16 +134,13 @@ class ServerMonitoringController extends Controller
             'emailConfirmed' => FilterType::Bool,
             'role' => FilterType::String,
         ]);
-        $orderBy = $request->query('orderBy');
-        $direction = $request->query('direction', 'asc');
-        $query = $request->query('query');
+        $orderBy = OrderByCollection::fromRequest($request);
+        $query = self::queryFromRequest($request);
         $this->validateLimit($limit);
         $this->validateUserFilters($filters);
         $this->validateUserOrderBy($orderBy);
-        $this->validateDirection($direction);
-        $this->validateQuery($query);
 
-        return new UserCollection($userRepository->fetchUsers($filters, $query, $orderBy, $direction, $limit));
+        return new UserCollection($userRepository->fetchUsers($filters, $query, $orderBy, $limit));
     }
 
     private function handleWallet(Request $request): array
@@ -235,16 +233,6 @@ class ServerMonitoringController extends Controller
         return self::json();
     }
 
-    private function validateDirection(array|string|null $direction): void
-    {
-        $allowedDirections = ['asc', 'desc'];
-        if (!in_array($direction, $allowedDirections)) {
-            throw new UnprocessableEntityHttpException(
-                sprintf('Limit must be any of %s', join(', ', $allowedDirections))
-            );
-        }
-    }
-
     private static function validateLimit(array|string|null $limit): void
     {
         if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
@@ -264,29 +252,30 @@ class ServerMonitoringController extends Controller
         }
     }
 
-    private function validateUserOrderBy(array|string|null $orderBy): void
+    private function validateUserOrderBy(?OrderByCollection $orderBy): void
     {
         if (null === $orderBy) {
             return;
         }
-        if (!is_string($orderBy)) {
-            throw new UnprocessableEntityHttpException('Sorting is supported by single category only');
-        }
-        if (
-            !in_array(
-                $orderBy,
-                [
-                    'bonusBalance',
-                    'campaignCount',
-                    'connectedWallet',
-                    'email',
-                    'lastActiveAt',
-                    'siteCount',
-                    'walletBalance',
-                ]
-            )
-        ) {
-            throw new UnprocessableEntityHttpException(sprintf('Sorting by `%s` is not supported', $orderBy));
+
+        $columns = array_map(fn($orderBy) => $orderBy->getColumn(), $orderBy->getOrderBy());
+        foreach ($columns as $column) {
+            if (
+                !in_array(
+                    $column,
+                    [
+                        'bonusBalance',
+                        'campaignCount',
+                        'connectedWallet',
+                        'email',
+                        'lastActiveAt',
+                        'siteCount',
+                        'walletBalance',
+                    ]
+                )
+            ) {
+                throw new UnprocessableEntityHttpException(sprintf('Sorting by `%s` is not supported', $column));
+            }
         }
     }
 
@@ -304,10 +293,11 @@ class ServerMonitoringController extends Controller
         }
     }
 
-    private function validateQuery(array|string|null $query): void
+    private static function queryFromRequest(Request $request): ?string
     {
+        $query = $request->query('query');
         if (null === $query || is_string($query)) {
-            return;
+            return $query;
         }
         throw new UnprocessableEntityHttpException('Query must be a string');
     }

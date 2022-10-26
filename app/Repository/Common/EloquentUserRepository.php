@@ -24,6 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Repository\Common;
 
 use Adshares\Adserver\Http\Request\Filter\BoolFilter;
+use Adshares\Adserver\Http\Request\OrderBy;
+use Adshares\Adserver\Http\Request\OrderByCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
@@ -38,9 +40,8 @@ class EloquentUserRepository implements UserRepository
 {
     public function fetchUsers(
         array $filters,
-        ?string $query,
-        $orderBy,
-        $direction,
+        ?string $query = null,
+        ?OrderByCollection $orderBy = null,
         int $perPage = null
     ): CursorPaginator {
         $builder = User::query();
@@ -83,80 +84,96 @@ class EloquentUserRepository implements UserRepository
             }
         }
 
-        if ($orderBy) {
-            switch ($orderBy) {
-                case 'bonusBalance':
-                    $set = UserLedgerEntry::queryForEntriesRelevantForBonusBalance()
-                        ->select(DB::raw('user_id, SUM(amount) as bonus_balance'))
-                        ->groupBy('user_id');
-                    $builder->leftJoinSub($set, 's', function ($join) {
-                        $join->on('users.id', '=', 's.user_id');
-                    })->orderBy('bonus_balance', $direction)
-                        ->select(['*', DB::raw('IFNULL(bonus_balance, 0) AS bonus_balance')]);
-                    break;
-                case 'campaignCount':
-                    $set = Campaign::where('status', Campaign::STATUS_ACTIVE)
-                        ->where(function ($subBuilder) {
-                            $subBuilder->where('time_end', '>', new DateTimeImmutable())->orWhere('time_end', null);
-                        })
-                        ->select(DB::raw('user_id, COUNT(*) as campaign_count'))
-                        ->groupBy('user_id');
-                    $builder->leftJoinSub($set, 's', function ($join) {
-                        $join->on('users.id', '=', 's.user_id');
-                    })->orderBy('campaign_count', $direction)
-                        ->select(['*', DB::raw('IFNULL(campaign_count, 0) AS campaign_count')]);
-                    break;
-                case 'connectedWallet':
-                    $builder->orderBy('wallet_address', $direction);
-                    break;
-                case 'lastActiveAt':
-                    $builder->orderBy('last_active_at', $direction);
-                    break;
-                case 'siteCount':
-                    $set = Site::where('status', Site::STATUS_ACTIVE)
-                        ->select(DB::raw('user_id, COUNT(*) as site_count'))
-                        ->groupBy('user_id');
-                    $builder->leftJoinSub($set, 's', function ($join) {
-                        $join->on('users.id', '=', 's.user_id');
-                    })->orderBy('site_count', $direction)
-                        ->select(['*', DB::raw('IFNULL(site_count, 0) AS site_count')]);
-                    break;
-                case 'walletBalance':
-                    $set = UserLedgerEntry::queryForEntriesRelevantForWalletBalance()
-                        ->select(DB::raw('user_id, SUM(amount) as wallet_balance'))
-                        ->groupBy('user_id');
-                    $builder->leftJoinSub($set, 's', function ($join) {
-                        $join->on('users.id', '=', 's.user_id');
-                    })->orderBy('wallet_balance', $direction)
-                        ->select(['*', DB::raw('IFNULL(wallet_balance, 0) AS wallet_balance')]);
-                    break;
-                default:
-                    $builder->orderBy($orderBy, $direction);
-                    break;
+        if (null !== $orderBy) {
+            foreach ($orderBy->getOrderBy() as $order) {
+                $builder = $this->appendOrderBy($builder, $order);
             }
         }
+
         if ($query) {
-            $siteUserIds = Site::where('domain', 'LIKE', '%' . $query . '%')
-                ->whereNull('deleted_at')
-                ->select(['user_id']);
-            $campaignUserIds = Campaign::where('landing_url', 'LIKE', '%' . $query . '%')
-                ->whereNull('deleted_at')
-                ->select(['user_id']);
-            $set = $campaignUserIds->union($siteUserIds);
-
-            $builder->leftJoinSub($set, 'q', function ($join) {
-                $join->on('users.id', '=', 'q.user_id');
-            });
-
-            $builder->where(function (Builder $sub) use ($query) {
-                $sub->where('email', 'LIKE', '%' . $query . '%')
-                    ->orWhere('wallet_address', 'LIKE', '%' . $query . '%')
-                    ->orWhereNotNull('q.user_id');
-            });
+            $builder = $this->appendQuery($builder, $query);
         }
 
         return $builder->orderBy('id')
             ->tokenPaginate($perPage)
             ->withQueryString();
+    }
+
+    private function appendOrderBy(Builder $builder, OrderBy $orderBy): Builder
+    {
+        switch ($orderBy->getColumn()) {
+            case 'bonusBalance':
+                $set = UserLedgerEntry::queryForEntriesRelevantForBonusBalance()
+                    ->select(DB::raw('user_id, SUM(amount) as bonus_balance'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('bonus_balance', $orderBy->getDirection())
+                    ->select(['*', DB::raw('IFNULL(bonus_balance, 0) AS bonus_balance')]);
+                break;
+            case 'campaignCount':
+                $set = Campaign::where('status', Campaign::STATUS_ACTIVE)
+                    ->where(function ($subBuilder) {
+                        $subBuilder->where('time_end', '>', new DateTimeImmutable())->orWhere('time_end', null);
+                    })
+                    ->select(DB::raw('user_id, COUNT(*) as campaign_count'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('campaign_count', $orderBy->getDirection())
+                    ->select(['*', DB::raw('IFNULL(campaign_count, 0) AS campaign_count')]);
+                break;
+            case 'connectedWallet':
+                $builder->orderBy('wallet_address', $orderBy->getDirection());
+                break;
+            case 'lastActiveAt':
+                $builder->orderBy('last_active_at', $orderBy->getDirection());
+                break;
+            case 'siteCount':
+                $set = Site::where('status', Site::STATUS_ACTIVE)
+                    ->select(DB::raw('user_id, COUNT(*) as site_count'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('site_count', $orderBy->getDirection())
+                    ->select(['*', DB::raw('IFNULL(site_count, 0) AS site_count')]);
+                break;
+            case 'walletBalance':
+                $set = UserLedgerEntry::queryForEntriesRelevantForWalletBalance()
+                    ->select(DB::raw('user_id, SUM(amount) as wallet_balance'))
+                    ->groupBy('user_id');
+                $builder->leftJoinSub($set, 's', function ($join) {
+                    $join->on('users.id', '=', 's.user_id');
+                })->orderBy('wallet_balance', $orderBy->getDirection())
+                    ->select(['*', DB::raw('IFNULL(wallet_balance, 0) AS wallet_balance')]);
+                break;
+            default:
+                $builder->orderBy($orderBy->getColumn(), $orderBy->getDirection());
+                break;
+        }
+        return $builder;
+    }
+
+    private function appendQuery(Builder $builder, string $query): Builder
+    {
+        $siteUserIds = Site::where('domain', 'LIKE', '%' . $query . '%')
+            ->whereNull('deleted_at')
+            ->select(['user_id']);
+        $campaignUserIds = Campaign::where('landing_url', 'LIKE', '%' . $query . '%')
+            ->whereNull('deleted_at')
+            ->select(['user_id']);
+        $set = $campaignUserIds->union($siteUserIds);
+
+        $builder->leftJoinSub($set, 'q', function ($join) {
+            $join->on('users.id', '=', 'q.user_id');
+        });
+
+        $builder->where(function (Builder $sub) use ($query) {
+            $sub->where('email', 'LIKE', '%' . $query . '%')
+                ->orWhere('wallet_address', 'LIKE', '%' . $query . '%')
+                ->orWhereNotNull('q.user_id');
+        });
+
+        return $builder;
     }
 }

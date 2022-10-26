@@ -541,7 +541,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['orderBy' => 'email', 'direction' => 'up']),
+            self::buildUriForKey('users', ['orderBy' => 'email:up']),
             self::getHeaders($admin)
         );
 
@@ -557,7 +557,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['orderBy' => $orderBy, 'direction' => 'desc']),
+            self::buildUriForKey('users', ['orderBy' => $orderBy . ':desc']),
             self::getHeaders($admin)
         );
 
