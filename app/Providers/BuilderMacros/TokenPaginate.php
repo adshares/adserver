@@ -54,7 +54,10 @@ class TokenPaginate
                     : CursorPaginator::resolveCurrentCursor($cursorName, $cursor);
             }
 
-            $orders = $this->ensureOrderForCursorPagination(!is_null($cursor) && $cursor->pointsToPreviousItems());
+            $orders = $this->ensureOrderForCursorPagination(!is_null($cursor) && $cursor->pointsToPreviousItems())
+                ->filter(function ($value) {
+                    return 'id' === $value['column'];
+                })->values();
 
             if (!is_null($cursor)) {
                 $addCursorConditions = function (
