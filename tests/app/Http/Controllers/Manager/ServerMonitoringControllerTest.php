@@ -48,7 +48,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 // phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 final class ServerMonitoringControllerTest extends TestCase
 {
-    private const EVENTS_URI = '/api/monitoring/events';
+    private const BASE_URI = '/api';
     private const EVENTS_STRUCTURE = [
         'data' => [
             '*' => [
@@ -58,7 +58,6 @@ final class ServerMonitoringControllerTest extends TestCase
             ],
         ],
     ];
-    private const MONITORING_URI = '/api/monitoring';
     private const HOSTS_STRUCTURE = [
         'data' => [
             '*' => [
@@ -103,13 +102,12 @@ final class ServerMonitoringControllerTest extends TestCase
             '*' => self::USER_DATA_STRUCTURE,
         ],
     ];
-    private const USERS_URI = '/api/monitoring/users';
 
     public function testAccessAdminNoJwt(): void
     {
         $this->actingAs(User::factory()->admin()->create(), 'api');
 
-        $response = $this->getJson(self::buildUriForKey('wallet'));
+        $response = $this->getJson(self::buildUriForKey('hosts'));
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
 
@@ -117,7 +115,7 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $this->actingAs(User::factory()->create(), 'api');
 
-        $response = $this->getJson(self::buildUriForKey('wallet'));
+        $response = $this->getJson(self::buildUriForKey('hosts'));
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
 
@@ -126,7 +124,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->getJson(
-            self::buildUriForKey('wallet'),
+            self::buildUriForKey('hosts'),
             $this->getHeaders($user)
         );
 
@@ -196,7 +194,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'type' => UserLedgerEntry::TYPE_BONUS_EXPENSE,
         ]);
 
-        $response = $this->getResponseForKey('wallet');
+        $response = $this->getResponseForKey('wallet/balance');
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson(
@@ -207,13 +205,6 @@ final class ServerMonitoringControllerTest extends TestCase
                 ]
             ]
         );
-    }
-
-    public function testFetchByInvalidKey(): void
-    {
-        $response = $this->getResponseForKey('invalid');
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testHostConnectionErrorCounterReset(): void
@@ -251,12 +242,12 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         self::seedServerEvents();
 
-        $response = $this->getJson(self::EVENTS_URI, self::getHeaders());
+        $response = $this->getJson(self::buildUriForKey('events'), self::getHeaders());
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         $json = $response->json('data');
         self::assertEquals(2, count($json));
 
-        $response = $this->getJson(self::EVENTS_URI . '?limit=1', self::getHeaders());
+        $response = $this->getJson(self::buildUriForKey('events', ['limit' => 1]), self::getHeaders());
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(1, count($response->json('data')));
@@ -265,7 +256,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEventsEmpty(): void
     {
-        $response = $this->getJson(self::EVENTS_URI, self::getHeaders());
+        $response = $this->getJson(self::buildUriForKey('events'), self::getHeaders());
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         $json = $response->json('data');
         self::assertEquals(0, count($json));
@@ -276,7 +267,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::seedServerEvents();
         self::seedServerEvents();
 
-        $response = $this->getJson(self::EVENTS_URI . '?limit=3', self::getHeaders());
+        $response = $this->getJson(self::buildUriForKey('events', ['limit' => 3]), self::getHeaders());
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(3, count($response->json('data')));
         self::assertNull($response->json('prevPageUrl'));
@@ -295,7 +286,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::seedServerEvents();
 
         $response = $this->getJson(
-            self::EVENTS_URI . '?filter[type]=' . ServerEventType::HostBroadcastProcessed->value,
+            self::buildUriForKey('events', ['filter' => ['type' => ServerEventType::HostBroadcastProcessed->value]]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
@@ -325,9 +316,14 @@ final class ServerMonitoringControllerTest extends TestCase
         $from = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
         $to = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
         $response = $this->getJson(
-            self::EVENTS_URI .
-            '?filter[createdAt][from]=' . urlencode($from) .
-            '&filter[createdAt][to]=' . urlencode($to),
+            self::buildUriForKey('events', [
+                'filter' => [
+                    'createdAt' => [
+                        'from' => $from,
+                        'to' => $to,
+                    ]
+                ]
+            ]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
@@ -340,7 +336,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationLimit(): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?limit=no',
+            self::buildUriForKey('events', ['limit' => 'no']),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -349,7 +345,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationTypeInvalid(): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?filter[type]=invalid',
+            self::buildUriForKey('events', ['filter' => ['type' => 'invalid']]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -361,7 +357,13 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationFrom(string $from): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?filter[createdAt][from]=' . $from,
+            self::buildUriForKey('events', [
+                'filter' => [
+                    'createdAt' => [
+                        'from' => $from,
+                    ]
+                ]
+            ]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -373,7 +375,13 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationTo(string $to): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?filter[createdAt][to]=' . $to,
+            self::buildUriForKey('events', [
+                'filter' => [
+                    'createdAt' => [
+                        'to' => $to,
+                    ]
+                ]
+            ]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -391,7 +399,13 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationFromArray(): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?filter[createdAt][from][]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::buildUriForKey('events', [
+                'filter' => [
+                    'createdAt' => [
+                        'from' => ['2022-10-12T02:00:00+00:00'],
+                    ]
+                ]
+            ]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -400,7 +414,13 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsValidationToArray(): void
     {
         $response = $this->getJson(
-            self::EVENTS_URI . '?filter[createdAt][to][]=2022-10-12T02%3A00%3A00%2B00%3A00',
+            self::buildUriForKey('events', [
+                'filter' => [
+                    'createdAt' => [
+                        'to' => ['2022-10-12T02:00:00+00:00'],
+                    ]
+                ]
+            ]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -411,9 +431,14 @@ final class ServerMonitoringControllerTest extends TestCase
         $from = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
         $to = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
         $response = $this->getJson(
-            self::EVENTS_URI .
-            '?filter[createdAt][from]=' . urlencode($from) .
-            '&filter[createdAt][to]=' . urlencode($to),
+            self::buildUriForKey('events', [
+                'filter' => [
+                    'createdAt' => [
+                        'from' => $from,
+                        'to' => $to,
+                    ]
+                ]
+            ]),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -443,7 +468,7 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
 
         $response = $this->getJson(
-            self::buildUriForKey('latest-events')
+            self::buildUriForKey('events/latest')
             . '?filter[type][]=' . ServerEventType::HostBroadcastProcessed->value
             . '&filter[type][]=' . ServerEventType::InventorySynchronized->value,
             self::getHeaders()
@@ -808,7 +833,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->delete(
-            sprintf('%s/%d', self::USERS_URI, $user->id),
+            sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
             [],
             self::getHeaders()
         );
@@ -1136,23 +1161,21 @@ final class ServerMonitoringControllerTest extends TestCase
 
     private static function buildUriForKey(string $key, array $query = null): string
     {
-        $uri = self::MONITORING_URI . '/' . $key;
-
+        $uri = sprintf('%s/%s', self::BASE_URI, $key);
         if (null !== $query) {
             $uri .= '?' . http_build_query($query);
         }
-
         return $uri;
     }
 
     private static function buildUriForResetHostConnectionErrorCounter(int $hostId): string
     {
-        return sprintf('/api/monitoring/hosts/%d/reset', $hostId);
+        return sprintf('/%s/%d/reset', self::buildUriForKey('hosts'), $hostId);
     }
 
     private static function buildUriForPatchUser(int $userId, string $action = null): string
     {
-        $uri = sprintf('%s/%d', self::USERS_URI, $userId);
+        $uri = sprintf('%s/%d', self::buildUriForKey('users'), $userId);
         if (null !== $action) {
             $uri = sprintf('%s/%s', $uri, $action);
         }

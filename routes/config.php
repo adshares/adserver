@@ -33,31 +33,35 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(
     Route::patch('config', [ServerConfigurationController::class, 'store']);
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 
-    Route::get('monitoring/events', [ServerMonitoringController::class, 'fetchEvents']);
-    Route::get('monitoring/latest-events', [ServerMonitoringController::class, 'fetchLatestEvents']);
-    Route::get('monitoring/users', [ServerMonitoringController::class, 'fetchUsers']);
-    Route::post('monitoring/users', [ServerMonitoringController::class, 'addUser']);
-    Route::patch('monitoring/users/{userId}', [ServerMonitoringController::class, 'editUser']);
-    Route::get('monitoring/{key}', [ServerMonitoringController::class, 'fetch']);
-    Route::patch('monitoring/hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
-    Route::patch('monitoring/users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
+    Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
+    Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
+
+    Route::get('hosts', [ServerMonitoringController::class, 'fetchHosts']);
+    Route::patch('hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
+
+    Route::get('users', [ServerMonitoringController::class, 'fetchUsers']);
+    Route::post('users', [ServerMonitoringController::class, 'addUser']);
+    Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
     Route::patch(
-        'monitoring/users/{userId}/switchToModerator',
+        'users/{userId}/switchToModerator',
         [ServerMonitoringController::class, 'switchUserToModerator']
     );
-    Route::patch('monitoring/users/{userId}/unban', [ServerMonitoringController::class, 'unbanUser']);
-    Route::delete('monitoring/users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
+    Route::delete('users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
+
+    Route::get('wallet/balance', [ServerMonitoringController::class, 'fetchWallet']);
 });
 
 Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(function () {
-    Route::patch('monitoring/users/{userId}/confirm', [ServerMonitoringController::class, 'confirmUser']);
-    Route::patch('monitoring/users/{userId}/denyAdvertising', [ServerMonitoringController::class, 'denyAdvertising']);
-    Route::patch('monitoring/users/{userId}/denyPublishing', [ServerMonitoringController::class, 'denyPublishing']);
-    Route::patch('monitoring/users/{userId}/grantAdvertising', [ServerMonitoringController::class, 'grantAdvertising']);
-    Route::patch('monitoring/users/{userId}/grantPublishing', [ServerMonitoringController::class, 'grantPublishing']);
-    Route::patch('monitoring/users/{userId}/switchToAgency', [ServerMonitoringController::class, 'switchUserToAgency']);
+    Route::patch('users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
+    Route::patch('users/{userId}/confirm', [ServerMonitoringController::class, 'confirmUser']);
+    Route::patch('users/{userId}/denyAdvertising', [ServerMonitoringController::class, 'denyAdvertising']);
+    Route::patch('users/{userId}/denyPublishing', [ServerMonitoringController::class, 'denyPublishing']);
+    Route::patch('users/{userId}/grantAdvertising', [ServerMonitoringController::class, 'grantAdvertising']);
+    Route::patch('users/{userId}/grantPublishing', [ServerMonitoringController::class, 'grantPublishing']);
+    Route::patch('users/{userId}/switchToAgency', [ServerMonitoringController::class, 'switchUserToAgency']);
     Route::patch(
-        'monitoring/users/{userId}/switchToRegular',
+        'users/{userId}/switchToRegular',
         [ServerMonitoringController::class, 'switchUserToRegular']
     );
+    Route::patch('users/{userId}/unban', [ServerMonitoringController::class, 'unbanUser']);
 });

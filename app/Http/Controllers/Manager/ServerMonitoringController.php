@@ -59,22 +59,6 @@ class ServerMonitoringController extends Controller
 {
     private const ADPANEL_EMAIL_ACTIVATION_URI = '/auth/email-activation/';
     private const ADPANEL_RESET_PASSWORD_URI = '/auth/reset-password/';
-    private const ALLOWED_KEYS = [
-        'hosts',
-        'wallet',
-    ];
-
-    public function fetch(Request $request, string $key): JsonResponse
-    {
-        if (!in_array($key, self::ALLOWED_KEYS)) {
-            throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
-        }
-
-        $signature = Str::camel('handle_' . $key);
-        $data = $this->{$signature}($request);
-
-        return self::json($data);
-    }
 
     public function fetchEvents(Request $request, ServerEventLogRepository $repository): array
     {
@@ -90,7 +74,7 @@ class ServerMonitoringController extends Controller
             ->toArray();
     }
 
-    private function handleHosts(Request $request): array
+    public function fetchHosts(Request $request): JsonResource
     {
         $limit = $request->query('limit', 10);
         self::validateLimit($limit);
@@ -99,7 +83,7 @@ class ServerMonitoringController extends Controller
             ->tokenPaginate($limit)
             ->withQueryString();
 
-        return (new HostCollection($paginator))->toArray($request);
+        return new HostCollection($paginator);
     }
 
     public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): array
@@ -132,14 +116,14 @@ class ServerMonitoringController extends Controller
         return new UserCollection($userRepository->fetchUsers($filters, $query, $orderBy, $limit));
     }
 
-    private function handleWallet(Request $request): array
+    public function fetchWallet(): JsonResponse
     {
-        return [
+        return self::json([
             'wallet' => [
                 'balance' => UserLedgerEntry::getBalanceForAllUsers(),
                 'unusedBonuses' => UserLedgerEntry::getBonusBalanceForAllUsers(),
             ]
-        ];
+        ]);
     }
 
     public function banUser(AdminController $adminController, Request $request, int $userId): JsonResource
