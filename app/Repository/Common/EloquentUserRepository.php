@@ -40,11 +40,12 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentUserRepository implements UserRepository
 {
+    private int $aliasCount = 0;
+
     public function fetchUsers(
         ?FilterCollection $filters = null,
-        ?string $query = null,
         ?OrderByCollection $orderBy = null,
-        int $perPage = null
+        ?int $perPage = null
     ): CursorPaginator {
         $builder = User::query();
 
@@ -58,10 +59,6 @@ class EloquentUserRepository implements UserRepository
             foreach ($orderBy->getOrderBy() as $order) {
                 $builder = $this->appendOrderBy($builder, $order);
             }
-        }
-
-        if ($query) {
-            $builder = $this->appendQuery($builder, $query);
         }
 
         return $builder->orderBy('id')
@@ -90,6 +87,11 @@ class EloquentUserRepository implements UserRepository
                     }
                 }
                 break;
+            case 'query':
+                foreach ($filter->getValues() as $query) {
+                    $builder = $this->appendQuery($builder, $query);
+                }
+                break;
             case 'role':
                 $roleToColumnMap = [
                     Role::Admin->value => 'is_admin',
@@ -116,8 +118,9 @@ class EloquentUserRepository implements UserRepository
                 $set = UserLedgerEntry::queryForEntriesRelevantForBonusBalance()
                     ->select(DB::raw('user_id, SUM(amount) as bonus_balance'))
                     ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
+                $alias = $this->getUniqueAlias();
+                $builder->leftJoinSub($set, $alias, function ($join) use ($alias) {
+                    $join->on('users.id', '=', $alias . '.user_id');
                 })->orderBy('bonus_balance', $orderBy->getDirection())
                     ->select(['*', DB::raw('IFNULL(bonus_balance, 0) AS bonus_balance')]);
                 break;
@@ -128,8 +131,9 @@ class EloquentUserRepository implements UserRepository
                     })
                     ->select(DB::raw('user_id, COUNT(*) as campaign_count'))
                     ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
+                $alias = $this->getUniqueAlias();
+                $builder->leftJoinSub($set, $alias, function ($join) use ($alias) {
+                    $join->on('users.id', '=', $alias . '.user_id');
                 })->orderBy('campaign_count', $orderBy->getDirection())
                     ->select(['*', DB::raw('IFNULL(campaign_count, 0) AS campaign_count')]);
                 break;
@@ -143,8 +147,9 @@ class EloquentUserRepository implements UserRepository
                 $set = Site::where('status', Site::STATUS_ACTIVE)
                     ->select(DB::raw('user_id, COUNT(*) as site_count'))
                     ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
+                $alias = $this->getUniqueAlias();
+                $builder->leftJoinSub($set, $alias, function ($join) use ($alias) {
+                    $join->on('users.id', '=', $alias . '.user_id');
                 })->orderBy('site_count', $orderBy->getDirection())
                     ->select(['*', DB::raw('IFNULL(site_count, 0) AS site_count')]);
                 break;
@@ -152,8 +157,9 @@ class EloquentUserRepository implements UserRepository
                 $set = UserLedgerEntry::queryForEntriesRelevantForWalletBalance()
                     ->select(DB::raw('user_id, SUM(amount) as wallet_balance'))
                     ->groupBy('user_id');
-                $builder->leftJoinSub($set, 's', function ($join) {
-                    $join->on('users.id', '=', 's.user_id');
+                $alias = $this->getUniqueAlias();
+                $builder->leftJoinSub($set, $alias, function ($join) use ($alias) {
+                    $join->on('users.id', '=', $alias . '.user_id');
                 })->orderBy('wallet_balance', $orderBy->getDirection())
                     ->select(['*', DB::raw('IFNULL(wallet_balance, 0) AS wallet_balance')]);
                 break;
@@ -174,8 +180,9 @@ class EloquentUserRepository implements UserRepository
             ->select(['user_id']);
         $set = $campaignUserIds->union($siteUserIds);
 
-        $builder->leftJoinSub($set, 'q', function ($join) {
-            $join->on('users.id', '=', 'q.user_id');
+        $alias = $this->getUniqueAlias();
+        $builder->leftJoinSub($set, $alias, function ($join) use ($alias) {
+            $join->on('users.id', '=', $alias . '.user_id');
         });
 
         $builder->where(function (Builder $sub) use ($query) {
@@ -185,5 +192,10 @@ class EloquentUserRepository implements UserRepository
         });
 
         return $builder;
+    }
+
+    protected function getUniqueAlias(): string
+    {
+        return sprintf('s%d', $this->aliasCount++);
     }
 }

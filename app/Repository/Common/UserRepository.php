@@ -31,8 +31,7 @@ interface UserRepository
 {
     public function fetchUsers(
         ?FilterCollection $filters = null,
-        ?string $query = null,
         ?OrderByCollection $orderBy = null,
-        int $perPage = null,
+        ?int $perPage = null,
     ): CursorPaginator;
 }

@@ -35,7 +35,7 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
 {
     public static function fetchServerEvents(
         ?FilterCollection $filters = null,
-        int $perPage = null,
+        ?int $perPage = null,
     ): CursorPaginator {
         $builder = ServerEventLog::orderBy('id', 'desc');
 
@@ -51,7 +51,7 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
 
     public static function fetchLatestServerEvents(
         ?FilterCollection $filters = null,
-        int $perPage = null,
+        ?int $perPage = null,
     ): CursorPaginator {
         $latestEvents = ServerEventLog::select(DB::raw('MAX(id) as id'))
             ->groupBy('type');

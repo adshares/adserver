@@ -30,11 +30,11 @@ interface ServerEventLogRepository
 {
     public static function fetchServerEvents(
         ?FilterCollection $filters = null,
-        int $perPage = null,
+        ?int $perPage = null,
     ): CursorPaginator;
 
     public static function fetchLatestServerEvents(
         ?FilterCollection $filters = null,
-        int $perPage = null,
+        ?int $perPage = null,
     ): CursorPaginator;
 }

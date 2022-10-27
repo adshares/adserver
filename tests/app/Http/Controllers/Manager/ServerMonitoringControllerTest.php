@@ -604,6 +604,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'lastActiveAt' => ['lastActiveAt', 'admin@example.com'],
             'siteCount' => ['siteCount', 'user2@example.com'],
             'walletBalance' => ['walletBalance', 'user2@example.com'],
+            'bonusBalance & campaignCount' => ['bonusBalance:desc,campaignCount', 'user1@example.com'],
         ];
     }
 
@@ -720,7 +721,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['query' => 'user1']),
+            self::buildUriForKey('users', ['filter' => ['query' => 'user1']]),
             self::getHeaders($admin)
         );
 
@@ -736,7 +737,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['query' => 'ace8d62']),
+            self::buildUriForKey('users', ['filter' => ['query' => 'ace8d62']]),
             self::getHeaders($admin)
         );
 
@@ -755,7 +756,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['query' => 'ads']),
+            self::buildUriForKey('users', ['filter' => ['query' => 'ads']]),
             self::getHeaders($admin)
         );
 
@@ -771,7 +772,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['query' => 'test']),
+            self::buildUriForKey('users', ['filter' => ['query' => 'test']]),
             self::getHeaders($admin)
         );
 
@@ -786,7 +787,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['query' => ['test1', 'test2']]),
+            self::buildUriForKey('users', ['filter' => ['query' => ['test1', 'test2']]]),
             self::getHeaders($admin)
         );
 

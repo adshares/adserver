@@ -105,15 +105,15 @@ class ServerMonitoringController extends Controller
         $filters = FilterCollection::fromRequest($request, [
             'adminConfirmed' => FilterType::Bool,
             'emailConfirmed' => FilterType::Bool,
+            'query' => FilterType::String,
             'role' => FilterType::String,
         ]);
         $orderBy = OrderByCollection::fromRequest($request);
-        $query = self::queryFromRequest($request);
         self::validateLimit($limit);
         self::validateUserFilters($filters);
         self::validateUserOrderBy($orderBy);
 
-        return new UserCollection($userRepository->fetchUsers($filters, $query, $orderBy, $limit));
+        return new UserCollection($userRepository->fetchUsers($filters, $orderBy, $limit));
     }
 
     public function fetchWallet(): JsonResponse
