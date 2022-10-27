@@ -185,10 +185,10 @@ class EloquentUserRepository implements UserRepository
             $join->on('users.id', '=', $alias . '.user_id');
         });
 
-        $builder->where(function (Builder $sub) use ($query) {
+        $builder->where(function (Builder $sub) use ($query, $alias) {
             $sub->where('email', 'LIKE', '%' . $query . '%')
                 ->orWhere('wallet_address', 'LIKE', '%' . $query . '%')
-                ->orWhereNotNull('q.user_id');
+                ->orWhereNotNull($alias . '.user_id');
         });
 
         return $builder;

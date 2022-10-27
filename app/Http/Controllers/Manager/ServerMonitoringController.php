@@ -345,15 +345,6 @@ class ServerMonitoringController extends Controller
         }
     }
 
-    private static function queryFromRequest(Request $request): ?string
-    {
-        $query = $request->query('query');
-        if (null === $query || is_string($query)) {
-            return $query;
-        }
-        throw new UnprocessableEntityHttpException('Query must be a string');
-    }
-
     private static function getEmailAddress(Request $request): ?string
     {
         if (null === ($email = $request->input('email'))) {

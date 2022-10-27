@@ -787,11 +787,14 @@ final class ServerMonitoringControllerTest extends TestCase
         $admin = User::where('is_admin', true)->first();
 
         $response = $this->getJson(
-            self::buildUriForKey('users', ['filter' => ['query' => ['test1', 'test2']]]),
+            self::buildUriForKey('users', ['filter' => ['query' => ['test', 'ads']]]),
             self::getHeaders($admin)
         );
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(1, count($response->json('data')));
+        $response->assertJsonPath('data.0.email', 'user1@example.com');
     }
 
     public function testPatchUserBan(): void
