@@ -36,8 +36,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 final class ServerConfigurationControllerTest extends TestCase
 {
-    private const URI_CONFIG = '/api/config';
-    private const URI_PLACEHOLDERS = '/api/config/placeholders';
+    private const URI_CONFIG = '/api/v2/config';
+    private const URI_PLACEHOLDERS = '/api/v2/config/placeholders';
 
     public function testAccessAdminNoJwt(): void
     {

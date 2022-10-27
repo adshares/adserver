@@ -26,7 +26,7 @@ use Adshares\Adserver\Http\Controllers\Manager\ServerMonitoringController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(function () {
+Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
     Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
     Route::patch('config/placeholders', [ServerConfigurationController::class, 'storePlaceholders']);
     Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
@@ -48,10 +48,10 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(
     );
     Route::delete('users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
 
-    Route::get('wallet/balance', [ServerMonitoringController::class, 'fetchWallet']);
+    Route::get('wallet', [ServerMonitoringController::class, 'fetchWallet']);
 });
 
-Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(function () {
+Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
     Route::patch('users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
     Route::patch('users/{userId}/confirm', [ServerMonitoringController::class, 'confirmUser']);
     Route::patch('users/{userId}/denyAdvertising', [ServerMonitoringController::class, 'denyAdvertising']);

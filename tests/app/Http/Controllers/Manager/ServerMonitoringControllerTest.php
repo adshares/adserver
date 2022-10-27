@@ -48,7 +48,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 // phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 final class ServerMonitoringControllerTest extends TestCase
 {
-    private const BASE_URI = '/api';
+    private const BASE_URI = '/api/v2';
     private const EVENTS_STRUCTURE = [
         'data' => [
             '*' => [
@@ -194,7 +194,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'type' => UserLedgerEntry::TYPE_BONUS_EXPENSE,
         ]);
 
-        $response = $this->getResponseForKey('wallet/balance');
+        $response = $this->getResponseForKey('wallet');
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson(
