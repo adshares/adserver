@@ -36,6 +36,8 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->group(
     Route::get('monitoring/events', [ServerMonitoringController::class, 'fetchEvents']);
     Route::get('monitoring/latest-events', [ServerMonitoringController::class, 'fetchLatestEvents']);
     Route::get('monitoring/users', [ServerMonitoringController::class, 'fetchUsers']);
+    Route::post('monitoring/users', [ServerMonitoringController::class, 'addUser']);
+    Route::patch('monitoring/users/{userId}', [ServerMonitoringController::class, 'editUser']);
     Route::get('monitoring/{key}', [ServerMonitoringController::class, 'fetch']);
     Route::patch('monitoring/hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
     Route::patch('monitoring/users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);

@@ -28,7 +28,10 @@ use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
 use Adshares\Adserver\Http\Resources\HostCollection;
 use Adshares\Adserver\Http\Resources\UserCollection;
 use Adshares\Adserver\Http\Resources\UserResource;
+use Adshares\Adserver\Mail\AuthRecovery;
+use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -36,14 +39,26 @@ use Adshares\Adserver\Repository\Common\ServerEventLogRepository;
 use Adshares\Adserver\Repository\Common\UserRepository;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Throwable;
 
 class ServerMonitoringController extends Controller
 {
+    private const ADPANEL_EMAIL_ACTIVATION_URI = '/auth/email-activation/';
+    private const ADPANEL_RESET_PASSWORD_URI = '/auth/reset-password/';
     private const ALLOWED_KEYS = [
         'hosts',
         'wallet',
@@ -207,6 +222,77 @@ class ServerMonitoringController extends Controller
         return self::json();
     }
 
+    public function addUser(Request $request): JsonResponse
+    {
+        $roles = self::getRoles($request);
+        if (null === $roles) {
+            throw new UnprocessableEntityHttpException('Field `role` is required');
+        }
+        $email = self::getEmailAddress($request);
+        $walletAddress = self::getWalletAddress($request);
+        if (null === $email && null === $walletAddress) {
+            throw new UnprocessableEntityHttpException('Wallet address is required if email is not set');
+        }
+        $forcePasswordChange = self::forcePasswordChange($request);
+        if ($forcePasswordChange && null === $email) {
+            throw new UnprocessableEntityHttpException('Email is required if user should change password');
+        }
+
+        $data = [];
+
+        DB::beginTransaction();
+        try {
+            $user = new User();
+            $user->updateEmailWalletAndRoles($email, $walletAddress, $roles);
+            if (null !== $email) {
+                $this->notifyUserAboutRegistration($user, $forcePasswordChange);
+            }
+            if (!$forcePasswordChange) {
+                $password = substr(Hash::make(Str::random(8)), -8);
+                $user->password = $password;
+                $data = ['password' => $password];
+            }
+            $user->confirmAdmin();
+            $user->saveOrFail();
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Error during user registration: (%s)', $throwable->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return self::json(['data' => $data]);
+    }
+
+    public function editUser(int $userId, Request $request): JsonResponse
+    {
+        $user = User::fetchById($userId);
+        if (null === $user) {
+            throw new NotFoundHttpException('User not found');
+        }
+
+        $email = self::getEmailAddress($request);
+        $walletAddress = self::getWalletAddress($request);
+        $roles = self::getRoles($request);
+
+        DB::beginTransaction();
+        try {
+            $user->updateEmailWalletAndRoles($email, $walletAddress, $roles);
+            if (null !== $email) {
+                $this->notifyUserAboutRegistration($user);
+            }
+            $user->confirmAdmin();
+            $user->saveOrFail();
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Error during user editing: (%s)', $throwable->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return self::json(['data' => []]);
+    }
+
     private static function validateLimit(array|string|null $limit): void
     {
         if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
@@ -249,7 +335,8 @@ class ServerMonitoringController extends Controller
                         'lastActiveAt',
                         'siteCount',
                         'walletBalance',
-                    ]
+                    ],
+                    true,
                 )
             ) {
                 throw new UnprocessableEntityHttpException(sprintf('Sorting by `%s` is not supported', $column));
@@ -265,7 +352,7 @@ class ServerMonitoringController extends Controller
         if (null !== ($filter = $filters->getFilterByName('role'))) {
             $availableRoles = array_map(fn($role) => $role->value, Role::cases());
             foreach ($filter->getValues() as $role) {
-                if (!in_array($role, $availableRoles)) {
+                if (!in_array($role, $availableRoles, true)) {
                     throw new UnprocessableEntityHttpException(
                         sprintf('Filtering by role `%s` is not supported', $role)
                     );
@@ -281,5 +368,99 @@ class ServerMonitoringController extends Controller
             return $query;
         }
         throw new UnprocessableEntityHttpException('Query must be a string');
+    }
+
+    private static function getEmailAddress(Request $request): ?string
+    {
+        if (null === ($email = $request->input('email'))) {
+            return null;
+        }
+        if (false === filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new UnprocessableEntityHttpException('Invalid email address');
+        }
+        if (null !== User::fetchByEmail($email)) {
+            throw new UnprocessableEntityHttpException('Duplicated email address');
+        }
+        return $email;
+    }
+
+    private static function getRoles(Request $request): ?array
+    {
+        if (null === ($roles = $request->input('role'))) {
+            return null;
+        }
+        if (!is_array($roles)) {
+            $roles = [$roles];
+        }
+        $availableRoles = array_map(fn($role) => $role->value, Role::cases());
+        foreach ($roles as $role) {
+            if (!in_array($role, $availableRoles, true)) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Role `%s` is not supported', $role)
+                );
+            }
+        }
+        if (in_array(Role::Agency->value, $roles, true) && in_array(Role::Moderator->value, $roles, true)) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('User cannot have `%s` and `%s` roles together', Role::Agency->value, Role::Moderator->value)
+            );
+        }
+        return $roles;
+    }
+
+    private static function getWalletAddress(Request $request): ?WalletAddress
+    {
+        if (
+            null !== ($network = $request->input('wallet.network')) &&
+            null !== ($address = $request->input('wallet.address'))
+        ) {
+            try {
+                $walletAddress = new WalletAddress($network, $address);
+            } catch (InvalidArgumentException) {
+                throw new UnprocessableEntityHttpException('Invalid wallet address');
+            }
+            if (null !== User::fetchByWalletAddress($walletAddress)) {
+                throw new UnprocessableEntityHttpException('Duplicated wallet address');
+            }
+        } else {
+            $walletAddress = null;
+        }
+        return $walletAddress;
+    }
+
+    private static function forcePasswordChange(Request $request): mixed
+    {
+        if (
+            null === ($forcePasswordChange = filter_var(
+                $request->input('forcePasswordChange', false),
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE
+            ))
+        ) {
+            throw new UnprocessableEntityHttpException('Field `forcePasswordChange` must be a boolean');
+        }
+        return $forcePasswordChange;
+    }
+
+    private function notifyUserAboutRegistration(User $user, bool $forcePasswordChange = false): void
+    {
+        if ($forcePasswordChange) {
+            if (Token::canGenerateToken($user, Token::PASSWORD_RECOVERY)) {
+                $mailable = new AuthRecovery(
+                    Token::generate(Token::PASSWORD_RECOVERY, $user)->uuid,
+                    self::ADPANEL_RESET_PASSWORD_URI
+                );
+                Mail::to($user)->queue($mailable);
+            }
+        } else {
+            if (config('app.email_verification_required')) {
+                $user->email_confirmed_at = null;
+                $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
+                $mailable = new UserEmailActivate($token->uuid, self::ADPANEL_EMAIL_ACTIVATION_URI);
+                Mail::to($user)->queue($mailable);
+            } else {
+                $user->confirmEmail();
+            }
+        }
     }
 }

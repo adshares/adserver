@@ -250,6 +250,15 @@ class User extends Authenticatable implements JWTSubject
         return array_keys(array_filter($roles));
     }
 
+    public function setRolesAttribute($value): void
+    {
+        $this->is_admin = in_array(Role::Admin->value, $value);
+        $this->is_advertiser = in_array(Role::Advertiser->value, $value);
+        $this->is_agency = in_array(Role::Agency->value, $value);
+        $this->is_moderator = in_array(Role::Moderator->value, $value);
+        $this->is_publisher = in_array(Role::Publisher->value, $value);
+    }
+
     public function setPasswordAttribute($value): void
     {
         $this->attributes['password'] = null !== $value ? Hash::make($value) : null;
@@ -452,6 +461,20 @@ class User extends Authenticatable implements JWTSubject
         }
         $user->saveOrFail();
         return $user;
+    }
+
+    public function updateEmailWalletAndRoles(?string $email, ?WalletAddress $walletAddress, ?array $roles): void
+    {
+        if (null !== $email) {
+            $this->email = $email;
+        }
+        if (null !== $walletAddress) {
+            $this->wallet_address = $walletAddress;
+        }
+        if (null !== $roles) {
+            $this->roles = $roles;
+        }
+        $this->saveOrFail();
     }
 
     public static function registerWithWallet(

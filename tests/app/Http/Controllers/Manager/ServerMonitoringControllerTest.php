@@ -21,7 +21,10 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Mail\AuthRecovery;
+use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\Site;
@@ -31,10 +34,13 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -1144,9 +1150,13 @@ final class ServerMonitoringControllerTest extends TestCase
         return sprintf('/api/monitoring/hosts/%d/reset', $hostId);
     }
 
-    private static function buildUriForPatchUser(int $userId, string $action): string
+    private static function buildUriForPatchUser(int $userId, string $action = null): string
     {
-        return sprintf('%s/%d/%s', self::USERS_URI, $userId, $action);
+        $uri = sprintf('%s/%d', self::USERS_URI, $userId);
+        if (null !== $action) {
+            $uri = sprintf('%s/%s', $uri, $action);
+        }
+        return $uri;
     }
 
     private static function seedServerEvents(): void
@@ -1206,5 +1216,285 @@ final class ServerMonitoringControllerTest extends TestCase
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
             'amount' => 3e11,
         ]);
+    }
+
+    public function testAddUser(): void
+    {
+        $response = $this->postJson(self::buildUriForKey('users'), self::getUserData(), self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('data', []);
+        self::assertDatabaseHas(User::class, [
+            'email' => 'user@example.com',
+            'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
+            'is_advertiser' => 1,
+            'is_publisher' => 1,
+        ]);
+        $user = User::fetchByEmail('user@example.com');
+        self::assertNotNull($user->admin_confirmed_at);
+        self::assertNull($user->email_confirmed_at);
+        Mail::assertQueued(AuthRecovery::class);
+    }
+
+    public function testAddUserRequireEmailVerification(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+        $response = $this->postJson(
+            self::buildUriForKey('users'),
+            self::getUserData([], 'forcePasswordChange'),
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['data' => ['password']]);
+        self::assertDatabaseHas(User::class, [
+            'email' => 'user@example.com',
+            'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
+            'is_advertiser' => 1,
+            'is_publisher' => 1,
+        ]);
+        $user = User::fetchByEmail('user@example.com');
+        self::assertNotNull($user->admin_confirmed_at);
+        self::assertNull($user->email_confirmed_at);
+        Mail::assertQueued(UserEmailActivate::class);
+    }
+
+    public function testAddUserNoEmailVerification(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+        $response = $this->postJson(
+            self::buildUriForKey('users'),
+            self::getUserData([], 'forcePasswordChange'),
+            self::getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['data' => ['password']]);
+        self::assertDatabaseHas(User::class, [
+            'email' => 'user@example.com',
+            'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
+            'is_advertiser' => 1,
+            'is_publisher' => 1,
+        ]);
+        $user = User::fetchByEmail('user@example.com');
+        self::assertNotNull($user->admin_confirmed_at);
+        self::assertNotNull($user->email_confirmed_at);
+        Mail::assertNothingQueued();
+    }
+
+    /**
+     * @dataProvider addUserInvalidDataProvider
+     */
+    public function testAddUserWhileDataInvalid(array $data): void
+    {
+        User::factory()->create([
+            'email' => 'user5@example.com',
+            'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000004-DBEB'),
+        ]);
+        $response = $this->postJson(self::buildUriForKey('users'), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function addUserInvalidDataProvider(): array
+    {
+        return [
+            'duplicated email' => [self::getUserData(['email' => 'user5@example.com'])],
+            'duplicated wallet' => [
+                self::getUserData([
+                    'wallet' => [
+                        'address' => '0001-00000004-DBEB',
+                        'network' => WalletAddress::NETWORK_ADS,
+                    ]
+                ])
+            ],
+            'invalid email' => [self::getUserData(['email' => 'invalid'])],
+            'invalid force password change' => [self::getUserData(['forcePasswordChange' => 'user@example.com'])],
+            'invalid role' => [self::getUserData(['role' => ['invalid']])],
+            'invalid wallet' => [
+                self::getUserData([
+                    'wallet' => [
+                        'address' => 'invalid',
+                        'network' => WalletAddress::NETWORK_ADS,
+                    ]
+                ])
+            ],
+            'missing email while notify' => [self::getUserData([], 'email')],
+            'missing email and wallet' => [['role' => Role::Publisher->value]],
+            'missing role' => [self::getUserData([], 'role')],
+            'role conflict' => [self::getUserData(['role' => [Role::Agency->value, Role::Moderator->value]])],
+        ];
+    }
+
+    public function testAddUserWhileDbError(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+
+        $response = $this->postJson(self::buildUriForKey('users'), self::getUserData(), self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    private static function getUserData(array $mergeData = [], string $remove = null): array
+    {
+        $data = array_merge([
+            'email' => 'user@example.com',
+            'role' => [Role::Advertiser->value, Role::Publisher->value],
+            'wallet' => [
+                'address' => '0001-00000001-8B4E',
+                'network' => WalletAddress::NETWORK_ADS,
+            ],
+            'forcePasswordChange' => true,
+        ], $mergeData);
+
+        if (null !== $remove) {
+            unset($data[$remove]);
+        }
+
+        return $data;
+    }
+
+    public function testEditUserEmailRequireEmailVerification(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
+        /** @var User $user */
+        $user = User::factory()->create([
+            'email' => 'user@example.com',
+            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
+        ]);
+        $data = ['email' => 'user2@example.com'];
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(['data' => []]);
+        self::assertDatabaseHas(User::class, [
+            'email' => 'user2@example.com',
+        ]);
+        $user = User::fetchByEmail('user2@example.com');
+        self::assertNotNull($user->admin_confirmed_at);
+        self::assertNull($user->email_confirmed_at);
+        Mail::assertQueued(UserEmailActivate::class);
+    }
+
+    public function testEditUserEmailNoEmailVerification(): void
+    {
+        Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
+        /** @var User $user */
+        $user = User::factory()->create(['email' => 'user@example.com']);
+        $data = ['email' => 'user2@example.com'];
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(['data' => []]);
+        self::assertDatabaseHas(User::class, [
+            'email' => 'user2@example.com',
+        ]);
+        $user = User::fetchByEmail('user2@example.com');
+        self::assertNotNull($user->admin_confirmed_at);
+        self::assertNotNull($user->email_confirmed_at);
+        Mail::assertNothingQueued();
+    }
+
+    public function testEditUserWalletAddress(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $data = [
+            'wallet' => [
+                'address' => '0001-00000001-8B4E',
+                'network' => WalletAddress::NETWORK_ADS,
+            ],
+        ];
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(['data' => []]);
+        self::assertDatabaseHas(User::class, [
+            'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
+        ]);
+    }
+
+    public function testEditUserRole(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $data = [
+            'role' => [
+                Role::Advertiser->value,
+            ],
+        ];
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(['data' => []]);
+        self::assertDatabaseHas(User::class, [
+            'is_advertiser' => 1,
+            'is_publisher' => 0,
+        ]);
+    }
+
+    public function testEditUserInvalid(): void
+    {
+        $data = ['email' => 'user2@example.com'];
+
+        $response = $this->patchJson(self::buildUriForPatchUser(PHP_INT_MAX), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    /**
+     * @dataProvider editUserInvalidDataProvider
+     */
+    public function testEditUserWhileDataInvalid(array $data): void
+    {
+        User::factory()->create([
+            'email' => 'user2@example.com',
+            'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'),
+        ]);
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function editUserInvalidDataProvider(): array
+    {
+        return [
+            'duplicated email' => [['email' => 'user2@example.com']],
+            'duplicated wallet' => [
+                [
+                    'wallet' => [
+                        'address' => '0001-00000001-8B4E',
+                        'network' => WalletAddress::NETWORK_ADS
+                    ]
+                ]
+            ],
+            'invalid email' => [['email' => 'invalid']],
+            'invalid role' => [['role' => ['invalid']]],
+            'invalid wallet' => [['wallet' => ['address' => 'invalid', 'network' => WalletAddress::NETWORK_ADS]]],
+            'roles conflict' => [['role' => [Role::Agency->value, Role::Moderator->value]]],
+        ];
+    }
+
+    public function testEditUserWhileDbError(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        /** @var User $user */
+        $user = User::factory()->create();
+        $data = ['email' => 'user2@example.com'];
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 }
