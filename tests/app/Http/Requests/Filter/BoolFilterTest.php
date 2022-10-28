@@ -29,12 +29,17 @@ final class BoolFilterTest extends TestCase
     public function testBoolFilter(): void
     {
         $name = 'test-name';
-        $isChecked = true;
 
-        $filter = new BoolFilter($name, $isChecked);
+        $filter = new BoolFilter($name, true);
 
         self::assertEquals($name, $filter->getName());
         self::assertTrue($filter->isChecked());
-        self::assertEquals([$isChecked], $filter->getValues());
+        self::assertEquals([true], $filter->getValues());
+
+        $filter->setChecked(false);
+
+        self::assertEquals($name, $filter->getName());
+        self::assertFalse($filter->isChecked());
+        self::assertEquals([false], $filter->getValues());
     }
 }

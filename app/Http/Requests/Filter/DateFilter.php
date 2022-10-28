@@ -27,11 +27,11 @@ use DateTimeInterface;
 
 class DateFilter implements Filter
 {
-    private ?DateTimeInterface $from = null;
-    private ?DateTimeInterface $to = null;
-
-    public function __construct(private readonly string $name)
-    {
+    public function __construct(
+        private readonly string $name,
+        private ?DateTimeInterface $from = null,
+        private ?DateTimeInterface $to = null,
+    ) {
     }
 
     public function getName(): string

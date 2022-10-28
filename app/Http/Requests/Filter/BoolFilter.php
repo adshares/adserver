@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Http\Requests\Filter;
 
 class BoolFilter implements Filter
 {
-    public function __construct(private readonly string $name, private readonly bool $isChecked)
+    public function __construct(private readonly string $name, private bool $isChecked)
     {
     }
 
@@ -37,6 +37,11 @@ class BoolFilter implements Filter
     public function isChecked(): bool
     {
         return $this->isChecked;
+    }
+
+    public function setChecked(bool $isChecked): void
+    {
+        $this->isChecked = $isChecked;
     }
 
     public function getValues(): array

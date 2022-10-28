@@ -36,10 +36,6 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
     Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
     Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
 
-    Route::get('hosts', [ServerMonitoringController::class, 'fetchHosts']);
-    Route::patch('hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
-
-    Route::get('users', [ServerMonitoringController::class, 'fetchUsers']);
     Route::post('users', [ServerMonitoringController::class, 'addUser']);
     Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
     Route::patch(
@@ -52,6 +48,10 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
 });
 
 Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
+    Route::get('hosts', [ServerMonitoringController::class, 'fetchHosts']);
+    Route::patch('hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
+
+    Route::get('users', [ServerMonitoringController::class, 'fetchUsers']);
     Route::patch('users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
     Route::patch('users/{userId}/confirm', [ServerMonitoringController::class, 'confirmUser']);
     Route::patch('users/{userId}/denyAdvertising', [ServerMonitoringController::class, 'denyAdvertising']);

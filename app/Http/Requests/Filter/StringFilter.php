@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Http\Requests\Filter;
 
 class StringFilter implements Filter
 {
-    public function __construct(private readonly string $name, private readonly array $values)
+    public function __construct(private readonly string $name, private array $values)
     {
     }
 
@@ -40,5 +40,14 @@ class StringFilter implements Filter
     public function getValues(): array
     {
         return $this->values;
+    }
+
+    /**
+     * @param array<string> $values
+     * @return void
+     */
+    public function setValues(array $values): void
+    {
+        $this->values = $values;
     }
 }

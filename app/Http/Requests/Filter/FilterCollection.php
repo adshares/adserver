@@ -84,7 +84,6 @@ class FilterCollection
 
     private static function createDateFilter(string $name, mixed $queryValues): Filter
     {
-        $filter = new DateFilter($name);
         if (null !== ($from = $queryValues['from'] ?? null)) {
             if (!is_string($from)) {
                 throw new UnprocessableEntityHttpException('`from` must be a string in ISO 8601 format');
@@ -93,7 +92,6 @@ class FilterCollection
             if (false === $from) {
                 throw new UnprocessableEntityHttpException('`from` must be in ISO 8601 format');
             }
-            $filter->setFrom($from);
         }
         if (null !== ($to = $queryValues['to'] ?? null)) {
             if (!is_string($to)) {
@@ -103,14 +101,13 @@ class FilterCollection
             if (false === $to) {
                 throw new UnprocessableEntityHttpException('`to` must be in ISO 8601 format');
             }
-            $filter->setTo($to);
         }
         if (null !== $from && null !== $to && $from > $to) {
             throw new UnprocessableEntityHttpException(
                 sprintf('Invalid time range for `%s` filter: `from` must be earlier than `to`', $name)
             );
         }
-        return $filter;
+        return new DateFilter($name, $from, $to);
     }
 
     private static function createStringFilter(string $name, mixed $queryValues): Filter

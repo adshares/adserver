@@ -22,33 +22,27 @@
 namespace Adshares\Adserver\Tests\Http\Requests\Filter;
 
 use Adshares\Adserver\Http\Requests\Filter\DateFilter;
+use Adshares\Adserver\Http\Requests\Filter\StringFilter;
 use Adshares\Adserver\Tests\TestCase;
 use DateTimeImmutable;
 use DateTimeInterface;
 
-final class DateFilterTest extends TestCase
+final class StringFilterTest extends TestCase
 {
-    public function testDateFilter(): void
+    public function testStringFilter(): void
     {
         $name = 'test-name';
-        $from = '2022-01-01T00:00:00+00:00';
-        $to = '2022-02-03T18:45:59+00:00';
-        $dateFrom = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $from);
-        $dateTo = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $to);
+        $values1 = ['a', 'b', 'c'];
+        $values2 = ['c', 'd'];
 
-        $filter = new DateFilter($name, $dateFrom);
+        $filter = new StringFilter($name, $values1);
 
         self::assertEquals($name, $filter->getName());
-        self::assertEquals($dateFrom, $filter->getFrom());
-        self::assertNull($filter->getTo());
-        self::assertEquals([$dateFrom, null], $filter->getValues());
+        self::assertEquals($values1, $filter->getValues());
 
-        $filter->setFrom(null);
-        $filter->setTo($dateTo);
+        $filter->setValues($values2);
 
         self::assertEquals($name, $filter->getName());
-        self::assertNull($filter->getFrom());
-        self::assertEquals($dateTo, $filter->getTo());
-        self::assertEquals([null, $dateTo], $filter->getValues());
+        self::assertEquals($values2, $filter->getValues());
     }
 }
