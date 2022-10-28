@@ -31,6 +31,7 @@ use Adshares\Adserver\ViewModel\Role;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\UserRole;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -97,6 +98,15 @@ class User extends Authenticatable implements JWTSubject
         'password' => 'required|min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
+    ];
+
+    protected $casts = [
+        'created_at' => 'date:' . DateTimeInterface::ATOM,
+        'updated_at' => 'date:' . DateTimeInterface::ATOM,
+        'deleted_at' => 'date:' . DateTimeInterface::ATOM,
+        'admin_confirmed_at' => 'date:' . DateTimeInterface::ATOM,
+        'email_confirmed_at' => 'date:' . DateTimeInterface::ATOM,
+        'last_active_at' => 'date:' . DateTimeInterface::ATOM,
     ];
 
     /**
@@ -451,6 +461,7 @@ class User extends Authenticatable implements JWTSubject
     protected static function register(array $data, ?RefLink $refLink = null): User
     {
         $user = User::create($data);
+        $user->refresh();
         $user->password = $data['password'] ?? null;
         if (null !== $refLink) {
             if (null !== $refLink->user_roles) {
