@@ -99,14 +99,15 @@ class User extends Authenticatable implements JWTSubject
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
     ];
+    private const DATE_CAST = 'date:' . DateTimeInterface::ATOM;
 
     protected $casts = [
-        'created_at' => 'date:' . DateTimeInterface::ATOM,
-        'updated_at' => 'date:' . DateTimeInterface::ATOM,
-        'deleted_at' => 'date:' . DateTimeInterface::ATOM,
-        'admin_confirmed_at' => 'date:' . DateTimeInterface::ATOM,
-        'email_confirmed_at' => 'date:' . DateTimeInterface::ATOM,
-        'last_active_at' => 'date:' . DateTimeInterface::ATOM,
+        'created_at' => self::DATE_CAST,
+        'updated_at' => self::DATE_CAST,
+        'deleted_at' => self::DATE_CAST,
+        'admin_confirmed_at' => self::DATE_CAST,
+        'email_confirmed_at' => self::DATE_CAST,
+        'last_active_at' => self::DATE_CAST,
     ];
 
     /**

@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Spatie\Activitylog\LogOptions;
 
 class UserTest extends TestCase
 {
@@ -137,5 +138,11 @@ class UserTest extends TestCase
         $this->assertEquals(100, $user->auto_withdrawal);
         $this->assertEquals(100, $user->auto_withdrawal_limit);
         $this->assertTrue($user->is_auto_withdrawal);
+    }
+
+    public function testGetActivitylogOptions(): void
+    {
+        $options = (new User())->getActivitylogOptions();
+        self::assertInstanceOf(LogOptions::class, $options);
     }
 }
