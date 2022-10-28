@@ -42,6 +42,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
@@ -88,6 +90,7 @@ class User extends Authenticatable implements JWTSubject
     use BinHex;
     use AddressWithNetwork;
     use HasFactory;
+    use LogsActivity;
 
     public static $rules_add = [
         'email' => 'required|email|max:150|unique:users',
@@ -547,5 +550,16 @@ class User extends Authenticatable implements JWTSubject
             'admin' => $this->isAdmin(),
             'username' => $this->email ?? $this->wallet_address->toString()
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('users')
+            ->logAll()
+            ->logExcept(['api_token', 'last_active_at', 'updated_at'])
+            ->logOnlyDirty()
+            ->useAttributeRawValues(['wallet_address'])
+            ->dontSubmitEmptyLogs();
     }
 }
