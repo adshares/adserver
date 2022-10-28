@@ -21,31 +21,11 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Adserver\Http\Requests\Filter;
 
-use DateTimeImmutable;
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-class UserFactory extends Factory
+interface Filter
 {
-    public function definition(): array
-    {
-        return [
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => $this->faker->password(8),
-            'uuid' => $this->faker->md5,
-            'is_advertiser' => 1,
-            'is_publisher' => 1,
-            'is_admin' => false,
-        ];
-    }
+    public function getName(): string;
 
-    public function admin(): self
-    {
-        return $this->state([
-            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'is_admin' => true,
-        ]);
-    }
+    public function getValues(): array;
 }

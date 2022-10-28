@@ -21,31 +21,20 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Adserver\Repository\Common;
 
-use DateTimeImmutable;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Illuminate\Pagination\CursorPaginator;
 
-class UserFactory extends Factory
+interface ServerEventLogRepository
 {
-    public function definition(): array
-    {
-        return [
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => $this->faker->password(8),
-            'uuid' => $this->faker->md5,
-            'is_advertiser' => 1,
-            'is_publisher' => 1,
-            'is_admin' => false,
-        ];
-    }
+    public static function fetchServerEvents(
+        ?FilterCollection $filters = null,
+        ?int $perPage = null,
+    ): CursorPaginator;
 
-    public function admin(): self
-    {
-        return $this->state([
-            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'is_admin' => true,
-        ]);
-    }
+    public static function fetchLatestServerEvents(
+        ?FilterCollection $filters = null,
+        ?int $perPage = null,
+    ): CursorPaginator;
 }

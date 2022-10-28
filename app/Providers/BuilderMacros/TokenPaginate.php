@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Providers\BuilderMacros;
 
 use Adshares\Adserver\Utilities\Pagination\TokenPaginator;
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Pagination\CursorPaginator;
@@ -43,9 +44,9 @@ class TokenPaginate
             string $pageName = 'page',
             int|null $page = null,
         ): CursorPaginator {
-            $perPage = (int)($perPage ?: $this->model->getPerPage());
+            /** @var Builder $this */
+            $perPage = $perPage ?: $this->model->getPerPage();
             $page = $page ?: Paginator::resolveCurrentPage($pageName);
-
             $total = $this->toBase()->getCountForPagination();
 
             if (!$cursor instanceof Cursor) {
@@ -53,10 +54,12 @@ class TokenPaginate
                     ? Cursor::fromEncoded($cursor)
                     : CursorPaginator::resolveCurrentCursor($cursorName, $cursor);
             }
-
-            $orders = $this->ensureOrderForCursorPagination(!is_null($cursor) && $cursor->pointsToPreviousItems());
+            $maxId = null === $cursor ? $this->max('id') : $cursor->parameter('id');
 
             if (!is_null($cursor)) {
+                $orders = collect($this->query->orders)
+                    ->filter(fn ($order) => 'id' === $order['column'])
+                    ->values();
                 $addCursorConditions = function (
                     self $builder,
                     $previousColumn,
@@ -66,9 +69,11 @@ class TokenPaginate
                     $cursor,
                     $orders
                 ) {
+                    /** @var Builder $builder */
                     $unionBuilders = isset($builder->unions) ? collect($builder->unions)->pluck('query') : collect();
 
                     if (!is_null($previousColumn)) {
+                        /** @var Builder $this */
                         $originalColumn = $this->getOriginalColumnNameForCursorPagination($this, $previousColumn);
 
                         $builder->where(
@@ -81,6 +86,7 @@ class TokenPaginate
 
                         $unionBuilders->each(function ($unionBuilder) use ($previousColumn, $cursor) {
                             $unionBuilder->where(
+                            /** @var Builder $this */
                                 $this->getOriginalColumnNameForCursorPagination($this, $previousColumn),
                                 '=',
                                 $cursor->parameter($previousColumn)
@@ -94,13 +100,15 @@ class TokenPaginate
                         function (self $builder) use ($addCursorConditions, $cursor, $orders, $i, $unionBuilders) {
                             ['column' => $column, 'direction' => $direction] = $orders[$i];
 
+                            /** @var Builder $this */
                             $originalColumn = $this->getOriginalColumnNameForCursorPagination($this, $column);
 
+                            /** @var Builder $builder */
                             $builder->where(
                                 Str::contains($originalColumn, ['(', ')']) ? new Expression(
                                     $originalColumn
                                 ) : $originalColumn,
-                                $direction === 'asc' ? '>=' : '<=',
+                                '<=',
                                 $cursor->parameter($column)
                             );
 
@@ -129,6 +137,7 @@ class TokenPaginate
                                             $addCursorConditions
                                         ) {
                                             $unionBuilder->where(
+                                                /** @var Builder $this */
                                                 $this->getOriginalColumnNameForCursorPagination($this, $column),
                                                 $direction === 'asc' ? '>=' : '<=',
                                                 $cursor->parameter($column)
@@ -160,8 +169,9 @@ class TokenPaginate
             return new TokenPaginator($items, $perPage, $page, $cursor, [
                 'path' => Paginator::resolveCurrentPath(),
                 'cursorName' => $cursorName,
+                'maxId' => $maxId,
                 'pageName' => $pageName,
-                'parameters' => $orders->pluck('column')->toArray(),
+                'parameters' => ['id'],
                 'total' => $total,
             ]);
         };

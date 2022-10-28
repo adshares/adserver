@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\ViewModel\Role;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\UserRole;
 use DateTime;
@@ -49,6 +50,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property string email
  * @property string label
  * @property Carbon|null created_at
+ * @property Carbon|null updated_at
+ * @property Carbon|null deleted_at
  * @property DateTime|null email_confirmed_at
  * @property DateTime|null admin_confirmed_at
  * @property string uuid
@@ -72,6 +75,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int auto_withdrawal_limit
  * @property bool is_banned
  * @property string ban_reason
+ * @property Carbon|null last_active_at
+ * @property array roles
  * @mixin Builder
  */
 class User extends Authenticatable implements JWTSubject
@@ -100,6 +105,7 @@ class User extends Authenticatable implements JWTSubject
         'deleted_at',
         'email_confirmed_at',
         'admin_confirmed_at',
+        'last_active_at',
     ];
 
     /**
@@ -231,6 +237,28 @@ class User extends Authenticatable implements JWTSubject
         return (int)$this->auto_withdrawal;
     }
 
+    public function getRolesAttribute(): array
+    {
+        $roles = [
+            Role::Admin->value => $this->isAdmin(),
+            Role::Advertiser->value => $this->isAdvertiser(),
+            Role::Agency->value => $this->isAgency(),
+            Role::Moderator->value => $this->isModerator(),
+            Role::Publisher->value => $this->isPublisher(),
+        ];
+
+        return array_keys(array_filter($roles));
+    }
+
+    public function setRolesAttribute($value): void
+    {
+        $this->is_admin = in_array(Role::Admin->value, $value);
+        $this->is_advertiser = in_array(Role::Advertiser->value, $value);
+        $this->is_agency = in_array(Role::Agency->value, $value);
+        $this->is_moderator = in_array(Role::Moderator->value, $value);
+        $this->is_publisher = in_array(Role::Publisher->value, $value);
+    }
+
     public function setPasswordAttribute($value): void
     {
         $this->attributes['password'] = null !== $value ? Hash::make($value) : null;
@@ -256,6 +284,7 @@ class User extends Authenticatable implements JWTSubject
             $this->api_token = Str::random(60);
         } while ($this->where('api_token', $this->api_token)->exists());
 
+        $this->last_active_at = now();
         $this->save();
     }
 
@@ -432,6 +461,20 @@ class User extends Authenticatable implements JWTSubject
         }
         $user->saveOrFail();
         return $user;
+    }
+
+    public function updateEmailWalletAndRoles(?string $email, ?WalletAddress $walletAddress, ?array $roles): void
+    {
+        if (null !== $email) {
+            $this->email = $email;
+        }
+        if (null !== $walletAddress) {
+            $this->wallet_address = $walletAddress;
+        }
+        if (null !== $roles) {
+            $this->roles = $roles;
+        }
+        $this->saveOrFail();
     }
 
     public static function registerWithWallet(

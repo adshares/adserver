@@ -31,12 +31,14 @@ class TokenPaginator extends CursorPaginator
 {
     protected int $currentPage;
     protected int $lastPage;
+    protected ?int $maxId;
     protected int $total;
 
     public function __construct($items, int $perPage, int $currentPage, ?Cursor $cursor = null, array $options = [])
     {
         parent::__construct($items, $perPage, $cursor, $options);
         $this->currentPage = $currentPage;
+        $this->maxId = $this->options['maxId'];
         $this->total = $this->options['total'];
         $this->lastPage = max((int)ceil($this->total / $perPage), 1);
     }
@@ -65,7 +67,7 @@ class TokenPaginator extends CursorPaginator
         if ($this->items->isEmpty()) {
             return null;
         }
-        return is_null($this->cursor) ? $this->getCursorForItem($this->items->first()) : $this->cursor;
+        return is_null($this->cursor) ? new Cursor(['id' => $this->maxId]) : $this->cursor;
     }
 
     public function nextPageUrl(): ?string

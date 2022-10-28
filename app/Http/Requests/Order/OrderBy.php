@@ -21,31 +21,21 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Adserver\Http\Requests\Order;
 
-use DateTimeImmutable;
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-class UserFactory extends Factory
+class OrderBy
 {
-    public function definition(): array
+    public function __construct(private readonly string $column, private readonly string $direction)
     {
-        return [
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => $this->faker->password(8),
-            'uuid' => $this->faker->md5,
-            'is_advertiser' => 1,
-            'is_publisher' => 1,
-            'is_admin' => false,
-        ];
     }
 
-    public function admin(): self
+    public function getColumn(): string
     {
-        return $this->state([
-            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'is_admin' => true,
-        ]);
+        return $this->column;
+    }
+
+    public function getDirection(): string
+    {
+        return $this->direction;
     }
 }

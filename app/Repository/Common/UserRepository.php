@@ -21,31 +21,17 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Adserver\Repository\Common;
 
-use DateTimeImmutable;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
+use Illuminate\Pagination\CursorPaginator;
 
-class UserFactory extends Factory
+interface UserRepository
 {
-    public function definition(): array
-    {
-        return [
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => $this->faker->password(8),
-            'uuid' => $this->faker->md5,
-            'is_advertiser' => 1,
-            'is_publisher' => 1,
-            'is_admin' => false,
-        ];
-    }
-
-    public function admin(): self
-    {
-        return $this->state([
-            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'is_admin' => true,
-        ]);
-    }
+    public function fetchUsers(
+        ?FilterCollection $filters = null,
+        ?OrderByCollection $orderBy = null,
+        ?int $perPage = null,
+    ): CursorPaginator;
 }

@@ -19,33 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests\Http\Requests\Filter;
 
-namespace Database\Factories;
+use Adshares\Adserver\Http\Requests\Filter\BoolFilter;
+use Adshares\Adserver\Tests\TestCase;
 
-use DateTimeImmutable;
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-class UserFactory extends Factory
+final class BoolFilterTest extends TestCase
 {
-    public function definition(): array
+    public function testBoolFilter(): void
     {
-        return [
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => $this->faker->password(8),
-            'uuid' => $this->faker->md5,
-            'is_advertiser' => 1,
-            'is_publisher' => 1,
-            'is_admin' => false,
-        ];
-    }
+        $name = 'test-name';
 
-    public function admin(): self
-    {
-        return $this->state([
-            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
-            'is_admin' => true,
-        ]);
+        $filter = new BoolFilter($name, true);
+
+        self::assertEquals($name, $filter->getName());
+        self::assertTrue($filter->isChecked());
+        self::assertEquals([true], $filter->getValues());
+
+        $filter->setChecked(false);
+
+        self::assertEquals($name, $filter->getName());
+        self::assertFalse($filter->isChecked());
+        self::assertEquals([false], $filter->getValues());
     }
 }
