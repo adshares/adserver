@@ -257,7 +257,8 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchEventsEmpty(): void
     {
         $response = $this->getJson(self::buildUriForKey('events'), self::getHeaders());
-        $response->assertJsonStructure(self::EVENTS_STRUCTURE);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::EVENTS_STRUCTURE);
         $json = $response->json('data');
         self::assertEquals(0, count($json));
     }
@@ -468,9 +469,17 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
 
         $response = $this->getJson(
-            self::buildUriForKey('events/latest')
-            . '?filter[type][]=' . ServerEventType::HostBroadcastProcessed->value
-            . '&filter[type][]=' . ServerEventType::InventorySynchronized->value,
+            self::buildUriForKey(
+                'events/latest',
+                [
+                    'filter' => [
+                        'type' => [
+                            ServerEventType::HostBroadcastProcessed->value,
+                            ServerEventType::InventorySynchronized->value
+                        ]
+                    ]
+                ]
+            ),
             self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
@@ -532,6 +541,62 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertNotContains(Role::Admin->value, $user2['roles']);
         self::assertNotContains(Role::Advertiser->value, $user2['roles']);
         self::assertContains(Role::Publisher->value, $user2['roles']);
+    }
+
+    public function testFetchUserPaginationWithFilteringAndSorting(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        User::factory()
+            ->count(10)
+            ->sequence(fn($sequence) => ['email' => sprintf('user%d@example.com', $sequence->index + 3)])
+            ->create([
+                'email_confirmed_at' => new DateTimeImmutable('-10 minutes'),
+            ]);
+
+        $response = $this->getJson(
+            self::buildUriForKey(
+                'users',
+                [
+                    'limit' => 4,
+                    'filter' => ['role' => Role::Advertiser->value, 'query' => 'user'],
+                    'orderBy' => 'email:desc'
+                ]
+            ),
+            self::getHeaders($admin)
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(4, count($response->json('data')));
+        self::assertNull($response->json('prevPageUrl'));
+        self::assertNotNull($response->json('nextPageUrl'));
+        self::assertEquals(11, $response->json('total'));
+        $emails = array_map(fn($entry) => $entry['email'], $response->json(['data']));
+        self::assertEquals(['user9@example.com', 'user8@example.com', 'user7@example.com', 'user6@example.com'],
+            $emails);
+
+        $url = $response->json('nextPageUrl');
+        $response = $this->getJson($url, self::getHeaders());
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(4, count($response->json('data')));
+        self::assertNotNull($response->json('prevPageUrl'));
+        self::assertNotNull($response->json('nextPageUrl'));
+        $emails = array_map(fn($entry) => $entry['email'], $response->json(['data']));
+        self::assertEquals(['user5@example.com', 'user4@example.com', 'user3@example.com', 'user12@example.com'],
+            $emails);
+
+        $url = $response->json('nextPageUrl');
+        $response = $this->getJson($url, self::getHeaders());
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals(3, count($response->json('data')));
+        self::assertNotNull($response->json('prevPageUrl'));
+        self::assertNull($response->json('nextPageUrl'));
+        $emails = array_map(fn($entry) => $entry['email'], $response->json(['data']));
+        self::assertEquals(['user11@example.com', 'user10@example.com', 'user1@example.com'], $emails);
     }
 
     public function testFetchUsersLimit(): void

@@ -53,7 +53,7 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
         ?FilterCollection $filters = null,
         ?int $perPage = null,
     ): CursorPaginator {
-        $latestEvents = ServerEventLog::select(DB::raw('MAX(id) as id'))
+        $latestEvents = ServerEventLog::select(DB::raw('MAX(id) as max_id'))
             ->groupBy('type');
 
         if (null !== $filters) {
@@ -66,7 +66,7 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
             ->from('server_event_logs AS s')
             ->orderBy('id', 'desc')
             ->joinSub($latestEvents, 'le', function ($join) {
-                $join->on('s.id', '=', 'le.id');
+                $join->on('s.id', '=', 'le.max_id');
             })
             ->tokenPaginate($perPage)
             ->withQueryString();
