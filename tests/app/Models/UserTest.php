@@ -119,8 +119,8 @@ class UserTest extends TestCase
         $this->assertEquals('test@test.pl', $user->email);
         $this->assertEquals('admin2', $user->name);
         $this->assertTrue($user->isAdmin());
-        $this->assertFalse($user->isPublisher());
-        $this->assertFalse($user->isAdvertiser());
+        $this->assertTrue($user->isPublisher());
+        $this->assertTrue($user->isAdvertiser());
         $this->assertNotNull($user->password);
         $this->assertNotNull($user->admin_confirmed_at);
     }
