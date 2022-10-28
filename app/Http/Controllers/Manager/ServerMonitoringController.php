@@ -238,6 +238,7 @@ class ServerMonitoringController extends Controller
             }
             $user->confirmAdmin();
             $user->saveOrFail();
+            $id = $user->id;
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
@@ -245,10 +246,11 @@ class ServerMonitoringController extends Controller
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
+        $data = array_merge((new UserResource(User::fetchById($id)))->toArray($request), $data);
         return self::json(['data' => $data]);
     }
 
-    public function editUser(int $userId, Request $request): JsonResponse
+    public function editUser(int $userId, Request $request): JsonResource
     {
         $user = User::fetchById($userId);
         if (null === $user) {
@@ -274,7 +276,7 @@ class ServerMonitoringController extends Controller
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        return self::json(['data' => []]);
+        return new UserResource($user);
     }
 
     private static function validateLimit(array|string|null $limit): void

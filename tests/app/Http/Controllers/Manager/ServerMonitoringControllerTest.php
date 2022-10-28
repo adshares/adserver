@@ -1314,8 +1314,9 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $response = $this->postJson(self::buildUriForKey('users'), self::getUserData(), self::getHeaders());
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonPath('data', []);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE)
+            ->assertJsonMissingPath('data.password');
         self::assertDatabaseHas(User::class, [
             'email' => 'user@example.com',
             'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
@@ -1337,8 +1338,9 @@ final class ServerMonitoringControllerTest extends TestCase
             self::getHeaders()
         );
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['data' => ['password']]);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE)
+            ->assertJsonStructure(['data' => ['password']]);
         self::assertDatabaseHas(User::class, [
             'email' => 'user@example.com',
             'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
@@ -1360,8 +1362,9 @@ final class ServerMonitoringControllerTest extends TestCase
             self::getHeaders()
         );
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['data' => ['password']]);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE)
+            ->assertJsonStructure(['data' => ['password']]);
         self::assertDatabaseHas(User::class, [
             'email' => 'user@example.com',
             'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
@@ -1460,8 +1463,8 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertExactJson(['data' => []]);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertDatabaseHas(User::class, [
             'email' => 'user2@example.com',
         ]);
@@ -1480,8 +1483,8 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertExactJson(['data' => []]);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertDatabaseHas(User::class, [
             'email' => 'user2@example.com',
         ]);
@@ -1504,8 +1507,8 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertExactJson(['data' => []]);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertDatabaseHas(User::class, [
             'wallet_address' => (new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'))->toString(),
         ]);
@@ -1523,8 +1526,8 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertExactJson(['data' => []]);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertDatabaseHas(User::class, [
             'is_advertiser' => 1,
             'is_publisher' => 0,
