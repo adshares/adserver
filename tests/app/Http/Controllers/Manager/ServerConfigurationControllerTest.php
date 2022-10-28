@@ -361,7 +361,7 @@ final class ServerConfigurationControllerTest extends TestCase
     public function testFetchPlaceholders(): void
     {
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_INDEX_KEYWORDS, 'ads'));
-        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_INDEX_TITLE, 'title'));
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'terms'));
 
         $response = $this->getJson(
             self::URI_PLACEHOLDERS,
@@ -373,11 +373,11 @@ final class ServerConfigurationControllerTest extends TestCase
             'indexDescription' => null,
             'indexKeywords' => 'ads',
             'indexMetaTags' => null,
-            'indexTitle' => 'title',
+            'indexTitle' => 'AdServer powered by Adshares',
             'loginInfo' => null,
             'robotsTxt' => null,
             'privacyPolicy' => null,
-            'terms' => null,
+            'terms' => 'terms',
         ]);
     }
 
@@ -394,7 +394,7 @@ final class ServerConfigurationControllerTest extends TestCase
         $response->assertJson(['indexTitle' => 'title']);
     }
 
-    public function testFetchPlaceholdersByKeyWhileMissing(): void
+    public function testFetchPlaceholdersByKeyIndexTitleWhileMissing(): void
     {
         $response = $this->getJson(
             self::URI_PLACEHOLDERS . '/indexTitle',
@@ -402,7 +402,18 @@ final class ServerConfigurationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson(['indexTitle' => null]);
+        $response->assertJson(['indexTitle' => 'AdServer powered by Adshares']);
+    }
+
+    public function testFetchPlaceholdersByKeyWhileMissing(): void
+    {
+        $response = $this->getJson(
+            self::URI_PLACEHOLDERS . '/loginInfo',
+            $this->getHeaders()
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['loginInfo' => null]);
     }
 
     public function testFetchPlaceholdersByInvalidKey(): void
