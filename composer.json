@@ -30,6 +30,7 @@
         "phpoffice/phpspreadsheet": "^1.6",
         "ramsey/uuid": "^4.2.2",
         "spatie/fork": "^1.0.0",
+        "spatie/laravel-activitylog": "^4.6",
         "symfony/intl": "^v6.1.0",
         "symfony/lock": "^v6.1.0",
         "symfony/polyfill-php80": "^1.24",

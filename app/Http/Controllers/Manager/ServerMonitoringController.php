@@ -228,6 +228,7 @@ class ServerMonitoringController extends Controller
         try {
             $user = new User();
             $user->updateEmailWalletAndRoles($email, $walletAddress, $roles);
+            $user->refresh();
             if (null !== $email) {
                 $this->notifyUserAboutRegistration($user, $forcePasswordChange);
             }

@@ -31,6 +31,7 @@ use Adshares\Adserver\ViewModel\Role;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\UserRole;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
@@ -88,12 +91,23 @@ class User extends Authenticatable implements JWTSubject
     use BinHex;
     use AddressWithNetwork;
     use HasFactory;
+    use LogsActivity;
 
     public static $rules_add = [
         'email' => 'required|email|max:150|unique:users',
         'password' => 'required|min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
+    ];
+    private const DATE_CAST = 'date:' . DateTimeInterface::ATOM;
+
+    protected $casts = [
+        'created_at' => self::DATE_CAST,
+        'updated_at' => self::DATE_CAST,
+        'deleted_at' => self::DATE_CAST,
+        'admin_confirmed_at' => self::DATE_CAST,
+        'email_confirmed_at' => self::DATE_CAST,
+        'last_active_at' => self::DATE_CAST,
     ];
 
     /**
@@ -448,6 +462,7 @@ class User extends Authenticatable implements JWTSubject
     protected static function register(array $data, ?RefLink $refLink = null): User
     {
         $user = User::create($data);
+        $user->refresh();
         $user->password = $data['password'] ?? null;
         if (null !== $refLink) {
             if (null !== $refLink->user_roles) {
@@ -547,5 +562,16 @@ class User extends Authenticatable implements JWTSubject
             'admin' => $this->isAdmin(),
             'username' => $this->email ?? $this->wallet_address->toString()
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('users')
+            ->logAll()
+            ->logExcept(['api_token', 'last_active_at', 'updated_at'])
+            ->logOnlyDirty()
+            ->useAttributeRawValues(['wallet_address'])
+            ->dontSubmitEmptyLogs();
     }
 }
