@@ -23,20 +23,22 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ZoneFactory extends Factory
 {
     public function definition(): array
     {
+        $format = $this->faker->randomElement((new DummyConfigurationRepository())->fetchMedium()->getFormats());
         return [
             'uuid' => $this->faker->uuid,
             'name' => $this->faker->word,
             'status' => Zone::STATUS_ACTIVE,
-            'type' => Size::TYPE_DISPLAY,
-            'size' => $this->faker->randomKey(Size::SIZE_INFOS),
+            'type' => Utils::getZoneTypeByBannerType($format->getType()),
+            'size' => $this->faker->randomKey($format->getScopes()),
         ];
     }
 }

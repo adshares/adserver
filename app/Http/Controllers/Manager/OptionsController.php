@@ -27,8 +27,7 @@ use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\TargetingReachRequest;
-use Adshares\Adserver\Models\Banner;
-use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
@@ -210,25 +209,10 @@ class OptionsController extends Controller
                     'label' => $label,
                     'size' => $size,
                     'tags' => Size::SIZE_INFOS[$size]['tags'] ?? ['Other'],
-                    'type' => $this->getType($format->getType()),
+                    'type' => Utils::getZoneTypeByBannerType($format->getType()),
                 ];
             }
         }
         return self::json(array_values($types));
-    }
-
-    private function getType(string $type): string
-    {
-        switch ($type) {
-            case Banner::TEXT_TYPE_DIRECT_LINK:
-                return Size::TYPE_POP;
-            case Banner::TEXT_TYPE_MODEL:
-                return Size::TYPE_MODEL;
-            case Banner::TEXT_TYPE_IMAGE:
-            case Banner::TEXT_TYPE_HTML:
-            case Banner::TEXT_TYPE_VIDEO:
-            default:
-                return Size::TYPE_DISPLAY;
-        }
     }
 }
