@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Mail\Crm\SiteAdded;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
@@ -241,10 +242,11 @@ class SitesController extends Controller
     {
         $presentUniqueSizes = [];
         $keysToRemove = [];
+        $bannerTypeBySize = $this->getBannerTypeBySize($site);
 
         foreach ($inputZones as $key => &$inputZone) {
             $size = $inputZone['size'];
-            $type = Size::SIZE_INFOS[$size]['type'];
+            $type = Utils::getZoneTypeByBannerType($bannerTypeBySize[$size]);
             $inputZone['type'] = $type;
 
             if (Size::TYPE_POP !== $type) {
@@ -499,5 +501,18 @@ class SitesController extends Controller
                 new SiteAdded($user->uuid, $user->email, $site)
             );
         }
+    }
+
+    private function getBannerTypeBySize(Site $site): array
+    {
+        $formats = $this->configurationRepository->fetchMedium($site->medium, $site->vendor)->getFormats();
+        $typeBySize = [];
+
+        foreach ($formats as $format) {
+            foreach ($format->getScopes() as $size => $label) {
+                $typeBySize[$size] = $format->getType();
+            }
+        }
+        return $typeBySize;
     }
 }
