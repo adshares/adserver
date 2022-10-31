@@ -46,7 +46,6 @@ use function hex2bin;
  * @property string uuid
  * @property int site_id
  * @property string size
- * @property string label
  * @property string type
  * @property int status
  * @mixin Builder
@@ -82,7 +81,6 @@ class Zone extends Model
         'id',
         'name',
         'code',
-        'label',
         'size',
         'status',
         'type',
@@ -91,7 +89,6 @@ class Zone extends Model
 
     protected $appends = [
         'code',
-        'label',
     ];
 
     protected $touches = ['site'];
@@ -181,10 +178,5 @@ class Zone extends Model
     public function getCodeAttribute(): string
     {
         return SiteCodeGenerator::getZoneCode($this);
-    }
-
-    public function getLabelAttribute(): string
-    {
-        return Size::SIZE_INFOS[$this->size]['label'] ?? '';
     }
 }
