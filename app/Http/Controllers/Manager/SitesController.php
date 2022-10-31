@@ -510,7 +510,9 @@ class SitesController extends Controller
 
         foreach ($formats as $format) {
             foreach ($format->getScopes() as $size => $label) {
-                $typeBySize[$size] = $format->getType();
+                if (!isset($typeBySize[$size])) {
+                    $typeBySize[$size] = $format->getType();
+                }
             }
         }
         return $typeBySize;

@@ -37,139 +37,106 @@ final class Size
         #best
         '300x250' => [
             'label' => 'Medium Rectangle',
-            'tags' => ['Desktop', 'best'],
         ],
         '336x280' => [
             'label' => 'Large Rectangle',
-            'tags' => ['Desktop', 'best'],
         ],
         '728x90' => [
             'label' => 'Leaderboard',
-            'tags' => ['Desktop', 'best'],
         ],
         '300x600' => [
             'label' => 'Half Page',
-            'tags' => ['Desktop', 'best'],
         ],
         '320x100' => [
             'label' => 'Large Mobile Banner',
-            'tags' => ['Desktop', 'best', 'Mobile'],
         ],
         #other
         '320x50' => [
             'label' => 'Mobile Banner',
-            'tags' => ['Desktop', 'Mobile'],
         ],
         '468x60' => [
             'label' => 'Full Banner',
-            'tags' => ['Desktop'],
         ],
         '234x60' => [
             'label' => 'Half Banner',
-            'tags' => ['Desktop'],
         ],
         '120x600' => [
             'label' => 'Skyscraper',
-            'tags' => ['Desktop'],
         ],
         '120x240' => [
             'label' => 'Vertical Banner',
-            'tags' => ['Desktop'],
         ],
         '160x600' => [
             'label' => 'Wide Skyscraper',
-            'tags' => ['Desktop'],
         ],
         '300x1050' => [
             'label' => 'Portrait',
-            'tags' => ['Desktop'],
         ],
         '970x90' => [
             'label' => 'Large Leaderboard',
-            'tags' => ['Desktop'],
         ],
         '970x250' => [
             'label' => 'Billboard',
-            'tags' => ['Desktop'],
         ],
         '250x250' => [
             'label' => 'Square',
-            'tags' => ['Desktop'],
         ],
         '200x200' => [
             'label' => 'Small Square',
-            'tags' => ['Desktop'],
         ],
         '180x150' => [
             'label' => 'Small Rectangle',
-            'tags' => ['Desktop'],
         ],
         '125x125' => [
             'label' => 'Button',
-            'tags' => ['Desktop'],
         ],
         #regional
         '240x400' => [
             'label' => 'Vertical Rectangle',
-            'tags' => ['Desktop'],
         ],
         '980x120' => [
             'label' => 'Panorama',
-            'tags' => ['Desktop'],
         ],
         '250x360' => [
             'label' => 'Triple Widescreen',
-            'tags' => ['Desktop'],
         ],
         '930x180' => [
             'label' => 'Top Banner',
-            'tags' => ['Desktop'],
         ],
         '580x400' => [
             'label' => 'Netboard',
-            'tags' => ['Desktop'],
         ],
         #polish
         '750x100' => [
             'label' => 'Single Billboard',
-            'tags' => ['Desktop', 'PL'],
         ],
         '750x200' => [
             'label' => 'Double Billboard',
-            'tags' => ['Desktop', 'PL'],
         ],
         '750x300' => [
             'label' => 'Triple Billboard',
-            'tags' => ['Desktop', 'PL'],
         ],
         # https://en.wikipedia.org/wiki/Web_banner
         '300x100' => [
             'label' => '3 to 1 Rectangle',
-            'tags' => ['Desktop'],
         ],
         '120x90' => [
             'label' => 'Button One',
-            'tags' => ['Desktop'],
         ],
         '120x60' => [
             'label' => 'Button Two',
-            'tags' => ['Desktop'],
         ],
         '88x31' => [
             'label' => 'Micro Banner',
-            'tags' => ['Desktop'],
         ],
         'pop-up' => [
             'label' => 'Pop-up',
-            'tags' => ['Desktop', 'Mobile'],
         ],
         'pop-under' => [
             'label' => 'Pop-under',
-            'tags' => ['Desktop', 'Mobile'],
         ],
         self::CUBE => [
             'label' => 'Cube',
-            'tags' => ['Metaverse'],
         ],
     ];
 

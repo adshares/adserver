@@ -208,7 +208,6 @@ class OptionsController extends Controller
                 $types[$size] = [
                     'label' => $label,
                     'size' => $size,
-                    'tags' => Size::SIZE_INFOS[$size]['tags'] ?? ['Other'],
                     'type' => Utils::getZoneTypeByBannerType($format->getType()),
                 ];
             }

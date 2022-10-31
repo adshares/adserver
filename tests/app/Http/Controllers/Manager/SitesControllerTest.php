@@ -60,7 +60,6 @@ class SitesControllerTest extends TestCase
                 'name',
                 'size',
                 'status',
-                'tags',
                 'type',
             ],
         ],

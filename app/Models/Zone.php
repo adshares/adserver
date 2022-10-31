@@ -49,7 +49,6 @@ use function hex2bin;
  * @property string label
  * @property string type
  * @property int status
- * @property array tags
  * @mixin Builder
  */
 class Zone extends Model
@@ -60,9 +59,7 @@ class Zone extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 0;
-
     public const STATUS_ACTIVE = 1;
-
     public const STATUS_ARCHIVED = 2;
 
     public const STATUSES = [
@@ -88,7 +85,6 @@ class Zone extends Model
         'label',
         'size',
         'status',
-        'tags',
         'type',
         'uuid'
     ];
@@ -96,7 +92,6 @@ class Zone extends Model
     protected $appends = [
         'code',
         'label',
-        'tags',
     ];
 
     protected $touches = ['site'];
@@ -191,10 +186,5 @@ class Zone extends Model
     public function getLabelAttribute(): string
     {
         return Size::SIZE_INFOS[$this->size]['label'] ?? '';
-    }
-
-    public function getTagsAttribute(): array
-    {
-        return Size::SIZE_INFOS[$this->size]['tags'] ?? [];
     }
 }
