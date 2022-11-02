@@ -722,6 +722,27 @@ final class ServerMonitoringControllerTest extends TestCase
         ];
     }
 
+    public function testFetchUsersCursorDoesNotChangeWhileSetDoesNotChange(): void
+    {
+        self::seedUsers();
+        $admin = User::where('is_admin', true)->first();
+
+        $responseNoFilter = $this->getJson(
+            self::buildUriForKey('users'),
+            self::getHeaders($admin)
+        );
+        $response = $this->getJson(
+            self::buildUriForKey('users', ['filter' => ['role' => Role::Advertiser->value]]),
+            self::getHeaders($admin)
+        );
+
+        $responseNoFilter->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USERS_STRUCTURE);
+        self::assertEquals($responseNoFilter->json('cursor'), $response->json('cursor'));
+    }
+
     public function testFetchUsersFilterByMultipleRoles(): void
     {
         User::factory()->admin()->create([
