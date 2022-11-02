@@ -33,7 +33,6 @@ use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -88,7 +87,7 @@ class OptionsController extends Controller
     {
         try {
             $media = $this->optionsRepository->fetchMedia();
-        } catch (MissingInitialConfigurationException $exception) {
+        } catch (MissingInitialConfigurationException) {
             return self::json();
         }
         return self::json($media->toArray());
@@ -158,7 +157,7 @@ class OptionsController extends Controller
         }
         try {
             $selector = $this->optionsRepository->fetchFilteringOptions();
-        } catch (MissingInitialConfigurationException $exception) {
+        } catch (MissingInitialConfigurationException) {
             return self::json();
         }
         return self::json(new OptionsSelector($selector->exclude($exclusions)));
@@ -195,7 +194,7 @@ class OptionsController extends Controller
     {
         try {
             $medium = $this->optionsRepository->fetchMedium();
-        } catch (MissingInitialConfigurationException $exception) {
+        } catch (MissingInitialConfigurationException) {
             return self::json();
         }
 

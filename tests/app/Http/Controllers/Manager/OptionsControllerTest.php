@@ -21,14 +21,18 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Mock\Client\DummyAdClassifyClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
+use Symfony\Component\HttpFoundation\Response;
 
 final class OptionsControllerTest extends TestCase
 {
+    private const ZONES_URI = '/api/options/sites/zones';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -58,7 +62,7 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::getJson('/api/options/banners');
-        $response->assertStatus(200)
+        $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure($expectedFields);
 
         $content = json_decode($response->content(), true);
@@ -77,7 +81,7 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::getJson('/api/options/campaigns');
-        $response->assertStatus(200)
+        $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure($expectedFields);
 
         $content = json_decode($response->content(), true);
@@ -99,7 +103,7 @@ final class OptionsControllerTest extends TestCase
 
         $response = $this->get('/api/options/server');
 
-        $response->assertStatus(200)
+        $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(array_keys($expectedStructure));
         foreach ($expectedStructure as $key => $expectedValue) {
             $response->assertJsonPath($key, $expectedValue);
@@ -116,7 +120,7 @@ final class OptionsControllerTest extends TestCase
 
         $response = $this->get('/api/options/sites');
 
-        $response->assertStatus(200)
+        $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure($expectedFields);
         $content = json_decode($response->content(), true);
         self::assertEquals(0, $content['acceptBannersManually']);
@@ -145,7 +149,7 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::getJson('/api/options/sites/filtering');
-        $response->assertStatus(200)
+        $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(
                 [
                     '*' => [
@@ -164,8 +168,18 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::get('/api/options/campaigns/media');
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertJson(['web' => 'Website', 'metaverse' => 'Metaverse']);
+    }
+
+    public function testMediaWhileMissingTaxonomy(): void
+    {
+        $this->mockRepositoryWhileMissingTaxonomy();
+        $this->login();
+
+        $response = self::get('/api/options/campaigns/media');
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson([]);
     }
 
     public function testMedium(): void
@@ -173,9 +187,18 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::get('/api/options/campaigns/media/web');
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['name' => 'web', 'label' => 'Website']);
         $response->assertJsonFragment(['apple-os' => 'Apple OS']);
+    }
+
+    public function testMediumWhileMissingTaxonomy(): void
+    {
+        $this->mockRepositoryWhileMissingTaxonomy();
+        $this->login();
+
+        $response = self::get('/api/options/campaigns/media/web');
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testMediumExcludeQuality(): void
@@ -183,7 +206,7 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::get('/api/options/campaigns/media/web?e=1');
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonMissing(['label' => 'Quality', 'name' => 'quality']);
     }
 
@@ -192,7 +215,7 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::get('/api/options/campaigns/media/metaverse/vendors');
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['decentraland' => 'Decentraland']);
     }
 
@@ -202,7 +225,7 @@ final class OptionsControllerTest extends TestCase
 
         $response = self::get('/api/options/server/default-user-roles');
 
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertExactJson(['defaultUserRoles' => ['advertiser', 'publisher']]);
     }
 
@@ -211,7 +234,48 @@ final class OptionsControllerTest extends TestCase
         $this->login();
 
         $response = self::get('/api/options/campaigns/media/web/vendors');
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertExactJson([]);
+    }
+
+    public function testWebVendorsWhileMissingTaxonomy(): void
+    {
+        $this->mockRepositoryWhileMissingTaxonomy();
+        $this->login();
+
+        $response = self::get('/api/options/campaigns/media/web/vendors');
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson([]);
+    }
+
+    public function testZones(): void
+    {
+        $this->login();
+
+        $response = self::get(self::ZONES_URI);
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(['*' => ['label', 'size', 'type']]);
+    }
+
+    public function testZonesWhileMissingTaxonomy(): void
+    {
+        $this->mockRepositoryWhileMissingTaxonomy();
+        $this->login();
+
+        $response = self::get(self::ZONES_URI);
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertExactJson([]);
+    }
+
+    private function mockRepositoryWhileMissingTaxonomy(): void
+    {
+        $mock = self::createMock(ConfigurationRepository::class);
+        $mock->method('fetchMedium')
+            ->willThrowException(new MissingInitialConfigurationException('test'));
+        $mock->method('fetchTaxonomy')
+            ->willThrowException(new MissingInitialConfigurationException('test'));
+        $this->app->bind(ConfigurationRepository::class, fn() => $mock);
     }
 }
