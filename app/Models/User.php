@@ -43,9 +43,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Passport\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
  * @property Collection|Campaign[] campaigns
@@ -82,7 +82,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property array roles
  * @mixin Builder
  */
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable
 {
     use Notifiable;
     use SoftDeletes;
@@ -90,6 +90,7 @@ class User extends Authenticatable implements JWTSubject
     use AutomateMutators;
     use BinHex;
     use AddressWithNetwork;
+    use HasApiTokens;
     use HasFactory;
     use LogsActivity;
 
@@ -554,19 +555,6 @@ class User extends Authenticatable implements JWTSubject
     public static function fetchEmails(): Collection
     {
         return self::where('subscribe', 1)->whereNotNull('email')->get()->pluck('email');
-    }
-
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    public function getJWTCustomClaims(): array
-    {
-        return [
-            'admin' => $this->isAdmin(),
-            'username' => $this->email ?? $this->wallet_address->toString()
-        ];
     }
 
     public function getActivitylogOptions(): LogOptions

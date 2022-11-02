@@ -19,7 +19,8 @@
 #
 
 # Usage: build.sh [<work-dir>]
-cd ${1:-"."}
+WORK_DIR=${1:-"."}
+cd "$WORK_DIR" || exit 1
 
 function artisanCommand {
     ./artisan --no-interaction "$@"
@@ -49,3 +50,8 @@ if [ $? -ne 0 ]; then exit 1; fi
 rm -f bootstrap/cache/config.php
 artisanCommand optimize
 if [ $? -ne 0 ]; then exit 1; fi
+
+if [ ! -f config/jwt/oauth-private.key ] || [ ! -f config/jwt/oauth-public.key ]
+then
+  artisanCommand passport:keys --force || exit 1
+fi

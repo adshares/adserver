@@ -133,14 +133,10 @@ return [
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
         Adshares\Adserver\Providers\Common\ClientProvider::class,
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
+        Adshares\Adserver\Providers\Common\PassportServiceProvider::class,
         Adshares\Adserver\Providers\Supply\PaymentDetailsVerifyProvider::class,
         Adshares\Adserver\Providers\Supply\ClassifyProvider::class,
         Adshares\Adserver\Providers\MacrosProvider::class,
-
-        /*
-         * JWT
-         */
-        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
     ],
 
     /*

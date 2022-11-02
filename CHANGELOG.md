@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Referral links pagination
 - Server events log
 - Logging changes in users table
+- OAuth2
 ### Changed
 - Network host which does not broadcast is marked as failed before deleting
 - Do not request banners when zones are invalid

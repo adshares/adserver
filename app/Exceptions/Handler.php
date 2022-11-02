@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -42,7 +43,7 @@ use function sprintf;
 
 class Handler extends ExceptionHandler
 {
-    public function render($request, Throwable $exception)
+    public function render($request, Throwable $exception): Response
     {
         if ($exception instanceof HttpException) {
             return $this->response(
@@ -88,11 +89,9 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof AuthenticationException) {
-            return $this->response(
-                $exception->getMessage(),
-                Response::HTTP_UNAUTHORIZED,
-                $exception->getTrace()
-            );
+            return $this->shouldReturnJson($request, $exception)
+                ? $this->response($exception->getMessage(), Response::HTTP_UNAUTHORIZED, $exception->getTrace())
+                : redirect()->guest($exception->redirectTo() ?? $this->getAdPanelLoginUrl($request));
         }
         if ($exception instanceof InvalidArgumentException) {
             return $this->response(
@@ -145,7 +144,8 @@ class Handler extends ExceptionHandler
         }
 
         if (method_exists($e, 'report')) {
-            return $e->report();
+            $e->report();
+            return;
         }
 
         try {
@@ -175,5 +175,10 @@ class Handler extends ExceptionHandler
                 )
             )
         );
+    }
+
+    private function getAdPanelLoginUrl(Request $request): string
+    {
+        return config('app.adpanel_url') . '/oauth/login?redirect_uri=' . urlencode($request->fullUrl());
     }
 }
