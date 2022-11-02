@@ -137,7 +137,7 @@ class TokenPaginate
                                             $addCursorConditions
                                         ) {
                                             $unionBuilder->where(
-                                            /** @var Builder $this */
+                                                /** @var Builder $this */
                                                 $this->getOriginalColumnNameForCursorPagination($this, $column),
                                                 $direction === 'asc' ? '>=' : '<=',
                                                 $cursor->parameter($column)
