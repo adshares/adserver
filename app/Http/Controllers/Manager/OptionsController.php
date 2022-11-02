@@ -27,14 +27,12 @@ use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\TargetingReachRequest;
-use Adshares\Adserver\Models\Banner;
-use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -89,7 +87,7 @@ class OptionsController extends Controller
     {
         try {
             $media = $this->optionsRepository->fetchMedia();
-        } catch (MissingInitialConfigurationException $exception) {
+        } catch (MissingInitialConfigurationException) {
             return self::json();
         }
         return self::json($media->toArray());
@@ -159,7 +157,7 @@ class OptionsController extends Controller
         }
         try {
             $selector = $this->optionsRepository->fetchFilteringOptions();
-        } catch (MissingInitialConfigurationException $exception) {
+        } catch (MissingInitialConfigurationException) {
             return self::json();
         }
         return self::json(new OptionsSelector($selector->exclude($exclusions)));
@@ -196,7 +194,7 @@ class OptionsController extends Controller
     {
         try {
             $medium = $this->optionsRepository->fetchMedium();
-        } catch (MissingInitialConfigurationException $exception) {
+        } catch (MissingInitialConfigurationException) {
             return self::json();
         }
 
@@ -209,26 +207,10 @@ class OptionsController extends Controller
                 $types[$size] = [
                     'label' => $label,
                     'size' => $size,
-                    'tags' => Size::SIZE_INFOS[$size]['tags'] ?? ['Other'],
-                    'type' => $this->getType($format->getType()),
+                    'type' => Utils::getZoneTypeByBannerType($format->getType()),
                 ];
             }
         }
         return self::json(array_values($types));
-    }
-
-    private function getType(string $type): string
-    {
-        switch ($type) {
-            case Banner::TEXT_TYPE_DIRECT_LINK:
-                return Size::TYPE_POP;
-            case Banner::TEXT_TYPE_MODEL:
-                return Size::TYPE_MODEL;
-            case Banner::TEXT_TYPE_IMAGE:
-            case Banner::TEXT_TYPE_HTML:
-            case Banner::TEXT_TYPE_VIDEO:
-            default:
-                return Size::TYPE_DISPLAY;
-        }
     }
 }

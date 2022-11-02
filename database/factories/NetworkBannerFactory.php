@@ -23,7 +23,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class NetworkBannerFactory extends Factory
@@ -38,8 +39,19 @@ class NetworkBannerFactory extends Factory
             'click_url' => $this->faker->url,
             'type' => 'image',
             'mime' => 'image/png',
-            'size' => $this->faker->randomKey(Size::SIZE_INFOS),
+            'size' => $this->getSize(),
             'checksum' => $this->faker->uuid,
         ];
+    }
+
+    private function getSize(): string
+    {
+        $formats = (new DummyConfigurationRepository())->fetchMedium()->getFormats();
+        foreach ($formats as $format) {
+            if ('image' === $format->getType()) {
+                return $this->faker->randomKey($format->getScopes());
+            }
+        }
+        throw new RuntimeException('Format of type `image` is missing');
     }
 }
