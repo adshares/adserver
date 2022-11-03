@@ -93,6 +93,8 @@ final class ServerMonitoringControllerTest extends TestCase
         'campaignCount',
         'siteCount',
         'lastActiveAt',
+        'isBanned',
+        'banReason',
     ];
     private const USER_STRUCTURE = [
         'data' => self::USER_DATA_STRUCTURE,
@@ -519,6 +521,8 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertEquals(0, $adminData['campaignCount']);
         self::assertEquals(0, $adminData['siteCount']);
         self::assertContains(Role::Admin->value, $adminData['roles']);
+        self::assertFalse($adminData['isBanned']);
+        self::assertNull($adminData['banReason']);
         $user1 = $data[1];
         self::assertEquals('user1@example.com', $user1['email']);
         self::assertEquals(1e5, $user1['adsharesWallet']['walletBalance']);
@@ -530,6 +534,8 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertNotContains(Role::Admin->value, $user1['roles']);
         self::assertContains(Role::Advertiser->value, $user1['roles']);
         self::assertContains(Role::Publisher->value, $user1['roles']);
+        self::assertFalse($adminData['isBanned']);
+        self::assertNull($adminData['banReason']);
         $user2 = $data[2];
         self::assertEquals('user2@example.com', $user2['email']);
         self::assertEquals(3e11, $user2['adsharesWallet']['walletBalance']);
@@ -541,6 +547,8 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertNotContains(Role::Admin->value, $user2['roles']);
         self::assertNotContains(Role::Advertiser->value, $user2['roles']);
         self::assertContains(Role::Publisher->value, $user2['roles']);
+        self::assertFalse($adminData['isBanned']);
+        self::assertNull($adminData['banReason']);
     }
 
     public function testFetchUserPaginationWithFilteringAndSorting(): void
@@ -876,7 +884,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         $user = $user->refresh();
-        self::assertEquals(1, $user->is_banned);
+        self::assertTrue($user->isBanned());
         self::assertEquals('suspicious activity', $user->ban_reason);
     }
 
@@ -1184,20 +1192,8 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         $user = $user->refresh();
-        self::assertEquals(0, $user->is_banned);
+        self::assertFalse($user->isBanned());
     }
-
-//    public function patchUserProvider(): array
-//    {
-//        return [
-//            'ban' => ['ban', 'banUser'],
-//            'delete' => ['delete', 'deleteUser'],
-//            'switchToModerator' => ['switchToModerator', 'switchUserToModerator'],
-//            'unban' => ['unban', 'unbanUser'],
-//            'switchToAgency' => ['switchToAgency', 'switchUserToAgency'],
-//            'switchToRegular' => ['switchToRegular', 'switchUserToRegular'],
-//        ];
-//    }
 
     public function testPatchUserInvalidAction(): void
     {
