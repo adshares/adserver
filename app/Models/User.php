@@ -76,7 +76,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int|null auto_withdrawal
  * @property bool is_auto_withdrawal
  * @property int auto_withdrawal_limit
- * @property bool is_banned
+ * @property int is_banned
  * @property string ban_reason
  * @property Carbon|null last_active_at
  * @property array roles
@@ -318,7 +318,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function ban(string $reason): void
     {
-        $this->is_banned = true;
+        $this->is_banned = 1;
         $this->ban_reason = $reason;
         $this->api_token = null;
         $this->auto_withdrawal = null;
@@ -327,7 +327,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function unban(): void
     {
-        $this->is_banned = false;
+        $this->is_banned = 0;
         $this->save();
     }
 
@@ -384,6 +384,11 @@ class User extends Authenticatable implements JWTSubject
     public function isAgency(): bool
     {
         return (bool)$this->is_agency;
+    }
+
+    public function isBanned(): bool
+    {
+        return (bool)$this->is_banned;
     }
 
     public function campaigns(): HasMany
