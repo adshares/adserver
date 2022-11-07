@@ -32,6 +32,8 @@ class UserResource extends JsonResource
             'siteCount' => null !== $this->site_count
                 ? (int)$this->site_count : $this->sites()->count(),
             'lastActiveAt' => $this->last_active_at?->format(DateTimeInterface::ATOM),
+            'isBanned' => $this->isBanned(),
+            'banReason' => $this->ban_reason,
         ];
     }
 }

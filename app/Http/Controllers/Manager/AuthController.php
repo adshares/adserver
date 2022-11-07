@@ -345,7 +345,7 @@ class AuthController extends Controller
         ) {
             /** @var User $user */
             $user = Auth::user();
-            if ($user->is_banned) {
+            if ($user->isBanned()) {
                 return new JsonResponse(['reason' => $user->ban_reason], Response::HTTP_FORBIDDEN);
             }
             $user->generateApiKey();
