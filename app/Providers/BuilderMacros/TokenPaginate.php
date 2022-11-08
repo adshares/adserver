@@ -54,7 +54,7 @@ class TokenPaginate
                     ? Cursor::fromEncoded($cursor)
                     : CursorPaginator::resolveCurrentCursor($cursorName, $cursor);
             }
-            $maxId = null === $cursor ? $this->max('id') : $cursor->parameter('id');
+            $maxId = null === $cursor ? $this->getModel()->max('id') : $cursor->parameter('id');
 
             if (!is_null($cursor)) {
                 $orders = collect($this->query->orders)

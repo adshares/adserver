@@ -163,6 +163,16 @@ final class OptionsControllerTest extends TestCase
         self::assertStructure($content);
     }
 
+    public function testFilteringWhileMissingTaxonomy(): void
+    {
+        $this->mockRepositoryWhileMissingTaxonomy();
+        $this->login();
+
+        $response = self::getJson('/api/options/sites/filtering');
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertExactJson([]);
+    }
+
     public function testMedia(): void
     {
         $this->login();
@@ -272,10 +282,9 @@ final class OptionsControllerTest extends TestCase
     private function mockRepositoryWhileMissingTaxonomy(): void
     {
         $mock = self::createMock(ConfigurationRepository::class);
-        $mock->method('fetchMedium')
-            ->willThrowException(new MissingInitialConfigurationException('test'));
-        $mock->method('fetchTaxonomy')
-            ->willThrowException(new MissingInitialConfigurationException('test'));
+        foreach (['fetchFilteringOptions', 'fetchMedia', 'fetchMedium', 'fetchTaxonomy'] as $functionName) {
+            $mock->method($functionName)->willThrowException(new MissingInitialConfigurationException('test'));
+        }
         $this->app->bind(ConfigurationRepository::class, fn() => $mock);
     }
 }
