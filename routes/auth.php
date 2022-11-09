@@ -33,7 +33,10 @@ Route::middleware([Kernel::JSON_API])->group(function () {
     Route::post('email/activate', [AuthController::class, 'emailActivate']);
 });
 
-Route::post('/oauth/login', [OAuthController::class, 'login'])->middleware(['web']);
+Route::middleware(Kernel::WEB)->group(function () {
+    Route::post('/oauth/login', [OAuthController::class, 'login']);
+    Route::post('/oauth/login/wallet', [OAuthController::class, 'walletLogin']);
+});
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::post('email', [AuthController::class, 'emailChangeStep1']);

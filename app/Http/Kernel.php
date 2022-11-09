@@ -67,6 +67,7 @@ class Kernel extends HttpKernel
     public const JSON_API = 'api';
     public const JSON_API_CAMELIZE = 'api-camelize';
     public const JSON_API_NO_TRANSFORM = 'api-no-transform';
+    public const WEB = 'web';
 
     protected $middleware = [
         CheckForMaintenanceMode::class,
@@ -147,7 +148,7 @@ class Kernel extends HttpKernel
             #post-handle
             SetCacheHeaders::class,
         ],
-        'web' => [
+        self::WEB => [
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
