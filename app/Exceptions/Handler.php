@@ -179,6 +179,6 @@ class Handler extends ExceptionHandler
 
     private function getAdPanelLoginUrl(Request $request): string
     {
-        return config('app.adpanel_url') . '/oauth/login?redirect_uri=' . urlencode($request->fullUrl());
+        return config('app.adpanel_url') . '/auth/login?redirect_uri=' . urlencode($request->fullUrl());
     }
 }

@@ -33,9 +33,8 @@ Route::middleware([Kernel::JSON_API])->group(function () {
     Route::post('email/activate', [AuthController::class, 'emailActivate']);
 });
 
-Route::middleware(Kernel::WEB)->group(function () {
-    Route::post('/oauth/login', [OAuthController::class, 'login']);
-    Route::post('/oauth/login/wallet', [OAuthController::class, 'walletLogin']);
+Route::middleware(['auth' . ':api', 'web'])->group(function () {
+    Route::get('/authorize', [OAuthController::class, 'authorizeUser']);
 });
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {

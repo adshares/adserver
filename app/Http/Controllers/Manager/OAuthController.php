@@ -23,54 +23,108 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\User;
-use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Common\Exception\InvalidArgumentException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Laravel\Passport\Bridge\User as UserBridge;
+use Laravel\Passport\Client;
+use Laravel\Passport\ClientRepository;
+use Laravel\Passport\Http\Controllers\HandlesOAuthErrors;
+use Laravel\Passport\Passport;
+use Laravel\Passport\TokenRepository;
+use League\OAuth2\Server\AuthorizationServer;
+use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
+use Nyholm\Psr7\Response as Psr7Response;
+use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class OAuthController extends Controller
 {
-    public function login(Request $request): Response
+    use HandlesOAuthErrors;
+
+    public function __construct(private readonly AuthorizationServer $server)
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw new UnprocessableEntityHttpException('Invalid credentials');
-        }
+    }
+
+    public function authorizeUser(
+        ServerRequestInterface $psrRequest,
+        Request $request,
+        ClientRepository $clients,
+        TokenRepository $tokens
+    ): JsonResponse {
+        $noRedirect = null !== $request->query('no_redirect');
+
         /** @var User $user */
         $user = Auth::user();
         if ($user->isBanned()) {
             return new JsonResponse(['reason' => $user->ban_reason], Response::HTTP_FORBIDDEN);
         }
 
-        $request->session()->regenerate();
+        $authRequest = $this->withErrorHandling(function () use ($psrRequest) {
+            return $this->server->validateAuthorizationRequest($psrRequest);
+        });
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        $request->session()->forget('promptedForLogin');
+
+        $scopes = $this->parseScopes($authRequest);
+        $client = $clients->find($authRequest->getClient()->getIdentifier());
+
+        if ($client->skipsAuthorization() || $this->hasValidToken($tokens, $user, $client, $scopes)) {
+            return $this->approveRequest($authRequest, $user, $noRedirect);
+        }
+
+        $request->session()->put('authToken', $authToken = Str::random());
+        $request->session()->put('authRequest', $authRequest);
+
+        return new JsonResponse([
+            'client' => $client,
+            'user' => $user,
+            'scopes' => $scopes,
+            'request' => $request,
+            'authToken' => $authToken,
+        ]);
     }
 
-    public function walletLogin(Request $request): JsonResponse
+    protected function approveRequest(AuthorizationRequest $authRequest, Model $user, bool $noRedirect): JsonResponse
     {
-        try {
-            $address = new WalletAddress($request->input('network'), $request->input('address'));
-        } catch (InvalidArgumentException) {
-            throw new UnprocessableEntityHttpException('Invalid wallet address');
-        }
-        if (null === ($user = User::fetchByWalletAddress($address))) {
-            throw new UnprocessableEntityHttpException('Incorrect wallet address');
-        }
-        if ($user->isBanned()) {
-            return new JsonResponse(['reason' => $user->ban_reason], Response::HTTP_FORBIDDEN);
-        }
+        $authRequest->setUser(new UserBridge($user->getAuthIdentifier()));
+        $authRequest->setAuthorizationApproved(true);
 
-        $credentials = $request->only('token', 'signature');
-        $credentials['wallet_address'] = $address;
-        if (!Auth::guard()->attempt($credentials)) {
-            throw new UnprocessableEntityHttpException('Invalid signature');
-        }
+        return $this->withErrorHandling(function () use ($authRequest, $noRedirect) {
+            $psrResponse = $this->server->completeAuthorizationRequest($authRequest, new Psr7Response);
+            $headers = $psrResponse->getHeaders();
 
-        $request->session()->regenerate();
+            if ($noRedirect && Response::HTTP_FOUND === $psrResponse->getStatusCode()) {
+                return new JsonResponse(
+                    ['location' => $headers['Location']],
+                    Response::HTTP_OK,
+                    $headers
+                );
+            } else {
+                return new JsonResponse(
+                    $psrResponse->getBody(),
+                    $psrResponse->getStatusCode(),
+                    $headers
+                );
+            }
+        });
+    }
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    protected function hasValidToken(TokenRepository $tokens, Model $user, Client $client, array $scopes): bool
+    {
+        $token = $tokens->findValidToken($user, $client);
+
+        return $token && $token->scopes === collect($scopes)->pluck('id')->all();
+    }
+
+    protected function parseScopes(AuthorizationRequest $authRequest): array
+    {
+        return Passport::scopesFor(
+            collect($authRequest->getScopes())->map(function ($scope) {
+                return $scope->getIdentifier();
+            })->unique()->all()
+        );
     }
 }
