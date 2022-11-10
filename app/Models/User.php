@@ -531,6 +531,21 @@ class User extends Authenticatable
         return $user;
     }
 
+    public static function fetchOrRegisterSystemUser(): User
+    {
+        if (null !== ($user = self::where('name', 'system')->first())) {
+            return $user;
+        }
+
+        $user = new User();
+        $user->name = 'system';
+        $user->password = Str::random(32);
+        $user->is_advertiser = 0;
+        $user->is_publisher = 0;
+        $user->saveOrFail();
+        return $user;
+    }
+
     public function awardBonus(int $amount, ?RefLink $refLink = null): void
     {
         UserLedgerEntry::insertUserBonus($this->id, $amount, $refLink);

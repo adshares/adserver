@@ -48,10 +48,13 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
         Passport::loadKeysFrom(config_path('jwt'));
+        Passport::hashClientSecrets();
+        Passport::useClientModel(Client::class);
+
         Auth::provider('wallet', function ($app, array $config) {
             return new WalletUserProvider($app[Ads::class], $app['hash'], $config['model']);
         });
-        Passport::useClientModel(Client::class);
     }
 }
