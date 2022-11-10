@@ -28,7 +28,7 @@ use DateTimeImmutable;
 use Laravel\Passport\Bridge\AccessToken as LaravelAccessToken;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\InMemory;
-use Lcobucci\JWT\Signer\Rsa\Sha512;
+use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Token\Plain;
 use League\OAuth2\Server\CryptKey;
 
@@ -45,7 +45,7 @@ class AccessToken extends LaravelAccessToken
     public function initJwtConfiguration()
     {
         $this->jwtConfiguration = Configuration::forAsymmetricSigner(
-            new Sha512(),
+            new Sha256(),
             InMemory::plainText($this->privateKey->getKeyContents(), $this->privateKey->getPassPhrase() ?? ''),
             InMemory::plainText('empty', 'empty')
         );

@@ -93,7 +93,7 @@ class OAuthController extends Controller
         $authRequest->setAuthorizationApproved(true);
 
         return $this->withErrorHandling(function () use ($authRequest, $noRedirect) {
-            $psrResponse = $this->server->completeAuthorizationRequest($authRequest, new Psr7Response);
+            $psrResponse = $this->server->completeAuthorizationRequest($authRequest, new Psr7Response());
             $headers = $psrResponse->getHeaders();
 
             if ($noRedirect && Response::HTTP_FOUND === $psrResponse->getStatusCode()) {
