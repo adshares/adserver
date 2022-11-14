@@ -54,7 +54,16 @@ class AccessToken extends LaravelAccessToken
     private function convertToJWT(): Plain
     {
         $this->initJwtConfiguration();
-        $user = User::fetchById($this->getUserIdentifier());
+        $userIdentifier = $this->getUserIdentifier();
+
+        if (null === $userIdentifier) {
+            $roles = [];
+            $username = $this->getClient()->getName();
+        } else {
+            $user = User::fetchById($userIdentifier);
+            $roles = $user->roles;
+            $username = $user->email ?? $user->wallet_address->toString();
+        }
 
         return $this->jwtConfiguration->builder()
             ->permittedFor($this->getClient()->getIdentifier())
@@ -62,10 +71,10 @@ class AccessToken extends LaravelAccessToken
             ->issuedAt(new DateTimeImmutable())
             ->canOnlyBeUsedAfter(new DateTimeImmutable())
             ->expiresAt($this->getExpiryDateTime())
-            ->relatedTo((string)$this->getUserIdentifier())
-            ->withClaim('roles', $user->roles)
+            ->relatedTo((string)$userIdentifier)
+            ->withClaim('roles', $roles)
             ->withClaim('scopes', $this->getScopes())
-            ->withClaim('username', $user->email ?? $user->wallet_address->toString())
+            ->withClaim('username', $username)
             ->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey());
     }
 
