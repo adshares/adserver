@@ -59,7 +59,9 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Event::fake();
+        Event::fake()->except([
+            'eloquent.creating: Adshares\Adserver\Models\Passport\Client',
+        ]);
         Mail::fake();
         Queue::fake();
         Storage::fake(self::DISK);

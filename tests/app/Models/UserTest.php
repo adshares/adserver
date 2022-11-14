@@ -145,4 +145,20 @@ class UserTest extends TestCase
         $options = (new User())->getActivitylogOptions();
         self::assertInstanceOf(LogOptions::class, $options);
     }
+
+    public function testFetchOrRegisterSystemUserWhileDoesNotExist(): void
+    {
+        User::fetchOrRegisterSystemUser();
+
+        self::assertDatabaseCount(User::class, 1);
+    }
+
+    public function testFetchOrRegisterSystemUserWhileExist(): void
+    {
+        User::factory()->create(['name' => 'system']);
+
+        User::fetchOrRegisterSystemUser();
+
+        self::assertDatabaseCount(User::class, 1);
+    }
 }

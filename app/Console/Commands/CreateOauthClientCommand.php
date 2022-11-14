@@ -39,7 +39,7 @@ class CreateOauthClientCommand extends BaseCommand
     public function handle(): int
     {
         if (!$this->lock()) {
-            $this->info('Command ' . $this->signature . ' already running');
+            $this->info('Command ' . explode(' ', $this->signature)[0] . ' already running');
             return 1;
         }
 
