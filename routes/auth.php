@@ -33,7 +33,7 @@ Route::middleware([Kernel::JSON_API])->group(function () {
     Route::post('email/activate', [AuthController::class, 'emailActivate']);
 });
 
-Route::middleware(['auth' . ':api', 'web'])->group(function () {
+Route::middleware([Kernel::AUTH . ':api', Kernel::WEB])->group(function () {
     Route::get('/authorize', [OAuthController::class, 'authorizeUser']);
 });
 

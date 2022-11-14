@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Providers;
 
-use Adshares\Adserver\Models\Passport\Client;
 use Adshares\Common\Application\Service\Ads;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Auth;
@@ -51,7 +50,6 @@ class AuthServiceProvider extends ServiceProvider
 
         Passport::loadKeysFrom(config_path('jwt'));
         Passport::hashClientSecrets();
-        Passport::useClientModel(Client::class);
 
         Auth::provider('wallet', function ($app, array $config) {
             return new WalletUserProvider($app[Ads::class], $app['hash'], $config['model']);

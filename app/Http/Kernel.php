@@ -52,7 +52,7 @@ use Laravel\Passport\Http\Middleware\CheckClientCredentials;
 
 class Kernel extends HttpKernel
 {
-    private const AUTH = 'auth';
+    public const AUTH = 'auth';
 
     public const USER_ACCESS = 'only-authenticated-users';
     public const ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION = 'only-authenticated-users-except-impersonation';

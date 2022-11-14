@@ -24,9 +24,9 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Models\Passport\Client;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Illuminate\Support\Facades\DB;
+use Laravel\Passport\Client;
 use PDOException;
 
 class CreateOauthClientCommandTest extends ConsoleTestCase

@@ -51,8 +51,6 @@ class OAuthController extends Controller
     public function authorizeUser(
         ServerRequestInterface $psrRequest,
         Request $request,
-        ClientRepository $clients,
-        TokenRepository $tokens
     ): JsonResponse {
         $noRedirect = null !== $request->query('no_redirect');
 
@@ -68,23 +66,7 @@ class OAuthController extends Controller
 
         $request->session()->forget('promptedForLogin');
 
-        $scopes = $this->parseScopes($authRequest);
-        $client = $clients->find($authRequest->getClient()->getIdentifier());
-
-        if ($client->skipsAuthorization() || $this->hasValidToken($tokens, $user, $client, $scopes)) {
-            return $this->approveRequest($authRequest, $user, $noRedirect);
-        }
-
-        $request->session()->put('authToken', $authToken = Str::random());
-        $request->session()->put('authRequest', $authRequest);
-
-        return new JsonResponse([
-            'client' => $client,
-            'user' => $user,
-            'scopes' => $scopes,
-            'request' => $request,
-            'authToken' => $authToken,
-        ]);
+        return $this->approveRequest($authRequest, $user, $noRedirect);
     }
 
     protected function approveRequest(AuthorizationRequest $authRequest, Model $user, bool $noRedirect): JsonResponse
@@ -98,7 +80,7 @@ class OAuthController extends Controller
 
             if ($noRedirect && Response::HTTP_FOUND === $psrResponse->getStatusCode()) {
                 return new JsonResponse(
-                    ['location' => $headers['Location']],
+                    ['location' => $headers['Location'][0]],
                     Response::HTTP_OK,
                     $headers
                 );
@@ -110,21 +92,5 @@ class OAuthController extends Controller
                 );
             }
         });
-    }
-
-    protected function hasValidToken(TokenRepository $tokens, Model $user, Client $client, array $scopes): bool
-    {
-        $token = $tokens->findValidToken($user, $client);
-
-        return $token && $token->scopes === collect($scopes)->pluck('id')->all();
-    }
-
-    protected function parseScopes(AuthorizationRequest $authRequest): array
-    {
-        return Passport::scopesFor(
-            collect($authRequest->getScopes())->map(function ($scope) {
-                return $scope->getIdentifier();
-            })->unique()->all()
-        );
     }
 }
