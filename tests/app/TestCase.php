@@ -60,7 +60,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         Event::fake()->except([
-            'eloquent.creating: Adshares\Adserver\Models\Passport\Client',
+            'eloquent.creating: Laravel\Passport\Client',
         ]);
         Mail::fake();
         Queue::fake();
