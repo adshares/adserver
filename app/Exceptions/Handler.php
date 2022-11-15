@@ -32,6 +32,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Laravel\Passport\Exceptions\OAuthServerException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -79,12 +80,12 @@ class Handler extends ExceptionHandler
             );
         }
 
-        if ($exception instanceof ValidationException) {
+        if ($exception instanceof ValidationException || $exception instanceof OAuthServerException) {
             return $this->response(
                 $exception->getMessage(),
                 Response::HTTP_UNPROCESSABLE_ENTITY,
                 $exception->getTrace(),
-                $exception->errors()
+                $exception instanceof ValidationException ? $exception->errors() : [],
             );
         }
 

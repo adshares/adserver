@@ -84,6 +84,21 @@ final class OAuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
+    public function testInvalidClientId(): void
+    {
+        $this->login();
+
+        $redirectUri = 'https://example.com/callback';
+        $uri = sprintf(
+            '/auth/authorize?client_id=%s&redirect_uri=%s&response_type=code&no_redirect=true',
+            PHP_INT_MAX,
+            $redirectUri
+        );
+        $response = $this->get($uri);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     private static function buildUri(bool $redirect = true): string
     {
         $redirectUri = 'https://example.com/callback';
