@@ -25,6 +25,8 @@ use Adshares\Adserver\Http\Controllers\Manager\AuthController;
 use Adshares\Adserver\Http\Controllers\Manager\OAuthController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
+use Laravel\Passport\Http\Controllers\PersonalAccessTokenController;
+use Laravel\Passport\Http\Controllers\ScopeController;
 
 Route::middleware([Kernel::JSON_API])->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -47,6 +49,11 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::patch('self', [AuthController::class, 'changePassword']);
     Route::post('password/confirm/{token}', [AuthController::class, 'confirmPasswordChange']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
+
+    Route::get('/scopes', [ScopeController::class, 'all']);
+    Route::get('/personal-access-tokens', [PersonalAccessTokenController::class, 'forUser']);
+    Route::post('/personal-access-tokens', [PersonalAccessTokenController::class, 'store']);
+    Route::delete('/personal-access-tokens/{token_id}', [PersonalAccessTokenController::class, 'destroy']);
 });
 
 Route::middleware([Kernel::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION, Kernel::JSON_API])->group(function () {

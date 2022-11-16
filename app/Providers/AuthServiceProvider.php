@@ -50,6 +50,10 @@ class AuthServiceProvider extends ServiceProvider
 
         Passport::loadKeysFrom(config_path('jwt'));
         Passport::hashClientSecrets();
+        Passport::tokensCan([
+            'campaign.read' => 'Read Campaigns',
+            'campaign.write' => 'Save Campaigns',
+        ]);
 
         Auth::provider('wallet', function ($app, array $config) {
             return new WalletUserProvider($app[Ads::class], $app['hash'], $config['model']);
