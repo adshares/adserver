@@ -76,8 +76,6 @@ final class DemandCampaignMapperTest extends TestCase
                         'country' => ['us'],
                     ],
                 ],
-                'classification_status' => 0,
-                'classification_tags' => null,
                 'bid_strategy_uuid' => '00000000000000000000000000000000',
             ]
         );
