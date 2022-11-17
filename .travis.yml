@@ -35,7 +35,7 @@ before_install:
   - mkdir -p storage/app/{invoices,public}
   - mkdir -p storage/framework/{sessions,views,cache}
   - chmod 777 -R storage
-  - chmod 660 -R test/mock/Files/OAuth
+  - chmod 660 -R tests/mock/Files/OAuth
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2>/dev/null | mysql mysql
 
 install:
