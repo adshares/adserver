@@ -43,11 +43,11 @@ class AccessTokenTest extends TestCase
         ]);
         $client = self::createMock(ClientEntityInterface::class);
         $client->method('getIdentifier')->willReturn('test-client-id');
-        $scope = new Scope('campaign.read');
+        $scopes = [new Scope('campaign.read')];
 
-        $token = new AccessToken($user->id, [$scope], $client);
+        $token = new AccessToken($user->id, $scopes, $client);
         $token->setExpiryDateTime((new DateTimeImmutable('+1 day')));
-        $token->setPrivateKey(new CryptKey(base_path('tests/mock/Files/OAuth/oauth-private.key')));
+        $token->setPrivateKey($this->getCryptKey());
         $token->setIdentifier('test-id');
 
         $parser = new Parser(new JoseEncoder());
@@ -65,20 +65,28 @@ class AccessTokenTest extends TestCase
         $client = self::createMock(ClientEntityInterface::class);
         $client->method('getIdentifier')->willReturn('test-client-id');
         $client->method('getName')->willReturn('test-client');
-        $scope = new Scope('campaign.read');
+        $scopes = [new Scope('campaign.read')];
 
-        $token = new AccessToken(null, [$scope], $client);
+        $token = new AccessToken(null, $scopes, $client);
         $token->setExpiryDateTime((new DateTimeImmutable('+1 day')));
-        $token->setPrivateKey(new CryptKey(base_path('tests/mock/Files/OAuth/oauth-private.key')));
+        $token->setPrivateKey($this->getCryptKey());
         $token->setIdentifier('test-id');
 
         $parser = new Parser(new JoseEncoder());
         $parsedToken = $parser->parse((string)$token);
-
         self::assertEquals('test-client-id', $parsedToken->claims()->get('aud')[0]);
         self::assertEquals('test-id', $parsedToken->claims()->get('jti'));
         self::assertEquals([], $parsedToken->claims()->get('roles'));
         self::assertEquals(['campaign.read'], $parsedToken->claims()->get('scopes'));
         self::assertEquals('test-client', $parsedToken->claims()->get('username'));
+    }
+
+    private function getCryptKey(): CryptKey
+    {
+        $privateKey = self::createMock(CryptKey::class);
+        $privateKey->method('getKeyContents')
+            ->willReturn(file_get_contents(base_path('tests/mock/Files/OAuth/oauth-private.key')));
+        $privateKey->method('getPassPhrase')->willReturn('');
+        return $privateKey;
     }
 }
