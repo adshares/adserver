@@ -54,4 +54,11 @@ if [ $? -ne 0 ]; then exit 1; fi
 if [ ! -f config/jwt/oauth-private.key ] || [ ! -f config/jwt/oauth-public.key ]
 then
   artisanCommand passport:keys --force || exit 1
+  OUTPUT=$(artisanCommand passport:client --personal --name="Personal Access Client")
+  CLIENT_ID=$(echo "$OUTPUT" | grep -oP "Client ID: \K\S+")
+  CLIENT_SECRET=$(echo "$OUTPUT" | grep -oP "Client secret: \K\S+")
+  if [ -z "$CLIENT_ID" ]; then echo "Missing CLIENT_ID"; exit 1; fi
+  if [ -z "$CLIENT_SECRET" ]; then echo "Missing CLIENT_CLIENT_SECRET"; exit 1; fi
+  echo "PASSPORT_PERSONAL_ACCESS_CLIENT_ID='$CLIENT_ID'" >> .env
+  echo "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET='$CLIENT_SECRET'" >> .env
 fi
