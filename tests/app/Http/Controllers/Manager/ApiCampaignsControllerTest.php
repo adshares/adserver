@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\ScopeType;
 use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -146,7 +147,7 @@ final class ApiCampaignsControllerTest extends TestCase
     private function setUpUser(): User
     {
         $user = User::factory()->create();
-        Passport::actingAs($user, ['campaign.read'], 'jwt');
+        Passport::actingAs($user, [ScopeType::CAMPAIGN_READ], 'jwt');
         return $user;
     }
 }

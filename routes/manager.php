@@ -35,6 +35,7 @@ use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Adshares\Adserver\Http\Kernel;
+use Adshares\Adserver\ViewModel\ScopeType;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::JSON_API])->group(
@@ -164,10 +165,16 @@ Route::middleware([Kernel::ADVERTISER_ACCESS, Kernel::JSON_API])->group(
     }
 );
 
-Route::middleware([Kernel::ADVERTISER_JWT_ACCESS, Kernel::JSON_API, 'scope:campaign.read'])->prefix('v2')->group(function () {
-    Route::get('campaigns/{id}', [ApiCampaignsController::class, 'fetchCampaignById']);
-    Route::get('campaigns', [ApiCampaignsController::class, 'fetchCampaigns']);
-});
+Route::middleware([
+    Kernel::ADVERTISER_JWT_ACCESS,
+    Kernel::JSON_API,
+    'scope:' . ScopeType::CAMPAIGN_READ,
+])
+    ->prefix('v2')
+    ->group(function () {
+        Route::get('campaigns/{id}', [ApiCampaignsController::class, 'fetchCampaignById']);
+        Route::get('campaigns', [ApiCampaignsController::class, 'fetchCampaigns']);
+    });
 
 Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(
     function () {

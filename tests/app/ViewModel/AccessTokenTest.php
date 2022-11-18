@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\ViewModel;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\AccessToken;
+use Adshares\Adserver\ViewModel\ScopeType;
 use DateTimeImmutable;
 use Laravel\Passport\Bridge\Scope;
 use Lcobucci\JWT\Encoding\JoseEncoder;
@@ -43,7 +44,7 @@ class AccessTokenTest extends TestCase
         ]);
         $client = self::createMock(ClientEntityInterface::class);
         $client->method('getIdentifier')->willReturn('test-client-id');
-        $scopes = [new Scope('campaign.read')];
+        $scopes = [new Scope(ScopeType::CAMPAIGN_READ)];
 
         $token = new AccessToken($user->id, $scopes, $client);
         $token->setExpiryDateTime((new DateTimeImmutable('+1 day')));
@@ -56,7 +57,7 @@ class AccessTokenTest extends TestCase
         self::assertEquals('test-client-id', $parsedToken->claims()->get('aud')[0]);
         self::assertEquals('test-id', $parsedToken->claims()->get('jti'));
         self::assertEquals(['advertiser', 'publisher'], $parsedToken->claims()->get('roles'));
-        self::assertEquals(['campaign.read'], $parsedToken->claims()->get('scopes'));
+        self::assertEquals([ScopeType::CAMPAIGN_READ], $parsedToken->claims()->get('scopes'));
         self::assertEquals('test@example.com', $parsedToken->claims()->get('username'));
     }
 
@@ -65,7 +66,7 @@ class AccessTokenTest extends TestCase
         $client = self::createMock(ClientEntityInterface::class);
         $client->method('getIdentifier')->willReturn('test-client-id');
         $client->method('getName')->willReturn('test-client');
-        $scopes = [new Scope('campaign.read')];
+        $scopes = [new Scope(ScopeType::CAMPAIGN_READ)];
 
         $token = new AccessToken(null, $scopes, $client);
         $token->setExpiryDateTime((new DateTimeImmutable('+1 day')));
@@ -77,7 +78,7 @@ class AccessTokenTest extends TestCase
         self::assertEquals('test-client-id', $parsedToken->claims()->get('aud')[0]);
         self::assertEquals('test-id', $parsedToken->claims()->get('jti'));
         self::assertEquals([], $parsedToken->claims()->get('roles'));
-        self::assertEquals(['campaign.read'], $parsedToken->claims()->get('scopes'));
+        self::assertEquals([ScopeType::CAMPAIGN_READ], $parsedToken->claims()->get('scopes'));
         self::assertEquals('test-client', $parsedToken->claims()->get('username'));
     }
 

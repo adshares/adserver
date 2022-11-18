@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Repository\Common;
 use Adshares\Adserver\Repository\Common\AccessTokenRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\AccessToken;
+use Adshares\Adserver\ViewModel\ScopeType;
 use Laravel\Passport\Bridge\Scope;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 
@@ -37,7 +38,7 @@ final class AccessTokenRepositoryTest extends TestCase
 
         $client = self::createMock(ClientEntityInterface::class);
         $client->method('getIdentifier')->willReturn('test-client');
-        $scope = new Scope('campaign.read');
+        $scope = new Scope(ScopeType::CAMPAIGN_READ);
 
         $token = $repository->getNewToken($client, [$scope]);
 

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Providers;
 
+use Adshares\Adserver\ViewModel\ScopeType;
 use Adshares\Common\Application\Service\Ads;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Auth;
@@ -30,14 +31,6 @@ use Laravel\Passport\Passport;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    public const CAMPAIGN_READ = 'campaign.read';
-    public const CAMPAIGN_WRITE = 'campaign.write';
-
-    private const SCOPES = [
-        self::CAMPAIGN_READ => 'Read Campaigns',
-        self::CAMPAIGN_WRITE => 'Write Campaigns',
-    ];
-
     /**
      * The policy mappings for the application.
      *
@@ -58,7 +51,7 @@ class AuthServiceProvider extends ServiceProvider
 
         Passport::loadKeysFrom(config_path('jwt'));
         Passport::hashClientSecrets();
-        Passport::tokensCan(self::SCOPES);
+        Passport::tokensCan(ScopeType::ALL_WITH_DESCRIPTIONS);
 
         Auth::provider('wallet', function ($app, array $config) {
             return new WalletUserProvider($app[Ads::class], $app['hash'], $config['model']);
