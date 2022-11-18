@@ -30,6 +30,14 @@ use Laravel\Passport\Passport;
 
 class AuthServiceProvider extends ServiceProvider
 {
+    public const CAMPAIGN_READ = 'campaign.read';
+    public const CAMPAIGN_WRITE = 'campaign.write';
+
+    private const SCOPES = [
+        self::CAMPAIGN_READ => 'Read Campaigns',
+        self::CAMPAIGN_WRITE => 'Write Campaigns',
+    ];
+
     /**
      * The policy mappings for the application.
      *
@@ -50,10 +58,7 @@ class AuthServiceProvider extends ServiceProvider
 
         Passport::loadKeysFrom(config_path('jwt'));
         Passport::hashClientSecrets();
-        Passport::tokensCan([
-            'campaign.read' => 'Read Campaigns',
-            'campaign.write' => 'Save Campaigns',
-        ]);
+        Passport::tokensCan(self::SCOPES);
 
         Auth::provider('wallet', function ($app, array $config) {
             return new WalletUserProvider($app[Ads::class], $app['hash'], $config['model']);

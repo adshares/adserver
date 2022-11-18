@@ -49,6 +49,7 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Laravel\Passport\Http\Middleware\CheckClientCredentials;
+use Laravel\Passport\Http\Middleware\CheckForAnyScope;
 
 class Kernel extends HttpKernel
 {
@@ -63,6 +64,7 @@ class Kernel extends HttpKernel
     public const AGENCY_ACCESS = 'only-agency-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const ADVERTISER_ACCESS = 'only-advertisers';
+    public const ADVERTISER_JWT_ACCESS = 'jwt-only-advertisers';
     public const PUBLISHER_ACCESS = 'only-publishers';
     public const JSON_API = 'api';
     public const JSON_API_CAMELIZE = 'api-camelize';
@@ -85,6 +87,11 @@ class Kernel extends HttpKernel
             self::AUTH . ':api',
             TrackUserActivity::class,
             Impersonation::class,
+            RequireAdvertiserAccess::class,
+        ],
+        self::ADVERTISER_JWT_ACCESS => [
+            self::AUTH . ':jwt',
+            TrackUserActivity::class,
             RequireAdvertiserAccess::class,
         ],
         self::PUBLISHER_ACCESS => [
@@ -161,6 +168,7 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         self::AUTH => Authenticate::class,
         'client' => CheckClientCredentials::class,
+        'scope' => CheckForAnyScope::class,
         'throttle' => ThrottleRequests::class,
     ];
 

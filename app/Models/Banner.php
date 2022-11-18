@@ -26,6 +26,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -101,6 +102,8 @@ class Banner extends Model
     ];
 
     protected $casts = [
+        'created_at' => 'date:' . DateTimeInterface::ATOM,
+        'updated_at' => 'date:' . DateTimeInterface::ATOM,
         'status' => 'int',
     ];
 

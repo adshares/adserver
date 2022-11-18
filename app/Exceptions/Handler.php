@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Exceptions;
 
 use Adshares\Adserver\Http\Utils;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -99,6 +100,14 @@ class Handler extends ExceptionHandler
                 $exception->getMessage(),
                 Response::HTTP_BAD_REQUEST,
                 $exception->getTrace()
+            );
+        }
+
+        if ($exception instanceof AuthorizationException) {
+            return $this->response(
+                $exception->getMessage(),
+                $exception->hasStatus() ? $exception->status() : Response::HTTP_FORBIDDEN,
+                $exception->getTrace(),
             );
         }
 

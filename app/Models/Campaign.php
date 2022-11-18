@@ -69,9 +69,11 @@ use InvalidArgumentException;
  * @property User user
  * @property string secret
  * @property int conversion_click
+ * @property string|null conversion_click_link
+ * @property array bid_strategy
  * @property string bid_strategy_uuid
  * @property array basic_information
- * @property array classifications
+ * @property array|null classifications
  * @property array targeting
  * @mixin Builder
  */
@@ -113,6 +115,8 @@ class Campaign extends Model
     ];
 
     protected $casts = [
+        'created_at' => 'date:' . DateTimeInterface::ATOM,
+        'updated_at' => 'date:' . DateTimeInterface::ATOM,
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
         'status' => 'int',
