@@ -85,7 +85,9 @@ final class CampaignsControllerTest extends TestCase
     {
         $adPath = base_path('tests/mock/980x120.png');
         $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
+        $filesystemMock->method('get')->willReturnCallback(function ($fileName) use ($adPath) {
+            return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName ? file_get_contents($adPath) : null;
+        });
         $filesystemMock->method('path')->willReturn($adPath);
         Storage::shouldReceive('disk')->andReturn($filesystemMock);
         $this->createUser();
@@ -109,6 +111,9 @@ final class CampaignsControllerTest extends TestCase
             'without name' => [$this->getCampaignData(['ads' => [$this->getBannerData([], 'name')]])],
             'with invalid name type' => [$this->getCampaignData(['ads' => [$this->getBannerData(['name' => 1])]])],
             'with empty name' => [$this->getCampaignData(['ads' => [$this->getBannerData(['name' => ''])]])],
+            'with not existing name' => [$this->getCampaignData(['ads' => [$this->getBannerData([
+                'url' => 'http://localhost:8010/upload-preview/image/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png',
+            ])]])],
             'without url' => [$this->getCampaignData(['ads' => [$this->getBannerData([], 'url')]])],
             'with empty url' => [$this->getCampaignData(['ads' => [$this->getBannerData(['url' => ''])]])],
             'with invalid url type' => [$this->getCampaignData(['ads' => [$this->getBannerData(['url' => 1])]])],
