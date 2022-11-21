@@ -39,25 +39,20 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OptionsController extends Controller
 {
-    private ConfigurationRepository $optionsRepository;
-    private ClassifierExternalRepository $classifierRepository;
-
     public function __construct(
-        ConfigurationRepository $optionsRepository,
-        ClassifierExternalRepository $classifierRepository
+        private readonly ConfigurationRepository $optionsRepository,
+        private readonly ClassifierExternalRepository $classifierRepository,
     ) {
-        $this->optionsRepository = $optionsRepository;
-        $this->classifierRepository = $classifierRepository;
     }
 
     public function banners(): JsonResponse
     {
         return self::json(
             [
-                'upload_limit_image' => config('app.upload_limit_image'),
-                'upload_limit_model' => config('app.upload_limit_model'),
-                'upload_limit_video' => config('app.upload_limit_video'),
-                'upload_limit_zip' => config('app.upload_limit_zip'),
+                'uploadLimitImage' => config('app.upload_limit_image'),
+                'uploadLimitModel' => config('app.upload_limit_model'),
+                'uploadLimitVideo' => config('app.upload_limit_video'),
+                'uploadLimitZip' => config('app.upload_limit_zip'),
             ]
         );
     }
@@ -66,9 +61,9 @@ class OptionsController extends Controller
     {
         return self::json(
             [
-                'min_budget' => config('app.campaign_min_budget'),
-                'min_cpm' => config('app.campaign_min_cpm'),
-                'min_cpa' => config('app.campaign_min_cpa'),
+                'minBudget' => config('app.campaign_min_budget'),
+                'minCpm' => config('app.campaign_min_cpm'),
+                'minCpa' => config('app.campaign_min_cpa'),
             ]
         );
     }

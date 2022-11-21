@@ -58,8 +58,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('invoices', [InvoicesController::class, 'browse']);
         Route::post('invoices', [InvoicesController::class, 'add']);
 
-        Route::get('options/banners', [OptionsController::class, 'banners']);
-        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
         Route::get('options/sites', [OptionsController::class, 'sites']);
         Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
@@ -176,6 +174,19 @@ Route::middleware([
         Route::get('campaigns', [ApiCampaignsController::class, 'fetchCampaigns']);
     });
 
+Route::middleware([
+    Kernel::ADVERTISER_JWT_ACCESS,
+    Kernel::JSON_API_NO_TRANSFORM,
+    'scope:' . ScopeType::CAMPAIGN_READ,
+])
+    ->prefix('v2')
+    ->group(function () {
+        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
+        Route::get('options/campaigns/media', [OptionsController::class, 'media']);
+        Route::get('options/campaigns/media/{medium}', [OptionsController::class, 'medium']);
+        Route::get('options/campaigns/media/{medium}/vendors', [OptionsController::class, 'vendors']);
+    });
+
 Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(
     function () {
         Route::post('sites/domain/validate', [SitesController::class, 'verifyDomain']);
@@ -211,6 +222,8 @@ Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(
     function () {
+        Route::get('options/banners', [OptionsController::class, 'banners']);
+        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::get('options/campaigns/media', [OptionsController::class, 'media']);
         Route::get('options/campaigns/media/{medium}', [OptionsController::class, 'medium']);
         Route::get('options/campaigns/media/{medium}/vendors', [OptionsController::class, 'vendors']);
