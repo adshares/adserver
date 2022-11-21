@@ -68,6 +68,7 @@ final class CampaignsControllerTest extends TestCase
     {
         $adPath = base_path('tests/mock/980x120.png');
         $filesystemMock = self::createMock(FilesystemAdapter::class);
+        $filesystemMock->method('exists')->willReturn(true);
         $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
         $filesystemMock->method('path')->willReturn($adPath);
         Storage::shouldReceive('disk')->andReturn($filesystemMock);
@@ -85,6 +86,9 @@ final class CampaignsControllerTest extends TestCase
     {
         $adPath = base_path('tests/mock/980x120.png');
         $filesystemMock = self::createMock(FilesystemAdapter::class);
+        $filesystemMock->method('exists')->willReturn(function ($fileName) {
+            return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName;
+        });
         $filesystemMock->method('get')->willReturnCallback(function ($fileName) use ($adPath) {
             return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName ? file_get_contents($adPath) : null;
         });
