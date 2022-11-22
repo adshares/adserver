@@ -115,6 +115,11 @@ class CampaignRepository
         DB::beginTransaction();
 
         try {
+            if (Campaign::STATUS_INACTIVE !== $campaign->status) {
+                $campaign->status = Campaign::STATUS_INACTIVE;
+                $this->save($campaign);
+            }
+            $campaign->conversions()->delete();
             $campaign->delete();
             foreach ($campaign->banners as $banner) {
                 $banner->classifications()->delete();

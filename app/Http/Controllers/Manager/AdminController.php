@@ -191,7 +191,6 @@ class AdminController extends Controller
         try {
             $campaigns = $campaignRepository->findByUserId($userId);
             foreach ($campaigns as $campaign) {
-                $campaign->conversions()->delete();
                 $campaignRepository->delete($campaign);
             }
             BidStrategy::deleteByUserId($userId);

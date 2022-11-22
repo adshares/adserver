@@ -538,12 +538,6 @@ class CampaignsController extends Controller
     public function delete(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-
-        if ($campaign->status !== Campaign::STATUS_INACTIVE) {
-            $campaign->status = Campaign::STATUS_INACTIVE;
-            $this->campaignRepository->save($campaign);
-        }
-
         $this->campaignRepository->delete($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);

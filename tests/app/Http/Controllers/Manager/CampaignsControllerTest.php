@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
@@ -657,9 +658,6 @@ final class CampaignsControllerTest extends TestCase
         $this->assertEquals($campaign->time_start, $info['dateStart']);
         $this->assertEquals($campaign->time_end, $info['dateEnd']);
 
-//        $cloned['classificationStatus']
-//        $cloned['classificationTags']
-
         $this->assertEmpty($cloned['conversions']);
         $this->assertEmpty($cloned['classifications']);
         $this->assertEmpty($cloned['ads']);
@@ -823,6 +821,30 @@ final class CampaignsControllerTest extends TestCase
             ['campaign' => ['basic_information' => ['medium' => 'invalid']]]
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDelete(): void
+    {
+        $user = $this->createUser();
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user->id,
+        ]);
+        $conversion = ConversionDefinition::factory()->create(['campaign_id' => $campaign->id]);
+        $banner = Banner::factory()->create([
+            'campaign_id' => $campaign->id,
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+        $bannerClassification = $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
+
+        $response = $this->delete(self::URI . '/' . $campaign->id);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertTrue($campaign->refresh()->trashed());
+        self::assertTrue($conversion->refresh()->trashed());
+        self::assertTrue($banner->refresh()->trashed());
+        self::assertEquals(Campaign::STATUS_INACTIVE, $campaign->status);
+        self::assertDatabaseMissing(BannerClassification::class, ['id' => $bannerClassification->id]);
     }
 
     private static function buildCampaignStatusUri(int $campaignId): string
