@@ -138,8 +138,6 @@ class MockDataCampaignsSeeder extends Seeder
                 'status' => Campaign::STATUS_ACTIVE,
                 'targeting_requires' => $cr->targeting_requires ?? null,
                 'targeting_excludes' => $cr->targeting_excludes ?? null,
-                'classification_status' => $cr->classification_status ?? 0,
-                'classification_tags' => $cr->classification_tags ?? null,
                 'bid_strategy_uuid' => $bidStrategy->uuid,
             ]
         );
@@ -224,7 +222,7 @@ class MockDataCampaignsSeeder extends Seeder
         //if(!mt_rand(0, 2))        return self::tankHTML();
         return '
         <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-        <html>
+        <html lang="en">
         <head>
             <meta http-equiv="content-type" content="text/html; charset=utf-8">
             <meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src \'self\' data: '
@@ -248,7 +246,7 @@ class MockDataCampaignsSeeder extends Seeder
             .$width
             .'" height="'
             .$height
-            .'" border="0">
+            .'" alt="" border="0">
             </a>
 
         </body>

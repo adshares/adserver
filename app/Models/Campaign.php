@@ -87,19 +87,14 @@ class Campaign extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 0;
-
     public const STATUS_INACTIVE = 1;
-
     public const STATUS_ACTIVE = 2;
-
     public const STATUS_SUSPENDED = 3;
 
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_SUSPENDED];
 
     public const CONVERSION_CLICK_NONE = 0;
-
     public const CONVERSION_CLICK_BASIC = 1;
-
     public const CONVERSION_CLICK_ADVANCED = 2;
 
     public static $rules = [
@@ -141,8 +136,6 @@ class Campaign extends Model
         'basic_information',
         'targeting_requires',
         'targeting_excludes',
-        'classification_status',
-        'classification_tags',
         'conversion_click',
         'bid_strategy_uuid',
     ];
@@ -153,8 +146,6 @@ class Campaign extends Model
         'created_at',
         'updated_at',
         'classifications',
-        'classification_status',
-        'classification_tags',
         'basic_information',
         'targeting',
         'ads',

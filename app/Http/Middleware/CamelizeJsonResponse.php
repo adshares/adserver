@@ -27,6 +27,11 @@ use Illuminate\Support\Str;
 
 class CamelizeJsonResponse
 {
+    private const FORBIDDEN_KEYS = [
+        'filtering',
+        'targeting',
+    ];
+
     public function handle($request, Closure $next)
     {
         $response = $next($request);
@@ -40,23 +45,26 @@ class CamelizeJsonResponse
 
     private function camelizeJsonResponse(JsonResponse $response): JsonResponse
     {
-        $content = $response->content();
+        $content = $response->getData(true);
 
-        $json = $this->camelizeJsonKeys($content);
-
-        $response->setContent($json);
+        if (is_array($content)) {
+            $json = $this->camelizeJsonKeys($content);
+            $response->setData($json);
+        }
 
         return $response;
     }
 
-    private function camelizeJsonKeys(string $json): string
+    private function camelizeJsonKeys(array $data): array
     {
-        return preg_replace_callback(
-            '/"([^"]+?)"\s*:/',
-            function (array $input): string {
-                return '"' . Str::camel($input[1]) . '":';
-            },
-            $json
-        );
+        $result = [];
+        foreach ($data as $key => $value) {
+            if (in_array($key, self::FORBIDDEN_KEYS, true)) {
+                $result[$key] = $value;
+            } else {
+                $result[Str::camel($key)] = is_array($value) ? $this->camelizeJsonKeys($value) : $value;
+            }
+        }
+        return $result;
     }
 }
