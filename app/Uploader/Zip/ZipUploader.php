@@ -89,6 +89,9 @@ class ZipUploader implements Uploader
 
     public static function content(string $fileName): string
     {
+        if (!Storage::disk(self::ZIP_DISK)->exists($fileName)) {
+            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
+        }
         $zip = new ZipToHtml(Storage::disk(self::ZIP_DISK)->path($fileName));
 
         return $zip->getHtml();

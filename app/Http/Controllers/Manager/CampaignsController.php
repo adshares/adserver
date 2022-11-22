@@ -51,6 +51,7 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -250,6 +251,8 @@ class CampaignsController extends Controller
                         $mimeType = 'text/plain';
                         break;
                 }
+            } catch (FileNotFoundException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage());
             } catch (RuntimeException $exception) {
                 Log::debug(
                     sprintf(

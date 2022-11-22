@@ -27,6 +27,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -86,12 +87,13 @@ final class ModelUploaderTest extends TestCase
 
     public function testRemove(): void
     {
-        $file = UploadedFile::fake()->create('exists');
-        Storage::disk(self::DISK)->put($file->getClientOriginalName(), $file);
+        Storage::disk(self::DISK)->put('exists', 'content');
         $request = self::createMock(Request::class);
         $uploader = new ModelUploader($request);
 
-        self::assertNull($uploader->removeTemporaryFile('exists'));
+        $uploader->removeTemporaryFile('exists');
+
+        self::assertFalse(Storage::disk(self::DISK)->exists('exists'));
     }
 
     public function testRemoveQuietError(): void
@@ -99,6 +101,15 @@ final class ModelUploaderTest extends TestCase
         $request = self::createMock(Request::class);
         $uploader = new ModelUploader($request);
 
-        self::assertNull($uploader->removeTemporaryFile('not_exist'));
+        self::expectNotToPerformAssertions();
+
+        $uploader->removeTemporaryFile('not_exist');
+    }
+
+    public function testContentWhenFileMissing(): void
+    {
+        self::expectException(FileNotFoundException::class);
+
+        ModelUploader::content('a.glb');
     }
 }
