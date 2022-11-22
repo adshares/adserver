@@ -172,6 +172,8 @@ Route::middleware([
     ->group(function () {
         Route::get('campaigns/{id}', [ApiCampaignsController::class, 'fetchCampaignById']);
         Route::get('campaigns', [ApiCampaignsController::class, 'fetchCampaigns']);
+        Route::post('campaigns', [CampaignsController::class, 'add']);
+        Route::post('campaigns/banner', [CampaignsController::class, 'upload']);
     });
 
 Route::middleware([
