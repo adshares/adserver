@@ -25,7 +25,10 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class EloquentCampaignRepository implements CampaignRepository
 {
@@ -45,11 +48,12 @@ class EloquentCampaignRepository implements CampaignRepository
                 $banner->classifications()->delete();
             }
             $campaign->banners()->delete();
-        } catch (\Exception $ex) {
+            DB::commit();
+        } catch (Throwable $throwable) {
             DB::rollBack();
-            throw $ex;
+            Log::error(sprintf('Campaign deletion failed (%s)', $throwable->getMessage()));
+            throw new RuntimeException('Campaign deletion failed');
         }
-        DB::commit();
     }
 
     public function fetchCampaignById(int $id): Campaign

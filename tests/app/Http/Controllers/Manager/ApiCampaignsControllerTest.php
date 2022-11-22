@@ -28,7 +28,9 @@ use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\ScopeType;
+use Illuminate\Support\Facades\DB;
 use Laravel\Passport\Passport;
+use PDOException;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ApiCampaignsControllerTest extends TestCase
@@ -118,6 +120,22 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertTrue($banner->refresh()->trashed());
         self::assertEquals(Campaign::STATUS_INACTIVE, $campaign->status);
         self::assertDatabaseMissing(BannerClassification::class, ['id' => $bannerClassification->id]);
+    }
+
+    public function testDeleteCampaignByIdFail(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $user = $this->setUpUser();
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->delete(self::buildUriCampaign($campaign->id));
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testFetchCampaignById(): void
