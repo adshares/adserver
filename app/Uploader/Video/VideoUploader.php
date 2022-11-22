@@ -105,11 +105,18 @@ class VideoUploader implements Uploader
 
     public static function content(string $fileName): string
     {
-        return Storage::disk(self::VIDEO_DISK)->get($fileName);
+        $content = Storage::disk(self::VIDEO_DISK)->get($fileName);
+        if (null === $content) {
+            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
+        }
+        return $content;
     }
 
     public static function contentMimeType(string $fileName): string
     {
+        if (!Storage::disk(self::VIDEO_DISK)->exists($fileName)) {
+            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
+        }
         $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
 
         return mime_content_type($path);

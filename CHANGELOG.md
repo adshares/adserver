@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changing network host state after incoming broadcast
 - Return default AdPanel's title if not set
 - Do not transform campaign's targeting
+- Campaign validation when files are missing
 
 ## [2.1.1] - 2022-10-04
 ### Added
