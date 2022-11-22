@@ -52,6 +52,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
 
         Route::get('ref-links', [RefLinksController::class, 'browse']);
         Route::post('ref-links', [RefLinksController::class, 'add']);
+        Route::delete('ref-links/{refLinkId}', [RefLinksController::class, 'delete']);
         Route::get('invoices', [InvoicesController::class, 'browse']);
         Route::post('invoices', [InvoicesController::class, 'add']);
 

@@ -29,6 +29,7 @@ use Adshares\Ads\Response\GetBroadcastResponse;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Config\AppMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -59,6 +60,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
         $this->assertNotNull($host);
         $this->assertEquals('https://app.example.com/', $host->host);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     public function testUpdatingHosts(): void
@@ -72,6 +74,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
         $this->assertNotNull($host);
         $this->assertEquals('https://app.example.com/', $host->host);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     public function testRestoringHosts(): void
@@ -91,9 +94,10 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
         $this->assertNotNull($host);
         $this->assertEquals('https://app.example.com/', $host->host);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
-    public function testDeletingOldHosts(): void
+    public function testMarkingOldHosts(): void
     {
         $this->setupAdsClient();
         $this->setupDemandClientInfo(self::getInfoData());
@@ -105,6 +109,31 @@ class AdsFetchHostsTest extends ConsoleTestCase
                 'last_broadcast' => new DateTimeImmutable('-3 days')
             ]
         );
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+
+        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
+        $this->assertNotNull($host);
+        $this->assertEquals('https://app.example.com/', $host->host);
+        self::assertDatabaseHas(NetworkHost::class, [
+            'address' => '0001-00000003-AB0C',
+            'status' => HostStatus::Failure,
+        ]);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
+    }
+
+    public function testDeletingOldHosts(): void
+    {
+        $this->setupAdsClient();
+        $this->setupDemandClientInfo(self::getInfoData());
+
+        NetworkHost::factory()->create(
+            [
+                'address' => '0001-00000003-AB0C',
+                'host' => 'https://two.example.com/',
+                'last_broadcast' => new DateTimeImmutable('-10 days')
+            ]
+        );
         NetworkHost::factory()->create(['address' => '0001-00000002-BB2D', 'host' => 'https://app.example.com/']);
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
@@ -113,6 +142,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $this->assertNotNull($host);
         $this->assertEquals('https://app.example.com/', $host->host);
         $this->assertNull(NetworkHost::fetchByAddress('0001-00000003-AB0C'));
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     public function testFetchingHostsDemandClientException(): void
@@ -122,6 +152,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
         self::assertDatabaseCount(NetworkHost::class, 0);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     public function testFetchingHostsDemandClientInvalidInfoModule(): void
@@ -131,6 +162,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
         self::assertDatabaseCount(NetworkHost::class, 0);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     public function invalidInfoDataProvider(): array
@@ -157,6 +189,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
                 'status' => HostStatus::Failure,
             ],
         );
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     public function invalidInfoProvider(): array
@@ -178,6 +211,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $this->setupFailingAdsClient($errorCode);
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     public function testBroadcastError(): void
@@ -190,6 +224,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $this->setupFailingAdsClient($errorCode);
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
     private function setupAdsClient(): void
@@ -361,10 +396,5 @@ class AdsFetchHostsTest extends ConsoleTestCase
         }
 
         return $data;
-    }
-
-    private static function getInfo(): Info
-    {
-        return Info::fromArray(self::getInfoData());
     }
 }

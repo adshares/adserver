@@ -21,16 +21,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-class AllowAutoCpm extends Migration
-{
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+return new class extends Migration {
+    public function up(): void
     {
         Schema::table('campaigns', function (Blueprint $table) {
             $table->bigInteger('max_cpm')->nullable()->default(null)->change();
@@ -38,16 +33,13 @@ class AllowAutoCpm extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
+        DB::update('UPDATE `campaigns` SET `max_cpm` = 0 WHERE `max_cpm` IS NULL');
+        DB::update('UPDATE `campaigns` SET `max_cpc` = 0 WHERE `max_cpc` IS NULL');
         Schema::table('campaigns', function (Blueprint $table) {
             $table->bigInteger('max_cpm')->nullable(false)->default(0)->change();
             $table->bigInteger('max_cpc')->nullable(false)->default(0)->change();
         });
     }
-}
+};

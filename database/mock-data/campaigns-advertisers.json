@@ -8,9 +8,7 @@
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 100000000000,
-        "budget_per_hour": 100000000000,
-        "classification_status": 2,
-        "classification_tags": "cats"
+        "budget_per_hour": 100000000000
       },
       {
         "code": "tea",
@@ -19,8 +17,6 @@
         "max_cpm": 100000000000,
         "max_cpc": 100000000000,
         "budget_per_hour": 100000000000,
-        "classification_status": 2,
-        "classification_tags": "tea",
         "conversion_definitions": [
           {
               "name" : "Conversion #1",
@@ -44,9 +40,7 @@
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 100000000000,
-        "budget_per_hour": 100000000000,
-        "classification_status": 2,
-        "classification_tags": "travel"
+        "budget_per_hour": 100000000000
       }
     ]
   },
@@ -59,9 +53,7 @@
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 100000000000,
-        "budget_per_hour": 100000000000,
-        "classification_status": 2,
-        "classification_tags": "advertising,blockchain,technology"
+        "budget_per_hour": 100000000000
       }
     ]
   },
@@ -74,9 +66,7 @@
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 100000000000,
-        "budget_per_hour": 100000000000,
-        "classification_status": 2,
-        "classification_tags": "advertising,blockchain,technology"
+        "budget_per_hour": 100000000000
       }
     ]
   }

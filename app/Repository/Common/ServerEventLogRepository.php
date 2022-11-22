@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,10 +21,20 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Adserver\Repository\Common;
 
-use Adshares\Common\Exception\Exception;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Illuminate\Pagination\CursorPaginator;
 
-final class UserLedgerException extends Exception
+interface ServerEventLogRepository
 {
+    public static function fetchServerEvents(
+        ?FilterCollection $filters = null,
+        ?int $perPage = null,
+    ): CursorPaginator;
+
+    public static function fetchLatestServerEvents(
+        ?FilterCollection $filters = null,
+        ?int $perPage = null,
+    ): CursorPaginator;
 }

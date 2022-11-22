@@ -173,13 +173,13 @@ class UserLedgerEntry extends Model
             ->join('users', 'users.id', 'user_ledger_entries.user_id')->whereNull('users.deleted_at');
     }
 
-    private static function queryForEntriesRelevantForWalletBalance()
+    public static function queryForEntriesRelevantForWalletBalance(): Builder
     {
         return self::queryForEntriesRelevantForBalance()
             ->whereNotIn('type', [self::TYPE_BONUS_INCOME, self::TYPE_BONUS_EXPENSE]);
     }
 
-    private static function queryForEntriesRelevantForBonusBalance()
+    public static function queryForEntriesRelevantForBonusBalance(): Builder
     {
         return self::queryForEntriesRelevantForBalance()
             ->whereIn('type', [self::TYPE_BONUS_INCOME, self::TYPE_BONUS_EXPENSE]);

@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -40,12 +41,14 @@ class JwtController extends Controller
         if (!$token = auth()->attempt($credentials)) {
             return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
+        $this->updateUserActivity();
 
         return $this->json(['token' => $token]);
     }
 
     public function logout(): Response
     {
+        $this->updateUserActivity();
         auth()->logout();
 
         return $this->json(['message' => 'Successfully logged out']);
@@ -53,6 +56,15 @@ class JwtController extends Controller
 
     public function refresh(): Response
     {
+        $this->updateUserActivity();
         return $this->json(['token' => auth()->refresh()]);
+    }
+
+    private function updateUserActivity(): void
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $user->last_active_at = now();
+        $user->save();
     }
 }

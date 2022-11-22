@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Mock\Client\DummyAdUserClient;
 
@@ -32,15 +33,11 @@ class UpdateTargetingOptionsTest extends ConsoleTestCase
 {
     public function testTargetingOptionsUpdate(): void
     {
-        $this->app->bind(
-            AdUser::class,
-            function () {
-                return new DummyAdUserClient();
-            }
-        );
+        $this->app->bind(AdUser::class, DummyAdUserClient::class);
 
         $this->artisan('ops:targeting-options:update')
             ->assertExitCode(0);
+        self::assertServerEventDispatched(ServerEventType::TargetingUpdated);
     }
 
     public function testLock(): void

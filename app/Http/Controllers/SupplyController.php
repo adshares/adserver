@@ -244,14 +244,6 @@ class SupplyController extends Controller
         try {
             $decodedQueryData = Utils::decodeZones($data);
             if (!isset($decodedQueryData['zones'])) {
-                $logData = [
-                    'decodedData' => $decodedQueryData,
-                    'request' => [
-                        'headers' => $request->headers->all(),
-                        'method' => $request->getRealMethod(),
-                    ],
-                ];
-                Log::error(sprintf('Error IT-103 (%s)', json_encode($logData)));
                 throw new UnprocessableEntityHttpException('Zones are required');
             }
             foreach ($decodedQueryData['zones'] as &$zone) {

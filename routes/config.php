@@ -26,13 +26,42 @@ use Adshares\Adserver\Http\Controllers\Manager\ServerMonitoringController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(function () {
+Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
     Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
     Route::patch('config/placeholders', [ServerConfigurationController::class, 'storePlaceholders']);
     Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
     Route::patch('config', [ServerConfigurationController::class, 'store']);
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 
-    Route::get('monitoring/{key}', [ServerMonitoringController::class, 'fetch']);
-    Route::patch('monitoring/hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
+    Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
+    Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
+
+    Route::post('users', [ServerMonitoringController::class, 'addUser']);
+    Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
+    Route::patch(
+        'users/{userId}/switchToModerator',
+        [ServerMonitoringController::class, 'switchUserToModerator']
+    );
+    Route::delete('users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
+
+    Route::get('wallet', [ServerMonitoringController::class, 'fetchWallet']);
+});
+
+Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
+    Route::get('hosts', [ServerMonitoringController::class, 'fetchHosts']);
+    Route::patch('hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
+
+    Route::get('users', [ServerMonitoringController::class, 'fetchUsers']);
+    Route::patch('users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
+    Route::patch('users/{userId}/confirm', [ServerMonitoringController::class, 'confirmUser']);
+    Route::patch('users/{userId}/denyAdvertising', [ServerMonitoringController::class, 'denyAdvertising']);
+    Route::patch('users/{userId}/denyPublishing', [ServerMonitoringController::class, 'denyPublishing']);
+    Route::patch('users/{userId}/grantAdvertising', [ServerMonitoringController::class, 'grantAdvertising']);
+    Route::patch('users/{userId}/grantPublishing', [ServerMonitoringController::class, 'grantPublishing']);
+    Route::patch('users/{userId}/switchToAgency', [ServerMonitoringController::class, 'switchUserToAgency']);
+    Route::patch(
+        'users/{userId}/switchToRegular',
+        [ServerMonitoringController::class, 'switchUserToRegular']
+    );
+    Route::patch('users/{userId}/unban', [ServerMonitoringController::class, 'unbanUser']);
 });

@@ -24,7 +24,9 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -112,6 +114,10 @@ class InventoryImporterCommand extends BaseCommand
                 );
             }
         }
+        ServerEvent::dispatch(ServerEventType::InventorySynchronized, [
+            'synchronizedHostCount' => $networkHostSuccessfulConnectionCount,
+            'allHostCount' => $networkHostCount,
+        ]);
 
         $this->info(
             sprintf(

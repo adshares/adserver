@@ -21,9 +21,10 @@
 
 namespace Adshares\Tests\Supply\Domain\ValueObject;
 
+use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Domain\ValueObject\Size;
-use PHPUnit\Framework\TestCase;
 
 final class SizeTest extends TestCase
 {
@@ -84,7 +85,11 @@ final class SizeTest extends TestCase
 
     public function testFindMatching(): void
     {
-        $sizes = array_keys(Size::SIZE_INFOS);
+        $sizes = [];
+        $formats = (new DummyConfigurationRepository())->fetchMedium()->getFormats();
+        foreach ($formats as $format) {
+            $sizes = array_merge($sizes, array_keys($format->getScopes()));
+        }
 
         $this->assertEmpty(Size::findMatchingWithSizes($sizes, 1, 1));
         $this->assertEmpty(Size::findMatchingWithSizes($sizes, 300, 0));

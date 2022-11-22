@@ -73,6 +73,9 @@ class AdminController extends Controller
         return new LicenseResponse($license);
     }
 
+    /**
+     * @deprecated
+     */
     public function getIndexUpdateTime(): JsonResponse
     {
         return self::json([
@@ -83,21 +86,14 @@ class AdminController extends Controller
 
     public function switchUserToModerator(int $userId): JsonResponse
     {
-        /** @var User $logged */
-        $logged = Auth::user();
-
-        if (!$logged->isAdmin()) {
-            return self::json([], Response::HTTP_FORBIDDEN);
-        }
-
         /** @var User $user */
         $user = User::find($userId);
         if (empty($user)) {
-            return self::json([], Response::HTTP_NOT_FOUND);
+            throw new NotFoundHttpException();
         }
 
         if ($user->isModerator()) {
-            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+            throw new UnprocessableEntityHttpException();
         }
 
         $user->is_moderator = true;
@@ -109,21 +105,14 @@ class AdminController extends Controller
 
     public function switchUserToAgency(int $userId): JsonResponse
     {
-        /** @var User $logged */
-        $logged = Auth::user();
-
-        if (!$logged->isModerator()) {
-            return self::json([], Response::HTTP_FORBIDDEN);
-        }
-
         /** @var User $user */
         $user = User::find($userId);
         if (empty($user)) {
-            return self::json([], Response::HTTP_NOT_FOUND);
+            throw new NotFoundHttpException();
         }
 
         if ($user->isAgency()) {
-            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+            throw new UnprocessableEntityHttpException();
         }
 
         $user->is_moderator = false;
@@ -138,18 +127,14 @@ class AdminController extends Controller
         /** @var User $logged */
         $logged = Auth::user();
 
-        if (!$logged->isModerator()) {
-            return self::json([], Response::HTTP_FORBIDDEN);
-        }
-
         /** @var User $user */
         $user = User::find($userId);
         if (empty($user)) {
-            return self::json([], Response::HTTP_NOT_FOUND);
+            throw new NotFoundHttpException();
         }
 
         if ($user->isModerator() && !$logged->isAdmin()) {
-            return self::json([], Response::HTTP_FORBIDDEN);
+            throw new HttpException(Response::HTTP_FORBIDDEN);
         }
 
         $user->is_moderator = false;

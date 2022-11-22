@@ -157,7 +157,7 @@ class RefLink extends Model
         return null === $this->refund_valid_until || (new Carbon($this->refund_valid_until))->isAfter(now());
     }
 
-    public static function fetchByUser(int $userId): Collection
+    public static function getRefLinkByUserBuilder(int $userId): Builder
     {
         return RefLink::select('*')
             ->selectSub(
@@ -178,8 +178,12 @@ class RefLink extends Model
                 },
                 'refunded'
             )
-            ->where('user_id', $userId)
-            ->get();
+            ->where('user_id', $userId);
+    }
+
+    public static function fetchByUser(int $userId): Collection
+    {
+        return self::getRefLinkByUserBuilder($userId)->get();
     }
 
     public static function fetchByToken(string $token, bool $withInactive = false): ?self

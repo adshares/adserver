@@ -19,33 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Middleware;
+declare(strict_types=1);
 
-use Illuminate\Foundation\Http\Middleware\TransformsRequest;
-use Illuminate\Support\Str;
+namespace Adshares\Adserver\Tests\Uploader\Video;
 
-class CamelizeResponse extends TransformsRequest
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Uploader\Video\VideoUploader;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
+
+final class VideoUploaderTest extends TestCase
 {
-    protected function cleanArray(array $data, $keyPrefix = '')
+    public function testContentWhenFileMissing(): void
     {
-        return collect($data)->mapWithKeys(
-            function ($value, $key) {
-                return $this->cleanValue($key, $value);
-            }
-        )->all();
+        self::expectException(FileNotFoundException::class);
+
+        VideoUploader::content('a.mp4');
     }
 
-    protected function cleanValue($key, $value)
+    public function testContentMimeTypeWhenFileMissing(): void
     {
-        if (is_array($value)) {
-            return $this->transform($key, $this->cleanArray($value));
-        }
+        self::expectException(FileNotFoundException::class);
 
-        return $this->transform($key, $value);
-    }
-
-    protected function transform($key, $value)
-    {
-        return [Str::camel($key) => $value];
+        VideoUploader::contentMimeType('a.mp4');
     }
 }

@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Models\Traits;
 use Adshares\Common\Exception\RuntimeException;
 
 /**
- * binhex columns
+ * json columns
  */
 trait JsonValue
 {
