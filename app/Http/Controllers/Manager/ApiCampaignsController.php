@@ -26,11 +26,20 @@ use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Resources\CampaignCollection;
 use Adshares\Adserver\Http\Resources\CampaignResource;
 use Adshares\Adserver\Repository\Advertiser\CampaignRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Symfony\Component\HttpFoundation\Response;
 
 class ApiCampaignsController extends Controller
 {
+    public function deleteCampaignById(int $id, CampaignRepository $campaignRepository): JsonResponse
+    {
+        $campaignRepository->deleteCampaignById($id);
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
     public function fetchCampaignById(int $id, CampaignRepository $campaignRepository): JsonResource
     {
         return new CampaignResource($campaignRepository->fetchCampaignById($id));

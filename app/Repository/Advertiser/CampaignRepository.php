@@ -28,6 +28,8 @@ use Illuminate\Pagination\CursorPaginator;
 
 interface CampaignRepository
 {
+    public function deleteCampaignById(int $id): void;
+
     public function fetchCampaignById(int $id): Campaign;
 
     public function fetchCampaigns(?int $perPage = null): CursorPaginator;

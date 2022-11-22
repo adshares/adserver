@@ -174,6 +174,7 @@ Route::middleware([
         Route::get('campaigns', [ApiCampaignsController::class, 'fetchCampaigns']);
         Route::post('campaigns', [CampaignsController::class, 'add']);
         Route::post('campaigns/banner', [CampaignsController::class, 'upload']);
+        Route::delete('campaigns/{id}', [ApiCampaignsController::class, 'deleteCampaignById']);
     });
 
 Route::middleware([

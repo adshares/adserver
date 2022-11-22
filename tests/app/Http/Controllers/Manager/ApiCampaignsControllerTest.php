@@ -21,7 +21,10 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\ScopeType;
@@ -92,6 +95,30 @@ final class ApiCampaignsControllerTest extends TestCase
             '*' => self::CAMPAIGN_DATA_STRUCTURE,
         ],
     ];
+
+    public function testDeleteCampaignById(): void
+    {
+        $user = $this->setUpUser();
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user->id,
+        ]);
+        $conversion = ConversionDefinition::factory()->create(['campaign_id' => $campaign->id]);
+        $banner = Banner::factory()->create([
+            'campaign_id' => $campaign->id,
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+        $bannerClassification = $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
+
+        $response = $this->delete(self::buildUriCampaign($campaign->id));
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertTrue($campaign->refresh()->trashed());
+        self::assertTrue($conversion->refresh()->trashed());
+        self::assertTrue($banner->refresh()->trashed());
+        self::assertEquals(Campaign::STATUS_INACTIVE, $campaign->status);
+        self::assertDatabaseMissing(BannerClassification::class, ['id' => $bannerClassification->id]);
+    }
 
     public function testFetchCampaignById(): void
     {

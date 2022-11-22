@@ -23,11 +23,35 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use Illuminate\Pagination\CursorPaginator;
 
 class EloquentCampaignRepository implements CampaignRepository
 {
+    public function deleteCampaignById(int $id): void
+    {
+        $campaign = $this->fetchCampaignById($id);
+
+        DB::beginTransaction();
+        try {
+            if (Campaign::STATUS_INACTIVE !== $campaign->status) {
+                $campaign->status = Campaign::STATUS_INACTIVE;
+                $campaign->save();
+            }
+            $campaign->conversions()->delete();
+            $campaign->delete();
+            foreach ($campaign->banners as $banner) {
+                $banner->classifications()->delete();
+            }
+            $campaign->banners()->delete();
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            throw $ex;
+        }
+        DB::commit();
+    }
+
     public function fetchCampaignById(int $id): Campaign
     {
         return Campaign::findOrFail($id);
@@ -35,10 +59,7 @@ class EloquentCampaignRepository implements CampaignRepository
 
     public function fetchCampaigns(?int $perPage = null): CursorPaginator
     {
-        $builder = Campaign::query();
-        $builder->with('conversions');
-
-        return $builder->orderBy('id')
+        return Campaign::query()->orderBy('id')
             ->tokenPaginate($perPage)
             ->withQueryString();
     }
