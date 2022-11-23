@@ -40,26 +40,24 @@ class BannerValidator
 
     public function validateBanner(array $banner): void
     {
-        foreach (['creative_type', 'creative_size', 'name', 'url'] as $field) {
-            if (!isset($banner[$field])) {
-                throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
-            }
-            if (!is_string($banner[$field]) || 0 === strlen($banner[$field])) {
-                throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
-            }
+        foreach (['creative_type', 'creative_size', 'name'] as $field) {
+            self::validateField($banner, $field);
+        }
+        $type = $banner['creative_type'];
+        if (Banner::TEXT_TYPE_DIRECT_LINK !== $type) {
+            self::validateField($banner, 'url');
         }
 
         if (null === $this->supportedScopesByTypes) {
             $this->initializeSupportedScopesByTypes();
         }
 
-        $type = $banner['creative_type'];
         if (!isset($this->supportedScopesByTypes[$type])) {
             throw new InvalidArgumentException(sprintf('Invalid banner type (%s)', $type));
         }
 
         $size = $banner['creative_size'];
-        if ($type === Banner::TEXT_TYPE_VIDEO) {
+        if (Banner::TEXT_TYPE_VIDEO === $type) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new InvalidArgumentException(sprintf('Invalid video size (%s)', $size));
             }
@@ -90,5 +88,15 @@ class BannerValidator
         }
 
         $this->supportedScopesByTypes = $supported;
+    }
+
+    private static function validateField(array $banner, string $field): void
+    {
+        if (!isset($banner[$field])) {
+            throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
+        }
+        if (!is_string($banner[$field]) || 0 === strlen($banner[$field])) {
+            throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
+        }
     }
 }
