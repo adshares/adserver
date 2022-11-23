@@ -97,12 +97,6 @@ class Campaign extends Model
     public const CONVERSION_CLICK_BASIC = 1;
     public const CONVERSION_CLICK_ADVANCED = 2;
 
-    public static $rules = [
-//        'name' => 'required|max:255',
-//        'landing_url' => 'required|max:1024',
-//        'basic_information.budget' => 'required:numeric|min:1',
-    ];
-
     protected $dates = [
         'deleted_at',
         'time_start',

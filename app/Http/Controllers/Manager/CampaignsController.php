@@ -123,8 +123,8 @@ class CampaignsController extends Controller
     {
         $exchangeRate = $this->fetchExchangeRateOrFail();
 
-        $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
+        $this->validateCampaignInput($input);
         try {
             $input = $this->processTargeting($input);
         } catch (InvalidArgumentException $exception) {
@@ -308,16 +308,8 @@ class CampaignsController extends Controller
     {
         $exchangeRate = $this->fetchExchangeRateOrFail();
 
-        $this->validateRequestObject(
-            $request,
-            'campaign',
-            array_intersect_key(
-                Campaign::$rules,
-                $request->input('campaign')
-            )
-        );
-
         $input = $request->input('campaign');
+        $this->validateCampaignInput($input);
         try {
             $input = $this->processTargeting($input);
         } catch (InvalidArgumentException $exception) {
@@ -665,5 +657,15 @@ class CampaignsController extends Controller
             throw new ServiceUnavailableHttpException();
         }
         return $exchangeRate;
+    }
+
+    private function validateCampaignInput(mixed $input): void
+    {
+        if (null === $input) {
+            throw new UnprocessableEntityHttpException('Field `campaign` is required');
+        }
+        if (!is_array($input)) {
+            throw new UnprocessableEntityHttpException('Field `campaign` must be an array');
+        }
     }
 }
