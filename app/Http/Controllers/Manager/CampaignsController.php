@@ -471,7 +471,7 @@ class CampaignsController extends Controller
                         [
                             'errors' => $errors,
                         ],
-                        JsonResponse::HTTP_BAD_REQUEST
+                        JsonResponse::HTTP_UNPROCESSABLE_ENTITY
                     )
                 );
             }
@@ -481,7 +481,7 @@ class CampaignsController extends Controller
     public function changeStatus(Campaign $campaign, Request $request): JsonResponse
     {
         if (!$request->has('campaign.status')) {
-            throw new InvalidArgumentException('No status provided');
+            throw new UnprocessableEntityHttpException('No status provided');
         }
 
         $status = (int)$request->input('campaign.status');
@@ -494,7 +494,7 @@ class CampaignsController extends Controller
         $exchangeRate = $this->fetchExchangeRateOrFail();
 
         if (!$campaign->changeStatus($status, $exchangeRate)) {
-            return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
+            throw new UnprocessableEntityHttpException(sprintf('Cannot set status to {%d}', $status));
         }
 
         $this->campaignRepository->update($campaign);
@@ -525,7 +525,7 @@ class CampaignsController extends Controller
         $banner = $campaign->banners()->where('id', $bannerId)->first();
 
         if (Banner::STATUS_REJECTED === $banner->status) {
-            throw new BadRequestHttpException('Status cannot be changed. Banner was rejected.');
+            throw new UnprocessableEntityHttpException('Status cannot be changed. Banner was rejected.');
         }
 
         $banner->status = $status;

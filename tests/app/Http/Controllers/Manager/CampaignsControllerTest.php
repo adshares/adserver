@@ -266,6 +266,26 @@ final class CampaignsControllerTest extends TestCase
         $response->assertStatus($expectedResponseCode);
     }
 
+    public function testCampaignStatusChangeWhileMissingStatusField(): void
+    {
+        $user = $this->createUser();
+
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'user_id' => $user->id,
+            'budget' => (int)(10 * 1e9),
+        ]);
+
+        $response = $this->putJson(
+            self::buildCampaignStatusUri($campaign->id),
+            [
+                'campaign' => ['stat' => Campaign::STATUS_ACTIVE],
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     /** @dataProvider campaignStatusChangeBlockadesProvider */
     public function testCampaignStatusChangeBlockades(Currency $currency, int $expectedBlockade): void
     {
@@ -423,7 +443,7 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenStatusChange(): array
     {
         return [
-            'insufficient funds' => [(int)(300 * 1e9), Response::HTTP_BAD_REQUEST],
+            'insufficient funds' => [(int)(300 * 1e9), Response::HTTP_UNPROCESSABLE_ENTITY],
             'sufficient funds' => [(int)(10 * 1e9), Response::HTTP_NO_CONTENT],
         ];
     }
@@ -438,8 +458,8 @@ final class CampaignsControllerTest extends TestCase
             [Banner::STATUS_ACTIVE, Banner::STATUS_INACTIVE, Banner::STATUS_INACTIVE, Response::HTTP_NO_CONTENT],
             [Banner::STATUS_INACTIVE, Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Response::HTTP_NO_CONTENT],
             [Banner::STATUS_ACTIVE, $nonExistentBannerStatus, Banner::STATUS_INACTIVE, Response::HTTP_NO_CONTENT],
-            [Banner::STATUS_REJECTED, Banner::STATUS_ACTIVE, Banner::STATUS_REJECTED, Response::HTTP_BAD_REQUEST],
-            [Banner::STATUS_REJECTED, Banner::STATUS_INACTIVE, Banner::STATUS_REJECTED, Response::HTTP_BAD_REQUEST],
+            [Banner::STATUS_REJECTED, Banner::STATUS_ACTIVE, Banner::STATUS_REJECTED, Response::HTTP_UNPROCESSABLE_ENTITY],
+            [Banner::STATUS_REJECTED, Banner::STATUS_INACTIVE, Banner::STATUS_REJECTED, Response::HTTP_UNPROCESSABLE_ENTITY],
         ];
     }
 
