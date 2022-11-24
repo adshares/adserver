@@ -87,9 +87,11 @@ class CampaignRepository
      * @param array $banners
      * @param array $conversions
      *
+     * @return Campaign
+     *
      * @throws RuntimeException
      */
-    public function save(Campaign $campaign, array $banners = [], array $conversions = []): void
+    public function save(Campaign $campaign, array $banners = [], array $conversions = []): Campaign
     {
         DB::beginTransaction();
 
@@ -113,6 +115,8 @@ class CampaignRepository
             Log::error(sprintf('Campaign save failed (%s)', $throwable->getMessage()));
             throw new RuntimeException('Campaign save failed');
         }
+
+        return $campaign;
     }
 
     public function delete(Campaign $campaign): void

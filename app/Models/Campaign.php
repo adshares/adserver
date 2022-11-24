@@ -118,18 +118,19 @@ class Campaign extends Model
 
     protected $fillable = [
         'landing_url',
-        'require_count',
         'user_id',
         'name',
         'status',
         'budget',
         'medium',
-        'integration',
+        'vendor',
         'max_cpc',
         'max_cpm',
         'basic_information',
         'targeting_requires',
         'targeting_excludes',
+        'time_start',
+        'time_end',
         'conversion_click',
         'bid_strategy_uuid',
     ];

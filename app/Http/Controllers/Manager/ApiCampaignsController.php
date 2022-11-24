@@ -27,24 +27,38 @@ use Adshares\Adserver\Http\Resources\CampaignCollection;
 use Adshares\Adserver\Http\Resources\CampaignResource;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Demand\BannerCreator;
+use Adshares\Adserver\Services\Demand\CampaignCreator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ApiCampaignsController extends Controller
 {
     public function __construct(
         private readonly BannerCreator $bannerCreator,
+        private readonly CampaignCreator $campaignCreator,
         private readonly CampaignRepository $campaignRepository,
     ) {
     }
 
     public function addCampaign(Request $request): JsonResponse
     {
+        $campaign = $this->campaignCreator->prepareCampaignFromInput($request->input());
+        $ads = $request->input('ads');//TODO validate is array
+        $banners = $this->bannerCreator->prepareBannersFromInput($ads, $campaign);
+        $campaign->user_id = Auth::user()->id;
+        $campaign = $this->campaignRepository->save($campaign, $banners);
 
-        throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);//TODO implement
+        return (new CampaignResource($campaign))
+            ->response()
+            ->header(
+                'Location',
+                route('api.campaigns.fetch', [
+                    'id' => $campaign->id,
+                ])
+            );
     }
 
     public function deleteCampaignById(int $id): JsonResponse
