@@ -29,16 +29,6 @@ use Adshares\Mock\Repository\DummyConfigurationRepository;
 
 final class MimeTypesValidatorTest extends TestCase
 {
-    public function testUnknownMedium(): void
-    {
-        $banner = new Banner();
-        $banner->creative_mime = 'image/png';
-        $banner->creative_type = Banner::TEXT_TYPE_IMAGE;
-
-        self::expectException(InvalidArgumentException::class);
-        self::validator()->validateMimeTypes([$banner], 'unknown');
-    }
-
     public function testUnsupportedMimeType(): void
     {
         $banner = new Banner();
@@ -61,6 +51,6 @@ final class MimeTypesValidatorTest extends TestCase
 
     private static function validator(): MimeTypesValidator
     {
-        return new MimeTypesValidator((new DummyConfigurationRepository())->fetchTaxonomy());
+        return new MimeTypesValidator((new DummyConfigurationRepository())->fetchMedium());
     }
 }

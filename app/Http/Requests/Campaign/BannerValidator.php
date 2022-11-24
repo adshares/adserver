@@ -30,18 +30,27 @@ use Adshares\Supply\Domain\ValueObject\Size;
 
 class BannerValidator
 {
-    private Medium $medium;
+    private const NAME_MAXIMAL_LENGTH = 255;
+    private const TYPE_MAXIMAL_LENGTH = 32;
+    private const SIZE_MAXIMAL_LENGTH = 16;
+
     private ?array $supportedScopesByTypes = null;
 
-    public function __construct(Medium $medium)
+    public function __construct(private readonly Medium $medium)
     {
-        $this->medium = $medium;
     }
 
     public function validateBanner(array $banner): void
     {
-        foreach (['creative_type', 'creative_size', 'name'] as $field) {
+        foreach (
+            [
+                'creative_type' => self::TYPE_MAXIMAL_LENGTH,
+                'creative_size' => self::SIZE_MAXIMAL_LENGTH,
+                'name' => self::NAME_MAXIMAL_LENGTH,
+            ] as $field => $maxLength
+        ) {
             self::validateField($banner, $field);
+            $this->validateFieldMaximumLength($banner[$field], $maxLength, $field);
         }
         $type = $banner['creative_type'];
         if (Banner::TEXT_TYPE_DIRECT_LINK !== $type) {
@@ -98,5 +107,21 @@ class BannerValidator
         if (!is_string($banner[$field]) || 0 === strlen($banner[$field])) {
             throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
         }
+    }
+
+    private static function validateFieldMaximumLength(string $value, int $maxLength, string $field): void
+    {
+        if (strlen($value) > $maxLength) {
+            throw new InvalidArgumentException(
+                sprintf('Field `%s` must have at most %d characters', $field, $maxLength)
+            );
+        }
+    }
+
+    public static function validateName($name): void
+    {
+        $field = 'name';
+        self::validateField([$field => $name], $field);
+        self::validateFieldMaximumLength($name, self::NAME_MAXIMAL_LENGTH, $field);
     }
 }

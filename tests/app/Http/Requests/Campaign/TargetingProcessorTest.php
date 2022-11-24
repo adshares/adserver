@@ -23,10 +23,9 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Dto\TaxonomyV2;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Mock\Client\DummyAdUserClient;
 
 final class TargetingProcessorTest extends TestCase
@@ -48,14 +47,6 @@ final class TargetingProcessorTest extends TestCase
         $result = $targetingProcessor->processTargeting($targetingValid);
 
         $this->assertEquals($targetingValid, $result);
-    }
-
-    public function testWhileMediumNameInvalid(): void
-    {
-        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
-
-        $this->expectException(InvalidArgumentException::class);
-        $targetingProcessor->processTargeting($this->getTargetingValid(), 'invalid');
     }
 
     /**
@@ -177,8 +168,8 @@ final class TargetingProcessorTest extends TestCase
         );
     }
 
-    private function getTargetingSchema(): TaxonomyV2
+    private function getTargetingSchema(): Medium
     {
-        return $this->app->make(ConfigurationRepository::class)->fetchTaxonomy();
+        return $this->app->make(ConfigurationRepository::class)->fetchMedium();
     }
 }

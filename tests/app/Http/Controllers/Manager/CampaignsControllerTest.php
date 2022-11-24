@@ -106,117 +106,64 @@ final class CampaignsControllerTest extends TestCase
     {
         return [
             'missing campaign field' => [[$this->getCampaignData()]],
-            'invalid campaign type' => [[
-                'campaign' => 'set',
-            ]],
+            'invalid campaign type' => [['campaign' => 'set']],
             'ad without size' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(
-                            ['ads' => [$this->getBannerData([], 'creativeSize')]]
-                        )
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeSize')]])]
             ],
             'ad with empty size' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(
-                            ['ads' => [$this->getBannerData(['creativeSize' => ''])]]
-                        )
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => ''])]])]
             ],
-            'ad with invalid size type' =>
-                [['campaign' => [$this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => 1])]])]]],
+            'ad with invalid size type' => [
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => 1])]])]
+            ],
             'ad without type' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(
-                            ['ads' => [$this->getBannerData([], 'creativeType')]]
-                        )
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeType')]])]
             ],
             'ad with empty type' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(
-                            ['ads' => [$this->getBannerData(['creativeType' => ''])]]
-                        )
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => ''])]])]
             ],
-            'ad with invalid type' =>
-                [['campaign' => [$this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => 1])]])]]],
+            'ad with invalid type' => [
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => 1])]])]
+            ],
             'ad without name' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(['ads' => [$this->getBannerData([], 'name')]])
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'name')]])]
             ],
             'ad with invalid name type' => [
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['name' => 1])]])]
+            ],
+            'ad with invalid name length' => [
                 [
-                    'campaign' => [
-                        $this->getCampaignData(
-                            ['ads' => [$this->getBannerData(['name' => 1])]]
-                        )
-                    ]
+                    'campaign' => $this->getCampaignData(
+                        ['ads' => [$this->getBannerData(['name' => str_repeat('n', 256)])]]
+                    )
                 ]
             ],
             'ad with empty name' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(
-                            ['ads' => [$this->getBannerData(['name' => ''])]]
-                        )
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['name' => ''])]])]
             ],
             'ad with not existing name' => [
                 [
-                    'campaign' => [
-                        $this->getCampaignData([
-                            'ads' => [
-                                $this->getBannerData([
-                                    'url' => 'http://localhost:8010'
-                                        . '/upload-preview/image/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png',
-                                ])
-                            ]
-                        ])
-                    ]
+                    'campaign' => $this->getCampaignData([
+                        'ads' => [
+                            $this->getBannerData([
+                                'url' => 'http://localhost:8010'
+                                    . '/upload-preview/image/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png',
+                            ])
+                        ]
+                    ])
                 ]
             ],
             'ad without url' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(['ads' => [$this->getBannerData([], 'url')]])
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'url')]])]
             ],
             'ad with empty url' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(['ads' => [$this->getBannerData(['url' => ''])]])
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['url' => ''])]])]
             ],
             'ad with invalid url type' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(
-                            ['ads' => [$this->getBannerData(['url' => 1])]]
-                        )
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['url' => 1])]])]
             ],
             'ad size not in taxonomy' => [
-                [
-                    'campaign' => [
-                        $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => '600x600'])]])
-                    ]
-                ]
+                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => '600x600'])]])]
             ],
         ];
     }
@@ -298,10 +245,6 @@ final class CampaignsControllerTest extends TestCase
                 'dateEnd' => '2018-12-30T18:42:00+01:00',
             ],
             'targeting' => [
-                'requires' => [],
-                'excludes' => [],
-            ],
-            'targetingArray' => [
                 'requires' => [],
                 'excludes' => [],
             ],
@@ -551,18 +494,23 @@ final class CampaignsControllerTest extends TestCase
             [Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Response::HTTP_NO_CONTENT],
             [Banner::STATUS_ACTIVE, Banner::STATUS_INACTIVE, Banner::STATUS_INACTIVE, Response::HTTP_NO_CONTENT],
             [Banner::STATUS_INACTIVE, Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Response::HTTP_NO_CONTENT],
-            [Banner::STATUS_ACTIVE, $nonExistentBannerStatus, Banner::STATUS_INACTIVE, Response::HTTP_NO_CONTENT],
+            [
+                Banner::STATUS_ACTIVE,
+                $nonExistentBannerStatus,
+                Banner::STATUS_ACTIVE,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
             [
                 Banner::STATUS_REJECTED,
                 Banner::STATUS_ACTIVE,
                 Banner::STATUS_REJECTED,
-                Response::HTTP_UNPROCESSABLE_ENTITY
+                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             [
                 Banner::STATUS_REJECTED,
                 Banner::STATUS_INACTIVE,
                 Banner::STATUS_REJECTED,
-                Response::HTTP_UNPROCESSABLE_ENTITY
+                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
         ];
     }

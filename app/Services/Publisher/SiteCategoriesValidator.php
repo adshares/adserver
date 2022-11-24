@@ -29,13 +29,10 @@ use Adshares\Common\Exception\InvalidArgumentException;
 
 class SiteCategoriesValidator
 {
-    private ConfigurationRepository $configurationRepository;
-
     private TargetingProcessor $targetingProcessor;
 
-    public function __construct(ConfigurationRepository $configurationRepository)
+    public function __construct(private readonly ConfigurationRepository $configurationRepository)
     {
-        $this->configurationRepository = $configurationRepository;
     }
 
     public function processCategories($categories, $medium, $vendor): array
@@ -51,10 +48,12 @@ class SiteCategoriesValidator
         }
 
         if (!isset($this->targetingProcessor)) {
-            $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
+            $this->targetingProcessor = new TargetingProcessor(
+                $this->configurationRepository->fetchMedium($medium, $vendor)
+            );
         }
 
-        if (!$this->targetingProcessor->checkIfPathExist(['site', 'category'], $medium, $vendor)) {
+        if (!$this->targetingProcessor->checkIfPathExist(['site', 'category'])) {
             return ['unknown'];
         }
 
@@ -64,14 +63,10 @@ class SiteCategoriesValidator
         if (!is_array($categories)) {
             throw new InvalidArgumentException('Field `categories` must be an array.');
         }
-        $targeting = $this->targetingProcessor->processTargeting(
-            ['site' => ['category' => $categories]],
-            $medium,
-            $vendor
-        );
+        $targeting = $this->targetingProcessor->processTargeting(['site' => ['category' => $categories]]);
 
         if (!$targeting) {
-            throw new InvalidArgumentException('Field categories[] must match targeting taxonomy');
+            throw new InvalidArgumentException('Field `categories` must match targeting taxonomy');
         }
 
         return $targeting['site']['category'];

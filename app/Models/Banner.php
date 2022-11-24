@@ -51,6 +51,7 @@ use Illuminate\Support\Facades\Cache;
  * @property string name
  * @property int status
  * @property Campaign campaign
+ * @property int campaign_id
  * @property BannerClassification[] classifications
  * @property string url
  * @property string|null cdn_url

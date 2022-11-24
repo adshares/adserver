@@ -23,35 +23,28 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
-use Adshares\Common\Application\Dto\TaxonomyV2;
-use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 
 class TargetingProcessor
 {
     private array $targetingSchema;
 
-    public function __construct(TaxonomyV2 $taxonomy)
+    public function __construct(Medium $medium)
     {
-        $this->targetingSchema = [];
-        foreach ($taxonomy->getMedia() as $medium) {
-            $key = self::buildSchemaKey($medium->getName(), $medium->getVendor());
-            $this->targetingSchema[$key] = $medium->getTargeting()->toArray();
-        }
+        $this->targetingSchema = $medium->getTargeting()->toArray();
     }
 
-    public function processTargeting(array $targeting, string $medium = 'web', ?string $vendor = null): array
+    public function processTargeting(array $targeting): array
     {
-        $this->validateMedium($medium, $vendor);
         if (!$targeting) {
             return [];
         }
-        return $this->processGroups($targeting, $this->targetingSchema[self::buildSchemaKey($medium, $vendor)]);
+        return $this->processGroups($targeting, $this->targetingSchema);
     }
 
-    public function checkIfPathExist(array $path, string $medium = 'web', ?string $vendor = null): bool
+    public function checkIfPathExist(array $path): bool
     {
-        $this->validateMedium($medium, $vendor);
-        $schema = $this->targetingSchema[self::buildSchemaKey($medium, $vendor)];
+        $schema = $this->targetingSchema;
         foreach ($path as $entry) {
             if (!isset($schema[$entry])) {
                 return false;
@@ -163,17 +156,5 @@ class TargetingProcessor
     private static function arrayHasDefaultNumericKeys(array $array): bool
     {
         return array_keys($array) === range(0, count($array) - 1);
-    }
-
-    private function validateMedium(string $medium, ?string $vendor): void
-    {
-        if (!isset($this->targetingSchema[self::buildSchemaKey($medium, $vendor)])) {
-            throw new InvalidArgumentException('Invalid medium');
-        }
-    }
-
-    private static function buildSchemaKey(string $medium, ?string $vendor): string
-    {
-        return sprintf('%s/%s', $medium, $vendor);
     }
 }

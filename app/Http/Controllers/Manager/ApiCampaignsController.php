@@ -25,30 +25,107 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Resources\CampaignCollection;
 use Adshares\Adserver\Http\Resources\CampaignResource;
-use Adshares\Adserver\Repository\Advertiser\CampaignRepository;
+use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Services\Demand\BannerCreator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ApiCampaignsController extends Controller
 {
-    public function deleteCampaignById(int $id, CampaignRepository $campaignRepository): JsonResponse
+    public function __construct(
+        private readonly BannerCreator $bannerCreator,
+        private readonly CampaignRepository $campaignRepository,
+    ) {
+    }
+
+    public function addCampaign(Request $request): JsonResponse
     {
-        $campaignRepository->deleteCampaignById($id);
+
+        throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);//TODO implement
+    }
+
+    public function deleteCampaignById(int $id): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($id);
+        $this->campaignRepository->delete($campaign);
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function fetchCampaignById(int $id, CampaignRepository $campaignRepository): JsonResource
+    public function fetchCampaignById(int $id): JsonResource
     {
-        return new CampaignResource($campaignRepository->fetchCampaignById($id));
+        return new CampaignResource($this->campaignRepository->fetchCampaignByIdSimple($id));
     }
 
-    public function fetchCampaigns(Request $request, CampaignRepository $campaignRepository): JsonResource
+    public function fetchCampaigns(Request $request): JsonResource
     {
         $limit = $request->query('limit', 10);
         LimitValidator::validate($limit);
-        return new CampaignCollection($campaignRepository->fetchCampaigns($limit));
+        return new CampaignCollection($this->campaignRepository->fetchCampaigns($limit));
+    }
+
+    public function fetchBanner(int $campaignId, int $bannerId): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
+        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
+
+        return new JsonResponse(['data' => $banner]);
+    }
+
+    public function fetchBanners(int $campaignId): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
+        $banners = $this->campaignRepository->fetchBanners($campaign);
+
+        return new JsonResponse(['data' => $banners]);
+    }
+
+    public function addBanner(int $campaignId, Request $request): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
+        $oldBannerIds = $campaign->banners()->pluck('id');
+
+        $banners = $this->bannerCreator->prepareBannersFromInput([$request->input()], $campaign);
+        $this->campaignRepository->save($campaign, $banners);
+
+        $bannerIds = $campaign->refresh()->banners()->pluck('id');
+        $bannerId = $bannerIds->diff($oldBannerIds)->first();
+
+        $banner = $campaign->banners()->where('id', $bannerId)->first();
+
+        return new JsonResponse(
+            ['data' => $banner],
+            Response::HTTP_CREATED,
+            [
+                'Location' => route('api.campaigns.banners.fetch', [
+                    'banner' => $bannerId,
+                    'campaign' => $campaignId,
+                ]),
+            ]
+        );
+    }
+
+    public function editBanner(int $campaignId, int $bannerId, Request $request): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
+        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
+
+        $banner = $this->bannerCreator->updateBanner($request->input(), $banner);
+        $this->campaignRepository->update($campaign, bannersToUpdate: [$banner]);
+
+        return new JsonResponse(['data' => $banner->refresh()]);
+    }
+
+    public function deleteBanner(int $campaignId, int $bannerId): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
+        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
+
+        $this->campaignRepository->update($campaign, bannersToDelete: [$banner]);
+
+        return new JsonResponse(['data' => []], Response::HTTP_OK);
     }
 }

@@ -22,9 +22,14 @@
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Common\Exception\RuntimeException;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CampaignRepository
 {
@@ -82,7 +87,7 @@ class CampaignRepository
      * @param array $banners
      * @param array $conversions
      *
-     * @throws \Exception
+     * @throws RuntimeException
      */
     public function save(Campaign $campaign, array $banners = [], array $conversions = []): void
     {
@@ -102,18 +107,17 @@ class CampaignRepository
                     $campaign->conversions()->save($conversion);
                 }
             }
-        } catch (\Exception $ex) {
+            DB::commit();
+        } catch (Throwable $throwable) {
             DB::rollBack();
-            throw $ex;
+            Log::error(sprintf('Campaign save failed (%s)', $throwable->getMessage()));
+            throw new RuntimeException('Campaign save failed');
         }
-
-        DB::commit();
     }
 
     public function delete(Campaign $campaign): void
     {
         DB::beginTransaction();
-
         try {
             if (Campaign::STATUS_INACTIVE !== $campaign->status) {
                 $campaign->status = Campaign::STATUS_INACTIVE;
@@ -125,12 +129,12 @@ class CampaignRepository
                 $banner->classifications()->delete();
             }
             $campaign->banners()->delete();
-        } catch (\Exception $ex) {
+            DB::commit();
+        } catch (Throwable $throwable) {
             DB::rollBack();
-            throw $ex;
+            Log::error(sprintf('Campaign deletion failed (%s)', $throwable->getMessage()));
+            throw new RuntimeException('Campaign deletion failed');
         }
-
-        DB::commit();
     }
 
     public function update(
@@ -140,7 +144,7 @@ class CampaignRepository
         array $bannersToDelete = [],
         array $conversionsToInsert = [],
         array $conversionsToUpdate = [],
-        array $conversionUuidsToDelete = []
+        array $conversionUuidsToDelete = [],
     ): void {
         DB::beginTransaction();
 
@@ -188,11 +192,33 @@ class CampaignRepository
 
                 $campaign->conversions()->whereIn('uuid', $conversionBinaryUuidsToDelete)->delete();
             }
-        } catch (\Exception $ex) {
+            DB::commit();
+        } catch (Throwable $throwable) {
             DB::rollBack();
-            throw $ex;
+            Log::error(sprintf('Campaign update failed (%s)', $throwable->getMessage()));
+            throw new RuntimeException('Campaign update failed');
         }
+    }
 
-        DB::commit();
+    public function fetchCampaignByIdSimple(int $id): Campaign
+    {
+        return Campaign::findOrFail($id);
+    }
+
+    public function fetchBanner(Campaign $campaign, int $bannerId): Banner
+    {
+        return $campaign->banners()->findOrFail($bannerId);
+    }
+
+    public function fetchBanners(Campaign $campaign): Collection
+    {
+        return $campaign->banners()->get();
+    }
+
+    public function fetchCampaigns(?int $perPage = null): CursorPaginator
+    {
+        return Campaign::query()->orderBy('id')
+            ->tokenPaginate($perPage)
+            ->withQueryString();
     }
 }
