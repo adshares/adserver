@@ -21,15 +21,16 @@
 
 namespace Adshares\Adserver\Services\Demand;
 
-use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
-use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\RuntimeException;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class CampaignCreator
@@ -44,31 +45,48 @@ class CampaignCreator
      */
     public function prepareCampaignFromInput(array $input): Campaign
     {
-        $medium = $input['medium'] ?? '';
-        $vendor = $input['vendor'] ?? null;
-        try {
-            $mediumSchema = $this->configurationRepository->fetchMedium($medium, $vendor);
-            $campaignTargetingProcessor = new CampaignTargetingProcessor($mediumSchema);
-            $require = $campaignTargetingProcessor->processTargetingRequire($input['targeting']['requires'] ?? []);
-            $exclude = $campaignTargetingProcessor->processTargetingExclude($input['targeting']['excludes'] ?? []);
-        } catch (InvalidArgumentException $exception) {
-            throw new UnprocessableEntityHttpException($exception->getMessage());
+        foreach (['budget', 'date_start', 'medium', 'name', 'status'] as $field) {
+            if (!array_key_exists($field, $input)) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
+            }
         }
+
+        $name = $input['name'];
+        self::validateString($name, Campaign::NAME_MAXIMAL_LENGTH, 'name');
+        $status = $input['status'];
+        self::validateStatus($status);
+        $landingUrl = $input['target_url'];
+        self::validateString($landingUrl, Campaign::URL_MAXIMAL_LENGTH, 'targetUrl');
+        self::validateUrl($landingUrl);
+        $budget = $input['budget'];
+        self::validateClickAmount($budget, 'budget');
+        $maxCpc = $input['max_cpc'] ?? null;
+        if (null !== $maxCpc) {
+            self::validateClickAmount($maxCpc, 'maxCpc');
+        }
+        $maxCpm = $input['max_cpm'] ?? null;
+        if (null !== $maxCpm) {
+            self::validateClickAmount($maxCpm, 'maxCpm');
+        }
+        $timeStart = $input['date_start'];
+        self::validateDate($timeStart, 'dateStart');
+        $timeEnd = $input['date_end'] ?? null;
+        if (null !== $timeEnd) {
+            self::validateDate($timeEnd, 'dateEnd');
+            self::validateDateRange($timeStart, $timeEnd);
+        }
+
+        $medium = $input['medium'];
+        $vendor = $input['vendor'] ?? null;
+        $mediumSchema = $this->configurationRepository->fetchMedium($medium, $vendor);
+        $campaignTargetingProcessor = new CampaignTargetingProcessor($mediumSchema);
+        $require = $campaignTargetingProcessor->processTargetingRequire($input['targeting']['requires'] ?? []);
+        $exclude = $campaignTargetingProcessor->processTargetingExclude($input['targeting']['excludes'] ?? []);
 
         if (null === ($bidStrategy = BidStrategy::fetchDefault($medium, $vendor))) {
             Log::critical(sprintf('Bid strategy for (`%s`, `%s`) is missing', $medium, $vendor));
-            throw new ServiceUnavailableHttpException();
+            throw new RuntimeException();
         }
-
-        //TODO validate
-        $name = $input['name'];
-        $status = $input['status'];
-        $landingUrl = $input['target_url'];
-        $budget = $input['budget'];
-        $maxCpc = $input['max_cpc'];
-        $maxCpm = $input['max_cpm'];
-        $timeStart = $input['date_start'];
-        $timeEnd = $input['date_end'] ?? null;
 
         return new Campaign([
             'landing_url' => $landingUrl,
@@ -85,5 +103,151 @@ class CampaignCreator
             'time_end' => $timeEnd,
             'bid_strategy_uuid' => $bidStrategy->uuid,
         ]);
+    }
+
+    public function updateCampaign(mixed $input, Campaign $campaign): Campaign
+    {
+        //TODO validate input is array
+
+        foreach (['max_cpc', 'max_cpm'] as $field) {
+            if (array_key_exists($field, $input)) {
+                $value = $input[$field];
+                if (null !== $value) {
+                    self::validateClickAmount($value, $field);
+                }
+                $campaign->$field = $value;
+            }
+        }
+
+        if (array_key_exists('name', $input)) {
+            $value = $input['name'];
+            self::validateString($value, Campaign::NAME_MAXIMAL_LENGTH, 'name');
+            $campaign->name = $value;
+        }
+
+        if (array_key_exists('status', $input)) {
+            $value = $input['status'];
+            self::validateStatus($value);
+            $campaign->status = $value;
+        }
+
+        if (array_key_exists('target_url', $input)) {
+            $value = $input['target_url'];
+            self::validateString($value, Campaign::URL_MAXIMAL_LENGTH, 'targetUrl');
+            self::validateUrl($value);
+            $campaign->landing_url = $value;
+        }
+
+        if (array_key_exists('budget', $input)) {
+            $value = $input['budget'];
+            self::validateClickAmount($value, 'budget');
+            $campaign->budget = $value;
+        }
+
+        if (array_key_exists('budget', $input)) {
+            $value = $input['budget'];
+            self::validateClickAmount($value, 'budget');
+            $campaign->budget = $value;
+        }
+
+        $checkDateRange = false;
+        if (array_key_exists('date_start', $input)) {
+            $value = $input['date_start'];
+            self::validateDate($value, 'dateStart');
+            $checkDateRange = true;
+            $campaign->time_start = $value;
+        }
+
+        if (array_key_exists('date_end', $input)) {
+            $value = $input['date_end'];
+            if (null !== $value) {
+                self::validateDate($value, 'dateEnd');
+                $checkDateRange = true;
+            }
+            $campaign->time_end = $value;
+        }
+
+        if ($checkDateRange && null !== $campaign->time_end) {
+            self::validateDateRange($campaign->time_start, $campaign->time_end);
+        }
+
+        if (array_key_exists('targeting', $input)) {
+            $mediumSchema = $this->configurationRepository->fetchMedium($campaign->medium, $campaign->vendor);
+            $campaignTargetingProcessor = new CampaignTargetingProcessor($mediumSchema);
+            $campaign->targeting_requires =
+                $campaignTargetingProcessor->processTargetingRequire($input['targeting']['requires'] ?? []);
+            $campaign->targeting_excludes =
+                $campaignTargetingProcessor->processTargetingExclude($input['targeting']['excludes'] ?? []);
+        }
+
+        return $campaign;
+    }
+
+    private static function validateClickAmount(mixed $value, string $field): void
+    {
+        if (!is_int($value)) {
+            throw new InvalidArgumentException(sprintf('Field `%s` must be an integer', $field));
+        }
+        if ($value < 0 || $value > AdsConverter::TOTAL_SUPPLY) {
+            throw new InvalidArgumentException(
+                sprintf('Field `%s` must be an amount in clicks', $field)
+            );
+        }
+    }
+
+    private static function validateDate(mixed $value, string $field): void
+    {
+        if (!is_string($value)) {
+            throw new InvalidArgumentException(
+                sprintf('Field `%s` must be a string in ISO 8601 format', $field)
+            );
+        }
+        if (false === DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value)) {
+            throw new InvalidArgumentException(sprintf('Field `%s` must be in ISO 8601 format', $field));
+        }
+    }
+
+    private static function validateDateRange(string $timeStart, string $timeEnd): void
+    {
+        if (
+            DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $timeStart)
+            > DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $timeEnd)
+        ) {
+            throw new InvalidArgumentException('Field `dateEnd` must be later than `dateStart`');
+        }
+    }
+
+    private static function validateStatus(mixed $status): void
+    {
+        if (!is_int($status)) {
+            throw new InvalidArgumentException('Field `status` must be an integer');
+        }
+        if (!Campaign::isStatusAllowed($status)) {
+            throw new InvalidArgumentException('Field `status` must be one of supported states');
+        }
+    }
+
+    private static function validateString(mixed $value, int $maximalLength, string $field): void
+    {
+        if (!is_string($value)) {
+            throw new InvalidArgumentException(
+                sprintf('Field `%s` must be a string', $field)
+            );
+        }
+        if ('' === $value) {
+            throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
+        }
+        if (strlen($value) > $maximalLength) {
+            throw new InvalidArgumentException(
+                sprintf('Field `%s` must have at most %d characters', $field, $maximalLength)
+            );
+        }
+    }
+
+    private static function validateUrl(string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_URL)) {
+            throw new UnprocessableEntityHttpException('Field `targetUrl` must be a url');
+        }
     }
 }

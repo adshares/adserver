@@ -76,6 +76,10 @@ class Banner extends Model
     public const STATUS_REJECTED = 3;
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
 
+    public const NAME_MAXIMAL_LENGTH = 255;
+    public const SIZE_MAXIMAL_LENGTH = 16;
+    public const TYPE_MAXIMAL_LENGTH = 32;
+
     protected $dates = [
         'deleted_at',
     ];

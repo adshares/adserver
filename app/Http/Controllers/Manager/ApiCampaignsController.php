@@ -28,11 +28,13 @@ use Adshares\Adserver\Http\Resources\CampaignResource;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Services\Demand\CampaignCreator;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ApiCampaignsController extends Controller
 {
@@ -45,7 +47,11 @@ class ApiCampaignsController extends Controller
 
     public function addCampaign(Request $request): JsonResponse
     {
-        $campaign = $this->campaignCreator->prepareCampaignFromInput($request->input());
+        try {
+            $campaign = $this->campaignCreator->prepareCampaignFromInput($request->input());
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
         $ads = $request->input('ads');//TODO validate is array
         $banners = $this->bannerCreator->prepareBannersFromInput($ads, $campaign);
         $campaign->user_id = Auth::user()->id;
@@ -59,6 +65,15 @@ class ApiCampaignsController extends Controller
                     'id' => $campaign->id,
                 ])
             );
+    }
+
+    public function editCampaignById(int $id, Request $request): JsonResource
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($id);
+        $campaign = $this->campaignCreator->updateCampaign($request->input(), $campaign);
+        $campaign = $this->campaignRepository->save($campaign);
+
+        return new CampaignResource($campaign);
     }
 
     public function deleteCampaignById(int $id): JsonResponse

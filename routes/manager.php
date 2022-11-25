@@ -170,11 +170,13 @@ Route::middleware([
 ])
     ->prefix('v2')
     ->group(function () {
+        Route::post('campaigns/banner', [CampaignsController::class, 'upload']);
+
         Route::get('campaigns/{id}', [ApiCampaignsController::class, 'fetchCampaignById'])
             ->name('api.campaigns.fetch');
         Route::get('campaigns', [ApiCampaignsController::class, 'fetchCampaigns']);
         Route::post('campaigns', [ApiCampaignsController::class, 'addCampaign']);
-        Route::post('campaigns/banner', [CampaignsController::class, 'upload']);
+        Route::patch('campaigns/{id}', [ApiCampaignsController::class, 'editCampaignById']);
         Route::delete('campaigns/{id}', [ApiCampaignsController::class, 'deleteCampaignById']);
 
         Route::get('campaigns/{campaign}/banners/{banner}', [ApiCampaignsController::class, 'fetchBanner'])

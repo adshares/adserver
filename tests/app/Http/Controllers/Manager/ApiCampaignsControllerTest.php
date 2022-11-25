@@ -153,6 +153,56 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
     }
 
+    public function testEditCampaign(): void
+    {
+        $uri = $this->setUpCampaign();
+        $this->setUpUser();
+        $this->mockStorage();
+
+        $dateStart = (new DateTimeImmutable('+3 days'))->format(DateTimeInterface::ATOM);
+        $requires = [
+            'site' => [
+                'category' => ['health', 'technology'],
+                'quality' => ['high', 'medium'],
+            ],
+        ];
+        $excludes = [
+            'site' => [
+                'domain' => ['malware.xyz'],
+            ],
+        ];
+        $campaignData = [
+            'name' => 'Edited campaign',
+            'targetUrl' => 'https://exmaple.com/edited/landing',
+            'maxCpc' => (int)(2 * 1e11),
+            'maxCpm' => (int)(1e11),
+            'budget' => (int)(100 * 1e11),
+            'dateStart' => $dateStart,
+            'dateEnd' => null,
+            'targeting' => [
+                'requires' => $requires,
+                'excludes' => $excludes,
+            ],
+        ];
+        $response = $this->patch($uri, $campaignData);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
+        $campaign = Campaign::first();
+        self::assertEquals(Campaign::STATUS_ACTIVE, $campaign->status);
+        self::assertEquals('Edited campaign', $campaign->name);
+        self::assertEquals('https://exmaple.com/edited/landing', $campaign->landing_url);
+        self::assertEquals((int)(2 * 1e11), $campaign->max_cpc);
+        self::assertEquals((int)(1e11), $campaign->max_cpm);
+        self::assertEquals((int)(100 * 1e11), $campaign->budget);
+        self::assertEquals('web', $campaign->medium);
+        self::assertNull($campaign->vendor);
+        self::assertEquals($dateStart, $campaign->time_start);
+        self::assertNull($campaign->time_end);
+        self::assertEquals($requires, $campaign->targeting_requires);
+        self::assertEquals($excludes, $campaign->targeting_excludes);
+    }
+
     public function testAddBanner(): void
     {
         $this->setUpUser();

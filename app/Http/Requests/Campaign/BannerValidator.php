@@ -30,10 +30,6 @@ use Adshares\Supply\Domain\ValueObject\Size;
 
 class BannerValidator
 {
-    private const NAME_MAXIMAL_LENGTH = 255;
-    private const TYPE_MAXIMAL_LENGTH = 32;
-    private const SIZE_MAXIMAL_LENGTH = 16;
-
     private ?array $supportedScopesByTypes = null;
 
     public function __construct(private readonly Medium $medium)
@@ -44,9 +40,9 @@ class BannerValidator
     {
         foreach (
             [
-                'creative_type' => self::TYPE_MAXIMAL_LENGTH,
-                'creative_size' => self::SIZE_MAXIMAL_LENGTH,
-                'name' => self::NAME_MAXIMAL_LENGTH,
+                'creative_type' => Banner::TYPE_MAXIMAL_LENGTH,
+                'creative_size' => Banner::SIZE_MAXIMAL_LENGTH,
+                'name' => Banner::NAME_MAXIMAL_LENGTH,
             ] as $field => $maxLength
         ) {
             self::validateField($banner, $field);
@@ -122,6 +118,6 @@ class BannerValidator
     {
         $field = 'name';
         self::validateField([$field => $name], $field);
-        self::validateFieldMaximumLength($name, self::NAME_MAXIMAL_LENGTH, $field);
+        self::validateFieldMaximumLength($name, Banner::NAME_MAXIMAL_LENGTH, $field);
     }
 }

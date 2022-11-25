@@ -124,6 +124,7 @@ class BannerCreator
 
     public function updateBanner(array $input, Banner $banner): Banner
     {
+        //TODO validate input is array
         if (array_key_exists('name', $input)) {
             BannerValidator::validateName($input['name']);
             $banner->name = $input['name'];

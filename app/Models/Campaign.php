@@ -97,6 +97,9 @@ class Campaign extends Model
     public const CONVERSION_CLICK_BASIC = 1;
     public const CONVERSION_CLICK_ADVANCED = 2;
 
+    public const NAME_MAXIMAL_LENGTH = 255;
+    public const URL_MAXIMAL_LENGTH = 1024;
+
     protected $dates = [
         'deleted_at',
         'time_start',
