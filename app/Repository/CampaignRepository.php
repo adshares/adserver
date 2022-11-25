@@ -151,7 +151,7 @@ class CampaignRepository
         array $conversionsToInsert = [],
         array $conversionsToUpdate = [],
         array $conversionUuidsToDelete = [],
-    ): void {
+    ): Campaign {
         if ($campaign->exists() && isset($campaign->getDirty()['bid_strategy_uuid'])) {
             self::checkIfBidStrategyCanChanged($campaign);
         }
@@ -208,6 +208,7 @@ class CampaignRepository
             Log::error(sprintf('Campaign update failed (%s)', $throwable->getMessage()));
             throw new RuntimeException('Campaign update failed');
         }
+        return $campaign;
     }
 
     public function fetchCampaignByIdSimple(int $id): Campaign
