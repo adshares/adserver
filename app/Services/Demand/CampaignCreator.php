@@ -105,10 +105,8 @@ class CampaignCreator
         ]);
     }
 
-    public function updateCampaign(mixed $input, Campaign $campaign): Campaign
+    public function updateCampaign(array $input, Campaign $campaign): Campaign
     {
-        //TODO validate input is array
-
         foreach (['max_cpc', 'max_cpm'] as $field) {
             if (array_key_exists($field, $input)) {
                 $value = $input[$field];

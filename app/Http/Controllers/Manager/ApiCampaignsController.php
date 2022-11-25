@@ -47,13 +47,19 @@ class ApiCampaignsController extends Controller
 
     public function addCampaign(Request $request): JsonResponse
     {
+        $input = $request->input();
+        if (!is_array($input)) {
+            throw new UnprocessableEntityHttpException('Invalid body type');
+        }
         try {
-            $campaign = $this->campaignCreator->prepareCampaignFromInput($request->input());
+            $campaign = $this->campaignCreator->prepareCampaignFromInput($input);
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-        $ads = $request->input('ads');//TODO validate is array
-        $banners = $this->bannerCreator->prepareBannersFromInput($ads, $campaign);
+        if (!isset($input['ads']) || !is_array($input['ads'])) {
+            throw new UnprocessableEntityHttpException('Field `ads` must be an array');
+        }
+        $banners = $this->bannerCreator->prepareBannersFromInput($input['ads'], $campaign);
         $campaign->user_id = Auth::user()->id;
         $campaign = $this->campaignRepository->save($campaign, $banners);
 
@@ -69,8 +75,12 @@ class ApiCampaignsController extends Controller
 
     public function editCampaignById(int $id, Request $request): JsonResource
     {
+        $input = $request->input();
+        if (!is_array($input)) {
+            throw new UnprocessableEntityHttpException('Invalid body type');
+        }
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($id);
-        $campaign = $this->campaignCreator->updateCampaign($request->input(), $campaign);
+        $campaign = $this->campaignCreator->updateCampaign($input, $campaign);
         $campaign = $this->campaignRepository->save($campaign);
 
         return new CampaignResource($campaign);
@@ -139,10 +149,15 @@ class ApiCampaignsController extends Controller
 
     public function editBanner(int $campaignId, int $bannerId, Request $request): JsonResponse
     {
+        $input = $request->input();
+        if (!is_array($input)) {
+            throw new UnprocessableEntityHttpException('Invalid body type');
+        }
+
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
         $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
 
-        $banner = $this->bannerCreator->updateBanner($request->input(), $banner);
+        $banner = $this->bannerCreator->updateBanner($input, $banner);
         $this->campaignRepository->update($campaign, bannersToUpdate: [$banner]);
 
         return new JsonResponse(['data' => $banner->refresh()]);

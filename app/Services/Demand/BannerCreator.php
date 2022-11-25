@@ -56,6 +56,9 @@ class BannerCreator
         $banners = [];
 
         foreach ($input as $banner) {
+            if (!is_array($banner)) {
+                throw new InvalidArgumentException('Invalid banner data type');
+            }
             $bannerValidator->validateBanner($banner);
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
@@ -124,7 +127,6 @@ class BannerCreator
 
     public function updateBanner(array $input, Banner $banner): Banner
     {
-        //TODO validate input is array
         if (array_key_exists('name', $input)) {
             BannerValidator::validateName($input['name']);
             $banner->name = $input['name'];

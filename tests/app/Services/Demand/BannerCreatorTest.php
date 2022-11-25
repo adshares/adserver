@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Services\Demand;
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -31,6 +32,15 @@ use Adshares\Common\Exception\InvalidArgumentException;
 
 final class BannerCreatorTest extends TestCase
 {
+    public function testPrepareBannersFromInputFail(): void
+    {
+        $campaign = Campaign::factory()->create();
+        $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
+        self::expectException(InvalidArgumentException::class);
+
+        $creator->prepareBannersFromInput(['name' => 'banner'], $campaign);
+    }
+
     public function testUpdateBanner(): void
     {
         /** @var Banner $banner */

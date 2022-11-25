@@ -143,7 +143,7 @@ class CampaignsController extends Controller
         $campaign = new Campaign($input);
 
         $banners = $conversions = [];
-        if (isset($input['ads']) && count($input['ads']) > 0) {
+        if (isset($input['ads']) && is_array($input['ads']) && count($input['ads']) > 0) {
             try {
                 $banners = $this->bannerCreator->prepareBannersFromInput($input['ads'], $campaign);
             } catch (InvalidArgumentException $exception) {
