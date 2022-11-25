@@ -56,6 +56,7 @@ class Kernel extends HttpKernel
     public const AUTH = 'auth';
 
     public const USER_ACCESS = 'only-authenticated-users';
+    public const USER_JWT_ACCESS = 'jwt-only-authenticated-users';
     public const ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION = 'only-authenticated-users-except-impersonation';
     public const ADMIN_ACCESS = 'only-admin-users';
     public const ADMIN_JWT_ACCESS = 'jwt-admin-users';
@@ -82,6 +83,10 @@ class Kernel extends HttpKernel
             self::AUTH . ':api',
             TrackUserActivity::class,
             Impersonation::class,
+        ],
+        self::USER_JWT_ACCESS => [
+            self::AUTH . ':jwt',
+            TrackUserActivity::class,
         ],
         self::ADVERTISER_ACCESS => [
             self::AUTH . ':api',

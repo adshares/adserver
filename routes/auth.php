@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controllers\Manager\AuthController;
 use Adshares\Adserver\Http\Controllers\Manager\OAuthController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
+use Laravel\Passport\Http\Controllers\AuthorizedAccessTokenController;
 use Laravel\Passport\Http\Controllers\PersonalAccessTokenController;
 use Laravel\Passport\Http\Controllers\ScopeController;
 
@@ -58,6 +59,10 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
 
 Route::middleware([Kernel::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION, Kernel::JSON_API])->group(function () {
     Route::get('logout', [AuthController::class, 'logout']);
+});
+
+Route::middleware([Kernel::USER_JWT_ACCESS, Kernel::JSON_API])->group(function () {
+    Route::delete('tokens/{token_id}', [AuthorizedAccessTokenController::class, 'destroy']);
 });
 
 Route::middleware([Kernel::GUEST_ACCESS, Kernel::JSON_API])->group(function () {
