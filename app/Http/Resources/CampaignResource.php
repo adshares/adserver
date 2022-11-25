@@ -21,11 +21,11 @@ class CampaignResource extends JsonResource
             'conversionClick' => $this->conversion_click,
             'classifications' => BannerClassification::fetchCampaignClassifications($this->id),
             'conversionClickLink' => $this->conversion_click_link,
-            'basicInformation' => $this->basic_information,
             'targeting' => $this->targeting,
             'ads' => $this->ads,
             'bidStrategy' => $this->bid_strategy,
             'conversions' => $this->conversions,
+            ...$this->basic_information,
         ];
     }
 }
