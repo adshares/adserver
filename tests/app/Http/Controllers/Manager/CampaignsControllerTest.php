@@ -877,22 +877,35 @@ final class CampaignsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
-    public function testCampaignEditMedium(): void
+    /**
+     * @dataProvider campaignEditMediumProvider
+     */
+    public function testCampaignEditMedium(array $data): void
     {
         $user = $this->login();
         /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
             [
-                'medium' => 'web',
+                'medium' => 'metaverse',
+                'vendor' => 'decentraland',
                 'user_id' => $user->id,
             ]
         );
 
         $response = $this->patchJson(
             self::URI . '/' . $campaign->id,
-            ['campaign' => ['basic_information' => ['medium' => 'invalid']]]
+            ['campaign' => ['basic_information' => $data]]
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function campaignEditMediumProvider(): array
+    {
+        return [
+            'invalid' => [['medium' => 'invalid']],
+            'change medium' => [['medium' => 'web', 'vendor' => null]],
+            'change vendor' => [['medium' => 'metaverse', 'vendor' => 'cryptovoxels']],
+        ];
     }
 
     public function testDelete(): void

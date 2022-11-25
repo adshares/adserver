@@ -158,7 +158,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $this->setUpUser();
         $this->mockStorage();
         $campaignId = $this->getIdFromLocationHeader(
-            $this->post(self::URI_CAMPAIGNS, ['campaign' => self::getCampaignData()])//TODO remove key
+            $this->post(self::URI_CAMPAIGNS, self::getCampaignData())
         );
 
         $response = $this->post(self::buildUriBanner($campaignId), [
@@ -389,6 +389,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
     private function getIdFromLocationHeader(TestResponse $response): string
     {
+        $response->assertHeader('Location');
         $matches = [];
         preg_match('~/(\d+)$~', $response->headers->get('Location'), $matches);
 
@@ -414,7 +415,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $this->setUpUser();
         $this->mockStorage();
         $campaignId = $this->getIdFromLocationHeader(
-            $this->post(self::URI_CAMPAIGNS, ['campaign' => self::getCampaignData()])//TODO remove key
+            $this->post(self::URI_CAMPAIGNS, self::getCampaignData())
         );
         return self::buildUriCampaign($campaignId);
     }
@@ -424,7 +425,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $this->setUpUser();
         $this->mockStorage();
         $campaignId = $this->getIdFromLocationHeader(
-            $this->post(self::URI_CAMPAIGNS, ['campaign' => self::getCampaignData()])//TODO remove key
+            $this->post(self::URI_CAMPAIGNS, self::getCampaignData())
         );
         $bannerId = Banner::first()->id;
         return self::buildUriBanner($campaignId, $bannerId);
