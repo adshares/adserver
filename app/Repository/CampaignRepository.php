@@ -23,7 +23,9 @@ namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
@@ -125,7 +127,7 @@ class CampaignRepository
         try {
             if (Campaign::STATUS_INACTIVE !== $campaign->status) {
                 $campaign->status = Campaign::STATUS_INACTIVE;
-                $this->save($campaign);
+                $this->update($campaign);
             }
             $campaign->conversions()->delete();
             $campaign->delete();
@@ -150,6 +152,10 @@ class CampaignRepository
         array $conversionsToUpdate = [],
         array $conversionUuidsToDelete = [],
     ): void {
+        if ($campaign->exists() && isset($campaign->getDirty()['bid_strategy_uuid'])) {
+            self::checkIfBidStrategyCanChanged($campaign);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -224,5 +230,17 @@ class CampaignRepository
         return Campaign::query()->orderBy('id')
             ->tokenPaginate($perPage)
             ->withQueryString();
+    }
+
+    private static function checkIfBidStrategyCanChanged(Campaign $campaign): void
+    {
+        $userId = $campaign->user_id;
+        $bidStrategy = BidStrategy::fetchByPublicId($campaign->bid_strategy_uuid);
+        if (
+            $bidStrategy === null
+            || ($bidStrategy->user_id !== $userId && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)
+        ) {
+            throw new InvalidArgumentException('Bid strategy could not be accessed');
+        }
     }
 }

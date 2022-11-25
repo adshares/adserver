@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
@@ -88,10 +89,7 @@ final class ApiCampaignsControllerTest extends TestCase
         'ads' => [
             '*' => self::ADVERTISEMENT_DATA_STRUCTURE,
         ],
-        'bidStrategy' => [
-            'name',
-            'uuid',
-        ],
+        'bidStrategyUuid',
         'conversions' => [],
     ];
     private const ADVERTISEMENT_STRUCTURE = [
@@ -154,9 +152,10 @@ final class ApiCampaignsControllerTest extends TestCase
     public function testEditCampaign(): void
     {
         $uri = $this->setUpCampaign();
-        $this->setUpUser();
-        $this->mockStorage();
+        $user = User::first();
 
+        /** @var BidStrategy $bidStrategy */
+        $bidStrategy = BidStrategy::factory()->create(['user_id' => $user->id]);
         $dateStart = (new DateTimeImmutable('+3 days'))->format(DateTimeInterface::ATOM);
         $requires = [
             'site' => [
@@ -181,6 +180,7 @@ final class ApiCampaignsControllerTest extends TestCase
                 'requires' => $requires,
                 'excludes' => $excludes,
             ],
+            'bidStrategyUuid' => $bidStrategy->uuid,
         ];
         $response = $this->patch($uri, $campaignData);
 
@@ -199,6 +199,7 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertNull($campaign->time_end);
         self::assertEquals($requires, $campaign->targeting_requires);
         self::assertEquals($excludes, $campaign->targeting_excludes);
+        self::assertEquals($bidStrategy->uuid, $campaign->bid_strategy_uuid);
     }
 
     public function testAddBanner(): void

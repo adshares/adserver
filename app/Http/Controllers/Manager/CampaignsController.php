@@ -230,18 +230,6 @@ class CampaignsController extends Controller
             if (!Utils::isUuidValid($bidStrategyUuid)) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid bid strategy id (%s)', $bidStrategyUuid));
             }
-
-            /** @var User $user */
-            $user = Auth::user();
-            $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyUuid);
-
-            if (
-                $bidStrategy === null
-                || ($bidStrategy->user_id !== $user->id && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)
-            ) {
-                throw new UnprocessableEntityHttpException('Bid strategy could not be accessed.');
-            }
-
             $input['bid_strategy_uuid'] = $bidStrategyUuid;
         }
         $conversions = $this->prepareConversionsFromInput($input['conversions'] ?? []);
@@ -330,15 +318,19 @@ class CampaignsController extends Controller
 
         $conversionUuidsToDelete = $dbConversions->keys()->all();
 
-        $this->campaignRepository->update(
-            $campaign,
-            $bannersToInsert,
-            $bannersToUpdate,
-            $bannersToDelete,
-            $conversionsToInsert,
-            $conversionsToUpdate,
-            $conversionUuidsToDelete
-        );
+        try {
+            $this->campaignRepository->update(
+                $campaign,
+                $bannersToInsert,
+                $bannersToUpdate,
+                $bannersToDelete,
+                $conversionsToInsert,
+                $conversionsToUpdate,
+                $conversionUuidsToDelete,
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
@@ -416,11 +408,10 @@ class CampaignsController extends Controller
 
         try {
             $banner = $this->bannerCreator->updateBanner(['status' => $status], $banner);
+            $this->campaignRepository->update($campaign, bannersToUpdate: [$banner]);
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-
-        $this->campaignRepository->update($campaign, bannersToUpdate: [$banner]);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }

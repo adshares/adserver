@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Services\Demand;
 
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -178,7 +179,22 @@ class CampaignCreator
                 $campaignTargetingProcessor->processTargetingExclude($input['targeting']['excludes'] ?? []);
         }
 
+        if (array_key_exists('bid_strategy_uuid', $input)) {
+            $value = $input['bid_strategy_uuid'];
+            self::validateBidStrategyUuid($value);
+            $campaign->bid_strategy_uuid = $value;
+        }
+
         return $campaign;
+    }
+
+    private static function validateBidStrategyUuid(mixed $value): void
+    {
+        if (!Utils::isUuidValid($value)) {
+            throw new UnprocessableEntityHttpException(
+                'Field `bidStrategyUuid` must be a hexadecimal string of length 32'
+            );
+        }
     }
 
     private static function validateClickAmount(mixed $value, string $field): void

@@ -80,8 +80,12 @@ class ApiCampaignsController extends Controller
             throw new UnprocessableEntityHttpException('Invalid body type');
         }
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($id);
-        $campaign = $this->campaignCreator->updateCampaign($input, $campaign);
-        $campaign = $this->campaignRepository->save($campaign);
+        try {
+            $campaign = $this->campaignCreator->updateCampaign($input, $campaign);
+            $campaign = $this->campaignRepository->update($campaign);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         return new CampaignResource($campaign);
     }
@@ -128,7 +132,7 @@ class ApiCampaignsController extends Controller
         $oldBannerIds = $campaign->banners()->pluck('id');
 
         $banners = $this->bannerCreator->prepareBannersFromInput([$request->input()], $campaign);
-        $this->campaignRepository->save($campaign, $banners);
+        $this->campaignRepository->update($campaign, $banners);
 
         $bannerIds = $campaign->refresh()->banners()->pluck('id');
         $bannerId = $bannerIds->diff($oldBannerIds)->first();

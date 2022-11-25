@@ -23,7 +23,7 @@ class CampaignResource extends JsonResource
             'conversionClickLink' => $this->conversion_click_link,
             'targeting' => $this->targeting,
             'ads' => $this->ads,
-            'bidStrategy' => $this->bid_strategy,
+            'bidStrategyUuid' => $this->bid_strategy_uuid,
             'conversions' => $this->conversions,
             ...$this->basic_information,
         ];

@@ -157,17 +157,6 @@ final class TargetingProcessorTest extends TestCase
         ];
     }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->app->bind(
-            AdUser::class,
-            static function () {
-                return new DummyAdUserClient();
-            }
-        );
-    }
-
     private function getTargetingSchema(): Medium
     {
         return $this->app->make(ConfigurationRepository::class)->fetchMedium();

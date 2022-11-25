@@ -55,7 +55,6 @@ use InvalidArgumentException;
  * @property int status
  * @property string name
  * @property array|null|string strategy_name
- * @property float bid
  * @property int budget
  * @property string medium
  * @property string|null $vendor
