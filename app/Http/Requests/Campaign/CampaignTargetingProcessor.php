@@ -50,7 +50,6 @@ class CampaignTargetingProcessor
         if (is_array($serverTargeting)) {
             $targeting = array_map([__CLASS__, 'normalize'], array_merge_recursive($targeting, $serverTargeting));
         }
-
         return $this->targetingProcessor->processTargeting($targeting);
     }
 

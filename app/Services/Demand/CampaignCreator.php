@@ -143,12 +143,6 @@ class CampaignCreator
             $campaign->budget = $value;
         }
 
-        if (array_key_exists('budget', $input)) {
-            $value = $input['budget'];
-            self::validateClickAmount($value, 'budget');
-            $campaign->budget = $value;
-        }
-
         $checkDateRange = false;
         if (array_key_exists('date_start', $input)) {
             $value = $input['date_start'];
