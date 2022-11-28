@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not transform campaign's targeting
 - Campaign validation when files are missing
 - Direct banner validation (URL not required)
+- Configuration key case
 
 ## [2.1.1] - 2022-10-04
 ### Added
