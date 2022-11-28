@@ -49,12 +49,12 @@ use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
@@ -355,7 +355,7 @@ class CampaignsController extends Controller
                         [
                             'errors' => $errors,
                         ],
-                        JsonResponse::HTTP_UNPROCESSABLE_ENTITY
+                        Response::HTTP_UNPROCESSABLE_ENTITY
                     )
                 );
             }
@@ -368,20 +368,18 @@ class CampaignsController extends Controller
             throw new UnprocessableEntityHttpException('No status provided');
         }
 
-        $status = (int)$request->input('campaign.status');
+        $campaign->status = (int)$request->input('campaign.status');
 
-        return $this->changeCampaignStatus($campaign, $status);
+        return $this->changeCampaignStatus($campaign);
     }
 
-    private function changeCampaignStatus(Campaign $campaign, int $status): JsonResponse
+    private function changeCampaignStatus(Campaign $campaign): JsonResponse
     {
-        $exchangeRate = $this->fetchExchangeRateOrFail();
-
-        if (!$campaign->changeStatus($status, $exchangeRate)) {
-            throw new UnprocessableEntityHttpException(sprintf('Cannot set status to {%d}', $status));
+        try {
+            $this->campaignRepository->update($campaign);
+        } catch (InvalidArgumentException) {
+            throw new UnprocessableEntityHttpException(sprintf('Cannot set status to {%d}', $campaign->status));
         }
-
-        $this->campaignRepository->update($campaign);
 
         $this->createBannerClassificationsForCampaign($campaign);
 
@@ -391,9 +389,9 @@ class CampaignsController extends Controller
     public function activateOutdatedCampaign(Campaign $campaign): JsonResponse
     {
         $campaign->time_end = null;
-        $campaign->status = Campaign::STATUS_SUSPENDED;
+        $campaign->status = Campaign::STATUS_ACTIVE;
 
-        return $this->changeCampaignStatus($campaign, Campaign::STATUS_ACTIVE);
+        return $this->changeCampaignStatus($campaign);
     }
 
     public function changeBannerStatus(Request $request, int $campaignId, int $bannerId): JsonResponse

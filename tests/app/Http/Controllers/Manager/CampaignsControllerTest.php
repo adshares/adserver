@@ -38,6 +38,7 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
+use DateTimeImmutable;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -930,6 +931,26 @@ final class CampaignsControllerTest extends TestCase
         self::assertTrue($banner->refresh()->trashed());
         self::assertEquals(Campaign::STATUS_INACTIVE, $campaign->status);
         self::assertDatabaseMissing(BannerClassification::class, ['id' => $bannerClassification->id]);
+    }
+
+    public function testActivateOutdatedCampaign(): void
+    {
+        $user = $this->createUser();
+        $campaign = $this->createCampaignForUser($user, [
+            'budget' => (int)1e11,
+            'status' => Campaign::STATUS_INACTIVE,
+            'time_start' => (new DateTimeImmutable('-1 month'))->format(DATE_ATOM),
+            'time_end' => (new DateTimeImmutable('-1 day'))->format(DATE_ATOM),
+        ]);
+
+        $response = $this->patchJson(self::URI . '/' . $campaign->id . '/activate-outdated');
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertDatabaseHas(Campaign::class, [
+            'id' => $campaign->id,
+            'status' => Campaign::STATUS_ACTIVE,
+            'time_end' => null,
+        ]);
     }
 
     private static function buildCampaignStatusUri(int $campaignId): string
