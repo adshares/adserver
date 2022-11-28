@@ -179,10 +179,9 @@ class CampaignsController extends Controller
     private function removeTemporaryUploadedFiles(array $files, Request $request): void
     {
         foreach ($files as $file) {
-            if (!isset($file['uuid']) && isset($file['url'])) {
-                $filename = Utils::extractFilename($file['url']);
-                $uploader = Factory::createFromExtension($filename, $request);
-                $uploader->removeTemporaryFile($filename);
+            if (!isset($file['uuid']) && isset($file['creative_type']) && isset($file['url'])) {
+                Factory::createFromType($file['creative_type'], $request)
+                    ->removeTemporaryFile(Utils::extractFilename($file['url']));
             }
         }
     }

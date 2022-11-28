@@ -25,11 +25,13 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Resources\CampaignCollection;
 use Adshares\Adserver\Http\Resources\CampaignResource;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Services\Demand\CampaignCreator;
+use Adshares\Adserver\Uploader\Factory;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,6 +74,7 @@ class ApiCampaignsController extends Controller
         }
 
         CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
+        self::removeTemporaryUploadedFiles($input['ads'], $request);
 
         return (new CampaignResource($campaign))
             ->response()
@@ -153,6 +156,8 @@ class ApiCampaignsController extends Controller
 
         $banner = $campaign->banners()->where('id', $bannerId)->first();
 
+        self::removeTemporaryUploadedFiles([$request->input()], $request);
+
         return new JsonResponse(
             ['data' => $banner],
             Response::HTTP_CREATED,
@@ -197,5 +202,15 @@ class ApiCampaignsController extends Controller
         }
 
         return new JsonResponse(['data' => []], Response::HTTP_OK);
+    }
+
+    private static function removeTemporaryUploadedFiles(array $input, Request $request): void
+    {
+        foreach ($input as $banner) {
+            if (isset($banner['creative_type']) && isset($banner['url'])) {
+                Factory::createFromType($banner['creative_type'], $request)
+                    ->removeTemporaryFile(Utils::extractFilename($banner['url']));
+            }
+        }
     }
 }

@@ -32,15 +32,6 @@ use Illuminate\Http\Request;
 
 class Factory
 {
-    private const EXTENSION_VIDEO_LIST = [
-        'mp4',
-    ];
-
-    private const EXTENSION_MODEL_LIST = [
-        'glb',
-        'vox',
-    ];
-
     private const MIME_VIDEO_LIST = [
         'video/mp4',
     ];
@@ -95,29 +86,5 @@ class Factory
         }
 
         return new ImageUploader($request);
-    }
-
-    public static function createFromExtension(string $fileName, Request $request)
-    {
-        $extension = self::getFileExtension($fileName);
-
-        if ($extension === ZipUploader::ZIP_FILE) {
-            return new ZipUploader($request);
-        }
-
-        if (in_array($extension, self::EXTENSION_VIDEO_LIST, true)) {
-            return new VideoUploader($request);
-        }
-
-        if (in_array($extension, self::EXTENSION_MODEL_LIST, true)) {
-            return new ModelUploader($request);
-        }
-
-        return new ImageUploader($request);
-    }
-
-    private static function getFileExtension(string $name): string
-    {
-        return substr($name, strrpos($name, '.') + 1);
     }
 }
