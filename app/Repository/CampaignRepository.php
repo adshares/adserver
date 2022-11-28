@@ -25,6 +25,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -40,6 +41,7 @@ use Throwable;
 class CampaignRepository
 {
     public function __construct(
+        private readonly BannerClassificationCreator $bannerClassificationCreator,
         private readonly ExchangeRateReader $exchangeRateReader,
     ) {
     }
@@ -125,6 +127,8 @@ class CampaignRepository
                     $campaign->conversions()->save($conversion);
                 }
             }
+
+            $this->bannerClassificationCreator->createForCampaign($campaign);
             DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
@@ -228,6 +232,8 @@ class CampaignRepository
 
                 $campaign->conversions()->whereIn('uuid', $conversionBinaryUuidsToDelete)->delete();
             }
+
+            $this->bannerClassificationCreator->createForCampaign($campaign);
             DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();

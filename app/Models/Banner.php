@@ -200,7 +200,7 @@ class Banner extends Model
 
     public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection
     {
-        $builder = Banner::whereDoesntHave(
+        $builder = Banner::where('status', Banner::STATUS_ACTIVE)->whereDoesntHave(
             'classifications',
             function ($query) use ($classifier) {
                 $query->where('classifier', $classifier);

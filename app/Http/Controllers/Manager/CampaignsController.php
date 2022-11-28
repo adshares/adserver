@@ -33,7 +33,6 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
-use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Services\Demand\BannerCreator;
@@ -66,9 +65,7 @@ class CampaignsController extends Controller
         private readonly CampaignRepository $campaignRepository,
         private readonly ConfigurationRepository $configurationRepository,
         private readonly ExchangeRateReader $exchangeRateReader,
-        private readonly BannerClassificationCreator $bannerClassificationCreator,
         private readonly BannerCreator $bannerCreator,
-        private readonly ClassifierExternalRepository $classifierExternalRepository,
     ) {
     }
 
@@ -165,8 +162,6 @@ class CampaignsController extends Controller
         if ($campaign->changeStatus($status, $exchangeRate)) {
             $this->campaignRepository->update($campaign);
         }
-
-        $this->createBannerClassificationsForCampaign($campaign);
 
         CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
 
@@ -337,8 +332,6 @@ class CampaignsController extends Controller
             $this->campaignRepository->update($campaign);
         }
 
-        $this->createBannerClassificationsForCampaign($campaign);
-
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
@@ -379,8 +372,6 @@ class CampaignsController extends Controller
         } catch (InvalidArgumentException) {
             throw new UnprocessableEntityHttpException(sprintf('Cannot set status to {%d}', $campaign->status));
         }
-
-        $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
@@ -471,31 +462,6 @@ class CampaignsController extends Controller
         );
 
         return $input;
-    }
-
-    private function createBannerClassificationsForCampaign(Campaign $campaign): void
-    {
-        if (
-            Campaign::STATUS_ACTIVE !== $campaign->status
-            || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())
-        ) {
-            return;
-        }
-
-        $classifierName = $classifier->getName();
-
-        $bannerIds = $campaign->banners()->where('status', Banner::STATUS_ACTIVE)->whereDoesntHave(
-            'classifications',
-            function ($query) use ($classifierName) {
-                $query->where('classifier', $classifierName);
-            }
-        )->get()->pluck('id');
-
-        if ($bannerIds->isEmpty()) {
-            return;
-        }
-
-        $this->bannerClassificationCreator->create($classifierName, $bannerIds->toArray());
     }
 
     private function fetchExchangeRateOrFail(): ExchangeRate

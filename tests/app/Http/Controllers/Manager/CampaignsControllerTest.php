@@ -39,6 +39,7 @@ use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -75,10 +76,17 @@ final class CampaignsControllerTest extends TestCase
         $filesystemMock->method('path')->willReturn($adPath);
         Storage::shouldReceive('disk')->andReturn($filesystemMock);
         $this->createUser();
+        $campaignData = $this->getCampaignData();
+        $campaignData['basicInformation']['budget'] = (int)1e11;
 
-        $response = $this->postJson(self::URI, ['campaign' => $this->getCampaignData()]);
+        $response = $this->postJson(self::URI, ['campaign' => $campaignData]);
 
         $response->assertStatus(Response::HTTP_CREATED);
+        $bannerId = $response->json('ads.0.id');
+
+        self::assertDatabaseHas(BannerClassification::class, [
+            'banner_id' => $bannerId,
+        ]);
     }
 
     /**
@@ -242,8 +250,8 @@ final class CampaignsControllerTest extends TestCase
                 'budget' => 10000000000000,
                 'medium' => 'web',
                 'vendor' => null,
-                'dateStart' => '2018-12-03T18:42:00+01:00',
-                'dateEnd' => '2018-12-30T18:42:00+01:00',
+                'dateStart' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+                'dateEnd' => (new DateTimeImmutable('+2 weeks'))->format(DateTimeInterface::ATOM),
             ],
             'targeting' => [
                 'requires' => [],
