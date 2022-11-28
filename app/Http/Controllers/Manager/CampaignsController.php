@@ -26,7 +26,6 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Mail\Crm\CampaignCreated;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
@@ -35,6 +34,7 @@ use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
+use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Uploader\Factory;
@@ -53,7 +53,6 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -169,7 +168,7 @@ class CampaignsController extends Controller
 
         $this->createBannerClassificationsForCampaign($campaign);
 
-        $this->sendCrmMailOnCampaignCreated($user, $campaign);
+        CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
             'Location',
@@ -500,15 +499,6 @@ class CampaignsController extends Controller
         }
 
         $this->bannerClassificationCreator->create($classifierName, $bannerIds->toArray());
-    }
-
-    private function sendCrmMailOnCampaignCreated(User $user, Campaign $campaign): void
-    {
-        if (config('app.crm_mail_address_on_campaign_created')) {
-            Mail::to(config('app.crm_mail_address_on_campaign_created'))->queue(
-                new CampaignCreated($user->uuid, $user->email, $campaign)
-            );
-        }
     }
 
     private function fetchExchangeRateOrFail(): ExchangeRate

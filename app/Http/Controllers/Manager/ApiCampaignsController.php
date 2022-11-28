@@ -25,7 +25,9 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Resources\CampaignCollection;
 use Adshares\Adserver\Http\Resources\CampaignResource;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Services\Demand\CampaignCreator;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -47,6 +49,8 @@ class ApiCampaignsController extends Controller
 
     public function addCampaign(Request $request): JsonResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
         $input = $request->input();
         if (!is_array($input)) {
             throw new UnprocessableEntityHttpException('Invalid body type');
@@ -61,11 +65,13 @@ class ApiCampaignsController extends Controller
         }
         try {
             $banners = $this->bannerCreator->prepareBannersFromInput($input['ads'], $campaign);
-            $campaign->user_id = Auth::user()->id;
+            $campaign->user_id = $user->id;
             $campaign = $this->campaignRepository->save($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
+
+        CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
 
         return (new CampaignResource($campaign))
             ->response()

@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\AuthRecovery;
-use Adshares\Adserver\Mail\Crm\UserRegistered;
 use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
@@ -33,6 +32,7 @@ use Adshares\Adserver\Mail\UserPasswordChangeConfirm;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
@@ -42,7 +42,6 @@ use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Config\RegistrationMode;
-use DateTime;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -136,7 +135,7 @@ class AuthController extends Controller
         $user->save();
         DB::commit();
 
-        $this->sendCrmMailOnUserRegistered($user);
+        CrmNotifier::sendCrmMailOnUserRegistered($user);
 
         return self::json($user->toArray());
     }
@@ -588,19 +587,5 @@ MSG;
             Currency::ADS => $this->exchangeRateReader->fetchExchangeRate(),
             default => ExchangeRate::ONE($appCurrency),
         };
-    }
-
-    private function sendCrmMailOnUserRegistered(User $user): void
-    {
-        if (config('app.crm_mail_address_on_user_registered')) {
-            Mail::to(config('app.crm_mail_address_on_user_registered'))->queue(
-                new UserRegistered(
-                    $user->uuid,
-                    $user->email,
-                    ($user->created_at ?: new DateTime())->format('d/m/Y'),
-                    optional($user->refLink)->token
-                )
-            );
-        }
     }
 }
