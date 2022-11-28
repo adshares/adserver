@@ -71,7 +71,7 @@ class Config extends Model
     public const ADUSER_INTERNAL_URL = 'aduser-internal-url';
     public const ADUSER_SERVE_SUBDOMAIN = 'aduser-serve-subdomain';
     public const ADVERTISER_APPLY_FORM_URL = 'advertiser-apply-form-url';
-    public const ALLOW_ZONE_IN_IFRAME = 'allow_zone-in-iframe';
+    public const ALLOW_ZONE_IN_IFRAME = 'allow-zone-in-iframe';
     public const AUTO_CONFIRMATION_ENABLED = 'auto-confirmation-enabled';
     public const AUTO_REGISTRATION_ENABLED = 'auto-registration-enabled';
     public const AUTO_WITHDRAWAL_LIMIT_ADS = 'auto-withdrawal-limit-ads';
@@ -139,7 +139,7 @@ class Config extends Model
     public const MAIN_JS_BASE_URL = 'main-js-base-url';
     public const MAIN_JS_TLD = 'main-js-tld';
     public const MAX_PAGE_ZONES = 'max-page-zones';
-    public const NETWORK_DATA_CACHE_TTL = 'network_data_cache-ttl';
+    public const NETWORK_DATA_CACHE_TTL = 'network-data-cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
     public const NOW_PAYMENTS_CURRENCY = 'now-payments-currency';
     public const NOW_PAYMENTS_EXCHANGE = 'now-payments-exchange';
