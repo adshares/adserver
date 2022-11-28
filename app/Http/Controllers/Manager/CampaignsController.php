@@ -234,15 +234,14 @@ class CampaignsController extends Controller
         }
         $conversions = $this->prepareConversionsFromInput($input['conversions'] ?? []);
 
-        $status = $campaign->status;
         if ($input['basic_information']['medium'] !== $campaign->medium) {
             throw new UnprocessableEntityHttpException('Medium cannot be changed');
         }
         if ($input['basic_information']['vendor'] !== $campaign->vendor) {
             throw new UnprocessableEntityHttpException('Vendor cannot be changed');
         }
+        $status = $campaign->status;
         $campaign->fill($input);
-
         $campaign->status = Campaign::STATUS_INACTIVE;
 
         $bannersToUpdate = [];

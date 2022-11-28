@@ -108,7 +108,7 @@ class CampaignRepository
         $status = $campaign->status;
         $campaign->status = Campaign::STATUS_DRAFT;
         if (Campaign::STATUS_DRAFT !== $status && !$campaign->changeStatus($status, $this->fetchExchangeRateOrFail())) {
-            throw new InvalidArgumentException('Cannot set status');
+            throw new InvalidArgumentException('Insufficient funds');
         }
 
         try {
@@ -126,6 +126,9 @@ class CampaignRepository
                 }
             }
             DB::commit();
+        } catch (InvalidArgumentException $exception) {
+            DB::rollBack();
+            throw $exception;
         } catch (Throwable $throwable) {
             DB::rollBack();
             Log::error(sprintf('Campaign save failed (%s)', $throwable->getMessage()));
@@ -172,8 +175,14 @@ class CampaignRepository
         if (isset($campaign->getDirty()['bid_strategy_uuid'])) {
             self::checkIfBidStrategyCanChanged($campaign);
         }
-
         DB::beginTransaction();
+        $status = $campaign->status;
+        $campaign->status = Campaign::STATUS_INACTIVE;
+        if (
+            Campaign::STATUS_INACTIVE !== $status && !$campaign->changeStatus($status, $this->fetchExchangeRateOrFail())
+        ) {
+            throw new InvalidArgumentException('Insufficient funds');
+        }
 
         try {
             $campaign->update();
@@ -220,6 +229,9 @@ class CampaignRepository
                 $campaign->conversions()->whereIn('uuid', $conversionBinaryUuidsToDelete)->delete();
             }
             DB::commit();
+        } catch (InvalidArgumentException $exception) {
+            DB::rollBack();
+            throw $exception;
         } catch (Throwable $throwable) {
             DB::rollBack();
             Log::error(sprintf('Campaign update failed (%s)', $throwable->getMessage()));

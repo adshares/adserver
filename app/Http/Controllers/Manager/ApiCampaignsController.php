@@ -59,9 +59,13 @@ class ApiCampaignsController extends Controller
         if (!isset($input['ads']) || !is_array($input['ads'])) {
             throw new UnprocessableEntityHttpException('Field `ads` must be an array');
         }
-        $banners = $this->bannerCreator->prepareBannersFromInput($input['ads'], $campaign);
-        $campaign->user_id = Auth::user()->id;
-        $campaign = $this->campaignRepository->save($campaign, $banners);
+        try {
+            $banners = $this->bannerCreator->prepareBannersFromInput($input['ads'], $campaign);
+            $campaign->user_id = Auth::user()->id;
+            $campaign = $this->campaignRepository->save($campaign, $banners);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         return (new CampaignResource($campaign))
             ->response()
@@ -131,8 +135,12 @@ class ApiCampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
         $oldBannerIds = $campaign->banners()->pluck('id');
 
-        $banners = $this->bannerCreator->prepareBannersFromInput([$request->input()], $campaign);
-        $this->campaignRepository->update($campaign, $banners);
+        try {
+            $banners = $this->bannerCreator->prepareBannersFromInput([$request->input()], $campaign);
+            $this->campaignRepository->update($campaign, $banners);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         $bannerIds = $campaign->refresh()->banners()->pluck('id');
         $bannerId = $bannerIds->diff($oldBannerIds)->first();
@@ -161,8 +169,12 @@ class ApiCampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
         $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
 
-        $banner = $this->bannerCreator->updateBanner($input, $banner);
-        $this->campaignRepository->update($campaign, bannersToUpdate: [$banner]);
+        try {
+            $banner = $this->bannerCreator->updateBanner($input, $banner);
+            $this->campaignRepository->update($campaign, bannersToUpdate: [$banner]);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         return new JsonResponse(['data' => $banner->refresh()]);
     }
@@ -172,7 +184,11 @@ class ApiCampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
         $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
 
-        $this->campaignRepository->update($campaign, bannersToDelete: [$banner]);
+        try {
+            $this->campaignRepository->update($campaign, bannersToDelete: [$banner]);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         return new JsonResponse(['data' => []], Response::HTTP_OK);
     }

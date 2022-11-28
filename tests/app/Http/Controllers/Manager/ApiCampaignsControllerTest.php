@@ -484,7 +484,7 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        UserLedgerEntry::factory()->create(['user_id' => $user->id, 'amount' => (int)(100 * 1e11)]);
+        UserLedgerEntry::factory()->create(['user_id' => $user->id, 'amount' => (int)(400 * 1e11)]);
         Passport::actingAs($user, [ScopeType::CAMPAIGN_READ], 'jwt');
         return $user;
     }
