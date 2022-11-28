@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Banner;
-use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 
@@ -34,17 +33,13 @@ use function explode;
 class BannerClassificationsCreateCommand extends BaseCommand
 {
     protected $signature = 'ops:demand:classification:create {classifier} {--bannerIds=}';
-
     protected $description = 'Creates banner classification entries for specified classifier';
 
-    private BannerClassificationCreator $creator;
-
     public function __construct(
-        BannerClassificationCreator $creator,
-        Locker $locker
+        private readonly BannerClassificationCreator $creator,
+        private readonly CampaignRepository $campaignRepository,
+        Locker $locker,
     ) {
-        $this->creator = $creator;
-
         parent::__construct($locker);
     }
 
@@ -52,7 +47,6 @@ class BannerClassificationsCreateCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
@@ -70,10 +64,8 @@ class BannerClassificationsCreateCommand extends BaseCommand
             return explode(',', $bannerIds);
         }
 
-        $campaignRepository = new CampaignRepository();
-
         $bannerIds = [];
-        foreach ($campaignRepository->fetchActiveCampaigns() as $campaign) {
+        foreach ($this->campaignRepository->fetchActiveCampaigns() as $campaign) {
             foreach ($campaign->ads as $banner) {
                 if (Banner::STATUS_ACTIVE === $banner->status) {
                     $bannerIds[] = $banner->id;

@@ -164,7 +164,7 @@ class CampaignsController extends Controller
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
         if ($campaign->changeStatus($status, $exchangeRate)) {
-            $this->campaignRepository->save($campaign);
+            $this->campaignRepository->update($campaign);
         }
 
         $this->createBannerClassificationsForCampaign($campaign);
@@ -337,7 +337,7 @@ class CampaignsController extends Controller
         }
 
         if ($campaign->changeStatus($status, $exchangeRate)) {
-            $this->campaignRepository->save($campaign);
+            $this->campaignRepository->update($campaign);
         }
 
         $this->createBannerClassificationsForCampaign($campaign);

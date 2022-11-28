@@ -25,8 +25,12 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\CursorPaginator;
@@ -35,6 +39,11 @@ use Throwable;
 
 class CampaignRepository
 {
+    public function __construct(
+        private readonly ExchangeRateReader $exchangeRateReader,
+    ) {
+    }
+
     public function find()
     {
         return (new Campaign())->with('conversions')->get();
@@ -96,6 +105,11 @@ class CampaignRepository
     public function save(Campaign $campaign, array $banners = [], array $conversions = []): Campaign
     {
         DB::beginTransaction();
+        $status = $campaign->status;
+        $campaign->status = Campaign::STATUS_DRAFT;
+        if (Campaign::STATUS_DRAFT !== $status && !$campaign->changeStatus($status, $this->fetchExchangeRateOrFail())) {
+            throw new InvalidArgumentException('Cannot set status');
+        }
 
         try {
             $campaign->save();
@@ -152,7 +166,10 @@ class CampaignRepository
         array $conversionsToUpdate = [],
         array $conversionUuidsToDelete = [],
     ): Campaign {
-        if ($campaign->exists() && isset($campaign->getDirty()['bid_strategy_uuid'])) {
+        if (!$campaign->exists()) {
+            throw new RuntimeException('Function `update` requires existing Campaign model');
+        }
+        if (isset($campaign->getDirty()['bid_strategy_uuid'])) {
             self::checkIfBidStrategyCanChanged($campaign);
         }
 
@@ -243,5 +260,20 @@ class CampaignRepository
         ) {
             throw new InvalidArgumentException('Bid strategy could not be accessed');
         }
+    }
+
+    private function fetchExchangeRateOrFail(): ExchangeRate
+    {
+        if (Currency::ADS !== Currency::from(config('app.currency'))) {
+            return ExchangeRate::ONE(Currency::ADS);
+        }
+
+        try {
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+        } catch (ExchangeRateNotAvailableException $exception) {
+            Log::error(sprintf('Exchange rate is not available (%s)', $exception->getMessage()));
+            throw new RuntimeException('Exchange rate is not available');
+        }
+        return $exchangeRate;
     }
 }

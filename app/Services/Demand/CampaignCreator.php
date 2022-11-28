@@ -32,7 +32,6 @@ use Adshares\Common\Exception\RuntimeException;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class CampaignCreator
 {
@@ -48,7 +47,7 @@ class CampaignCreator
     {
         foreach (['budget', 'date_start', 'medium', 'name', 'status'] as $field) {
             if (!array_key_exists($field, $input)) {
-                throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
+                throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
             }
         }
 
@@ -86,10 +85,10 @@ class CampaignCreator
 
         if (null === ($bidStrategy = BidStrategy::fetchDefault($medium, $vendor))) {
             Log::critical(sprintf('Bid strategy for (`%s`, `%s`) is missing', $medium, $vendor));
-            throw new RuntimeException();
+            throw new RuntimeException('Default bid strategy is missing');
         }
 
-        return new Campaign([
+        $campaign = new Campaign([
             'landing_url' => $landingUrl,
             'name' => $name,
             'status' => $status,
@@ -104,15 +103,25 @@ class CampaignCreator
             'time_end' => $timeEnd,
             'bid_strategy_uuid' => $bidStrategy->uuid,
         ]);
+
+        self::validateOutdated($campaign);
+        self::validateLimits($campaign);
+
+        return $campaign;
     }
 
     public function updateCampaign(array $input, Campaign $campaign): Campaign
     {
+        $checkLimits = false;
+        $checkDateRange = false;
+        $checkOutdated = false;
+
         foreach (['max_cpc', 'max_cpm'] as $field) {
             if (array_key_exists($field, $input)) {
                 $value = $input[$field];
                 if (null !== $value) {
                     self::validateClickAmount($value, $field);
+                    $checkLimits = true;
                 }
                 $campaign->$field = $value;
             }
@@ -127,6 +136,8 @@ class CampaignCreator
         if (array_key_exists('status', $input)) {
             $value = $input['status'];
             self::validateStatus($value);
+            $checkLimits = true;
+            $checkOutdated = true;
             $campaign->status = $value;
         }
 
@@ -140,10 +151,10 @@ class CampaignCreator
         if (array_key_exists('budget', $input)) {
             $value = $input['budget'];
             self::validateClickAmount($value, 'budget');
+            $checkLimits = true;
             $campaign->budget = $value;
         }
 
-        $checkDateRange = false;
         if (array_key_exists('date_start', $input)) {
             $value = $input['date_start'];
             self::validateDate($value, 'dateStart');
@@ -156,6 +167,7 @@ class CampaignCreator
             if (null !== $value) {
                 self::validateDate($value, 'dateEnd');
                 $checkDateRange = true;
+                $checkOutdated = true;
             }
             $campaign->time_end = $value;
         }
@@ -179,13 +191,21 @@ class CampaignCreator
             $campaign->bid_strategy_uuid = $value;
         }
 
+        if ($checkLimits) {
+            self::validateLimits($campaign);
+        }
+
+        if ($checkOutdated) {
+            self::validateOutdated($campaign);
+        }
+
         return $campaign;
     }
 
     private static function validateBidStrategyUuid(mixed $value): void
     {
         if (!Utils::isUuidValid($value)) {
-            throw new UnprocessableEntityHttpException(
+            throw new InvalidArgumentException(
                 'Field `bidStrategyUuid` must be a hexadecimal string of length 32'
             );
         }
@@ -225,6 +245,22 @@ class CampaignCreator
         }
     }
 
+    private static function validateLimits(Campaign $campaign): void
+    {
+        if (Campaign::STATUS_ACTIVE === $campaign->status && !$campaign->areBudgetLimitsMet()) {
+            throw new InvalidArgumentException(
+                'Fields `budget`, `maxCpc`, `maxCpm` cannot be lower than minimal'
+            );
+        }
+    }
+
+    private static function validateOutdated(Campaign $campaign): void
+    {
+        if (Campaign::STATUS_ACTIVE === $campaign->status && $campaign->isOutdated()) {
+            throw new InvalidArgumentException('Field `dateEnd` cannot be in past');
+        }
+    }
+
     private static function validateStatus(mixed $status): void
     {
         if (!is_int($status)) {
@@ -255,7 +291,7 @@ class CampaignCreator
     private static function validateUrl(string $value): void
     {
         if (false === filter_var($value, FILTER_VALIDATE_URL)) {
-            throw new UnprocessableEntityHttpException('Field `targetUrl` must be a url');
+            throw new InvalidArgumentException('Field `targetUrl` must be a url');
         }
     }
 }

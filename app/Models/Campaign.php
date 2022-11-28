@@ -370,7 +370,7 @@ class Campaign extends Model
             return false;
         }
 
-        if ($status === self::STATUS_ACTIVE && !$this->checkBudget()) {
+        if ($status === self::STATUS_ACTIVE && !$this->areBudgetLimitsMet()) {
             $status = self::STATUS_INACTIVE;
         }
 
@@ -398,7 +398,7 @@ class Campaign extends Model
         return true;
     }
 
-    private function checkBudget(): bool
+    public function areBudgetLimitsMet(): bool
     {
         if ($this->budget < config('app.campaign_min_budget')) {
             return false;
