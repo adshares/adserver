@@ -34,7 +34,6 @@ use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Common\CrmNotifier;
-use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -62,10 +61,10 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class CampaignsController extends Controller
 {
     public function __construct(
+        private readonly BannerCreator $bannerCreator,
         private readonly CampaignRepository $campaignRepository,
         private readonly ConfigurationRepository $configurationRepository,
         private readonly ExchangeRateReader $exchangeRateReader,
-        private readonly BannerCreator $bannerCreator,
     ) {
     }
 

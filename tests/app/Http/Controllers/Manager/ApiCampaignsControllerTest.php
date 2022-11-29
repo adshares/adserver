@@ -447,7 +447,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
     private function mockStorage(): void
     {
-        $adPath = base_path('tests/mock/980x120.png');
+        $adPath = base_path('tests/mock/Files/Banners/980x120.png');
         $filesystemMock = self::createMock(FilesystemAdapter::class);
         $filesystemMock->method('exists')->willReturn(function ($fileName) {
             return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName;

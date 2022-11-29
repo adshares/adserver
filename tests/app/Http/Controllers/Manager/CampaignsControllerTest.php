@@ -69,7 +69,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddCampaignWithBanner(): void
     {
-        $adPath = base_path('tests/mock/980x120.png');
+        $adPath = base_path('tests/mock/Files/Banners/980x120.png');
         $filesystemMock = self::createMock(FilesystemAdapter::class);
         $filesystemMock->method('exists')->willReturn(true);
         $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
@@ -94,15 +94,9 @@ final class CampaignsControllerTest extends TestCase
      */
     public function testAddCampaignWithInvalidData(array $data): void
     {
-        $adPath = base_path('tests/mock/980x120.png');
         $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('exists')->willReturn(function ($fileName) {
-            return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName;
-        });
-        $filesystemMock->method('get')->willReturnCallback(function ($fileName) use ($adPath) {
-            return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName ? file_get_contents($adPath) : null;
-        });
-        $filesystemMock->method('path')->willReturn($adPath);
+        $filesystemMock->method('exists')->willReturn(false);
+        $filesystemMock->method('get')->willReturn(null);
         Storage::shouldReceive('disk')->andReturn($filesystemMock);
         $this->createUser();
 
