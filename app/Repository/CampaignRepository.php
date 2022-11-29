@@ -258,9 +258,11 @@ class CampaignRepository
         return $campaign->banners()->findOrFail($bannerId);
     }
 
-    public function fetchBanners(Campaign $campaign): Collection
+    public function fetchBanners(Campaign $campaign, ?int $perPage = null): CursorPaginator
     {
-        return $campaign->banners()->get();
+        return $campaign->banners()->orderBy('id')
+            ->tokenPaginate($perPage)
+            ->withQueryString();
     }
 
     public function fetchCampaigns(?int $perPage = null): CursorPaginator

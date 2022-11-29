@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
+use Adshares\Adserver\Http\Resources\BannerCollection;
+use Adshares\Adserver\Http\Resources\BannerResource;
 use Adshares\Adserver\Http\Resources\CampaignCollection;
 use Adshares\Adserver\Http\Resources\CampaignResource;
 use Adshares\Adserver\Http\Utils;
@@ -107,8 +109,7 @@ class ApiCampaignsController extends Controller
     {
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($id);
         $this->campaignRepository->delete($campaign);
-
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        return new JsonResponse(['data' => []], Response::HTTP_OK);
     }
 
     public function fetchCampaignById(int $id): JsonResource
@@ -120,23 +121,24 @@ class ApiCampaignsController extends Controller
     {
         $limit = $request->query('limit', 10);
         LimitValidator::validate($limit);
-        return new CampaignCollection($this->campaignRepository->fetchCampaigns($limit));
+        $campaigns = $this->campaignRepository->fetchCampaigns($limit);
+        return new CampaignCollection($campaigns);
     }
 
-    public function fetchBanner(int $campaignId, int $bannerId): JsonResponse
+    public function fetchBanner(int $campaignId, int $bannerId): JsonResource
     {
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
         $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
-
-        return new JsonResponse(['data' => $banner]);
+        return new BannerResource($banner);
     }
 
-    public function fetchBanners(int $campaignId): JsonResponse
+    public function fetchBanners(int $campaignId, Request $request): JsonResource
     {
+        $limit = $request->query('limit', 10);
+        LimitValidator::validate($limit);
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
-        $banners = $this->campaignRepository->fetchBanners($campaign);
-
-        return new JsonResponse(['data' => $banners]);
+        $banners = $this->campaignRepository->fetchBanners($campaign, $limit);
+        return new BannerCollection($banners);
     }
 
     public function addBanner(int $campaignId, Request $request): JsonResponse
@@ -158,19 +160,19 @@ class ApiCampaignsController extends Controller
 
         self::removeTemporaryUploadedFiles([$request->input()], $request);
 
-        return new JsonResponse(
-            ['data' => $banner],
-            Response::HTTP_CREATED,
-            [
-                'Location' => route('api.campaigns.banners.fetch', [
+        return (new BannerResource($banner))
+            ->response()
+            ->setStatusCode(Response::HTTP_CREATED)
+            ->header(
+                'Location',
+                route('api.campaigns.banners.fetch', [
                     'banner' => $bannerId,
                     'campaign' => $campaignId,
-                ]),
-            ]
-        );
+                ])
+            );
     }
 
-    public function editBanner(int $campaignId, int $bannerId, Request $request): JsonResponse
+    public function editBanner(int $campaignId, int $bannerId, Request $request): JsonResource
     {
         $input = $request->input();
         if (!is_array($input)) {
@@ -187,7 +189,7 @@ class ApiCampaignsController extends Controller
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
 
-        return new JsonResponse(['data' => $banner->refresh()]);
+        return new BannerResource($banner->refresh());
     }
 
     public function deleteBanner(int $campaignId, int $bannerId): JsonResponse

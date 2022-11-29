@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\ViewModel\CampaignStatus;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
@@ -91,7 +92,7 @@ class CampaignCreator
         $campaign = new Campaign([
             'landing_url' => $landingUrl,
             'name' => $name,
-            'status' => $status,
+            'status' => CampaignStatus::fromString($status)->value,
             'budget' => $budget,
             'max_cpc' => $maxCpc,
             'max_cpm' => $maxCpm,
@@ -138,7 +139,7 @@ class CampaignCreator
             self::validateStatus($value);
             $checkLimits = true;
             $checkOutdated = true;
-            $campaign->status = $value;
+            $campaign->status =  CampaignStatus::fromString($value)->value;
         }
 
         if (array_key_exists('target_url', $input)) {
@@ -261,10 +262,12 @@ class CampaignCreator
 
     private static function validateStatus(mixed $status): void
     {
-        if (!is_int($status)) {
-            throw new InvalidArgumentException('Field `status` must be an integer');
+        if (!is_string($status)) {
+            throw new InvalidArgumentException('Field `status` must be a string');
         }
-        if (!Campaign::isStatusAllowed($status)) {
+        try {
+            CampaignStatus::fromString($status);
+        } catch (InvalidArgumentException) {
             throw new InvalidArgumentException('Field `status` must be one of supported states');
         }
     }

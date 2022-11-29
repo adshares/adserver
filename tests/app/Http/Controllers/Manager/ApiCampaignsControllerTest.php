@@ -124,6 +124,8 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertHeader('Location');
         $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
+        $response->assertJsonPath('data.status', 'active');
+        $response->assertJsonPath('data.ads.0.status', 'active');
         $campaign = Campaign::first();
         self::assertNotNull($campaign);
         self::assertEquals($campaign->id, $this->getIdFromLocationHeader($response));
@@ -231,26 +233,26 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
     }
 
-    /**
-     * @dataProvider editBannerProvider
-     */
-    public function testEditBanner(array $data): void
+    public function testEditBannerName(): void
     {
         $bannerUri = $this->setUpCampaignWithBanner();
 
-        $response = $this->patch($bannerUri, $data);
+        $response = $this->patch($bannerUri, ['name' => 'new banner name']);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::ADVERTISEMENT_STRUCTURE);
-        self::assertDatabaseHas(Banner::class, $data);
+        self::assertDatabaseHas(Banner::class, ['name' => 'new banner name']);
     }
 
-    public function editBannerProvider(): array
+    public function testEditBannerStatus(): void
     {
-        return [
-            'name' => [['name' => 'new banner name']],
-            'status' => [['status' => Banner::STATUS_INACTIVE]],
-        ];
+        $bannerUri = $this->setUpCampaignWithBanner();
+
+        $response = $this->patch($bannerUri, ['status' => 'inactive']);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::ADVERTISEMENT_STRUCTURE);
+        self::assertDatabaseHas(Banner::class, ['status' => Banner::STATUS_INACTIVE]);
     }
 
     public function testDeleteBanner(): void
@@ -288,7 +290,7 @@ final class ApiCampaignsControllerTest extends TestCase
     private function getCampaignData(array $mergeData = []): array
     {
         return array_merge([
-            'status' => Campaign::STATUS_ACTIVE,
+            'status' => 'active',
             'name' => 'Test campaign',
             'targetUrl' => 'https://exmaple.com/landing',
             'maxCpc' => 0,
@@ -352,7 +354,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $bannerClassification = $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
 
         $response = $this->delete(self::buildUriCampaign($campaign->id));
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $response->assertStatus(Response::HTTP_OK);
         self::assertTrue($campaign->refresh()->trashed());
         self::assertTrue($conversion->refresh()->trashed());
         self::assertTrue($banner->refresh()->trashed());

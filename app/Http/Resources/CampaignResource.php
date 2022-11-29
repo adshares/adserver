@@ -4,6 +4,7 @@ namespace Adshares\Adserver\Http\Resources;
 
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\ViewModel\CampaignStatus;
 use DateTimeInterface;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,6 +13,8 @@ class CampaignResource extends JsonResource
     public function toArray($request): array
     {
         /** @var Campaign $this */
+        $basicInformation = $this->basic_information;
+        $basicInformation['status'] = strtolower(CampaignStatus::from($basicInformation['status'])->name);
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
@@ -22,10 +25,10 @@ class CampaignResource extends JsonResource
             'classifications' => BannerClassification::fetchCampaignClassifications($this->id),
             'conversionClickLink' => $this->conversion_click_link,
             'targeting' => $this->targeting,
-            'ads' => $this->ads,
+            'ads' => new BannerCollection($this->ads),
             'bidStrategyUuid' => $this->bid_strategy_uuid,
             'conversions' => $this->conversions,
-            ...$this->basic_information,
+            ...$basicInformation,
         ];
     }
 }
