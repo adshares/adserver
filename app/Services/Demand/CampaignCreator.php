@@ -247,10 +247,8 @@ class CampaignCreator
 
     private static function validateLimits(Campaign $campaign): void
     {
-        if (Campaign::STATUS_ACTIVE === $campaign->status && !$campaign->areBudgetLimitsMet()) {
-            throw new InvalidArgumentException(
-                'Fields `budget`, `maxCpc`, `maxCpm` cannot be lower than minimal'
-            );
+        if (Campaign::STATUS_ACTIVE === $campaign->status) {
+            $campaign->checkBudgetLimits();
         }
     }
 

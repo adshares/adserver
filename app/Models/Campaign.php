@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +41,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use InvalidArgumentException;
 
 /**
  * @property int id
@@ -398,24 +398,47 @@ class Campaign extends Model
         return true;
     }
 
-    public function areBudgetLimitsMet(): bool
+    /**
+     * @return void
+     *
+     * @throws InvalidArgumentException
+     */
+    public function checkBudgetLimits(): void
     {
         if ($this->budget < config('app.campaign_min_budget')) {
-            return false;
+            throw new InvalidArgumentException(
+                sprintf('Budget must be at least %d', config('app.campaign_min_budget'))
+            );
         }
 
         if ($this->isAutoCpm() || $this->max_cpm >= config('app.campaign_min_cpm')) {
-            return true;
+            return;
         }
 
         foreach ($this->conversions as $conversion) {
             /** @var $conversion ConversionDefinition */
             if ($conversion->value >= config('app.campaign_min_cpa')) {
-                return true;
+                return;
             }
         }
 
-        return false;
+        throw new InvalidArgumentException(
+            sprintf(
+                'CPM must be at least %d or any CPC must be at least %d',
+                config('app.campaign_min_cpm'),
+                config('app.campaign_min_cpa'),
+            )
+        );
+    }
+
+    private function areBudgetLimitsMet(): bool
+    {
+        try {
+            $this->checkBudgetLimits();
+        } catch (InvalidArgumentException) {
+            return false;
+        }
+        return true;
     }
 
     private function updateBlockadeOrFailIfNotAllowed(int $total, int $bonusable): bool

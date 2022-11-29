@@ -51,6 +51,7 @@ final class CampaignCreatorTest extends TestCase
     public function testPrepareCampaignFromInputInvalid(array $input): void
     {
         $creator = new CampaignCreator($this->app->make(ConfigurationRepository::class));
+
         self::expectException(InvalidArgumentException::class);
 
         $creator->prepareCampaignFromInput($input);
@@ -125,5 +126,29 @@ final class CampaignCreatorTest extends TestCase
             unset($data[$remove]);
         }
         return $data;
+    }
+
+    /**
+     * @dataProvider updateCampaignInvalidProvider
+     */
+    public function testUpdateCampaignInvalid(array $data): void
+    {
+        $campaign = Campaign::factory()->create();
+        $creator = new CampaignCreator($this->app->make(ConfigurationRepository::class));
+
+        self::expectException(InvalidArgumentException::class);
+
+        $creator->updateCampaign($data, $campaign);
+    }
+
+    public function updateCampaignInvalidProvider(): array
+    {
+        return [
+            'invalid bid_strategy_uuid type' => [['bid_strategy_uuid' => 0]],
+            'invalid date range' => [[
+                'date_start' => (new DateTimeImmutable('+2 day'))->format(DateTimeInterface::ATOM),
+                'date_end' => (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM),
+            ]],
+        ];
     }
 }
