@@ -33,8 +33,7 @@
         "spatie/fork": "^1.0.0",
         "spatie/laravel-activitylog": "^4.6",
         "symfony/intl": "^v6.1.0",
-        "symfony/lock": "^v6.1.0",
-        "symfony/polyfill-php80": "^1.24"
+        "symfony/lock": "^v6.1.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
