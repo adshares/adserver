@@ -34,6 +34,8 @@ use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use stdClass;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -113,15 +115,16 @@ class OptionsController extends Controller
 
     public function vendors(string $medium): JsonResponse
     {
-        $data = [];
+        $data = new stdClass();
         try {
             $taxonomy = $this->optionsRepository->fetchTaxonomy();
         } catch (MissingInitialConfigurationException $exception) {
-            return self::json();
+            Log::error(sprintf('No taxonomy (%s)', $exception->getMessage()));
+            return self::json($data);
         }
         foreach ($taxonomy->getMedia() as $mediumObject) {
             if ($mediumObject->getName() === $medium && $mediumObject->getVendor() !== null) {
-                $data[$mediumObject->getVendor()] = $mediumObject->getVendorLabel();
+                $data->{$mediumObject->getVendor()} = $mediumObject->getVendorLabel();
             }
         }
         return self::json($data);
