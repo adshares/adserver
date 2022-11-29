@@ -118,7 +118,7 @@ final class BannerCreatorTest extends TestCase
         $banner = Banner::factory()->create(['name' => 'a', 'status' => Banner::STATUS_INACTIVE]);
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
 
-        $creator->updateBanner(['name' => 'b', 'status' => Banner::STATUS_ACTIVE], $banner);
+        $creator->updateBanner(['name' => 'b', 'status' => 'active'], $banner);
 
         self::assertEquals('b', $banner->name);
         self::assertEquals(Banner::STATUS_ACTIVE, $banner->status);
@@ -131,7 +131,7 @@ final class BannerCreatorTest extends TestCase
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
         self::expectException(InvalidArgumentException::class);
 
-        $creator->updateBanner(['name' => 'b', 'status' => 'active'], $banner);
+        $creator->updateBanner(['name' => 'b', 'status' => 'invalid'], $banner);
     }
 
     private function mockStorage(): void

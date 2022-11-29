@@ -97,7 +97,7 @@ final class CampaignCreatorTest extends TestCase
     private static function getCampaignData(array $merge = [], string $remove = null): array
     {
         $data = array_merge([
-            'status' => Campaign::STATUS_ACTIVE,
+            'status' => 'active',
             'name' => 'Test campaign',
             'target_url' => 'https://exmaple.com/landing',
             'max_cpc' => 0,
