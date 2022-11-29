@@ -41,9 +41,8 @@ use DateTimeInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Testing\TestResponse;
+use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 // phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 final class ServerMonitoringControllerTest extends TestCase
@@ -123,18 +122,16 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testAccessUserJwt(): void
     {
-        $user = User::factory()->create();
+        $this->setUpUser();
 
-        $response = $this->getJson(
-            self::buildUriForKey('hosts'),
-            $this->getHeaders($user)
-        );
+        $response = $this->getJson(self::buildUriForKey('hosts'));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testFetchHosts(): void
     {
+        $this->setUpAdmin();
         NetworkHost::factory()->create([
             'address' => '0001-00000001-8B4E',
             'status' => HostStatus::Initialization,
@@ -147,7 +144,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'last_synchronization' => $carbon,
         ]);
 
-        $response = $this->getResponseForKey('hosts');
+        $response = $this->getJson(self::buildUriForKey('hosts'));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::HOSTS_STRUCTURE);
@@ -165,9 +162,10 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchHostsValidateLimit(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->getJson(
             self::buildUriForKey('hosts') . '?limit=no',
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -175,6 +173,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchWallet(): void
     {
+        $this->setUpAdmin();
         UserLedgerEntry::factory()->create([
             'amount' => 2000,
             'status' => UserLedgerEntry::STATUS_ACCEPTED,
@@ -196,7 +195,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'type' => UserLedgerEntry::TYPE_BONUS_EXPENSE,
         ]);
 
-        $response = $this->getResponseForKey('wallet');
+        $response = $this->getJson(self::buildUriForKey('wallet'));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson(
@@ -211,6 +210,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testHostConnectionErrorCounterReset(): void
     {
+        $this->setUpAdmin();
         /** @var NetworkHost $host */
         $host = NetworkHost::factory()->create([
             'status' => HostStatus::Unreachable,
@@ -220,7 +220,6 @@ final class ServerMonitoringControllerTest extends TestCase
         $response = $this->patchJson(
             self::buildUriForResetHostConnectionErrorCounter($host->id),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -229,12 +228,12 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testHostConnectionErrorCounterFailWhenHostDoesNotExist(): void
     {
+        $this->setUpAdmin();
         $nonExistingHostId = 1;
 
         $response = $this->patchJson(
             self::buildUriForResetHostConnectionErrorCounter($nonExistingHostId),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -242,14 +241,15 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEvents(): void
     {
+        $this->setUpAdmin();
         self::seedServerEvents();
 
-        $response = $this->getJson(self::buildUriForKey('events'), self::getHeaders());
+        $response = $this->getJson(self::buildUriForKey('events'));
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         $json = $response->json('data');
         self::assertEquals(2, count($json));
 
-        $response = $this->getJson(self::buildUriForKey('events', ['limit' => 1]), self::getHeaders());
+        $response = $this->getJson(self::buildUriForKey('events', ['limit' => 1]));
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(1, count($response->json('data')));
@@ -258,7 +258,9 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEventsEmpty(): void
     {
-        $response = $this->getJson(self::buildUriForKey('events'), self::getHeaders());
+        $this->setUpAdmin();
+
+        $response = $this->getJson(self::buildUriForKey('events'));
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::EVENTS_STRUCTURE);
         $json = $response->json('data');
@@ -267,17 +269,18 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEventsPagination(): void
     {
+        $this->setUpAdmin();
         self::seedServerEvents();
         self::seedServerEvents();
 
-        $response = $this->getJson(self::buildUriForKey('events', ['limit' => 3]), self::getHeaders());
+        $response = $this->getJson(self::buildUriForKey('events', ['limit' => 3]));
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(3, count($response->json('data')));
         self::assertNull($response->json('prevPageUrl'));
         self::assertNotNull($response->json('nextPageUrl'));
 
         $url = $response->json('nextPageUrl');
-        $response = $this->getJson($url, self::getHeaders());
+        $response = $this->getJson($url);
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(1, count($response->json('data')));
         self::assertNotNull($response->json('prevPageUrl'));
@@ -286,11 +289,11 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEventsByType(): void
     {
+        $this->setUpAdmin();
         self::seedServerEvents();
 
         $response = $this->getJson(
             self::buildUriForKey('events', ['filter' => ['type' => ServerEventType::HostBroadcastProcessed->value]]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::EVENTS_STRUCTURE);
@@ -300,6 +303,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEventsByDate(): void
     {
+        $this->setUpAdmin();
         ServerEventLog::factory()->create([
             'created_at' => new DateTimeImmutable('-1 month'),
             'type' => ServerEventType::InventorySynchronized,
@@ -327,7 +331,6 @@ final class ServerMonitoringControllerTest extends TestCase
                     ]
                 ]
             ]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::EVENTS_STRUCTURE);
@@ -338,18 +341,18 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEventsValidationLimit(): void
     {
+        $this->setUpAdmin();
         $response = $this->getJson(
             self::buildUriForKey('events', ['limit' => 'no']),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFetchEventsValidationTypeInvalid(): void
     {
+        $this->setUpAdmin();
         $response = $this->getJson(
             self::buildUriForKey('events', ['filter' => ['type' => 'invalid']]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -359,6 +362,7 @@ final class ServerMonitoringControllerTest extends TestCase
      */
     public function testFetchEventsValidationFrom(string $from): void
     {
+        $this->setUpAdmin();
         $response = $this->getJson(
             self::buildUriForKey('events', [
                 'filter' => [
@@ -367,7 +371,6 @@ final class ServerMonitoringControllerTest extends TestCase
                     ]
                 ]
             ]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -377,6 +380,7 @@ final class ServerMonitoringControllerTest extends TestCase
      */
     public function testFetchEventsValidationTo(string $to): void
     {
+        $this->setUpAdmin();
         $response = $this->getJson(
             self::buildUriForKey('events', [
                 'filter' => [
@@ -385,7 +389,6 @@ final class ServerMonitoringControllerTest extends TestCase
                     ]
                 ]
             ]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -401,6 +404,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchEventsValidationFromArray(): void
     {
+        $this->setUpAdmin();
         $response = $this->getJson(
             self::buildUriForKey('events', [
                 'filter' => [
@@ -409,13 +413,13 @@ final class ServerMonitoringControllerTest extends TestCase
                     ]
                 ]
             ]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFetchEventsValidationToArray(): void
     {
+        $this->setUpAdmin();
         $response = $this->getJson(
             self::buildUriForKey('events', [
                 'filter' => [
@@ -424,13 +428,13 @@ final class ServerMonitoringControllerTest extends TestCase
                     ]
                 ]
             ]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFetchEventValidationDateRange(): void
     {
+        $this->setUpAdmin();
         $from = (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM);
         $to = (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM);
         $response = $this->getJson(
@@ -442,13 +446,13 @@ final class ServerMonitoringControllerTest extends TestCase
                     ]
                 ]
             ]),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFetchLatestEventsByType(): void
     {
+        $this->setUpAdmin();
         ServerEventLog::factory()->create([
             'created_at' => new DateTimeImmutable('-8 minutes'),
             'type' => ServerEventType::InventorySynchronized,
@@ -482,7 +486,6 @@ final class ServerMonitoringControllerTest extends TestCase
                     ]
                 ]
             ),
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::EVENTS_STRUCTURE);
@@ -501,12 +504,9 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsers(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
-        $response = $this->getJson(
-            self::buildUriForKey('users'),
-            self::getHeaders($admin)
-        );
+        $response = $this->getJson(self::buildUriForKey('users'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USERS_STRUCTURE);
@@ -554,7 +554,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUserPaginationWithFilteringAndSorting(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         User::factory()
             ->count(10)
@@ -572,7 +572,6 @@ final class ServerMonitoringControllerTest extends TestCase
                     'orderBy' => 'email:desc'
                 ]
             ),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -586,7 +585,7 @@ final class ServerMonitoringControllerTest extends TestCase
             $emails);
 
         $url = $response->json('nextPageUrl');
-        $response = $this->getJson($url, self::getHeaders());
+        $response = $this->getJson($url);
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USERS_STRUCTURE);
         self::assertEquals(4, count($response->json('data')));
@@ -597,7 +596,7 @@ final class ServerMonitoringControllerTest extends TestCase
             $emails);
 
         $url = $response->json('nextPageUrl');
-        $response = $this->getJson($url, self::getHeaders());
+        $response = $this->getJson($url);
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USERS_STRUCTURE);
         self::assertEquals(3, count($response->json('data')));
@@ -610,11 +609,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersLimit(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['limit' => 1]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -626,11 +624,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersOrderByInvalidCategory(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['orderBy' => 'id']),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -639,11 +636,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersOrderByInvalidDirection(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['orderBy' => 'email:up']),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -655,11 +651,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersOrderBy(string $orderBy, string $expectedEmailOfFirst): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['orderBy' => $orderBy . ':desc']),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -684,11 +679,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersOrderByArray(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['orderBy' => ['test1', 'test2']]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -700,11 +694,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersFilterBy(array $filter, int $filteredCount, ?string $expectedEmailOfFirst): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => $filter]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -733,15 +726,13 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersCursorDoesNotChangeWhileSetDoesNotChange(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $responseNoFilter = $this->getJson(
             self::buildUriForKey('users'),
-            self::getHeaders($admin)
         );
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => ['role' => Role::Advertiser->value]]),
-            self::getHeaders($admin)
         );
 
         $responseNoFilter->assertStatus(Response::HTTP_OK)
@@ -768,12 +759,11 @@ final class ServerMonitoringControllerTest extends TestCase
                 '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb'
             ),
         ]);
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
         $query = ['filter' => ['role' => [Role::Advertiser->value, Role::Publisher->value]]];
 
         $response = $this->getJson(
             self::buildUriForKey('users', $query),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -787,11 +777,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersFilterByInvalid(mixed $filter): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => $filter]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -812,11 +801,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersQueryByEmail(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => ['query' => 'user1']]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -828,11 +816,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersQueryByWalletAddress(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => ['query' => 'ace8d62']]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -847,11 +834,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersQueryByCampaignLandingUrlWalletAddress(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => ['query' => 'ads']]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -863,11 +849,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersQueryBySiteDomain(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => ['query' => 'test']]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -878,11 +863,10 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchUsersQueryByArray(): void
     {
         self::seedUsers();
-        $admin = User::where('is_admin', true)->first();
+        $this->setUpAdmin(User::where('is_admin', true)->first());
 
         $response = $this->getJson(
             self::buildUriForKey('users', ['filter' => ['query' => ['test', 'ads']]]),
-            self::getHeaders($admin)
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -893,13 +877,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserBan(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_banned' => 0, 'ban_reason' => null]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'ban'),
             ['reason' => 'suspicious activity'],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -911,13 +895,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserConfirm(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['admin_confirmed_at' => null]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'confirm'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -927,13 +911,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserDelete(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this->delete(
             sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
@@ -942,13 +926,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserDenyAdvertising(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_advertiser' => 1]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'denyAdvertising'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -958,13 +942,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserDenyPublishing(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_publisher' => 1]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'denyPublishing'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -974,13 +958,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserGrantAdvertising(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_advertiser' => 0]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'grantAdvertising'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -990,13 +974,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserGrantPublishing(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_publisher' => 0]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'grantPublishing'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1006,13 +990,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToAgency(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_agency' => 0]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1024,11 +1008,11 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create(['is_agency' => 0]);
+        $this->setUpAdmin($user);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
             [],
-            self::getHeaders($user)
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1037,13 +1021,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToAgencyWhileUserIsAgency(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_agency' => 1]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -1052,6 +1036,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToAgencyWhileUserDeleted(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create([
             'deleted_at' => new DateTimeImmutable('-1 minute'),
@@ -1061,7 +1046,6 @@ final class ServerMonitoringControllerTest extends TestCase
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -1070,13 +1054,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToModerator(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 0]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1086,14 +1070,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToModeratorByModerator(): void
     {
-        $moderator = User::factory()->create(['is_moderator' => 1]);
+        $this->setUpAdmin(User::factory()->create(['is_moderator' => 1]));
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 0]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
             [],
-            self::getHeaders($moderator)
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1102,13 +1085,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToModeratorWhileUserIsModerator(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 1]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -1117,6 +1100,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToModeratorWhileUserDeleted(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create([
             'deleted_at' => new DateTimeImmutable('-1 minute'),
@@ -1126,7 +1110,6 @@ final class ServerMonitoringControllerTest extends TestCase
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -1135,13 +1118,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToRegular(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 1]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToRegular'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1151,14 +1134,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToRegularByRegularUser(): void
     {
-        $user = User::factory()->create();
+        $this->setUpAdmin(User::factory()->create());
         /** @var User $moderator */
         $moderator = User::factory()->create(['is_moderator' => 1]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($moderator->id, 'switchToRegular'),
             [],
-            self::getHeaders($user)
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1167,14 +1149,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToRegularByModeratorWhileUserIsModerator(): void
     {
-        $moderator = User::factory()->create(['is_moderator' => 1]);
+        $this->setUpAdmin(User::factory()->create(['is_moderator' => 1]));
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 1]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToRegular'),
             [],
-            self::getHeaders($moderator)
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1183,6 +1164,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserSwitchUserToRegularWhileUserDeleted(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create([
             'deleted_at' => new DateTimeImmutable('-1 minute'),
@@ -1192,7 +1174,6 @@ final class ServerMonitoringControllerTest extends TestCase
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToRegular'),
             [],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -1201,13 +1182,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserUnban(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_banned' => 1, 'ban_reason' => 'suspicious activity']);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'unban'),
             ['reason' => 'suspicious activity'],
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1218,31 +1199,15 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testPatchUserInvalidAction(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'invalid'),
             [],
-            self::getHeaders()
         );
         $response->assertStatus(Response::HTTP_NOT_FOUND);
-    }
-
-    private function getResponseForKey(string $key): TestResponse
-    {
-        return $this->getJson(
-            self::buildUriForKey($key),
-            self::getHeaders()
-        );
-    }
-
-    private static function getHeaders($user = null): array
-    {
-        if (null === $user) {
-            $user = User::factory()->admin()->create();
-        }
-        return ['Authorization' => 'Bearer ' . JWTAuth::fromUser($user)];
     }
 
     private static function buildUriForKey(string $key, array $query = null): string
@@ -1329,7 +1294,8 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testAddUser(): void
     {
-        $response = $this->postJson(self::buildUriForKey('users'), self::getUserData(), self::getHeaders());
+        $this->setUpAdmin();
+        $response = $this->postJson(self::buildUriForKey('users'), self::getUserData());
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE)
@@ -1348,11 +1314,11 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testAddUserRequireEmailVerification(): void
     {
+        $this->setUpAdmin();
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
         $response = $this->postJson(
             self::buildUriForKey('users'),
             self::getUserData([], 'forcePasswordChange'),
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1372,11 +1338,11 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testAddUserNoEmailVerification(): void
     {
+        $this->setUpAdmin();
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
         $response = $this->postJson(
             self::buildUriForKey('users'),
             self::getUserData([], 'forcePasswordChange'),
-            self::getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1399,11 +1365,12 @@ final class ServerMonitoringControllerTest extends TestCase
      */
     public function testAddUserWhileDataInvalid(array $data): void
     {
+        $this->setUpAdmin();
         User::factory()->create([
             'email' => 'user5@example.com',
             'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000004-DBEB'),
         ]);
-        $response = $this->postJson(self::buildUriForKey('users'), $data, self::getHeaders());
+        $response = $this->postJson(self::buildUriForKey('users'), $data);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -1440,11 +1407,12 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testAddUserWhileDbError(): void
     {
+        $this->setUpAdmin();
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
 
-        $response = $this->postJson(self::buildUriForKey('users'), self::getUserData(), self::getHeaders());
+        $response = $this->postJson(self::buildUriForKey('users'), self::getUserData());
 
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
@@ -1470,6 +1438,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testEditUserEmailRequireEmailVerification(): void
     {
+        $this->setUpAdmin();
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '1']);
         /** @var User $user */
         $user = User::factory()->create([
@@ -1478,7 +1447,7 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
         $data = ['email' => 'user2@example.com'];
 
-        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
@@ -1493,12 +1462,13 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testEditUserEmailNoEmailVerification(): void
     {
+        $this->setUpAdmin();
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
         /** @var User $user */
         $user = User::factory()->create(['email' => 'user@example.com']);
         $data = ['email' => 'user2@example.com'];
 
-        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
@@ -1513,6 +1483,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testEditUserWalletAddress(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create();
         $data = [
@@ -1522,7 +1493,7 @@ final class ServerMonitoringControllerTest extends TestCase
             ],
         ];
 
-        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
@@ -1533,6 +1504,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testEditUserRole(): void
     {
+        $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create();
         $data = [
@@ -1541,7 +1513,7 @@ final class ServerMonitoringControllerTest extends TestCase
             ],
         ];
 
-        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
@@ -1553,9 +1525,10 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testEditUserInvalid(): void
     {
+        $this->setUpAdmin();
         $data = ['email' => 'user2@example.com'];
 
-        $response = $this->patchJson(self::buildUriForPatchUser(PHP_INT_MAX), $data, self::getHeaders());
+        $response = $this->patchJson(self::buildUriForPatchUser(PHP_INT_MAX), $data);
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
@@ -1565,6 +1538,7 @@ final class ServerMonitoringControllerTest extends TestCase
      */
     public function testEditUserWhileDataInvalid(array $data): void
     {
+        $this->setUpAdmin();
         User::factory()->create([
             'email' => 'user2@example.com',
             'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E'),
@@ -1572,7 +1546,7 @@ final class ServerMonitoringControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -1598,6 +1572,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testEditUserWhileDbError(): void
     {
+        $this->setUpAdmin();
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
@@ -1605,8 +1580,21 @@ final class ServerMonitoringControllerTest extends TestCase
         $user = User::factory()->create();
         $data = ['email' => 'user2@example.com'];
 
-        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data, self::getHeaders());
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
 
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    private function setUpAdmin(User $user = null): void
+    {
+        if (null === $user) {
+            $user = User::factory()->admin()->create();
+        }
+        Passport::actingAs($user, [], 'jwt');
+    }
+
+    private function setUpUser(): void
+    {
+        Passport::actingAs(User::factory()->create(), [], 'jwt');
     }
 }

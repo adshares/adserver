@@ -21,10 +21,13 @@
 
 declare(strict_types=1);
 
-use Adshares\Adserver\Http\Controllers\JwtController;
 use Adshares\Adserver\Http\Controllers\Manager\AuthController;
+use Adshares\Adserver\Http\Controllers\Manager\OAuthController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
+use Laravel\Passport\Http\Controllers\AuthorizedAccessTokenController;
+use Laravel\Passport\Http\Controllers\PersonalAccessTokenController;
+use Laravel\Passport\Http\Controllers\ScopeController;
 
 Route::middleware([Kernel::JSON_API])->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -33,10 +36,8 @@ Route::middleware([Kernel::JSON_API])->group(function () {
     Route::post('email/activate', [AuthController::class, 'emailActivate']);
 });
 
-Route::middleware([Kernel::JSON_API_NO_TRANSFORM])->group(function () {
-    Route::post('jwt/login', [JwtController::class, 'login']);
-    Route::post('jwt/logout', [JwtController::class, 'logout']);
-    Route::post('jwt/refresh', [JwtController::class, 'refresh']);
+Route::middleware([Kernel::AUTH . ':api', Kernel::WEB])->group(function () {
+    Route::get('/authorize', [OAuthController::class, 'authorizeUser']);
 });
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
@@ -49,10 +50,19 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::patch('self', [AuthController::class, 'changePassword']);
     Route::post('password/confirm/{token}', [AuthController::class, 'confirmPasswordChange']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
+
+    Route::get('/scopes', [ScopeController::class, 'all']);
+    Route::get('/personal-access-tokens', [PersonalAccessTokenController::class, 'forUser']);
+    Route::post('/personal-access-tokens', [PersonalAccessTokenController::class, 'store']);
+    Route::delete('/personal-access-tokens/{token_id}', [PersonalAccessTokenController::class, 'destroy']);
 });
 
 Route::middleware([Kernel::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION, Kernel::JSON_API])->group(function () {
     Route::get('logout', [AuthController::class, 'logout']);
+});
+
+Route::middleware([Kernel::USER_JWT_ACCESS, Kernel::JSON_API])->group(function () {
+    Route::delete('tokens/{token_id}', [AuthorizedAccessTokenController::class, 'destroy']);
 });
 
 Route::middleware([Kernel::GUEST_ACCESS, Kernel::JSON_API])->group(function () {

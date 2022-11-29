@@ -21,6 +21,8 @@
 
 declare(strict_types=1);
 
+use Adshares\Adserver\Http\Controllers\Manager\ApiCampaignsController;
+use Adshares\Adserver\Http\Controllers\Manager\ApiTaxonomyController;
 use Adshares\Adserver\Http\Controllers\Manager\BidStrategyController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
@@ -34,6 +36,7 @@ use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Adshares\Adserver\Http\Kernel;
+use Adshares\Adserver\ViewModel\ScopeType;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::JSON_API])->group(
@@ -56,8 +59,6 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('invoices', [InvoicesController::class, 'browse']);
         Route::post('invoices', [InvoicesController::class, 'add']);
 
-        Route::get('options/banners', [OptionsController::class, 'banners']);
-        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::post('options/campaigns/targeting-reach', [OptionsController::class, 'targetingReach']);
         Route::get('options/sites', [OptionsController::class, 'sites']);
         Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
@@ -163,6 +164,42 @@ Route::middleware([Kernel::ADVERTISER_ACCESS, Kernel::JSON_API])->group(
     }
 );
 
+Route::middleware([
+    Kernel::ADVERTISER_JWT_ACCESS,
+    Kernel::JSON_API,
+    'scope:' . ScopeType::CAMPAIGN_READ,
+])
+    ->prefix('v2')
+    ->group(function () {
+        Route::post('campaigns/banner', [CampaignsController::class, 'upload']);
+
+        Route::get('campaigns/{id}', [ApiCampaignsController::class, 'fetchCampaignById'])
+            ->name('api.campaigns.fetch');
+        Route::get('campaigns', [ApiCampaignsController::class, 'fetchCampaigns']);
+        Route::post('campaigns', [ApiCampaignsController::class, 'addCampaign']);
+        Route::patch('campaigns/{id}', [ApiCampaignsController::class, 'editCampaignById']);
+        Route::delete('campaigns/{id}', [ApiCampaignsController::class, 'deleteCampaignById']);
+
+        Route::get('campaigns/{campaign}/banners/{banner}', [ApiCampaignsController::class, 'fetchBanner'])
+            ->name('api.campaigns.banners.fetch');
+        Route::get('campaigns/{campaign}/banners', [ApiCampaignsController::class, 'fetchBanners']);
+        Route::post('campaigns/{campaign}/banners', [ApiCampaignsController::class, 'addBanner']);
+        Route::patch('campaigns/{campaign}/banners/{banner}', [ApiCampaignsController::class, 'editBanner']);
+        Route::delete('campaigns/{campaign}/banners/{banner}', [ApiCampaignsController::class, 'deleteBanner']);
+    });
+
+Route::middleware([
+    Kernel::ADVERTISER_JWT_ACCESS,
+    Kernel::JSON_API_NO_TRANSFORM,
+    'scope:' . ScopeType::CAMPAIGN_READ,
+])
+    ->prefix('v2')
+    ->group(function () {
+        Route::get('taxonomy/media', [ApiTaxonomyController::class, 'media']);
+        Route::get('taxonomy/media/{medium}', [ApiTaxonomyController::class, 'medium']);
+        Route::get('taxonomy/media/{medium}/vendors', [ApiTaxonomyController::class, 'vendors']);
+    });
+
 Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(
     function () {
         Route::post('sites/domain/validate', [SitesController::class, 'verifyDomain']);
@@ -198,6 +235,8 @@ Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API_NO_TRANSFORM])->group(
     function () {
+        Route::get('options/banners', [OptionsController::class, 'banners']);
+        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
         Route::get('options/campaigns/media', [OptionsController::class, 'media']);
         Route::get('options/campaigns/media/{medium}', [OptionsController::class, 'medium']);
         Route::get('options/campaigns/media/{medium}/vendors', [OptionsController::class, 'vendors']);

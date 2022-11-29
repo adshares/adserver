@@ -24,6 +24,7 @@
         "guzzlehttp/guzzle": "^7.4.0",
         "james-heinrich/getid3": "^1.9",
         "laravel/framework": "^9.0",
+        "laravel/passport": "^11.3",
         "laravel/tinker": "^2.0",
         "mikehaertl/phpwkhtmltopdf": "^2.5",
         "paragonie/sodium_compat": "^1.8",
@@ -32,9 +33,7 @@
         "spatie/fork": "^1.0.0",
         "spatie/laravel-activitylog": "^4.6",
         "symfony/intl": "^v6.1.0",
-        "symfony/lock": "^v6.1.0",
-        "symfony/polyfill-php80": "^1.24",
-        "tymon/jwt-auth": "^1.0"
+        "symfony/lock": "^v6.1.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",

@@ -35,19 +35,28 @@ use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Fruitcake\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Laravel\Passport\Http\Middleware\CheckClientCredentials;
+use Laravel\Passport\Http\Middleware\CheckForAnyScope;
 
 class Kernel extends HttpKernel
 {
-    private const AUTH = 'auth';
+    public const AUTH = 'auth';
 
     public const USER_ACCESS = 'only-authenticated-users';
+    public const USER_JWT_ACCESS = 'jwt-only-authenticated-users';
     public const ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION = 'only-authenticated-users-except-impersonation';
     public const ADMIN_ACCESS = 'only-admin-users';
     public const ADMIN_JWT_ACCESS = 'jwt-admin-users';
@@ -56,10 +65,12 @@ class Kernel extends HttpKernel
     public const AGENCY_ACCESS = 'only-agency-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const ADVERTISER_ACCESS = 'only-advertisers';
+    public const ADVERTISER_JWT_ACCESS = 'jwt-only-advertisers';
     public const PUBLISHER_ACCESS = 'only-publishers';
     public const JSON_API = 'api';
     public const JSON_API_CAMELIZE = 'api-camelize';
     public const JSON_API_NO_TRANSFORM = 'api-no-transform';
+    public const WEB = 'web';
 
     protected $middleware = [
         CheckForMaintenanceMode::class,
@@ -73,10 +84,19 @@ class Kernel extends HttpKernel
             TrackUserActivity::class,
             Impersonation::class,
         ],
+        self::USER_JWT_ACCESS => [
+            self::AUTH . ':jwt',
+            TrackUserActivity::class,
+        ],
         self::ADVERTISER_ACCESS => [
             self::AUTH . ':api',
             TrackUserActivity::class,
             Impersonation::class,
+            RequireAdvertiserAccess::class,
+        ],
+        self::ADVERTISER_JWT_ACCESS => [
+            self::AUTH . ':jwt',
+            TrackUserActivity::class,
             RequireAdvertiserAccess::class,
         ],
         self::PUBLISHER_ACCESS => [
@@ -140,10 +160,21 @@ class Kernel extends HttpKernel
             #post-handle
             SetCacheHeaders::class,
         ],
+        self::WEB => [
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            VerifyCsrfToken::class,
+            SubstituteBindings::class,
+        ],
     ];
 
     protected $routeMiddleware = [
         self::AUTH => Authenticate::class,
+        'client' => CheckClientCredentials::class,
+        'scope' => CheckForAnyScope::class,
+        'throttle' => ThrottleRequests::class,
     ];
 
     public function bootstrap()

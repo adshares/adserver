@@ -25,12 +25,12 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Mail\Crm\SiteAdded;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
@@ -48,7 +48,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -135,7 +134,7 @@ class SitesController extends Controller
 
         DB::commit();
 
-        $this->sendCrmMailOnSiteAdded($user, $site);
+        CrmNotifier::sendCrmMailOnSiteAdded($user, $site);
 
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site->id]));
@@ -497,15 +496,6 @@ class SitesController extends Controller
         if (SitesRejectedDomain::isDomainRejected($domain)) {
             throw new UnprocessableEntityHttpException(
                 'The subdomain ' . $domain . ' is not supported. Please use your own domain.'
-            );
-        }
-    }
-
-    private function sendCrmMailOnSiteAdded(User $user, Site $site): void
-    {
-        if (config('app.crm_mail_address_on_site_added')) {
-            Mail::to(config('app.crm_mail_address_on_site_added'))->queue(
-                new SiteAdded($user->uuid, $user->email, $site)
             );
         }
     }

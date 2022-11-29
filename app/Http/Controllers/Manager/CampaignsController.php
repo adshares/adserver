@@ -24,11 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
-use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
-use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
+use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Mail\Crm\CampaignCreated;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
@@ -36,14 +33,10 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
-use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
-use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
+use Adshares\Adserver\Services\Common\CrmNotifier;
+use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Uploader\Factory;
-use Adshares\Adserver\Uploader\Image\ImageUploader;
-use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
-use Adshares\Adserver\Uploader\Video\VideoUploader;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -51,17 +44,15 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
@@ -70,11 +61,10 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class CampaignsController extends Controller
 {
     public function __construct(
+        private readonly BannerCreator $bannerCreator,
         private readonly CampaignRepository $campaignRepository,
         private readonly ConfigurationRepository $configurationRepository,
         private readonly ExchangeRateReader $exchangeRateReader,
-        private readonly BannerClassificationCreator $bannerClassificationCreator,
-        private readonly ClassifierExternalRepository $classifierExternalRepository
     ) {
     }
 
@@ -123,8 +113,8 @@ class CampaignsController extends Controller
     {
         $exchangeRate = $this->fetchExchangeRateOrFail();
 
-        $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
+        $this->validateCampaignInput($input);
         try {
             $input = $this->processTargeting($input);
         } catch (InvalidArgumentException $exception) {
@@ -134,7 +124,7 @@ class CampaignsController extends Controller
             $input['basic_information']['medium'] ?? '',
             $input['basic_information']['vendor'] ?? null
         );
-        if ($bidStrategy === null) {
+        if (null === $bidStrategy) {
             throw new ServiceUnavailableHttpException();
         }
         $status = $input['basic_information']['status'];
@@ -148,9 +138,9 @@ class CampaignsController extends Controller
         $campaign = new Campaign($input);
 
         $banners = $conversions = [];
-        if (isset($input['ads']) && count($input['ads']) > 0) {
+        if (isset($input['ads']) && is_array($input['ads']) && count($input['ads']) > 0) {
             try {
-                $banners = $this->prepareBannersFromInput($input['ads'], $campaign);
+                $banners = $this->bannerCreator->prepareBannersFromInput($input['ads'], $campaign);
             } catch (InvalidArgumentException $exception) {
                 throw new UnprocessableEntityHttpException($exception->getMessage());
             }
@@ -169,12 +159,10 @@ class CampaignsController extends Controller
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
         if ($campaign->changeStatus($status, $exchangeRate)) {
-            $this->campaignRepository->save($campaign);
+            $this->campaignRepository->update($campaign);
         }
 
-        $this->createBannerClassificationsForCampaign($campaign);
-
-        $this->sendCrmMailOnCampaignCreated($user, $campaign);
+        CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
             'Location',
@@ -185,105 +173,11 @@ class CampaignsController extends Controller
     private function removeTemporaryUploadedFiles(array $files, Request $request): void
     {
         foreach ($files as $file) {
-            if (!isset($file['uuid']) && isset($file['url'])) {
-                $filename = $this->filename($file['url']);
-                $uploader = Factory::createFromExtension($filename, $request);
-                $uploader->removeTemporaryFile($filename);
+            if (!isset($file['uuid']) && isset($file['creative_type']) && isset($file['url'])) {
+                Factory::createFromType($file['creative_type'], $request)
+                    ->removeTemporaryFile(Utils::extractFilename($file['url']));
             }
         }
-    }
-
-    private function filename(string $imageUrl): string
-    {
-        return substr($imageUrl, strrpos($imageUrl, '/') + 1);
-    }
-
-    /**
-     * @param array $input
-     * @param Campaign $campaign
-     * @return Banner[]|array
-     */
-    private function prepareBannersFromInput(array $input, Campaign $campaign): array
-    {
-        $bannerValidator = new BannerValidator(
-            $this->configurationRepository->fetchMedium($campaign->medium, $campaign->vendor)
-        );
-
-        $banners = [];
-
-        foreach ($input as $banner) {
-            $bannerValidator->validateBanner($banner);
-            $bannerModel = new Banner();
-            $bannerModel->name = $banner['name'];
-            $bannerModel->status = Banner::STATUS_ACTIVE;
-            $size = $banner['creative_size'];
-            $type = $banner['creative_type'];
-            $bannerModel->creative_size = $size;
-            $bannerModel->creative_type = $type;
-
-            try {
-                switch ($type) {
-                    case Banner::TEXT_TYPE_IMAGE:
-                        $fileName = $this->filename($banner['url']);
-                        $content = ImageUploader::content($fileName);
-                        $mimeType = ImageUploader::contentMimeType($fileName);
-                        break;
-                    case Banner::TEXT_TYPE_VIDEO:
-                        $fileName = $this->filename($banner['url']);
-                        $content = VideoUploader::content($fileName);
-                        $mimeType = VideoUploader::contentMimeType($fileName);
-                        break;
-                    case Banner::TEXT_TYPE_MODEL:
-                        $fileName = $this->filename($banner['url']);
-                        $content = ModelUploader::content($fileName);
-                        $mimeType = ModelUploader::contentMimeType($content);
-                        break;
-                    case Banner::TEXT_TYPE_HTML:
-                        $content = ZipUploader::content($this->filename($banner['url']));
-                        $mimeType = 'text/html';
-                        break;
-                    case Banner::TEXT_TYPE_DIRECT_LINK:
-                    default:
-                        $content = self::decorateUrlWithSize(
-                            empty($banner['creative_contents']) ? $campaign->landing_url : $banner['creative_contents'],
-                            $size
-                        );
-                        $mimeType = 'text/plain';
-                        break;
-                }
-            } catch (FileNotFoundException $exception) {
-                throw new UnprocessableEntityHttpException($exception->getMessage());
-            } catch (RuntimeException $exception) {
-                Log::debug(
-                    sprintf(
-                        'Banner (name: %s, type: %s) could not be added (%s).',
-                        $banner['name'],
-                        $type,
-                        $exception->getMessage()
-                    )
-                );
-
-                continue;
-            }
-
-            $bannerModel->creative_contents = $content;
-            $bannerModel->creative_mime = $mimeType;
-
-            $banners[] = $bannerModel;
-        }
-
-        $mimesValidator = new MimeTypesValidator($this->configurationRepository->fetchTaxonomy());
-        $mimesValidator->validateMimeTypes($banners, $campaign->medium, $campaign->vendor);
-
-        return $banners;
-    }
-
-    private static function decorateUrlWithSize(string $url, string $size): string
-    {
-        $sizeSuffix = '#' . $size;
-        $length = strlen($sizeSuffix);
-
-        return (substr($url, -$length) === $sizeSuffix) ? $url : $url . $sizeSuffix;
     }
 
     private function prepareConversionsFromInput(array $input): array
@@ -307,17 +201,10 @@ class CampaignsController extends Controller
     public function edit(Request $request, int $campaignId): JsonResponse
     {
         $exchangeRate = $this->fetchExchangeRateOrFail();
-
-        $this->validateRequestObject(
-            $request,
-            'campaign',
-            array_intersect_key(
-                Campaign::$rules,
-                $request->input('campaign')
-            )
-        );
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         $input = $request->input('campaign');
+        $this->validateCampaignInput($input);
         try {
             $input = $this->processTargeting($input);
         } catch (InvalidArgumentException $exception) {
@@ -335,32 +222,18 @@ class CampaignsController extends Controller
             if (!Utils::isUuidValid($bidStrategyUuid)) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid bid strategy id (%s)', $bidStrategyUuid));
             }
-
-            /** @var User $user */
-            $user = Auth::user();
-            $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyUuid);
-
-            if (
-                null === $bidStrategy
-                || ($bidStrategy->user_id !== $user->id && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)
-            ) {
-                throw new UnprocessableEntityHttpException('Bid strategy could not be accessed.');
-            }
-
             $input['bid_strategy_uuid'] = $bidStrategyUuid;
         }
         $conversions = $this->prepareConversionsFromInput($input['conversions'] ?? []);
 
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-        $status = $campaign->status;
         if ($input['basic_information']['medium'] !== $campaign->medium) {
             throw new UnprocessableEntityHttpException('Medium cannot be changed');
         }
         if ($input['basic_information']['vendor'] !== $campaign->vendor) {
             throw new UnprocessableEntityHttpException('Vendor cannot be changed');
         }
+        $status = $campaign->status;
         $campaign->fill($input);
-
         $campaign->status = Campaign::STATUS_INACTIVE;
 
         $bannersToUpdate = [];
@@ -373,7 +246,7 @@ class CampaignsController extends Controller
             if ($bannerFromInput) {
                 $banner->name = $bannerFromInput['name'] ?? $bannerFromInput['creative_size'];
                 if ($banner->creative_type === Banner::TEXT_TYPE_DIRECT_LINK) {
-                    $banner->creative_contents = self::decorateUrlWithSize(
+                    $banner->creative_contents = Utils::appendFragment(
                         empty($bannerFromInput['creative_contents']) ? $campaign->landing_url
                             : $bannerFromInput['creative_contents'],
                         $banner->creative_size
@@ -395,7 +268,7 @@ class CampaignsController extends Controller
 
         if ($banners) {
             try {
-                $bannersToInsert = $this->prepareBannersFromInput($banners->toArray(), $campaign);
+                $bannersToInsert = $this->bannerCreator->prepareBannersFromInput($banners->toArray(), $campaign);
             } catch (InvalidArgumentException $exception) {
                 throw new UnprocessableEntityHttpException($exception->getMessage());
             }
@@ -436,25 +309,27 @@ class CampaignsController extends Controller
 
         $conversionUuidsToDelete = $dbConversions->keys()->all();
 
-        $this->campaignRepository->update(
-            $campaign,
-            $bannersToInsert,
-            $bannersToUpdate,
-            $bannersToDelete,
-            $conversionsToInsert,
-            $conversionsToUpdate,
-            $conversionUuidsToDelete
-        );
+        try {
+            $this->campaignRepository->update(
+                $campaign,
+                $bannersToInsert,
+                $bannersToUpdate,
+                $bannersToDelete,
+                $conversionsToInsert,
+                $conversionsToUpdate,
+                $conversionUuidsToDelete,
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
         }
 
         if ($campaign->changeStatus($status, $exchangeRate)) {
-            $this->campaignRepository->save($campaign);
+            $this->campaignRepository->update($campaign);
         }
-
-        $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
@@ -471,7 +346,7 @@ class CampaignsController extends Controller
                         [
                             'errors' => $errors,
                         ],
-                        JsonResponse::HTTP_BAD_REQUEST
+                        Response::HTTP_UNPROCESSABLE_ENTITY
                     )
                 );
             }
@@ -481,25 +356,21 @@ class CampaignsController extends Controller
     public function changeStatus(Campaign $campaign, Request $request): JsonResponse
     {
         if (!$request->has('campaign.status')) {
-            throw new InvalidArgumentException('No status provided');
+            throw new UnprocessableEntityHttpException('No status provided');
         }
 
-        $status = (int)$request->input('campaign.status');
+        $campaign->status = (int)$request->input('campaign.status');
 
-        return $this->changeCampaignStatus($campaign, $status);
+        return $this->changeCampaignStatus($campaign);
     }
 
-    private function changeCampaignStatus(Campaign $campaign, int $status): JsonResponse
+    private function changeCampaignStatus(Campaign $campaign): JsonResponse
     {
-        $exchangeRate = $this->fetchExchangeRateOrFail();
-
-        if (!$campaign->changeStatus($status, $exchangeRate)) {
-            return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
+        try {
+            $this->campaignRepository->update($campaign);
+        } catch (InvalidArgumentException) {
+            throw new UnprocessableEntityHttpException(sprintf('Cannot set status to {%d}', $campaign->status));
         }
-
-        $this->campaignRepository->update($campaign);
-
-        $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
@@ -507,30 +378,25 @@ class CampaignsController extends Controller
     public function activateOutdatedCampaign(Campaign $campaign): JsonResponse
     {
         $campaign->time_end = null;
-        $campaign->status = Campaign::STATUS_SUSPENDED;
+        $campaign->status = Campaign::STATUS_ACTIVE;
 
-        return $this->changeCampaignStatus($campaign, Campaign::STATUS_ACTIVE);
+        return $this->changeCampaignStatus($campaign);
     }
 
     public function changeBannerStatus(Request $request, int $campaignId, int $bannerId): JsonResponse
     {
         $status = (int)$request->input('banner.status');
 
-        if (!Banner::isStatusAllowed($status)) {
-            $status = Banner::STATUS_INACTIVE;
-        }
-
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         /** @var Banner $banner */
         $banner = $campaign->banners()->where('id', $bannerId)->first();
 
-        if (Banner::STATUS_REJECTED === $banner->status) {
-            throw new BadRequestHttpException('Status cannot be changed. Banner was rejected.');
+        try {
+            $banner = $this->bannerCreator->updateBanner(['status' => $status], $banner);
+            $this->campaignRepository->update($campaign, bannersToUpdate: [$banner]);
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-
-        $banner->status = $status;
-
-        $this->campaignRepository->update($campaign, [], [$banner], []);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
@@ -538,12 +404,6 @@ class CampaignsController extends Controller
     public function delete(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-
-        if ($campaign->status !== Campaign::STATUS_INACTIVE) {
-            $campaign->status = Campaign::STATUS_INACTIVE;
-            $this->campaignRepository->save($campaign);
-        }
-
         $this->campaignRepository->delete($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
@@ -560,9 +420,6 @@ class CampaignsController extends Controller
     public function clone(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-        if (!$campaign) {
-            throw new NotFoundHttpException(sprintf('Campaign %s does not exist.', $campaignId));
-        }
 
         $clonedCampaign = $campaign->replicate();
         $clonedCampaign->status = Campaign::STATUS_DRAFT;
@@ -593,69 +450,17 @@ class CampaignsController extends Controller
     {
         $medium = $input['basic_information']['medium'] ?? '';
         $vendor = $input['basic_information']['vendor'] ?? null;
-        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTaxonomy());
-
-        $requires = $input['targeting']['requires'] ?? [];
-        $baseRequires = json_decode(config('app.campaign_targeting_require') ?? '', true);
-        if (is_array($baseRequires)) {
-            $requires = array_map([__CLASS__, 'normalize'], array_merge_recursive($requires, $baseRequires));
-        }
-
-        $excludes = $input['targeting']['excludes'] ?? [];
-        $baseExcludes = json_decode(config('app.campaign_targeting_exclude') ?? '', true);
-        if (is_array($baseExcludes)) {
-            $excludes = array_map([__CLASS__, 'normalize'], array_merge_recursive($excludes, $baseExcludes));
-        }
-
-        $input['targeting_requires'] = $targetingProcessor->processTargeting($requires, $medium, $vendor);
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting($excludes, $medium, $vendor);
+        $campaignTargetingProcessor = new CampaignTargetingProcessor(
+            $this->configurationRepository->fetchMedium($medium, $vendor)
+        );
+        $input['targeting_requires'] = $campaignTargetingProcessor->processTargetingRequire(
+            $input['targeting']['requires'] ?? []
+        );
+        $input['targeting_excludes'] = $campaignTargetingProcessor->processTargetingExclude(
+            $input['targeting']['excludes'] ?? []
+        );
 
         return $input;
-    }
-
-    private static function normalize($arr)
-    {
-        if (!is_array($arr) || empty($arr)) {
-            return $arr;
-        }
-        if (array_keys($arr) !== range(0, count($arr) - 1)) {
-            return $arr;
-        }
-        return array_unique($arr);
-    }
-
-    private function createBannerClassificationsForCampaign(Campaign $campaign): void
-    {
-        if (
-            Campaign::STATUS_ACTIVE !== $campaign->status
-            || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())
-        ) {
-            return;
-        }
-
-        $classifierName = $classifier->getName();
-
-        $bannerIds = $campaign->banners()->where('status', Banner::STATUS_ACTIVE)->whereDoesntHave(
-            'classifications',
-            function ($query) use ($classifierName) {
-                $query->where('classifier', $classifierName);
-            }
-        )->get()->pluck('id');
-
-        if ($bannerIds->isEmpty()) {
-            return;
-        }
-
-        $this->bannerClassificationCreator->create($classifierName, $bannerIds->toArray());
-    }
-
-    private function sendCrmMailOnCampaignCreated(User $user, Campaign $campaign): void
-    {
-        if (config('app.crm_mail_address_on_campaign_created')) {
-            Mail::to(config('app.crm_mail_address_on_campaign_created'))->queue(
-                new CampaignCreated($user->uuid, $user->email, $campaign)
-            );
-        }
     }
 
     private function fetchExchangeRateOrFail(): ExchangeRate
@@ -671,5 +476,15 @@ class CampaignsController extends Controller
             throw new ServiceUnavailableHttpException();
         }
         return $exchangeRate;
+    }
+
+    private function validateCampaignInput(mixed $input): void
+    {
+        if (null === $input) {
+            throw new UnprocessableEntityHttpException('Field `campaign` is required');
+        }
+        if (!is_array($input)) {
+            throw new UnprocessableEntityHttpException('Field `campaign` must be an array');
+        }
     }
 }

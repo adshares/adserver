@@ -34,30 +34,27 @@ use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use stdClass;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OptionsController extends Controller
 {
-    private ConfigurationRepository $optionsRepository;
-    private ClassifierExternalRepository $classifierRepository;
-
     public function __construct(
-        ConfigurationRepository $optionsRepository,
-        ClassifierExternalRepository $classifierRepository
+        private readonly ConfigurationRepository $optionsRepository,
+        private readonly ClassifierExternalRepository $classifierRepository,
     ) {
-        $this->optionsRepository = $optionsRepository;
-        $this->classifierRepository = $classifierRepository;
     }
 
     public function banners(): JsonResponse
     {
         return self::json(
             [
-                'upload_limit_image' => config('app.upload_limit_image'),
-                'upload_limit_model' => config('app.upload_limit_model'),
-                'upload_limit_video' => config('app.upload_limit_video'),
-                'upload_limit_zip' => config('app.upload_limit_zip'),
+                'uploadLimitImage' => config('app.upload_limit_image'),
+                'uploadLimitModel' => config('app.upload_limit_model'),
+                'uploadLimitVideo' => config('app.upload_limit_video'),
+                'uploadLimitZip' => config('app.upload_limit_zip'),
             ]
         );
     }
@@ -66,9 +63,9 @@ class OptionsController extends Controller
     {
         return self::json(
             [
-                'min_budget' => config('app.campaign_min_budget'),
-                'min_cpm' => config('app.campaign_min_cpm'),
-                'min_cpa' => config('app.campaign_min_cpa'),
+                'minBudget' => config('app.campaign_min_budget'),
+                'minCpm' => config('app.campaign_min_cpm'),
+                'minCpa' => config('app.campaign_min_cpa'),
             ]
         );
     }
@@ -118,15 +115,16 @@ class OptionsController extends Controller
 
     public function vendors(string $medium): JsonResponse
     {
-        $data = [];
+        $data = new stdClass();
         try {
             $taxonomy = $this->optionsRepository->fetchTaxonomy();
         } catch (MissingInitialConfigurationException $exception) {
-            return self::json();
+            Log::error(sprintf('No taxonomy (%s)', $exception->getMessage()));
+            return self::json($data);
         }
         foreach ($taxonomy->getMedia() as $mediumObject) {
             if ($mediumObject->getName() === $medium && $mediumObject->getVendor() !== null) {
-                $data[$mediumObject->getVendor()] = $mediumObject->getVendorLabel();
+                $data->{$mediumObject->getVendor()} = $mediumObject->getVendorLabel();
             }
         }
         return self::json($data);

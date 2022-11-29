@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
@@ -67,7 +68,7 @@ class ServerMonitoringController extends Controller
             'createdAt' => FilterType::Date,
             'type' => FilterType::String,
         ]);
-        self::validateLimit($limit);
+        LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
         return $repository->fetchServerEvents($filters, $limit)
@@ -77,7 +78,7 @@ class ServerMonitoringController extends Controller
     public function fetchHosts(Request $request): JsonResource
     {
         $limit = $request->query('limit', 10);
-        self::validateLimit($limit);
+        LimitValidator::validate($limit);
 
         $paginator = NetworkHost::orderBy('id')
             ->tokenPaginate($limit)
@@ -92,7 +93,7 @@ class ServerMonitoringController extends Controller
         $filters = FilterCollection::fromRequest($request, [
             'type' => FilterType::String,
         ]);
-        self::validateLimit($limit);
+        LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
         return $repository->fetchLatestServerEvents($filters, $limit)
@@ -109,7 +110,7 @@ class ServerMonitoringController extends Controller
             'role' => FilterType::String,
         ]);
         $orderBy = OrderByCollection::fromRequest($request);
-        self::validateLimit($limit);
+        LimitValidator::validate($limit);
         self::validateUserFilters($filters);
         self::validateUserOrderBy($orderBy);
 
@@ -278,13 +279,6 @@ class ServerMonitoringController extends Controller
         }
 
         return new UserResource($user);
-    }
-
-    private static function validateLimit(array|string|null $limit): void
-    {
-        if (false === filter_var($limit, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-            throw new UnprocessableEntityHttpException('Limit must be a positive integer');
-        }
     }
 
     private static function validateEventFilters(?FilterCollection $filters): void

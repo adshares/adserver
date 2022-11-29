@@ -93,4 +93,22 @@ class UtilsTest extends TestCase
             Banner::TEXT_TYPE_MODEL => [Banner::TEXT_TYPE_MODEL, Size::TYPE_MODEL],
         ];
     }
+
+    public function testAppendFragment(): void
+    {
+        self::assertEquals(
+            'https://example.com/a.html#300x250',
+            Utils::appendFragment('https://example.com/a.html', '300x250')
+        );
+        self::assertEquals(
+            'https://example.com/a.html#300x250',
+            Utils::appendFragment('https://example.com/a.html#300x250', '300x250')
+        );
+    }
+
+    public function testExtractFilename(): void
+    {
+        self::assertEquals('a.html', Utils::extractFilename('https://example.com/a.html'));
+        self::assertEquals('a', Utils::extractFilename('https://example.com/a'));
+    }
 }

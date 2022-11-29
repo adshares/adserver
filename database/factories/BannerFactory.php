@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -33,6 +34,7 @@ class BannerFactory extends Factory
     {
         $format = $this->faker->randomElement((new DummyConfigurationRepository())->fetchMedium()->getFormats());
         return [
+            'campaign_id' => Campaign::factory(),
             'creative_contents' => $this->faker->sha1,
             'creative_type' => $format->getType(),
             'creative_mime' => $this->faker->randomElement($format->getMimes()),

@@ -22,12 +22,30 @@
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Model\Currency;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CampaignRepository
 {
+    public function __construct(
+        private readonly BannerClassificationCreator $bannerClassificationCreator,
+        private readonly ExchangeRateReader $exchangeRateReader,
+    ) {
+    }
+
     public function find()
     {
         return (new Campaign())->with('conversions')->get();
@@ -82,11 +100,18 @@ class CampaignRepository
      * @param array $banners
      * @param array $conversions
      *
-     * @throws \Exception
+     * @return Campaign
+     *
+     * @throws RuntimeException
      */
-    public function save(Campaign $campaign, array $banners = [], array $conversions = []): void
+    public function save(Campaign $campaign, array $banners = [], array $conversions = []): Campaign
     {
         DB::beginTransaction();
+        $status = $campaign->status;
+        $campaign->status = Campaign::STATUS_DRAFT;
+        if (Campaign::STATUS_DRAFT !== $status && !$campaign->changeStatus($status, $this->fetchExchangeRateOrFail())) {
+            throw new InvalidArgumentException('Insufficient funds');
+        }
 
         try {
             $campaign->save();
@@ -102,30 +127,42 @@ class CampaignRepository
                     $campaign->conversions()->save($conversion);
                 }
             }
-        } catch (\Exception $ex) {
+
+            $this->bannerClassificationCreator->createForCampaign($campaign);
+            $campaign->refresh();
+            DB::commit();
+        } catch (InvalidArgumentException $exception) {
             DB::rollBack();
-            throw $ex;
+            throw $exception;
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Campaign save failed (%s)', $throwable->getMessage()));
+            throw new RuntimeException('Campaign save failed');
         }
 
-        DB::commit();
+        return $campaign;
     }
 
     public function delete(Campaign $campaign): void
     {
         DB::beginTransaction();
-
         try {
+            if (Campaign::STATUS_INACTIVE !== $campaign->status) {
+                $campaign->status = Campaign::STATUS_INACTIVE;
+                $this->update($campaign);
+            }
+            $campaign->conversions()->delete();
             $campaign->delete();
             foreach ($campaign->banners as $banner) {
                 $banner->classifications()->delete();
             }
             $campaign->banners()->delete();
-        } catch (\Exception $ex) {
+            DB::commit();
+        } catch (Throwable $throwable) {
             DB::rollBack();
-            throw $ex;
+            Log::error(sprintf('Campaign deletion failed (%s)', $throwable->getMessage()));
+            throw new RuntimeException('Campaign deletion failed');
         }
-
-        DB::commit();
     }
 
     public function update(
@@ -135,9 +172,22 @@ class CampaignRepository
         array $bannersToDelete = [],
         array $conversionsToInsert = [],
         array $conversionsToUpdate = [],
-        array $conversionUuidsToDelete = []
-    ): void {
+        array $conversionUuidsToDelete = [],
+    ): Campaign {
+        if (!$campaign->exists()) {
+            throw new RuntimeException('Function `update` requires existing Campaign model');
+        }
+        if (isset($campaign->getDirty()['bid_strategy_uuid'])) {
+            self::checkIfBidStrategyCanChanged($campaign);
+        }
         DB::beginTransaction();
+        $status = $campaign->status;
+        $campaign->status = Campaign::STATUS_INACTIVE;
+        if (
+            Campaign::STATUS_INACTIVE !== $status && !$campaign->changeStatus($status, $this->fetchExchangeRateOrFail())
+        ) {
+            throw new InvalidArgumentException('Insufficient funds');
+        }
 
         try {
             $campaign->update();
@@ -183,11 +233,67 @@ class CampaignRepository
 
                 $campaign->conversions()->whereIn('uuid', $conversionBinaryUuidsToDelete)->delete();
             }
-        } catch (\Exception $ex) {
+
+            $this->bannerClassificationCreator->createForCampaign($campaign);
+            $campaign->refresh();
+            DB::commit();
+        } catch (InvalidArgumentException $exception) {
             DB::rollBack();
-            throw $ex;
+            throw $exception;
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Campaign update failed (%s)', $throwable->getMessage()));
+            throw new RuntimeException('Campaign update failed');
+        }
+        return $campaign;
+    }
+
+    public function fetchCampaignByIdSimple(int $id): Campaign
+    {
+        return Campaign::findOrFail($id);
+    }
+
+    public function fetchBanner(Campaign $campaign, int $bannerId): Banner
+    {
+        return $campaign->banners()->findOrFail($bannerId);
+    }
+
+    public function fetchBanners(Campaign $campaign): Collection
+    {
+        return $campaign->banners()->get();
+    }
+
+    public function fetchCampaigns(?int $perPage = null): CursorPaginator
+    {
+        return Campaign::query()->orderBy('id')
+            ->tokenPaginate($perPage)
+            ->withQueryString();
+    }
+
+    private static function checkIfBidStrategyCanChanged(Campaign $campaign): void
+    {
+        $userId = $campaign->user_id;
+        $bidStrategy = BidStrategy::fetchByPublicId($campaign->bid_strategy_uuid);
+        if (
+            $bidStrategy === null
+            || ($bidStrategy->user_id !== $userId && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)
+        ) {
+            throw new InvalidArgumentException('Bid strategy could not be accessed');
+        }
+    }
+
+    private function fetchExchangeRateOrFail(): ExchangeRate
+    {
+        if (Currency::ADS !== Currency::from(config('app.currency'))) {
+            return ExchangeRate::ONE(Currency::ADS);
         }
 
-        DB::commit();
+        try {
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+        } catch (ExchangeRateNotAvailableException $exception) {
+            Log::error(sprintf('Exchange rate is not available (%s)', $exception->getMessage()));
+            throw new RuntimeException('Exchange rate is not available');
+        }
+        return $exchangeRate;
     }
 }

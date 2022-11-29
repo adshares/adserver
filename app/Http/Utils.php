@@ -456,4 +456,15 @@ class Utils
             default => Size::TYPE_DISPLAY,
         };
     }
+
+    public static function appendFragment(string $url, string $fragment): string
+    {
+        $suffix = '#' . $fragment;
+        return str_ends_with($url, $suffix) ? $url : $url . $suffix;
+    }
+
+    public static function extractFilename(string $imageUrl): string
+    {
+        return substr($imageUrl, strrpos($imageUrl, '/') + 1);
+    }
 }

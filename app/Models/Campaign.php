@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +41,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use InvalidArgumentException;
 
 /**
  * @property int id
@@ -55,7 +55,6 @@ use InvalidArgumentException;
  * @property int status
  * @property string name
  * @property array|null|string strategy_name
- * @property float bid
  * @property int budget
  * @property string medium
  * @property string|null $vendor
@@ -69,9 +68,11 @@ use InvalidArgumentException;
  * @property User user
  * @property string secret
  * @property int conversion_click
+ * @property string|null conversion_click_link
+ * @property array bid_strategy
  * @property string bid_strategy_uuid
  * @property array basic_information
- * @property array classifications
+ * @property array|null classifications
  * @property array targeting
  * @mixin Builder
  */
@@ -95,11 +96,8 @@ class Campaign extends Model
     public const CONVERSION_CLICK_BASIC = 1;
     public const CONVERSION_CLICK_ADVANCED = 2;
 
-    public static $rules = [
-//        'name' => 'required|max:255',
-//        'landing_url' => 'required|max:1024',
-//        'basic_information.budget' => 'required:numeric|min:1',
-    ];
+    public const NAME_MAXIMAL_LENGTH = 255;
+    public const URL_MAXIMAL_LENGTH = 1024;
 
     protected $dates = [
         'deleted_at',
@@ -108,6 +106,8 @@ class Campaign extends Model
     ];
 
     protected $casts = [
+        'created_at' => 'date:' . DateTimeInterface::ATOM,
+        'updated_at' => 'date:' . DateTimeInterface::ATOM,
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
         'status' => 'int',
@@ -120,18 +120,19 @@ class Campaign extends Model
 
     protected $fillable = [
         'landing_url',
-        'require_count',
         'user_id',
         'name',
         'status',
         'budget',
         'medium',
-        'integration',
+        'vendor',
         'max_cpc',
         'max_cpm',
         'basic_information',
         'targeting_requires',
         'targeting_excludes',
+        'time_start',
+        'time_end',
         'conversion_click',
         'bid_strategy_uuid',
     ];
@@ -369,7 +370,7 @@ class Campaign extends Model
             return false;
         }
 
-        if ($status === self::STATUS_ACTIVE && !$this->checkBudget()) {
+        if ($status === self::STATUS_ACTIVE && !$this->areBudgetLimitsMet()) {
             $status = self::STATUS_INACTIVE;
         }
 
@@ -397,24 +398,47 @@ class Campaign extends Model
         return true;
     }
 
-    private function checkBudget(): bool
+    /**
+     * @return void
+     *
+     * @throws InvalidArgumentException
+     */
+    public function checkBudgetLimits(): void
     {
         if ($this->budget < config('app.campaign_min_budget')) {
-            return false;
+            throw new InvalidArgumentException(
+                sprintf('Budget must be at least %d', config('app.campaign_min_budget'))
+            );
         }
 
         if ($this->isAutoCpm() || $this->max_cpm >= config('app.campaign_min_cpm')) {
-            return true;
+            return;
         }
 
         foreach ($this->conversions as $conversion) {
             /** @var $conversion ConversionDefinition */
             if ($conversion->value >= config('app.campaign_min_cpa')) {
-                return true;
+                return;
             }
         }
 
-        return false;
+        throw new InvalidArgumentException(
+            sprintf(
+                'CPM must be at least %d or any CPC must be at least %d',
+                config('app.campaign_min_cpm'),
+                config('app.campaign_min_cpa'),
+            )
+        );
+    }
+
+    private function areBudgetLimitsMet(): bool
+    {
+        try {
+            $this->checkBudgetLimits();
+        } catch (InvalidArgumentException) {
+            return false;
+        }
+        return true;
     }
 
     private function updateBlockadeOrFailIfNotAllowed(int $total, int $bonusable): bool

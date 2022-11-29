@@ -47,16 +47,20 @@ class TokenPaginate
             /** @var Builder $this */
             $perPage = $perPage ?: $this->model->getPerPage();
             $page = $page ?: Paginator::resolveCurrentPage($pageName);
-            $total = $this->toBase()->getCountForPagination();
 
             if (!$cursor instanceof Cursor) {
                 $cursor = is_string($cursor)
                     ? Cursor::fromEncoded($cursor)
                     : CursorPaginator::resolveCurrentCursor($cursorName, $cursor);
             }
-            $maxId = null === $cursor ? $this->getModel()->max('id') : $cursor->parameter('id');
 
-            if (!is_null($cursor)) {
+            if (is_null($cursor)) {
+                $maxId = $this->getModel()->max('id');
+                $total = $this->toBase()->getCountForPagination();
+            } else {
+                $maxId = $cursor->parameter('id');
+                $total = $this->toBase()->where('id', '<=', $maxId)->getCountForPagination();
+
                 $orders = collect($this->query->orders)
                     ->filter(fn ($order) => 'id' === $order['column'])
                     ->values();

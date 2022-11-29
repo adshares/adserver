@@ -23,33 +23,12 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Mock\Client\DummyAdClassifyClient;
-use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Symfony\Component\HttpFoundation\Response;
 
 final class OptionsControllerTest extends TestCase
 {
     private const ZONES_URI = '/api/options/sites/zones';
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->app->bind(
-            AdClassify::class,
-            static function () {
-                return new DummyAdClassifyClient();
-            }
-        );
-        $this->app->bind(
-            ConfigurationRepository::class,
-            static function () {
-                return new DummyConfigurationRepository();
-            }
-        );
-    }
 
     public function testBanners(): void
     {
@@ -179,7 +158,7 @@ final class OptionsControllerTest extends TestCase
 
         $response = self::get('/api/options/campaigns/media');
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson(['web' => 'Website', 'metaverse' => 'Metaverse']);
+        $response->assertExactJson(['web' => 'Website', 'metaverse' => 'Metaverse']);
     }
 
     public function testMediaWhileMissingTaxonomy(): void
