@@ -129,6 +129,7 @@ class CampaignRepository
             }
 
             $this->bannerClassificationCreator->createForCampaign($campaign);
+            $campaign->refresh();
             DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
@@ -234,6 +235,7 @@ class CampaignRepository
             }
 
             $this->bannerClassificationCreator->createForCampaign($campaign);
+            $campaign->refresh();
             DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();

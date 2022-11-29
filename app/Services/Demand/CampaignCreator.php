@@ -45,7 +45,7 @@ class CampaignCreator
      */
     public function prepareCampaignFromInput(array $input): Campaign
     {
-        foreach (['budget', 'date_start', 'medium', 'name', 'status'] as $field) {
+        foreach (['budget', 'date_start', 'medium', 'name', 'status', 'target_url'] as $field) {
             if (!array_key_exists($field, $input)) {
                 throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
             }
