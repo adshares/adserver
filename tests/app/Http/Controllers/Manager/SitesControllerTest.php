@@ -28,10 +28,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Mock\Client\DummyAdUserClient;
-use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use DateTimeImmutable;
@@ -1069,20 +1066,6 @@ JSON
 
         $response = $this->get(self::URI_CRYPTOVOXELS_CODE);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->app->bind(
-            AdUser::class,
-            static function () {
-                return new DummyAdUserClient();
-            }
-        );
-
-        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 
     private function setupUser(): User

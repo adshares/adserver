@@ -22,6 +22,7 @@
 declare(strict_types=1);
 
 use Adshares\Adserver\Http\Controllers\Manager\ApiCampaignsController;
+use Adshares\Adserver\Http\Controllers\Manager\ApiTaxonomyController;
 use Adshares\Adserver\Http\Controllers\Manager\BidStrategyController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
@@ -194,10 +195,9 @@ Route::middleware([
 ])
     ->prefix('v2')
     ->group(function () {
-        Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
-        Route::get('options/campaigns/media', [OptionsController::class, 'media']);
-        Route::get('options/campaigns/media/{medium}', [OptionsController::class, 'medium']);
-        Route::get('options/campaigns/media/{medium}/vendors', [OptionsController::class, 'vendors']);
+        Route::get('taxonomy/media', [ApiTaxonomyController::class, 'media']);
+        Route::get('taxonomy/media/{medium}', [ApiTaxonomyController::class, 'medium']);
+        Route::get('taxonomy/media/{medium}/vendors', [ApiTaxonomyController::class, 'vendors']);
     });
 
 Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(

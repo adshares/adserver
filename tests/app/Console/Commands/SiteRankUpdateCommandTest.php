@@ -29,9 +29,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Exception;
 use Illuminate\Mail\PendingMail;
@@ -241,12 +239,5 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
     private static function assertSiteRankEventDispatched(int $processedCount): void
     {
         self::assertServerEventDispatched(ServerEventType::SiteRankUpdated, ['processedSiteCount' => $processedCount]);
-    }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 }

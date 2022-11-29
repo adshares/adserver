@@ -27,16 +27,20 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Mock\Client\DummyAdClassifyClient;
 use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Faker\Factory;
@@ -98,6 +102,12 @@ abstract class TestCase extends BaseTestCase
             }
         );
         $this->app->bind(
+            AdClassify::class,
+            static function () {
+                return new DummyAdClassifyClient();
+            }
+        );
+        $this->app->bind(
             AdsRpcClient::class,
             static function () {
                 return new DummyAdsRpcClient();
@@ -113,6 +123,12 @@ abstract class TestCase extends BaseTestCase
             AdUser::class,
             static function () {
                 return new DummyAdUserClient();
+            }
+        );
+        $this->app->bind(
+            ConfigurationRepository::class,
+            static function () {
+                return new DummyConfigurationRepository();
             }
         );
         $this->app->bind(
