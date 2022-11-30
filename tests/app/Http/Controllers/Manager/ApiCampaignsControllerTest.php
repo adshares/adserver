@@ -33,6 +33,7 @@ use Adshares\Adserver\ViewModel\ScopeType;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
@@ -106,6 +107,13 @@ final class ApiCampaignsControllerTest extends TestCase
     private const CAMPAIGNS_STRUCTURE = [
         'data' => [
             '*' => self::CAMPAIGN_DATA_STRUCTURE,
+        ],
+    ];
+    private const UPLOAD_STRUCTURE = [
+        'data' => [
+            'name',
+            'size',
+            'url',
         ],
     ];
 
@@ -422,6 +430,24 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::CAMPAIGNS_STRUCTURE);
         $response->assertJsonCount(3, 'data');
+    }
+
+    public function testUpload(): void
+    {
+        $user = $this->setUpUser();
+        Campaign::factory()->count(3)->create(['user_id' => $user->id]);
+
+        $response = $this->post(
+            self::URI_CAMPAIGNS . '/banner',
+            [
+                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                'medium' => 'web',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::UPLOAD_STRUCTURE);
+        $response->assertJsonPath('data.size', '300x250');
     }
 
     private static function buildUriCampaign(int $id): string

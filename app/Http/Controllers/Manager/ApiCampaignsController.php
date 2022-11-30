@@ -206,6 +206,12 @@ class ApiCampaignsController extends Controller
         return new JsonResponse(['data' => []], Response::HTTP_OK);
     }
 
+    public function upload(Request $request, CampaignsController $campaignsController): JsonResponse
+    {
+        $file = $campaignsController->upload($request);
+        return new JsonResponse(['data' => $file->toArray()]);
+    }
+
     private static function removeTemporaryUploadedFiles(array $input, Request $request): void
     {
         foreach ($input as $banner) {
