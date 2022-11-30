@@ -135,6 +135,16 @@ final class CampaignCreatorTest extends TestCase
         return $data;
     }
 
+    public function testUpdateCampaignStatus(): void
+    {
+        $campaign = Campaign::factory()->create(['status' => Campaign::STATUS_ACTIVE]);
+        $creator = new CampaignCreator($this->app->make(ConfigurationRepository::class));
+
+        $updatedCampaign = $creator->updateCampaign(['status' => 'inactive'], $campaign);
+
+        self::assertEquals(Campaign::STATUS_INACTIVE, $updatedCampaign->status);
+    }
+
     /**
      * @dataProvider updateCampaignInvalidProvider
      */

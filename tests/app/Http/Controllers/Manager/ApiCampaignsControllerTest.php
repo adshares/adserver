@@ -134,6 +134,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
         $response->assertJsonPath('data.status', 'active');
         $response->assertJsonPath('data.ads.0.status', 'active');
+        $response->assertJsonPath('data.conversionClick', 'none');
         $campaign = Campaign::first();
         self::assertNotNull($campaign);
         self::assertEquals($campaign->id, $this->getIdFromLocationHeader($response));

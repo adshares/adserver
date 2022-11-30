@@ -21,30 +21,15 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\ViewModel;
+namespace Adshares\Adserver\Tests\ViewModel;
 
-use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\ClickConversionType;
 
-enum CampaignStatus: int
+class ClickConversionTypeTest extends TestCase
 {
-    case Draft = 0;
-    case Inactive = 1;
-    case Active = 2;
-    case Suspended = 3;
-
-    public static function fromString(string $value): self
+    public function testToString(): void
     {
-        return match (strtolower($value)) {
-            'draft' => self::Draft,
-            'inactive' => self::Inactive,
-            'active' => self::Active,
-            'suspended' => self::Suspended,
-            default => throw new InvalidArgumentException('Unsupported value'),
-        };
-    }
-
-    public function toString(): string
-    {
-        return strtolower($this->name);
+        self::assertEquals('none', ClickConversionType::None->toString());
     }
 }

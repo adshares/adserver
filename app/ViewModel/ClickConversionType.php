@@ -23,25 +23,11 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\ViewModel;
 
-use Adshares\Common\Exception\InvalidArgumentException;
-
-enum CampaignStatus: int
+enum ClickConversionType: int
 {
-    case Draft = 0;
-    case Inactive = 1;
-    case Active = 2;
-    case Suspended = 3;
-
-    public static function fromString(string $value): self
-    {
-        return match (strtolower($value)) {
-            'draft' => self::Draft,
-            'inactive' => self::Inactive,
-            'active' => self::Active,
-            'suspended' => self::Suspended,
-            default => throw new InvalidArgumentException('Unsupported value'),
-        };
-    }
+    case None = 0;
+    case Basic = 1;
+    case Advanced = 2;
 
     public function toString(): string
     {

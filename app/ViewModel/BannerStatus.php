@@ -42,4 +42,9 @@ enum BannerStatus: int
             default => throw new InvalidArgumentException('Unsupported value'),
         };
     }
+
+    public function toString(): string
+    {
+        return strtolower($this->name);
+    }
 }

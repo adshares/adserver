@@ -10,7 +10,7 @@ class BannerResource extends JsonResource
     public function toArray($request): array
     {
         $data = $this->resource->toArray();
-        $data['status'] = strtolower(BannerStatus::from($data['status'])->name);
+        $data['status'] = BannerStatus::from($data['status'])->toString();
         return $data;
     }
 }
