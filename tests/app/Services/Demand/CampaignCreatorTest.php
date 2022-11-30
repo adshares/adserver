@@ -74,11 +74,18 @@ final class CampaignCreatorTest extends TestCase
                 'date_start' => (new DateTimeImmutable('-2 days'))->format(DateTimeInterface::ATOM),
                 'date_end' => (new DateTimeImmutable('-1 days'))->format(DateTimeInterface::ATOM),
             ])],
+            'invalid date_start type' => [self::getCampaignData(['date_start' => 0])],
+            'invalid date_start format' => [self::getCampaignData(['date_start' => 'now'])],
             'invalid max_cpm negative' => [self::getCampaignData(['max_cpm' => -1])],
             'invalid max_cpm too big' => [self::getCampaignData(['max_cpm' => AdsConverter::TOTAL_SUPPLY + 1])],
             'invalid max_cpm too low' => [self::getCampaignData(['max_cpm' => 1000])],
             'invalid max_cpm type' => [self::getCampaignData(['max_cpm' => 'auto'])],
             'invalid medium' => [self::getCampaignData(['medium' => 'invalid'])],
+            'invalid name type' => [self::getCampaignData(['name' => 1])],
+            'invalid name empty' => [self::getCampaignData(['name' => ''])],
+            'invalid name too long' => [self::getCampaignData([
+                'name' => str_repeat('a', Campaign::NAME_MAXIMAL_LENGTH + 1),
+                ])],
             'invalid status type' => [self::getCampaignData(['status' => 'invalid'])],
             'invalid status unknown' => [self::getCampaignData(['status' => 1024])],
             'invalid target_url' => [self::getCampaignData(['target_url' => 'invalid'])],
@@ -97,7 +104,7 @@ final class CampaignCreatorTest extends TestCase
     private static function getCampaignData(array $merge = [], string $remove = null): array
     {
         $data = array_merge([
-            'status' => Campaign::STATUS_ACTIVE,
+            'status' => 'active',
             'name' => 'Test campaign',
             'target_url' => 'https://exmaple.com/landing',
             'max_cpc' => 0,
@@ -126,6 +133,16 @@ final class CampaignCreatorTest extends TestCase
             unset($data[$remove]);
         }
         return $data;
+    }
+
+    public function testUpdateCampaignStatus(): void
+    {
+        $campaign = Campaign::factory()->create(['status' => Campaign::STATUS_ACTIVE]);
+        $creator = new CampaignCreator($this->app->make(ConfigurationRepository::class));
+
+        $updatedCampaign = $creator->updateCampaign(['status' => 'inactive'], $campaign);
+
+        self::assertEquals(Campaign::STATUS_INACTIVE, $updatedCampaign->status);
     }
 
     /**

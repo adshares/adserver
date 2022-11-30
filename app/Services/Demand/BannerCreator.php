@@ -30,6 +30,7 @@ use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\ViewModel\BannerStatus;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
@@ -133,16 +134,27 @@ class BannerCreator
         }
 
         if (array_key_exists('status', $input)) {
-            if (!is_int($input['status'])) {
-                throw new InvalidArgumentException('Field `status` must be an integer');
-            }
             if (Banner::STATUS_REJECTED === $banner->status) {
                 throw new InvalidArgumentException('Banner was rejected');
             }
-            if (!Banner::isStatusAllowed($input['status'])) {
-                throw new InvalidArgumentException(sprintf('Invalid status (%d)', $input['status']));
+
+            if (!is_int($input['status']) && !is_string($input['status'])) {
+                throw new InvalidArgumentException('Field `status` must be an integer or string');
             }
-            $banner->status = $input['status'];
+
+            if (is_int($input['status'])) {
+                if (!Banner::isStatusAllowed($input['status'])) {
+                    throw new InvalidArgumentException('Field `status` must be one of supported states');
+                }
+                $banner->status = $input['status'];
+            } else {
+                try {
+                    $status = BannerStatus::fromString($input['status']);
+                } catch (InvalidArgumentException) {
+                    throw new InvalidArgumentException('Field `status` must be one of supported states');
+                }
+                $banner->status = $status->value;
+            }
         }
 
         return $banner;
