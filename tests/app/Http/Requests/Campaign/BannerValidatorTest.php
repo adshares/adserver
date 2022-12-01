@@ -43,10 +43,10 @@ final class BannerValidatorTest extends TestCase
         return [
             'direct no url' => [
                 [
+                    'contents' => 'https://example.com/landing',
                     'name' => 'test',
-                    'creative_contents' => 'https://example.com/landing',
-                    'creative_size' => 'pop-up',
-                    'creative_type' => Banner::TEXT_TYPE_DIRECT_LINK,
+                    'size' => 'pop-up',
+                    'type' => Banner::TEXT_TYPE_DIRECT_LINK,
                 ]
             ],
         ];

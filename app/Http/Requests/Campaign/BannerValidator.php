@@ -40,15 +40,15 @@ class BannerValidator
     {
         foreach (
             [
-                'creative_type' => Banner::TYPE_MAXIMAL_LENGTH,
-                'creative_size' => Banner::SIZE_MAXIMAL_LENGTH,
+                'type' => Banner::TYPE_MAXIMAL_LENGTH,
+                'size' => Banner::SIZE_MAXIMAL_LENGTH,
                 'name' => Banner::NAME_MAXIMAL_LENGTH,
             ] as $field => $maxLength
         ) {
             self::validateField($banner, $field);
             $this->validateFieldMaximumLength($banner[$field], $maxLength, $field);
         }
-        $type = $banner['creative_type'];
+        $type = $banner['type'];
         if (Banner::TEXT_TYPE_DIRECT_LINK !== $type) {
             self::validateField($banner, 'url');
         }
@@ -61,7 +61,7 @@ class BannerValidator
             throw new InvalidArgumentException(sprintf('Invalid banner type (%s)', $type));
         }
 
-        $size = $banner['creative_size'];
+        $size = $banner['size'];
         if (Banner::TEXT_TYPE_VIDEO === $type) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new InvalidArgumentException(sprintf('Invalid video size (%s)', $size));

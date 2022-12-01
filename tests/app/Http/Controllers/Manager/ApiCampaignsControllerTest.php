@@ -332,9 +332,9 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         $data = array_merge(
             [
-                'creativeSize' => '300x250',
-                'creativeType' => Banner::TEXT_TYPE_IMAGE,
                 'name' => 'IMAGE 1',
+                'size' => '300x250',
+                'type' => Banner::TEXT_TYPE_IMAGE,
                 'url' => 'https://example.com/upload-preview/image/nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png',
             ],
             $mergeData,
