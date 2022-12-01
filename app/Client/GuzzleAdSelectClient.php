@@ -146,7 +146,7 @@ class GuzzleAdSelectClient implements AdSelect
         $zoneInputByUuid = [];
         $zoneIds = [];
         foreach ($zones as $zone) {
-            $zoneId = $zone['zoneId'] ?? (string)$zone['zone'];// Key 'zone' is for legacy search
+            $zoneId = $zone['placementId'] ?? (string)$zone['zone'];// Key 'zone' is for legacy search
             $zoneInputByUuid[$zoneId] = $zone;
             $zoneIds[] = strtolower($zoneId);
         }

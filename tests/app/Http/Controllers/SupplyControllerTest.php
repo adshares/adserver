@@ -137,8 +137,8 @@ final class SupplyControllerTest extends TestCase
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
                 'url' => 'https://example.com',
             ],
-            'zones' => [
-                ['zoneId' => $zone->uuid],
+            'placements' => [
+                ['placementId' => $zone->uuid],
             ],
         ];
 
@@ -148,7 +148,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(['*' => self::FIND_BANNER_STRUCTURE]);
     }
 
-    public function testFindWithoutZones(): void
+    public function testFindWithoutPlacements(): void
     {
         $data = [
             'page' => [
@@ -162,7 +162,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testFindWithZonePayToExistingUserWhichIsAdvertiserOnly(): void
+    public function testFindWithExistingUserWhoIsAdvertiserOnly(): void
     {
         $this->mockAdSelect();
         /** @var User $user */
@@ -182,7 +182,7 @@ final class SupplyControllerTest extends TestCase
                 'publisher' => 'ADS:0001-00000001-8B4E',
                 'medium' => 'web',
             ],
-            'zones' => [
+            'placements' => [
                 [
                     'id' => 'a1',
                     'width' => '300',
@@ -196,7 +196,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testFindWithZonePayToNonExistingUser(): void
+    public function testFindWithExistingUser(): void
     {
         $this->mockAdSelect();
         $data = [
@@ -206,7 +206,7 @@ final class SupplyControllerTest extends TestCase
                 'publisher' => 'ADS:0001-00000001-8B4E',
                 'medium' => 'web',
             ],
-            'zones' => [
+            'placements' => [
                 [
                     'id' => 'a1',
                     'name' => 'test-zone',
@@ -222,7 +222,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]);
     }
 
-    public function testFindWithZonePayToNonExistingUserWhenDefaultUserRoleDoesNotContainPublisher(): void
+    public function testFindWithExistingUserWhenDefaultUserRoleDoesNotContainPublisher(): void
     {
         Config::updateAdminSettings([
             Config::AUTO_REGISTRATION_ENABLED => '1',
@@ -236,7 +236,7 @@ final class SupplyControllerTest extends TestCase
                 'publisher' => 'ADS:0001-00000001-8B4E',
                 'medium' => 'web',
             ],
-            'zones' => [
+            'placements' => [
                 [
                     'id' => '1',
                     'name' => 'test-zone',

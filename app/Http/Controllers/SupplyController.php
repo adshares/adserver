@@ -326,7 +326,7 @@ class SupplyController extends Controller
         if (!is_array($input)) {
             throw new UnprocessableEntityHttpException('Invalid body type');
         }
-        foreach (['page', 'zones'] as $field) {
+        foreach (['page', 'placements'] as $field) {
             if (!isset($input[$field])) {
                 throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
             }
@@ -344,20 +344,27 @@ class SupplyController extends Controller
                 throw new UnprocessableEntityHttpException(sprintf('Field `page.%s` must be a string', $field));
             }
         }
-        if (!is_array($input['zones'])) {
-            throw new UnprocessableEntityHttpException('Field `zones` must be an array');
+        if (!is_array($input['placements'])) {
+            throw new UnprocessableEntityHttpException('Field `placements` must be an array');
         }
-        foreach ($input['zones'] as $zone) {
+        foreach ($input['placements'] as $placement) {
             $fieldsOptional = [
                 'types',
                 'mimeTypes',
             ];
             foreach ($fieldsOptional as $field) {
-                if (isset($zone[$field])) {
-                    if (!is_string($zone[$field])) {
+                if (isset($placement[$field])) {
+                    if (!is_array($placement[$field])) {
                         throw new UnprocessableEntityHttpException(
-                            sprintf('Field `zones.*.%s` must be a string', $field)
+                            sprintf('Field `placements.*.%s` must be an array', $field)
                         );
+                    }
+                    foreach ($placement[$field] as $entry) {
+                        if (!is_string($entry)) {
+                            throw new UnprocessableEntityHttpException(
+                                sprintf('Field `placements.*.%s` must be an array of strings', $field)
+                            );
+                        }
                     }
                 }
             }
@@ -388,30 +395,33 @@ class SupplyController extends Controller
                 throw new UnprocessableEntityHttpException('Field `page.publisher` must be a string');
             }
             $user = $this->getPublisherOrFail($page['publisher']);
-            foreach ($input['zones'] as $key => $zone) {
+            foreach ($input['placements'] as $key => $placement) {
                 $fieldsRequired = [
                     'width',
                     'height',
                 ];
                 foreach ($fieldsRequired as $field) {
-                    if (!isset($zone[$field])) {
-                        throw new UnprocessableEntityHttpException(sprintf('Field `zones.*.%s` is required', $field));
-                    }
-                    if (!is_string($zone[$field])) {
+                    if (!isset($placement[$field])) {
                         throw new UnprocessableEntityHttpException(
-                            sprintf('Field `zones.*.%s` must be a string', $field)
+                            sprintf('Field `placements.*.%s` is required', $field)
+                        );
+                    }
+                    if (!is_string($placement[$field])) {
+                        throw new UnprocessableEntityHttpException(
+                            sprintf('Field `placements.*.%s` must be a string', $field)
                         );
                     }
                 }
                 $fieldsOptional = [
                     'depth',
                     'minDpi',
+                    'name',
                 ];
                 foreach ($fieldsOptional as $field) {
-                    if (isset($zone[$field])) {
-                        if (!is_string($zone[$field])) {
+                    if (isset($placement[$field])) {
+                        if (!is_string($placement[$field])) {
                             throw new UnprocessableEntityHttpException(
-                                sprintf('Field `zones.*.%s` must be a string', $field)
+                                sprintf('Field `placements.*.%s` must be a string', $field)
                             );
                         }
                     }
@@ -434,26 +444,35 @@ class SupplyController extends Controller
 
                 $zoneSizes = Size::findBestFit(
                     $medium,
-                    (float)$zone['width'],
-                    (float)$zone['height'],
-                    (float)($zone['depth'] ?? self::ZONE_DEPTH_DEFAULT),
-                    (float)($zone['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
+                    (float)$placement['width'],
+                    (float)$placement['height'],
+                    (float)($placement['depth'] ?? self::ZONE_DEPTH_DEFAULT),
+                    (float)($placement['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
                 );
+                if (empty($zoneSizes)) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf(
+                            'Cannot find placement matching width %s, height %s)',
+                            $placement['width'],
+                            $placement['height']
+                        )
+                    );
+                }
                 $zoneObject = Zone::fetchOrCreate(
                     $site->id,
                     $zoneSizes[0],
-                    $zone['name'] ?? self::ZONE_NAME_DEFAULT,
+                    $placement['name'] ?? self::ZONE_NAME_DEFAULT,
                 );
-                $input['zones'][$key]['zoneId'] = $zoneObject->uuid;
+                $input['placements'][$key]['placementId'] = $zoneObject->uuid;
             }
         } else {
-            foreach ($input['zones'] as $zone) {
-                if (!isset($zone['zoneId'])) {
-                    throw new UnprocessableEntityHttpException('Field `zone.*.zoneId` is required');
+            foreach ($input['placements'] as $placement) {
+                if (!isset($placement['placementId'])) {
+                    throw new UnprocessableEntityHttpException('Field `placements.*.placementId` is required');
                 }
-                if (!Utils::isUuidValid($zone['zoneId'])) {
+                if (!Utils::isUuidValid($placement['placementId'])) {
                     throw new UnprocessableEntityHttpException(
-                        'Field `zone.*.zoneId` is must be a hexadecimal string of length 32'
+                        'Field `placements.*.placementId` is must be a hexadecimal string of length 32'
                     );
                 }
             }
@@ -570,7 +589,7 @@ class SupplyController extends Controller
 
     private function decodeZones(array $decodedQueryData): array
     {
-        $zones = $decodedQueryData['zones'] ?? [];
+        $zones = $decodedQueryData['placements'] ?? $decodedQueryData['zones'] ?? [];// Key 'zones' is for legacy search
         if (!$zones) {
             throw new BadRequestHttpException('Site not accepted');
         }
@@ -629,7 +648,7 @@ class SupplyController extends Controller
                 foreach ($zones as &$zone) {
                     $zone['options']['cpa_only'] = true;
                 }
-            } elseif (config('app.env') != 'dev') {
+            } else {
                 return new FoundBanners();
             }
         }
