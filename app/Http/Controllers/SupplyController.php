@@ -348,6 +348,9 @@ class SupplyController extends Controller
             throw new UnprocessableEntityHttpException('Field `placements` must be an array');
         }
         foreach ($input['placements'] as $placement) {
+            if (!is_array($placement)) {
+                throw new UnprocessableEntityHttpException('Field `placements[]` must be an object');
+            }
             $fieldsOptional = [
                 'types',
                 'mimeTypes',
@@ -356,13 +359,13 @@ class SupplyController extends Controller
                 if (isset($placement[$field])) {
                     if (!is_array($placement[$field])) {
                         throw new UnprocessableEntityHttpException(
-                            sprintf('Field `placements.*.%s` must be an array', $field)
+                            sprintf('Field `placements[].%s` must be an array', $field)
                         );
                     }
                     foreach ($placement[$field] as $entry) {
                         if (!is_string($entry)) {
                             throw new UnprocessableEntityHttpException(
-                                sprintf('Field `placements.*.%s` must be an array of strings', $field)
+                                sprintf('Field `placements[].%s` must be an array of strings', $field)
                             );
                         }
                     }
@@ -372,6 +375,9 @@ class SupplyController extends Controller
 
         $isDynamicFind = array_key_exists('publisher', $page);
         if ($isDynamicFind) {
+            if (!is_string($page['publisher'])) {
+                throw new UnprocessableEntityHttpException('Field `page.publisher` must be a string');
+            }
             if (!isset($page['medium'])) {
                 throw new UnprocessableEntityHttpException('Field `page.medium` is required');
             }
@@ -391,56 +397,10 @@ class SupplyController extends Controller
             } catch (InvalidArgumentException $exception) {
                 throw new UnprocessableEntityHttpException($exception->getMessage());
             }
-            if (!is_string($page['publisher'])) {
-                throw new UnprocessableEntityHttpException('Field `page.publisher` must be a string');
-            }
-            $user = $this->getPublisherOrFail($page['publisher']);
+            $site = $this->getSiteOrFail($page);
+
             foreach ($input['placements'] as $key => $placement) {
-                $fieldsRequired = [
-                    'width',
-                    'height',
-                ];
-                foreach ($fieldsRequired as $field) {
-                    if (!isset($placement[$field])) {
-                        throw new UnprocessableEntityHttpException(
-                            sprintf('Field `placements.*.%s` is required', $field)
-                        );
-                    }
-                    if (!is_string($placement[$field])) {
-                        throw new UnprocessableEntityHttpException(
-                            sprintf('Field `placements.*.%s` must be a string', $field)
-                        );
-                    }
-                }
-                $fieldsOptional = [
-                    'depth',
-                    'minDpi',
-                    'name',
-                ];
-                foreach ($fieldsOptional as $field) {
-                    if (isset($placement[$field])) {
-                        if (!is_string($placement[$field])) {
-                            throw new UnprocessableEntityHttpException(
-                                sprintf('Field `placements.*.%s` must be a string', $field)
-                            );
-                        }
-                    }
-                }
-
-                try {
-                    $site = Site::fetchOrCreate(
-                        $user->id,
-                        $page['url'],
-                        $page['medium'],
-                        $page['vendor'] ?? null,
-                    );
-                } catch (InvalidArgumentException $exception) {
-                    throw new UnprocessableEntityHttpException($exception->getMessage());
-                }
-
-                if (Site::STATUS_ACTIVE !== $site->status) {
-                    throw new UnprocessableEntityHttpException(sprintf("Site '%s' is not active", $site->name));
-                }
+                self::validatePlacementFieldsDynamic($placement);
 
                 $zoneSizes = Size::findBestFit(
                     $medium,
@@ -467,14 +427,7 @@ class SupplyController extends Controller
             }
         } else {
             foreach ($input['placements'] as $placement) {
-                if (!isset($placement['placementId'])) {
-                    throw new UnprocessableEntityHttpException('Field `placements.*.placementId` is required');
-                }
-                if (!Utils::isUuidValid($placement['placementId'])) {
-                    throw new UnprocessableEntityHttpException(
-                        'Field `placements.*.placementId` is must be a hexadecimal string of length 32'
-                    );
-                }
+                self::validatePlacementFields($placement);
             }
         }
 
@@ -1160,7 +1113,7 @@ class SupplyController extends Controller
         );
     }
 
-    private function getPublisherOrFail(string $publisher): ?User
+    private function getPublisherOrFail(string $publisher): User
     {
         if (Utils::isUuidValid($publisher)) {
             $user = User::fetchByUuid($publisher);
@@ -1194,6 +1147,28 @@ class SupplyController extends Controller
         return $user;
     }
 
+    private function getSiteOrFail(array $page): Site
+    {
+        $user = $this->getPublisherOrFail($page['publisher']);
+
+        try {
+            $site = Site::fetchOrCreate(
+                $user->id,
+                $page['url'],
+                $page['medium'],
+                $page['vendor'] ?? null,
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
+
+        if (Site::STATUS_ACTIVE !== $site->status) {
+            throw new UnprocessableEntityHttpException(sprintf('Site `%s` is not active', $site->name));
+        }
+
+        return $site;
+    }
+
     private function mapFoundBannerToResult(): Closure
     {
         return function ($item) {
@@ -1216,5 +1191,51 @@ class SupplyController extends Controller
             }
             return $mapped;
         };
+    }
+
+    private static function validatePlacementFields(array $placement): void
+    {
+        if (!isset($placement['placementId'])) {
+            throw new UnprocessableEntityHttpException('Field `placements[].placementId` is required');
+        }
+        if (!Utils::isUuidValid($placement['placementId'])) {
+            throw new UnprocessableEntityHttpException(
+                'Field `placements[].placementId` is must be a hexadecimal string of length 32'
+            );
+        }
+    }
+
+    private static function validatePlacementFieldsDynamic(array $placement): void
+    {
+        $fieldsRequired = [
+            'width',
+            'height',
+        ];
+        foreach ($fieldsRequired as $field) {
+            if (!isset($placement[$field])) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Field `placements[].%s` is required', $field)
+                );
+            }
+            if (!is_string($placement[$field])) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Field `placements[].%s` must be a string', $field)
+                );
+            }
+        }
+        $fieldsOptional = [
+            'depth',
+            'minDpi',
+            'name',
+        ];
+        foreach ($fieldsOptional as $field) {
+            if (array_key_exists($field, $placement)) {
+                if (!is_string($placement[$field])) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('Field `placements[].%s` must be a string', $field)
+                    );
+                }
+            }
+        }
     }
 }

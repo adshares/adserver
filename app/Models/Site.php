@@ -78,9 +78,7 @@ class Site extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 0;
-
     public const STATUS_INACTIVE = 1;
-
     public const STATUS_ACTIVE = 2;
 
     public const ALLOWED_STATUSES = [
@@ -264,7 +262,7 @@ class Site extends Model
         string $url,
         string $medium,
         ?string $vendor,
-    ): ?self {
+    ): self {
         $domain = DomainReader::domain($url);
 
         $site = self::where('user_id', $userId)
