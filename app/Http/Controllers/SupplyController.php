@@ -1184,6 +1184,7 @@ class SupplyController extends Controller
                 'serveUrl' => $item['serve_url'],
                 'viewUrl' => $item['view_url'],
                 'clickUrl' => $item['click_url'],
+                'infoBox' => $item['info_box'],
                 'rpm' => $item['rpm'],
             ];
             if (isset($item['request_id'])) {
