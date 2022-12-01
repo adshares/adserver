@@ -263,15 +263,17 @@ class Site extends Model
         int $userId,
         string $url,
         string $medium,
-        ?string $vendor
+        ?string $vendor,
     ): ?self {
         $domain = DomainReader::domain($url);
 
         $site = self::where('user_id', $userId)
             ->where('domain', $domain)
+            ->where('medium', $medium)
+            ->where('vendor', $vendor)
             ->first();
 
-        if (!$site) {
+        if (null === $site) {
             $name = $domain;
             if ('metaverse' === $medium) {
                 if ('decentraland' === $vendor) {

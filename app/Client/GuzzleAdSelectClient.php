@@ -53,7 +53,6 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 
-use function array_map;
 use function config;
 use function GuzzleHttp\json_decode;
 use function iterator_to_array;
@@ -145,14 +144,12 @@ class GuzzleAdSelectClient implements AdSelect
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
         $zoneInputByUuid = [];
-        $zoneIds = array_map(
-            static function (array $zone) use (&$zoneInputByUuid) {
-                $zoneInputByUuid[(string)$zone['zone']] = $zone;
-
-                return strtolower((string)$zone['zone']);
-            },
-            $zones
-        );
+        $zoneIds = [];
+        foreach ($zones as $zone) {
+            $zoneId = $zone['zoneId'] ?? (string)$zone['zone'];// Key 'zone' is for legacy search
+            $zoneInputByUuid[$zoneId] = $zone;
+            $zoneIds[] = strtolower($zoneId);
+        }
 
         $zoneMap = [];
         $sitesMap = [];
@@ -212,8 +209,9 @@ class GuzzleAdSelectClient implements AdSelect
         }
 
         $zoneCollection = new Collection();
-        foreach ($zoneIds as $id) {
-            $zoneCollection[] = $zoneMap[$id] ?? null;
+        foreach ($zoneIds as $i => $id) {
+            $requestId = $zoneInputByUuid[$id]['id'] ?? $i;
+            $zoneCollection[$requestId] = $zoneMap[$id] ?? null;
         }
 
         $existingZones = $zoneCollection->reject(
@@ -266,11 +264,11 @@ class GuzzleAdSelectClient implements AdSelect
         }
 
         $bannerIds = [];
-        foreach ($zoneCollection as $request_id => $zone) {
-            if (isset($existingZones[$request_id]) && isset($items[$request_id])) {
-                $bannerIds[] = $items[$request_id] ?: [null];
+        foreach ($zoneCollection as $requestId => $zone) {
+            if (isset($existingZones[$requestId]) && isset($items[$requestId])) {
+                $bannerIds[$requestId] = $items[$requestId] ?: [null];
             } else {
-                $bannerIds[] = [null];
+                $bannerIds[$requestId] = [null];
             }
         }
 
@@ -299,7 +297,7 @@ class GuzzleAdSelectClient implements AdSelect
                 } else {
                     $zone = $zoneCollection[$requestId];
                     $campaign = $banner->campaign;
-                    yield [
+                    $data = [
                         'id'            => $bannerId,
                         'publisher_id'  => $zone->site->user->uuid,
                         'zone_id'       => $zone->uuid,
@@ -330,6 +328,10 @@ class GuzzleAdSelectClient implements AdSelect
                         'info_box'      => $infoBox,
                         'rpm'           => $item['rpm'],
                     ];
+                    if (is_string($requestId)) {
+                        $data['request_id'] = $requestId;
+                    }
+                    yield $data;
                 }
             }
         }

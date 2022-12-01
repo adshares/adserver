@@ -141,7 +141,7 @@ final class ImpressionContext
                 'site_id' => $siteMap['uuid'],
                 'zone_id' => $zone->uuid,
                 'zone_options' => $zonesInput[$requestId]['options'] ?? [],
-                'request_id' => $requestId,
+                'request_id' => $zonesInput[$requestId]['id'] ?? $requestId,
                 'user_id' => !empty($userId) ? $userId : $trackingId,
                 'tracking_id' => $trackingId,
                 'banner_filters' => $siteMap['filters'],

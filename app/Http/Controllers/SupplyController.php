@@ -67,6 +67,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -74,6 +75,9 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
     private const TTL_ONE_HOUR = 3600;
+    private const ZONE_DEPTH_DEFAULT = 0;
+    private const ZONE_MINIMAL_DPI_DEFAULT = 1;
+    private const ZONE_NAME_DEFAULT = 'default';
 
     private static string $adserverId;
 
@@ -115,9 +119,9 @@ class SupplyController extends Controller
             ]
         );
 
-        $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
-        $validated['zone_name'] = $validated['zone_name'] ?? 'default';
-        $validated['depth'] = $validated['depth'] ?? 0;
+        $validated['min_dpi'] = $validated['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT;
+        $validated['zone_name'] = $validated['zone_name'] ?? self::ZONE_NAME_DEFAULT;
+        $validated['depth'] = $validated['depth'] ?? self::ZONE_DEPTH_DEFAULT;
 
         $payoutAddress = WalletAddress::fromString($validated['pay_to']);
         $user = User::fetchByWalletAddress($payoutAddress);
@@ -205,7 +209,7 @@ class SupplyController extends Controller
         );
     }
 
-    public function find(
+    public function legacyFind(
         Request $request,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
@@ -292,6 +296,154 @@ class SupplyController extends Controller
         return self::json(
             $this->findBanners($decodedQueryData, $request, $response, $contextProvider, $bannerFinder)->toArray()
         );
+    }
+
+    public function find(
+        AdUser $contextProvider,
+        AdSelect $bannerFinder,
+        ConfigurationRepository $configurationRepository,
+        Request $request,
+    ) {
+        $response = new Response();
+
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        }
+
+        if ('POST' === $request->getRealMethod()) {
+            $data = json_decode($request->getContent(), true);
+        } elseif ('OPTIONS' === $request->getRealMethod()) {
+            $response->setStatusCode(Response::HTTP_NO_CONTENT);
+            $response->headers->set('Access-Control-Max-Age', 1728000);
+            return $response;
+        } else {
+            throw new MethodNotAllowedHttpException(['POST']);
+        }
+
+        //TODO validate
+        if (!is_array($data)) {
+            throw new UnprocessableEntityHttpException('Invalid body type');
+        }
+        foreach (['page', 'zones'] as $field) {
+            if (!isset($data[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
+            }
+            if (!is_array($data[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be an array', $field));
+            }
+        }
+
+        if (!is_array($data['page'])) {
+            throw new UnprocessableEntityHttpException('Field `page` must be an object');
+        }
+        $page = $data['page'];
+        foreach (['iid', 'url'] as $field) {
+            if (!isset($page[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `page.%s` is required', $field));
+            }
+            if (!is_string($page[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `page.%s` must be a string', $field));
+            }
+        }
+
+        if (!is_array($data['zones'])) {
+            throw new UnprocessableEntityHttpException('Field `zones` must be an array');
+        }
+
+        foreach ($data['zones'] as &$zone) {
+            if (!isset($zone['zoneId'])) {
+                try {
+                    $medium = $configurationRepository->fetchMedium(
+                        $data['page']['medium'],
+                        $data['page']['vendor'] ?? null
+                    );
+                } catch (InvalidArgumentException $exception) {
+                    throw new UnprocessableEntityHttpException($exception->getMessage());
+                }
+                if (WalletAddress::isValid($page['publisher'])) {
+                    $payoutAddress = WalletAddress::fromString($page['publisher']);
+                    $user = User::fetchByWalletAddress($payoutAddress);
+                    if (!$user) {
+                        if (config('app.auto_registration_enabled')) {
+                            if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
+                                throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                            }
+                            $user = User::registerWithWallet($payoutAddress, true);
+                        } else {
+                            throw new UnprocessableEntityHttpException(
+                                sprintf('User not found for account address %s', $payoutAddress->toString())
+                            );
+                        }
+                    }
+                } else {
+                    // TODO validate uuid
+                    $user = User::fetchByUuid($page['publisher']);
+                    if (null === $user) {
+                        throw new UnprocessableEntityHttpException(
+                            sprintf('User not found for id %s', $page['publisher'])
+                        );
+                    }
+                }
+
+                if (!$user->isPublisher()) {
+                    throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
+                }
+
+                try {
+                    $site = Site::fetchOrCreate(
+                        $user->id,
+                        $data['page']['url'],
+                        $data['page']['medium'],
+                        $data['page']['vendor'] ?? null,
+                    );
+                } catch (InvalidArgumentException $exception) {
+                    throw new UnprocessableEntityHttpException($exception->getMessage());
+                }
+
+                if (Site::STATUS_ACTIVE !== $site->status) {
+                    throw new UnprocessableEntityHttpException(sprintf("Site '%s' is not active", $site->name));
+                }
+
+                $zoneSizes = Size::findBestFit(
+                    $medium,
+                    (float)$zone['width'],
+                    (float)$zone['height'],
+                    (float)($zone['depth'] ?? self::ZONE_DEPTH_DEFAULT),
+                    (float)($zone['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
+                );
+                $zoneObject = Zone::fetchOrCreate(
+                    $site->id,
+                    $zoneSizes[0],
+                    $zone['name'] ?? self::ZONE_NAME_DEFAULT,
+                );
+                $zone['zoneId'] = $zoneObject->uuid;
+            }
+        }
+
+        $foundBanners = $this->findBanners($data, $request, $response, $contextProvider, $bannerFinder);
+        $data = $foundBanners->map(function ($item) {
+            $mapped = [
+                'placementId' => $item['id'],
+                'zoneId' => $item['zone_id'],
+                'publisherId' => $item['publisher_id'],
+                'demandServer' => $item['pay_from'],
+                'supplyServer' => $item['pay_to'],
+                'type' => $item['type'],
+                'scope' => $item['size'],
+                'hash' => $item['creative_sha1'],
+                'serveUrl' => $item['serve_url'],
+                'viewUrl' => $item['view_url'],
+                'clickUrl' => $item['click_url'],
+                'rpm' => $item['rpm'],
+            ];
+            if (isset($item['request_id'])) {
+                $mapped['id'] = $item['request_id'];
+            }
+            return $mapped;
+        });
+        return self::json($data);
     }
 
     public function findSimple(
