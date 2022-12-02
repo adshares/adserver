@@ -145,7 +145,7 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['*' => self::FIND_BANNER_STRUCTURE]);
+        $response->assertJsonStructure(['data' => ['*' => self::FIND_BANNER_STRUCTURE]]);
     }
 
     public function testFindWithoutPlacements(): void
@@ -219,7 +219,7 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]);
+        $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
     }
 
     public function testFindWithExistingUserWhenDefaultUserRoleDoesNotContainPublisher(): void

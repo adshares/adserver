@@ -432,7 +432,7 @@ class SupplyController extends Controller
         }
 
         $foundBanners = $this->findBanners($input, $request, $response, $contextProvider, $bannerFinder);
-        return self::json($foundBanners->map($this->mapFoundBannerToResult()));
+        return self::json(['data' => $foundBanners->map($this->mapFoundBannerToResult())]);
     }
 
     public function findSimple(

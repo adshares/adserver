@@ -160,6 +160,28 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
     }
 
+    /**
+     * @dataProvider addCampaignFailProvider
+     */
+    public function testAddCampaignFail(array $campaignData): void
+    {
+        $this->setUpUser();
+        $this->mockStorage();
+
+        $response = $this->post(self::URI_CAMPAIGNS, $campaignData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function addCampaignFailProvider(): array
+    {
+        return [
+            'missing campaign' => [self::getCampaignData(remove: 'targetUrl')],
+            'missing creatives' => [self::getCampaignData(remove: 'creatives')],
+            'missing creatives[].type' => [self::getCampaignData(['creatives' => self::getBannerData(remove: 'type')])],
+        ];
+    }
+
     public function testEditCampaign(): void
     {
         $uri = $this->setUpCampaign();
@@ -296,9 +318,9 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertJsonStructure(self::CREATIVES_STRUCTURE);
     }
 
-    private function getCampaignData(array $mergeData = []): array
+    private function getCampaignData(array $mergeData = [], ?string $remove = null): array
     {
-        return array_merge([
+        $data = array_merge([
             'status' => 'active',
             'name' => 'Test campaign',
             'targetUrl' => 'https://exmaple.com/landing',
@@ -326,9 +348,15 @@ final class ApiCampaignsControllerTest extends TestCase
                 $this->getBannerData(),
             ],
         ], $mergeData);
+
+        if (null !== $remove) {
+            unset($data[$remove]);
+        }
+
+        return $data;
     }
 
-    private function getBannerData(array $mergeData = [], string $remove = null): array
+    private function getBannerData(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge(
             [
