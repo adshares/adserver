@@ -229,7 +229,10 @@ final class SupplyControllerTest extends TestCase
         return [
             'invalid page type' => [self::getDynamicFindData(['page' => 1])],
             'missing page.url' => [self::getDynamicFindData(['page' => self::getPageData(remove: 'url')])],
-            'invalid page.url' => [self::getDynamicFindData(['page' => self::getPageData(['url' => 1])])],
+            'invalid page.url type' => [self::getDynamicFindData(['page' => self::getPageData(['url' => 1])])],
+            'invalid page.metamask type' => [
+                self::getDynamicFindData(['page' => self::getPageData(['metamask' => 'metamask'])])
+            ],
             'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
             'conflicting placement types' => [
                 self::getDynamicFindData(['placements' => [

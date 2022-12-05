@@ -349,6 +349,11 @@ class SupplyController extends Controller
                 throw new UnprocessableEntityHttpException(sprintf('Field `page.%s` must be a string', $field));
             }
         }
+        if (array_key_exists('metamask', $input['page'])) {
+            if (!is_bool($input['page']['metamask'])) {
+                throw new UnprocessableEntityHttpException('Field `page.metamask` must be a boolean');
+            }
+        }
         if (!is_array($input['placements'])) {
             throw new UnprocessableEntityHttpException('Field `placements` must be an array');
         }
