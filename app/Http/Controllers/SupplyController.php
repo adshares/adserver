@@ -131,7 +131,7 @@ class SupplyController extends Controller
         if (!$user) {
             if (config('app.auto_registration_enabled')) {
                 if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
-                    throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                    throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                 }
                 $user = User::registerWithWallet($payoutAddress, true);
             } else {
@@ -139,7 +139,7 @@ class SupplyController extends Controller
             }
         }
         if (!$user->isPublisher()) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
+            throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
         }
         $site = Site::fetchOrCreate(
             $user->id,
@@ -316,12 +316,16 @@ class SupplyController extends Controller
 
         if ('POST' === $request->getRealMethod()) {
             $input = $request->input();
-        } elseif ('OPTIONS' === $request->getRealMethod()) {
-            $response->setStatusCode(BaseResponse::HTTP_NO_CONTENT);
-            $response->headers->set('Access-Control-Max-Age', 1728000);
-            return $response;
+        } elseif ('GET' === $request->getRealMethod()) {
+            if (null === ($query = $request->getQueryString())) {
+                throw new UnprocessableEntityHttpException('Query is required');
+            }
+            if (false !== ($index = strpos($query, '&'))) {
+                $query = substr($query, 0, $index);
+            }
+            $input = json_decode(Utils::urlSafeBase64Decode($query), true);
         } else {
-            throw new MethodNotAllowedHttpException(['POST']);
+            throw new MethodNotAllowedHttpException(['GET', 'POST']);
         }
 
         if (!is_array($input)) {
@@ -348,31 +352,6 @@ class SupplyController extends Controller
         if (!is_array($input['placements'])) {
             throw new UnprocessableEntityHttpException('Field `placements` must be an array');
         }
-        foreach ($input['placements'] as $placement) {
-            if (!is_array($placement)) {
-                throw new UnprocessableEntityHttpException('Field `placements[]` must be an object');
-            }
-            $fieldsOptional = [
-                'types',
-                'mimeTypes',
-            ];
-            foreach ($fieldsOptional as $field) {
-                if (isset($placement[$field])) {
-                    if (!is_array($placement[$field])) {
-                        throw new UnprocessableEntityHttpException(
-                            sprintf('Field `placements[].%s` must be an array', $field)
-                        );
-                    }
-                    foreach ($placement[$field] as $entry) {
-                        if (!is_string($entry)) {
-                            throw new UnprocessableEntityHttpException(
-                                sprintf('Field `placements[].%s` must be an array of strings', $field)
-                            );
-                        }
-                    }
-                }
-            }
-        }
 
         $isDynamicFind = array_key_exists('publisher', $page);
         if ($isDynamicFind) {
@@ -385,11 +364,28 @@ class SupplyController extends Controller
             if (!is_string($page['medium'])) {
                 throw new UnprocessableEntityHttpException('Field `page.medium` must be a string');
             }
-            if (isset($page['vendor'])) {
-                if (!is_string($page['vendor'])) {
-                    throw new UnprocessableEntityHttpException('Field `page.vendor` must be a string');
-                }
+            if (isset($page['vendor']) && !is_string($page['vendor'])) {
+                throw new UnprocessableEntityHttpException('Field `page.vendor` must be a string');
             }
+
+            foreach ($input['placements'] as $placement) {
+                if (!is_array($placement)) {
+                    throw new UnprocessableEntityHttpException('Field `placements[]` must be an object');
+                }
+                self::validatePlacementCommonFields($placement);
+                self::validatePlacementFieldsDynamic($placement);
+            }
+        } else {
+            foreach ($input['placements'] as $placement) {
+                if (!is_array($placement)) {
+                    throw new UnprocessableEntityHttpException('Field `placements[]` must be an object');
+                }
+                self::validatePlacementCommonFields($placement);
+                self::validatePlacementFields($placement);
+            }
+        }
+
+        if ($isDynamicFind) {
             try {
                 $medium = $configurationRepository->fetchMedium(
                     $page['medium'],
@@ -401,14 +397,14 @@ class SupplyController extends Controller
             $site = $this->getSiteOrFail($page);
 
             foreach ($input['placements'] as $key => $placement) {
-                self::validatePlacementFieldsDynamic($placement);
-
+                $zoneType = $this->getZoneType($placement);
                 $zoneSizes = Size::findBestFit(
                     $medium,
                     (float)$placement['width'],
                     (float)$placement['height'],
                     (float)($placement['depth'] ?? self::ZONE_DEPTH_DEFAULT),
-                    (float)($placement['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
+                    (float)($placement['minDpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
+                    zoneType: $zoneType,
                 );
                 if (empty($zoneSizes)) {
                     throw new UnprocessableEntityHttpException(
@@ -423,13 +419,17 @@ class SupplyController extends Controller
                     $site->id,
                     $zoneSizes[0],
                     $placement['name'] ?? self::ZONE_NAME_DEFAULT,
+                    $zoneType,
                 );
                 $input['placements'][$key]['placementId'] = $zoneObject->uuid;
             }
-        } else {
-            foreach ($input['placements'] as $placement) {
-                self::validatePlacementFields($placement);
-            }
+        }
+
+        foreach ($input['placements'] as $key => $placement) {
+            $input['placements'][$key]['options'] = [
+                'banner_type' => $placement['types'] ?? null,
+                'banner_mime' => $placement['mimeTypes'] ?? null,
+            ];
         }
 
         $foundBanners = $this->findBanners($input, $request, $response, $contextProvider, $bannerFinder);
@@ -1170,6 +1170,24 @@ class SupplyController extends Controller
         return $site;
     }
 
+    private function getZoneType(array $placement): ?string
+    {
+        if (isset($placement['types'])) {
+            $zoneTypes = array_unique(
+                array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+            );
+            if (count($zoneTypes) > 1) {
+                throw new UnprocessableEntityHttpException(
+                    'Field `placements[].types` cannot contain conflicting types'
+                );
+            }
+            $zoneType = $zoneTypes[0];
+        } else {
+            $zoneType = null;
+        }
+        return $zoneType;
+    }
+
     private function mapFoundBannerToResult(): Closure
     {
         return function ($item) {
@@ -1193,6 +1211,30 @@ class SupplyController extends Controller
             }
             return $mapped;
         };
+    }
+
+    private static function validatePlacementCommonFields(array $placement): void
+    {
+        $fieldsOptional = [
+            'types',
+            'mimeTypes',
+        ];
+        foreach ($fieldsOptional as $field) {
+            if (isset($placement[$field])) {
+                if (!is_array($placement[$field])) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('Field `placements[].%s` must be an array', $field)
+                    );
+                }
+                foreach ($placement[$field] as $entry) {
+                    if (!is_string($entry)) {
+                        throw new UnprocessableEntityHttpException(
+                            sprintf('Field `placements[].%s` must be an array of strings', $field)
+                        );
+                    }
+                }
+            }
+        }
     }
 
     private static function validatePlacementFields(array $placement): void

@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Supply\Domain\ValueObject;
 
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Supply\Domain\Model\Banner;
 
 final class Size
 {
@@ -31,7 +32,6 @@ final class Size
     public const TYPE_MODEL = 'model';
     public const TYPE_POP = 'pop';
 
-    private const CUBE = 'cube';
     private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
 
     public static function findBestFit(
@@ -39,26 +39,26 @@ final class Size
         float $width,
         float $height,
         float $depth,
-        float $min_dpi,
-        int $count = 5
+        float $minDpi,
+        int $count = 5,
+        ?string $zoneType = null,
     ): array {
-        if ($depth > 0) {
-            return [self::CUBE];
+        if (self::TYPE_POP === $zoneType) {
+            return self::getScopesByTypes($medium, [Banner::TYPE_DIRECT_LINK]);
         }
 
-        $scopes = [];
-        foreach ($medium->getFormats() as $format) {
-            if (in_array($format->getType(), ['image', 'video'])) {
-                $scopes = array_merge($scopes, $format->getScopes());
-            }
+        if ((null === $zoneType && $depth > 0) || self::TYPE_MODEL === $zoneType) {
+            return self::getScopesByTypes($medium, [Banner::TYPE_MODEL]);
         }
+
+        $scopes = self::getScopesByTypes($medium, [Banner::TYPE_IMAGE, Banner::TYPE_VIDEO]);
 
         $sizes = array_map(
-            function ($size) use ($width, $height, $min_dpi) {
+            function ($size) use ($width, $height, $minDpi) {
                 [$x, $y] = explode("x", $size);
 
                 $dpi = min($x / $width, $y / $height);
-                if ($dpi < $min_dpi) {
+                if ($dpi < $minDpi) {
                     return false;
                 }
 
@@ -70,7 +70,7 @@ final class Size
                     'dpi' => $dpi,
                 ];
             },
-            array_keys($scopes)
+            $scopes
         );
 
         $sizes = array_filter($sizes);
@@ -150,5 +150,17 @@ final class Size
         }
 
         return $width / $a . ':' . $height / $a;
+    }
+
+    private static function getScopesByTypes(Medium $medium, array $types): array
+    {
+        $scopes = [];
+
+        foreach ($medium->getFormats() as $format) {
+            if (in_array($format->getType(), $types)) {
+                $scopes = array_merge($scopes, $format->getScopes());
+            }
+        }
+        return array_keys($scopes);
     }
 }

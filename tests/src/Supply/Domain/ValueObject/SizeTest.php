@@ -69,7 +69,14 @@ final class SizeTest extends TestCase
                         '300x250' => 'Medium Rectangle',
                         '336x280' => 'Large Rectangle',
                     ],
-                ]
+                ],
+                [
+                    'type' => 'model',
+                    'mimes' => ['model/gltf-binary'],
+                    'scopes' => [
+                        'cube' => 'Cube',
+                    ],
+                ],
             ],
             'targeting' => [
                 'user' => [],

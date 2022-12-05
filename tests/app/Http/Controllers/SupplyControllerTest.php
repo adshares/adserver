@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
@@ -34,6 +35,7 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Domain\ValueObject\Size;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
@@ -175,51 +177,60 @@ final class SupplyControllerTest extends TestCase
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
         Zone::factory()->create(['site_id' => $site->id, 'size' => '300x250']);
-        $data = [
-            'page' => [
-                'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
-                'publisher' => 'ADS:0001-00000001-8B4E',
-                'medium' => 'web',
-            ],
-            'placements' => [
-                [
-                    'id' => 'a1',
-                    'width' => '300',
-                    'height' => '250',
-                ],
-            ],
-        ];
+        $data = self::getDynamicFindData();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testFindWithExistingUser(): void
+    public function testFindDynamicWithExistingUser(): void
     {
         $this->mockAdSelect();
-        $data = [
-            'page' => [
-                'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
-                'publisher' => 'ADS:0001-00000001-8B4E',
-                'medium' => 'web',
-            ],
-            'placements' => [
-                [
-                    'id' => 'a1',
-                    'name' => 'test-zone',
-                    'width' => '300',
-                    'height' => '250',
-                ]
-            ],
-        ];
+        $data = self::getDynamicFindData();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
+    }
+
+    public function testFindDynamicPopup(): void
+    {
+        $this->mockAdSelect();
+        $data = self::getDynamicFindData(['placements' => [
+            self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
+        ]]);
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
+
+        self::assertDatabaseHas(Zone::class, ['type' => Size::TYPE_POP]);
+    }
+
+    /**
+     * @dataProvider findDynamicFailProvider
+     */
+    public function testFindDynamicFail(array $data): void
+    {
+        $this->mockAdSelect();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function findDynamicFailProvider(): array
+    {
+        return [
+            'conflicting placement types' => [
+                self::getDynamicFindData(['placements' => [
+                    self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
+                ]])
+            ],
+        ];
     }
 
     public function testFindWithExistingUserWhenDefaultUserRoleDoesNotContainPublisher(): void
@@ -229,22 +240,7 @@ final class SupplyControllerTest extends TestCase
             Config::DEFAULT_USER_ROLES => 'advertiser',
         ]);
         $this->mockAdSelect();
-        $data = [
-            'page' => [
-                'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
-                'publisher' => 'ADS:0001-00000001-8B4E',
-                'medium' => 'web',
-            ],
-            'placements' => [
-                [
-                    'id' => '1',
-                    'name' => 'test-zone',
-                    'width' => '300',
-                    'height' => '250',
-                ]
-            ],
-        ];
+        $data = self::getDynamicFindData();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -353,5 +349,30 @@ final class SupplyControllerTest extends TestCase
                 return new GuzzleAdSelectClient($client);
             }
         );
+    }
+
+    private static function getDynamicFindData(array $merge = []): array
+    {
+        return array_merge([
+            'page' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+                'publisher' => 'ADS:0001-00000001-8B4E',
+                'medium' => 'web',
+            ],
+            'placements' => [
+                self::getPlacementData(),
+            ],
+        ], $merge);
+    }
+
+    private static function getPlacementData(array $merge = []): array
+    {
+        return array_merge([
+            'id' => 'a1',
+            'name' => 'test-zone',
+            'width' => '300',
+            'height' => '250',
+        ], $merge);
     }
 }
