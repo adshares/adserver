@@ -41,7 +41,7 @@ class BannerValidator
         foreach (
             [
                 'type' => Banner::TYPE_MAXIMAL_LENGTH,
-                'size' => Banner::SIZE_MAXIMAL_LENGTH,
+                'scope' => Banner::SIZE_MAXIMAL_LENGTH,
                 'name' => Banner::NAME_MAXIMAL_LENGTH,
             ] as $field => $maxLength
         ) {
@@ -61,7 +61,7 @@ class BannerValidator
             throw new InvalidArgumentException(sprintf('Invalid banner type (%s)', $type));
         }
 
-        $size = $banner['size'];
+        $size = $banner['scope'];
         if (Banner::TEXT_TYPE_VIDEO === $type) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
                 throw new InvalidArgumentException(sprintf('Invalid video size (%s)', $size));
@@ -80,7 +80,7 @@ class BannerValidator
         }
 
         if (!isset($this->supportedScopesByTypes[$type][$size])) {
-            throw new InvalidArgumentException(sprintf('Invalid banner size (%s)', $size));
+            throw new InvalidArgumentException(sprintf('Invalid banner scope (%s)', $size));
         }
     }
 

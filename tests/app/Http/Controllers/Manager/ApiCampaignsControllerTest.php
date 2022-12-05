@@ -52,7 +52,7 @@ final class ApiCampaignsControllerTest extends TestCase
         'type',
         'mimeType',
         'hash',
-        'size',
+        'scope',
         'name',
         'status',
         'cdnUrl',
@@ -112,7 +112,7 @@ final class ApiCampaignsControllerTest extends TestCase
     private const UPLOAD_STRUCTURE = [
         'data' => [
             'name',
-            'size',
+            'scope',
             'url',
         ],
     ];
@@ -361,7 +361,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $data = array_merge(
             [
                 'name' => 'IMAGE 1',
-                'size' => '300x250',
+                'scope' => '300x250',
                 'type' => Banner::TEXT_TYPE_IMAGE,
                 'url' => 'https://example.com/upload-preview/image/nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png',
             ],
@@ -476,7 +476,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::UPLOAD_STRUCTURE);
-        $response->assertJsonPath('data.size', '300x250');
+        $response->assertJsonPath('data.scope', '300x250');
     }
 
     private static function buildUriCampaign(int $id): string

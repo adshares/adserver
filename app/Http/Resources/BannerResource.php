@@ -20,7 +20,7 @@ class BannerResource extends JsonResource
             'type' => $this->creative_type,
             'mimeType' => $this->creative_mime,
             'hash' => $this->creative_sha1,
-            'size' => $this->creative_size,
+            'scope' => $this->creative_size,
             'name' => $this->name,
             'status' => BannerStatus::from($this->status)->toString(),
             'cdnUrl' => $this->cdn_url,

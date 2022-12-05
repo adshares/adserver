@@ -209,7 +209,12 @@ class ApiCampaignsController extends Controller
     public function upload(Request $request, CampaignsController $campaignsController): JsonResponse
     {
         $file = $campaignsController->upload($request);
-        return new JsonResponse(['data' => $file->toArray()]);
+        $data = $file->toArray();
+        if (array_key_exists('size', $data)) {
+            $data['scope'] = $data['size'];
+            unset($data['size']);
+        }
+        return new JsonResponse(['data' => $data]);
     }
 
     private static function removeTemporaryUploadedFiles(array $input, Request $request): void

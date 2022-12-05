@@ -65,9 +65,9 @@ class BannerCreator
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
-            $size = $banner['size'];
+            $scope = $banner['scope'];
             $type = $banner['type'];
-            $bannerModel->creative_size = $size;
+            $bannerModel->creative_size = $scope;
             $bannerModel->creative_type = $type;
 
             try {
@@ -95,7 +95,7 @@ class BannerCreator
                     default:
                         $content = Utils::appendFragment(
                             empty($banner['contents']) ? $campaign->landing_url : $banner['contents'],
-                            $size
+                            $scope
                         );
                         $mimeType = 'text/plain';
                         break;
@@ -165,7 +165,7 @@ class BannerCreator
     {
         foreach (
             [
-                'creative_size' => 'size',
+                'creative_size' => 'scope',
                 'creative_type' => 'type',
                 'creative_contents' => 'contents',
             ] as $legacyField => $field
