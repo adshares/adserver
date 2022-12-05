@@ -48,6 +48,7 @@ use Generator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Utils as GuzzleUtils;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -55,7 +56,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 use function array_map;
 use function config;
-use function GuzzleHttp\json_decode;
 use function iterator_to_array;
 use function json_encode;
 use function route;
@@ -73,11 +73,8 @@ class GuzzleAdSelectClient implements AdSelect
     private const URI_FIND_BANNERS = '/api/v1/find';
     private const URI_INVENTORY = '/api/v1/campaigns';
 
-    private Client $client;
-
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
     }
 
     public function exportInventory(CampaignCollection $campaigns): void
@@ -251,8 +248,8 @@ class GuzzleAdSelectClient implements AdSelect
 
             $body = (string)$result->getBody();
             try {
-                $items = json_decode($body, true);
-            } catch (InvalidArgumentException $exception) {
+                $items = GuzzleUtils::jsonDecode($body, true);
+            } catch (InvalidArgumentException) {
                 throw new DomainRuntimeException(sprintf('[ADSELECT] Find Banners. Invalid json data (%s).', $body));
             }
             Log::debug(
@@ -433,8 +430,8 @@ class GuzzleAdSelectClient implements AdSelect
 
         $body = (string)$response->getBody();
         try {
-            $item = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
+            $item = GuzzleUtils::jsonDecode($body, true);
+        } catch (InvalidArgumentException) {
             throw new DomainRuntimeException(
                 sprintf(
                     '[ADSELECT] Fetch last id (%s). Invalid json data (%s).',

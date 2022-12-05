@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,22 +28,17 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Application\Service\SupplyClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Utils as GuzzleUtils;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
-
-use function GuzzleHttp\json_decode;
 
 final class GuzzleSupplyClient implements SupplyClient
 {
     private const ENDPOINT_TARGETING_REACH = '/supply/targeting-reach';
 
-    /** @var int */
-    private $timeout;
-
-    public function __construct(int $timeout)
+    public function __construct(private readonly int $timeout)
     {
-        $this->timeout = $timeout;
     }
 
     public function fetchTargetingReach(string $host): array
@@ -89,8 +84,8 @@ final class GuzzleSupplyClient implements SupplyClient
     private function createDecodedResponseFromBody(string $body): array
     {
         try {
-            $decoded = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
+            $decoded = GuzzleUtils::jsonDecode($body, true);
+        } catch (InvalidArgumentException) {
             throw new RuntimeException('Invalid json data.');
         }
 
