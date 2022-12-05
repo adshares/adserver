@@ -45,7 +45,7 @@ final class BannerValidatorTest extends TestCase
                 [
                     'contents' => 'https://example.com/landing',
                     'name' => 'test',
-                    'size' => 'pop-up',
+                    'scope' => 'pop-up',
                     'type' => Banner::TEXT_TYPE_DIRECT_LINK,
                 ]
             ],

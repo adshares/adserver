@@ -198,9 +198,11 @@ final class SupplyControllerTest extends TestCase
     public function testFindDynamicPopup(): void
     {
         $this->mockAdSelect();
-        $data = self::getDynamicFindData(['placements' => [
-            self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
-        ]]);
+        $data = self::getDynamicFindData([
+            'placements' => [
+                self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
+            ]
+        ]);
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -225,6 +227,10 @@ final class SupplyControllerTest extends TestCase
     public function findDynamicFailProvider(): array
     {
         return [
+            'invalid page type' => [self::getDynamicFindData(['page' => 1])],
+            'missing page.url' => [self::getDynamicFindData(['page' => self::getPageData(remove: 'url')])],
+            'invalid page.url' => [self::getDynamicFindData(['page' => self::getPageData(['url' => 1])])],
+            'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
             'conflicting placement types' => [
                 self::getDynamicFindData(['placements' => [
                     self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
@@ -354,16 +360,25 @@ final class SupplyControllerTest extends TestCase
     private static function getDynamicFindData(array $merge = []): array
     {
         return array_merge([
-            'page' => [
-                'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
-                'publisher' => 'ADS:0001-00000001-8B4E',
-                'medium' => 'web',
-            ],
+            'page' => self::getPageData(),
             'placements' => [
                 self::getPlacementData(),
             ],
         ], $merge);
+    }
+
+    private static function getPageData(array $merge = [], string $remove = null): array
+    {
+        $data = array_merge([
+            'iid' => '0123456789ABCDEF0123456789ABCDEF',
+            'url' => 'https://example.com',
+            'publisher' => 'ADS:0001-00000001-8B4E',
+            'medium' => 'web',
+        ], $merge);
+        if (null !== $remove) {
+            unset($data[$remove]);
+        }
+        return $data;
     }
 
     private static function getPlacementData(array $merge = []): array
