@@ -65,6 +65,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -92,7 +93,7 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         AdSelect $bannerFinder,
         ConfigurationRepository $configurationRepository
-    ) {
+    ): BaseResponse {
         $type = $request->get('type');
         if (isset($type) && !is_array($type)) {
             $request->offsetSet('type', array($type));
@@ -206,7 +207,7 @@ class SupplyController extends Controller
                     $type => $message
                 ]
             ],
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            BaseResponse::HTTP_UNPROCESSABLE_ENTITY,
         );
     }
 
@@ -304,7 +305,7 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
         ConfigurationRepository $configurationRepository,
         Request $request,
-    ) {
+    ): BaseResponse {
         $response = new Response();
 
         if ($request->headers->has('Origin')) {
@@ -316,7 +317,7 @@ class SupplyController extends Controller
         if ('POST' === $request->getRealMethod()) {
             $input = $request->input();
         } elseif ('OPTIONS' === $request->getRealMethod()) {
-            $response->setStatusCode(Response::HTTP_NO_CONTENT);
+            $response->setStatusCode(BaseResponse::HTTP_NO_CONTENT);
             $response->headers->set('Access-Control-Max-Age', 1728000);
             return $response;
         } else {
@@ -441,7 +442,7 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
         string $zone_id,
         string $impression_id
-    ) {
+    ): BaseResponse {
         $zone = Zone::fetchByPublicId($zone_id);
         $response = new Response();
         $queryData = [
@@ -478,7 +479,7 @@ class SupplyController extends Controller
         $im->compositeImage($watermark, \Imagick::COMPOSITE_ATOP, $w - 16, 0);
     }
 
-    private function sendForeignBrandedBanner($foundBanner): \Symfony\Component\HttpFoundation\Response
+    private function sendForeignBrandedBanner($foundBanner): BaseResponse
     {
         $response = new Response();
         $img = Cache::remember(
@@ -628,7 +629,7 @@ class SupplyController extends Controller
         return $foundBanners;
     }
 
-    public function findScript(Request $request): \Symfony\Component\HttpFoundation\Response
+    public function findScript(Request $request): BaseResponse
     {
         if ($request->query->get('medium') == 'cryptovoxels') {
             return $this->cryptovoxelsScript();
@@ -959,7 +960,7 @@ class SupplyController extends Controller
                 $impressionId
             );
 
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FOUND);
+            $response->setStatusCode(BaseResponse::HTTP_FOUND);
             $response->headers->set('Location', new SecureUrl($adUserUrl));
         }
 
@@ -1061,15 +1062,15 @@ class SupplyController extends Controller
     {
         if (null === ($networkHost = NetworkHost::fetchByAddress(config('app.adshares_address')))) {
             return response(
-                ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
-                Response::HTTP_INTERNAL_SERVER_ERROR
+                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
+                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
             );
         }
 
         if (null === ($meta = NetworkVectorsMeta::fetchByNetworkHostId($networkHost->id))) {
             return response(
-                ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver meta'],
-                Response::HTTP_INTERNAL_SERVER_ERROR
+                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver meta'],
+                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
             );
         }
 
@@ -1127,7 +1128,7 @@ class SupplyController extends Controller
             if (null === $user) {
                 if (config('app.auto_registration_enabled')) {
                     if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
-                        throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                        throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                     }
                     $user = User::registerWithWallet($payoutAddress, true);
                 }
@@ -1141,7 +1142,7 @@ class SupplyController extends Controller
         }
 
         if (!$user->isPublisher()) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
+            throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
         }
 
         return $user;
