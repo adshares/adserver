@@ -317,11 +317,8 @@ class SupplyController extends Controller
         if ('POST' === $request->getRealMethod()) {
             $input = $request->input();
         } elseif ('GET' === $request->getRealMethod()) {
-            if (null === ($query = $request->getQueryString())) {
-                throw new UnprocessableEntityHttpException('Query is required');
-            }
-            if (false !== ($index = strpos($query, '&'))) {
-                $query = substr($query, 0, $index);
+            if (null === ($query = $request->query('data'))) {
+                throw new UnprocessableEntityHttpException('Query `data` is required');
             }
             $input = json_decode(Utils::urlSafeBase64Decode($query), true);
         } else {
@@ -430,28 +427,8 @@ class SupplyController extends Controller
             }
         }
 
-        $decodedData = [
-            'page' => [
-                'iid' => $input['context']['iid'],
-                'url' => $input['context']['url'],
-                'metamask' => (int)($input['context']['metamask'] ?? 0),
-            ],
-        ];
-        foreach ($input['placements'] as $placement) {
-            $placementData = [
-                'placementId' => $placement['placementId'],
-                'options' => [
-                    'banner_type' => $placement['types'] ?? null,
-                    'banner_mime' => $placement['mimeTypes'] ?? null,
-                ],
-            ];
-            if ($isDynamicFind) {
-                $placementData['id'] = $placement['id'];
-            }
-            $decodedData['placements'][] = $placementData;
-        }
-
-        $foundBanners = $this->findBanners($decodedData, $request, $response, $contextProvider, $bannerFinder)
+        $mappedInput = self::mapFindInput($input);
+        $foundBanners = $this->findBanners($mappedInput, $request, $response, $contextProvider, $bannerFinder)
             ->map($this->mapFoundBannerToResult())
             ->toArray();
         return self::json(['data' => $foundBanners]);
@@ -1209,6 +1186,33 @@ class SupplyController extends Controller
             $zoneType = null;
         }
         return $zoneType;
+    }
+
+    private static function mapFindInput(array $input): array
+    {
+        $mapped = [
+            'page' => [
+                'iid' => $input['context']['iid'],
+                'url' => $input['context']['url'],
+                'metamask' => (int)($input['context']['metamask'] ?? 0),
+            ],
+        ];
+
+        foreach ($input['placements'] as $placement) {
+            $placementData = [
+                'placementId' => $placement['placementId'],
+                'options' => [
+                    'banner_type' => $placement['types'] ?? null,
+                    'banner_mime' => $placement['mimeTypes'] ?? null,
+                ],
+            ];
+            if (isset($placement['id'])) {
+                $placementData['id'] = $placement['id'];
+            }
+            $mapped['placements'][] = $placementData;
+        }
+
+        return $mapped;
     }
 
     private function mapFoundBannerToResult(): Closure
