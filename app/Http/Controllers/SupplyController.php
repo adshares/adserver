@@ -1203,7 +1203,7 @@ class SupplyController extends Controller
                 'placementId' => $placement['placementId'],
                 'options' => [
                     'banner_type' => $placement['types'] ?? null,
-                    'banner_mime' => $placement['mimeTypes'] ?? null,
+                    'banner_mime' => $placement['mimes'] ?? null,
                 ],
             ];
             if (isset($placement['id'])) {
@@ -1244,7 +1244,7 @@ class SupplyController extends Controller
     {
         $fieldsOptional = [
             'types',
-            'mimeTypes',
+            'mimes',
         ];
         foreach ($fieldsOptional as $field) {
             if (isset($placement[$field])) {
