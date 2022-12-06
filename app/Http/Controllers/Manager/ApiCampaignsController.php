@@ -64,11 +64,11 @@ class ApiCampaignsController extends Controller
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-        if (!isset($input['ads']) || !is_array($input['ads'])) {
-            throw new UnprocessableEntityHttpException('Field `ads` must be an array');
+        if (!isset($input['creatives']) || !is_array($input['creatives'])) {
+            throw new UnprocessableEntityHttpException('Field `creatives` must be an array');
         }
         try {
-            $banners = $this->bannerCreator->prepareBannersFromInput($input['ads'], $campaign);
+            $banners = $this->bannerCreator->prepareBannersFromInput($input['creatives'], $campaign);
             $campaign->user_id = $user->id;
             $campaign = $this->campaignRepository->save($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
@@ -76,7 +76,7 @@ class ApiCampaignsController extends Controller
         }
 
         CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
-        self::removeTemporaryUploadedFiles($input['ads'], $request);
+        self::removeTemporaryUploadedFiles($input['creatives'], $request);
 
         return (new CampaignResource($campaign))
             ->response()
@@ -165,7 +165,7 @@ class ApiCampaignsController extends Controller
             ->setStatusCode(Response::HTTP_CREATED)
             ->header(
                 'Location',
-                route('api.campaigns.banners.fetch', [
+                route('api.campaigns.creatives.fetch', [
                     'banner' => $bannerId,
                     'campaign' => $campaignId,
                 ])
@@ -209,7 +209,12 @@ class ApiCampaignsController extends Controller
     public function upload(Request $request, CampaignsController $campaignsController): JsonResponse
     {
         $file = $campaignsController->upload($request);
-        return new JsonResponse(['data' => $file->toArray()]);
+        $data = $file->toArray();
+        if (array_key_exists('size', $data)) {
+            $data['scope'] = $data['size'];
+            unset($data['size']);
+        }
+        return new JsonResponse(['data' => $data]);
     }
 
     private static function removeTemporaryUploadedFiles(array $input, Request $request): void

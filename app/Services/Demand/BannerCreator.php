@@ -60,13 +60,14 @@ class BannerCreator
             if (!is_array($banner)) {
                 throw new InvalidArgumentException('Invalid banner data type');
             }
+            $banner = $this->changeLegacyFields($banner);
             $bannerValidator->validateBanner($banner);
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
-            $size = $banner['creative_size'];
-            $type = $banner['creative_type'];
-            $bannerModel->creative_size = $size;
+            $scope = $banner['scope'];
+            $type = $banner['type'];
+            $bannerModel->creative_size = $scope;
             $bannerModel->creative_type = $type;
 
             try {
@@ -93,8 +94,8 @@ class BannerCreator
                     case Banner::TEXT_TYPE_DIRECT_LINK:
                     default:
                         $content = Utils::appendFragment(
-                            empty($banner['creative_contents']) ? $campaign->landing_url : $banner['creative_contents'],
-                            $size
+                            empty($banner['contents']) ? $campaign->landing_url : $banner['contents'],
+                            $scope
                         );
                         $mimeType = 'text/plain';
                         break;
@@ -157,6 +158,22 @@ class BannerCreator
             }
         }
 
+        return $banner;
+    }
+
+    private function changeLegacyFields(array $banner): array
+    {
+        foreach (
+            [
+                'creative_size' => 'scope',
+                'creative_type' => 'type',
+                'creative_contents' => 'contents',
+            ] as $legacyField => $field
+        ) {
+            if (!isset($banner[$field]) && isset($banner[$legacyField])) {
+                $banner[$field] = $banner[$legacyField];
+            }
+        }
         return $banner;
     }
 }

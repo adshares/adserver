@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
-use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
@@ -35,9 +35,9 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Domain\ValueObject\Size;
 use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -46,7 +46,7 @@ final class SupplyControllerTest extends TestCase
     private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
     private const SUPPLY_ANON_URI = '/supply/anon';
-    private const FOUND_BANNERS_STRUCTURE = [
+    private const LEGACY_FOUND_BANNERS_STRUCTURE = [
         'id',
         'publisher_id',
         'zone_id',
@@ -60,9 +60,27 @@ final class SupplyControllerTest extends TestCase
         'view_url',
         'rpm',
     ];
+    private const FIND_BANNER_STRUCTURE = [
+        'placementId',
+        'zoneId',
+        'publisherId',
+        'demandServer',
+        'supplyServer',
+        'type',
+        'scope',
+        'hash',
+        'serveUrl',
+        'viewUrl',
+        'clickUrl',
+        'rpm',
+    ];
+    private const DYNAMIC_FIND_BANNER_STRUCTURE = [
+        'id',
+        ...self::FIND_BANNER_STRUCTURE,
+    ];
     private const FOUND_BANNERS_WITH_CREATION_STRUCTURE = [
         'banners' => [
-            '*' => self::FOUND_BANNERS_STRUCTURE,
+            '*' => self::LEGACY_FOUND_BANNERS_STRUCTURE,
         ],
         'zones',
         'zoneSizes',
@@ -121,19 +139,18 @@ final class SupplyControllerTest extends TestCase
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
                 'url' => 'https://example.com',
             ],
-            'zones' => [
-                ['zone' => $zone->uuid]
+            'placements' => [
+                ['placementId' => $zone->uuid],
             ],
         ];
-        $content = Utils::urlSafeBase64Encode(json_encode($data));
 
-        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure([self::FOUND_BANNERS_STRUCTURE]);
+        $response->assertJsonStructure(['data' => ['*' => self::FIND_BANNER_STRUCTURE]]);
     }
 
-    public function testFindWithoutZones(): void
+    public function testFindWithoutPlacements(): void
     {
         $data = [
             'page' => [
@@ -141,14 +158,13 @@ final class SupplyControllerTest extends TestCase
                 'url' => 'https://example.com',
             ],
         ];
-        $content = Utils::urlSafeBase64Encode(json_encode($data));
 
-        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testFindWithZonePayToExistingUserWhichIsAdvertiserOnly(): void
+    public function testFindWithExistingUserWhoIsAdvertiserOnly(): void
     {
         $this->mockAdSelect();
         /** @var User $user */
@@ -160,73 +176,82 @@ final class SupplyControllerTest extends TestCase
         ]);
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
-        /** @var Zone $zone */
-        $zone = Zone::factory()->create(['site_id' => $site->id]);
-        $data = [
-            'page' => [
-                'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
-            ],
-            'zones' => [
-                ['zone' => $zone->uuid, 'pay-to' => 'ADS:0001-00000001-8B4E']
-            ],
-        ];
-        $content = Utils::urlSafeBase64Encode(json_encode($data));
+        Zone::factory()->create(['site_id' => $site->id, 'size' => '300x250']);
+        $data = self::getDynamicFindData();
 
-        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testFindWithZonePayToNonExistingUser(): void
+    public function testFindDynamicWithExistingUser(): void
     {
         $this->mockAdSelect();
-        $data = [
-            'page' => [
-                'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
-            ],
-            'zones' => [
-                [
-                    'width' => 300,
-                    'height' => 250,
-                    'pay-to' => 'ADS:0001-00000001-8B4E',
-                    'zone' => 'test-zone',
-                ]
-            ],
-        ];
-        $content = Utils::urlSafeBase64Encode(json_encode($data));
+        $data = self::getDynamicFindData();
 
-        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure([self::FOUND_BANNERS_STRUCTURE]);
+        $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
     }
 
-    public function testFindWithZonePayToNonExistingUserWhenDefaultUserRoleDoesNotContainPublisher(): void
+    public function testFindDynamicPopup(): void
+    {
+        $this->mockAdSelect();
+        $data = self::getDynamicFindData([
+            'placements' => [
+                self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
+            ]
+        ]);
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
+
+        self::assertDatabaseHas(Zone::class, ['type' => Size::TYPE_POP]);
+    }
+
+    /**
+     * @dataProvider findDynamicFailProvider
+     */
+    public function testFindDynamicFail(array $data): void
+    {
+        $this->mockAdSelect();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function findDynamicFailProvider(): array
+    {
+        return [
+            'invalid page type' => [self::getDynamicFindData(['page' => 1])],
+            'missing page.url' => [self::getDynamicFindData(['page' => self::getPageData(remove: 'url')])],
+            'invalid page.url type' => [self::getDynamicFindData(['page' => self::getPageData(['url' => 1])])],
+            'invalid page.metamask type' => [
+                self::getDynamicFindData(['page' => self::getPageData(['metamask' => 'metamask'])])
+            ],
+            'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
+            'conflicting placement types' => [
+                self::getDynamicFindData(['placements' => [
+                    self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
+                ]])
+            ],
+        ];
+    }
+
+    public function testFindWithExistingUserWhenDefaultUserRoleDoesNotContainPublisher(): void
     {
         Config::updateAdminSettings([
             Config::AUTO_REGISTRATION_ENABLED => '1',
             Config::DEFAULT_USER_ROLES => 'advertiser',
         ]);
         $this->mockAdSelect();
-        $data = [
-            'page' => [
-                'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
-            ],
-            'zones' => [
-                [
-                    'width' => 300,
-                    'height' => 250,
-                    'pay-to' => 'ADS:0001-00000001-8B4E',
-                    'zone' => 'test-zone',
-                ]
-            ],
-        ];
-        $content = Utils::urlSafeBase64Encode(json_encode($data));
+        $data = self::getDynamicFindData();
 
-        $response = self::call('POST', self::BANNER_FIND_URI, [], [], [], [], $content);
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -317,15 +342,55 @@ final class SupplyControllerTest extends TestCase
         NetworkCampaign::factory()->create(['id' => 1]);
         /** @var NetworkBanner $networkBanner */
         $networkBanner = NetworkBanner::factory()->create(['network_campaign_id' => 1]);
-        $adSelectResponse = self::createMock(ResponseInterface::class);
-        $adSelectResponse->method('getBody')
-            ->willReturn(json_encode([[['banner_id' => $networkBanner->uuid, 'rpm' => '0.01']]]));
-        $client = new Client(['handler' => HandlerStack::create(new MockHandler([$adSelectResponse]))]);
+        $client = self::createMock(Client::class);
+        $client->method('post')->willReturnCallback(function ($uri, $options) use ($networkBanner) {
+            $requestId = $options[RequestOptions::JSON][0]['request_id'];
+            $content = json_encode([$requestId => [['banner_id' => $networkBanner->uuid, 'rpm' => '0.01']]]);
+            $response = self::createMock(ResponseInterface::class);
+            $response->method('getBody')->willReturn($content);
+            return $response;
+        });
+
+
         $this->app->bind(
             AdSelect::class,
             static function () use ($client) {
                 return new GuzzleAdSelectClient($client);
             }
         );
+    }
+
+    private static function getDynamicFindData(array $merge = []): array
+    {
+        return array_merge([
+            'page' => self::getPageData(),
+            'placements' => [
+                self::getPlacementData(),
+            ],
+        ], $merge);
+    }
+
+    private static function getPageData(array $merge = [], string $remove = null): array
+    {
+        $data = array_merge([
+            'iid' => '0123456789ABCDEF0123456789ABCDEF',
+            'url' => 'https://example.com',
+            'publisher' => 'ADS:0001-00000001-8B4E',
+            'medium' => 'web',
+        ], $merge);
+        if (null !== $remove) {
+            unset($data[$remove]);
+        }
+        return $data;
+    }
+
+    private static function getPlacementData(array $merge = []): array
+    {
+        return array_merge([
+            'id' => 'a1',
+            'name' => 'test-zone',
+            'width' => '300',
+            'height' => '250',
+        ], $merge);
     }
 }

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 
 final class BannerValidatorTest extends TestCase
@@ -43,10 +44,57 @@ final class BannerValidatorTest extends TestCase
         return [
             'direct no url' => [
                 [
+                    'contents' => 'https://example.com/landing',
                     'name' => 'test',
-                    'creative_contents' => 'https://example.com/landing',
-                    'creative_size' => 'pop-up',
-                    'creative_type' => Banner::TEXT_TYPE_DIRECT_LINK,
+                    'scope' => 'pop-up',
+                    'type' => Banner::TEXT_TYPE_DIRECT_LINK,
+                ]
+            ],
+        ];
+    }
+    /**
+     * @dataProvider invalidBannerProvider
+     */
+    public function testInvalid(array $banner): void
+    {
+        self::expectException(InvalidArgumentException::class);
+
+        $this->bannerValidator()->validateBanner($banner);
+    }
+
+    public function invalidBannerProvider(): array
+    {
+        return [
+            'invalid image size no match' => [
+                [
+                    'name' => 'test',
+                    'scope' => '1x1',
+                    'type' => Banner::TEXT_TYPE_IMAGE,
+                    'url' => 'https://example.com/file.png',
+                ]
+            ],
+            'invalid type for web medium' => [
+                [
+                    'name' => 'test',
+                    'scope' => 'cube',
+                    'type' => Banner::TEXT_TYPE_MODEL,
+                    'url' => 'https://example.com/file.glb',
+                ]
+            ],
+            'invalid video size format' => [
+                [
+                    'name' => 'test',
+                    'scope' => 'mp4',
+                    'type' => Banner::TEXT_TYPE_VIDEO,
+                    'url' => 'https://example.com/file.mp4',
+                ]
+            ],
+            'invalid video size no match' => [
+                [
+                    'name' => 'test',
+                    'scope' => '1x1',
+                    'type' => Banner::TEXT_TYPE_VIDEO,
+                    'url' => 'https://example.com/file.mp4',
                 ]
             ],
         ];

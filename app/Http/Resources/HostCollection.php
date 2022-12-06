@@ -10,9 +10,4 @@ class HostCollection extends ResourceCollection
     {
         return $this->resource->toArray();
     }
-
-    public function paginationInformation(): array
-    {
-        return [];
-    }
 }

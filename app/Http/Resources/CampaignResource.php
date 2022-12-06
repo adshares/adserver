@@ -26,7 +26,7 @@ class CampaignResource extends JsonResource
             'classifications' => BannerClassification::fetchCampaignClassifications($this->id),
             'conversionClickLink' => $this->conversion_click_link,
             'targeting' => $this->targeting,
-            'ads' => new BannerCollection($this->ads),
+            'creatives' => new BannerCollection($this->ads),
             'bidStrategyUuid' => $this->bid_strategy_uuid,
             'conversions' => $this->conversions,
             ...$basicInformation,

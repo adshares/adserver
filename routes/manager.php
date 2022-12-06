@@ -171,7 +171,7 @@ Route::middleware([
 ])
     ->prefix('v2')
     ->group(function () {
-        Route::post('campaigns/banner', [ApiCampaignsController::class, 'upload']);
+        Route::post('campaigns/creative', [ApiCampaignsController::class, 'upload']);
 
         Route::get('campaigns/{id}', [ApiCampaignsController::class, 'fetchCampaignById'])
             ->name('api.campaigns.fetch');
@@ -180,12 +180,12 @@ Route::middleware([
         Route::patch('campaigns/{id}', [ApiCampaignsController::class, 'editCampaignById']);
         Route::delete('campaigns/{id}', [ApiCampaignsController::class, 'deleteCampaignById']);
 
-        Route::get('campaigns/{campaign}/banners/{banner}', [ApiCampaignsController::class, 'fetchBanner'])
-            ->name('api.campaigns.banners.fetch');
-        Route::get('campaigns/{campaign}/banners', [ApiCampaignsController::class, 'fetchBanners']);
-        Route::post('campaigns/{campaign}/banners', [ApiCampaignsController::class, 'addBanner']);
-        Route::patch('campaigns/{campaign}/banners/{banner}', [ApiCampaignsController::class, 'editBanner']);
-        Route::delete('campaigns/{campaign}/banners/{banner}', [ApiCampaignsController::class, 'deleteBanner']);
+        Route::get('campaigns/{campaign}/creatives/{banner}', [ApiCampaignsController::class, 'fetchBanner'])
+            ->name('api.campaigns.creatives.fetch');
+        Route::get('campaigns/{campaign}/creatives', [ApiCampaignsController::class, 'fetchBanners']);
+        Route::post('campaigns/{campaign}/creatives', [ApiCampaignsController::class, 'addBanner']);
+        Route::patch('campaigns/{campaign}/creatives/{banner}', [ApiCampaignsController::class, 'editBanner']);
+        Route::delete('campaigns/{campaign}/creatives/{banner}', [ApiCampaignsController::class, 'deleteBanner']);
     });
 
 Route::middleware([

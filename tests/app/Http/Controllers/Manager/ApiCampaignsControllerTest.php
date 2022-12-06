@@ -44,15 +44,15 @@ use Symfony\Component\HttpFoundation\Response;
 final class ApiCampaignsControllerTest extends TestCase
 {
     private const URI_CAMPAIGNS = '/api/v2/campaigns';
-    private const ADVERTISEMENT_DATA_STRUCTURE = [
+    private const CREATIVE_DATA_STRUCTURE = [
         'id',
         'uuid',
         'createdAt',
         'updatedAt',
-        'creativeType',
-        'creativeMime',
-        'creativeSha1',
-        'creativeSize',
+        'type',
+        'mimeType',
+        'hash',
+        'scope',
         'name',
         'status',
         'cdnUrl',
@@ -87,18 +87,18 @@ final class ApiCampaignsControllerTest extends TestCase
             'requires',
             'excludes',
         ],
-        'ads' => [
-            '*' => self::ADVERTISEMENT_DATA_STRUCTURE,
+        'creatives' => [
+            '*' => self::CREATIVE_DATA_STRUCTURE,
         ],
         'bidStrategyUuid',
         'conversions' => [],
     ];
-    private const ADVERTISEMENT_STRUCTURE = [
-        'data' => self::ADVERTISEMENT_DATA_STRUCTURE,
+    private const CREATIVE_STRUCTURE = [
+        'data' => self::CREATIVE_DATA_STRUCTURE,
     ];
-    private const ADVERTISEMENTS_STRUCTURE = [
+    private const CREATIVES_STRUCTURE = [
         'data' => [
-            '*' => self::ADVERTISEMENT_DATA_STRUCTURE,
+            '*' => self::CREATIVE_DATA_STRUCTURE,
         ],
     ];
     private const CAMPAIGN_STRUCTURE = [
@@ -112,7 +112,7 @@ final class ApiCampaignsControllerTest extends TestCase
     private const UPLOAD_STRUCTURE = [
         'data' => [
             'name',
-            'size',
+            'scope',
             'url',
         ],
     ];
@@ -133,7 +133,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertHeader('Location');
         $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
         $response->assertJsonPath('data.status', 'active');
-        $response->assertJsonPath('data.ads.0.status', 'active');
+        $response->assertJsonPath('data.creatives.0.status', 'active');
         $response->assertJsonPath('data.conversionClick', 'none');
         $campaign = Campaign::first();
         self::assertNotNull($campaign);
@@ -158,6 +158,28 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals('image/png', $banner->creative_mime);
         self::assertEquals('300x250', $banner->creative_size);
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
+    }
+
+    /**
+     * @dataProvider addCampaignFailProvider
+     */
+    public function testAddCampaignFail(array $campaignData): void
+    {
+        $this->setUpUser();
+        $this->mockStorage();
+
+        $response = $this->post(self::URI_CAMPAIGNS, $campaignData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function addCampaignFailProvider(): array
+    {
+        return [
+            'missing campaign' => [self::getCampaignData(remove: 'targetUrl')],
+            'missing creatives' => [self::getCampaignData(remove: 'creatives')],
+            'missing creatives[].type' => [self::getCampaignData(['creatives' => self::getBannerData(remove: 'type')])],
+        ];
     }
 
     public function testEditCampaign(): void
@@ -230,7 +252,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertHeader('Location');
-        $response->assertJsonStructure(self::ADVERTISEMENT_STRUCTURE);
+        $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
         $bannerId = $this->getIdFromLocationHeader($response);
         $banner = Banner::find($bannerId);
         self::assertNotNull($banner);
@@ -249,7 +271,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $response = $this->patch($bannerUri, ['name' => 'new banner name']);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::ADVERTISEMENT_STRUCTURE);
+        $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
         self::assertDatabaseHas(Banner::class, ['name' => 'new banner name']);
     }
 
@@ -260,7 +282,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $response = $this->patch($bannerUri, ['status' => 'inactive']);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::ADVERTISEMENT_STRUCTURE);
+        $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
         self::assertDatabaseHas(Banner::class, ['status' => Banner::STATUS_INACTIVE]);
     }
 
@@ -283,7 +305,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
         $response = $this->get($bannerUri);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::ADVERTISEMENT_STRUCTURE);
+        $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
     }
 
     public function testFetchBanners(): void
@@ -293,12 +315,12 @@ final class ApiCampaignsControllerTest extends TestCase
 
         $response = $this->get($bannersUri);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::ADVERTISEMENTS_STRUCTURE);
+        $response->assertJsonStructure(self::CREATIVES_STRUCTURE);
     }
 
-    private function getCampaignData(array $mergeData = []): array
+    private function getCampaignData(array $mergeData = [], ?string $remove = null): array
     {
-        return array_merge([
+        $data = array_merge([
             'status' => 'active',
             'name' => 'Test campaign',
             'targetUrl' => 'https://exmaple.com/landing',
@@ -322,19 +344,25 @@ final class ApiCampaignsControllerTest extends TestCase
                     ],
                 ],
             ],
-            'ads' => [
+            'creatives' => [
                 $this->getBannerData(),
             ],
         ], $mergeData);
+
+        if (null !== $remove) {
+            unset($data[$remove]);
+        }
+
+        return $data;
     }
 
-    private function getBannerData(array $mergeData = [], string $remove = null): array
+    private function getBannerData(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge(
             [
-                'creativeSize' => '300x250',
-                'creativeType' => Banner::TEXT_TYPE_IMAGE,
                 'name' => 'IMAGE 1',
+                'scope' => '300x250',
+                'type' => Banner::TEXT_TYPE_IMAGE,
                 'url' => 'https://example.com/upload-preview/image/nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png',
             ],
             $mergeData,
@@ -439,7 +467,7 @@ final class ApiCampaignsControllerTest extends TestCase
         Campaign::factory()->count(3)->create(['user_id' => $user->id]);
 
         $response = $this->post(
-            self::URI_CAMPAIGNS . '/banner',
+            self::URI_CAMPAIGNS . '/creative',
             [
                 'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                 'medium' => 'web',
@@ -448,7 +476,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::UPLOAD_STRUCTURE);
-        $response->assertJsonPath('data.size', '300x250');
+        $response->assertJsonPath('data.scope', '300x250');
     }
 
     private static function buildUriCampaign(int $id): string
@@ -458,7 +486,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
     private static function buildUriBanner(int $campaignId, int $bannerId = null): string
     {
-        $uri = sprintf('%s/%d/banners', self::URI_CAMPAIGNS, $campaignId);
+        $uri = sprintf('%s/%d/creatives', self::URI_CAMPAIGNS, $campaignId);
         if (null !== $bannerId) {
             $uri = sprintf('%s/%d', $uri, $bannerId);
         }

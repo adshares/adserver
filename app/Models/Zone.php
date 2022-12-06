@@ -25,7 +25,6 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -101,9 +100,12 @@ class Zone extends Model
         'creating' => GenerateUUID::class,
     ];
 
-
-    public static function fetchOrCreate(int $siteId, string $size, string $name): ?self
-    {
+    public static function fetchOrCreate(
+        int $siteId,
+        string $size,
+        string $name,
+        ?string $type = null,
+    ): ?self {
         $zone = self::where('site_id', $siteId)
             ->where('size', $size)
             ->where('name', $name)
@@ -115,6 +117,9 @@ class Zone extends Model
             $zone->site_id = $siteId;
             $zone->size = $size;
             $zone->status = Zone::STATUS_ACTIVE;
+            if (null !== $type) {
+                $zone->type = $type;
+            }
             $zone->save();
         }
         return $zone;
