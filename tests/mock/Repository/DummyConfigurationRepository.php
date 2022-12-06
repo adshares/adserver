@@ -33,8 +33,6 @@ use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 
-use function GuzzleHttp\json_decode;
-
 class DummyConfigurationRepository implements ConfigurationRepository
 {
     public function storeFilteringOptions(Selector $options): void
@@ -53,8 +51,8 @@ class DummyConfigurationRepository implements ConfigurationRepository
     private function getTaxonomyFromFile(string $fileName): Selector
     {
         $path = base_path($fileName);
-        $var = file_get_contents($path);
-        $decodedTaxonomy = json_decode($var, true);
+        $json = file_get_contents($path);
+        $decodedTaxonomy = json_decode($json, true);
         $taxonomy = TaxonomyV1Factory::fromArray($decodedTaxonomy);
 
         return Selector::fromTaxonomy($taxonomy);

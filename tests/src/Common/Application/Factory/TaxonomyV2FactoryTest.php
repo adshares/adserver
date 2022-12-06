@@ -28,8 +28,6 @@ use Adshares\Common\Application\Factory\TaxonomyV2Factory;
 use Adshares\Common\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-use function GuzzleHttp\json_decode;
-
 class TaxonomyV2FactoryTest extends TestCase
 {
     public function testTaxonomyFromJson(): void

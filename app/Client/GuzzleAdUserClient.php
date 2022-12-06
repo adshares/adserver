@@ -36,20 +36,16 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Utils as GuzzleUtils;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
-use function GuzzleHttp\json_decode;
-
 final class GuzzleAdUserClient implements AdUser
 {
-    private Client $client;
-
     private const API_PATH = '/api/v2';
 
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
     }
 
     public function fetchPageRank(string $url): PageRank
@@ -58,8 +54,8 @@ final class GuzzleAdUserClient implements AdUser
 
         try {
             $response = $this->client->get($path);
-            $body = json_decode((string)$response->getBody());
-        } catch (InvalidArgumentException $invalidArgumentException) {
+            $body = GuzzleUtils::jsonDecode((string)$response->getBody());
+        } catch (InvalidArgumentException) {
             throw new UnexpectedClientResponseException(
                 sprintf('Cannot decode response from the AdUser for (%s)', $url)
             );
@@ -100,8 +96,8 @@ final class GuzzleAdUserClient implements AdUser
                     RequestOptions::JSON => ['urls' => $urls],
                 ]
             );
-            $body = json_decode((string)$response->getBody(), true);
-        } catch (InvalidArgumentException $invalidArgumentException) {
+            $body = GuzzleUtils::jsonDecode((string)$response->getBody(), true);
+        } catch (InvalidArgumentException) {
             throw new UnexpectedClientResponseException(
                 sprintf('Cannot decode response from the AdUser for (%s)', join(',', $urls))
             );
@@ -162,7 +158,7 @@ final class GuzzleAdUserClient implements AdUser
                 ['form_params' => $context->adUserRequestBody()]
             );
 
-            $body = json_decode((string)$response->getBody(), true);
+            $body = GuzzleUtils::jsonDecode((string)$response->getBody(), true);
 
             return UserContext::fromAdUserArray($body);
         } catch (GuzzleException $exception) {

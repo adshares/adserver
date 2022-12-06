@@ -25,8 +25,7 @@ namespace Adshares\Common\Application\Factory;
 
 use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Exception\InvalidArgumentException;
-
-use function GuzzleHttp\json_decode;
+use GuzzleHttp\Utils;
 
 class TaxonomyV2Factory
 {
@@ -34,7 +33,7 @@ class TaxonomyV2Factory
 
     public static function fromJson(string $json): TaxonomyV2
     {
-        $data = json_decode($json, true);
+        $data = Utils::jsonDecode($json, true);
         $data = self::replaceParameters($data);
         $data = self::appendVendors($data);
 

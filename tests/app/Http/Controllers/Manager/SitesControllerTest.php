@@ -35,8 +35,6 @@ use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-use function GuzzleHttp\json_decode;
-
 class SitesControllerTest extends TestCase
 {
     private const URI = '/api/sites';
@@ -175,32 +173,26 @@ class SitesControllerTest extends TestCase
             ],
         ];
 
-        $default = json_decode(
-            <<<JSON
-{
-    "filtering": {
-      "requires": {
-        "category": [
-          "1"
-        ]
-      },
-      "excludes": {}
-    },
-    "onlyAcceptedBanners": false,
-    "adUnits": [
-      {
-        "name": "ssss",
-        "size": "300x250"
-      }
-    ],
-    "categories": [
-      "unknown"
-    ]
-  }
-JSON
-            ,
-            true
-        );
+        $default = [
+            'filtering' => [
+                'requires' => [
+                    'category' => [
+                        '1'
+                    ]
+                ],
+                'excludes' => [],
+            ],
+            'onlyAcceptedBanners' => false,
+            'adUnits' => [
+                [
+                    'name' => 'ssss',
+                    'size' => '300x250'
+                ]
+            ],
+            'categories' => [
+                'unknown'
+            ]
+        ];
 
         return array_map(
             function ($preset) use ($default) {
@@ -833,9 +825,7 @@ JSON
             2,
             'filtering'
         );
-
-        $content = json_decode($response->content(), true);
-        $this->assertEquals($preset['onlyAcceptedBanners'] ?? false, $content['onlyAcceptedBanners']);
+        $response->assertJsonPath('onlyAcceptedBanners', $preset['onlyAcceptedBanners'] ?? false);
     }
 
     public function filteringDataProvider(): array
@@ -850,33 +840,27 @@ JSON
             ],
         ];
 
-        $default = json_decode(
-            <<<JSON
-{
-    "filtering": {
-      "requires": {},
-      "excludes": {}
-    },
-    "status": 0,
-    "name": "nameA",
-    "url": "https://example.com",
-    "primaryLanguage": "pl",
-    "medium": "web",
-    "vendor": null,
-    "adUnits": [
-      {
-        "name": "name",
-        "size": "300x250"
-      }
-    ],
-    "categories": [
-      "unknown"
-    ]
-  }
-JSON
-            ,
-            true
-        );
+        $default = [
+            'filtering' => [
+                'requires' => [],
+                'excludes' => []
+            ],
+            'status' => 0,
+            'name' => 'nameA',
+            'url' => 'https://example.com',
+            'primaryLanguage' => 'pl',
+            'medium' => 'web',
+            'vendor' => null,
+            'adUnits' => [
+                [
+                    'name' => 'name',
+                    'size' => '300x250'
+                ]
+            ],
+            'categories' => [
+                'unknown'
+            ],
+        ];
 
         return array_map(
             function ($preset) use ($default) {
