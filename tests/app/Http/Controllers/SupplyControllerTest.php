@@ -135,7 +135,7 @@ final class SupplyControllerTest extends TestCase
         /** @var Zone $zone */
         $zone = Zone::factory()->create(['site_id' => $site->id]);
         $data = [
-            'page' => [
+            'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
                 'url' => 'https://example.com',
             ],
@@ -153,7 +153,7 @@ final class SupplyControllerTest extends TestCase
     public function testFindWithoutPlacements(): void
     {
         $data = [
-            'page' => [
+            'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
                 'url' => 'https://example.com',
             ],
@@ -227,11 +227,11 @@ final class SupplyControllerTest extends TestCase
     public function findDynamicFailProvider(): array
     {
         return [
-            'invalid page type' => [self::getDynamicFindData(['page' => 1])],
-            'missing page.url' => [self::getDynamicFindData(['page' => self::getPageData(remove: 'url')])],
-            'invalid page.url type' => [self::getDynamicFindData(['page' => self::getPageData(['url' => 1])])],
-            'invalid page.metamask type' => [
-                self::getDynamicFindData(['page' => self::getPageData(['metamask' => 'metamask'])])
+            'invalid context type' => [self::getDynamicFindData(['context' => 1])],
+            'missing context.url' => [self::getDynamicFindData(['context' => self::getContextData(remove: 'url')])],
+            'invalid context.url type' => [self::getDynamicFindData(['context' => self::getContextData(['url' => 1])])],
+            'invalid context.metamask type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['metamask' => 'metamask'])])
             ],
             'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
             'conflicting placement types' => [
@@ -363,14 +363,14 @@ final class SupplyControllerTest extends TestCase
     private static function getDynamicFindData(array $merge = []): array
     {
         return array_merge([
-            'page' => self::getPageData(),
+            'context' => self::getContextData(),
             'placements' => [
                 self::getPlacementData(),
             ],
         ], $merge);
     }
 
-    private static function getPageData(array $merge = [], string $remove = null): array
+    private static function getContextData(array $merge = [], string $remove = null): array
     {
         $data = array_merge([
             'iid' => '0123456789ABCDEF0123456789ABCDEF',

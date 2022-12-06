@@ -331,46 +331,46 @@ class SupplyController extends Controller
         if (!is_array($input)) {
             throw new UnprocessableEntityHttpException('Invalid body type');
         }
-        foreach (['page', 'placements'] as $field) {
+        foreach (['context', 'placements'] as $field) {
             if (!isset($input[$field])) {
                 throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
             }
         }
 
-        if (!is_array($input['page'])) {
-            throw new UnprocessableEntityHttpException('Field `page` must be an object');
+        if (!is_array($input['context'])) {
+            throw new UnprocessableEntityHttpException('Field `context` must be an object');
         }
-        $page = $input['page'];
+        $context = $input['context'];
         foreach (['iid', 'url'] as $field) {
-            if (!isset($page[$field])) {
-                throw new UnprocessableEntityHttpException(sprintf('Field `page.%s` is required', $field));
+            if (!isset($context[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `context.%s` is required', $field));
             }
-            if (!is_string($page[$field])) {
-                throw new UnprocessableEntityHttpException(sprintf('Field `page.%s` must be a string', $field));
+            if (!is_string($context[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `context.%s` must be a string', $field));
             }
         }
-        if (array_key_exists('metamask', $input['page'])) {
-            if (!is_bool($input['page']['metamask'])) {
-                throw new UnprocessableEntityHttpException('Field `page.metamask` must be a boolean');
+        if (array_key_exists('metamask', $context)) {
+            if (!is_bool($context['metamask'])) {
+                throw new UnprocessableEntityHttpException('Field `context.metamask` must be a boolean');
             }
         }
         if (!is_array($input['placements'])) {
             throw new UnprocessableEntityHttpException('Field `placements` must be an array');
         }
 
-        $isDynamicFind = array_key_exists('publisher', $page);
+        $isDynamicFind = array_key_exists('publisher', $context);
         if ($isDynamicFind) {
-            if (!is_string($page['publisher'])) {
-                throw new UnprocessableEntityHttpException('Field `page.publisher` must be a string');
+            if (!is_string($context['publisher'])) {
+                throw new UnprocessableEntityHttpException('Field `context.publisher` must be a string');
             }
-            if (!isset($page['medium'])) {
-                throw new UnprocessableEntityHttpException('Field `page.medium` is required');
+            if (!isset($context['medium'])) {
+                throw new UnprocessableEntityHttpException('Field `context.medium` is required');
             }
-            if (!is_string($page['medium'])) {
-                throw new UnprocessableEntityHttpException('Field `page.medium` must be a string');
+            if (!is_string($context['medium'])) {
+                throw new UnprocessableEntityHttpException('Field `context.medium` must be a string');
             }
-            if (isset($page['vendor']) && !is_string($page['vendor'])) {
-                throw new UnprocessableEntityHttpException('Field `page.vendor` must be a string');
+            if (isset($context['vendor']) && !is_string($context['vendor'])) {
+                throw new UnprocessableEntityHttpException('Field `context.vendor` must be a string');
             }
 
             foreach ($input['placements'] as $placement) {
@@ -393,13 +393,13 @@ class SupplyController extends Controller
         if ($isDynamicFind) {
             try {
                 $medium = $configurationRepository->fetchMedium(
-                    $page['medium'],
-                    $page['vendor'] ?? null
+                    $context['medium'],
+                    $context['vendor'] ?? null
                 );
             } catch (InvalidArgumentException $exception) {
                 throw new UnprocessableEntityHttpException($exception->getMessage());
             }
-            $site = $this->getSiteOrFail($page);
+            $site = $this->getSiteOrFail($context);
 
             foreach ($input['placements'] as $key => $placement) {
                 $zoneType = $this->getZoneType($placement);
@@ -430,15 +430,31 @@ class SupplyController extends Controller
             }
         }
 
-        foreach ($input['placements'] as $key => $placement) {
-            $input['placements'][$key]['options'] = [
-                'banner_type' => $placement['types'] ?? null,
-                'banner_mime' => $placement['mimeTypes'] ?? null,
+        $decodedData = [
+            'page' => [
+                'iid' => $input['context']['iid'],
+                'url' => $input['context']['url'],
+                'metamask' => (int)($input['context']['metamask'] ?? 0),
+            ],
+        ];
+        foreach ($input['placements'] as $placement) {
+            $placementData = [
+                'placementId' => $placement['placementId'],
+                'options' => [
+                    'banner_type' => $placement['types'] ?? null,
+                    'banner_mime' => $placement['mimeTypes'] ?? null,
+                ],
             ];
+            if ($isDynamicFind) {
+                $placementData['id'] = $placement['id'];
+            }
+            $decodedData['placements'][] = $placementData;
         }
 
-        $foundBanners = $this->findBanners($input, $request, $response, $contextProvider, $bannerFinder);
-        return self::json(['data' => $foundBanners->map($this->mapFoundBannerToResult())]);
+        $foundBanners = $this->findBanners($decodedData, $request, $response, $contextProvider, $bannerFinder)
+            ->map($this->mapFoundBannerToResult())
+            ->toArray();
+        return self::json(['data' => $foundBanners]);
     }
 
     public function findSimple(
@@ -1127,7 +1143,9 @@ class SupplyController extends Controller
             try {
                 $payoutAddress = WalletAddress::fromString($publisher);
             } catch (InvalidArgumentException) {
-                throw new UnprocessableEntityHttpException('Field `page.publisher` must be an ID or account address');
+                throw new UnprocessableEntityHttpException(
+                    'Field `context.publisher` must be an ID or account address'
+                );
             }
             $user = User::fetchByWalletAddress($payoutAddress);
             if (null === $user) {
@@ -1153,16 +1171,16 @@ class SupplyController extends Controller
         return $user;
     }
 
-    private function getSiteOrFail(array $page): Site
+    private function getSiteOrFail(array $context): Site
     {
-        $user = $this->getPublisherOrFail($page['publisher']);
+        $user = $this->getPublisherOrFail($context['publisher']);
 
         try {
             $site = Site::fetchOrCreate(
                 $user->id,
-                $page['url'],
-                $page['medium'],
-                $page['vendor'] ?? null,
+                $context['url'],
+                $context['medium'],
+                $context['vendor'] ?? null,
             );
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
