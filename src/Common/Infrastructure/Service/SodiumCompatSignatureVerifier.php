@@ -78,7 +78,7 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
         $message = $this->createMessageHashFromNonce($nonce, $date);
         try {
             return Sodium::sign($privateKey, $message);
-        } catch (SodiumException $exception) {
+        } catch (SodiumException) {
             throw new SignatureVerifierException(
                 sprintf(
                     'Cannot create a signature (nonce: %s, date: %s).',
@@ -98,7 +98,7 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
         $message = $this->createMessageHashFromNonce($nonce, $date);
         try {
             return Sodium::verify($signature, $message, $publicKey);
-        } catch (Throwable $exception) {
+        } catch (Throwable) {
             throw new SignatureVerifierException(
                 sprintf(
                     'Verification failed. Wrong signature (%s) or public key (%s).',

@@ -29,6 +29,7 @@ use Adshares\Common\Application\Service\Exception\SignatureVerifierException;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -87,7 +88,7 @@ class AdsAuthenticator
 
         try {
             $created = new DateTimeImmutable($matches['created']);
-        } catch (\Exception $exception) {
+        } catch (Exception) {
             throw new AuthenticationException('Invalid date');
         }
 
@@ -107,7 +108,7 @@ class AdsAuthenticator
     ): string {
         try {
             $account = AdsUtils::normalizeAddress($account);
-        } catch (RuntimeException $exception) {
+        } catch (RuntimeException) {
             throw new AuthenticationException('Invalid account');
         }
 

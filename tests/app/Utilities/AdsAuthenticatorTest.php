@@ -185,7 +185,7 @@ class AdsAuthenticatorTest extends TestCase
     {
         /** @var SignatureVerifier $signatureVerifier */
         $signatureVerifier = $this->app->make(SignatureVerifier::class);
-        $signature = $signatureVerifier->createFromNonce($privateKey, $nonce, $created);
+        $signature = $signatureVerifier->createFromNonce($privateKey, base64_decode($nonce), $created);
 
         return sprintf(
             'ADS account="%s", nonce="%s", created="%s", signature="%s"',
