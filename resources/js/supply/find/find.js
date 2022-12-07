@@ -19,6 +19,7 @@
 
 var serverOrigin = '{{ ORIGIN }}';
 var selectorClass = '{{ SELECTOR }}';
+var rotateInterval = parseInt('{{ ROTATE_INTERVAL }}');
 
 
 var topwin = window;
@@ -198,7 +199,6 @@ var prepareInfoBox = function (context, banner, contextParam) {
         'url': banner.serveUrl,
     });
 
-
     var div = document.createElement('div');
     div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important;z-index:1');
 
@@ -291,10 +291,11 @@ function rectIntersect(a, b) {
     var num1 = Math.min(a.left + a.width, b.left + b.width);
     var y = Math.max(a.top, b.top);
     var num2 = Math.min(a.top + a.height, b.top + b.height);
-    if (num1 >= x && num2 >= y)
+    if (num1 >= x && num2 >= y) {
         return {left: x, top: y, width: num1 - x, height: num2 - y, bottom: num2, right: num1};
-    else
+    } else {
         return false;
+    }
 }
 
 function getBoundRect(el, overflow) {
@@ -439,7 +440,6 @@ var aduserPixel = function (impressionId, onload) {
         setTimeout(loadFn, 1);
     }
 
-
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
     dwmthURLS[url] = 1;
@@ -458,7 +458,6 @@ var createIframeFromUrl = function createIframeFromUrl(url, doc) {
 };
 
 var getPageKeywords = function (doc) {
-
     var MAX_KEYWORDS = 10;
     var metaKeywords = doc.querySelector("meta[name=keywords]");
 
