@@ -28,7 +28,6 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\InvalidArgumentException;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Symfony\Component\HttpFoundation\Request;
 
 class NetworkBannerFilter

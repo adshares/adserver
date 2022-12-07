@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Banner;
-use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Cdn\CdnProviderFactory;
 use Exception;

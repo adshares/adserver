@@ -21,7 +21,6 @@
 
 namespace Adshares\Adserver\Mail;
 
-use Adshares\Adserver\Models\Invoice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;

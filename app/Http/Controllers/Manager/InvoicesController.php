@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Mail\InvoiceCreated;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

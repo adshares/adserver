@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Events;
 
 use Adshares\Adserver\Models\Banner;
-use Adshares\Lib\DOMDocumentSafe;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 

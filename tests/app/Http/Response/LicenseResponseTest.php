@@ -21,16 +21,12 @@
 
 namespace Adshares\Adserver\Tests\Http\Response;
 
-use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Http\Response\LicenseResponse;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\License;
-use Adshares\Common\Exception\InvalidArgumentException;
 use DateTimeImmutable;
-use Symfony\Component\HttpFoundation\Request;
 
 final class LicenseResponseTest extends TestCase
 {
