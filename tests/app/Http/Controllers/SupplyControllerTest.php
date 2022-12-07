@@ -233,6 +233,9 @@ final class SupplyControllerTest extends TestCase
             'invalid context.metamask type' => [
                 self::getDynamicFindData(['context' => self::getContextData(['metamask' => 'metamask'])])
             ],
+            'invalid context.uid type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['uid' => 12])])
+            ],
             'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
             'conflicting placement types' => [
                 self::getDynamicFindData(['placements' => [
