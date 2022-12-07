@@ -24,11 +24,9 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Providers;
 
 use Adshares\Adserver\Models\Token;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Utilities\EthUtils;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Hashing\Hasher as HasherContract;

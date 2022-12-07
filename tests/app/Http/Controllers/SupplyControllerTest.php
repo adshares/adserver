@@ -33,7 +33,10 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Mock\Client\DummyAdUserClient;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Size;
 use GuzzleHttp\Client;
@@ -128,6 +131,17 @@ final class SupplyControllerTest extends TestCase
     public function testFind(): void
     {
         $this->mockAdSelect();
+        $adUser = self::createMock(AdUser::class);
+        $adUser->expects(self::once())
+            ->method('getUserContext')
+            ->willReturnCallback(function ($context) {
+                self::assertInstanceOf(ImpressionContext::class, $context);
+                $contextArray = $context->toArray();
+                self::assertEquals(1, $contextArray['device']['extensions']['metamask']);
+                self::assertEquals('good-user', $contextArray['user']['account']);
+                return (new DummyAdUserClient())->getUserContext($context);
+            });
+        $this->instance(AdUser::class, $adUser);
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
         /** @var Site $site */
@@ -138,6 +152,8 @@ final class SupplyControllerTest extends TestCase
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
                 'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
             ],
             'placements' => [
                 ['placementId' => $zone->uuid],
@@ -148,6 +164,7 @@ final class SupplyControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['data' => ['*' => self::FIND_BANNER_STRUCTURE]]);
+        $response->assertJsonCount(1, 'data');
     }
 
     public function testFindWithoutPlacements(): void
@@ -193,6 +210,7 @@ final class SupplyControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
+        $response->assertJsonCount(1, 'data');
     }
 
     public function testFindDynamicPopup(): void
@@ -233,11 +251,16 @@ final class SupplyControllerTest extends TestCase
             'invalid context.metamask type' => [
                 self::getDynamicFindData(['context' => self::getContextData(['metamask' => 'metamask'])])
             ],
+            'invalid context.uid type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['uid' => 12])])
+            ],
             'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
             'conflicting placement types' => [
-                self::getDynamicFindData(['placements' => [
-                    self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
-                ]])
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
+                    ],
+                ])
             ],
         ];
     }

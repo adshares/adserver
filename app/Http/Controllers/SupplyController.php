@@ -346,10 +346,11 @@ class SupplyController extends Controller
                 throw new UnprocessableEntityHttpException(sprintf('Field `context.%s` must be a string', $field));
             }
         }
-        if (array_key_exists('metamask', $context)) {
-            if (!is_bool($context['metamask'])) {
-                throw new UnprocessableEntityHttpException('Field `context.metamask` must be a boolean');
-            }
+        if (array_key_exists('metamask', $context) && !is_bool($context['metamask'])) {
+            throw new UnprocessableEntityHttpException('Field `context.metamask` must be a boolean');
+        }
+        if (array_key_exists('uid', $context) && !is_string($context['uid'])) {
+            throw new UnprocessableEntityHttpException('Field `context.uid` must be a string');
         }
         if (!is_array($input['placements'])) {
             throw new UnprocessableEntityHttpException('Field `placements` must be an array');
@@ -1125,13 +1126,11 @@ class SupplyController extends Controller
                 );
             }
             $user = User::fetchByWalletAddress($payoutAddress);
-            if (null === $user) {
-                if (config('app.auto_registration_enabled')) {
-                    if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
-                        throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
-                    }
-                    $user = User::registerWithWallet($payoutAddress, true);
+            if (null === $user && config('app.auto_registration_enabled')) {
+                if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
+                    throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                 }
+                $user = User::registerWithWallet($payoutAddress, true);
             }
         }
 
@@ -1190,13 +1189,19 @@ class SupplyController extends Controller
 
     private static function mapFindInput(array $input): array
     {
+        $context = $input['context'];
         $mapped = [
             'page' => [
-                'iid' => $input['context']['iid'],
-                'url' => $input['context']['url'],
-                'metamask' => (int)($input['context']['metamask'] ?? 0),
+                'iid' => $context['iid'],
+                'url' => $context['url'],
             ],
         ];
+        if (isset($context['metamask'])) {
+            $mapped['page']['metamask'] = (int)($context['metamask']);
+        }
+        if (isset($context['uid'])) {
+            $mapped['user']['account'] = $context['uid'];
+        }
 
         foreach ($input['placements'] as $placement) {
             $placementData = [
@@ -1300,12 +1305,10 @@ class SupplyController extends Controller
             'name',
         ];
         foreach ($fieldsOptional as $field) {
-            if (array_key_exists($field, $placement)) {
-                if (!is_string($placement[$field])) {
-                    throw new UnprocessableEntityHttpException(
-                        sprintf('Field `placements[].%s` must be a string', $field)
-                    );
-                }
+            if (array_key_exists($field, $placement) && !is_string($placement[$field])) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Field `placements[].%s` must be a string', $field)
+                );
             }
         }
     }

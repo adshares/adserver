@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not request banners when zones are invalid
 - Configuration and monitoring API in camel case
 - Find script uses HTTP POST method
+- Placement code attribute to data-placement
 - Increased authentication security
 ### Removed
 - Legacy campaign classification columns

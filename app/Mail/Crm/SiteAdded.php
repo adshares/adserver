@@ -21,7 +21,6 @@
 
 namespace Adshares\Adserver\Mail\Crm;
 
-use Adshares\Adserver\Models\Site;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;

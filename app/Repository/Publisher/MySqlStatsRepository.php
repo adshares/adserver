@@ -37,8 +37,6 @@ use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
 
-use function bin2hex;
-
 class MySqlStatsRepository implements StatsRepository
 {
     private const PLACEHOLDER_FOR_EMPTY_DOMAIN = 'N/A';
