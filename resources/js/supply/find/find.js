@@ -527,7 +527,7 @@ var parseZoneOptions = function(str) {
 var abd;
 
 var getActiveZones = function(call_func, retryNo) {
-    var _tags = document.querySelectorAll(selectorClass + '[data-zone]');
+    var _tags = document.querySelectorAll(selectorClass + '[data-placement],' + selectorClass + '[data-zone]');
     var n = _tags.length;
 
     var retryFn = function () {
@@ -556,7 +556,6 @@ var getActiveZones = function(call_func, retryNo) {
     var waiting = 0;
     tags.forEach(function(tag, i) {
         var zone;
-        var tag = tags[i];
         if (tag.__dwmth) {
             return;
         }
@@ -567,8 +566,14 @@ var getActiveZones = function(call_func, retryNo) {
         for (var j = 0, m = tag.attributes.length; j < m; j++) {
             var parts = tag.attributes[j].name.split('-');
             var isData = (parts.shift() === 'data');
-            if (isData && typeof param[parts.join('-')] === 'undefined') {
-                param[parts.join('-')] = tag.attributes[j].value;
+            if (isData) {
+                var name = parts.join('-');
+                if ('placement' === name) {
+                    name = 'zone';
+                }
+                if (typeof param[name] === 'undefined') {
+                    param[name] = tag.attributes[j].value;
+                }
             }
         }
         if (param.zone) {
