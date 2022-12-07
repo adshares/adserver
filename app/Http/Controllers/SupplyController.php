@@ -1189,13 +1189,19 @@ class SupplyController extends Controller
 
     private static function mapFindInput(array $input): array
     {
+        $context = $input['context'];
         $mapped = [
             'page' => [
-                'iid' => $input['context']['iid'],
-                'url' => $input['context']['url'],
-                'metamask' => (int)($input['context']['metamask'] ?? 0),
+                'iid' => $context['iid'],
+                'url' => $context['url'],
             ],
         ];
+        if (isset($context['metamask'])) {
+            $mapped['page']['metamask'] = (int)($context['metamask']);
+        }
+        if (isset($context['uid'])) {
+            $mapped['user']['account'] = $context['uid'];
+        }
 
         foreach ($input['placements'] as $placement) {
             $placementData = [
