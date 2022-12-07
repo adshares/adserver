@@ -1041,7 +1041,7 @@ class SupplyController extends Controller
 
         $userId = User::fetchByUuid($case->publisher_id)->id;
 
-        Storage::disk('local')->put(
+        Storage::disk('local')->append(
             'reported-ads.txt',
             sprintf('%s;%s', $userId, $bannerId)
         );
