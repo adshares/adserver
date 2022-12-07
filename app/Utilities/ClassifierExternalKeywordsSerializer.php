@@ -23,14 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Utilities;
 
-use function array_keys;
-use function count;
-use function is_array;
-use function json_encode;
-use function ksort;
-use function range;
-use function sort;
-
 class ClassifierExternalKeywordsSerializer
 {
     public static function serialize(array $data): string

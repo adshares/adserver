@@ -24,9 +24,7 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
-use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Mock\Client\DummyAdUserClient;
 
 final class TargetingProcessorTest extends TestCase
 {

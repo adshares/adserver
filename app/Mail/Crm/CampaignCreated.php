@@ -21,7 +21,6 @@
 
 namespace Adshares\Adserver\Mail\Crm;
 
-use Adshares\Adserver\Models\Campaign;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Bus\Queueable;

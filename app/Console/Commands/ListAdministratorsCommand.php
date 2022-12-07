@@ -24,15 +24,6 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Utilities\SqlUtils;
-use Adshares\Common\Domain\ValueObject\Email;
-use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-
-use function substr;
-use function env;
 
 class ListAdministratorsCommand extends BaseCommand
 {

@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace Adshares\Tests\Classify\Model;
 
 use Adshares\Classify\Domain\Model\Classification;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use PHPUnit\Framework\TestCase;
 
 final class ClassificationTest extends TestCase

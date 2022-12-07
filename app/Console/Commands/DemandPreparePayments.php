@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\EventLogsHourlyMeta;

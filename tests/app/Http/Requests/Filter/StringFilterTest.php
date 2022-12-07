@@ -21,11 +21,8 @@
 
 namespace Adshares\Adserver\Tests\Http\Requests\Filter;
 
-use Adshares\Adserver\Http\Requests\Filter\DateFilter;
 use Adshares\Adserver\Http\Requests\Filter\StringFilter;
 use Adshares\Adserver\Tests\TestCase;
-use DateTimeImmutable;
-use DateTimeInterface;
 
 final class StringFilterTest extends TestCase
 {
