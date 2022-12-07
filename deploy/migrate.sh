@@ -32,6 +32,7 @@ then
   CLIENT_SECRET=$(echo "$OUTPUT" | grep -oP "Client secret: \K\S+")
   if [ -z "$CLIENT_ID" ]; then echo "Missing CLIENT_ID"; exit 1; fi
   if [ -z "$CLIENT_SECRET" ]; then echo "Missing CLIENT_CLIENT_SECRET"; exit 1; fi
+  echo -e "\n" >> .env
   echo "PASSPORT_PERSONAL_ACCESS_CLIENT_ID='$CLIENT_ID'" >> .env
   echo "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET='$CLIENT_SECRET'" >> .env
 fi
