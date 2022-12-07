@@ -57,14 +57,14 @@ class AdsAuthenticator
 
     public function getHeader(string $account, string $privateKey): string
     {
-        $nonce = base64_encode(NonceGenerator::get());
+        $nonce = NonceGenerator::get();
         $created = new DateTimeImmutable();
         $signature = $this->signatureVerifier->createFromNonce($privateKey, $nonce, $created);
 
         return sprintf(
             'ADS account="%s", nonce="%s", created="%s", signature="%s"',
             $account,
-            $nonce,
+            base64_encode($nonce),
             $created->format('c'),
             $signature
         );
@@ -93,7 +93,7 @@ class AdsAuthenticator
 
         return $this->authenticate(
             $matches['account'],
-            $matches['nonce'],
+            base64_decode($matches['nonce']),
             $created,
             $matches['signature']
         );

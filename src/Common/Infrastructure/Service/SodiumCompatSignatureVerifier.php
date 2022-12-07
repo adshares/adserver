@@ -119,6 +119,6 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
 
     private function createMessageHashFromNonce(string $nonce, DateTimeInterface $date): string
     {
-        return sha1($nonce . $date->format('U'));
+        return $nonce . $date->format('U');
     }
 }

@@ -629,7 +629,7 @@ class WalletController extends Controller
         $message = sprintf(
             'Connect your wallet with %s adserver %s',
             config('app.adserver_name'),
-            NonceGenerator::get()
+            base64_encode(NonceGenerator::get())
         );
 
         $payload = [

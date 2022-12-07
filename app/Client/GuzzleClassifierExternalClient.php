@@ -100,9 +100,9 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
         $apiKeyName = $classifier->getApiKeyName();
         $apiKeySecret = $classifier->getApiKeySecret();
 
-        $nonce = base64_encode(NonceGenerator::get());
+        $nonce = NonceGenerator::get();
         $created = date('c');
-        $digest = base64_encode(hash('sha256', base64_decode($nonce) . $created . $apiKeySecret, true));
+        $digest = base64_encode(hash('sha256', $nonce . $created . $apiKeySecret, true));
 
         return [
             'Authorization' => 'WSSE profile="UsernameToken"',
@@ -110,7 +110,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
                 'UsernameToken Username="%s", PasswordDigest="%s", Nonce="%s", Created="%s"',
                 $apiKeyName,
                 $digest,
-                $nonce,
+                base64_encode($nonce),
                 $created
             ),
         ];

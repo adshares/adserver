@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,8 +25,8 @@ namespace Adshares\Adserver\Utilities;
 
 final class NonceGenerator
 {
-    public static function get(int $length = 16): string
+    public static function get(int $length = 32): string
     {
-        return substr(md5(uniqid()), 0, $length);
+        return random_bytes($length);
     }
 }
