@@ -653,16 +653,15 @@ var bannerLoaded = function() {
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
-            console.log({params, zones})
+            var context = params.shift()
+            var placements = params.map(p => ({ placementId: p.zone }))
             var data = {
                 context: {
-                    iid: params[0].iid,
-                    metamask: !!(params[0].metamask || 0),
-                    url: params[0].url,
+                    iid: context.iid,
+                    metamask: !!(context.metamask || 0),
+                    url: context.url,
                 },
-                placements: [
-                    { placementId: params[1].zone },//TODO handle 2+ placements
-                ],
+                placements: placements,
             };
             var url = serverOrigin + '/supply/find';
             var options = {
