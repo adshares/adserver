@@ -23,16 +23,15 @@ var selectorClass = '{{ SELECTOR }}';
 
 var topwin = window;
 try {
-    while(topwin.parent != topwin && topwin.parent.document) {
+    while (topwin.parent != topwin && topwin.parent.document) {
         topwin = topwin.parent;
     }
-} catch(e) {
+} catch (e) {
 
 }
 var topdoc = topwin.document;
 
-var winOpen = (function(open)
-{
+var winOpen = (function(open) {
     return function() {
         return open.apply(topwin, arguments);
     }
@@ -67,13 +66,13 @@ var encodeZones = function (zone_data) {
         }
         result[0] = entry.join(VALUE_GLUE);
     }
-    return UrlSafeBase64Encode(result.join(ZONE_GLUE)); // url safe encoding
+    return UrlSafeBase64Encode(result.join(ZONE_GLUE));
 };
 
 
 var insertedElements = [];
 var logInsertedElement = function(el) {
-    if(insertedElements.length === 0) {
+    if (insertedElements.length === 0) {
         addListener(window, 'beforeunload', function (event) {
             var x;
             while (x = insertedElements.pop()) {
@@ -90,7 +89,7 @@ var dwmthURLS = [];
 var replaceTag = function (oldTag, newTag, banner) {
     for (var i = 0; i < oldTag.attributes.length; i++) {
         var name = oldTag.attributes[i].name;
-        if (name.indexOf('data-') != 0) {
+        if (name.indexOf('data-') !== 0) {
             newTag.setAttribute(name, oldTag.getAttribute(name));
         }
     }
@@ -98,7 +97,7 @@ var replaceTag = function (oldTag, newTag, banner) {
     newTag.style.position = 'relative';
     // ios 12 fix
     var el = [];
-    if (!banner || banner.type != 'video') {
+    if (!banner || banner.type !== 'video') {
         while (newTag.firstChild) {
             el.push(newTag.removeChild(newTag.firstChild));
         }
@@ -108,8 +107,8 @@ var replaceTag = function (oldTag, newTag, banner) {
     oldTag.parentNode.replaceChild(newTag, oldTag);
 
     // ios 12 fix
-    setTimeout(function(){
-        while(el.length > 0) {
+    setTimeout(function() {
+        while (el.length > 0) {
             newTag.appendChild(el.shift());
         }
     }, 0);
@@ -122,33 +121,37 @@ var replaceTag = function (oldTag, newTag, banner) {
 var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
     var clickOverlay;
+    var infoBox;
 
-    if (false !== banner.info_box) {
-        var infoBox = prepareInfoBox(context, banner, contextParam);
+    if (false !== banner.infoBox) {
+        infoBox = prepareInfoBox(context, banner, contextParam);
         div.appendChild(infoBox);
     }
 
-    if (element.tagName == 'IFRAME') {
-
-        if(banner.type == 'direct' && !context.skip_overlay) {
+    if (element.tagName === 'IFRAME') {
+        if (banner.type === 'direct' && !context.skip_overlay) {
             clickOverlay = document.createElement('a');
             clickOverlay.style.cssText = "display:block; position: absolute !important; top: 0px !important; left: 0px !important; right: 0px !important; bottom: 0px !important";
             clickOverlay.setAttribute('href', context.click_url);
             clickOverlay.setAttribute('target', '_blank');
-            div.insertBefore(clickOverlay, infoBox);
+            if (infoBox) {
+                div.insertBefore(clickOverlay, infoBox);
+            } else {
+                div.appendChild(clickOverlay);
+            }
         }
 
         prepareIframe(element);
         addListener(window, 'message', function (event) {
             if (event.source == element.contentWindow && event.data) {
-                var data, isString = typeof event.data == "string";
+                var data, isString = typeof event.data === 'string';
                 if (isString) {
                     data = JSON.parse(event.data);
                 } else {
                     data = event.data;
                 }
                 if (data.dwmthLoad) {
-                    if(clickOverlay) { // ad is aware of mechanics
+                    if (clickOverlay) { // ad is aware of mechanics
                         div.removeChild(clickOverlay);
                     }
                     var msg = {dwmthLoad: 1, data: context};
@@ -188,11 +191,11 @@ var prepareElement = function (context, banner, element, contextParam) {
 
 var prepareInfoBox = function (context, banner, contextParam) {
     var url = addUrlParam(serverOrigin + '/supply/why', {
-        'bid': banner.id,
+        'bid': banner.placementId,
         'cid': context.cid,
         'ctx': contextParam,
         'iid': getImpressionId(),
-        'url': banner.serve_url,
+        'url': banner.serveUrl,
     });
 
 
@@ -215,21 +218,18 @@ var prepareInfoBox = function (context, banner, contextParam) {
 };
 
 // checks if element is not hidden with display: none
-// function isRendered(domObj) {
-// return (domObj.offsetParent !== null);
-// }
-
 function isRendered(domObj) {
-    if (domObj.nodeType != 1)
+    if (domObj.nodeType !== 1) {
         return true;
+    }
     while (domObj != document.body) {
         if (window.getComputedStyle) {
             var cs = document.defaultView.getComputedStyle(domObj, null);
-            if (cs.getPropertyValue("display") == "none" || cs.getPropertyValue("visibility") == "hidden") {
+            if (cs.getPropertyValue("display") === "none" || cs.getPropertyValue("visibility") === "hidden") {
                 return false;
             }
         } else if (domObj.currentStyle
-            && (domObj.currentStyle["display"] == "none" || domObj.currentStyle["visibility"] == "hidden")) {
+            && (domObj.currentStyle["display"] === "none" || domObj.currentStyle["visibility"] === "hidden")) {
             return false;
         } else {
             return true;
@@ -239,31 +239,28 @@ function isRendered(domObj) {
     return true;
 }
 
-function viewSizeWin(w)
-{
+function viewSizeWin(w) {
     var left = 0, top = 0;
     var doc = w.document;
-    var docEl = (doc.compatMode && doc.compatMode === 'CSS1Compat')?
-        doc.documentElement: doc.body;
+    var docEl = (doc.compatMode && doc.compatMode === 'CSS1Compat')
+        ? doc.documentElement : doc.body;
 
     var width = docEl.clientWidth;
     var height = docEl.clientHeight;
 
     // mobile zoomed in?
-    if ( w.innerWidth && width > w.innerWidth ) {
+    if (w.innerWidth && width > w.innerWidth) {
         width = w.innerWidth;
         height = w.innerHeight;
     }
 
-
     return {width: width, height: height, left: left, top: top, right: width, bottom: height};
 }
 
-function locateFrameElement(w_parent, w)
-{
+function locateFrameElement(w_parent, w) {
     var frames = w_parent.document.getElementsByTagName('iframe');
-    for(var i=0,n=frames.length;i<n;i++) {
-        if(frames[i].contentWindow == w) {
+    for (var i = 0, n = frames.length; i < n; i++) {
+        if (frames[i].contentWindow == w) {
             return frames[i];
         }
     }
@@ -273,9 +270,7 @@ function locateFrameElement(w_parent, w)
 function viewSize() {
     var w = window;
     var size = viewSizeWin(w);
-    // console.log(w.location.href, size);
-    while(w != topwin) {
-
+    while (w != topwin) {
         var parent_size = viewSizeWin(w.parent);
         var frame_el = locateFrameElement(w.parent, w);
         var rect = getBoundRect(frame_el);
@@ -284,7 +279,6 @@ function viewSize() {
         isect.right -= rect.left;
         isect.top -= rect.top;
         isect.bottom -= rect.top;
-        // console.log(w.location.pathname, isect);
         size = rectIntersect(size, isect);
         w = w.parent;
     }
@@ -292,8 +286,7 @@ function viewSize() {
     return size;
 }
 
-function rectIntersect(a, b)
-{
+function rectIntersect(a, b) {
     var x = Math.max(a.left, b.left);
     var num1 = Math.min(a.left + a.width, b.left + b.width);
     var y = Math.max(a.top, b.top);
@@ -308,13 +301,13 @@ function getBoundRect(el, overflow) {
     var left = 0, top = 0;
     var width = el.offsetWidth, height = el.offsetHeight;
 
-    if(overflow) {
+    if (overflow) {
         var css = el.ownerDocument.defaultView.getComputedStyle(el);
-        if (css.overflowX == 'visible') {
+        if (css.overflowX === 'visible') {
             width = 200000;
             left = -100000;
         }
-        if (css.overflowY == 'visible') {
+        if (css.overflowY === 'visible') {
             height = 200000;
             top = -100000;
         }
@@ -363,11 +356,12 @@ var isWindowVisible = (function() {
 })();
 
 
-var isOccluded = function(rect, el)
-{
-    if(!rect) return true;
+var isOccluded = function(rect, el) {
+    if (!rect) {
+        return true;
+    }
     outer:
-    for(var i=0; i < 10; i++) {
+    for (var i = 0; i < 10; i++) {
         var top = document.elementFromPoint(Math.floor(rect.left + Math.random() * rect.width), Math.floor(rect.top + Math.random() * rect.height));
         while (top) {
             if (top == el) {
@@ -383,9 +377,7 @@ var isOccluded = function(rect, el)
 
 // checks if element is visible on screen
 var isVisible = function (el) {
-    if (!isRendered(el) || !isWindowVisible())
-        return false;
-    return true;
+    return isRendered(el) && isWindowVisible();
 };
 
 var impressionId;
@@ -422,18 +414,24 @@ var getRandId = function(bytes) {
 }
 
 var aduserPixel = function (impressionId, onload) {
-    if (!serverOrigin) return;
+    if (!serverOrigin) {
+        return;
+    }
     var path = '/supply/register?iid=';
     var url = serverOrigin + path + impressionId;
 
-    if(dwmthURLS[url]) return false;
+    if (dwmthURLS[url]) {
+        return false;
+    }
 
     var iframe = createIframeFromUrl(url);
 
-    if(onload) {
+    if (onload) {
         var loaded = false;
         var loadFn = function() {
-            if(loaded) return;
+            if (loaded) {
+                return;
+            }
             loaded = true;
             onload();
         };
@@ -499,7 +497,7 @@ var getBrowserContext = function () {
 var findBackfillCode = function(container) {
     var tag = container.querySelectorAll('[type="app/backfill"]')[0];
     var text = null;
-    if(tag) {
+    if (tag) {
         text = tag.textContent;
     } else {
         for (var i = 0, n = container.childNodes.length; i < n; i++) {
@@ -514,14 +512,14 @@ var findBackfillCode = function(container) {
 
 var parseZoneOptions = function(str) {
     var opts = {};
-    if(typeof str != 'string') {
+    if (typeof str !== 'string') {
         return opts;
     }
     var parts = str.split(',');
-    for(var i =0; i < parts.length; i++) {
+    for (var i =0; i < parts.length; i++) {
         var part = parts[i].trim();
         var name_val = part.split('=', 2);
-        opts[name_val[0]] = name_val.length == 1 ? true : name_val[1];
+        opts[name_val[0]] = name_val.length === 1 ? true : name_val[1];
     }
     return opts;
 };
@@ -559,7 +557,7 @@ var getActiveZones = function(call_func, retryNo) {
     tags.forEach(function(tag, i) {
         var zone;
         var tag = tags[i];
-        if(tag.__dwmth) {
+        if (tag.__dwmth) {
             return;
         }
         tag.__dwmth = 1;
@@ -568,8 +566,8 @@ var getActiveZones = function(call_func, retryNo) {
         param.height = parseInt(tag.offsetHeight) || parseInt(tag.style.height) || 0;
         for (var j = 0, m = tag.attributes.length; j < m; j++) {
             var parts = tag.attributes[j].name.split('-');
-            var isData = (parts.shift() == "data");
-            if (isData && typeof param[parts.join('-')] == 'undefined') {
+            var isData = (parts.shift() === 'data');
+            if (isData && typeof param[parts.join('-')] === 'undefined') {
                 param[parts.join('-')] = tag.attributes[j].value;
             }
         }
@@ -647,7 +645,7 @@ var getActiveZones = function(call_func, retryNo) {
 var bannersToLoad = 0;
 var bannerLoaded = function() {
     bannersToLoad--;
-    if(bannersToLoad <= 0) {
+    if (bannersToLoad <= 0) {
         allBannersLoaded();
     }
 };
@@ -655,27 +653,30 @@ var bannerLoaded = function() {
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
-            var data = encodeZones(params);
-
+            var context = params.shift()
+            var placements = params.map(p => ({ placementId: p.zone }))
+            var data = {
+                context: {
+                    iid: context.iid,
+                    metamask: !!(context.metamask || 0),
+                    url: context.url,
+                },
+                placements: placements,
+            };
             var url = serverOrigin + '/supply/find';
             var options = {
-                json: true
+                json: true,
+                method: 'post',
+                post: data,
             };
-            if (data.length <= 800) {
-                // safe limit for url
-                url += '?' + data;
-            } else {
-                options.method = 'post';
-                options.post = data;
-            }
 
             fetchURL(url, options).then(function (banners) {
                 bannersToLoad = 0;
 
-                banners.forEach(function (banner, i) {
+                banners.data.forEach(function (banner, i) {
                     var zone = zones[i] || {options: {}};
 
-                    if (!banner || typeof banner != 'object') {
+                    if (!banner || typeof banner !== 'object') {
                         insertBackfill(zone.destElement, zone.backfill);
                         return;
                     }
@@ -691,7 +692,7 @@ domReady(function () {
                     }
                 });
             }, function () {
-                zones.forEach(function (zone, i) {
+                zones.forEach(function (zone) {
                     if (!zone.destElement) {
                         console.log('no element to replace');
                         return;
@@ -702,15 +703,15 @@ domReady(function () {
             });
 
             addListener(topwin, 'message', function (event) {
-                var has_access = dwmthACL.some(function (win) {
+                const hasAccess = dwmthACL.some(function (win) {
                     try {
                         return win && (win === event.source);
                     } catch (e) {
                         return false;
                     }
                 });
-                if (has_access && event.data) {
-                    var data, isString = typeof event.data == "string";
+                if (hasAccess && event.data) {
+                    var data, isString = typeof event.data === 'string';
                     if (isString) {
                         data = JSON.parse(event.data);
                     } else {
@@ -721,14 +722,14 @@ domReady(function () {
                             if (dwmthACL.length >= 5 * zones.length) {
                                 return;
                             }
-                            if (request.type == 'iframe') {
+                            if (request.type === 'iframe') {
                                 if (dwmthURLS[request.url]) {
                                     return;
                                 }
                                 var iframe = addAnalyticsIframe(request.url);
                                 dwmthACL.push(iframe.contentWindow);
                                 dwmthURLS[request.url] = 1;
-                            } else if (request.type == 'img') {
+                            } else if (request.type === 'img') {
                                 if (dwmthURLS[request.url]) {
                                     return;
                                 }
@@ -745,7 +746,9 @@ domReady(function () {
 });
 
 var addAnalyticsIframe = function (url) {
-    if (!url) return;
+    if (!url) {
+        return;
+    }
     var iframe = createIframeFromUrl(url, topdoc);
     topdoc.body.appendChild(iframe);
     setTimeout(function() {
@@ -755,7 +758,9 @@ var addAnalyticsIframe = function (url) {
 };
 
 var addAnalyticsImage = function (url) {
-    if (!url) return;
+    if (!url) {
+        return;
+    }
     var img = new Image();
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
@@ -765,26 +770,24 @@ var addAnalyticsImage = function (url) {
     return img;
 };
 
-var mapInt = function(hex, min)
-{
+var mapInt = function(hex, min) {
     var short = hex.substr(0, 8);
-    if(short.charAt(0) > '7') {
+    if (short.charAt(0) > '7') {
         short = '7' + short.substr(1);
     }
     var r = parseInt(short, 16);
-    if(min && r < min) {
+    if (min && r < min) {
         r += 1*min;
     }
     return r;
 }
 
-var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId, keywords)
-{
+var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId, keywords) {
     var hashPos = url.indexOf('#');
-    if(hashPos !== -1) {
+    if (hashPos !== -1) {
         url = url.substr(0, hashPos);
     }
-    if(url.indexOf('{cid}') === -1) {
+    if (url.indexOf('{cid}') === -1) {
         url = addUrlParam(url, 'cid', caseId);
     } else {
         url = url.replace('{cid}', caseId);
@@ -799,40 +802,39 @@ var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, si
         .replace('{kwd}', keywords)
         .replace('{rand}', Math.random().toString().substr(2));
 };
-var getDomain = function(url)
-{
+var getDomain = function (url) {
     var a = document.createElement('a');
     a.href = url;
     var host = a.host.indexOf('www.') === 0 ? a.host.substr(4) :a.host;
     var colonPos = host.indexOf(':');
-    return colonPos == -1 ? host : host.substr(0, colonPos);
+    return colonPos === -1 ? host : host.substr(0, colonPos);
 };
 
 var popCandidates = [];
-var addPopCandidate = function(args, rpm)
-{
+var addPopCandidate = function(args, rpm) {
     popCandidates.push({args: args, rpm: rpm});
 }
 
 function shuffle(array) {
     var tmp, current, top = array.length;
 
-    if(top) while(--top) {
-        current = Math.floor(Math.random() * (top + 1));
-        tmp = array[current];
-        array[current] = array[top];
-        array[top] = tmp;
+    if (top) {
+        while (--top) {
+            current = Math.floor(Math.random() * (top + 1));
+            tmp = array[current];
+            array[current] = array[top];
+            array[top] = tmp;
+        }
     }
 
     return array;
 }
 
-var allBannersLoaded = function()
-{
+var allBannersLoaded = function() {
     var hasNulls = popCandidates.some(function(x) {
         return x.rpm === null;
     });
-    if(hasNulls) {
+    if (hasNulls) {
         shuffle(popCandidates);
     } else {
         popCandidates.sort(function (x, y) {
@@ -845,26 +847,29 @@ var allBannersLoaded = function()
 }
 
 var fetchBanner = function (banner, context, zone_options) {
-    fetchURL(banner.serve_url, {
+    fetchURL(banner.serveUrl, {
         binary: true,
         noCredentials: true
     }).then(function (data, xhr) {
         context.cid = getCid();
-
-        context.page.zone = banner.zone_id;
+        context.page.zone = banner.zoneId;
         var contextParam = encodeZones([context.page]);
-        context.click_url = addUrlParam(banner.click_url,
+        context.click_url = addUrlParam(
+            banner.clickUrl,
             {
                 'cid': context.cid,
                 'ctx': contextParam,
-                'iid': getImpressionId()
-            });
-        context.view_url = addUrlParam(banner.view_url,
+                'iid': getImpressionId(),
+            }
+        );
+        context.view_url = addUrlParam(
+            banner.viewUrl,
             {
                 'cid': context.cid,
                 'ctx': contextParam,
-                'iid': getImpressionId()
-            });
+                'iid': getImpressionId(),
+            }
+        );
 
         var sendViewEvent = function(element) {
             // record view if visible for 1 second
@@ -879,29 +884,33 @@ var fetchBanner = function (banner, context, zone_options) {
         var displayBanner = function () {
             var caller;
 
-            if (banner.type == 'image') {
+            if (banner.type === 'image') {
                 caller = createImageFromData;
-            } else if (banner.type == 'video') {
+            } else if (banner.type === 'video') {
                 caller = createVideoFromData;
-            } else if (banner.type == 'html') {
+            } else if (banner.type === 'html') {
                 caller = createIframeFromData;
-            } else if (banner.type == 'direct') {
+            } else if (banner.type === 'direct') {
                 createLinkFromData(data, function(url) {
-                    if(url.length > 1024) {
-                        url = banner.serve_url;
+                    if (url.length > 1024) {
+                        url = banner.serveUrl;
                     }
-                    context.skip_overlay = (url.indexOf('#dwmth') != -1);
-                    url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id, context.page.keywords);
+                    context.skip_overlay = (url.indexOf('#dwmth') !== -1);
+                    url = fillPlaceholders(url, context.cid, banner.placementId, banner.publisherId, banner.supplyServer, getDomain(context.page.url), banner.zoneId, context.page.keywords);
 
-                    if(banner.size == 'pop-up' || banner.size == 'pop-under') {
-                        addPopCandidate([banner.size,
-                            url,
-                            $pick(zone_options.count, 1),
-                            $pick(zone_options.interval, 1),
-                            $pick(zone_options.burst, 1),
-                            function () {
-                                dwmthACL.push(addAnalyticsIframe(context.view_url).contentWindow);
-                            }], banner.rpm
+                    if (banner.scope === 'pop-up' || banner.scope === 'pop-under') {
+                        addPopCandidate(
+                            [
+                                banner.scope,
+                                url,
+                                $pick(zone_options.count, 1),
+                                $pick(zone_options.interval, 1),
+                                $pick(zone_options.burst, 1),
+                                function () {
+                                    dwmthACL.push(addAnalyticsIframe(context.view_url).contentWindow);
+                                }
+                            ],
+                            banner.rpm
                         );
                     } else {
                         data.iframe_src = url;
@@ -911,7 +920,7 @@ var fetchBanner = function (banner, context, zone_options) {
                 });
             }
             caller && caller(data, function (element) {
-                if(!banner.destElement) {
+                if (!banner.destElement) {
                     console.log('warning: no element to replace');
                     return;
                 }
@@ -921,9 +930,8 @@ var fetchBanner = function (banner, context, zone_options) {
             });
         };
 
-        var displayIfVisible = function()
-        {
-            if ((banner.type == 'direct' && (banner.size == 'pop-up' || banner.size == 'pop-under')) || !banner.destElement) {
+        var displayIfVisible = function() {
+            if ((banner.type === 'direct' && (banner.scope === 'pop-up' || banner.scope === 'pop-under')) || !banner.destElement) {
                 displayBanner();
             } else {
                 if (isVisible(banner.destElement)) {
@@ -941,10 +949,10 @@ var fetchBanner = function (banner, context, zone_options) {
             }
         };
 
-        if (banner.creative_sha1) {
+        if (banner.hash) {
             sha1_async(data, function (hash) {
-                if (hash === 'NO_SUPPORT' || hash == banner.creative_sha1) {
-                    if(hash === 'NO_SUPPORT') {
+                if (hash === 'NO_SUPPORT' || hash === banner.hash) {
+                    if (hash === 'NO_SUPPORT') {
                         console.log('warning: hash not checked');
                     }
                     displayIfVisible();

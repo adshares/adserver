@@ -13,11 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server events log
 - Logging changes in users table
 - OAuth2
+- Campaigns APIv2
 - Dynamic find
 ### Changed
 - Network host which does not broadcast is marked as failed before deleting
 - Do not request banners when zones are invalid
 - Configuration and monitoring API in camel case
+- Find script uses HTTP POST method
 ### Removed
 - Legacy campaign classification columns
 ### Fixed

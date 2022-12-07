@@ -18,7 +18,7 @@ class BannerResource extends JsonResource
             'createdAt' => $this->created_at->format(DateTimeInterface::ATOM),
             'updatedAt' => $this->updated_at->format(DateTimeInterface::ATOM),
             'type' => $this->creative_type,
-            'mimeType' => $this->creative_mime,
+            'mime' => $this->creative_mime,
             'hash' => $this->creative_sha1,
             'scope' => $this->creative_size,
             'name' => $this->name,

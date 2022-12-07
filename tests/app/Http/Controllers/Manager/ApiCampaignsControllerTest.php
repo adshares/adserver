@@ -50,7 +50,7 @@ final class ApiCampaignsControllerTest extends TestCase
         'createdAt',
         'updatedAt',
         'type',
-        'mimeType',
+        'mime',
         'hash',
         'scope',
         'name',

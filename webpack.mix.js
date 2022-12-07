@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -42,15 +42,6 @@ mix.babel([
   'resources/js/supply/find/*',
   'resources/js/footer/*',
 ], 'public/-/find.js');
-
-mix.babel([
-  'resources/js/header/*',
-  'resources/js/base/*',
-  'resources/js/supply/*js',
-  'resources/js/supply/test/sha256.js',
-  'resources/js/supply/test/test.js',
-  'resources/js/footer/*',
-], 'public/-/test.js');
 
 mix.babel([
   'resources/js/header/*',
