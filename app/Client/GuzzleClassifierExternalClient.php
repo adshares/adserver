@@ -31,9 +31,8 @@ use Adshares\Common\Exception\RuntimeException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Utils as GuzzleUtils;
 use InvalidArgumentException;
-
-use function GuzzleHttp\json_decode;
 
 final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 {
@@ -43,12 +42,8 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 
     private const PATH_TAXONOMY = '/taxonomy';
 
-    /** @var Client */
-    private $client;
-
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
     }
 
     public function requestClassification(ClassifierExternal $classifier, array $data): void
@@ -92,7 +87,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 
         $body = (string)$result->getBody();
         try {
-            $items = json_decode($body, true);
+            $items = GuzzleUtils::jsonDecode($body, true);
         } catch (InvalidArgumentException $exception) {
             throw new RuntimeException($exception->getMessage(), $exception->getCode(), $exception);
         }
@@ -105,9 +100,9 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
         $apiKeyName = $classifier->getApiKeyName();
         $apiKeySecret = $classifier->getApiKeySecret();
 
-        $nonce = base64_encode(NonceGenerator::get());
+        $nonce = NonceGenerator::get();
         $created = date('c');
-        $digest = base64_encode(hash('sha256', base64_decode($nonce) . $created . $apiKeySecret, true));
+        $digest = base64_encode(hash('sha256', $nonce . $created . $apiKeySecret, true));
 
         return [
             'Authorization' => 'WSSE profile="UsernameToken"',
@@ -115,7 +110,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
                 'UsernameToken Username="%s", PasswordDigest="%s", Nonce="%s", Created="%s"',
                 $apiKeyName,
                 $digest,
-                $nonce,
+                base64_encode($nonce),
                 $created
             ),
         ];

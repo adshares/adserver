@@ -117,11 +117,31 @@ class PanelPlaceholder extends Model
 
     public static function fetchByTypes(array $types): Collection
     {
-        return self::whereIn(self::FIELD_TYPE, $types)->get();
+        $collection = self::whereIn(self::FIELD_TYPE, $types)->get();
+
+        if (
+            in_array(self::TYPE_INDEX_TITLE, $types) &&
+            !$collection->contains(fn($value) => self::TYPE_INDEX_TITLE === $value->type)
+        ) {
+            $collection->add(self::defaultIndexTitle());
+        }
+
+        return $collection;
     }
 
     public static function fetchByType(string $type): ?self
     {
-        return self::where(self::FIELD_TYPE, $type)->first();
+        $model = self::where(self::FIELD_TYPE, $type)->first();
+
+        if (null === $model && self::TYPE_INDEX_TITLE === $type) {
+            return self::defaultIndexTitle();
+        }
+
+        return $model;
+    }
+
+    private static function defaultIndexTitle(): PanelPlaceholder
+    {
+        return self::construct(self::TYPE_INDEX_TITLE, config('app.adserver_name') . ' powered by Adshares');
     }
 }

@@ -48,14 +48,13 @@ use Generator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Utils as GuzzleUtils;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 
-use function array_map;
 use function config;
-use function GuzzleHttp\json_decode;
 use function iterator_to_array;
 use function json_encode;
 use function route;
@@ -73,11 +72,8 @@ class GuzzleAdSelectClient implements AdSelect
     private const URI_FIND_BANNERS = '/api/v1/find';
     private const URI_INVENTORY = '/api/v1/campaigns';
 
-    private Client $client;
-
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
     }
 
     public function exportInventory(CampaignCollection $campaigns): void
@@ -145,14 +141,12 @@ class GuzzleAdSelectClient implements AdSelect
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
         $zoneInputByUuid = [];
-        $zoneIds = array_map(
-            static function (array $zone) use (&$zoneInputByUuid) {
-                $zoneInputByUuid[(string)$zone['zone']] = $zone;
-
-                return strtolower((string)$zone['zone']);
-            },
-            $zones
-        );
+        $zoneIds = [];
+        foreach ($zones as $zone) {
+            $zoneId = $zone['placementId'] ?? (string)$zone['zone'];// Key 'zone' is for legacy search
+            $zoneInputByUuid[$zoneId] = $zone;
+            $zoneIds[] = strtolower($zoneId);
+        }
 
         $zoneMap = [];
         $sitesMap = [];
@@ -212,8 +206,9 @@ class GuzzleAdSelectClient implements AdSelect
         }
 
         $zoneCollection = new Collection();
-        foreach ($zoneIds as $id) {
-            $zoneCollection[] = $zoneMap[$id] ?? null;
+        foreach ($zoneIds as $i => $id) {
+            $requestId = $zoneInputByUuid[$id]['id'] ?? $i;
+            $zoneCollection[$requestId] = $zoneMap[$id] ?? null;
         }
 
         $existingZones = $zoneCollection->reject(
@@ -251,8 +246,8 @@ class GuzzleAdSelectClient implements AdSelect
 
             $body = (string)$result->getBody();
             try {
-                $items = json_decode($body, true);
-            } catch (InvalidArgumentException $exception) {
+                $items = GuzzleUtils::jsonDecode($body, true);
+            } catch (InvalidArgumentException) {
                 throw new DomainRuntimeException(sprintf('[ADSELECT] Find Banners. Invalid json data (%s).', $body));
             }
             Log::debug(
@@ -266,11 +261,11 @@ class GuzzleAdSelectClient implements AdSelect
         }
 
         $bannerIds = [];
-        foreach ($zoneCollection as $request_id => $zone) {
-            if (isset($existingZones[$request_id]) && isset($items[$request_id])) {
-                $bannerIds[] = $items[$request_id] ?: [null];
+        foreach ($zoneCollection as $requestId => $zone) {
+            if (isset($existingZones[$requestId]) && isset($items[$requestId])) {
+                $bannerIds[$requestId] = $items[$requestId] ?: [null];
             } else {
-                $bannerIds[] = [null];
+                $bannerIds[$requestId] = [null];
             }
         }
 
@@ -299,7 +294,7 @@ class GuzzleAdSelectClient implements AdSelect
                 } else {
                     $zone = $zoneCollection[$requestId];
                     $campaign = $banner->campaign;
-                    yield [
+                    $data = [
                         'id'            => $bannerId,
                         'publisher_id'  => $zone->site->user->uuid,
                         'zone_id'       => $zone->uuid,
@@ -330,6 +325,10 @@ class GuzzleAdSelectClient implements AdSelect
                         'info_box'      => $infoBox,
                         'rpm'           => $item['rpm'],
                     ];
+                    if (is_string($requestId)) {
+                        $data['request_id'] = $requestId;
+                    }
+                    yield $data;
                 }
             }
         }
@@ -433,8 +432,8 @@ class GuzzleAdSelectClient implements AdSelect
 
         $body = (string)$response->getBody();
         try {
-            $item = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
+            $item = GuzzleUtils::jsonDecode($body, true);
+        } catch (InvalidArgumentException) {
             throw new DomainRuntimeException(
                 sprintf(
                     '[ADSELECT] Fetch last id (%s). Invalid json data (%s).',

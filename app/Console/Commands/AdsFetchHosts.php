@@ -28,8 +28,10 @@ use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\AppMode;
 use Adshares\Network\BroadcastableUrl;
@@ -48,7 +50,7 @@ class AdsFetchHosts extends BaseCommand
     /**
      * Period in seconds which will be searched for broadcast
      */
-    private const BROADCAST_PERIOD = 12 * 3600; //12 hours
+    private const BROADCAST_PERIOD = 24 * 3600;
 
     protected $signature = 'ads:fetch-hosts';
     protected $description = 'Fetches Demand AdServers';
@@ -67,6 +69,8 @@ class AdsFetchHosts extends BaseCommand
 
         $this->info('Start command ' . $this->signature);
 
+        $hostsCount = NetworkHost::all()->count();
+        $found = 0;
         $timeNow = time();
         $timeBlock = $this->getTimeOfFirstBlock($timeNow);
 
@@ -74,16 +78,27 @@ class AdsFetchHosts extends BaseCommand
         $progressBar->start();
         while ($timeBlock <= $timeNow - self::BLOCK_TIME) {
             $blockId = dechex($timeBlock);
-            $this->handleBlock($adsClient, $blockId);
+            $found += $this->handleBlock($adsClient, $blockId);
             $timeBlock += self::BLOCK_TIME;
             $progressBar->advance();
         }
         $progressBar->finish();
         $this->newLine();
 
-        $this->comment('Cleaning old hosts...');
+        $this->comment('Cleaning up old hosts...');
+        $added = NetworkHost::all()->count() - $hostsCount;
         $removed = $this->removeOldHosts();
-        $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to clean');
+        $marked = $this->markHostsWhichDoesNotBroadcast();
+        ServerEvent::dispatch(ServerEventType::HostBroadcastProcessed, [
+            'added' => $added,
+            'found' => $found,
+            'marked' => $marked,
+            'removed' => $removed,
+        ]);
+        if ($marked) {
+            $this->info(sprintf('Marked %d hosts which does not broadcast', $marked));
+        }
+        $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to remove');
 
         $this->info('Finished command ' . $this->signature);
     }
@@ -102,14 +117,17 @@ class AdsFetchHosts extends BaseCommand
         return $timeBlock;
     }
 
-    private function handleBlock(AdsClient $adsClient, string $blockId): void
+    private function handleBlock(AdsClient $adsClient, string $blockId): int
     {
+        $foundHosts = 0;
         try {
-            $resp = $adsClient->getBroadcast($blockId);
-            $broadcastArray = $resp->getBroadcast();
+            $response = $adsClient->getBroadcast($blockId);
+            $broadcastArray = $response->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {
-                $this->handleBroadcast($broadcast);
+                if ($this->handleBroadcast($broadcast)) {
+                    ++$foundHosts;
+                }
             }
         } catch (CommandException $commandException) {
             $code = $commandException->getCode();
@@ -119,9 +137,10 @@ class AdsFetchHosts extends BaseCommand
                 Log::error(sprintf('Error %s: Unexpected error for block %s', $code, $blockId));
             }
         }
+        return $foundHosts;
     }
 
-    private function handleBroadcast(Broadcast $broadcast): void
+    private function handleBroadcast(Broadcast $broadcast): bool
     {
         $address = $broadcast->getAddress();
         $time = new DateTimeImmutable('@' . $broadcast->getTime()->getTimestamp());
@@ -137,9 +156,11 @@ class AdsFetchHosts extends BaseCommand
             $error = $this->getErrorFromInfo($info, $address);
             $host = NetworkHost::registerHost($address, $url->toString(), $info, $time, $error);
             Log::debug(sprintf('Stored %s as #%d', $url->toString(), $host->id));
+            return null === $error;
         } catch (RuntimeException | UnexpectedClientResponseException $exception) {
             Log::debug(sprintf('[%s] {%s}', $url ?? '', $exception->getMessage()));
         }
+        return false;
     }
 
     private function validateInfoModule(Info $info): void
@@ -164,9 +185,15 @@ class AdsFetchHosts extends BaseCommand
         return null;
     }
 
+    private function markHostsWhichDoesNotBroadcast(): int
+    {
+        $period = new DateTimeImmutable(sprintf('-%d seconds', self::BROADCAST_PERIOD));
+        return NetworkHost::failHostsBroadcastedBefore($period);
+    }
+
     private function removeOldHosts(): int
     {
-        $period = new DateTimeImmutable('-24 hours');
+        $period = new DateTimeImmutable(sprintf('-%d hours', config('app.hours_until_inactive_host_removal')));
         return NetworkHost::deleteBroadcastedBefore($period);
     }
 }

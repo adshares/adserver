@@ -24,36 +24,21 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Adshares\Adserver\Models\Banner;
-use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class BannerFactory extends Factory
 {
     public function definition(): array
     {
-        $size = $this->faker->randomKey(Size::SIZE_INFOS);
-        $type =
-            Size::TYPE_POP === Size::SIZE_INFOS[$size]['type']
-                ? Banner::TEXT_TYPE_DIRECT_LINK
-                : $this->faker->randomElement([Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_HTML]);
-        switch ($type) {
-            case Banner::TEXT_TYPE_HTML:
-                $mime = 'text/html';
-                break;
-            case Banner::TEXT_TYPE_IMAGE:
-                $mime = 'image/png';
-                break;
-            case Banner::TEXT_TYPE_DIRECT_LINK:
-            default:
-                $mime = 'text/plain';
-                break;
-        }
-
+        $format = $this->faker->randomElement((new DummyConfigurationRepository())->fetchMedium()->getFormats());
         return [
+            'campaign_id' => Campaign::factory(),
             'creative_contents' => $this->faker->sha1,
-            'creative_type' => $type,
-            'creative_mime' => $mime,
-            'creative_size' => $size,
+            'creative_type' => $format->getType(),
+            'creative_mime' => $this->faker->randomElement($format->getMimes()),
+            'creative_size' => $this->faker->randomKey($format->getScopes()),
             'name' => $this->faker->word,
             'status' => Banner::STATUS_ACTIVE,
         ];

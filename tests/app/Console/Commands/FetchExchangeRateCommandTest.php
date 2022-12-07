@@ -22,13 +22,16 @@
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Event;
 use PDOException;
 
 final class FetchExchangeRateCommandTest extends ConsoleTestCase
@@ -58,6 +61,11 @@ final class FetchExchangeRateCommandTest extends ConsoleTestCase
         );
 
         $this->artisan(self::COMMAND_SIGNATURE)->assertSuccessful();
+        if ($expectedStoreCallsCount > 0) {
+            self::assertServerEventDispatched(ServerEventType::ExchangeRatesFetched);
+        } else {
+            Event::assertNotDispatched(ServerEvent::class);
+        }
     }
 
     public function customProvider(): array
@@ -105,6 +113,7 @@ final class FetchExchangeRateCommandTest extends ConsoleTestCase
 
         $this->expectException(QueryException::class);
         $this->artisan(self::COMMAND_SIGNATURE);
+        self::assertServerEventDispatched(ServerEventType::ExchangeRatesFetched);
     }
 
     public function testFetchExchangeRateStoreDuplicateEntryException(): void
@@ -122,6 +131,7 @@ final class FetchExchangeRateCommandTest extends ConsoleTestCase
         );
 
         $this->artisan(self::COMMAND_SIGNATURE)->assertSuccessful();
+        self::assertServerEventDispatched(ServerEventType::ExchangeRatesFetched);
     }
 
     public function testLock(): void

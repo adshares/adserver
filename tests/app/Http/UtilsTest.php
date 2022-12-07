@@ -24,11 +24,11 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
-
-use function hex2bin;
+use Adshares\Supply\Domain\ValueObject\Size;
 
 class UtilsTest extends TestCase
 {
@@ -73,5 +73,42 @@ class UtilsTest extends TestCase
             . '"page_rank_info":"ok"}',
             $userContext->toString()
         );
+    }
+
+    /**
+     * @dataProvider getZoneTypeByBannerTypeProvider
+     */
+    public function testGetZoneTypeByBannerType(string $bannerType, string $expectedZoneType): void
+    {
+        self::assertEquals($expectedZoneType, Utils::getZoneTypeByBannerType($bannerType));
+    }
+
+    public function getZoneTypeByBannerTypeProvider(): array
+    {
+        return [
+            Banner::TEXT_TYPE_IMAGE => [Banner::TEXT_TYPE_IMAGE, Size::TYPE_DISPLAY],
+            Banner::TEXT_TYPE_HTML => [Banner::TEXT_TYPE_HTML, Size::TYPE_DISPLAY],
+            Banner::TEXT_TYPE_DIRECT_LINK => [Banner::TEXT_TYPE_DIRECT_LINK, Size::TYPE_POP],
+            Banner::TEXT_TYPE_VIDEO => [Banner::TEXT_TYPE_VIDEO, Size::TYPE_DISPLAY],
+            Banner::TEXT_TYPE_MODEL => [Banner::TEXT_TYPE_MODEL, Size::TYPE_MODEL],
+        ];
+    }
+
+    public function testAppendFragment(): void
+    {
+        self::assertEquals(
+            'https://example.com/a.html#300x250',
+            Utils::appendFragment('https://example.com/a.html', '300x250')
+        );
+        self::assertEquals(
+            'https://example.com/a.html#300x250',
+            Utils::appendFragment('https://example.com/a.html#300x250', '300x250')
+        );
+    }
+
+    public function testExtractFilename(): void
+    {
+        self::assertEquals('a.html', Utils::extractFilename('https://example.com/a.html'));
+        self::assertEquals('a', Utils::extractFilename('https://example.com/a'));
     }
 }

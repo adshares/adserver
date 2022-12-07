@@ -23,14 +23,17 @@ namespace Adshares\Adserver\Exceptions;
 
 use Adshares\Adserver\Http\Utils;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Laravel\Passport\Exceptions\OAuthServerException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -42,7 +45,7 @@ use function sprintf;
 
 class Handler extends ExceptionHandler
 {
-    public function render($request, Throwable $exception)
+    public function render($request, Throwable $exception): Response
     {
         if ($exception instanceof HttpException) {
             return $this->response(
@@ -78,27 +81,33 @@ class Handler extends ExceptionHandler
             );
         }
 
-        if ($exception instanceof ValidationException) {
+        if ($exception instanceof ValidationException || $exception instanceof OAuthServerException) {
             return $this->response(
                 $exception->getMessage(),
                 Response::HTTP_UNPROCESSABLE_ENTITY,
                 $exception->getTrace(),
-                $exception->errors()
+                $exception instanceof ValidationException ? $exception->errors() : [],
             );
         }
 
         if ($exception instanceof AuthenticationException) {
-            return $this->response(
-                $exception->getMessage(),
-                Response::HTTP_UNAUTHORIZED,
-                $exception->getTrace()
-            );
+            return $this->shouldReturnJson($request, $exception)
+                ? $this->response($exception->getMessage(), Response::HTTP_UNAUTHORIZED, $exception->getTrace())
+                : redirect()->guest($exception->redirectTo() ?? $this->getAdPanelLoginUrl($request));
         }
         if ($exception instanceof InvalidArgumentException) {
             return $this->response(
                 $exception->getMessage(),
                 Response::HTTP_BAD_REQUEST,
                 $exception->getTrace()
+            );
+        }
+
+        if ($exception instanceof AuthorizationException) {
+            return $this->response(
+                $exception->getMessage(),
+                $exception->hasStatus() ? $exception->status() : Response::HTTP_FORBIDDEN,
+                $exception->getTrace(),
             );
         }
 
@@ -145,7 +154,8 @@ class Handler extends ExceptionHandler
         }
 
         if (method_exists($e, 'report')) {
-            return $e->report();
+            $e->report();
+            return;
         }
 
         try {
@@ -175,5 +185,10 @@ class Handler extends ExceptionHandler
                 )
             )
         );
+    }
+
+    private function getAdPanelLoginUrl(Request $request): string
+    {
+        return config('app.adpanel_url') . '/auth/login?redirect_uri=' . urlencode($request->fullUrl());
     }
 }

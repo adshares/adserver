@@ -28,16 +28,12 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Mock\Client\DummyAdUserClient;
-use Adshares\Mock\Repository\DummyConfigurationRepository;
+use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
-
-use function GuzzleHttp\json_decode;
 
 class SitesControllerTest extends TestCase
 {
@@ -59,7 +55,6 @@ class SitesControllerTest extends TestCase
                 'name',
                 'size',
                 'status',
-                'tags',
                 'type',
             ],
         ],
@@ -178,32 +173,26 @@ class SitesControllerTest extends TestCase
             ],
         ];
 
-        $default = json_decode(
-            <<<JSON
-{
-    "filtering": {
-      "requires": {
-        "category": [
-          "1"
-        ]
-      },
-      "excludes": {}
-    },
-    "onlyAcceptedBanners": false,
-    "adUnits": [
-      {
-        "name": "ssss",
-        "size": "300x250"
-      }
-    ],
-    "categories": [
-      "unknown"
-    ]
-  }
-JSON
-            ,
-            true
-        );
+        $default = [
+            'filtering' => [
+                'requires' => [
+                    'category' => [
+                        '1'
+                    ]
+                ],
+                'excludes' => [],
+            ],
+            'onlyAcceptedBanners' => false,
+            'adUnits' => [
+                [
+                    'name' => 'ssss',
+                    'size' => '300x250'
+                ]
+            ],
+            'categories' => [
+                'unknown'
+            ]
+        ];
 
         return array_map(
             function ($preset) use ($default) {
@@ -213,96 +202,84 @@ JSON
         );
     }
 
+    public function testCreateSiteWithAdUnits(): void
+    {
+        $this->login();
+        $siteData = self::simpleSiteData([
+            'adUnits' => [
+                self::simpleAdUnit(['size' => '300x250']),
+                self::simpleAdUnit(['size' => 'pop-up']),
+            ]
+        ]);
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        self::assertDatabaseHas(Zone::class, ['size' => '300x250', 'type' => Size::TYPE_DISPLAY]);
+        self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Size::TYPE_POP]);
+    }
+
     /**
      * @dataProvider createSiteUnprocessableProvider
      *
      * @param array $siteData
-     * @param int $expectedStatus
      */
-    public function testCreateSiteUnprocessable(array $siteData, int $expectedStatus): void
+    public function testCreateSiteUnprocessable(array $siteData): void
     {
         $this->setupUser();
 
         $response = $this->postJson(self::URI, ['site' => $siteData]);
 
-        $response->assertStatus($expectedStatus);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function createSiteUnprocessableProvider(): array
     {
         return [
-            'no data' => [[], Response::HTTP_UNPROCESSABLE_ENTITY],
-            'correct' => [self::simpleSiteData(), Response::HTTP_CREATED],
-            'missing name' => [self::simpleSiteData([], 'name'), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'missing language' => [self::simpleSiteData([], 'primaryLanguage'), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'invalid language' => [
-                self::simpleSiteData(['primaryLanguage' => 'English']),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
-            'missing status' => [self::simpleSiteData([], 'status'), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'invalid status' => [self::simpleSiteData(['status' => -1]), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'invalid only_accepted_banners' =>
-                [self::simpleSiteData(['only_accepted_banners' => 1]), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'missing url' => [self::simpleSiteData([], 'url'), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'invalid url' => [self::simpleSiteData(['url' => 'example']), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'invalid ad units type' => [
-                self::simpleSiteData(['adUnits' => 'adUnits']),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
-            'invalid ad unit, missing name' => [
-                self::simpleSiteData(['adUnits' => [self::simpleAdUnit([], 'name')]]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
+            'no data' => [[]],
+            'missing name' => [self::simpleSiteData([], 'name')],
+            'missing language' => [self::simpleSiteData([], 'primaryLanguage')],
+            'invalid language' => [self::simpleSiteData(['primaryLanguage' => 'English'])],
+            'missing status' => [self::simpleSiteData([], 'status')],
+            'invalid status' => [self::simpleSiteData(['status' => -1])],
+            'invalid only_accepted_banners' => [self::simpleSiteData(['only_accepted_banners' => 1])],
+            'missing url' => [self::simpleSiteData([], 'url')],
+            'invalid url' => [self::simpleSiteData(['url' => 'example'])],
+            'invalid ad units type' => [self::simpleSiteData(['adUnits' => 'adUnits'])],
+            'invalid ad unit, missing name' => [self::simpleSiteData(['adUnits' => [self::simpleAdUnit([], 'name')]])],
             'invalid ad unit, invalid name type' => [
                 self::simpleSiteData(['adUnits' => [self::simpleAdUnit(['name' => ['name']])]]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'invalid ad unit, missing size' => [
                 self::simpleSiteData(['adUnits' => [self::simpleAdUnit([], 'size')]]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'invalid ad unit, invalid size type' => [
                 self::simpleSiteData(['adUnits' => [self::simpleAdUnit(['size' => ['300x250']])]]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'invalid ad unit, invalid size' => [
                 self::simpleSiteData(['adUnits' => [self::simpleAdUnit(['size' => 'invalid'])]]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
-            'missing categories' => [self::simpleSiteData([], 'categories'), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'invalid categories type' => [
-                self::simpleSiteData(['categories' => 'unknown']),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
-            'not allowed categories' => [
-                self::simpleSiteData(['categories' => ['good']]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
-            'missing filtering' => [self::simpleSiteData([], 'filtering'), Response::HTTP_UNPROCESSABLE_ENTITY],
-            'invalid filtering' => [self::simpleSiteData(['filtering' => true]), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'missing categories' => [self::simpleSiteData([], 'categories')],
+            'invalid categories type' => [self::simpleSiteData(['categories' => 'unknown'])],
+            'not allowed categories' => [self::simpleSiteData(['categories' => ['good']])],
+            'missing filtering' => [self::simpleSiteData([], 'filtering')],
+            'invalid filtering' => [self::simpleSiteData(['filtering' => true])],
             'missing filtering.requires' => [
                 self::simpleSiteData(['filtering' => self::filtering([], 'requires')]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'invalid filtering.requires' => [
                 self::simpleSiteData(['filtering' => self::filtering(['requires' => 1])]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'missing filtering.excludes' => [
                 self::simpleSiteData(['filtering' => self::filtering([], 'excludes')]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'invalid filtering.excludes 1' => [
                 self::simpleSiteData(['filtering' => self::filtering(['excludes' => [1]])]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'invalid filtering.excludes 2' => [
                 self::simpleSiteData(['filtering' => self::filtering(['excludes' => ['category' => 'unknown']])]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'invalid filtering.excludes 3' => [
                 self::simpleSiteData(['filtering' => self::filtering(['excludes' => ['category' => [1]]])]),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
         ];
     }
@@ -362,7 +339,6 @@ JSON
         $adUnit = array_merge(
             [
                 'name' => 'Medium Rectangle',
-                'type' => 'display',
                 'size' => '300x250',
                 'label' => 'Medium Rectangle',
                 'tags' => [
@@ -736,10 +712,9 @@ JSON
     }
 
     /**
-     * @test
      * @dataProvider updateZonesInSiteProvider
      */
-    public function updateZonesInSite($data): void
+    public function testUpdateZonesInSite($data): void
     {
         $user = $this->setupUser();
 
@@ -811,10 +786,9 @@ JSON
     }
 
     /**
-     * @test
      * @dataProvider updateZonesInSiteProvider
      */
-    public function failZoneUpdatesInSite($data): void
+    public function testFailZoneUpdatesInSite($data): void
     {
         $user = $this->setupUser();
 
@@ -851,9 +825,7 @@ JSON
             2,
             'filtering'
         );
-
-        $content = json_decode($response->content(), true);
-        $this->assertEquals($preset['onlyAcceptedBanners'] ?? false, $content['onlyAcceptedBanners']);
+        $response->assertJsonPath('onlyAcceptedBanners', $preset['onlyAcceptedBanners'] ?? false);
     }
 
     public function filteringDataProvider(): array
@@ -868,33 +840,27 @@ JSON
             ],
         ];
 
-        $default = json_decode(
-            <<<JSON
-{
-    "filtering": {
-      "requires": {},
-      "excludes": {}
-    },
-    "status": 0,
-    "name": "nameA",
-    "url": "https://example.com",
-    "primaryLanguage": "pl",
-    "medium": "web",
-    "vendor": null,
-    "adUnits": [
-      {
-        "name": "name",
-        "size": "300x250"
-      }
-    ],
-    "categories": [
-      "unknown"
-    ]
-  }
-JSON
-            ,
-            true
-        );
+        $default = [
+            'filtering' => [
+                'requires' => [],
+                'excludes' => []
+            ],
+            'status' => 0,
+            'name' => 'nameA',
+            'url' => 'https://example.com',
+            'primaryLanguage' => 'pl',
+            'medium' => 'web',
+            'vendor' => null,
+            'adUnits' => [
+                [
+                    'name' => 'name',
+                    'size' => '300x250'
+                ]
+            ],
+            'categories' => [
+                'unknown'
+            ],
+        ];
 
         return array_map(
             function ($preset) use ($default) {
@@ -1084,20 +1050,6 @@ JSON
 
         $response = $this->get(self::URI_CRYPTOVOXELS_CODE);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->app->bind(
-            AdUser::class,
-            static function () {
-                return new DummyAdUserClient();
-            }
-        );
-
-        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 
     private function setupUser(): User

@@ -1,0 +1,179 @@
+<?php
+
+/**
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
+ */
+
+namespace Adshares\Adserver\Services\Demand;
+
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
+use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
+use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Uploader\Image\ImageUploader;
+use Adshares\Adserver\Uploader\Model\ModelUploader;
+use Adshares\Adserver\Uploader\Video\VideoUploader;
+use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\ViewModel\BannerStatus;
+use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\RuntimeException;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+
+class BannerCreator
+{
+    public function __construct(private readonly ConfigurationRepository $configurationRepository)
+    {
+    }
+
+    /**
+     * @param array $input
+     * @param Campaign $campaign
+     * @return Banner[]|array
+     */
+    public function prepareBannersFromInput(array $input, Campaign $campaign): array
+    {
+        $medium = $this->configurationRepository->fetchMedium($campaign->medium, $campaign->vendor);
+        $bannerValidator = new BannerValidator($medium);
+
+        $banners = [];
+
+        foreach ($input as $banner) {
+            if (!is_array($banner)) {
+                throw new InvalidArgumentException('Invalid banner data type');
+            }
+            $banner = $this->changeLegacyFields($banner);
+            $bannerValidator->validateBanner($banner);
+            $bannerModel = new Banner();
+            $bannerModel->name = $banner['name'];
+            $bannerModel->status = Banner::STATUS_ACTIVE;
+            $scope = $banner['scope'];
+            $type = $banner['type'];
+            $bannerModel->creative_size = $scope;
+            $bannerModel->creative_type = $type;
+
+            try {
+                switch ($type) {
+                    case Banner::TEXT_TYPE_IMAGE:
+                        $fileName = Utils::extractFilename($banner['url']);
+                        $content = ImageUploader::content($fileName);
+                        $mimeType = ImageUploader::contentMimeType($fileName);
+                        break;
+                    case Banner::TEXT_TYPE_VIDEO:
+                        $fileName = Utils::extractFilename($banner['url']);
+                        $content = VideoUploader::content($fileName);
+                        $mimeType = VideoUploader::contentMimeType($fileName);
+                        break;
+                    case Banner::TEXT_TYPE_MODEL:
+                        $fileName = Utils::extractFilename($banner['url']);
+                        $content = ModelUploader::content($fileName);
+                        $mimeType = ModelUploader::contentMimeType($content);
+                        break;
+                    case Banner::TEXT_TYPE_HTML:
+                        $content = ZipUploader::content(Utils::extractFilename($banner['url']));
+                        $mimeType = 'text/html';
+                        break;
+                    case Banner::TEXT_TYPE_DIRECT_LINK:
+                    default:
+                        $content = Utils::appendFragment(
+                            empty($banner['contents']) ? $campaign->landing_url : $banner['contents'],
+                            $scope
+                        );
+                        $mimeType = 'text/plain';
+                        break;
+                }
+            } catch (FileNotFoundException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage());
+            } catch (RuntimeException $exception) {
+                Log::debug(
+                    sprintf(
+                        'Banner (name: %s, type: %s) could not be added (%s).',
+                        $banner['name'],
+                        $type,
+                        $exception->getMessage()
+                    )
+                );
+
+                continue;
+            }
+
+            $bannerModel->creative_contents = $content;
+            $bannerModel->creative_mime = $mimeType;
+
+            $banners[] = $bannerModel;
+        }
+
+        $mimesValidator = new MimeTypesValidator($medium);
+        $mimesValidator->validateMimeTypes($banners);
+
+        return $banners;
+    }
+
+    public function updateBanner(array $input, Banner $banner): Banner
+    {
+        if (array_key_exists('name', $input)) {
+            BannerValidator::validateName($input['name']);
+            $banner->name = $input['name'];
+        }
+
+        if (array_key_exists('status', $input)) {
+            if (Banner::STATUS_REJECTED === $banner->status) {
+                throw new InvalidArgumentException('Banner was rejected');
+            }
+
+            if (!is_int($input['status']) && !is_string($input['status'])) {
+                throw new InvalidArgumentException('Field `status` must be an integer or string');
+            }
+
+            if (is_int($input['status'])) {
+                if (!Banner::isStatusAllowed($input['status'])) {
+                    throw new InvalidArgumentException('Field `status` must be one of supported states');
+                }
+                $banner->status = $input['status'];
+            } else {
+                try {
+                    $status = BannerStatus::fromString($input['status']);
+                } catch (InvalidArgumentException) {
+                    throw new InvalidArgumentException('Field `status` must be one of supported states');
+                }
+                $banner->status = $status->value;
+            }
+        }
+
+        return $banner;
+    }
+
+    private function changeLegacyFields(array $banner): array
+    {
+        foreach (
+            [
+                'creative_size' => 'scope',
+                'creative_type' => 'type',
+                'creative_contents' => 'contents',
+            ] as $legacyField => $field
+        ) {
+            if (!isset($banner[$field]) && isset($banner[$legacyField])) {
+                $banner[$field] = $banner[$legacyField];
+            }
+        }
+        return $banner;
+    }
+}

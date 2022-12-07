@@ -23,9 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Utilities;
 
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-
 class PercentileComputer
 {
     /** @var int */

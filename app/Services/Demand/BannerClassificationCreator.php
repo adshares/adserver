@@ -25,9 +25,15 @@ namespace Adshares\Adserver\Services\Demand;
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 
 class BannerClassificationCreator
 {
+    public function __construct(private readonly ClassifierExternalRepository $classifierExternalRepository)
+    {
+    }
+
     public function create(string $classifier, ?array $bannerIds): void
     {
         $banners = Banner::fetchBannersNotClassifiedByClassifier($classifier, $bannerIds);
@@ -35,5 +41,23 @@ class BannerClassificationCreator
         foreach ($banners as $banner) {
             $banner->classifications()->save(BannerClassification::prepare($classifier));
         }
+    }
+
+    public function createForCampaign(Campaign $campaign): void
+    {
+        if (
+            Campaign::STATUS_ACTIVE !== $campaign->status
+            || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier()?->getName())
+        ) {
+            return;
+        }
+
+        $bannerIds = $campaign->banners()->pluck('id');
+
+        if ($bannerIds->isEmpty()) {
+            return;
+        }
+
+        $this->create($classifier, $bannerIds->toArray());
     }
 }

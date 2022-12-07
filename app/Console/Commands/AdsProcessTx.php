@@ -27,6 +27,7 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Mail\CampaignResume;
 use Adshares\Adserver\Mail\DepositProcessed;
@@ -35,6 +36,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Common\AdsLogReader;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -113,6 +115,7 @@ class AdsProcessTx extends BaseCommand
         }
 
         $this->info('Finish processing incoming txs');
+        ServerEvent::dispatch(ServerEventType::IncomingTransactionProcessed);
 
         return self::EXIT_CODE_SUCCESS;
     }
@@ -266,6 +269,8 @@ class AdsProcessTx extends BaseCommand
                 }
 
                 DB::commit();
+                $transactionId = $transaction->getId();
+                ServerEvent::dispatch(ServerEventType::UserDepositProcessed, compact('amount', 'transactionId'));
             }
         } else {
             $adsPayment->status = AdsPayment::STATUS_INVALID;

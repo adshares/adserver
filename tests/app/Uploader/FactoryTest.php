@@ -75,26 +75,4 @@ final class FactoryTest extends TestCase
             ['default', ImageUploader::class],
         ];
     }
-
-    /**
-     * @dataProvider fileNameProvider
-     */
-    public function testCreateFromExtension(string $fileName, string $class): void
-    {
-        $request = self::createMock(Request::class);
-
-        $uploader = Factory::createFromExtension($fileName, $request);
-        self::assertInstanceOf($class, $uploader);
-    }
-
-    public function fileNameProvider(): array
-    {
-        return [
-            ['example.zip', ZipUploader::class],
-            ['example.mp4', VideoUploader::class],
-            ['example.glb', ModelUploader::class],
-            ['example.png', ImageUploader::class],
-            ['example', ImageUploader::class],
-        ];
-    }
 }

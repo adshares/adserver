@@ -28,6 +28,7 @@ use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
@@ -75,7 +76,11 @@ class ModelUploader implements Uploader
 
     public static function content(string $fileName): string
     {
-        return Storage::disk(self::DISK)->get($fileName);
+        $content = Storage::disk(self::DISK)->get($fileName);
+        if (null === $content) {
+            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
+        }
+        return $content;
     }
 
     public static function contentMimeType(string $content): string

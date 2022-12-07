@@ -21,10 +21,12 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
@@ -444,5 +446,25 @@ class Utils
     public static function isUuidValid($uuid): bool
     {
         return is_string($uuid) && 1 === preg_match('/^[0-9a-f]{32}$/i', $uuid);
+    }
+
+    public static function getZoneTypeByBannerType(string $type): string
+    {
+        return match ($type) {
+            Banner::TEXT_TYPE_DIRECT_LINK => Size::TYPE_POP,
+            Banner::TEXT_TYPE_MODEL => Size::TYPE_MODEL,
+            default => Size::TYPE_DISPLAY,
+        };
+    }
+
+    public static function appendFragment(string $url, string $fragment): string
+    {
+        $suffix = '#' . $fragment;
+        return str_ends_with($url, $suffix) ? $url : $url . $suffix;
+    }
+
+    public static function extractFilename(string $imageUrl): string
+    {
+        return substr($imageUrl, strrpos($imageUrl, '/') + 1);
     }
 }

@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Common\Infrastructure\Service;
 
-use Adshares\Adserver\Utilities\NonceGenerator;
 use Adshares\Common\Infrastructure\Service\SodiumCompatSignatureVerifier;
 use DateTime;
 use PHPUnit\Framework\TestCase;

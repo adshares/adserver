@@ -29,6 +29,7 @@ use Adshares\Common\Application\Service\Exception\SignatureVerifierException;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -57,14 +58,14 @@ class AdsAuthenticator
 
     public function getHeader(string $account, string $privateKey): string
     {
-        $nonce = base64_encode(NonceGenerator::get());
+        $nonce = NonceGenerator::get();
         $created = new DateTimeImmutable();
         $signature = $this->signatureVerifier->createFromNonce($privateKey, $nonce, $created);
 
         return sprintf(
             'ADS account="%s", nonce="%s", created="%s", signature="%s"',
             $account,
-            $nonce,
+            base64_encode($nonce),
             $created->format('c'),
             $signature
         );
@@ -87,13 +88,13 @@ class AdsAuthenticator
 
         try {
             $created = new DateTimeImmutable($matches['created']);
-        } catch (\Exception $exception) {
+        } catch (Exception) {
             throw new AuthenticationException('Invalid date');
         }
 
         return $this->authenticate(
             $matches['account'],
-            $matches['nonce'],
+            base64_decode($matches['nonce']),
             $created,
             $matches['signature']
         );
@@ -107,7 +108,7 @@ class AdsAuthenticator
     ): string {
         try {
             $account = AdsUtils::normalizeAddress($account);
-        } catch (RuntimeException $exception) {
+        } catch (RuntimeException) {
             throw new AuthenticationException('Invalid account');
         }
 

@@ -22,9 +22,6 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Supply\Domain\ValueObject\Size;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 
 class Simulator extends Controller
 {

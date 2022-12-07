@@ -24,28 +24,23 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
 use Adshares\Adserver\Models\Banner;
-use Adshares\Common\Application\Dto\TaxonomyV2;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\InvalidArgumentException;
 
 class MimeTypesValidator
 {
-    private TaxonomyV2 $taxonomy;
-
-    public function __construct(TaxonomyV2 $taxonomy)
+    public function __construct(private readonly Medium $medium)
     {
-        $this->taxonomy = $taxonomy;
     }
 
     /**
      * @param Banner[]|array $banners
-     * @param string $mediumName
-     * @param string|null $vendor
      * @return void
      */
-    public function validateMimeTypes(array $banners, string $mediumName = 'web', ?string $vendor = null): void
+    public function validateMimeTypes(array $banners): void
     {
         $actual = $this->getActualMimesByBannerType($banners);
-        $supported = $this->getSupportedMimesByBannerType($mediumName, $vendor);
+        $supported = $this->getSupportedMimesByBannerType();
 
         foreach ($actual as $bannerType => $mimes) {
             if (!array_key_exists($bannerType, $supported)) {
@@ -73,16 +68,11 @@ class MimeTypesValidator
         return $mimesByBannerType;
     }
 
-    private function getSupportedMimesByBannerType(string $mediumName, ?string $vendor): array
+    private function getSupportedMimesByBannerType(): array
     {
         $supported = [];
-        foreach ($this->taxonomy->getMedia() as $medium) {
-            if ($medium->getName() === $mediumName && $medium->getVendor() === $vendor) {
-                foreach ($medium->getFormats() as $format) {
-                    $supported[$format->getType()] = $format->getMimes();
-                }
-                break;
-            }
+        foreach ($this->medium->getFormats() as $format) {
+            $supported[$format->getType()] = $format->getMimes();
         }
         return $supported;
     }

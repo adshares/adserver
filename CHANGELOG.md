@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.2.0] - 2022-12-07
+### Added
+- Deleting referral links
+- Referral links pagination
+- Server events log
+- Logging changes in users table
+- OAuth2
+- Campaigns APIv2
+- Dynamic find
+### Changed
+- Network host which does not broadcast is marked as failed before deleting
+- Do not request banners when zones are invalid
+- Configuration and monitoring API in camel case
+- Find script uses HTTP POST method
+- Placement code attribute to data-placement
+- Increased authentication security
+### Removed
+- Legacy campaign classification columns
+### Fixed
+- Changing network host state after incoming broadcast
+- Return default AdPanel's title if not set
+- Do not transform campaign's targeting
+- Campaign validation when files are missing
+- Direct banner validation (URL not required)
+- Configuration key case
+
 ## [2.1.1] - 2022-10-04
 ### Added
 - Monitoring network hosts
@@ -20,18 +48,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0] - 2022-09-28
 ### Added
 - Possibility to set application currency other than ADS
-- AdPanel's placeholders to config API
+- AdPanel's placeholders to configuration API
 - Allow change user roles
 - Login info to panel placeholders
 ### Changed
 - Split user access for advertisers and publishers
-- Config API returns data after store
+- Configuration API returns data after store
 ### Removed
 - Registration forms URLs from info
 ### Fixed
-- Do not expose SMTP password in config API
+- Do not expose SMTP password in configuration API
 - Remove deprecated zip* functions
-- Types, validators in config API
+- Types, validators in configuration API
 - Block find if publisher cannot be determined
 
 ## [2.0.5] - 2022-09-16
@@ -720,7 +748,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.1.1...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.0...develop
+[2.2.0]: https://github.com/adshares/adserver/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/adshares/adserver/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/adshares/adserver/compare/v2.0.5...v2.1.0
 [2.0.5]: https://github.com/adshares/adserver/compare/v2.0.4...v2.0.5

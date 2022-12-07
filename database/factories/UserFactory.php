@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class UserFactory extends Factory
@@ -41,6 +42,10 @@ class UserFactory extends Factory
 
     public function admin(): self
     {
-        return $this->state(['is_admin' => true]);
+        return $this->state([
+            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
+            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
+            'is_admin' => true,
+        ]);
     }
 }

@@ -49,6 +49,7 @@ use Adshares\Config\UserRole;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Closure;
 use DateTime;
 use DateTimeInterface;
 use Exception;
@@ -64,9 +65,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -74,6 +77,9 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
     private const TTL_ONE_HOUR = 3600;
+    private const ZONE_DEPTH_DEFAULT = 0;
+    private const ZONE_MINIMAL_DPI_DEFAULT = 1;
+    private const ZONE_NAME_DEFAULT = 'default';
 
     private static string $adserverId;
 
@@ -87,7 +93,7 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         AdSelect $bannerFinder,
         ConfigurationRepository $configurationRepository
-    ) {
+    ): BaseResponse {
         $type = $request->get('type');
         if (isset($type) && !is_array($type)) {
             $request->offsetSet('type', array($type));
@@ -115,9 +121,9 @@ class SupplyController extends Controller
             ]
         );
 
-        $validated['min_dpi'] = $validated['min_dpi'] ?? 1;
-        $validated['zone_name'] = $validated['zone_name'] ?? 'default';
-        $validated['depth'] = $validated['depth'] ?? 0;
+        $validated['min_dpi'] = $validated['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT;
+        $validated['zone_name'] = $validated['zone_name'] ?? self::ZONE_NAME_DEFAULT;
+        $validated['depth'] = $validated['depth'] ?? self::ZONE_DEPTH_DEFAULT;
 
         $payoutAddress = WalletAddress::fromString($validated['pay_to']);
         $user = User::fetchByWalletAddress($payoutAddress);
@@ -125,7 +131,7 @@ class SupplyController extends Controller
         if (!$user) {
             if (config('app.auto_registration_enabled')) {
                 if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
-                    throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                    throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                 }
                 $user = User::registerWithWallet($payoutAddress, true);
             } else {
@@ -133,7 +139,7 @@ class SupplyController extends Controller
             }
         }
         if (!$user->isPublisher()) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
+            throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
         }
         $site = Site::fetchOrCreate(
             $user->id,
@@ -201,11 +207,11 @@ class SupplyController extends Controller
                     $type => $message
                 ]
             ],
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            BaseResponse::HTTP_UNPROCESSABLE_ENTITY,
         );
     }
 
-    public function find(
+    public function legacyFind(
         Request $request,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
@@ -244,14 +250,6 @@ class SupplyController extends Controller
         try {
             $decodedQueryData = Utils::decodeZones($data);
             if (!isset($decodedQueryData['zones'])) {
-                $logData = [
-                    'decodedData' => $decodedQueryData,
-                    'request' => [
-                        'headers' => $request->headers->all(),
-                        'method' => $request->getRealMethod(),
-                    ],
-                ];
-                Log::error(sprintf('Error IT-103 (%s)', json_encode($logData)));
                 throw new UnprocessableEntityHttpException('Zones are required');
             }
             foreach ($decodedQueryData['zones'] as &$zone) {
@@ -302,13 +300,148 @@ class SupplyController extends Controller
         );
     }
 
+    public function find(
+        AdUser $contextProvider,
+        AdSelect $bannerFinder,
+        ConfigurationRepository $configurationRepository,
+        Request $request,
+    ): BaseResponse {
+        $response = new Response();
+
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        }
+
+        if ('POST' === $request->getRealMethod()) {
+            $input = $request->input();
+        } elseif ('GET' === $request->getRealMethod()) {
+            if (null === ($query = $request->query('data'))) {
+                throw new UnprocessableEntityHttpException('Query `data` is required');
+            }
+            $input = json_decode(Utils::urlSafeBase64Decode($query), true);
+        } else {
+            throw new MethodNotAllowedHttpException(['GET', 'POST']);
+        }
+
+        if (!is_array($input)) {
+            throw new UnprocessableEntityHttpException('Invalid body type');
+        }
+        foreach (['context', 'placements'] as $field) {
+            if (!isset($input[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', $field));
+            }
+        }
+
+        if (!is_array($input['context'])) {
+            throw new UnprocessableEntityHttpException('Field `context` must be an object');
+        }
+        $context = $input['context'];
+        foreach (['iid', 'url'] as $field) {
+            if (!isset($context[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `context.%s` is required', $field));
+            }
+            if (!is_string($context[$field])) {
+                throw new UnprocessableEntityHttpException(sprintf('Field `context.%s` must be a string', $field));
+            }
+        }
+        if (array_key_exists('metamask', $context) && !is_bool($context['metamask'])) {
+            throw new UnprocessableEntityHttpException('Field `context.metamask` must be a boolean');
+        }
+        if (array_key_exists('uid', $context) && !is_string($context['uid'])) {
+            throw new UnprocessableEntityHttpException('Field `context.uid` must be a string');
+        }
+        if (!is_array($input['placements'])) {
+            throw new UnprocessableEntityHttpException('Field `placements` must be an array');
+        }
+
+        $isDynamicFind = array_key_exists('publisher', $context);
+        if ($isDynamicFind) {
+            if (!is_string($context['publisher'])) {
+                throw new UnprocessableEntityHttpException('Field `context.publisher` must be a string');
+            }
+            if (!isset($context['medium'])) {
+                throw new UnprocessableEntityHttpException('Field `context.medium` is required');
+            }
+            if (!is_string($context['medium'])) {
+                throw new UnprocessableEntityHttpException('Field `context.medium` must be a string');
+            }
+            if (isset($context['vendor']) && !is_string($context['vendor'])) {
+                throw new UnprocessableEntityHttpException('Field `context.vendor` must be a string');
+            }
+
+            foreach ($input['placements'] as $placement) {
+                if (!is_array($placement)) {
+                    throw new UnprocessableEntityHttpException('Field `placements[]` must be an object');
+                }
+                self::validatePlacementCommonFields($placement);
+                self::validatePlacementFieldsDynamic($placement);
+            }
+        } else {
+            foreach ($input['placements'] as $placement) {
+                if (!is_array($placement)) {
+                    throw new UnprocessableEntityHttpException('Field `placements[]` must be an object');
+                }
+                self::validatePlacementCommonFields($placement);
+                self::validatePlacementFields($placement);
+            }
+        }
+
+        if ($isDynamicFind) {
+            try {
+                $medium = $configurationRepository->fetchMedium(
+                    $context['medium'],
+                    $context['vendor'] ?? null
+                );
+            } catch (InvalidArgumentException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage());
+            }
+            $site = $this->getSiteOrFail($context);
+
+            foreach ($input['placements'] as $key => $placement) {
+                $zoneType = $this->getZoneType($placement);
+                $zoneSizes = Size::findBestFit(
+                    $medium,
+                    (float)$placement['width'],
+                    (float)$placement['height'],
+                    (float)($placement['depth'] ?? self::ZONE_DEPTH_DEFAULT),
+                    (float)($placement['minDpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
+                    zoneType: $zoneType,
+                );
+                if (empty($zoneSizes)) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf(
+                            'Cannot find placement matching width %s, height %s)',
+                            $placement['width'],
+                            $placement['height']
+                        )
+                    );
+                }
+                $zoneObject = Zone::fetchOrCreate(
+                    $site->id,
+                    $zoneSizes[0],
+                    $placement['name'] ?? self::ZONE_NAME_DEFAULT,
+                    $zoneType,
+                );
+                $input['placements'][$key]['placementId'] = $zoneObject->uuid;
+            }
+        }
+
+        $mappedInput = self::mapFindInput($input);
+        $foundBanners = $this->findBanners($mappedInput, $request, $response, $contextProvider, $bannerFinder)
+            ->map($this->mapFoundBannerToResult())
+            ->toArray();
+        return self::json(['data' => $foundBanners]);
+    }
+
     public function findSimple(
         Request $request,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
         string $zone_id,
         string $impression_id
-    ) {
+    ): BaseResponse {
         $zone = Zone::fetchByPublicId($zone_id);
         $response = new Response();
         $queryData = [
@@ -345,7 +478,7 @@ class SupplyController extends Controller
         $im->compositeImage($watermark, \Imagick::COMPOSITE_ATOP, $w - 16, 0);
     }
 
-    private function sendForeignBrandedBanner($foundBanner): \Symfony\Component\HttpFoundation\Response
+    private function sendForeignBrandedBanner($foundBanner): BaseResponse
     {
         $response = new Response();
         $img = Cache::remember(
@@ -409,7 +542,7 @@ class SupplyController extends Controller
 
     private function decodeZones(array $decodedQueryData): array
     {
-        $zones = $decodedQueryData['zones'] ?? [];
+        $zones = $decodedQueryData['placements'] ?? $decodedQueryData['zones'] ?? [];// Key 'zones' is for legacy search
         if (!$zones) {
             throw new BadRequestHttpException('Site not accepted');
         }
@@ -468,7 +601,7 @@ class SupplyController extends Controller
                 foreach ($zones as &$zone) {
                     $zone['options']['cpa_only'] = true;
                 }
-            } elseif (config('app.env') != 'dev') {
+            } else {
                 return new FoundBanners();
             }
         }
@@ -489,14 +622,13 @@ class SupplyController extends Controller
                 $impressionContext,
                 $userContext,
                 $foundBanners,
-                $zones
             );
         }
 
         return $foundBanners;
     }
 
-    public function findScript(Request $request): \Symfony\Component\HttpFoundation\Response
+    public function findScript(Request $request): BaseResponse
     {
         if ($request->query->get('medium') == 'cryptovoxels') {
             return $this->cryptovoxelsScript();
@@ -827,7 +959,7 @@ class SupplyController extends Controller
                 $impressionId
             );
 
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FOUND);
+            $response->setStatusCode(BaseResponse::HTTP_FOUND);
             $response->headers->set('Location', new SecureUrl($adUserUrl));
         }
 
@@ -910,7 +1042,7 @@ class SupplyController extends Controller
 
         $userId = User::fetchByUuid($case->publisher_id)->id;
 
-        Storage::disk('local')->put(
+        Storage::disk('local')->append(
             'reported-ads.txt',
             sprintf('%s;%s', $userId, $bannerId)
         );
@@ -929,15 +1061,15 @@ class SupplyController extends Controller
     {
         if (null === ($networkHost = NetworkHost::fetchByAddress(config('app.adshares_address')))) {
             return response(
-                ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
-                Response::HTTP_INTERNAL_SERVER_ERROR
+                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
+                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
             );
         }
 
         if (null === ($meta = NetworkVectorsMeta::fetchByNetworkHostId($networkHost->id))) {
             return response(
-                ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver meta'],
-                Response::HTTP_INTERNAL_SERVER_ERROR
+                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver meta'],
+                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
             );
         }
 
@@ -979,5 +1111,205 @@ class SupplyController extends Controller
                 'categories' => $result,
             ]
         );
+    }
+
+    private function getPublisherOrFail(string $publisher): User
+    {
+        if (Utils::isUuidValid($publisher)) {
+            $user = User::fetchByUuid($publisher);
+        } else {
+            try {
+                $payoutAddress = WalletAddress::fromString($publisher);
+            } catch (InvalidArgumentException) {
+                throw new UnprocessableEntityHttpException(
+                    'Field `context.publisher` must be an ID or account address'
+                );
+            }
+            $user = User::fetchByWalletAddress($payoutAddress);
+            if (null === $user && config('app.auto_registration_enabled')) {
+                if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
+                    throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
+                }
+                $user = User::registerWithWallet($payoutAddress, true);
+            }
+        }
+
+        if (null === $user) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('User not found for %s', $publisher)
+            );
+        }
+
+        if (!$user->isPublisher()) {
+            throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
+        }
+
+        return $user;
+    }
+
+    private function getSiteOrFail(array $context): Site
+    {
+        $user = $this->getPublisherOrFail($context['publisher']);
+
+        try {
+            $site = Site::fetchOrCreate(
+                $user->id,
+                $context['url'],
+                $context['medium'],
+                $context['vendor'] ?? null,
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
+
+        if (Site::STATUS_ACTIVE !== $site->status) {
+            throw new UnprocessableEntityHttpException(sprintf('Site `%s` is not active', $site->name));
+        }
+
+        return $site;
+    }
+
+    private function getZoneType(array $placement): ?string
+    {
+        if (isset($placement['types'])) {
+            $zoneTypes = array_unique(
+                array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+            );
+            if (count($zoneTypes) > 1) {
+                throw new UnprocessableEntityHttpException(
+                    'Field `placements[].types` cannot contain conflicting types'
+                );
+            }
+            $zoneType = $zoneTypes[0];
+        } else {
+            $zoneType = null;
+        }
+        return $zoneType;
+    }
+
+    private static function mapFindInput(array $input): array
+    {
+        $context = $input['context'];
+        $mapped = [
+            'page' => [
+                'iid' => $context['iid'],
+                'url' => $context['url'],
+            ],
+        ];
+        if (isset($context['metamask'])) {
+            $mapped['page']['metamask'] = (int)($context['metamask']);
+        }
+        if (isset($context['uid'])) {
+            $mapped['user']['account'] = $context['uid'];
+        }
+
+        foreach ($input['placements'] as $placement) {
+            $placementData = [
+                'placementId' => $placement['placementId'],
+                'options' => [
+                    'banner_type' => $placement['types'] ?? null,
+                    'banner_mime' => $placement['mimes'] ?? null,
+                ],
+            ];
+            if (isset($placement['id'])) {
+                $placementData['id'] = $placement['id'];
+            }
+            $mapped['placements'][] = $placementData;
+        }
+
+        return $mapped;
+    }
+
+    private function mapFoundBannerToResult(): Closure
+    {
+        return function ($item) {
+            $mapped = [
+                'placementId' => $item['id'],
+                'zoneId' => $item['zone_id'],
+                'publisherId' => $item['publisher_id'],
+                'demandServer' => $item['pay_from'],
+                'supplyServer' => $item['pay_to'],
+                'type' => $item['type'],
+                'scope' => $item['size'],
+                'hash' => $item['creative_sha1'],
+                'serveUrl' => $item['serve_url'],
+                'viewUrl' => $item['view_url'],
+                'clickUrl' => $item['click_url'],
+                'infoBox' => $item['info_box'],
+                'rpm' => $item['rpm'],
+            ];
+            if (isset($item['request_id'])) {
+                $mapped['id'] = $item['request_id'];
+            }
+            return $mapped;
+        };
+    }
+
+    private static function validatePlacementCommonFields(array $placement): void
+    {
+        $fieldsOptional = [
+            'types',
+            'mimes',
+        ];
+        foreach ($fieldsOptional as $field) {
+            if (isset($placement[$field])) {
+                if (!is_array($placement[$field])) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('Field `placements[].%s` must be an array', $field)
+                    );
+                }
+                foreach ($placement[$field] as $entry) {
+                    if (!is_string($entry)) {
+                        throw new UnprocessableEntityHttpException(
+                            sprintf('Field `placements[].%s` must be an array of strings', $field)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    private static function validatePlacementFields(array $placement): void
+    {
+        if (!isset($placement['placementId'])) {
+            throw new UnprocessableEntityHttpException('Field `placements[].placementId` is required');
+        }
+        if (!Utils::isUuidValid($placement['placementId'])) {
+            throw new UnprocessableEntityHttpException(
+                'Field `placements[].placementId` is must be a hexadecimal string of length 32'
+            );
+        }
+    }
+
+    private static function validatePlacementFieldsDynamic(array $placement): void
+    {
+        $fieldsRequired = [
+            'width',
+            'height',
+        ];
+        foreach ($fieldsRequired as $field) {
+            if (!isset($placement[$field])) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Field `placements[].%s` is required', $field)
+                );
+            }
+            if (!is_string($placement[$field])) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Field `placements[].%s` must be a string', $field)
+                );
+            }
+        }
+        $fieldsOptional = [
+            'depth',
+            'minDpi',
+            'name',
+        ];
+        foreach ($fieldsOptional as $field) {
+            if (array_key_exists($field, $placement) && !is_string($placement[$field])) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Field `placements[].%s` must be a string', $field)
+                );
+            }
+        }
     }
 }

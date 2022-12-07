@@ -34,11 +34,11 @@ use Adshares\Supply\Domain\ValueObject\Size;
 class SiteCodeGenerator
 {
     private const CODE_TEMPLATE_DISPLAY
-        = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
+        = '<div class="{{selectorClass}}" {{dataOptions}}data-placement="{{zoneId}}" '
         . 'style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto">{{fallback}}</div>';
 
     private const CODE_TEMPLATE_POP
-        = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
+        = '<div class="{{selectorClass}}" {{dataOptions}}data-placement="{{zoneId}}" '
         . 'style="display: none">{{fallback}}</div>';
 
     private const FILE_TEMPLATE_CRYPTOVOXELS = '/resources/js/cryptovoxels/template.js';

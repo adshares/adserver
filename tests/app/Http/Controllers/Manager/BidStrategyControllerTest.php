@@ -28,8 +28,6 @@ use Adshares\Adserver\Models\BidStrategyDetail;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTimeImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -677,12 +675,5 @@ class BidStrategyControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user, 'api');
         return $user;
-    }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 }

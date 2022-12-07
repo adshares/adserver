@@ -30,34 +30,47 @@ use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\RequireModeratorAccess;
 use Adshares\Adserver\Http\Middleware\RequirePublisherAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
+use Adshares\Adserver\Http\Middleware\TrackUserActivity;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Fruitcake\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Laravel\Passport\Http\Middleware\CheckClientCredentials;
+use Laravel\Passport\Http\Middleware\CheckForAnyScope;
 
 class Kernel extends HttpKernel
 {
-    private const AUTH = 'auth';
+    public const AUTH = 'auth';
 
     public const USER_ACCESS = 'only-authenticated-users';
+    public const USER_JWT_ACCESS = 'jwt-only-authenticated-users';
     public const ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION = 'only-authenticated-users-except-impersonation';
     public const ADMIN_ACCESS = 'only-admin-users';
     public const ADMIN_JWT_ACCESS = 'jwt-admin-users';
     public const MODERATOR_ACCESS = 'only-moderator-users';
+    public const MODERATOR_JWT_ACCESS = 'jwt-moderator-users';
     public const AGENCY_ACCESS = 'only-agency-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const ADVERTISER_ACCESS = 'only-advertisers';
+    public const ADVERTISER_JWT_ACCESS = 'jwt-only-advertisers';
     public const PUBLISHER_ACCESS = 'only-publishers';
     public const JSON_API = 'api';
-
+    public const JSON_API_CAMELIZE = 'api-camelize';
     public const JSON_API_NO_TRANSFORM = 'api-no-transform';
+    public const WEB = 'web';
 
     protected $middleware = [
         CheckForMaintenanceMode::class,
@@ -68,38 +81,60 @@ class Kernel extends HttpKernel
     protected $middlewareGroups = [
         self::USER_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             Impersonation::class,
+        ],
+        self::USER_JWT_ACCESS => [
+            self::AUTH . ':jwt',
+            TrackUserActivity::class,
         ],
         self::ADVERTISER_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             Impersonation::class,
+            RequireAdvertiserAccess::class,
+        ],
+        self::ADVERTISER_JWT_ACCESS => [
+            self::AUTH . ':jwt',
+            TrackUserActivity::class,
             RequireAdvertiserAccess::class,
         ],
         self::PUBLISHER_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             Impersonation::class,
             RequirePublisherAccess::class,
         ],
         self::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
         ],
         self::GUEST_ACCESS => [
             RequireGuestAccess::class,
         ],
         self::ADMIN_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             RequireAdminAccess::class,
         ],
         self::ADMIN_JWT_ACCESS => [
             self::AUTH . ':jwt',
+            TrackUserActivity::class,
             RequireAdminAccess::class,
         ],
         self::MODERATOR_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
+            RequireModeratorAccess::class,
+        ],
+        self::MODERATOR_JWT_ACCESS => [
+            self::AUTH . ':jwt',
+            TrackUserActivity::class,
             RequireModeratorAccess::class,
         ],
         self::AGENCY_ACCESS => [
             self::AUTH . ':api',
+            TrackUserActivity::class,
             RequireAgencyAccess::class,
         ],
         self::JSON_API => [
@@ -112,16 +147,34 @@ class Kernel extends HttpKernel
             SetCacheHeaders::class,
             CamelizeJsonResponse::class,
         ],
+        self::JSON_API_CAMELIZE => [
+            ValidatePostSize::class,
+            SubstituteBindings::class,
+            #post-handle
+            SetCacheHeaders::class,
+            CamelizeJsonResponse::class,
+        ],
         self::JSON_API_NO_TRANSFORM => [
             ValidatePostSize::class,
             SubstituteBindings::class,
             #post-handle
             SetCacheHeaders::class,
         ],
+        self::WEB => [
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            VerifyCsrfToken::class,
+            SubstituteBindings::class,
+        ],
     ];
 
     protected $routeMiddleware = [
         self::AUTH => Authenticate::class,
+        'client' => CheckClientCredentials::class,
+        'scope' => CheckForAnyScope::class,
+        'throttle' => ThrottleRequests::class,
     ];
 
     public function bootstrap()

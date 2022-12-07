@@ -432,8 +432,8 @@ function fetchURL(url, options) {
                                 // request
         // completes (from cache)
         if (options.post) {
-            xhr.setRequestHeader && xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhr.send(options.post);
+            xhr.setRequestHeader && xhr.setRequestHeader('Content-type', 'application/json');
+            xhr.send(JSON.stringify(options.post));
         } else {
             xhr.send();
         }

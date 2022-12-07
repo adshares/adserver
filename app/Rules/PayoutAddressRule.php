@@ -2,7 +2,6 @@
 
 namespace Adshares\Adserver\Rules;
 
-use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Illuminate\Contracts\Validation\Rule;
 

@@ -27,15 +27,14 @@ use Adshares\Common\Application\Dto\TaxonomyV1;
 use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 use ErrorException;
+use GuzzleHttp\Utils;
 use Illuminate\Support\Facades\Log;
-
-use function GuzzleHttp\json_decode;
 
 final class TaxonomyV1Factory
 {
     public static function fromJson(string $json): TaxonomyV1
     {
-        return self::fromArray(json_decode($json, true));
+        return self::fromArray(Utils::jsonDecode($json, true));
     }
 
     public static function fromArray(array $taxonomy): TaxonomyV1

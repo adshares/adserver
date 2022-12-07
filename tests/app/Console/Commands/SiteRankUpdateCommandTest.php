@@ -27,10 +27,9 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Exception;
 use Illuminate\Mail\PendingMail;
@@ -43,6 +42,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
     public function testEmpty(): void
     {
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        self::assertSiteRankEventDispatched(0);
     }
 
     public function testLock(): void
@@ -56,6 +56,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
 
     public function testUpdateSitesInVerification(): void
     {
+        /** @var Site $siteInVerification */
         $siteInVerification = Site::factory()->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
         Site::factory()->create();
 
@@ -83,11 +84,14 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
         Mail::shouldReceive('to')->never();
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        self::assertSiteRankEventDispatched(1);
     }
 
     public function testUpdateSitesAll(): void
     {
+        /** @var Site $siteInVerification */
         $siteInVerification = Site::factory()->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
+        /** @var Site $siteVerified */
         $siteVerified = Site::factory()->create();
 
         $adUser = $this->createMock(AdUser::class);
@@ -125,6 +129,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
         Mail::shouldReceive('to')->never();
 
         $this->artisan(self::SIGNATURE, ['--all' => true])->assertExitCode(0);
+        self::assertSiteRankEventDispatched(2);
     }
 
     /**
@@ -143,6 +148,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
         $this->instance(AdUser::class, $adUser);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        self::assertSiteRankEventDispatched(1);
     }
 
     public function adUserExceptionProvider(): array
@@ -169,6 +175,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
         $this->instance(AdUser::class, $adUser);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        self::assertSiteRankEventDispatched(1);
     }
 
     public function adUserResponseProvider(): array
@@ -201,6 +208,7 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
         $this->instance(AdUser::class, $adUser);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        self::assertSiteRankEventDispatched(1);
     }
 
     public function testEmailSend(): void
@@ -225,12 +233,11 @@ class SiteRankUpdateCommandTest extends ConsoleTestCase
         $dbSite = Site::find($site->id);
         self::assertEquals(1, $dbSite->rank);
         self::assertEquals(AdUser::PAGE_INFO_OK, $dbSite->info);
+        self::assertSiteRankEventDispatched(1);
     }
 
-    protected function setUp(): void
+    private static function assertSiteRankEventDispatched(int $processedCount): void
     {
-        parent::setUp();
-
-        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
+        self::assertServerEventDispatched(ServerEventType::SiteRankUpdated, ['processedSiteCount' => $processedCount]);
     }
 }

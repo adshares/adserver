@@ -1,13 +1,14 @@
 <?php
+
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -24,8 +25,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class ChangeWidthAndHeightIntoSize extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::table(
@@ -105,6 +105,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
 
     public function down(): void
     {
+        DB::delete("DELETE FROM `banners` WHERE `creative_size` NOT REGEXP '^[0-9]+x[0-9]+$';");
         Schema::table(
             'banners',
             function (Blueprint $table) {
@@ -113,7 +114,10 @@ class ChangeWidthAndHeightIntoSize extends Migration
             }
         );
         DB::update(
-            'UPDATE `banners` SET `creative_width` = SUBSTRING_INDEX(`creative_size`, "x", 1), `creative_height` = SUBSTRING_INDEX(`creative_size`, "x", -1)'
+            'UPDATE `banners` '
+            . 'SET '
+            . '`creative_width` = SUBSTRING_INDEX(`creative_size`, "x", 1), '
+            . '`creative_height` = SUBSTRING_INDEX(`creative_size`, "x", -1)'
         );
         Schema::table(
             'banners',
@@ -122,6 +126,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
             }
         );
 
+        DB::delete("DELETE FROM `network_banners` WHERE `size` NOT REGEXP '^[0-9]+x[0-9]+$';");
         Schema::table(
             'network_banners',
             function (Blueprint $table) {
@@ -130,7 +135,8 @@ class ChangeWidthAndHeightIntoSize extends Migration
             }
         );
         DB::update(
-            'UPDATE `network_banners` SET `width` = SUBSTRING_INDEX(`size`, "x", 1), `height` = SUBSTRING_INDEX(`size`, "x", -1)'
+            'UPDATE `network_banners` '
+            . 'SET `width` = SUBSTRING_INDEX(`size`, "x", 1), `height` = SUBSTRING_INDEX(`size`, "x", -1)'
         );
         Schema::table(
             'network_banners',
@@ -148,28 +154,12 @@ class ChangeWidthAndHeightIntoSize extends Migration
             }
         );
 
-        Schema::create(
-            '__zone_labels',
-            function (Blueprint $table) {
-                $table->string('size', 16)->primary();
-                $table->string('label');
-            }
-        );
-
-        foreach (Size::SIZE_INFOS as $size => $info) {
-            DB::insert(
-                'INSERT INTO `__zone_labels`(`size`, `label`) VALUES (?, ?)',
-                [$size, $info['label'] ?? '']
-            );
-        }
-
+        DB::delete("DELETE FROM `zones` WHERE `size` NOT REGEXP '^[0-9]+x[0-9]+$';");
         DB::update(
             'UPDATE `zones` '
-            .'SET `width` = SUBSTRING_INDEX(`size`, "x", 1), `height` = SUBSTRING_INDEX(`size`, "x", -1), '
-            .'`label` = (SELECT `label` FROM `__zone_labels` `zl` WHERE `zl`.`size` = `zones`.`size`)'
+            . 'SET `width` = SUBSTRING_INDEX(`size`, "x", 1), `height` = SUBSTRING_INDEX(`size`, "x", -1), '
+            . '`label` = `size`'
         );
-
-        Schema::dropIfExists('__zone_labels');
 
         Schema::table(
             'zones',
@@ -178,4 +168,4 @@ class ChangeWidthAndHeightIntoSize extends Migration
             }
         );
     }
-}
+};

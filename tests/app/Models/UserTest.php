@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Spatie\Activitylog\LogOptions;
 
 class UserTest extends TestCase
 {
@@ -118,8 +119,8 @@ class UserTest extends TestCase
         $this->assertEquals('test@test.pl', $user->email);
         $this->assertEquals('admin2', $user->name);
         $this->assertTrue($user->isAdmin());
-        $this->assertFalse($user->isPublisher());
-        $this->assertFalse($user->isAdvertiser());
+        $this->assertTrue($user->isPublisher());
+        $this->assertTrue($user->isAdvertiser());
         $this->assertNotNull($user->password);
         $this->assertNotNull($user->admin_confirmed_at);
     }
@@ -137,5 +138,27 @@ class UserTest extends TestCase
         $this->assertEquals(100, $user->auto_withdrawal);
         $this->assertEquals(100, $user->auto_withdrawal_limit);
         $this->assertTrue($user->is_auto_withdrawal);
+    }
+
+    public function testGetActivitylogOptions(): void
+    {
+        $options = (new User())->getActivitylogOptions();
+        self::assertInstanceOf(LogOptions::class, $options);
+    }
+
+    public function testFetchOrRegisterSystemUserWhileDoesNotExist(): void
+    {
+        User::fetchOrRegisterSystemUser();
+
+        self::assertDatabaseCount(User::class, 1);
+    }
+
+    public function testFetchOrRegisterSystemUserWhileExist(): void
+    {
+        User::factory()->create(['name' => 'system']);
+
+        User::fetchOrRegisterSystemUser();
+
+        self::assertDatabaseCount(User::class, 1);
     }
 }

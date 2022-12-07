@@ -27,9 +27,11 @@ use Adshares\Adserver\Models\Traits\AddressWithNetwork;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\ViewModel\Role;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\UserRole;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,7 +43,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Tymon\JWTAuth\Contracts\JWTSubject;
+use Laravel\Passport\HasApiTokens;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property Collection|Campaign[] campaigns
@@ -49,6 +53,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property string email
  * @property string label
  * @property Carbon|null created_at
+ * @property Carbon|null updated_at
+ * @property Carbon|null deleted_at
  * @property DateTime|null email_confirmed_at
  * @property DateTime|null admin_confirmed_at
  * @property string uuid
@@ -70,11 +76,13 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int|null auto_withdrawal
  * @property bool is_auto_withdrawal
  * @property int auto_withdrawal_limit
- * @property bool is_banned
+ * @property int is_banned
  * @property string ban_reason
+ * @property Carbon|null last_active_at
+ * @property array roles
  * @mixin Builder
  */
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable
 {
     use Notifiable;
     use SoftDeletes;
@@ -82,13 +90,25 @@ class User extends Authenticatable implements JWTSubject
     use AutomateMutators;
     use BinHex;
     use AddressWithNetwork;
+    use HasApiTokens;
     use HasFactory;
+    use LogsActivity;
 
     public static $rules_add = [
         'email' => 'required|email|max:150|unique:users',
         'password' => 'required|min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
+    ];
+    private const DATE_CAST = 'date:' . DateTimeInterface::ATOM;
+
+    protected $casts = [
+        'created_at' => self::DATE_CAST,
+        'updated_at' => self::DATE_CAST,
+        'deleted_at' => self::DATE_CAST,
+        'admin_confirmed_at' => self::DATE_CAST,
+        'email_confirmed_at' => self::DATE_CAST,
+        'last_active_at' => self::DATE_CAST,
     ];
 
     /**
@@ -100,6 +120,7 @@ class User extends Authenticatable implements JWTSubject
         'deleted_at',
         'email_confirmed_at',
         'admin_confirmed_at',
+        'last_active_at',
     ];
 
     /**
@@ -231,6 +252,28 @@ class User extends Authenticatable implements JWTSubject
         return (int)$this->auto_withdrawal;
     }
 
+    public function getRolesAttribute(): array
+    {
+        $roles = [
+            Role::Admin->value => $this->isAdmin(),
+            Role::Advertiser->value => $this->isAdvertiser(),
+            Role::Agency->value => $this->isAgency(),
+            Role::Moderator->value => $this->isModerator(),
+            Role::Publisher->value => $this->isPublisher(),
+        ];
+
+        return array_keys(array_filter($roles));
+    }
+
+    public function setRolesAttribute($value): void
+    {
+        $this->is_admin = in_array(Role::Admin->value, $value);
+        $this->is_advertiser = in_array(Role::Advertiser->value, $value);
+        $this->is_agency = in_array(Role::Agency->value, $value);
+        $this->is_moderator = in_array(Role::Moderator->value, $value);
+        $this->is_publisher = in_array(Role::Publisher->value, $value);
+    }
+
     public function setPasswordAttribute($value): void
     {
         $this->attributes['password'] = null !== $value ? Hash::make($value) : null;
@@ -256,6 +299,7 @@ class User extends Authenticatable implements JWTSubject
             $this->api_token = Str::random(60);
         } while ($this->where('api_token', $this->api_token)->exists());
 
+        $this->last_active_at = now();
         $this->save();
     }
 
@@ -275,7 +319,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function ban(string $reason): void
     {
-        $this->is_banned = true;
+        $this->is_banned = 1;
         $this->ban_reason = $reason;
         $this->api_token = null;
         $this->auto_withdrawal = null;
@@ -284,7 +328,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function unban(): void
     {
-        $this->is_banned = false;
+        $this->is_banned = 0;
         $this->save();
     }
 
@@ -341,6 +385,11 @@ class User extends Authenticatable implements JWTSubject
     public function isAgency(): bool
     {
         return (bool)$this->is_agency;
+    }
+
+    public function isBanned(): bool
+    {
+        return (bool)$this->is_banned;
     }
 
     public function campaigns(): HasMany
@@ -419,6 +468,7 @@ class User extends Authenticatable implements JWTSubject
     protected static function register(array $data, ?RefLink $refLink = null): User
     {
         $user = User::create($data);
+        $user->refresh();
         $user->password = $data['password'] ?? null;
         if (null !== $refLink) {
             if (null !== $refLink->user_roles) {
@@ -432,6 +482,20 @@ class User extends Authenticatable implements JWTSubject
         }
         $user->saveOrFail();
         return $user;
+    }
+
+    public function updateEmailWalletAndRoles(?string $email, ?WalletAddress $walletAddress, ?array $roles): void
+    {
+        if (null !== $email) {
+            $this->email = $email;
+        }
+        if (null !== $walletAddress) {
+            $this->wallet_address = $walletAddress;
+        }
+        if (null !== $roles) {
+            $this->roles = $roles;
+        }
+        $this->saveOrFail();
     }
 
     public static function registerWithWallet(
@@ -467,6 +531,21 @@ class User extends Authenticatable implements JWTSubject
         return $user;
     }
 
+    public static function fetchOrRegisterSystemUser(): User
+    {
+        if (null !== ($user = self::where('name', 'system')->first())) {
+            return $user;
+        }
+
+        $user = new User();
+        $user->name = 'system';
+        $user->password = Str::random(32);
+        $user->is_advertiser = 0;
+        $user->is_publisher = 0;
+        $user->saveOrFail();
+        return $user;
+    }
+
     public function awardBonus(int $amount, ?RefLink $refLink = null): void
     {
         UserLedgerEntry::insertUserBonus($this->id, $amount, $refLink);
@@ -493,16 +572,14 @@ class User extends Authenticatable implements JWTSubject
         return self::where('subscribe', 1)->whereNotNull('email')->get()->pluck('email');
     }
 
-    public function getJWTIdentifier()
+    public function getActivitylogOptions(): LogOptions
     {
-        return $this->getKey();
-    }
-
-    public function getJWTCustomClaims(): array
-    {
-        return [
-            'admin' => $this->isAdmin(),
-            'username' => $this->email ?? $this->wallet_address->toString()
-        ];
+        return LogOptions::defaults()
+            ->useLogName('users')
+            ->logAll()
+            ->logExcept(['api_token', 'last_active_at', 'updated_at'])
+            ->logOnlyDirty()
+            ->useAttributeRawValues(['wallet_address'])
+            ->dontSubmitEmptyLogs();
     }
 }

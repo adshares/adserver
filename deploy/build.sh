@@ -19,7 +19,8 @@
 #
 
 # Usage: build.sh [<work-dir>]
-cd ${1:-"."}
+WORK_DIR=${1:-"."}
+cd "$WORK_DIR" || exit 1
 
 function artisanCommand {
     ./artisan --no-interaction "$@"

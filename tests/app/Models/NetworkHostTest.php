@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Models;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTimeImmutable;
 
@@ -81,5 +82,19 @@ class NetworkHostTest extends TestCase
             '0001-00000004-DBEB'
         ]);
         $this->assertEquals(['0001-00000002-BB2D', '0001-00000004-DBEB'], $addresses);
+    }
+
+    public function testRegisterWhenHostInUnreachableState(): void
+    {
+        $hostData = [
+            'address' => '0001-00000001-8B4E',
+            'failed_connection' => 10,
+            'status' => HostStatus::Unreachable,
+        ];
+        /** @var NetworkHost $host */
+        $host = NetworkHost::factory()->create($hostData);
+        NetworkHost::registerHost('0001-00000001-8B4E', $host->info_url, $host->info, new DateTimeImmutable());
+
+        self::assertDatabaseHas(NetworkHost::class, $hostData);
     }
 }

@@ -24,12 +24,13 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
-use Adshares\Adserver\Mail\Crm\SiteAdded;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
@@ -47,7 +48,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -55,15 +55,10 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
-    private ConfigurationRepository $configurationRepository;
-    private SiteCategoriesValidator $siteCategoriesValidator;
-
     public function __construct(
-        ConfigurationRepository $configurationRepository,
-        SiteCategoriesValidator $siteCategoriesValidator
+        private readonly ConfigurationRepository $configurationRepository,
+        private readonly SiteCategoriesValidator $siteCategoriesValidator,
     ) {
-        $this->configurationRepository = $configurationRepository;
-        $this->siteCategoriesValidator = $siteCategoriesValidator;
     }
 
     public function create(Request $request): JsonResponse
@@ -139,7 +134,7 @@ class SitesController extends Controller
 
         DB::commit();
 
-        $this->sendCrmMailOnSiteAdded($user, $site);
+        CrmNotifier::sendCrmMailOnSiteAdded($user, $site);
 
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site->id]));
@@ -147,14 +142,20 @@ class SitesController extends Controller
 
     public function read(Site $site): JsonResponse
     {
-        return self::json($this->processClassificationInFiltering($site));
+        return self::json($this->prepareSiteObject($site));
     }
 
-    private function processClassificationInFiltering(Site $site): array
+    private function prepareSiteObject(Site $site): array
     {
         $siteArray = $site->toArray();
-        $filtering = $siteArray['filtering'];
+        $siteArray['filtering'] = $this->processClassificationInFiltering($siteArray['filtering']);
+        $siteArray['ad_units'] = $this->appendAdUnitsLabels($siteArray['ad_units'], $this->getLabelBySize($site));
 
+        return $siteArray;
+    }
+
+    private function processClassificationInFiltering(array $filtering): array
+    {
         $filtering['requires'] = array_filter(
             $filtering['requires'] ?: [],
             $this->filterOutHelperKeywords(),
@@ -166,9 +167,7 @@ class SitesController extends Controller
             ARRAY_FILTER_USE_KEY
         );
 
-        $siteArray['filtering'] = $filtering;
-
-        return $siteArray;
+        return $filtering;
     }
 
     private function filterOutHelperKeywords(): Closure
@@ -177,6 +176,14 @@ class SitesController extends Controller
             return SiteFilteringUpdater::INTERNAL_CLASSIFIER_NAMESPACE !== $key
                 && false === strpos($key, SiteFilteringUpdater::KEYWORD_CLASSIFIED);
         };
+    }
+
+    private function appendAdUnitsLabels(array $adUnits, array $labelBySize): array
+    {
+        foreach ($adUnits as &$adUnit) {
+            $adUnit['label'] = $labelBySize[$adUnit['size']] ?? '';
+        }
+        return $adUnits;
     }
 
     public function update(Request $request, Site $site): JsonResponse
@@ -241,10 +248,11 @@ class SitesController extends Controller
     {
         $presentUniqueSizes = [];
         $keysToRemove = [];
+        $bannerTypeBySize = $this->getBannerTypeBySize($site);
 
         foreach ($inputZones as $key => &$inputZone) {
             $size = $inputZone['size'];
-            $type = Size::SIZE_INFOS[$size]['type'];
+            $type = Utils::getZoneTypeByBannerType($bannerTypeBySize[$size]);
             $inputZone['type'] = $type;
 
             if (Size::TYPE_POP !== $type) {
@@ -331,7 +339,7 @@ class SitesController extends Controller
         $siteCollection = Site::get();
         $sites = [];
         foreach ($siteCollection as $site) {
-            $sites[] = $this->processClassificationInFiltering($site);
+            $sites[] = $this->prepareSiteObject($site);
         }
 
         return self::json($sites);
@@ -492,12 +500,29 @@ class SitesController extends Controller
         }
     }
 
-    private function sendCrmMailOnSiteAdded(User $user, Site $site): void
+    private function getBannerTypeBySize(Site $site): array
     {
-        if (config('app.crm_mail_address_on_site_added')) {
-            Mail::to(config('app.crm_mail_address_on_site_added'))->queue(
-                new SiteAdded($user->uuid, $user->email, $site)
-            );
+        $formats = $this->configurationRepository->fetchMedium($site->medium, $site->vendor)->getFormats();
+        $typeBySize = [];
+
+        foreach ($formats as $format) {
+            foreach ($format->getScopes() as $size => $label) {
+                if (!isset($typeBySize[$size])) {
+                    $typeBySize[$size] = $format->getType();
+                }
+            }
         }
+        return $typeBySize;
+    }
+
+    private function getLabelBySize(Site $site): array
+    {
+        $formats = $this->configurationRepository->fetchMedium($site->medium, $site->vendor)->getFormats();
+        $labelBySize = [];
+
+        foreach ($formats as $format) {
+            $labelBySize = array_merge($format->getScopes(), $labelBySize);
+        }
+        return $labelBySize;
     }
 }

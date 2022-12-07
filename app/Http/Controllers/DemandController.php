@@ -27,7 +27,6 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;

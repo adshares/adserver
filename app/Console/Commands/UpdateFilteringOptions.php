@@ -21,12 +21,13 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Supply\Application\Service\FilteringOptionsImporter;
 
 class UpdateFilteringOptions extends BaseCommand
 {
     protected $signature = 'ops:filtering-options:update';
-
     protected $description = 'Updates site filtering options';
 
     public function handle(FilteringOptionsImporter $service): void
@@ -39,6 +40,7 @@ class UpdateFilteringOptions extends BaseCommand
         $this->info('Start command ' . $this->signature);
 
         $service->import();
+        ServerEvent::dispatch(ServerEventType::FilteringUpdated);
 
         $this->info('Finish command ' . $this->signature);
     }

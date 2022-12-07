@@ -30,38 +30,41 @@ use Adshares\Supply\Domain\ValueObject\Size;
 
 class BannerValidator
 {
-    private Medium $medium;
     private ?array $supportedScopesByTypes = null;
 
-    public function __construct(Medium $medium)
+    public function __construct(private readonly Medium $medium)
     {
-        $this->medium = $medium;
     }
 
     public function validateBanner(array $banner): void
     {
-        foreach (['creative_type', 'creative_size', 'name', 'url'] as $field) {
-            if (!isset($banner[$field])) {
-                throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
-            }
-            if (!is_string($banner[$field]) || 0 === strlen($banner[$field])) {
-                throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
-            }
+        foreach (
+            [
+                'type' => Banner::TYPE_MAXIMAL_LENGTH,
+                'scope' => Banner::SIZE_MAXIMAL_LENGTH,
+                'name' => Banner::NAME_MAXIMAL_LENGTH,
+            ] as $field => $maxLength
+        ) {
+            self::validateField($banner, $field);
+            $this->validateFieldMaximumLength($banner[$field], $maxLength, $field);
+        }
+        $type = $banner['type'];
+        if (Banner::TEXT_TYPE_DIRECT_LINK !== $type) {
+            self::validateField($banner, 'url');
         }
 
         if (null === $this->supportedScopesByTypes) {
             $this->initializeSupportedScopesByTypes();
         }
 
-        $type = $banner['creative_type'];
         if (!isset($this->supportedScopesByTypes[$type])) {
-            throw new InvalidArgumentException(sprintf('Invalid banner type (%s)', $type));
+            throw new InvalidArgumentException(sprintf('Invalid type (%s)', $type));
         }
 
-        $size = $banner['creative_size'];
-        if ($type === Banner::TEXT_TYPE_VIDEO) {
+        $size = $banner['scope'];
+        if (Banner::TEXT_TYPE_VIDEO === $type) {
             if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
-                throw new InvalidArgumentException(sprintf('Invalid video size (%s)', $size));
+                throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $size));
             }
             if (
                 empty(
@@ -71,13 +74,13 @@ class BannerValidator
                     )
                 )
             ) {
-                throw new InvalidArgumentException(sprintf('Invalid video size (%s). No match', $size));
+                throw new InvalidArgumentException(sprintf('Invalid scope (%s). No match', $size));
             }
             return;
         }
 
         if (!isset($this->supportedScopesByTypes[$type][$size])) {
-            throw new InvalidArgumentException(sprintf('Invalid banner size (%s)', $size));
+            throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $size));
         }
     }
 
@@ -90,5 +93,31 @@ class BannerValidator
         }
 
         $this->supportedScopesByTypes = $supported;
+    }
+
+    private static function validateField(array $banner, string $field): void
+    {
+        if (!isset($banner[$field])) {
+            throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
+        }
+        if (!is_string($banner[$field]) || 0 === strlen($banner[$field])) {
+            throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
+        }
+    }
+
+    private static function validateFieldMaximumLength(string $value, int $maxLength, string $field): void
+    {
+        if (strlen($value) > $maxLength) {
+            throw new InvalidArgumentException(
+                sprintf('Field `%s` must have at most %d characters', $field, $maxLength)
+            );
+        }
+    }
+
+    public static function validateName($name): void
+    {
+        $field = 'name';
+        self::validateField([$field => $name], $field);
+        self::validateFieldMaximumLength($name, Banner::NAME_MAXIMAL_LENGTH, $field);
     }
 }

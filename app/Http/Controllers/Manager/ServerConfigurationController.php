@@ -47,7 +47,7 @@ use Throwable;
 
 class ServerConfigurationController extends Controller
 {
-    private const ALLOWED_KEYS = [
+    private const VALIDATION_RULES = [
         Config::ADPANEL_URL => 'nullable|url',
         Config::ADPAY_URL => 'nullable|url',
         Config::ADS_OPERATOR_SERVER_URL => 'nullable|url',
@@ -68,10 +68,10 @@ class ServerConfigurationController extends Controller
         Config::ALLOW_ZONE_IN_IFRAME => 'nullable|boolean',
         Config::AUTO_CONFIRMATION_ENABLED => 'nullable|boolean',
         Config::AUTO_REGISTRATION_ENABLED => 'nullable|boolean',
-        Config::AUTO_WITHDRAWAL_LIMIT_ADS => 'nullable|positiveInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_BSC => 'nullable|positiveInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_BTC => 'nullable|positiveInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_ETH => 'nullable|positiveInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_ADS => 'nullable|nonNegativeInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_BSC => 'nullable|nonNegativeInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_BTC => 'nullable|nonNegativeInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_ETH => 'nullable|nonNegativeInteger',
         Config::BANNER_FORCE_HTTPS => 'nullable|boolean',
         Config::BTC_WITHDRAW => 'nullable|boolean',
         Config::BTC_WITHDRAW_FEE => 'nullable|commission',
@@ -101,10 +101,11 @@ class ServerConfigurationController extends Controller
         Config::EXCHANGE_API_SECRET => 'nullable',
         Config::EXCHANGE_API_URL => 'nullable|url',
         Config::EXCHANGE_CURRENCIES => 'nullable|notEmpty|list:currency',
-        Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|positiveInteger',
-        Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|positiveInteger',
+        Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|nonNegativeInteger',
+        Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|nonNegativeInteger',
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
+        Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => 'nullable|positiveInteger',
         Config::INVENTORY_EXPORT_WHITELIST => 'nullable|list:accountId',
         Config::INVENTORY_FAILED_CONNECTION_LIMIT => 'nullable|positiveInteger',
         Config::INVENTORY_IMPORT_WHITELIST => 'nullable|list:accountId',
@@ -129,15 +130,15 @@ class ServerConfigurationController extends Controller
         Config::MAIL_SMTP_USERNAME => 'nullable',
         Config::MAIN_JS_BASE_URL => 'nullable|url',
         Config::MAIN_JS_TLD => 'nullable|host',
-        Config::MAX_PAGE_ZONES => 'nullable|positiveInteger',
-        Config::NETWORK_DATA_CACHE_TTL => 'nullable|positiveInteger',
+        Config::MAX_PAGE_ZONES => 'nullable|nonNegativeInteger',
+        Config::NETWORK_DATA_CACHE_TTL => 'nullable|nonNegativeInteger',
         Config::NOW_PAYMENTS_API_KEY => 'nullable',
         Config::NOW_PAYMENTS_CURRENCY => 'nullable|currency',
         Config::NOW_PAYMENTS_EXCHANGE => 'nullable|boolean',
         Config::NOW_PAYMENTS_FEE => 'nullable|commission',
         Config::NOW_PAYMENTS_IPN_SECRET => 'nullable',
-        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|positiveInteger',
-        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|positiveInteger',
+        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|nonNegativeInteger',
+        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|nonNegativeInteger',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
         Config::PUBLISHER_APPLY_FORM_URL => 'nullable|url',
@@ -156,16 +157,16 @@ class ServerConfigurationController extends Controller
         Config::SUPPORT_EMAIL => 'email',
         Config::SUPPORT_TELEGRAM => 'nullable|notEmpty',
         Config::TECHNICAL_EMAIL => 'email',
-        Config::UPLOAD_LIMIT_IMAGE => 'nullable|positiveInteger',
-        Config::UPLOAD_LIMIT_MODEL => 'nullable|positiveInteger',
-        Config::UPLOAD_LIMIT_VIDEO => 'nullable|positiveInteger',
-        Config::UPLOAD_LIMIT_ZIP => 'nullable|positiveInteger',
+        Config::UPLOAD_LIMIT_IMAGE => 'nullable|nonNegativeInteger',
+        Config::UPLOAD_LIMIT_MODEL => 'nullable|nonNegativeInteger',
+        Config::UPLOAD_LIMIT_VIDEO => 'nullable|nonNegativeInteger',
+        Config::UPLOAD_LIMIT_ZIP => 'nullable|nonNegativeInteger',
         Config::URL => 'url',
-        self::REJECTED_DOMAINS => 'nullable|list:domain',
+        'rejected-domains' => 'nullable|list:domain',
     ];
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
     private const MAX_VALUE_LENGTH = 65535;
-    private const REJECTED_DOMAINS = 'rejected-domains';
+    private const REJECTED_DOMAINS = 'rejectedDomains';
     private const RULE_NULLABLE = 'nullable';
 
     public function fetch(string $key = null): JsonResponse
@@ -173,7 +174,7 @@ class ServerConfigurationController extends Controller
         if (null !== $key) {
             self::validateKey($key);
             $data = [
-                $key => Config::fetchAdminSettings()[$key] ?? null,
+                $key => Config::fetchAdminSettings()[Str::kebab($key)] ?? null,
             ];
         } else {
             $data = Config::fetchAdminSettings();
@@ -190,7 +191,7 @@ class ServerConfigurationController extends Controller
     {
         if (null !== $key) {
             self::validatePlaceholderKey($key);
-            $placeholder = PanelPlaceholder::fetchByType($key);
+            $placeholder = PanelPlaceholder::fetchByType(Str::kebab($key));
             return self::json([$key => $placeholder?->content]);
         }
 
@@ -246,9 +247,7 @@ class ServerConfigurationController extends Controller
             throw new UnprocessableEntityHttpException('Data is required');
         }
         foreach ($data as $type => $content) {
-            if (!in_array($type, PanelPlaceholder::TYPES_ALLOWED, true)) {
-                throw new UnprocessableEntityHttpException(sprintf('Invalid type (%s)', $type));
-            }
+            self::validatePlaceholderKey($type);
             if (null === $content) {
                 return;
             }
@@ -260,9 +259,12 @@ class ServerConfigurationController extends Controller
 
     private function storePlaceholdersData(array $data): array
     {
+        $types = [];
         $typesToDelete = [];
         $placeholders = [];
         foreach ($data as $type => $content) {
+            $type = Str::kebab($type);
+            $types[] = $type;
             if (null === $content) {
                 $typesToDelete[] = $type;
             } else {
@@ -297,13 +299,12 @@ class ServerConfigurationController extends Controller
             throw new RuntimeException();
         }
 
-        $types = array_keys($data);
-
         return $this->getPanelPlaceholdersWithNulls($types);
     }
 
     private function storeData(array $data): array
     {
+        $mappedData = [];
         $appendRejectedDomains = false;
         try {
             if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
@@ -311,13 +312,16 @@ class ServerConfigurationController extends Controller
                 unset($data[self::REJECTED_DOMAINS]);
                 $appendRejectedDomains = true;
             }
-            Config::updateAdminSettings($data);
+            foreach ($data as $key => $value) {
+                $mappedData[Str::kebab($key)] = $value;
+            }
+            Config::updateAdminSettings($mappedData);
         } catch (Throwable $exception) {
             Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
             throw new RuntimeException('Cannot store configuration');
         }
 
-        $settings = array_intersect_key(Config::fetchAdminSettings(), $data);
+        $settings = array_intersect_key(Config::fetchAdminSettings(), $mappedData);
         if ($appendRejectedDomains) {
             $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
         }
@@ -353,13 +357,6 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validatePositiveInteger(string $field, string $value): void
-    {
-        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a positive integer', $field));
-        }
-    }
-
     private static function validateBoolean(string $field, string $value): void
     {
         if (!in_array($value, ['0', '1'])) {
@@ -390,7 +387,7 @@ class ServerConfigurationController extends Controller
     {
         self::validateKey($field);
 
-        $rules = explode('|', self::ALLOWED_KEYS[$field]);
+        $rules = self::getRulesForField($field);
 
         if (in_array(self::RULE_NULLABLE, $rules) && null === $value) {
             return;
@@ -414,6 +411,11 @@ class ServerConfigurationController extends Controller
             $parameters = explode(',', $ruleParts[1] ?? '');
             self::{$signature}($field, $value, ...$parameters);
         }
+    }
+
+    private static function getRulesForField(string $field): array
+    {
+        return explode('|', self::VALIDATION_RULES[Str::kebab($field)]);
     }
 
     private static function validateNotEmpty(string $field, string $value): void
@@ -486,14 +488,14 @@ class ServerConfigurationController extends Controller
 
     private static function validateKey(string $key): void
     {
-        if (!isset(self::ALLOWED_KEYS[$key])) {
+        if (!isset(self::VALIDATION_RULES[Str::kebab($key)])) {
             throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
         }
     }
 
     private static function validatePlaceholderKey(string $key): void
     {
-        if (!in_array($key, PanelPlaceholder::TYPES_ALLOWED, true)) {
+        if (!in_array(Str::kebab($key), PanelPlaceholder::TYPES_ALLOWED, true)) {
             throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
         }
     }
@@ -529,6 +531,13 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validateNonNegativeInteger(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a non-negative integer', $field));
+        }
+    }
+
     private static function validatePort(string $field, string $value): void
     {
         if (
@@ -539,6 +548,13 @@ class ServerConfigurationController extends Controller
             )
         ) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a port number', $field));
+        }
+    }
+
+    private static function validatePositiveInteger(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a positive integer', $field));
         }
     }
 

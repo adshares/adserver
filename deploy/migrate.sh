@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018-2021 Adshares sp. z o.o.
+# Copyright (c) 2018-2022 Adshares sp. z o.o.
 #
 # This file is part of AdServer
 #
@@ -19,7 +19,20 @@
 #
 
 # Usage: migrate.sh [<work-dir>]
-cd ${1:-"."}
+WORK_DIR=${1:-"."}
+cd "$WORK_DIR" || exit 1
 
-./artisan migrate --no-interaction --force
-if [ $? -ne 0 ]; then exit 1; fi
+./artisan migrate --no-interaction --force || exit 1
+
+if [ ! -f config/jwt/oauth-private.key ] || [ ! -f config/jwt/oauth-public.key ]
+then
+  ./artisan passport:keys --force || exit 1
+  OUTPUT=$(./artisan passport:client --personal --name="Personal Access Client")
+  CLIENT_ID=$(echo "$OUTPUT" | grep -oP "Client ID: \K\S+")
+  CLIENT_SECRET=$(echo "$OUTPUT" | grep -oP "Client secret: \K\S+")
+  if [ -z "$CLIENT_ID" ]; then echo "Missing CLIENT_ID"; exit 1; fi
+  if [ -z "$CLIENT_SECRET" ]; then echo "Missing CLIENT_CLIENT_SECRET"; exit 1; fi
+  echo -e "\n" >> .env
+  echo "PASSPORT_PERSONAL_ACCESS_CLIENT_ID='$CLIENT_ID'" >> .env
+  echo "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET='$CLIENT_SECRET'" >> .env
+fi

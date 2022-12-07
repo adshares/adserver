@@ -26,6 +26,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -50,6 +51,7 @@ use Illuminate\Support\Facades\Cache;
  * @property string name
  * @property int status
  * @property Campaign campaign
+ * @property int campaign_id
  * @property BannerClassification[] classifications
  * @property string url
  * @property string|null cdn_url
@@ -73,6 +75,10 @@ class Banner extends Model
     public const STATUS_ACTIVE = 2;
     public const STATUS_REJECTED = 3;
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
+
+    public const NAME_MAXIMAL_LENGTH = 255;
+    public const SIZE_MAXIMAL_LENGTH = 16;
+    public const TYPE_MAXIMAL_LENGTH = 32;
 
     protected $dates = [
         'deleted_at',
@@ -101,6 +107,8 @@ class Banner extends Model
     ];
 
     protected $casts = [
+        'created_at' => 'date:' . DateTimeInterface::ATOM,
+        'updated_at' => 'date:' . DateTimeInterface::ATOM,
         'status' => 'int',
     ];
 
@@ -192,7 +200,7 @@ class Banner extends Model
 
     public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection
     {
-        $builder = Banner::whereDoesntHave(
+        $builder = Banner::where('status', Banner::STATUS_ACTIVE)->whereDoesntHave(
             'classifications',
             function ($query) use ($classifier) {
                 $query->where('classifier', $classifier);

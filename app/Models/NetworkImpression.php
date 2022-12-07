@@ -81,7 +81,6 @@ class NetworkImpression extends Model
         ImpressionContext $impressionContext,
         UserContext $userContext,
         FoundBanners $foundBanners,
-        array $zones
     ): void {
         if (self::where('impression_id', hex2bin($impressionId))->first()) {
             return;

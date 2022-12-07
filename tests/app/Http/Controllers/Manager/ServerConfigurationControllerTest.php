@@ -29,14 +29,15 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Currency;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Laravel\Passport\Passport;
 use PDOException;
 use Symfony\Component\HttpFoundation\Response;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 final class ServerConfigurationControllerTest extends TestCase
 {
-    private const URI_CONFIG = '/api/config';
-    private const URI_PLACEHOLDERS = '/api/config/placeholders';
+    private const URI_CONFIG = '/api/v2/config';
+    private const URI_PLACEHOLDERS = '/api/v2/config/placeholders';
 
     public function testAccessAdminNoJwt(): void
     {
@@ -56,43 +57,41 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testAccessUserJwt(): void
     {
-        $user = User::factory()->create();
+        $this->setUpUser();
 
-        $response = $this->getJson(
-            self::URI_CONFIG,
-            $this->getHeaders($user)
-        );
+        $response = $this->getJson(self::URI_CONFIG);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testFetch(): void
     {
-        $response = $this->getJson(
-            self::URI_CONFIG,
-            $this->getHeaders()
-        );
+        $this->setUpAdmin();
+
+        $response = $this->getJson(self::URI_CONFIG);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['support-email', 'technical-email']);
+        $response->assertJsonStructure(['supportEmail', 'technicalEmail']);
     }
 
     public function testFetchByKey(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->getJson(
-            self::URI_CONFIG . '/support-email',
-            $this->getHeaders()
+            self::URI_CONFIG . '/supportEmail',
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['support-email']);
+        $response->assertJsonStructure(['supportEmail']);
     }
 
     public function testFetchByInvalidKey(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->getJson(
             self::URI_CONFIG . '/invalid',
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -100,12 +99,12 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testFetchByKeyWhileValueIsNull(): void
     {
-        $key = Config::ADSHARES_SECRET;
-        Config::updateAdminSettings([$key => null]);
+        $this->setUpAdmin();
+        $key = 'adsharesSecret';
+        Config::updateAdminSettings([Config::ADSHARES_SECRET => null]);
 
         $response = $this->getJson(
             self::URI_CONFIG . '/' . $key,
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -114,28 +113,29 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreSingle(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->putJson(
-            self::URI_CONFIG . '/support-email',
+            self::URI_CONFIG . '/supportEmail',
             ['value' => 'sup@example.com'],
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson(['support-email' => 'sup@example.com']);
+        $response->assertJson(['supportEmail' => 'sup@example.com']);
         self::assertDatabaseHas(Config::class, [
-            'key' => 'support-email',
+            'key' => Config::SUPPORT_EMAIL,
             'value' => 'sup@example.com',
         ]);
     }
 
     public function testStoreError(): void
     {
+        $this->setUpAdmin();
         DB::shouldReceive('beginTransaction')->andThrow(new PDOException('test exception'));
 
         $response = $this->putJson(
-            self::URI_CONFIG . '/support-email',
+            self::URI_CONFIG . '/supportEmail',
             ['value' => 'sup@example.com'],
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -143,10 +143,11 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreNothing(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->patchJson(
             self::URI_CONFIG,
             [],
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -154,23 +155,20 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreSingleNull(): void
     {
-        $nullableKey = Config::OPERATOR_RX_FEE;
+        $this->setUpAdmin();
+        $nullableKey = 'paymentRxFee';
         $defaultValueOfNullableKey = '0.01';
 
         $response = $this->putJson(
             self::URI_CONFIG . '/' . $nullableKey,
             ['value' => null],
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([$nullableKey => $defaultValueOfNullableKey]);
-        self::assertDatabaseMissing(Config::class, ['key' => $nullableKey]);
+        self::assertDatabaseMissing(Config::class, ['key' => Config::OPERATOR_RX_FEE]);
 
-        $response = $this->getJson(
-            self::URI_CONFIG . '/' . $nullableKey,
-            $this->getHeaders()
-        );
+        $response = $this->getJson(self::URI_CONFIG . '/' . $nullableKey);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([$nullableKey => $defaultValueOfNullableKey]);
@@ -181,16 +179,16 @@ final class ServerConfigurationControllerTest extends TestCase
      */
     public function testStore(string $key, string $value): void
     {
-        $data = [$key => $value];
+        $this->setUpAdmin();
+        $data = [Str::camel($key) => $value];
 
         $response = $this->patchJson(
             self::URI_CONFIG,
             $data,
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson([$key => $value]);
+        $response->assertJson($data);
         self::assertDatabaseHas(Config::class, ['key' => $key, 'value' => $value]);
     }
 
@@ -198,8 +196,8 @@ final class ServerConfigurationControllerTest extends TestCase
     {
         return [
             'ADSHARES_ADDRESS' => [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
-            'INVENTORY_FAILED_CONNECTION_LIMIT #1' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '0'],
-            'INVENTORY_FAILED_CONNECTION_LIMIT #2' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '8'],
+            'HOURS_UNTIL_INACTIVE_HOST_REMOVAL' => [Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL, '168'],
+            'INVENTORY_FAILED_CONNECTION_LIMIT' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '8'],
             'REFERRAL_REFUND_COMMISSION' => [Config::REFERRAL_REFUND_COMMISSION, '0'],
             'REFERRAL_REFUND_ENABLED' => [Config::REFERRAL_REFUND_ENABLED, '1'],
             'SUPPORT_EMAIL' => [Config::SUPPORT_EMAIL, 'sup@example.com'],
@@ -212,16 +210,16 @@ final class ServerConfigurationControllerTest extends TestCase
      */
     public function testStoreArray(string $key, string $value): void
     {
-        $data = [$key => $value];
+        $this->setUpAdmin();
+        $data = [Str::camel($key) => $value];
 
         $response = $this->patchJson(
             self::URI_CONFIG,
             $data,
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson([$key => explode(',', $value)]);
+        $response->assertJson([Str::camel($key) => explode(',', $value)]);
         self::assertDatabaseHas(Config::class, ['key' => $key, 'value' => $value]);
     }
 
@@ -238,28 +236,28 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreRejectedDomains(): void
     {
-        $data = ['rejected-domains' => 'example.com'];
+        $this->setUpAdmin();
+        $data = ['rejectedDomains' => 'example.com'];
 
         $response = $this->patchJson(
             self::URI_CONFIG,
             $data,
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson(['rejected-domains' => ['example.com']]);
+        $response->assertJson(['rejectedDomains' => ['example.com']]);
         self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
     }
 
     public function testStoreRejectedDomainsEmpty(): void
     {
+        $this->setUpAdmin();
         SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
-        $data = ['rejected-domains' => ''];
+        $data = ['rejectedDomains' => ''];
 
         $response = $this->patchJson(
             self::URI_CONFIG,
             $data,
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -271,10 +269,11 @@ final class ServerConfigurationControllerTest extends TestCase
      */
     public function testStoreInvalidData(array $data): void
     {
+        $this->setUpAdmin();
+
         $response = $this->patchJson(
             self::URI_CONFIG,
             $data,
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -282,7 +281,7 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function storeInvalidDataProvider(): array
     {
-        return [
+        $dataSet = [
             'invalid key' => [['invalid' => 'invalid']],
             'invalid not empty' => [[Config::INVOICE_COMPANY_CITY => '']],
             'invalid value type' => [[Config::SUPPORT_EMAIL => true]],
@@ -322,16 +321,24 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid user role (empty)' => [[Config::DEFAULT_USER_ROLES => '']],
             'invalid user role (invalid)' => [[Config::DEFAULT_USER_ROLES => 'invalid']],
             'invalid rejected domains' => [['rejected-domains' => 'a,b']],
-            'invalid inventory failed connection limit' => [[Config::INVENTORY_FAILED_CONNECTION_LIMIT => '-1']],
+            'invalid inventory failed connection limit' => [[Config::INVENTORY_FAILED_CONNECTION_LIMIT => '0']],
+            'invalid inactive host removal period' => [[Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => '0']],
         ];
+
+        foreach ($dataSet as &$data) {
+            $configKey = array_key_first($data[0]);
+            $data = [[Str::camel($configKey) => $data[0][$configKey]]];
+        }
+        return $dataSet;
     }
 
     public function testStoreAppCurrencyWhileUserLedgerEntryIsEmpty(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->patchJson(
             self::URI_CONFIG,
-            [Config::CURRENCY => Currency::USD->value],
-            $this->getHeaders()
+            ['currency' => Currency::USD->value],
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -339,12 +346,12 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreAppCurrencyWhileUserLedgerEntryIsNotEmpty(): void
     {
+        $this->setUpAdmin();
         UserLedgerEntry::factory()->create();
 
         $response = $this->patchJson(
             self::URI_CONFIG,
-            [Config::CURRENCY => Currency::USD->value],
-            $this->getHeaders()
+            ['currency' => Currency::USD->value],
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -352,66 +359,72 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testFetchPlaceholders(): void
     {
+        $this->setUpAdmin();
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_INDEX_KEYWORDS, 'ads'));
-        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_INDEX_TITLE, 'title'));
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'terms'));
 
-        $response = $this->getJson(
-            self::URI_PLACEHOLDERS,
-            $this->getHeaders()
-        );
+        $response = $this->getJson(self::URI_PLACEHOLDERS);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson([
-            PanelPlaceholder::TYPE_INDEX_DESCRIPTION => null,
-            PanelPlaceholder::TYPE_INDEX_KEYWORDS => 'ads',
-            PanelPlaceholder::TYPE_INDEX_META_TAGS => null,
-            PanelPlaceholder::TYPE_INDEX_TITLE => 'title',
-            PanelPlaceholder::TYPE_ROBOTS_TXT => null,
-            PanelPlaceholder::TYPE_PRIVACY_POLICY => null,
-            PanelPlaceholder::TYPE_TERMS => null,
+        $response->assertExactJson([
+            'indexDescription' => null,
+            'indexKeywords' => 'ads',
+            'indexMetaTags' => null,
+            'indexTitle' => 'AdServer powered by Adshares',
+            'loginInfo' => null,
+            'robotsTxt' => null,
+            'privacyPolicy' => null,
+            'terms' => 'terms',
         ]);
     }
 
     public function testFetchPlaceholdersByKeyWhilePresent(): void
     {
+        $this->setUpAdmin();
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_INDEX_TITLE, 'title'));
 
-        $response = $this->getJson(
-            self::URI_PLACEHOLDERS . '/index-title',
-            $this->getHeaders()
-        );
+        $response = $this->getJson(self::URI_PLACEHOLDERS . '/indexTitle');
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson(['index-title' => 'title']);
+        $response->assertJson(['indexTitle' => 'title']);
+    }
+
+    public function testFetchPlaceholdersByKeyIndexTitleWhileMissing(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->getJson(self::URI_PLACEHOLDERS . '/indexTitle');
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['indexTitle' => 'AdServer powered by Adshares']);
     }
 
     public function testFetchPlaceholdersByKeyWhileMissing(): void
     {
-        $response = $this->getJson(
-            self::URI_PLACEHOLDERS . '/index-title',
-            $this->getHeaders()
-        );
+        $this->setUpAdmin();
+
+        $response = $this->getJson(self::URI_PLACEHOLDERS . '/loginInfo');
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson(['index-title' => null]);
+        $response->assertJson(['loginInfo' => null]);
     }
 
     public function testFetchPlaceholdersByInvalidKey(): void
     {
-        $response = $this->getJson(
-            self::URI_PLACEHOLDERS . '/invalid',
-            $this->getHeaders()
-        );
+        $this->setUpAdmin();
+
+        $response = $this->getJson(self::URI_PLACEHOLDERS . '/invalid');
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testStorePlaceholders(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->patchJson(
             self::URI_PLACEHOLDERS,
-            [PanelPlaceholder::TYPE_INDEX_TITLE => 'title'],
-            $this->getHeaders()
+            ['indexTitle' => 'title'],
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -423,14 +436,14 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStorePlaceholdersDbError(): void
     {
+        $this->setUpAdmin();
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('commit')->andThrow(new PDOException('test exception'));
         DB::shouldReceive('rollback')->andReturnUndefined();
 
         $response = $this->patchJson(
             self::URI_PLACEHOLDERS,
-            [PanelPlaceholder::TYPE_INDEX_TITLE => 'title'],
-            $this->getHeaders()
+            ['indexTitle' => 'title'],
         );
 
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -438,10 +451,11 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStorePlaceholdersInvalidKey(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->patchJson(
             self::URI_PLACEHOLDERS,
             ['invalid' => 'title'],
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -453,25 +467,26 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStorePlaceholdersInvalidValue(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->patchJson(
             self::URI_PLACEHOLDERS,
-            [PanelPlaceholder::TYPE_INDEX_TITLE => true],
-            $this->getHeaders()
+            ['indexTitle' => true],
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         self::assertDatabaseMissing(PanelPlaceholder::class, [
-            PanelPlaceholder::FIELD_CONTENT => 'title',
             PanelPlaceholder::FIELD_TYPE => PanelPlaceholder::TYPE_INDEX_TITLE,
         ]);
     }
 
     public function testStorePlaceholdersNothing(): void
     {
+        $this->setUpAdmin();
+
         $response = $this->patchJson(
             self::URI_PLACEHOLDERS,
             [],
-            $this->getHeaders()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -479,26 +494,28 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStorePlaceholdersDeleting(): void
     {
+        $this->setUpAdmin();
         PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_LOGIN_INFO, '<div>Hello</div>'));
 
         $response = $this->patchJson(
             self::URI_PLACEHOLDERS,
-            [PanelPlaceholder::TYPE_LOGIN_INFO => null],
-            $this->getHeaders()
+            ['loginInfo' => null],
         );
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertExactJson([
-            PanelPlaceholder::TYPE_LOGIN_INFO => null,
+            'loginInfo' => null,
         ]);
         self::assertEmpty(PanelPlaceholder::fetchByTypes([PanelPlaceholder::TYPE_LOGIN_INFO]));
     }
 
-    private function getHeaders($user = null): array
+    private function setUpAdmin(): void
     {
-        if (null === $user) {
-            $user = User::factory()->admin()->create();
-        }
-        return ['Authorization' => 'Bearer ' . JWTAuth::fromUser($user)];
+        Passport::actingAs(User::factory()->admin()->create(), [], 'jwt');
+    }
+
+    private function setUpUser(): void
+    {
+        Passport::actingAs(User::factory()->create(), [], 'jwt');
     }
 }

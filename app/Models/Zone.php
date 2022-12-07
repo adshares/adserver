@@ -25,7 +25,6 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -46,10 +45,8 @@ use function hex2bin;
  * @property string uuid
  * @property int site_id
  * @property string size
- * @property string label
  * @property string type
  * @property int status
- * @property array tags
  * @mixin Builder
  */
 class Zone extends Model
@@ -60,9 +57,7 @@ class Zone extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 0;
-
     public const STATUS_ACTIVE = 1;
-
     public const STATUS_ARCHIVED = 2;
 
     public const STATUSES = [
@@ -85,18 +80,14 @@ class Zone extends Model
         'id',
         'name',
         'code',
-        'label',
         'size',
         'status',
-        'tags',
         'type',
         'uuid'
     ];
 
     protected $appends = [
         'code',
-        'label',
-        'tags',
     ];
 
     protected $touches = ['site'];
@@ -109,9 +100,12 @@ class Zone extends Model
         'creating' => GenerateUUID::class,
     ];
 
-
-    public static function fetchOrCreate(int $siteId, string $size, string $name): ?self
-    {
+    public static function fetchOrCreate(
+        int $siteId,
+        string $size,
+        string $name,
+        ?string $type = null,
+    ): ?self {
         $zone = self::where('site_id', $siteId)
             ->where('size', $size)
             ->where('name', $name)
@@ -123,6 +117,9 @@ class Zone extends Model
             $zone->site_id = $siteId;
             $zone->size = $size;
             $zone->status = Zone::STATUS_ACTIVE;
+            if (null !== $type) {
+                $zone->type = $type;
+            }
             $zone->save();
         }
         return $zone;
@@ -186,15 +183,5 @@ class Zone extends Model
     public function getCodeAttribute(): string
     {
         return SiteCodeGenerator::getZoneCode($this);
-    }
-
-    public function getLabelAttribute(): string
-    {
-        return Size::SIZE_INFOS[$this->size]['label'] ?? '';
-    }
-
-    public function getTagsAttribute(): array
-    {
-        return Size::SIZE_INFOS[$this->size]['tags'] ?? [];
     }
 }

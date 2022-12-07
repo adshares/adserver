@@ -27,7 +27,6 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Adshares\Supply\Domain\ValueObject\Status;
-use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -58,9 +57,8 @@ class NetworkHost extends Model
     use HasFactory;
     use SoftDeletes;
 
-    /**
-     * @var array
-     */
+    private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+
     protected $fillable = [
         'address',
         'host',
@@ -89,9 +87,17 @@ class NetworkHost extends Model
         return self::where('host', $host)->first();
     }
 
-    public static function fetchBroadcastedAfter(DateTimeInterface $date): Collection
+    public static function failHostsBroadcastedBefore(DateTimeInterface $date): int
     {
-        return self::where('last_broadcast', '>', $date)->get();
+        $hosts = self::where('last_broadcast', '<', $date)->get();
+        $counter = $hosts->count();
+        /** @var NetworkHost $host */
+        foreach ($hosts as $host) {
+            $host->error = sprintf('No broadcast since %s', $host->last_broadcast->format(self::DATETIME_FORMAT));
+            $host->status = HostStatus::Failure;
+            $host->save();
+        }
+        return $counter;
     }
 
     public static function deleteBroadcastedBefore(DateTimeInterface $date): int
@@ -106,23 +112,29 @@ class NetworkHost extends Model
         string $address,
         string $infoUrl,
         Info $info,
-        ?DateTimeInterface $lastBroadcast = null,
+        DateTimeInterface $lastBroadcast,
         ?string $error = null,
     ): NetworkHost {
         $networkHost = self::withTrashed()->where('address', $address)->first();
-
-        if (empty($networkHost)) {
+        $newHost = null === $networkHost;
+        if ($newHost) {
             $networkHost = new self();
             $networkHost->address = $address;
         }
 
-        $networkHost->deleted_at = null;
+        if ($newHost || HostStatus::Failure === $networkHost->status || $networkHost->deleted_at !== null) {
+            $networkHost->deleted_at = null;
+            $networkHost->failed_connection = 0;
+            $networkHost->status = HostStatus::Initialization;
+        }
+
         $networkHost->host = $info->getServerUrl();
-        $networkHost->last_broadcast = $lastBroadcast ?? new DateTimeImmutable();
-        $networkHost->failed_connection = 0;
+        $networkHost->last_broadcast = $lastBroadcast;
         $networkHost->info = $info;
         $networkHost->info_url = $infoUrl;
-        $networkHost->status = null === $error ? HostStatus::Initialization : HostStatus::Failure;
+        if (null !== $error) {
+            $networkHost->status = HostStatus::Failure;
+        }
         $networkHost->error = $error;
         $networkHost->save();
 

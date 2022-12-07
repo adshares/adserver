@@ -434,6 +434,14 @@ class AuthControllerTest extends TestCase
         $this->assertEquals($refLink->id, $entry->refLink->id);
     }
 
+    public function testConfirmNonExistingUser(): void
+    {
+        $this->actingAs(User::factory()->admin()->create(), 'api');
+
+        $response = $this->postJson('/admin/users/999/confirm');
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     /**
      * @dataProvider currencyProvider
      */

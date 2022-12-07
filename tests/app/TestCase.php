@@ -22,24 +22,31 @@
 namespace Adshares\Adserver\Tests;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Mock\Client\DummyAdClassifyClient;
 use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -56,6 +63,9 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Event::fake()->except([
+            'eloquent.creating: Laravel\Passport\Client',
+        ]);
         Mail::fake();
         Queue::fake();
         Storage::fake(self::DISK);
@@ -92,6 +102,12 @@ abstract class TestCase extends BaseTestCase
             }
         );
         $this->app->bind(
+            AdClassify::class,
+            static function () {
+                return new DummyAdClassifyClient();
+            }
+        );
+        $this->app->bind(
             AdsRpcClient::class,
             static function () {
                 return new DummyAdsRpcClient();
@@ -110,6 +126,12 @@ abstract class TestCase extends BaseTestCase
             }
         );
         $this->app->bind(
+            ConfigurationRepository::class,
+            static function () {
+                return new DummyConfigurationRepository();
+            }
+        );
+        $this->app->bind(
             DemandClient::class,
             static function () {
                 return new DummyDemandClient();
@@ -124,5 +146,14 @@ abstract class TestCase extends BaseTestCase
         }
         $this->actingAs($user, 'api');
         return $user;
+    }
+
+    protected static function assertServerEventDispatched(ServerEventType $type, array $properties = null): void
+    {
+        Event::assertDispatched(
+            fn (ServerEvent $event) =>
+                $type === $event->getType() &&
+                (null === $properties || array_intersect_assoc($event->getProperties(), $properties) === $properties)
+        );
     }
 }

@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Common;
 
-use Adshares\Adserver\Models\Config;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 
 class TotalFeeReader
