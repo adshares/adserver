@@ -290,6 +290,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid account ID' => [[Config::ADSHARES_ADDRESS => 'invalid']],
             'invalid account ID list' => [[Config::INVENTORY_EXPORT_WHITELIST => 'invalid']],
             'invalid app currency' => [[Config::CURRENCY => 'EUR']],
+            'invalid banner rotate (too low)' => [[Config::BANNER_ROTATE_INTERVAL => '5']],
             'invalid boolean format' => [[Config::COLD_WALLET_IS_ACTIVE => '23']],
             'invalid click amount (not integer)' => [[Config::HOT_WALLET_MIN_VALUE => '1234a']],
             'invalid click amount (negative)' => [[Config::HOT_WALLET_MIN_VALUE => '-1']],

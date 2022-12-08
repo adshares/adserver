@@ -680,7 +680,7 @@ class SupplyController extends Controller
         $params = [
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
             '.' . CssUtils::normalizeClass(self::$adserverId),
-            30,
+            config('app.banner_rotate_interval'),
         ];
 
         $jsPath = public_path('-/find.js');
