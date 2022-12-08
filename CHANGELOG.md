@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Validation messages when creating campaign
+- Only found banner are returned (with request ID)
 
 ## [2.2.0] - 2022-12-07
 ### Added
