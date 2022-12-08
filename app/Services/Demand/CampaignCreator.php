@@ -33,6 +33,7 @@ use Adshares\Common\Exception\RuntimeException;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CampaignCreator
 {
@@ -48,7 +49,7 @@ class CampaignCreator
     {
         foreach (['budget', 'date_start', 'medium', 'name', 'status', 'target_url'] as $field) {
             if (!array_key_exists($field, $input)) {
-                throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
+                throw new InvalidArgumentException(sprintf('Field `%s` is required', Str::camel($field)));
             }
         }
 
@@ -121,7 +122,7 @@ class CampaignCreator
             if (array_key_exists($field, $input)) {
                 $value = $input[$field];
                 if (null !== $value) {
-                    self::validateClickAmount($value, $field);
+                    self::validateClickAmount($value, Str::camel($field));
                     $checkLimits = true;
                 }
                 $campaign->$field = $value;

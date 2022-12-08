@@ -659,7 +659,10 @@ domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
             var context = params.shift()
-            var placements = params.map(p => ({ placementId: p.zone }))
+            var placements = params.map((p, index) => ({
+                id: index.toString(),
+                placementId: p.zone,
+            }));
             var data = {
                 context: {
                     iid: context.iid,
@@ -678,8 +681,14 @@ domReady(function () {
             fetchURL(url, options).then(function (banners) {
                 bannersToLoad = 0;
 
-                banners.data.forEach(function (banner, i) {
-                    var zone = zones[i] || {options: {}};
+                var bannerMap = {}
+                banners.data.forEach((banner) => {
+                    bannerMap[banner.id] = banner
+                });
+
+                zones.forEach(function (zone, i) {
+                    var requestId = i.toString()
+                    var banner = bannerMap[requestId]
 
                     if (!banner || typeof banner !== 'object') {
                         insertBackfill(zone.destElement, zone.backfill);
@@ -693,7 +702,7 @@ domReady(function () {
                         insertBackfill(zone.destElement, zone.backfill);
                     } else {
                         bannersToLoad++;
-                        fetchBanner(banner, {page: params[0], zone: params[i + 1] || {}}, zone.options);
+                        fetchBanner(banner, {page: context, zone: params[i] || {}}, zone.options);
                     }
                 });
             }, function () {
