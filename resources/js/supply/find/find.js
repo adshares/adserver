@@ -659,7 +659,10 @@ domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
             var context = params.shift()
-            var placements = params.map(p => ({ placementId: p.zone }))
+            var placements = params.map((p, index) => ({
+                id: index.toString(),
+                placementId: p.zone,
+            }));
             var data = {
                 context: {
                     iid: context.iid,
@@ -693,7 +696,7 @@ domReady(function () {
                         insertBackfill(zone.destElement, zone.backfill);
                     } else {
                         bannersToLoad++;
-                        fetchBanner(banner, {page: params[0], zone: params[i + 1] || {}}, zone.options);
+                        fetchBanner(banner, {page: context, zone: params[i] || {}}, zone.options);
                     }
                 });
             }, function () {
@@ -852,6 +855,7 @@ var allBannersLoaded = function() {
 }
 
 var fetchBanner = function (banner, context, zone_options) {
+    console.log({banner, context, zone_options})
     fetchURL(banner.serveUrl, {
         binary: true,
         noCredentials: true

@@ -432,7 +432,7 @@ class SupplyController extends Controller
         $foundBanners = $this->findBanners($mappedInput, $request, $response, $contextProvider, $bannerFinder)
             ->filter(fn($banner) => null !== $banner)
             ->map($this->mapFoundBannerToResult())
-            ->toArray();
+            ->getValues();
         return self::json(['data' => $foundBanners]);
     }
 
