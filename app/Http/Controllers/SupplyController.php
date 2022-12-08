@@ -1294,23 +1294,29 @@ class SupplyController extends Controller
                     sprintf('Field `placements[].%s` is required', $field)
                 );
             }
-            if (!is_string($placement[$field])) {
+            if (!is_numeric($placement[$field])) {
                 throw new UnprocessableEntityHttpException(
-                    sprintf('Field `placements[].%s` must be a string', $field)
+                    sprintf('Field `placements[].%s` must be a number', $field)
                 );
             }
         }
         $fieldsOptional = [
             'depth',
             'minDpi',
-            'name',
         ];
         foreach ($fieldsOptional as $field) {
-            if (array_key_exists($field, $placement) && !is_string($placement[$field])) {
+            if (array_key_exists($field, $placement) && !is_numeric($placement[$field])) {
                 throw new UnprocessableEntityHttpException(
-                    sprintf('Field `placements[].%s` must be a string', $field)
+                    sprintf('Field `placements[].%s` must be a number', $field)
                 );
             }
+        }
+
+        $field = 'name';
+        if (array_key_exists($field, $placement) && !is_string($placement[$field])) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Field `placements[].%s` must be a string', $field)
+            );
         }
     }
 }
