@@ -19,7 +19,7 @@
 
 var serverOrigin = '{{ ORIGIN }}';
 var selectorClass = '{{ SELECTOR }}';
-var rotateInterval = parseInt('{{ ROTATE_INTERVAL }}');
+var rotateIntervalMs = parseInt('{{ ROTATE_INTERVAL }}') * 1000;
 
 
 var topwin = window;
@@ -105,7 +105,13 @@ var replaceTag = function (oldTag, newTag, banner) {
     }
     // ios 12 fix
 
-    oldTag.parentNode.replaceChild(newTag, oldTag);
+    while (oldTag.lastElementChild) {
+        oldTag.removeChild(oldTag.lastElementChild);
+    }
+    oldTag.appendChild(newTag);
+    setTimeout(function () {
+        oldTag.__dwmth = 0;
+    }, rotateIntervalMs);
 
     // ios 12 fix
     setTimeout(function() {
