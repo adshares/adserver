@@ -36,6 +36,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
+use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Size;
@@ -64,22 +65,23 @@ final class SupplyControllerTest extends TestCase
         'rpm',
     ];
     private const FIND_BANNER_STRUCTURE = [
-        'placementId',
-        'zoneId',
-        'publisherId',
-        'demandServer',
-        'supplyServer',
-        'type',
-        'scope',
-        'hash',
-        'serveUrl',
-        'viewUrl',
-        'clickUrl',
-        'rpm',
-    ];
-    private const DYNAMIC_FIND_BANNER_STRUCTURE = [
-        'id',
-        ...self::FIND_BANNER_STRUCTURE,
+        'data' => [
+            '*' => [
+                'id',
+                'placementId',
+                'zoneId',
+                'publisherId',
+                'demandServer',
+                'supplyServer',
+                'type',
+                'scope',
+                'hash',
+                'serveUrl',
+                'viewUrl',
+                'clickUrl',
+                'rpm',
+            ],
+        ]
     ];
     private const FOUND_BANNERS_WITH_CREATION_STRUCTURE = [
         'banners' => [
@@ -156,15 +158,58 @@ final class SupplyControllerTest extends TestCase
                 'uid' => 'good-user',
             ],
             'placements' => [
-                ['placementId' => $zone->uuid],
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                ],
             ],
         ];
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['data' => ['*' => self::FIND_BANNER_STRUCTURE]]);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', '3');
+    }
+
+    public function testFindWhileNoBanners(): void
+    {
+        $this->app->bind(
+            AdSelect::class,
+            function () {
+                $adSelect = self::createMock(AdSelect::class);
+                $adSelect->method('findBanners')->willReturnCallback(function (array $zones) {
+                    return new FoundBanners(array_map(fn($zone) => null, $zones));
+                });
+                return $adSelect;
+            }
+        );
+
+        /** @var User $user */
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site->id]);
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+            'placements' => [
+                [
+                    'id' => '1',
+                    'placementId' => $zone->uuid,
+                ],
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(0, 'data');
     }
 
     public function testFindWithoutPlacements(): void
@@ -209,7 +254,7 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(1, 'data');
     }
 
@@ -225,7 +270,7 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['data' => ['*' => self::DYNAMIC_FIND_BANNER_STRUCTURE]]);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
 
         self::assertDatabaseHas(Zone::class, ['type' => Size::TYPE_POP]);
     }

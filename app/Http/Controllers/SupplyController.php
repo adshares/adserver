@@ -430,8 +430,9 @@ class SupplyController extends Controller
 
         $mappedInput = self::mapFindInput($input);
         $foundBanners = $this->findBanners($mappedInput, $request, $response, $contextProvider, $bannerFinder)
+            ->filter(fn($banner) => null !== $banner)
             ->map($this->mapFoundBannerToResult())
-            ->toArray();
+            ->getValues();
         return self::json(['data' => $foundBanners]);
     }
 
@@ -1206,17 +1207,14 @@ class SupplyController extends Controller
         }
 
         foreach ($input['placements'] as $placement) {
-            $placementData = [
+            $mapped['placements'][] = [
+                'id' => $placement['id'],
                 'placementId' => $placement['placementId'],
                 'options' => [
                     'banner_type' => $placement['types'] ?? null,
                     'banner_mime' => $placement['mimes'] ?? null,
                 ],
             ];
-            if (isset($placement['id'])) {
-                $placementData['id'] = $placement['id'];
-            }
-            $mapped['placements'][] = $placementData;
         }
 
         return $mapped;
@@ -1225,7 +1223,8 @@ class SupplyController extends Controller
     private function mapFoundBannerToResult(): Closure
     {
         return function ($item) {
-            $mapped = [
+            return [
+                'id' => $item['request_id'],
                 'placementId' => $item['id'],
                 'zoneId' => $item['zone_id'],
                 'publisherId' => $item['publisher_id'],
@@ -1240,15 +1239,17 @@ class SupplyController extends Controller
                 'infoBox' => $item['info_box'],
                 'rpm' => $item['rpm'],
             ];
-            if (isset($item['request_id'])) {
-                $mapped['id'] = $item['request_id'];
-            }
-            return $mapped;
         };
     }
 
     private static function validatePlacementCommonFields(array $placement): void
     {
+        if (!isset($placement['id'])) {
+            throw new UnprocessableEntityHttpException('Field `placements[].id` is required');
+        }
+        if (!is_string($placement['id'])) {
+            throw new UnprocessableEntityHttpException('Field `placements[].id` must be a string');
+        }
         $fieldsOptional = [
             'types',
             'mimes',
@@ -1295,23 +1296,29 @@ class SupplyController extends Controller
                     sprintf('Field `placements[].%s` is required', $field)
                 );
             }
-            if (!is_string($placement[$field])) {
+            if (!is_numeric($placement[$field])) {
                 throw new UnprocessableEntityHttpException(
-                    sprintf('Field `placements[].%s` must be a string', $field)
+                    sprintf('Field `placements[].%s` must be a number', $field)
                 );
             }
         }
         $fieldsOptional = [
             'depth',
             'minDpi',
-            'name',
         ];
         foreach ($fieldsOptional as $field) {
-            if (array_key_exists($field, $placement) && !is_string($placement[$field])) {
+            if (array_key_exists($field, $placement) && !is_numeric($placement[$field])) {
                 throw new UnprocessableEntityHttpException(
-                    sprintf('Field `placements[].%s` must be a string', $field)
+                    sprintf('Field `placements[].%s` must be a number', $field)
                 );
             }
+        }
+
+        $field = 'name';
+        if (array_key_exists($field, $placement) && !is_string($placement[$field])) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Field `placements[].%s` must be a string', $field)
+            );
         }
     }
 }

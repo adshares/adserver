@@ -221,8 +221,8 @@ class GuzzleAdSelectClient implements AdSelect
             $items = [];
         } else {
             $zoneInput = [];
-            foreach ($existingZones as $zone) {
-                $zoneInput[] = $zoneInputByUuid[$zone->uuid] ?? [];
+            foreach ($existingZones as $key => $zone) {
+                $zoneInput[$key] = $zoneInputByUuid[$zone->uuid] ?? [];
             }
             try {
                 $result = $this->client->post(
@@ -263,7 +263,7 @@ class GuzzleAdSelectClient implements AdSelect
         $bannerIds = [];
         foreach ($zoneCollection as $requestId => $zone) {
             if (isset($existingZones[$requestId]) && isset($items[$requestId])) {
-                $bannerIds[$requestId] = $items[$requestId] ?: [null];
+                $bannerIds[$requestId] = $items[$requestId];
             } else {
                 $bannerIds[$requestId] = [null];
             }
@@ -324,10 +324,8 @@ class GuzzleAdSelectClient implements AdSelect
                         )),
                         'info_box'      => $infoBox,
                         'rpm'           => $item['rpm'],
+                        'request_id'    => (string)$requestId,
                     ];
-                    if (is_string($requestId)) {
-                        $data['request_id'] = $requestId;
-                    }
                     yield $data;
                 }
             }
