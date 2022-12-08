@@ -220,7 +220,7 @@ class Utils
 
         $page = $context['page'];
 
-        if (!$page['url']) {
+        if (!($page['url'] ?? null)) {
             $page['url'] = $request->headers->get('Referer');
         }
         $url = parse_url($page['url']);
