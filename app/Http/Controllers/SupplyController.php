@@ -430,7 +430,7 @@ class SupplyController extends Controller
 
         $mappedInput = self::mapFindInput($input);
         $foundBanners = $this->findBanners($mappedInput, $request, $response, $contextProvider, $bannerFinder)
-            ->filter(fn ($banner) => null !== $banner)
+            ->filter(fn($banner) => null !== $banner)
             ->map($this->mapFoundBannerToResult())
             ->toArray();
         return self::json(['data' => $foundBanners]);
@@ -1205,17 +1205,14 @@ class SupplyController extends Controller
         }
 
         foreach ($input['placements'] as $placement) {
-            $placementData = [
+            $mapped['placements'][] = [
+                'id' => $placement['id'],
                 'placementId' => $placement['placementId'],
                 'options' => [
                     'banner_type' => $placement['types'] ?? null,
                     'banner_mime' => $placement['mimes'] ?? null,
                 ],
             ];
-            if (isset($placement['id'])) {
-                $placementData['id'] = $placement['id'];
-            }
-            $mapped['placements'][] = $placementData;
         }
 
         return $mapped;
@@ -1224,7 +1221,8 @@ class SupplyController extends Controller
     private function mapFoundBannerToResult(): Closure
     {
         return function ($item) {
-            $mapped = [
+            return [
+                'id' => $item['request_id'],
                 'placementId' => $item['id'],
                 'zoneId' => $item['zone_id'],
                 'publisherId' => $item['publisher_id'],
@@ -1239,15 +1237,17 @@ class SupplyController extends Controller
                 'infoBox' => $item['info_box'],
                 'rpm' => $item['rpm'],
             ];
-            if (isset($item['request_id'])) {
-                $mapped['id'] = $item['request_id'];
-            }
-            return $mapped;
         };
     }
 
     private static function validatePlacementCommonFields(array $placement): void
     {
+        if (!isset($placement['id'])) {
+            throw new UnprocessableEntityHttpException('Field `placements[].id` is required');
+        }
+        if (!is_string($placement['id'])) {
+            throw new UnprocessableEntityHttpException('Field `placements[].id` must be a string');
+        }
         $fieldsOptional = [
             'types',
             'mimes',
