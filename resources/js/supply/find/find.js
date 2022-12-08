@@ -861,7 +861,6 @@ var allBannersLoaded = function() {
 }
 
 var fetchBanner = function (banner, context, zone_options) {
-    console.log({banner, context, zone_options})
     fetchURL(banner.serveUrl, {
         binary: true,
         noCredentials: true
