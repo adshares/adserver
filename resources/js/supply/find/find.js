@@ -681,8 +681,14 @@ domReady(function () {
             fetchURL(url, options).then(function (banners) {
                 bannersToLoad = 0;
 
-                banners.data.forEach(function (banner, i) {
-                    var zone = zones[i] || {options: {}};
+                var bannerMap = {}
+                banners.data.forEach((banner) => {
+                    bannerMap[banner.id] = banner
+                });
+
+                zones.forEach(function (zone, i) {
+                    var requestId = i.toString()
+                    var banner = bannerMap[requestId]
 
                     if (!banner || typeof banner !== 'object') {
                         insertBackfill(zone.destElement, zone.backfill);
