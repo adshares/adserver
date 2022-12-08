@@ -72,15 +72,16 @@ class OAuthController extends Controller
         return $this->withErrorHandling(function () use ($authRequest, $noRedirect) {
             $psrResponse = $this->server->completeAuthorizationRequest($authRequest, new Psr7Response());
             $headers = $psrResponse->getHeaders();
-
+            $location = $headers['Location'][0];
+            unset($headers['Location']);
             if ($noRedirect && Response::HTTP_FOUND === $psrResponse->getStatusCode()) {
                 return new JsonResponse(
-                    ['location' => $headers['Location'][0]],
+                    ['location' => $location],
                     Response::HTTP_OK,
                     $headers
                 );
             } else {
-                return new JsonResponse(
+                return new Response(
                     $psrResponse->getBody(),
                     $psrResponse->getStatusCode(),
                     $headers
