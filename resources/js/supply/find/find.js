@@ -688,12 +688,13 @@ domReady(function () {
 
                 var bannerMap = {}
                 banners.data.forEach((banner) => {
-                    bannerMap[banner.id] = banner
+                    bannerMap[banner.id] = banner;
                 });
 
                 zones.forEach(function (zone, i) {
-                    var requestId = i.toString()
-                    var banner = bannerMap[requestId]
+                    var requestId = i.toString();
+                    var banner = bannerMap[requestId];
+                    delete bannerMap[requestId];
 
                     if (!banner || typeof banner !== 'object') {
                         insertBackfill(zone.destElement, zone.backfill);
@@ -710,6 +711,16 @@ domReady(function () {
                         fetchBanner(banner, {page: context, zone: params[i] || {}}, zone.options);
                     }
                 });
+
+                if (0 === popCandidates.length && !popCandidatesAdded) {
+                    for (var requestId in bannerMap) {
+                        var banner = bannerMap[requestId]
+                        if (banner.type === 'direct' && (banner.scope === 'pop-up' || banner.scope === 'pop-under')) {
+                            bannersToLoad++;
+                            fetchBanner(banner, {page: context, zone: {}}, {});
+                        }
+                    }
+                }
             }, function () {
                 zones.forEach(function (zone) {
                     if (!zone.destElement) {
@@ -829,6 +840,7 @@ var getDomain = function (url) {
     return colonPos === -1 ? host : host.substr(0, colonPos);
 };
 
+var popCandidatesAdded = false;
 var popCandidates = [];
 var addPopCandidate = function(args, rpm) {
     popCandidates.push({args: args, rpm: rpm});
@@ -857,12 +869,14 @@ var allBannersLoaded = function() {
         shuffle(popCandidates);
     } else {
         popCandidates.sort(function (x, y) {
-            return hasNulls ? (Math.random() > 0.5 ? -1 : 1) : (x.rpm >= y.rpm ? -1 : 1);
+            return x.rpm >= y.rpm ? -1 : 1;
         });
     }
     popCandidates.forEach(function(item) {
         addPop.apply(this, item.args);
     });
+    popCandidates = [];
+    popCandidatesAdded = true;
 }
 
 var fetchBanner = function (banner, context, zone_options) {
@@ -931,6 +945,7 @@ var fetchBanner = function (banner, context, zone_options) {
                             ],
                             banner.rpm
                         );
+                        bannerLoaded();
                     } else {
                         data.iframe_src = url;
                         caller = createIframeFromSrc;
@@ -941,11 +956,13 @@ var fetchBanner = function (banner, context, zone_options) {
             caller && caller(data, function (element) {
                 if (!banner.destElement) {
                     console.log('warning: no element to replace');
+                    bannerLoaded();
                     return;
                 }
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element, banner);
                 sendViewEvent(element);
+                bannerLoaded();
             });
         };
 
@@ -978,12 +995,12 @@ var fetchBanner = function (banner, context, zone_options) {
                 } else {
                     console.log('hash error', banner, hash);
                     insertBackfill(banner.destElement, banner.backfill);
+                    bannerLoaded();
                 }
             });
         } else {
             displayIfVisible();
         }
-        bannerLoaded();
     }, function () {
         console.log('could not fetch url', banner);
         insertBackfill(banner.destElement, banner.backfill);
