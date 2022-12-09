@@ -660,6 +660,10 @@ var bannerLoaded = function() {
     }
 };
 
+var isBannerPop = function (banner) {
+    return (banner.type === 'direct' && (banner.scope === 'pop-up' || banner.scope === 'pop-under'));
+}
+
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
@@ -714,8 +718,8 @@ domReady(function () {
 
                 if (0 === popCandidates.length && !popCandidatesAdded) {
                     for (var requestId in bannerMap) {
-                        var banner = bannerMap[requestId]
-                        if (banner.type === 'direct' && (banner.scope === 'pop-up' || banner.scope === 'pop-under')) {
+                        var banner = bannerMap[requestId];
+                        if (isBannerPop(banner)) {
                             bannersToLoad++;
                             fetchBanner(banner, {page: context, zone: {}}, {});
                         }
@@ -967,7 +971,7 @@ var fetchBanner = function (banner, context, zone_options) {
         };
 
         var displayIfVisible = function() {
-            if ((banner.type === 'direct' && (banner.scope === 'pop-up' || banner.scope === 'pop-under')) || !banner.destElement) {
+            if (isBannerPop(banner) || !banner.destElement) {
                 displayBanner();
             } else {
                 if (isVisible(banner.destElement)) {
