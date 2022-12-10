@@ -46,7 +46,7 @@ class OAuthController extends Controller
     public function authorizeUser(
         ServerRequestInterface $psrRequest,
         Request $request,
-    ): JsonResponse {
+    ): Response {
         $noRedirect = null !== $request->query('no_redirect');
 
         /** @var User $user */
@@ -64,7 +64,7 @@ class OAuthController extends Controller
         return $this->approveRequest($authRequest, $user, $noRedirect);
     }
 
-    protected function approveRequest(AuthorizationRequest $authRequest, Model $user, bool $noRedirect): JsonResponse
+    protected function approveRequest(AuthorizationRequest $authRequest, Model $user, bool $noRedirect): Response
     {
         $authRequest->setUser(new UserBridge($user->getAuthIdentifier()));
         $authRequest->setAuthorizationApproved(true);
@@ -72,9 +72,9 @@ class OAuthController extends Controller
         return $this->withErrorHandling(function () use ($authRequest, $noRedirect) {
             $psrResponse = $this->server->completeAuthorizationRequest($authRequest, new Psr7Response());
             $headers = $psrResponse->getHeaders();
-            $location = $headers['Location'][0];
-            unset($headers['Location']);
             if ($noRedirect && Response::HTTP_FOUND === $psrResponse->getStatusCode()) {
+                $location = $headers['Location'][0];
+                unset($headers['Location']);
                 return new JsonResponse(
                     ['location' => $location],
                     Response::HTTP_OK,

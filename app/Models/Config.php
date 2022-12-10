@@ -79,6 +79,7 @@ class Config extends Model
     public const AUTO_WITHDRAWAL_LIMIT_BTC = 'auto-withdrawal-limit-btc';
     public const AUTO_WITHDRAWAL_LIMIT_ETH = 'auto-withdrawal-limit-eth';
     public const BANNER_FORCE_HTTPS = 'banner-force-https';
+    public const BANNER_ROTATE_INTERVAL = 'banner-rotate-interval';
     public const BTC_WITHDRAW = 'btc-withdraw';
     public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
     public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
@@ -217,6 +218,7 @@ class Config extends Model
         self::AUTO_WITHDRAWAL_LIMIT_BTC => ConfigTypes::Integer,
         self::AUTO_WITHDRAWAL_LIMIT_ETH => ConfigTypes::Integer,
         self::BANNER_FORCE_HTTPS => ConfigTypes::Bool,
+        self::BANNER_ROTATE_INTERVAL => ConfigTypes::Integer,
         self::BTC_WITHDRAW => ConfigTypes::Bool,
         self::BTC_WITHDRAW_FEE => ConfigTypes::Float,
         self::BTC_WITHDRAW_MAX_AMOUNT => ConfigTypes::Integer,
@@ -443,6 +445,7 @@ class Config extends Model
             self::AUTO_WITHDRAWAL_LIMIT_BTC => 1_000_000_000_000_00,
             self::AUTO_WITHDRAWAL_LIMIT_ETH => 1_000_000_000_000_00,
             self::BANNER_FORCE_HTTPS => true,
+            self::BANNER_ROTATE_INTERVAL => 30,
             self::BTC_WITHDRAW => false,
             self::BTC_WITHDRAW_FEE => 0.05,
             self::BTC_WITHDRAW_MAX_AMOUNT => 1000000000000000,

@@ -29,6 +29,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Illuminate\Http\Request;
 
 class UtilsTest extends TestCase
 {
@@ -110,5 +111,22 @@ class UtilsTest extends TestCase
     {
         self::assertEquals('a.html', Utils::extractFilename('https://example.com/a.html'));
         self::assertEquals('a', Utils::extractFilename('https://example.com/a'));
+    }
+
+    public function testGetSiteContextOnEmptyContext(): void
+    {
+        $request = new Request();
+        $context = [];
+        self::assertEquals([], Utils::getSiteContext($request, $context));
+    }
+
+    public function testGetSiteContextOnMissingUrl(): void
+    {
+        $request = new Request();
+        $request->headers->set('Referer', 'https://example.com/site/8');
+        $context = [
+            'page' => [],
+        ];
+        self::assertEquals('example.com', Utils::getSiteContext($request, $context)['domain']);
     }
 }
