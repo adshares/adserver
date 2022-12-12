@@ -64,7 +64,10 @@ final class CampaignMapperTest extends TestCase
                 'adshares_address' => $campaignData['source_campaign']['address'],
             ],
             'filters' => [
-                'require' => new stdClass(),
+                'require' => [
+                    'site:medium' => ['web'],
+                    'site:vendor' => ['unknown'],
+                ],
                 'exclude' => new stdClass(),
             ],
             'max_cpc' => 100000000001,
@@ -106,6 +109,8 @@ final class CampaignMapperTest extends TestCase
             'filters' => [
                 'require' => [
                     'device:type' => ['desktop'],
+                    'site:medium' => ['web'],
+                    'site:vendor' => ['unknown'],
                 ],
                 'exclude' => new stdClass(),
             ],
