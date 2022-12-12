@@ -68,11 +68,12 @@ class ServerConfigurationController extends Controller
         Config::ALLOW_ZONE_IN_IFRAME => 'nullable|boolean',
         Config::AUTO_CONFIRMATION_ENABLED => 'nullable|boolean',
         Config::AUTO_REGISTRATION_ENABLED => 'nullable|boolean',
-        Config::AUTO_WITHDRAWAL_LIMIT_ADS => 'nullable|nonNegativeInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_BSC => 'nullable|nonNegativeInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_BTC => 'nullable|nonNegativeInteger',
-        Config::AUTO_WITHDRAWAL_LIMIT_ETH => 'nullable|nonNegativeInteger',
+        Config::AUTO_WITHDRAWAL_LIMIT_ADS => 'nullable|integer|min:0',
+        Config::AUTO_WITHDRAWAL_LIMIT_BSC => 'nullable|integer|min:0',
+        Config::AUTO_WITHDRAWAL_LIMIT_BTC => 'nullable|integer|min:0',
+        Config::AUTO_WITHDRAWAL_LIMIT_ETH => 'nullable|integer|min:0',
         Config::BANNER_FORCE_HTTPS => 'nullable|boolean',
+        Config::BANNER_ROTATE_INTERVAL => 'nullable|integer|min:10',
         Config::BTC_WITHDRAW => 'nullable|boolean',
         Config::BTC_WITHDRAW_FEE => 'nullable|commission',
         Config::BTC_WITHDRAW_MAX_AMOUNT => 'nullable|clickAmount',
@@ -101,13 +102,13 @@ class ServerConfigurationController extends Controller
         Config::EXCHANGE_API_SECRET => 'nullable',
         Config::EXCHANGE_API_URL => 'nullable|url',
         Config::EXCHANGE_CURRENCIES => 'nullable|notEmpty|list:currency',
-        Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|nonNegativeInteger',
-        Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|nonNegativeInteger',
+        Config::FIAT_DEPOSIT_MAX_AMOUNT => 'nullable|integer|min:0',
+        Config::FIAT_DEPOSIT_MIN_AMOUNT => 'nullable|integer|min:0',
         Config::HOT_WALLET_MIN_VALUE => 'nullable|clickAmount',
         Config::HOT_WALLET_MAX_VALUE => 'nullable|clickAmount',
-        Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => 'nullable|positiveInteger',
+        Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => 'nullable|integer|min:1',
         Config::INVENTORY_EXPORT_WHITELIST => 'nullable|list:accountId',
-        Config::INVENTORY_FAILED_CONNECTION_LIMIT => 'nullable|positiveInteger',
+        Config::INVENTORY_FAILED_CONNECTION_LIMIT => 'nullable|integer|min:1',
         Config::INVENTORY_IMPORT_WHITELIST => 'nullable|list:accountId',
         Config::INVENTORY_WHITELIST => 'nullable|list:accountId',
         Config::INVOICE_COMPANY_ADDRESS => 'nullable|notEmpty',
@@ -130,15 +131,15 @@ class ServerConfigurationController extends Controller
         Config::MAIL_SMTP_USERNAME => 'nullable',
         Config::MAIN_JS_BASE_URL => 'nullable|url',
         Config::MAIN_JS_TLD => 'nullable|host',
-        Config::MAX_PAGE_ZONES => 'nullable|nonNegativeInteger',
-        Config::NETWORK_DATA_CACHE_TTL => 'nullable|nonNegativeInteger',
+        Config::MAX_PAGE_ZONES => 'nullable|integer|min:0',
+        Config::NETWORK_DATA_CACHE_TTL => 'nullable|integer|min:0',
         Config::NOW_PAYMENTS_API_KEY => 'nullable',
         Config::NOW_PAYMENTS_CURRENCY => 'nullable|currency',
         Config::NOW_PAYMENTS_EXCHANGE => 'nullable|boolean',
         Config::NOW_PAYMENTS_FEE => 'nullable|commission',
         Config::NOW_PAYMENTS_IPN_SECRET => 'nullable',
-        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|nonNegativeInteger',
-        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|nonNegativeInteger',
+        Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|integer|min:0',
+        Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|integer|min:0',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',
         Config::PUBLISHER_APPLY_FORM_URL => 'nullable|url',
@@ -157,10 +158,10 @@ class ServerConfigurationController extends Controller
         Config::SUPPORT_EMAIL => 'email',
         Config::SUPPORT_TELEGRAM => 'nullable|notEmpty',
         Config::TECHNICAL_EMAIL => 'email',
-        Config::UPLOAD_LIMIT_IMAGE => 'nullable|nonNegativeInteger',
-        Config::UPLOAD_LIMIT_MODEL => 'nullable|nonNegativeInteger',
-        Config::UPLOAD_LIMIT_VIDEO => 'nullable|nonNegativeInteger',
-        Config::UPLOAD_LIMIT_ZIP => 'nullable|nonNegativeInteger',
+        Config::UPLOAD_LIMIT_IMAGE => 'nullable|integer|min:0',
+        Config::UPLOAD_LIMIT_MODEL => 'nullable|integer|min:0',
+        Config::UPLOAD_LIMIT_VIDEO => 'nullable|integer|min:0',
+        Config::UPLOAD_LIMIT_ZIP => 'nullable|integer|min:0',
         Config::URL => 'url',
         'rejected-domains' => 'nullable|list:domain',
     ];
@@ -479,6 +480,13 @@ class ServerConfigurationController extends Controller
         }
     }
 
+    private static function validateInteger(string $field, string $value): void
+    {
+        if (false === filter_var($value, FILTER_VALIDATE_INT)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a integer', $field));
+        }
+    }
+
     private static function validateJson(string $field, string $value): void
     {
         if (null === json_decode($value, true)) {
@@ -490,6 +498,13 @@ class ServerConfigurationController extends Controller
     {
         if (!isset(self::VALIDATION_RULES[Str::kebab($key)])) {
             throw new UnprocessableEntityHttpException(sprintf('Key `%s` is not supported', $key));
+        }
+    }
+
+    private static function validateMin(string $field, string $value, int $min): void
+    {
+        if ($value < $min) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a at least %d', $field, $min));
         }
     }
 
@@ -531,13 +546,6 @@ class ServerConfigurationController extends Controller
         }
     }
 
-    private static function validateNonNegativeInteger(string $field, string $value): void
-    {
-        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a non-negative integer', $field));
-        }
-    }
-
     private static function validatePort(string $field, string $value): void
     {
         if (
@@ -548,13 +556,6 @@ class ServerConfigurationController extends Controller
             )
         ) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a port number', $field));
-        }
-    }
-
-    private static function validatePositiveInteger(string $field, string $value): void
-    {
-        if (false === filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a positive integer', $field));
         }
     }
 

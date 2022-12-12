@@ -19,6 +19,7 @@
 
 var serverOrigin = '{{ ORIGIN }}';
 var selectorClass = '{{ SELECTOR }}';
+var rotateIntervalMs = parseInt('{{ ROTATE_INTERVAL }}') * 1000;
 
 
 var topwin = window;
@@ -104,7 +105,13 @@ var replaceTag = function (oldTag, newTag, banner) {
     }
     // ios 12 fix
 
-    oldTag.parentNode.replaceChild(newTag, oldTag);
+    while (oldTag.lastElementChild) {
+        oldTag.removeChild(oldTag.lastElementChild);
+    }
+    oldTag.appendChild(newTag);
+    setTimeout(function () {
+        oldTag.__dwmth = 0;
+    }, rotateIntervalMs);
 
     // ios 12 fix
     setTimeout(function() {
@@ -198,7 +205,6 @@ var prepareInfoBox = function (context, banner, contextParam) {
         'url': banner.serveUrl,
     });
 
-
     var div = document.createElement('div');
     div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important;z-index:1');
 
@@ -291,10 +297,11 @@ function rectIntersect(a, b) {
     var num1 = Math.min(a.left + a.width, b.left + b.width);
     var y = Math.max(a.top, b.top);
     var num2 = Math.min(a.top + a.height, b.top + b.height);
-    if (num1 >= x && num2 >= y)
+    if (num1 >= x && num2 >= y) {
         return {left: x, top: y, width: num1 - x, height: num2 - y, bottom: num2, right: num1};
-    else
+    } else {
         return false;
+    }
 }
 
 function getBoundRect(el, overflow) {
@@ -439,7 +446,6 @@ var aduserPixel = function (impressionId, onload) {
         setTimeout(loadFn, 1);
     }
 
-
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
     dwmthURLS[url] = 1;
@@ -458,7 +464,6 @@ var createIframeFromUrl = function createIframeFromUrl(url, doc) {
 };
 
 var getPageKeywords = function (doc) {
-
     var MAX_KEYWORDS = 10;
     var metaKeywords = doc.querySelector("meta[name=keywords]");
 
@@ -655,6 +660,10 @@ var bannerLoaded = function() {
     }
 };
 
+var isBannerPop = function (banner) {
+    return (banner.type === 'direct' && (banner.scope === 'pop-up' || banner.scope === 'pop-under'));
+}
+
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
@@ -683,12 +692,13 @@ domReady(function () {
 
                 var bannerMap = {}
                 banners.data.forEach((banner) => {
-                    bannerMap[banner.id] = banner
+                    bannerMap[banner.id] = banner;
                 });
 
                 zones.forEach(function (zone, i) {
-                    var requestId = i.toString()
-                    var banner = bannerMap[requestId]
+                    var requestId = i.toString();
+                    var banner = bannerMap[requestId];
+                    delete bannerMap[requestId];
 
                     if (!banner || typeof banner !== 'object') {
                         insertBackfill(zone.destElement, zone.backfill);
@@ -705,6 +715,16 @@ domReady(function () {
                         fetchBanner(banner, {page: context, zone: params[i] || {}}, zone.options);
                     }
                 });
+
+                if (0 === popCandidates.length && !popCandidatesAdded) {
+                    for (var requestId in bannerMap) {
+                        var banner = bannerMap[requestId];
+                        if (isBannerPop(banner)) {
+                            bannersToLoad++;
+                            fetchBanner(banner, {page: context, zone: {}}, {});
+                        }
+                    }
+                }
             }, function () {
                 zones.forEach(function (zone) {
                     if (!zone.destElement) {
@@ -824,6 +844,7 @@ var getDomain = function (url) {
     return colonPos === -1 ? host : host.substr(0, colonPos);
 };
 
+var popCandidatesAdded = false;
 var popCandidates = [];
 var addPopCandidate = function(args, rpm) {
     popCandidates.push({args: args, rpm: rpm});
@@ -852,12 +873,14 @@ var allBannersLoaded = function() {
         shuffle(popCandidates);
     } else {
         popCandidates.sort(function (x, y) {
-            return hasNulls ? (Math.random() > 0.5 ? -1 : 1) : (x.rpm >= y.rpm ? -1 : 1);
+            return x.rpm >= y.rpm ? -1 : 1;
         });
     }
     popCandidates.forEach(function(item) {
         addPop.apply(this, item.args);
     });
+    popCandidates = [];
+    popCandidatesAdded = true;
 }
 
 var fetchBanner = function (banner, context, zone_options) {
@@ -926,6 +949,7 @@ var fetchBanner = function (banner, context, zone_options) {
                             ],
                             banner.rpm
                         );
+                        bannerLoaded();
                     } else {
                         data.iframe_src = url;
                         caller = createIframeFromSrc;
@@ -936,16 +960,18 @@ var fetchBanner = function (banner, context, zone_options) {
             caller && caller(data, function (element) {
                 if (!banner.destElement) {
                     console.log('warning: no element to replace');
+                    bannerLoaded();
                     return;
                 }
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element, banner);
                 sendViewEvent(element);
+                bannerLoaded();
             });
         };
 
         var displayIfVisible = function() {
-            if ((banner.type === 'direct' && (banner.scope === 'pop-up' || banner.scope === 'pop-under')) || !banner.destElement) {
+            if (isBannerPop(banner) || !banner.destElement) {
                 displayBanner();
             } else {
                 if (isVisible(banner.destElement)) {
@@ -973,12 +999,12 @@ var fetchBanner = function (banner, context, zone_options) {
                 } else {
                     console.log('hash error', banner, hash);
                     insertBackfill(banner.destElement, banner.backfill);
+                    bannerLoaded();
                 }
             });
         } else {
             displayIfVisible();
         }
-        bannerLoaded();
     }, function () {
         console.log('could not fetch url', banner);
         insertBackfill(banner.destElement, banner.backfill);

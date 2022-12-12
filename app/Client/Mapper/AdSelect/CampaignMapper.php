@@ -33,6 +33,8 @@ use DateTime;
 
 class CampaignMapper
 {
+    public const DEFAULT_VENDOR = 'unknown';
+
     public static function map(Medium $medium, Campaign $campaign): array
     {
         $banners = [];
@@ -72,7 +74,15 @@ class CampaignMapper
         }
 
         $targeting = TargetingMapper::map(
-            $campaignArray['targeting_requires'],
+            array_merge(
+                $campaignArray['targeting_requires'],
+                [
+                    'site' => [
+                        'medium' => $campaign->getMedium(),
+                        'vendor' => $campaign->getVendor() ?? self::DEFAULT_VENDOR,
+                    ],
+                ],
+            ),
             $campaignArray['targeting_excludes']
         );
 
