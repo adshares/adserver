@@ -173,7 +173,7 @@ class GuzzleAdSelectClient implements AdSelect
                         'publisher_id' => $user->uuid,
                         'uuid'         => $site->uuid,
                         'medium'       => $site->medium,
-                        'vendor'       => $site->vendor ?? 'unknown',
+                        'vendor'       => $site->vendor ?? CampaignMapper::DEFAULT_VENDOR,
                     ];
                     if (isset($zones[$i]['options']['banner_type'])) {
                         $sitesMap[$siteId]['filters']['require']['type'] = (array)$zones[$i]['options']['banner_type'];

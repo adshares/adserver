@@ -33,6 +33,8 @@ use DateTime;
 
 class CampaignMapper
 {
+    public const DEFAULT_VENDOR = 'unknown';
+
     public static function map(Medium $medium, Campaign $campaign): array
     {
         $banners = [];
@@ -77,7 +79,7 @@ class CampaignMapper
                 [
                     'site' => [
                         'medium' => $campaign->getMedium(),
-                        'vendor' => $campaign->getVendor() ?? 'unknown',
+                        'vendor' => $campaign->getVendor() ?? self::DEFAULT_VENDOR,
                     ],
                 ],
             ),
