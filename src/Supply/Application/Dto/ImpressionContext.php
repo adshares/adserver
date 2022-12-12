@@ -34,17 +34,13 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 
 final class ImpressionContext
 {
-    /** @var array */
-    private $site;
+    private array $site;
 
-    /** @var array */
-    private $device;
+    private array $device;
 
-    /** @var array */
-    private $user;
+    private array $user;
 
-    /** @var array|null */
-    private $originalUser;
+    private ?array $originalUser;
 
     public function __construct(array $site, array $device, array $user)
     {
@@ -131,9 +127,12 @@ final class ImpressionContext
             $siteMap = $sitesMap[$zone->site_id];
             $trackingId = $this->hexUuidFromBase64UrlWithChecksum($this->trackingId());
             $userId = $this->userId();
+            $siteKeywords = $this->site;
+            $siteKeywords['medium'] = $siteMap['medium'];
+            $siteKeywords['vendor'] = $siteMap['vendor'];
             $params[] = [
                 'keywords' => array_merge(
-                    AbstractFilterMapper::generateNestedStructure(['site' => $this->site]),
+                    AbstractFilterMapper::generateNestedStructure(['site' => $siteKeywords]),
                     AbstractFilterMapper::generateNestedStructure($this->user['keywords'])
                 ),
                 'banner_size' => $zone->size,

@@ -72,7 +72,15 @@ class CampaignMapper
         }
 
         $targeting = TargetingMapper::map(
-            $campaignArray['targeting_requires'],
+            array_merge(
+                $campaignArray['targeting_requires'],
+                [
+                    'site' => [
+                        'medium' => $campaign->getMedium(),
+                        'vendor' => $campaign->getVendor() ?? 'unknown',
+                    ],
+                ],
+            ),
             $campaignArray['targeting_excludes']
         );
 

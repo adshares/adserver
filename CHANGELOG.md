@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Banner rotate
+### Changed
+- Found banner must match campaign medium 
 
 ## [2.2.1] - 2022-12-08
 ### Fixed

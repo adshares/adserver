@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "simple",
-    "version": "4.1.0"
+    "version": "4.2.0"
   },
   "parameters": {
     "@countries": {
@@ -446,7 +446,7 @@
     "@qualityLevels": {
       "high": "Premium",
       "medium": "Regular",
-      "low": "Low quality"
+      "low": "Brand awareness"
     },
     "@devices": {
       "desktop": "Desktop",
@@ -702,36 +702,28 @@
             "image/webp"
           ],
           "scopes": {
-            "300x250": "Medium Rectangle",
-            "336x280": "Large Rectangle",
-            "728x90": "Leaderboard",
-            "300x600": "Half Page",
-            "320x100": "Large Mobile Banner",
-            "320x50": "Mobile Banner",
-            "468x60": "Full Banner",
-            "234x60": "Half Banner",
-            "120x600": "Skyscraper",
-            "120x240": "Vertical Banner",
-            "160x600": "Wide Skyscraper",
             "300x1050": "Portrait",
-            "970x90": "Large Leaderboard",
-            "970x250": "Billboard",
-            "250x250": "Square",
-            "200x200": "Small Square",
-            "180x150": "Small Rectangle",
-            "125x125": "Button",
-            "240x400": "Vertical Rectangle",
-            "980x120": "Panorama",
-            "250x360": "Triple Widescreen",
-            "930x180": "Top Banner",
-            "580x400": "Netboard",
-            "750x100": "Single Billboard",
-            "750x200": "Double Billboard",
-            "750x300": "Triple Billboard",
-            "300x100": "3 to 1 Rectangle",
-            "120x90": "Button One",
-            "120x60": "Button Two",
-            "88x31": "Micro Banner"
+            "1050x300": "Vertical portrait",
+            "854x480": "WVGA",
+            "1280x720": "HD",
+            "1920x1080": "Full HD",
+            "3840x2160": "UHD",
+            "480x854": "Vertical WVGA",
+            "720x1280": "Vertical HD",
+            "1080x1920": "Vertical Full HD",
+            "2160x3840": "Vertical UHD",
+            "640x480": "VGA",
+            "1024x768": "XGA",
+            "2048x1536": "QXGA",
+            "4096x3072": "HXGA",
+            "480x640": "Vertical VGA",
+            "768x1024": "Vertical XGA",
+            "1536x2048": "Vertical QXGA",
+            "3072x4096": "Vertical HXGA",
+            "512x512": "Square hK",
+            "1024x1024": "Square 1K",
+            "2048x2048": "Square 2K",
+            "4096x4096": "Square 4K"
           }
         },
         {
@@ -740,46 +732,28 @@
             "video/mp4"
           ],
           "scopes": {
-            "300x250": "Medium Rectangle",
-            "336x280": "Large Rectangle",
-            "728x90": "Leaderboard",
-            "300x600": "Half Page",
-            "320x100": "Large Mobile Banner",
-            "320x50": "Mobile Banner",
-            "468x60": "Full Banner",
-            "234x60": "Half Banner",
-            "120x600": "Skyscraper",
-            "120x240": "Vertical Banner",
-            "160x600": "Wide Skyscraper",
             "300x1050": "Portrait",
-            "970x90": "Large Leaderboard",
-            "970x250": "Billboard",
-            "250x250": "Square",
-            "200x200": "Small Square",
-            "180x150": "Small Rectangle",
-            "125x125": "Button",
-            "240x400": "Vertical Rectangle",
-            "980x120": "Panorama",
-            "250x360": "Triple Widescreen",
-            "930x180": "Top Banner",
-            "580x400": "Netboard",
-            "750x100": "Single Billboard",
-            "750x200": "Double Billboard",
-            "750x300": "Triple Billboard",
-            "300x100": "3 to 1 Rectangle",
-            "120x90": "Button One",
-            "120x60": "Button Two",
-            "88x31": "Micro Banner"
-          }
-        },
-        {
-          "type": "model",
-          "mimes": [
-            "model/voxel",
-            "model/gltf-binary"
-          ],
-          "scopes": {
-            "cube": "Cube"
+            "1050x300": "Vertical portrait",
+            "854x480": "WVGA",
+            "1280x720": "HD",
+            "1920x1080": "Full HD",
+            "3840x2160": "UHD",
+            "480x854": "Vertical WVGA",
+            "720x1280": "Vertical HD",
+            "1080x1920": "Vertical Full HD",
+            "2160x3840": "Vertical UHD",
+            "640x480": "VGA",
+            "1024x768": "XGA",
+            "2048x1536": "QXGA",
+            "4096x3072": "HXGA",
+            "480x640": "Vertical VGA",
+            "768x1024": "Vertical XGA",
+            "1536x2048": "Vertical QXGA",
+            "3072x4096": "Vertical HXGA",
+            "512x512": "Square hK",
+            "1024x1024": "Square 1K",
+            "2048x2048": "Square 2K",
+            "4096x4096": "Square 4K"
           }
         }
       ],
@@ -805,43 +779,43 @@
               "token": {
                 "label": "Tokens",
                 "values": {
-                  "token-analytics": "Analytics",
-                  "token-cex-token": "CEX Tokens",
-                  "token-defi": "DeFi",
-                  "token-fan-token": "Fan Tokens",
-                  "token-gamefi": "GameFi",
-                  "token-gambling": "Gambling",
-                  "token-governance-token": "Governance Tokens",
-                  "token-infrastructure": "Infrastructure",
-                  "token-iot": "IOT",
-                  "token-layer-2": "Layer 2",
-                  "token-meme-tokens": "Meme Tokens",
-                  "token-metaverse": "Metaverse",
-                  "token-music": "Music",
-                  "token-p2e": "P2E",
-                  "token-privacy-coins": "Privacy Tokens",
-                  "token-socialmedia-content": "SocialMedia Content",
-                  "token-sports": "Sports",
-                  "token-stablecoin": "Stablecoin",
-                  "token-storage": "Storage",
-                  "token-tourism": "Tourism",
-                  "token-wrapped-tokens": "Wrapped Tokens"
+                  "cookie3-token-analytics": "Analytics",
+                  "cookie3-token-cex-token": "CEX Tokens",
+                  "cookie3-token-defi": "DeFi",
+                  "cookie3-token-fan-token": "Fan Tokens",
+                  "cookie3-token-gamefi": "GameFi",
+                  "cookie3-token-gambling": "Gambling",
+                  "cookie3-token-governance-token": "Governance Tokens",
+                  "cookie3-token-infrastructure": "Infrastructure",
+                  "cookie3-token-iot": "IOT",
+                  "cookie3-token-layer-2": "Layer 2",
+                  "cookie3-token-meme-tokens": "Meme Tokens",
+                  "cookie3-token-metaverse": "Metaverse",
+                  "cookie3-token-music": "Music",
+                  "cookie3-token-p2e": "P2E",
+                  "cookie3-token-privacy-coins": "Privacy Tokens",
+                  "cookie3-token-socialmedia-content": "SocialMedia Content",
+                  "cookie3-token-sports": "Sports",
+                  "cookie3-token-stablecoin": "Stablecoin",
+                  "cookie3-token-storage": "Storage",
+                  "cookie3-token-tourism": "Tourism",
+                  "cookie3-token-wrapped-tokens": "Wrapped Tokens"
                 }
               },
               "nft": {
                 "label": "NFTs",
                 "values": {
-                  "nft-anime-asian": "Anime Asian",
-                  "nft-community": "Community",
-                  "nft-defi": "DeFi",
-                  "nft-fashion": "Fashion",
-                  "nft-metaverse": "Metaverse",
-                  "nft-p2e": "P2E",
-                  "nft-pfp": "PFP",
-                  "nft-realestate": "RealEstate",
-                  "nft-serum-utility": "Serum Utility",
-                  "nft-sports": "Sports",
-                  "nft-tickets": "Tickets"
+                  "cookie3-nft-anime-asian": "Anime Asian",
+                  "cookie3-nft-community": "Community",
+                  "cookie3-nft-defi": "DeFi",
+                  "cookie3-nft-fashion": "Fashion",
+                  "cookie3-nft-metaverse": "Metaverse",
+                  "cookie3-nft-p2e": "P2E",
+                  "cookie3-nft-pfp": "PFP",
+                  "cookie3-nft-realestate": "RealEstate",
+                  "cookie3-nft-serum-utility": "Serum Utility",
+                  "cookie3-nft-sports": "Sports",
+                  "cookie3-nft-tickets": "Tickets"
                 }
               }
             }
@@ -902,12 +876,51 @@
             "image/png"
           ]
         }
-      ]
+      ],
+      "targeting": []
     },
     {
       "medium": "metaverse",
       "name": "cryptovoxels",
-      "label": "Cryptovoxels"
+      "label": "Voxels",
+      "formats": [
+        {
+          "path": "$[?(@.type=image)].mimes",
+          "value": [
+            "image/gif",
+            "image/jpeg",
+            "image/png"
+          ]
+        },
+        {
+          "path": "$[]",
+          "value": {
+            "type": "model",
+            "mimes": [
+              "model/voxel"
+            ],
+            "scopes": {
+              "cube": "Cube"
+            }
+          }
+        }
+      ],
+      "targeting": []
+    },
+    {
+      "medium": "metaverse",
+      "name": "polkacity",
+      "label": "Polka City",
+      "formats": [
+        {
+          "path": "$[?(@.type=image)].mimes",
+          "value": [
+            "image/jpeg",
+            "image/png"
+          ]
+        }
+      ],
+      "targeting": []
     }
   ]
 }
