@@ -79,7 +79,7 @@ class SupplyController extends Controller
     private const TTL_ONE_HOUR = 3600;
     private const ZONE_DEPTH_DEFAULT = 0;
     private const ZONE_MINIMAL_DPI_DEFAULT = 1;
-    private const ZONE_NAME_DEFAULT = 'default';
+    private const ZONE_NAME_DEFAULT = 'Default';
 
     private static string $adserverId;
 
