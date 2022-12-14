@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
-use Adshares\Adserver\Models\Zone;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Supply\Domain\Model\Banner;
 
@@ -38,13 +37,8 @@ final class Size
         float $depth,
         float $minDpi,
         int $count = 5,
-        ?string $zoneType = null,
     ): array {
-        if (Zone::TYPE_POP === $zoneType) {
-            return self::getScopesByTypes($medium, [Banner::TYPE_DIRECT_LINK]);
-        }
-
-        if ((null === $zoneType && $depth > 0) || Zone::TYPE_MODEL === $zoneType) {
+        if ($depth > 0) {
             return self::getScopesByTypes($medium, [Banner::TYPE_MODEL]);
         }
 
