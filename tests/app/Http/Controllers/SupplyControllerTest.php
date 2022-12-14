@@ -257,7 +257,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonCount(1, 'data');
     }
 
-    public function testFindDynamicPopup(): void
+    public function testFindDynamicUnsupportedPopup(): void
     {
         $this->mockAdSelect();
         $data = self::getDynamicFindData([
@@ -268,10 +268,7 @@ final class SupplyControllerTest extends TestCase
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
-
-        self::assertDatabaseHas(Zone::class, ['type' => Zone::TYPE_POP]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     /**

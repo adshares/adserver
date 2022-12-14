@@ -77,9 +77,6 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
     private const TTL_ONE_HOUR = 3600;
-    private const ZONE_DEPTH_DEFAULT = 0;
-    private const ZONE_MINIMAL_DPI_DEFAULT = 1;
-    private const ZONE_NAME_DEFAULT = 'Default';
 
     private static string $adserverId;
 
@@ -121,9 +118,9 @@ class SupplyController extends Controller
             ]
         );
 
-        $validated['min_dpi'] = $validated['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT;
-        $validated['zone_name'] = $validated['zone_name'] ?? self::ZONE_NAME_DEFAULT;
-        $validated['depth'] = $validated['depth'] ?? self::ZONE_DEPTH_DEFAULT;
+        $validated['min_dpi'] = $validated['min_dpi'] ?? Zone::DEFAULT_MINIMAL_DPI;
+        $validated['zone_name'] = $validated['zone_name'] ?? Zone::DEFAULT_NAME;
+        $validated['depth'] = $validated['depth'] ?? Zone::DEFAULT_DEPTH;
 
         $payoutAddress = WalletAddress::fromString($validated['pay_to']);
         $user = User::fetchByWalletAddress($payoutAddress);
@@ -405,8 +402,8 @@ class SupplyController extends Controller
                     $medium,
                     (float)$placement['width'],
                     (float)$placement['height'],
-                    (float)($placement['depth'] ?? self::ZONE_DEPTH_DEFAULT),
-                    (float)($placement['minDpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
+                    (float)($placement['depth'] ?? Zone::DEFAULT_DEPTH),
+                    (float)($placement['minDpi'] ?? Zone::DEFAULT_MINIMAL_DPI),
                     zoneType: $zoneType,
                 );
                 if (empty($zoneSizes)) {
@@ -421,7 +418,7 @@ class SupplyController extends Controller
                 $zoneObject = Zone::fetchOrCreate(
                     $site->id,
                     $zoneSizes[0],
-                    $placement['name'] ?? self::ZONE_NAME_DEFAULT,
+                    $placement['name'] ?? Zone::DEFAULT_NAME,
                     $zoneType,
                 );
                 $input['placements'][$key]['placementId'] = $zoneObject->uuid;
@@ -1183,11 +1180,13 @@ class SupplyController extends Controller
                     'Field `placements[].types` cannot contain conflicting types'
                 );
             }
-            $zoneType = $zoneTypes[0];
-        } else {
-            $zoneType = null;
+            if (Zone::TYPE_DISPLAY !== $zoneTypes[0]) {
+                throw new UnprocessableEntityHttpException(
+                    'Field `placements[].types` cannot contain non-displayable type'
+                );
+            }
         }
-        return $zoneType;
+        return Zone::TYPE_DISPLAY;
     }
 
     private static function mapFindInput(array $input): array

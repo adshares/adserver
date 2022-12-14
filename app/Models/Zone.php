@@ -25,6 +25,9 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
+use Adshares\Adserver\Services\Publisher\ZoneScopesGenerator;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -56,6 +59,10 @@ class Zone extends Model
     use AutomateMutators;
     use BinHex;
     use HasFactory;
+
+    public const DEFAULT_DEPTH = 0;
+    public const DEFAULT_MINIMAL_DPI = 1;
+    public const DEFAULT_NAME = 'Default';
 
     public const STATUS_DRAFT = 0;
     public const STATUS_ACTIVE = 1;
@@ -113,7 +120,7 @@ class Zone extends Model
         int $siteId,
         string $size,
         string $name,
-        ?string $type = null,
+        string $type = self::TYPE_DISPLAY,
     ): ?self {
         $zone = self::where('site_id', $siteId)
             ->where('size', $size)
@@ -126,9 +133,7 @@ class Zone extends Model
             $zone->site_id = $siteId;
             $zone->size = $size;
             $zone->status = Zone::STATUS_ACTIVE;
-            if (null !== $type) {
-                $zone->type = $type;
-            }
+            $zone->type = $type;
             $zone->save();
         }
         return $zone;
