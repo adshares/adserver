@@ -23,6 +23,7 @@ use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -34,7 +35,7 @@ class AddMediumToBidStrategy extends Migration
     public function up(): void
     {
         Schema::table('bid_strategy', function (Blueprint $table) {
-            $table->string('medium', 16)->default('web');
+            $table->string('medium', 16)->default(MediumName::Web->value);
             $table->string('vendor', 32)->nullable();
             $table->boolean('is_default')->default(0);
         });
@@ -47,7 +48,10 @@ class AddMediumToBidStrategy extends Migration
     {
         $now = new DateTimeImmutable();
         $uuid = bin2hex(
-            DB::selectOne('SELECT `uuid` FROM bid_strategy WHERE user_id = 0 AND `medium` = ? LIMIT 1', ['web'])->uuid
+            DB::selectOne(
+                'SELECT `uuid` FROM bid_strategy WHERE user_id = 0 AND `medium` = ? LIMIT 1',
+                [MediumName::Web->value]
+            )->uuid
         );
 
         Schema::table('bid_strategy', function (Blueprint $table) {

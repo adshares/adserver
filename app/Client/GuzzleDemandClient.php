@@ -30,6 +30,7 @@ use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -55,8 +56,6 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
     private const DEFAULT_VENDOR = null;
-    private const MEDIUM_METAVERSE = 'metaverse';
-    private const MEDIUM_WEB = 'web';
     private const METAVERSE_VENDORS = [
         'cryptovoxels' => 'cryptovoxels.com',
         'decentraland' => 'decentraland.org',
@@ -318,12 +317,12 @@ final class GuzzleDemandClient implements DemandClient
                     ++$matchesCount;
                 }
                 if (count($domains) === $matchesCount) {
-                    return [self::MEDIUM_METAVERSE, $vendor];
+                    return [MediumName::Metaverse->value, $vendor];
                 }
             }
         }
 
-        return [self::MEDIUM_WEB, self::DEFAULT_VENDOR];
+        return [MediumName::Web->value, self::DEFAULT_VENDOR];
     }
 
     public function validateFetchInfoResponse(array $data): void

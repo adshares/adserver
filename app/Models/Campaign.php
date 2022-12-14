@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -507,7 +508,7 @@ class Campaign extends Model
 
         $domains = $this->targeting_requires['site']['domain'];
 
-        if ('metaverse' === $this->medium) {
+        if (MediumName::Metaverse->value === $this->medium) {
             if ('decentraland' === $this->vendor) {
                 return 1 !== count($domains) || 'decentraland.org' !== $domains[0];
             } elseif ('cryptovoxels' === $this->vendor) {

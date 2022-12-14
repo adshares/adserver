@@ -19,6 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\ViewModel\MediumName;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -28,11 +29,11 @@ class AddMediumName extends Migration
     public function up(): void
     {
         Schema::table('campaigns', function (Blueprint $table) {
-            $table->string('medium', 16)->after('budget')->default('web');
+            $table->string('medium', 16)->after('budget')->default(MediumName::Web->value);
             $table->string('vendor', 32)->after('medium')->nullable();
         });
         Schema::table('sites', function (Blueprint $table) {
-            $table->string('medium', 16)->after('reassess_available_at')->default('web');
+            $table->string('medium', 16)->after('reassess_available_at')->default(MediumName::Web->value);
             $table->string('vendor', 32)->after('medium')->nullable();
         });
     }
