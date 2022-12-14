@@ -59,6 +59,11 @@ final class Size
                     return false;
                 }
 
+                $occupiedField = $dpi * min($width / $x, $height / $y);
+                if ($occupiedField < self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING) {
+                    return false;
+                }
+
                 $score = 1 - min($x / $width, $y / $height) / max($x / $width, $y / $height);
 
                 return [
