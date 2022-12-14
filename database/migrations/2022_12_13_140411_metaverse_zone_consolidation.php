@@ -33,7 +33,7 @@ return new class extends Migration {
     {
         foreach (
             DB::select(
-                'SELECT id from sites WHERE medium="metaverse" AND deleted_at IS NULL AND id=91'
+                'SELECT id from sites WHERE medium="metaverse" AND deleted_at IS NULL'
             ) as $site
         ) {
             $uuids = [];
@@ -61,9 +61,6 @@ return new class extends Migration {
             $uuids = '0x' . implode(',0x', $uuids);
             DB::update(
                 'UPDATE network_cases SET zone_id = ' . $zoneUuid . ' WHERE zone_id IN (' . $uuids . ')'
-            );
-            DB::update(
-                'UPDATE network_case_logs_hourly SET zone_id = ' . $zoneUuid . ' WHERE zone_id IN (' . $uuids . ')'
             );
             DB::insert(
                 '
