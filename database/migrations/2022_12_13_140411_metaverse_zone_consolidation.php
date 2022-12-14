@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
@@ -19,27 +20,28 @@
  */
 
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Repository\FileConfigurationRepository;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
+        $repository = new FileConfigurationRepository(storage_path('app'));
+        $mediumByNameAndVendor = [];
+
         foreach (
             DB::select(
-                'SELECT id from sites WHERE medium="metaverse" AND deleted_at IS NULL'
+                'SELECT id, medium, vendor from sites WHERE medium="metaverse" AND deleted_at IS NULL'
             ) as $site
         ) {
             $uuids = [];
             $size = null;
             foreach (
                 DB::select(
-                    'SELECT * from zones WHERE site_id=:id AND name="default" AND type="display" AND deleted_at IS NULL',
+                    'SELECT * from zones'
+                    . ' WHERE site_id=:id AND name="default" AND type="display" AND deleted_at IS NULL',
                     ['id' => $site->id]
                 ) as $row
             ) {
@@ -49,9 +51,23 @@ return new class extends Migration {
             if (null === $size || empty($uuids)) {
                 continue;
             }
-            $zone = Zone::fetchOrCreate(
+
+            if (!isset($mediumByNameAndVendor[$site->medium][$site->vendor])) {
+                $mediumByNameAndVendor[$site->medium][$site->vendor] =
+                    $repository->fetchMedium($site->medium, $site->vendor);
+            }
+            [$width, $height] = Size::toDimensions($size);
+            $scopes = Size::findBestFit(
+                $mediumByNameAndVendor[$site->medium][$site->vendor],
+                $width,
+                $height,
+                Zone::DEFAULT_DEPTH,
+                Zone::DEFAULT_MINIMAL_DPI,
+            );
+            $zone = Zone::register(
                 $site->id,
                 $size,
+                $scopes,
                 'Default (legacy)',
                 Zone::TYPE_DISPLAY,
             );
@@ -112,12 +128,7 @@ return new class extends Migration {
         }
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         // Lack of rollback is intended.
     }

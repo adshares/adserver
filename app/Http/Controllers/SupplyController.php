@@ -39,6 +39,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -398,29 +399,39 @@ class SupplyController extends Controller
 
             foreach ($input['placements'] as $key => $placement) {
                 $zoneType = $this->getZoneType($placement);
-                $zoneSizes = Size::findBestFit(
-                    $medium,
-                    (float)$placement['width'],
-                    (float)$placement['height'],
-                    (float)($placement['depth'] ?? Zone::DEFAULT_DEPTH),
-                    (float)($placement['minDpi'] ?? Zone::DEFAULT_MINIMAL_DPI),
-                    zoneType: $zoneType,
-                );
-                if (empty($zoneSizes)) {
-                    throw new UnprocessableEntityHttpException(
-                        sprintf(
-                            'Cannot find placement matching width %s, height %s)',
-                            $placement['width'],
-                            $placement['height']
-                        )
+                $size = Size::fromDimensions((float)$placement['width'], (float)$placement['height']);
+                $name = $placement['name'] ?? Zone::DEFAULT_NAME;
+
+                $zoneObject = Zone::fetch($site->id, $size, $name);
+                if (null === $zoneObject) {
+                    if (MediumName::Web->value === $medium->getName() || Zone::TYPE_DISPLAY !== $zoneType) {
+                        $scopes = [$size];
+                    } else {
+                        $scopes = Size::findBestFit(
+                            $medium,
+                            (float)$placement['width'],
+                            (float)$placement['height'],
+                            (float)($placement['depth'] ?? Zone::DEFAULT_DEPTH),
+                            (float)($placement['minDpi'] ?? Zone::DEFAULT_MINIMAL_DPI),
+                        );
+                        if (empty($scopes)) {
+                            throw new UnprocessableEntityHttpException(
+                                sprintf(
+                                    'Cannot find placement matching width %s, height %s)',
+                                    $placement['width'],
+                                    $placement['height']
+                                )
+                            );
+                        }
+                    }
+                    $zoneObject = Zone::register(
+                        $site->id,
+                        $size,
+                        $scopes,
+                        $name,
+                        $zoneType,
                     );
                 }
-                $zoneObject = Zone::fetchOrCreate(
-                    $site->id,
-                    $zoneSizes[0],
-                    $placement['name'] ?? Zone::DEFAULT_NAME,
-                    $zoneType,
-                );
                 $input['placements'][$key]['placementId'] = $zoneObject->uuid;
             }
         }

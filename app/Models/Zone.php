@@ -122,11 +122,8 @@ class Zone extends Model
         string $size,
         string $name,
         string $type = self::TYPE_DISPLAY,
-    ): ?self {
-        $zone = self::where('site_id', $siteId)
-            ->where('size', $size)
-            ->where('name', $name)
-            ->first();
+    ): self {
+        $zone = self::fetch($siteId, $size, $name);
 
         if (!$zone) {
             $zone = new Zone();
@@ -138,6 +135,37 @@ class Zone extends Model
             $zone->type = $type;
             $zone->save();
         }
+        return $zone;
+    }
+
+    public static function fetch(
+        int $siteId,
+        string $size,
+        string $name,
+    ): ?self {
+        return self::where('site_id', $siteId)
+            ->where('size', $size)
+            ->where('name', $name)
+            ->first();
+    }
+
+    public static function register(
+        int $siteId,
+        string $size,
+        array $scopes,
+        string $name,
+        ?string $type = null,
+    ): self {
+        $zone = new Zone();
+        $zone->name = $name;
+        $zone->site_id = $siteId;
+        $zone->size = $size;
+        $zone->scopes = $scopes;
+        $zone->status = Zone::STATUS_ACTIVE;
+        if (null !== $type) {
+            $zone->type = $type;
+        }
+        $zone->save();
         return $zone;
     }
 
