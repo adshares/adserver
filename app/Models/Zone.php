@@ -45,6 +45,7 @@ use function hex2bin;
  * @property string uuid
  * @property int site_id
  * @property string size
+ * @property string[] scopes
  * @property string type
  * @property int status
  * @mixin Builder
@@ -67,6 +68,10 @@ class Zone extends Model
     ];
 
     public $publisher_id;
+
+    protected $casts = [
+        'scopes' => 'array',
+    ];
 
     protected $fillable = [
         'name',

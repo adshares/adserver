@@ -135,7 +135,7 @@ final class ImpressionContext
                     AbstractFilterMapper::generateNestedStructure(['site' => $siteKeywords]),
                     AbstractFilterMapper::generateNestedStructure($this->user['keywords'])
                 ),
-                'banner_size' => $zone->size,
+                'scopes' => $zone->scopes,
                 'publisher_id' => $siteMap['publisher_id'],
                 'site_id' => $siteMap['uuid'],
                 'zone_id' => $zone->uuid,

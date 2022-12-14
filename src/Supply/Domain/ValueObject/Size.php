@@ -51,7 +51,7 @@ final class Size
             return self::getScopesByTypes($medium, [Banner::TYPE_MODEL]);
         }
 
-        $scopes = self::getScopesByTypes($medium, [Banner::TYPE_IMAGE, Banner::TYPE_VIDEO]);
+        $scopes = self::getScopesByTypes($medium, [Banner::TYPE_HTML, Banner::TYPE_IMAGE, Banner::TYPE_VIDEO]);
 
         $sizes = array_map(
             function ($size) use ($width, $height, $minDpi) {
@@ -133,23 +133,6 @@ final class Size
                 return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
             }
         );
-    }
-
-    public static function getAspect(int $width, int $height): string
-    {
-        if ($width === 0 || $height === 0) {
-            return '';
-        }
-
-        $a = $width;
-        $b = $height;
-        while ($b !== 0) {
-            $c = $a % $b;
-            $a = $b;
-            $b = $c;
-        }
-
-        return $width / $a . ':' . $height / $a;
     }
 
     private static function getScopesByTypes(Medium $medium, array $types): array
