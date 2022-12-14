@@ -30,6 +30,7 @@ return new class extends Migration {
     {
         $repository = new FileConfigurationRepository(storage_path('app'));
         $mediumByNameAndVendor = [];
+        $scopesByMediumNameAndVendorAndSize = [];
 
         foreach (
             DB::select(
@@ -56,14 +57,18 @@ return new class extends Migration {
                 $mediumByNameAndVendor[$site->medium][$site->vendor] =
                     $repository->fetchMedium($site->medium, $site->vendor);
             }
-            [$width, $height] = Size::toDimensions($size);
-            $scopes = Size::findBestFit(
-                $mediumByNameAndVendor[$site->medium][$site->vendor],
-                $width,
-                $height,
-                Zone::DEFAULT_DEPTH,
-                Zone::DEFAULT_MINIMAL_DPI,
-            );
+            if (!isset($scopesByMediumNameAndVendorAndSize[$site->medium][$site->vendor][$size])) {
+                [$width, $height] = Size::toDimensions($size);
+                $scopesByMediumNameAndVendorAndSize[$site->medium][$site->vendor][$size] = Size::findBestFit(
+                    $mediumByNameAndVendor[$site->medium][$site->vendor],
+                    $width,
+                    $height,
+                    Zone::DEFAULT_DEPTH,
+                    Zone::DEFAULT_MINIMAL_DPI,
+                );
+            }
+
+            $scopes = $scopesByMediumNameAndVendorAndSize[$site->medium][$site->vendor][$size];
             $zone = Zone::register(
                 $site->id,
                 $size,
