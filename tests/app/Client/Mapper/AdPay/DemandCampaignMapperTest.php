@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use DateTime;
 use Illuminate\Support\Collection;
 
@@ -57,6 +58,8 @@ final class DemandCampaignMapperTest extends TestCase
             [
                 'uuid' => '0123456789ABCDEF0123456789ABCDEF',
                 'user_id' => $user->id,
+                'medium' => 'metaverse',
+                'vendor' => 'my-metaverse',
                 'status' => Campaign::STATUS_INACTIVE,
                 'landing_url' => 'https://example.com',
                 'time_start' => $dateTimeStart->format(DATE_ATOM),
@@ -105,6 +108,8 @@ final class DemandCampaignMapperTest extends TestCase
             [
                 'id' => $campaign->uuid,
                 'advertiser_id' => $user->uuid,
+                'medium' => 'metaverse',
+                'vendor' => 'my-metaverse',
                 'budget' => 10000000000000,
                 'max_cpc' => 0,
                 'max_cpm' => null,

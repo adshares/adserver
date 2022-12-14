@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Changed
 - Metaverse zones consolidation
+- Send medium and vendor to AdPay
 
 ## [2.2.2] - 2022-12-12
 ### Added

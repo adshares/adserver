@@ -41,6 +41,8 @@ class DemandCampaignMapper
                 return [
                     'id' => $campaign->uuid,
                     'advertiser_id' => Campaign::fetchAdvertiserId($campaign->id),
+                    'medium' => $campaign->medium,
+                    'vendor' => $campaign->vendor,
                     'budget' => $basicInformation['budget'],
                     'max_cpc' => $basicInformation['max_cpc'],
                     'max_cpm' => $basicInformation['max_cpm'],
