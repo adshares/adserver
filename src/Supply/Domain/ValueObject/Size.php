@@ -23,15 +23,12 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
+use Adshares\Adserver\Models\Zone;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Supply\Domain\Model\Banner;
 
 final class Size
 {
-    public const TYPE_DISPLAY = 'display';
-    public const TYPE_MODEL = 'model';
-    public const TYPE_POP = 'pop';
-
     private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
 
     public static function findBestFit(
@@ -43,11 +40,11 @@ final class Size
         int $count = 5,
         ?string $zoneType = null,
     ): array {
-        if (self::TYPE_POP === $zoneType) {
+        if (Zone::TYPE_POP === $zoneType) {
             return self::getScopesByTypes($medium, [Banner::TYPE_DIRECT_LINK]);
         }
 
-        if ((null === $zoneType && $depth > 0) || self::TYPE_MODEL === $zoneType) {
+        if ((null === $zoneType && $depth > 0) || Zone::TYPE_MODEL === $zoneType) {
             return self::getScopesByTypes($medium, [Banner::TYPE_MODEL]);
         }
 

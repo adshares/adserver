@@ -39,7 +39,6 @@ use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
-use Adshares\Supply\Domain\ValueObject\Size;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
@@ -272,7 +271,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
 
-        self::assertDatabaseHas(Zone::class, ['type' => Size::TYPE_POP]);
+        self::assertDatabaseHas(Zone::class, ['type' => Zone::TYPE_POP]);
     }
 
     /**

@@ -20,7 +20,7 @@
  */
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Adserver\Models\Zone;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -73,13 +73,13 @@ return new class extends Migration {
             'zones',
             function (Blueprint $table) {
                 $table->string('size', 16)->default('')->after('height');
-                $table->string('type')->default(Size::TYPE_DISPLAY)->change();
+                $table->string('type')->default(Zone::TYPE_DISPLAY)->change();
             }
         );
         DB::update(
             sprintf(
                 'UPDATE `zones` SET `size` = CONCAT(`width`, "x", `height`), `type` = \'%s\'',
-                Size::TYPE_DISPLAY
+                Zone::TYPE_DISPLAY
             )
         );
 

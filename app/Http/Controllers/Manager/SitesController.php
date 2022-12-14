@@ -41,7 +41,6 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
 use Exception;
 use Illuminate\Http\Request;
@@ -255,7 +254,7 @@ class SitesController extends Controller
             $type = Utils::getZoneTypeByBannerType($bannerTypeBySize[$size]);
             $inputZone['type'] = $type;
 
-            if (Size::TYPE_POP !== $type) {
+            if (Zone::TYPE_POP !== $type) {
                 continue;
             }
 
@@ -273,7 +272,7 @@ class SitesController extends Controller
 
         /** @var Zone $zone */
         foreach ($site->zones()->withTrashed()->get() as $zone) {
-            if (Size::TYPE_POP === $zone->type) {
+            if (Zone::TYPE_POP === $zone->type) {
                 $size = $zone->size;
 
                 if (isset($presentUniqueSizes[$size])) {

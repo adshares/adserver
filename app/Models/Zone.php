@@ -67,6 +67,10 @@ class Zone extends Model
         self::STATUS_ARCHIVED,
     ];
 
+    public const TYPE_DISPLAY = 'display';
+    public const TYPE_MODEL = 'model';
+    public const TYPE_POP = 'pop';
+
     public $publisher_id;
 
     protected $casts = [

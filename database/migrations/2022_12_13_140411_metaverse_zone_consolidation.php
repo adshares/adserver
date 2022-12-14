@@ -19,7 +19,6 @@
  */
 
 use Adshares\Adserver\Models\Zone;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -54,7 +53,7 @@ return new class extends Migration {
                 $site->id,
                 $size,
                 'Default (legacy)',
-                Size::TYPE_DISPLAY,
+                Zone::TYPE_DISPLAY,
             );
 
             $zoneUuid = '0x' . $zone->uuid;
