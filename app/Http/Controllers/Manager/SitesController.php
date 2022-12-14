@@ -251,6 +251,7 @@ class SitesController extends Controller
 
         foreach ($inputZones as $key => &$inputZone) {
             $size = $inputZone['size'];
+            $inputZone['scopes'] = [$size];
             $type = Utils::getZoneTypeByBannerType($bannerTypeBySize[$size]);
             $inputZone['type'] = $type;
 

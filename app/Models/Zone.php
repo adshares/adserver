@@ -87,6 +87,7 @@ class Zone extends Model
     protected $fillable = [
         'name',
         'size',
+        'scopes',
         'type',
         'status',
         'uuid',
@@ -132,6 +133,7 @@ class Zone extends Model
             $zone->name = $name;
             $zone->site_id = $siteId;
             $zone->size = $size;
+            $zone->scopes = [$size];
             $zone->status = Zone::STATUS_ACTIVE;
             $zone->type = $type;
             $zone->save();
