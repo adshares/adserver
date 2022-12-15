@@ -20,21 +20,24 @@
  */
 
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Repository\FileConfigurationRepository;
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void
     {
-        $repository = new FileConfigurationRepository(storage_path('app'));
-        $mediumByNameAndVendor = [];
-        $scopesByMediumNameAndVendorAndSize = [];
+        Schema::table('zones', function (Blueprint $table) {
+            $table->json('scopes')->after('size');
+        });
+        DB::update('UPDATE zones SET scopes=JSON_ARRAY(size);');
 
         foreach (
             DB::select(
-                'SELECT id, medium, vendor from sites WHERE medium="metaverse" AND deleted_at IS NULL'
+                'SELECT id from sites WHERE medium="metaverse" AND deleted_at IS NULL'
             ) as $site
         ) {
             $uuids = [];
@@ -53,26 +56,9 @@ return new class extends Migration {
                 continue;
             }
 
-            if (!isset($mediumByNameAndVendor[$site->medium][$site->vendor])) {
-                $mediumByNameAndVendor[$site->medium][$site->vendor] =
-                    $repository->fetchMedium($site->medium, $site->vendor);
-            }
-            if (!isset($scopesByMediumNameAndVendorAndSize[$site->medium][$site->vendor][$size])) {
-                [$width, $height] = Size::toDimensions($size);
-                $scopesByMediumNameAndVendorAndSize[$site->medium][$site->vendor][$size] = Size::findBestFit(
-                    $mediumByNameAndVendor[$site->medium][$site->vendor],
-                    $width,
-                    $height,
-                    Zone::DEFAULT_DEPTH,
-                    Zone::DEFAULT_MINIMAL_DPI,
-                );
-            }
-
-            $scopes = $scopesByMediumNameAndVendorAndSize[$site->medium][$site->vendor][$size];
-            $zone = Zone::register(
+            $zone = Zone::fetchOrCreate(
                 $site->id,
-                $size,
-                $scopes,
+                new ZoneSize(...Size::toDimensions($size)),
                 'Default (legacy)',
                 Zone::TYPE_DISPLAY,
             );
@@ -135,6 +121,8 @@ return new class extends Migration {
 
     public function down(): void
     {
-        // Lack of rollback is intended.
+        Schema::table('zones', function (Blueprint $table) {
+            $table->dropColumn('scopes');
+        });
     }
 };

@@ -39,7 +39,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
-use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -49,7 +49,6 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\UserRole;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
 use DateTime;
 use DateTimeInterface;
@@ -90,7 +89,6 @@ class SupplyController extends Controller
         Request $request,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
-        ConfigurationRepository $configurationRepository
     ): BaseResponse {
         $type = $request->get('type');
         if (isset($type) && !is_array($type)) {
@@ -149,28 +147,14 @@ class SupplyController extends Controller
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
 
-        $medium = $configurationRepository->fetchMedium($validated['medium'], $validated['vendor']);
-        $zones = [];
+        $minDpi = (float)$validated['min_dpi'];
+        $zoneSize = ZoneSize::fromArray([
+            'width' => (float)$validated['width'] * $minDpi,
+            'height' => (float)$validated['height'] * $minDpi,
+            'depth' => (float)$validated['depth'],
+        ]);
 
-        $zoneSizes = Size::findBestFit(
-            $medium,
-            (float)$validated['width'],
-            (float)$validated['height'],
-            (float)$validated['depth'],
-            (float)$validated['min_dpi']
-        );
-
-        foreach ($zoneSizes as $zoneSize) {
-            $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
-            $zones[] = [
-                'zone' => $zone->uuid,
-                'options' => [
-                    'banner_type' => isset($validated['type']) ? ((array)$validated['type']) : null,
-                    'banner_mime' => $validated['mime_type'] ?? null
-                ]
-            ];
-        }
-
+        $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
         $queryData = [
             'page' => [
                 'iid' => $validated['view_id'],
@@ -178,7 +162,15 @@ class SupplyController extends Controller
                 'metamask' => $validated['context']['site']['metamask'] ?? 0,
             ],
             'user' => $validated['context']['user'] ?? [],
-            'zones' => $zones,
+            'zones' => [
+                [
+                    'zone' => $zone->uuid,
+                    'options' => [
+                        'banner_type' => isset($validated['type']) ? ((array)$validated['type']) : null,
+                        'banner_mime' => $validated['mime_type'] ?? null
+                    ],
+                ],
+            ],
             'zone_mode' => 'best_match'
         ];
 
@@ -190,7 +182,7 @@ class SupplyController extends Controller
                 'banners' => $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)
                     ->toArray(),
                 'zones' => $queryData['zones'],
-                'zoneSizes' => $zoneSizes,
+                'zoneSizes' => $zone->scopes,
                 'success' => true,
             ]
         );
@@ -281,7 +273,7 @@ class SupplyController extends Controller
 
                         $zoneObject = Zone::fetchOrCreate(
                             $site->id,
-                            "{$zone['width']}x{$zone['height']}",
+                            ZoneSize::fromArray($zone),
                             $zone['zone']
                         );
                         $zone['zone'] = $zoneObject->uuid;
@@ -399,39 +391,12 @@ class SupplyController extends Controller
 
             foreach ($input['placements'] as $key => $placement) {
                 $zoneType = $this->getZoneType($placement);
-                $size = Size::fromDimensions((float)$placement['width'], (float)$placement['height']);
-                $name = $placement['name'] ?? Zone::DEFAULT_NAME;
-
-                $zoneObject = Zone::fetch($site->id, $size, $name);
-                if (null === $zoneObject) {
-                    if (MediumName::Web->value === $medium->getName() || Zone::TYPE_DISPLAY !== $zoneType) {
-                        $scopes = [$size];
-                    } else {
-                        $scopes = Size::findBestFit(
-                            $medium,
-                            (float)$placement['width'],
-                            (float)$placement['height'],
-                            (float)($placement['depth'] ?? Zone::DEFAULT_DEPTH),
-                            (float)($placement['minDpi'] ?? Zone::DEFAULT_MINIMAL_DPI),
-                        );
-                        if (empty($scopes)) {
-                            throw new UnprocessableEntityHttpException(
-                                sprintf(
-                                    'Cannot find placement matching width %s, height %s)',
-                                    $placement['width'],
-                                    $placement['height']
-                                )
-                            );
-                        }
-                    }
-                    $zoneObject = Zone::register(
-                        $site->id,
-                        $size,
-                        $scopes,
-                        $name,
-                        $zoneType,
-                    );
-                }
+                $zoneObject = Zone::fetchOrCreate(
+                    $site->id,
+                    ZoneSize::fromArray($placement),
+                    $placement['name'] ?? Zone::DEFAULT_NAME,
+                    $zoneType,
+                );
                 $input['placements'][$key]['placementId'] = $zoneObject->uuid;
             }
         }

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Supply\Domain\Model\Banner;
 
@@ -32,24 +33,23 @@ final class Size
 
     public static function findBestFit(
         Medium $medium,
-        float $width,
-        float $height,
-        float $depth,
-        float $minDpi,
+        ZoneSize $placementSize,
         int $count = 5,
     ): array {
-        if ($depth > 0) {
+        if ($placementSize->getDepth() > 0) {
             return self::getScopesByTypes($medium, [Banner::TYPE_MODEL]);
         }
 
         $scopes = self::getScopesByTypes($medium, [Banner::TYPE_HTML, Banner::TYPE_IMAGE, Banner::TYPE_VIDEO]);
 
         $sizes = array_map(
-            function ($size) use ($width, $height, $minDpi) {
-                [$x, $y] = explode("x", $size);
+            function ($size) use ($placementSize) {
+                $width = $placementSize->getWidth();
+                $height = $placementSize->getHeight();
+                [$x, $y] = self::toDimensions($size);
 
                 $dpi = min($x / $width, $y / $height);
-                if ($dpi < $minDpi) {
+                if ($dpi < 1) {
                     return false;
                 }
 

@@ -25,9 +25,11 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
-use Adshares\Adserver\Services\Publisher\ZoneScopesGenerator;
-use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\ZoneSize;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,9 +38,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-
-use function array_unique;
-use function hex2bin;
 
 /**
  * @property Site site
@@ -119,53 +118,48 @@ class Zone extends Model
 
     public static function fetchOrCreate(
         int $siteId,
-        string $size,
+        ZoneSize $zoneSize,
         string $name,
         string $type = self::TYPE_DISPLAY,
     ): self {
-        $zone = self::fetch($siteId, $size, $name);
+        $size = $zoneSize->toString();
+        $zone = self::where('site_id', $siteId)
+            ->where('size', $size)
+            ->where('name', $name)
+            ->first();
 
-        if (!$zone) {
+        if (null === $zone) {
+            if (null === ($site = Site::find($siteId))) {
+                throw new InvalidArgumentException('Cannot find site');
+            }
+            /** @var ConfigurationRepository $configurationRepository */
+            $configurationRepository = resolve(ConfigurationRepository::class);
+            $medium = $configurationRepository->fetchMedium($site->medium, $site->vendor);
+
             $zone = new Zone();
             $zone->name = $name;
             $zone->site_id = $siteId;
             $zone->size = $size;
-            $zone->scopes = [$size];
+
+            if (MediumName::Web->value === $medium->getName() || self::TYPE_DISPLAY !== $type) {
+                $scopes = [$size];
+            } else {
+                $scopes = Size::findBestFit($medium, $zoneSize);
+                if (empty($scopes)) {
+                    throw new InvalidArgumentException(
+                        sprintf(
+                            'Cannot find placement matching width %d, height %d)',
+                            $zoneSize->getWidth(),
+                            $zoneSize->getHeight(),
+                        )
+                    );
+                }
+            }
+            $zone->scopes = $scopes;
             $zone->status = Zone::STATUS_ACTIVE;
             $zone->type = $type;
             $zone->save();
         }
-        return $zone;
-    }
-
-    public static function fetch(
-        int $siteId,
-        string $size,
-        string $name,
-    ): ?self {
-        return self::where('site_id', $siteId)
-            ->where('size', $size)
-            ->where('name', $name)
-            ->first();
-    }
-
-    public static function register(
-        int $siteId,
-        string $size,
-        array $scopes,
-        string $name,
-        ?string $type = null,
-    ): self {
-        $zone = new Zone();
-        $zone->name = $name;
-        $zone->site_id = $siteId;
-        $zone->size = $size;
-        $zone->scopes = $scopes;
-        $zone->status = Zone::STATUS_ACTIVE;
-        if (null !== $type) {
-            $zone->type = $type;
-        }
-        $zone->save();
         return $zone;
     }
 
