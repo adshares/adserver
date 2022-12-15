@@ -67,7 +67,7 @@ return new class extends Migration {
                 INSERT INTO network_case_logs_hourly
                 SELECT
                     null as id,
-                    hour_timestamp,
+                    TIMESTAMP(hour_timestamp),
                     publisher_id,
                     site_id,
                     ' . $zoneUuid . ' as zone_id,
@@ -91,7 +91,7 @@ return new class extends Migration {
                 INSERT INTO network_case_logs_hourly_stats
                 SELECT
                     null as id,
-                    hour_timestamp,
+                    TIMESTAMP(hour_timestamp),
                     publisher_id,
                     site_id,
                     ' . $zoneUuid . ' as zone_id,
