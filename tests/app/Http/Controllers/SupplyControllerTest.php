@@ -286,23 +286,44 @@ final class SupplyControllerTest extends TestCase
     public function findDynamicFailProvider(): array
     {
         return [
-            'invalid context type' => [self::getDynamicFindData(['context' => 1])],
+            'missing context.medium' => [
+                self::getDynamicFindData(['context' => self::getContextData(remove: 'medium')])
+            ],
             'missing context.url' => [self::getDynamicFindData(['context' => self::getContextData(remove: 'url')])],
+            'invalid context type' => [self::getDynamicFindData(['context' => 1])],
             'invalid context.url type' => [self::getDynamicFindData(['context' => self::getContextData(['url' => 1])])],
+            'invalid context.medium type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['medium' => 1])])
+            ],
             'invalid context.medium value' => [
                 self::getDynamicFindData(['context' => self::getContextData(['medium' => 'invalid'])])
             ],
             'invalid context.metamask type' => [
                 self::getDynamicFindData(['context' => self::getContextData(['metamask' => 'metamask'])])
             ],
+            'invalid context.publisher type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['publisher' => 1])])
+            ],
             'invalid context.uid type' => [
                 self::getDynamicFindData(['context' => self::getContextData(['uid' => 12])])
             ],
+            'invalid context.vendor type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['vendor' => 12])])
+            ],
             'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
+            'invalid placements[] type' => [self::getDynamicFindData(['placements' => [1]])],
             'conflicting placement types' => [
                 self::getDynamicFindData([
                     'placements' => [
                         self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
+                    ],
+                ])
+            ],
+            'no matching scopes' => [
+                self::getDynamicFindData([
+                    'context' => self::getContextData(['medium' => 'metaverse', 'vendor' => 'decentraland']),
+                    'placements' => [
+                        self::getPlacementData(['width' => '30000'])
                     ],
                 ])
             ],
@@ -351,7 +372,7 @@ final class SupplyControllerTest extends TestCase
     /**
      * @dataProvider findJsonFailProvider
      */
-    public function testFindJsonWhileInvalidMedium(array $data): void
+    public function testFindJsonFail(array $data): void
     {
         Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '1']);
         $this->mockAdSelect();

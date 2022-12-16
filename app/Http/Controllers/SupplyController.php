@@ -386,21 +386,20 @@ class SupplyController extends Controller
         }
 
         if ($isDynamicFind) {
-            try {
-                $site = $this->getSiteOrFail($context);
-
-                foreach ($input['placements'] as $key => $placement) {
-                    $zoneType = $this->getZoneType($placement);
+            $site = $this->getSiteOrFail($context);
+            foreach ($input['placements'] as $key => $placement) {
+                $zoneType = $this->getZoneType($placement);
+                try {
                     $zoneObject = Zone::fetchOrCreate(
                         $site->id,
                         ZoneSize::fromArray($placement),
                         $placement['name'] ?? Zone::DEFAULT_NAME,
                         $zoneType,
                     );
-                    $input['placements'][$key]['placementId'] = $zoneObject->uuid;
+                } catch (InvalidArgumentException $exception) {
+                    throw new UnprocessableEntityHttpException($exception->getMessage());
                 }
-            } catch (InvalidArgumentException $exception) {
-                throw new UnprocessableEntityHttpException($exception->getMessage());
+                $input['placements'][$key]['placementId'] = $zoneObject->uuid;
             }
         }
 
