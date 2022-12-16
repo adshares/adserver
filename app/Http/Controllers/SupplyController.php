@@ -39,9 +39,9 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -137,12 +137,16 @@ class SupplyController extends Controller
         if (!$user->isPublisher()) {
             throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
         }
-        $site = Site::fetchOrCreate(
-            $user->id,
-            $validated['context']['site']['url'],
-            $validated['medium'],
-            $validated['vendor'] ?? null
-        );
+        try {
+            $site = Site::fetchOrCreate(
+                $user->id,
+                $validated['context']['site']['url'],
+                $validated['medium'],
+                $validated['vendor'] ?? null,
+            );
+        } catch (InvalidArgumentException $exception) {
+            return $this->sendError('site', $exception->getMessage());
+        }
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
@@ -154,7 +158,11 @@ class SupplyController extends Controller
             'depth' => (float)$validated['depth'],
         ]);
 
-        $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
+        try {
+            $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
+        } catch (InvalidArgumentException $exception) {
+            return $this->sendError('zone', $exception->getMessage());
+        }
         $queryData = [
             'page' => [
                 'iid' => $validated['view_id'],
@@ -264,7 +272,7 @@ class SupplyController extends Controller
                         $site = Site::fetchOrCreate(
                             $user->id,
                             $decodedQueryData['page']['url'],
-                            'website',
+                            MediumName::Web->value,
                             null
                         );
                         if ($site->status != Site::STATUS_ACTIVE) {
@@ -293,7 +301,6 @@ class SupplyController extends Controller
     public function find(
         AdUser $contextProvider,
         AdSelect $bannerFinder,
-        ConfigurationRepository $configurationRepository,
         Request $request,
     ): BaseResponse {
         $response = new Response();
@@ -380,24 +387,20 @@ class SupplyController extends Controller
 
         if ($isDynamicFind) {
             try {
-                $medium = $configurationRepository->fetchMedium(
-                    $context['medium'],
-                    $context['vendor'] ?? null
-                );
+                $site = $this->getSiteOrFail($context);
+
+                foreach ($input['placements'] as $key => $placement) {
+                    $zoneType = $this->getZoneType($placement);
+                    $zoneObject = Zone::fetchOrCreate(
+                        $site->id,
+                        ZoneSize::fromArray($placement),
+                        $placement['name'] ?? Zone::DEFAULT_NAME,
+                        $zoneType,
+                    );
+                    $input['placements'][$key]['placementId'] = $zoneObject->uuid;
+                }
             } catch (InvalidArgumentException $exception) {
                 throw new UnprocessableEntityHttpException($exception->getMessage());
-            }
-            $site = $this->getSiteOrFail($context);
-
-            foreach ($input['placements'] as $key => $placement) {
-                $zoneType = $this->getZoneType($placement);
-                $zoneObject = Zone::fetchOrCreate(
-                    $site->id,
-                    ZoneSize::fromArray($placement),
-                    $placement['name'] ?? Zone::DEFAULT_NAME,
-                    $zoneType,
-                );
-                $input['placements'][$key]['placementId'] = $zoneObject->uuid;
             }
         }
 

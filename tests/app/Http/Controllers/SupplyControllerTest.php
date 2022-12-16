@@ -289,6 +289,9 @@ final class SupplyControllerTest extends TestCase
             'invalid context type' => [self::getDynamicFindData(['context' => 1])],
             'missing context.url' => [self::getDynamicFindData(['context' => self::getContextData(remove: 'url')])],
             'invalid context.url type' => [self::getDynamicFindData(['context' => self::getContextData(['url' => 1])])],
+            'invalid context.medium value' => [
+                self::getDynamicFindData(['context' => self::getContextData(['medium' => 'invalid'])])
+            ],
             'invalid context.metamask type' => [
                 self::getDynamicFindData(['context' => self::getContextData(['metamask' => 'metamask'])])
             ],
@@ -345,6 +348,27 @@ final class SupplyControllerTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider findJsonFailProvider
+     */
+    public function testFindJsonWhileInvalidMedium(array $data): void
+    {
+        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '1']);
+        $this->mockAdSelect();
+
+        $response = self::post(self::SUPPLY_ANON_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function findJsonFailProvider(): array
+    {
+        return [
+            'invalid medium' => [self::findJsonData(['medium' => 'invalid'])],
+            'no matching scope' => [self::findJsonData(['width' => '30000'])],
+        ];
+    }
+
     public function testFindJsonWhenDefaultUserRoleDoesNotContainPublisher(): void
     {
         Config::updateAdminSettings([
@@ -383,22 +407,25 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    private static function findJsonData(): array
+    private static function findJsonData(array $merge = []): array
     {
-        return [
-            'pay_to' => 'ADS:0001-00000001-8B4E',
-            'view_id' => '0123456789ABCDEF0123456789ABCDEF',
-            'type' => 'image',
-            'width' => 300,
-            'height' => 250,
-            'context' => [
-                'user' => ['language' => 'en'],
-                'device' => ['os' => 'Windows'],
-                'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
+        return array_merge(
+            [
+                'pay_to' => 'ADS:0001-00000001-8B4E',
+                'view_id' => '0123456789ABCDEF0123456789ABCDEF',
+                'type' => 'image',
+                'width' => 300,
+                'height' => 250,
+                'context' => [
+                    'user' => ['language' => 'en'],
+                    'device' => ['os' => 'Windows'],
+                    'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
+                ],
+                'medium' => 'metaverse',
+                'vendor' => 'decentraland',
             ],
-            'medium' => 'metaverse',
-            'vendor' => 'decentraland',
-        ];
+            $merge,
+        );
     }
 
     private function mockAdSelect(): void

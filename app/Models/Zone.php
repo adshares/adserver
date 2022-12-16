@@ -132,18 +132,18 @@ class Zone extends Model
             if (null === ($site = Site::find($siteId))) {
                 throw new InvalidArgumentException('Cannot find site');
             }
-            /** @var ConfigurationRepository $configurationRepository */
-            $configurationRepository = resolve(ConfigurationRepository::class);
-            $medium = $configurationRepository->fetchMedium($site->medium, $site->vendor);
 
             $zone = new Zone();
             $zone->name = $name;
             $zone->site_id = $siteId;
             $zone->size = $size;
 
-            if (MediumName::Web->value === $medium->getName() || self::TYPE_DISPLAY !== $type) {
+            if (MediumName::Web->value === $site->medium || self::TYPE_DISPLAY !== $type) {
                 $scopes = [$size];
             } else {
+                /** @var ConfigurationRepository $configurationRepository */
+                $configurationRepository = resolve(ConfigurationRepository::class);
+                $medium = $configurationRepository->fetchMedium($site->medium, $site->vendor);
                 $scopes = Size::findBestFit($medium, $zoneSize);
                 if (empty($scopes)) {
                     throw new InvalidArgumentException(
