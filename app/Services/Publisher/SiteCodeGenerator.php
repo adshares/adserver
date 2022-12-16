@@ -43,63 +43,6 @@ class SiteCodeGenerator
 
     private const FILE_TEMPLATE_CRYPTOVOXELS = '/resources/js/cryptovoxels/template.js';
 
-    public static function generateAsSingleString(Site $site, ?SiteCodeConfig $config = null): string
-    {
-        if (null === $config) {
-            $config = SiteCodeConfig::default();
-        }
-
-        $commonCode = self::getCommonCode($config);
-
-        $popsCodes = [];
-        $displayCodes = [];
-        foreach ($site->zones as $zone) {
-            if (Zone::TYPE_MODEL === $zone->type) {
-                continue;
-            }
-            $zoneCode = self::getZoneCode($zone, $config);
-
-            if (Zone::TYPE_POP === $zone->type) {
-                $popsCodes[] = "<!-- {$zone->name} -->\n" . $zoneCode;
-            } else {
-                $displayCodes[] = "<!-- {$zone->name} {$zone->size} -->\n" . $zoneCode;
-            }
-        }
-
-        $code
-            = <<<CODE
-<!-- Common code for all ad units, should be inserted into head section -->
-{$commonCode}
-<!-- End of common code -->
-CODE;
-
-        if (count($popsCodes) > 0) {
-            $popsCodes = join("\n\n", $popsCodes);
-            $code
-                .= <<<CODE
-
-
-<!-- Code for pops -->
-{$popsCodes}
-<!-- End of code for pops-->
-CODE;
-        }
-
-        if (count($displayCodes) > 0) {
-            $displayCodes = join("\n\n", $displayCodes);
-            $code
-                .= <<<CODE
-
-
-<!-- Code for ad units -->
-{$displayCodes}
-<!-- End of code for ad units -->
-CODE;
-        }
-
-        return $code;
-    }
-
     public static function generate(Site $site, ?SiteCodeConfig $config = null): array
     {
         if (null === $config) {
