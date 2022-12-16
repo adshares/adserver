@@ -34,7 +34,7 @@ final class Size
     public static function findBestFit(
         Medium $medium,
         ZoneSize $placementSize,
-        int $count = 5,
+        int $count = PHP_INT_MAX,
     ): array {
         if ($placementSize->getDepth() > 0) {
             return self::getScopesByTypes($medium, [Banner::TYPE_MODEL]);
