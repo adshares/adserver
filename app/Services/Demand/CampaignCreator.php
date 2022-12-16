@@ -36,6 +36,8 @@ use Illuminate\Support\Str;
 
 class CampaignCreator
 {
+    private const CLICKS_RESOLUTION = 1e11;
+
     public function __construct(private readonly ConfigurationRepository $configurationRepository)
     {
     }
@@ -220,7 +222,7 @@ class CampaignCreator
                 sprintf('Field `%s` must be a non-negative numeric', $field)
             );
         }
-        return (int)((float)$value * 1e11);
+        return (int)((float)$value * self::CLICKS_RESOLUTION);
     }
 
     private static function validateDate(mixed $value, string $field): void

@@ -11,6 +11,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CampaignResource extends JsonResource
 {
+    private const CLICKS_RESOLUTION = 1e11;
+
     public function toArray($request): array
     {
         /** @var Campaign $this */
@@ -30,9 +32,9 @@ class CampaignResource extends JsonResource
             'status' => CampaignStatus::from($this->status)->toString(),
             'name' => $this->name,
             'targetUrl' => $this->landing_url,
-            'maxCpc' => null === $this->max_cpc ? null : $this->max_cpc / 1e11,
-            'maxCpm' => null === $this->max_cpm ? null : $this->max_cpm / 1e11,
-            'budget' => $this->budget / 1e11,
+            'maxCpc' => null === $this->max_cpc ? null : $this->max_cpc / self::CLICKS_RESOLUTION,
+            'maxCpm' => null === $this->max_cpm ? null : $this->max_cpm / self::CLICKS_RESOLUTION,
+            'budget' => $this->budget / self::CLICKS_RESOLUTION,
             'medium' => $this->medium,
             'vendor' => $this->vendor,
             'dateStart' => $this->time_start,
