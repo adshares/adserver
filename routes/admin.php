@@ -38,21 +38,21 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
         [BidStrategyController::class, 'patchBidStrategyUuidDefault']
     );
 
-    Route::post('users/{id}/switchToModerator', [AdminController::class, 'switchUserToModerator']);
-    Route::post('users/{id}/ban', [AdminController::class, 'banUser']);
-    Route::post('users/{id}/unban', [AdminController::class, 'unbanUser']);
-    Route::post('users/{id}/delete', [AdminController::class, 'deleteUser']);
+    Route::post('users/{id}/switchToModerator', [AdminController::class, 'switchUserToModerator']);//legacy
+    Route::post('users/{id}/ban', [AdminController::class, 'banUser']);//legacy
+    Route::post('users/{id}/unban', [AdminController::class, 'unbanUser']);//legacy
+    Route::post('users/{id}/delete', [AdminController::class, 'deleteUser']);//legacy
 });
 
 Route::middleware([Kernel::MODERATOR_ACCESS, Kernel::JSON_API])->group(function () {
-    Route::post('users/{id}/confirm', [AuthController::class, 'confirm']);
+    Route::post('users/{id}/confirm', [AuthController::class, 'confirm']);//legacy
 
-    Route::post('users/{id}/switchToAgency', [AdminController::class, 'switchUserToAgency']);
-    Route::post('users/{id}/switchToRegular', [AdminController::class, 'switchUserToRegular']);
-    Route::post('users/{id}/grantAdvertising', [AdminController::class, 'grantAdvertising']);
-    Route::post('users/{id}/denyAdvertising', [AdminController::class, 'denyAdvertising']);
-    Route::post('users/{id}/grantPublishing', [AdminController::class, 'grantPublishing']);
-    Route::post('users/{id}/denyPublishing', [AdminController::class, 'denyPublishing']);
+    Route::post('users/{id}/switchToAgency', [AdminController::class, 'switchUserToAgency']);//legacy
+    Route::post('users/{id}/switchToRegular', [AdminController::class, 'switchUserToRegular']);//legacy
+    Route::post('users/{id}/grantAdvertising', [AdminController::class, 'grantAdvertising']);//legacy
+    Route::post('users/{id}/denyAdvertising', [AdminController::class, 'denyAdvertising']);//legacy
+    Route::post('users/{id}/grantPublishing', [AdminController::class, 'grantPublishing']);//legacy
+    Route::post('users/{id}/denyPublishing', [AdminController::class, 'denyPublishing']);//legacy
 });
 
 Route::middleware([Kernel::AGENCY_ACCESS, Kernel::JSON_API])->group(function () {
