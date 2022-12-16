@@ -42,10 +42,10 @@ final class Size
 
         $scopes = self::getScopesByTypes($medium, [Banner::TYPE_HTML, Banner::TYPE_IMAGE, Banner::TYPE_VIDEO]);
 
+        $width = $placementSize->getWidth();
+        $height = $placementSize->getHeight();
         $sizes = array_map(
-            function ($size) use ($placementSize) {
-                $width = $placementSize->getWidth();
-                $height = $placementSize->getHeight();
+            function ($size) use ($width, $height) {
                 [$x, $y] = self::toDimensions($size);
 
                 $dpi = min($x / $width, $y / $height);
