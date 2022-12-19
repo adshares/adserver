@@ -32,6 +32,8 @@ use Adshares\Adserver\Mail\UserPasswordChangeConfirm;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
@@ -54,6 +56,7 @@ use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
@@ -421,6 +424,56 @@ MSG;
         }
 
         return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function foreignRegister(Request $request): JsonResponse
+    {
+        try {
+            $address = new WalletAddress('eth', $request->input('address'));
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException('Invalid wallet address');
+        }
+        $user = User::fetchByForeignWalletAddress($request->input('address'));
+
+        if (null === $user) {
+            DB::beginTransaction();
+            if(config('app.use_random_wallet_for_foreign')){
+                $address = new WalletAddress('eth', User::generateRandomETHWallet());
+            }
+            $user = User::registerWithWallet($address, false);
+            $user->foreign_wallet_address = $request->input('address');
+            if (config('app.auto_confirmation_enabled')) {
+                $this->confirmAdmin($user);
+            }
+            $user->saveOrFail();
+            DB::commit();
+        }
+        if(!config('app.foreign_default_site_js')){
+            Log::error(sprintf('foreign_default_site_js is not set in the config'));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        $site = Site::fetchOrCreate(
+            $user->id,
+            config('app.foreign_default_site_js'),
+            'website',
+            null
+        );
+        $ad_zones = array();
+        foreach (config('app.foreign_preferred_zones') as $zone_info) {
+            $zoneObject = Zone::fetchOrCreate(
+                $site->id,
+                "{$zone_info['width']}x{$zone_info['height']}",
+                $zone_info['name']
+            );
+            $ad_zones[] = array(
+                'name' => $zone_info['name'],
+                'width' => $zone_info['width'],
+                'height' => $zone_info['height'],
+                'uuid' => $zoneObject->uuid,
+            );
+        }
+
+        return response()->json(['foreignId' => $user->wallet_address->toString(), 'zones' => $ad_zones]);
     }
 
     public function logout(): JsonResponse

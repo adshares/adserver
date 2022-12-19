@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -640,7 +641,6 @@ class WalletControllerTest extends TestCase
     {
         $user = $this->login();
         $response = $this->get('/api/deposit-info');
-
         $response->assertStatus(Response::HTTP_OK)->assertJson(['address' => config('app.adshares_address')]);
         $content = json_decode($response->getContent());
 
@@ -1267,4 +1267,178 @@ class WalletControllerTest extends TestCase
         $ul->setUpdatedAt($dateString);
         $ul->save();
     }
+
+
+    /// Begins tests for foreign ecosystem
+    public function testWithdrawLessThanMin(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        $this->createForeignEntries(1);
+
+        $user = User::factory()->create([
+            'email_confirmed_at' => now(),
+            'admin_confirmed_at' => now(),
+            'email' => null,
+            'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E')
+        ]);
+        $user->is_admin = true;
+        $user->saveOrFail();
+        $this->actingAs($user, 'api');
+
+        $response = $this->postJson('/api/foreign/withdraw-request');
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['code' => 9, 'total' => 152000000, 'min' => config('app.min_ads_batch_withdrawal')]);
+    }
+
+    public function testWithdrawForeign(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        $this->createForeignEntries(10000);
+
+        $user = User::factory()->create([
+            'email_confirmed_at' => now(),
+            'admin_confirmed_at' => now(),
+            'email' => null,
+            'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E')
+        ]);
+        $user->is_admin = true;
+        $user->saveOrFail();
+        $this->actingAs($user, 'api');
+
+        $response = $this->postJson('/api/foreign/withdraw-request');
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['to' => config('app.foreign_bsc_wallet'), 'total' => 1519240379811]);
+        $json = $response->decodeResponseJson();
+        $userLedgerEntry = UserLedgerEntry::getFirstRecordByBatchId($json['batch']);
+        $this->assertEquals(0, UserLedgerEntry::getWalletBalanceForAllUsers());
+        $this->assertNotNull($userLedgerEntry);
+        $this->assertEquals(UserLedgerEntry::STATUS_PENDING, $userLedgerEntry->status);
+    }
+
+    public function testWithdrawForeignInfoSuccess(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        $this->createForeignEntries(10000);
+
+        $user = User::factory()->create([
+            'email_confirmed_at' => now(),
+            'admin_confirmed_at' => now(),
+            'email' => null,
+            'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E')
+        ]);
+        $user->is_admin = true;
+        $user->saveOrFail();
+        $this->actingAs($user, 'api');
+
+        $response = $this->postJson('/api/foreign/withdraw-request');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->decodeResponseJson();
+        $this->actingAs($user, 'api');
+        $response = $this->getJson('/api/foreign/withdraw-status');
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+
+        $response = $this->getJson('/api/foreign/withdraw-status?batch='. $json['batch']);
+        $response->assertStatus(Response::HTTP_OK);
+        $json2 = $response->decodeResponseJson();
+        $this->assertEquals(1, $json2['code']);
+        $this->assertEquals('pending', $json2['status']);
+        $txid = '1234';
+        UserLedgerEntry::acceptAllRecordsInBatch($json['batch'], $txid);
+
+        $response = $this->getJson('/api/foreign/withdraw-status?batch='. $json['batch']);
+        $response->assertStatus(Response::HTTP_OK);
+        $json2 = $response->decodeResponseJson();
+        $this->assertEquals(0, $json2['code']);
+        $this->assertEquals($txid, $json2['txid']);
+        $this->assertEquals('accepted', $json2['status']);
+        $userLedgerEntry = UserLedgerEntry::getFirstRecordByBatchId($json['batch']);
+        foreach ($json2['shares'] as $item) {
+            if($item['uid'] === $userLedgerEntry->user->name){
+                $this->assertEquals($item['ads'], $userLedgerEntry->amount * -1);
+            }
+        }
+        $response = $this->postJson('/api/foreign/withdraw-request');
+        $response->assertStatus(Response::HTTP_OK);
+        $json3 = $response->decodeResponseJson();
+        $this->assertEquals(AdsUtils::TXS_MIN_FEE, $json3['total']);
+        $this->assertEquals(9, $json3['code']);
+    }
+
+    public function testWithdrawForeignInfoFail(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        $this->createForeignEntries(10000);
+
+        $user = User::factory()->create([
+            'email_confirmed_at' => now(),
+            'admin_confirmed_at' => now(),
+            'email' => null,
+            'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E')
+        ]);
+        $user->is_admin = true;
+        $user->saveOrFail();
+        $this->actingAs($user, 'api');
+
+        $response = $this->postJson('/api/foreign/withdraw-request');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->decodeResponseJson();
+
+        $response = $this->getJson('/api/foreign/withdraw-status?batch='. $json['batch']);
+        $response->assertStatus(Response::HTTP_OK);
+        $json2 = $response->decodeResponseJson();
+        $this->assertEquals(1, $json2['code']);
+        $this->assertEquals('pending', $json2['status']);
+        UserLedgerEntry::failAllRecordsInBatch($json['batch'], UserLedgerEntry::STATUS_NET_ERROR);
+
+        $response = $this->getJson('/api/foreign/withdraw-status?batch='. $json['batch']);
+        $response->assertStatus(Response::HTTP_OK);
+        $json2 = $response->decodeResponseJson();
+        $this->assertEquals(UserLedgerEntry::STATUS_NET_ERROR, $json2['code']);
+        $this->assertEquals('failed', $json2['status']);
+        $response = $this->postJson('/api/foreign/withdraw-request');
+        $response->assertStatus(Response::HTTP_OK);
+        $json3 = $response->decodeResponseJson();
+        $this->assertEquals(AdsUtils::TXS_MIN_FEE, $json3['total']);
+        $this->assertEquals(9, $json3['code']);
+    }
+
+    private function generateForeignUserIncome(int $userId, int $amount): void
+    {
+        $dateString = '2018-10-24 15:00:49';
+
+        $ul = new UserLedgerEntry();
+        $ul->user_id = $userId;
+        $ul->amount = $amount;
+        $ul->address_from = '0001-00000000-XXXX';
+        $ul->address_to = '0001-00000000-XXXX';
+        $ul->txid = '0001:0000000A:0001';
+        $ul->type = UserLedgerEntry::TYPE_DEPOSIT;
+        $ul->setCreatedAt($dateString);
+        $ul->setUpdatedAt($dateString);
+        $ul->save();
+    }
+
+
+    private function createForeignEntries(int $magnify=1): void
+    {
+        $entries = [
+            ['0x9552D752001721d43d8F04AC4FDfb7aE27800001', 100000000 * $magnify],
+            ['0x9552D752001721d43d8F04AC4FDfb7aE27800002', 40000000 * $magnify],
+            ['0x9552D752001721d43d8F04AC4FDfb7aE27800003', 1000000 * $magnify],
+            ['0x9552D752001721d43d8F04AC4FDfb7aE27800004', 0 * $magnify],
+            ['0x9552D752001721d43d8F04AC4FDfb7aE27800005', 11000000 * $magnify]
+        ];    
+        foreach ($entries as $entry) {
+            $user = User::factory()->create();
+            $user->foreign_wallet_address = $entry[0];
+            $user->save();
+            $this->generateForeignUserIncome($user->id, $entry[1]);
+        }
+    }
+
+    /// end tests for foreign ecosystem
 }

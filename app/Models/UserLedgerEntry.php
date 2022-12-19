@@ -203,6 +203,54 @@ class UserLedgerEntry extends Model
             ->sum('amount');
     }
 
+    public static function getWalletBalanceForForeignUsers(): int
+    {
+        return (int)self::queryForEntriesRelevantForWalletBalance()
+            ->whereNotNull('users.foreign_wallet_address')
+            ->sum('amount');
+    }
+
+    public static function allForeignWalletBalanceIfAny(): array
+    {
+        return self::queryForEntriesRelevantForWalletBalance()
+            ->whereNotNull('users.foreign_wallet_address')
+            ->selectRaw('users.id as uid, users.foreign_wallet_address as wallet, sum(amount) as share')
+            ->groupBy('uid')
+            ->having('share', '>' , 0)
+            ->get()->toArray();            
+    }
+
+    public static function balancesByBatchId(string $batchId): array
+    {
+        return self::where('batchid', $batchId)
+            ->join('users', 'users.id', 'user_ledger_entries.user_id')->whereNull('users.deleted_at')
+            ->selectRaw('users.foreign_wallet_address as uid, (-1 * amount) as ads')
+            ->get()->toArray();
+    }
+
+    public static function getFirstRecordByBatchId(string $batchId): ?self
+    {
+        return self::where('batchid', $batchId)
+            ->first();
+    }
+
+    public static function failAllRecordsInBatch(string $batchId, int $error): void
+    {
+        self::where('batchid', $batchId)
+            ->update(['status' => $error]);
+    }
+
+    public static function acceptAllRecordsInBatch(string $batchId, string $txid): void
+    {
+        self::where('batchid', $batchId)
+            ->update(['status' => self::STATUS_ACCEPTED, 'txid' => $txid]);
+    }
+
+    public static function getNewBatchId():string
+    {
+        return hash('sha256', strval(rand(1,1000000) *  microtime(true)) );
+    }
+
     /**
      * @deprecated
      */
@@ -231,6 +279,19 @@ class UserLedgerEntry extends Model
         return (int)self::queryForEntriesRelevantForBonusBalance()
             ->where('user_id', $userId)
             ->sum('amount');
+    }
+
+    public static function constructForeignEntry(string $batchid, int $userId, int $amount): self {
+        $userLedgerEntry = new self();
+        $userLedgerEntry->user_id = $userId;
+        $userLedgerEntry->amount = $amount;
+        $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
+        $userLedgerEntry->batchid = $batchid;
+        $userLedgerEntry->type = UserLedgerEntry::TYPE_WITHDRAWAL;
+        $userLedgerEntry->currency = 'ADS';
+        $userLedgerEntry->currency_amount = null;
+
+        return $userLedgerEntry;
     }
 
     public static function construct(

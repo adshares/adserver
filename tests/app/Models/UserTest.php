@@ -140,6 +140,14 @@ class UserTest extends TestCase
         $this->assertTrue($user->is_auto_withdrawal);
     }
 
+    public function testGenerateRandomETHWallet(): void
+    {
+        $rnd = User::generateRandomETHWallet();
+        $rnd2 = User::generateRandomETHWallet();
+        $this->assertEquals(42, strlen($rnd));
+        $this->assertNotEquals($rnd, $rnd2);
+    }
+
     public function testGetActivitylogOptions(): void
     {
         $options = (new User())->getActivitylogOptions();
