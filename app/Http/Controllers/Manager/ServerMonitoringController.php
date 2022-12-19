@@ -45,13 +45,14 @@ use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -170,22 +171,49 @@ class ServerMonitoringController extends Controller
         return new UserResource(User::fetchById($userId));
     }
 
-    public function switchUserToAgency(AdminController $adminController, int $userId): JsonResource
+    public function switchUserToAgency(int $userId): JsonResource
     {
-        $adminController->switchUserToAgency($userId);
-        return new UserResource(User::fetchById($userId));
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isAgency()) {
+            throw new UnprocessableEntityHttpException();
+        }
+        $user->is_moderator = false;
+        $user->is_agency = true;
+        $user->save();
+
+        return new UserResource($user);
     }
 
-    public function switchUserToModerator(AdminController $adminController, int $userId): JsonResource
+    public function switchUserToModerator(int $userId): JsonResource
     {
-        $adminController->switchUserToModerator($userId);
-        return new UserResource(User::fetchById($userId));
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isModerator()) {
+            throw new UnprocessableEntityHttpException();
+        }
+        $user->is_moderator = true;
+        $user->is_agency = false;
+        $user->save();
+
+        return new UserResource($user);
     }
 
-    public function switchUserToRegular(AdminController $adminController, int $userId): JsonResource
+    public function switchUserToRegular(int $userId): JsonResource
     {
-        $adminController->switchUserToRegular($userId);
-        return new UserResource(User::fetchById($userId));
+        /** @var User $logged */
+        $logged = Auth::user();
+
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isModerator() && !$logged->isAdmin()) {
+            throw new HttpException(Response::HTTP_FORBIDDEN);
+        }
+        $user->is_moderator = false;
+        $user->is_agency = false;
+        $user->save();
+
+        return new UserResource($user);
     }
 
     public function unbanUser(AdminController $adminController, int $userId): JsonResource
@@ -353,6 +381,16 @@ class ServerMonitoringController extends Controller
             throw new UnprocessableEntityHttpException('Duplicated email address');
         }
         return $email;
+    }
+
+    private function getRegularUserById(int $userId): User
+    {
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator account cannot be changed');
+        }
+        return $user;
     }
 
     private static function getRoles(Request $request): ?array

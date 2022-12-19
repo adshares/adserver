@@ -43,7 +43,6 @@ use DateTimeInterface;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -82,66 +81,6 @@ class AdminController extends Controller
             'index_update_time' => Config::fetchDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME)
                 ->format(DateTimeInterface::ATOM),
         ]);
-    }
-
-    public function switchUserToModerator(int $userId): JsonResponse
-    {
-        /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
-
-        if ($user->isModerator()) {
-            throw new UnprocessableEntityHttpException();
-        }
-
-        $user->is_moderator = true;
-        $user->is_agency = false;
-        $user->save();
-
-        return self::json($user->toArray());
-    }
-
-    public function switchUserToAgency(int $userId): JsonResponse
-    {
-        /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
-
-        if ($user->isAgency()) {
-            throw new UnprocessableEntityHttpException();
-        }
-
-        $user->is_moderator = false;
-        $user->is_agency = true;
-        $user->save();
-
-        return self::json($user->toArray());
-    }
-
-    public function switchUserToRegular(int $userId): JsonResponse
-    {
-        /** @var User $logged */
-        $logged = Auth::user();
-
-        /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
-
-        if ($user->isModerator() && !$logged->isAdmin()) {
-            throw new HttpException(Response::HTTP_FORBIDDEN);
-        }
-
-        $user->is_moderator = false;
-        $user->is_agency = false;
-        $user->save();
-
-        return self::json($user->toArray());
     }
 
     public function banUser(int $userId, Request $request): JsonResponse
@@ -255,10 +194,7 @@ class AdminController extends Controller
     private function getRegularUserById(int $userId): User
     {
         /** @var User $user */
-        $user = (new User())->find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
+        $user = (new User())->findOrFail($userId);
         if ($user->isAdmin()) {
             throw new UnprocessableEntityHttpException('Administrator account cannot be changed');
         }

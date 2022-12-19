@@ -38,7 +38,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
         [BidStrategyController::class, 'patchBidStrategyUuidDefault']
     );
 
-    Route::post('users/{id}/switchToModerator', [AdminController::class, 'switchUserToModerator']);//legacy
     Route::post('users/{id}/ban', [AdminController::class, 'banUser']);//legacy
     Route::post('users/{id}/unban', [AdminController::class, 'unbanUser']);//legacy
     Route::post('users/{id}/delete', [AdminController::class, 'deleteUser']);//legacy
@@ -47,8 +46,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
 Route::middleware([Kernel::MODERATOR_ACCESS, Kernel::JSON_API])->group(function () {
     Route::post('users/{id}/confirm', [AuthController::class, 'confirm']);//legacy
 
-    Route::post('users/{id}/switchToAgency', [AdminController::class, 'switchUserToAgency']);//legacy
-    Route::post('users/{id}/switchToRegular', [AdminController::class, 'switchUserToRegular']);//legacy
     Route::post('users/{id}/grantAdvertising', [AdminController::class, 'grantAdvertising']);//legacy
     Route::post('users/{id}/denyAdvertising', [AdminController::class, 'denyAdvertising']);//legacy
     Route::post('users/{id}/grantPublishing', [AdminController::class, 'grantPublishing']);//legacy
