@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 - Metaverse zones consolidation
 - Send medium and vendor to AdPay
+- Campaign amounts in USD (APIv2)
 
 ## [2.2.2] - 2022-12-12
 ### Added
