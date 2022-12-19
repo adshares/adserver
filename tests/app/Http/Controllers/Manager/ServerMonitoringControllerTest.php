@@ -1179,6 +1179,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertNotContains('advertiser', $response->json('data.roles'));
         self::assertFalse($user->refresh()->isAdvertiser());
     }
 
@@ -1195,6 +1196,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertNotContains('publisher', $response->json('data.roles'));
         self::assertFalse($user->refresh()->isPublisher());
     }
 
@@ -1211,6 +1213,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertContains('advertiser', $response->json('data.roles'));
         self::assertTrue($user->refresh()->isAdvertiser());
     }
 
@@ -1222,11 +1225,11 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'grantPublishing'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertContains('publisher', $response->json('data.roles'));
         self::assertTrue($user->refresh()->isPublisher());
     }
 
