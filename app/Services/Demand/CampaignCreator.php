@@ -21,7 +21,6 @@
 
 namespace Adshares\Adserver\Services\Demand;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BidStrategy;
@@ -37,6 +36,8 @@ use Illuminate\Support\Str;
 
 class CampaignCreator
 {
+    private const CLICKS_RESOLUTION = 1e11;
+
     public function __construct(private readonly ConfigurationRepository $configurationRepository)
     {
     }
@@ -60,15 +61,14 @@ class CampaignCreator
         $landingUrl = $input['target_url'];
         self::validateString($landingUrl, Campaign::URL_MAXIMAL_LENGTH, 'targetUrl');
         self::validateUrl($landingUrl);
-        $budget = $input['budget'];
-        self::validateClickAmount($budget, 'budget');
+        $budget = self::validateAndExtractClickAmount($input['budget'], 'budget');
         $maxCpc = $input['max_cpc'] ?? null;
         if (null !== $maxCpc) {
-            self::validateClickAmount($maxCpc, 'maxCpc');
+            $maxCpc = self::validateAndExtractClickAmount($maxCpc, 'maxCpc');
         }
         $maxCpm = $input['max_cpm'] ?? null;
         if (null !== $maxCpm) {
-            self::validateClickAmount($maxCpm, 'maxCpm');
+            $maxCpm = self::validateAndExtractClickAmount($maxCpm, 'maxCpm');
         }
         $timeStart = $input['date_start'];
         self::validateDate($timeStart, 'dateStart');
@@ -122,7 +122,7 @@ class CampaignCreator
             if (array_key_exists($field, $input)) {
                 $value = $input[$field];
                 if (null !== $value) {
-                    self::validateClickAmount($value, Str::camel($field));
+                    $value = self::validateAndExtractClickAmount($value, Str::camel($field));
                     $checkLimits = true;
                 }
                 $campaign->$field = $value;
@@ -151,8 +151,7 @@ class CampaignCreator
         }
 
         if (array_key_exists('budget', $input)) {
-            $value = $input['budget'];
-            self::validateClickAmount($value, 'budget');
+            $value = self::validateAndExtractClickAmount($input['budget'], 'budget');
             $checkLimits = true;
             $campaign->budget = $value;
         }
@@ -213,16 +212,17 @@ class CampaignCreator
         }
     }
 
-    private static function validateClickAmount(mixed $value, string $field): void
+    private static function validateAndExtractClickAmount(mixed $value, string $field): int
     {
-        if (!is_int($value)) {
-            throw new InvalidArgumentException(sprintf('Field `%s` must be an integer', $field));
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentException(sprintf('Field `%s` must be a numeric', $field));
         }
-        if ($value < 0 || $value > AdsConverter::TOTAL_SUPPLY) {
+        if ((float)$value < 0) {
             throw new InvalidArgumentException(
-                sprintf('Field `%s` must be an amount in clicks', $field)
+                sprintf('Field `%s` must be a non-negative numeric', $field)
             );
         }
+        return (int)((float)$value * self::CLICKS_RESOLUTION);
     }
 
     private static function validateDate(mixed $value, string $field): void
