@@ -22,10 +22,12 @@
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\AuthRecovery;
+use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
@@ -897,16 +899,64 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $this->setUpAdmin();
         /** @var User $user */
-        $user = User::factory()->create(['admin_confirmed_at' => null]);
+        $user = User::factory()->create(
+            [
+                'admin_confirmed_at' => null,
+                'email' => $this->faker->email,
+                'email_confirmed_at' => new DateTimeImmutable(),
+            ]
+        );
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'confirm'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertNotNull($user->refresh()->admin_confirmed_at);
+        Mail::assertQueued(UserConfirmed::class);
+    }
+
+    public function testPatchUserConfirmWithBonus(): void
+    {
+        $this->setUpAdmin();
+        /** @var RefLink $refLink */
+        $refLink = RefLink::factory()->create(['bonus' => 100, 'refund' => 0.5]);
+        /** @var User $user */
+        $user = User::factory()->create(
+            [
+                'admin_confirmed_at' => null,
+                'email' => $this->faker->email,
+                'email_confirmed_at' => new DateTimeImmutable(),
+                'ref_link_id' => $refLink->id,
+            ]
+        );
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'confirm'),
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertNotNull($user->refresh()->admin_confirmed_at);
+        Mail::assertQueued(UserConfirmed::class);
+
+        self::assertSame(
+            [300, 300, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $entry = UserLedgerEntry::where('user_id', $user->id)
+            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
+            ->firstOrFail();
+
+        $this->assertEquals(300, $entry->amount);
+        $this->assertNotNull($entry->refLink);
+        $this->assertEquals($refLink->id, $entry->refLink->id);
     }
 
     public function testPatchUserDelete(): void
