@@ -37,10 +37,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
         'campaigns/bid-strategy/media/{medium}/uuid-default',
         [BidStrategyController::class, 'patchBidStrategyUuidDefault']
     );
-
-    Route::post('users/{id}/ban', [AdminController::class, 'banUser']);//legacy
-    Route::post('users/{id}/unban', [AdminController::class, 'unbanUser']);//legacy
-    Route::post('users/{id}/delete', [AdminController::class, 'deleteUser']);//legacy
 });
 
 Route::middleware([Kernel::MODERATOR_ACCESS, Kernel::JSON_API])->group(function () {

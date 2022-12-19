@@ -1188,7 +1188,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'unban'),
-            ['reason' => 'suspicious activity'],
         );
 
         $response->assertStatus(Response::HTTP_OK)
