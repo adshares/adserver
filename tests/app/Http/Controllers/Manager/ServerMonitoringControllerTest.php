@@ -22,8 +22,10 @@
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\AuthRecovery;
+use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
@@ -881,7 +883,13 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $this->setUpAdmin();
         /** @var User $user */
-        $user = User::factory()->create(['is_banned' => 0, 'ban_reason' => null]);
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11, 'is_banned' => 0, 'ban_reason' => null]);
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'ban'),
@@ -893,6 +901,82 @@ final class ServerMonitoringControllerTest extends TestCase
         $user = $user->refresh();
         self::assertTrue($user->isBanned());
         self::assertEquals('suspicious activity', $user->ban_reason);
+        self::assertNull($user->api_token);
+        self::assertNull($user->auto_withdrawal);
+        self::assertEquals(Campaign::STATUS_INACTIVE, (new Campaign())->find($campaign->id)->status);
+        self::assertEquals(Banner::STATUS_INACTIVE, (new Banner())->find($banner->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        Mail::assertQueued(UserBanned::class);
+    }
+
+    public function testPatchUserBanWhileBanAdmin(): void
+    {
+        $this->setUpAdmin();
+        $user = User::factory()->admin()->create();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testPatchUserBanWhileUserNotExist(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser(PHP_INT_MAX, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    /**
+     * @dataProvider patchUserBanFailProvider
+     */
+    public function testPatchUserBanFail(array $data): void
+    {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            $data,
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function patchUserBanFailProvider(): array
+    {
+        return [
+            'no reason' => [[]],
+            'empty reason' => [['reason' => '']],
+            'too long reason' => [['reason' => str_repeat('a', 256)]],
+        ];
+    }
+
+    public function testBanUserDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testPatchUserConfirm(): void
