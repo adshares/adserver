@@ -33,12 +33,14 @@ class ZoneFactory extends Factory
     public function definition(): array
     {
         $format = $this->faker->randomElement((new DummyConfigurationRepository())->fetchMedium()->getFormats());
+        $size = $this->faker->randomKey($format->getScopes());
         return [
             'uuid' => $this->faker->uuid,
             'name' => $this->faker->word,
             'status' => Zone::STATUS_ACTIVE,
             'type' => Utils::getZoneTypeByBannerType($format->getType()),
-            'size' => $this->faker->randomKey($format->getScopes()),
+            'size' => $size,
+            'scopes' => [$size],
         ];
     }
 }

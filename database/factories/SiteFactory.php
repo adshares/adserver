@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Service\AdUser;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -35,7 +36,7 @@ class SiteFactory extends Factory
             'name' => $this->faker->words(2, true),
             'domain' => 'example.com',
             'url' => 'https://example.com',
-            'medium' => 'web',
+            'medium' => MediumName::Web->value,
             'vendor' => null,
             'primary_language' => $this->faker->languageCode,
             'status' => Site::STATUS_ACTIVE,

@@ -41,6 +41,7 @@ use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Config\RegistrationMode;
 use DateTime;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -128,13 +129,6 @@ class AuthControllerTest extends TestCase
         $this->assertTrue($user->is_email_confirmed);
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
-
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-        $this->confirmUser($user);
-        $this->assertTrue($user->is_email_confirmed);
-        $this->assertTrue($user->is_admin_confirmed);
-        $this->assertTrue($user->is_confirmed);
-        Mail::assertQueued(UserConfirmed::class);
     }
 
     public function testAutoActivationAutoConfirmationRegister(): void
@@ -148,7 +142,7 @@ class AuthControllerTest extends TestCase
         $this->assertTrue($user->is_confirmed);
     }
 
-    public function testAutoActivationManualConfirmationRegister(): void
+    public function testAutoActivationManualConfirmationRequired(): void
     {
         Config::updateAdminSettings([Config::EMAIL_VERIFICATION_REQUIRED => '0']);
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
@@ -157,13 +151,6 @@ class AuthControllerTest extends TestCase
         $this->assertTrue($user->is_email_confirmed);
         $this->assertFalse($user->is_admin_confirmed);
         $this->assertFalse($user->is_confirmed);
-
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-        $this->confirmUser($user);
-        $this->assertTrue($user->is_email_confirmed);
-        $this->assertTrue($user->is_admin_confirmed);
-        $this->assertTrue($user->is_confirmed);
-        Mail::assertQueued(UserConfirmed::class);
     }
 
     public function testRestrictedRegister(): void
@@ -336,7 +323,7 @@ class AuthControllerTest extends TestCase
         );
     }
 
-    public function testActiveManualConfirmationWithBonus(): void
+    public function testActivateManualConfirmationRequired(): void
     {
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
@@ -363,47 +350,22 @@ class AuthControllerTest extends TestCase
                 $user->getWalletBalance(),
             ]
         );
-
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-        $this->confirmUser($user);
-
-        self::assertSame(
-            [300, 300, 0],
-            [
-                $user->getBalance(),
-                $user->getBonusBalance(),
-                $user->getWalletBalance(),
-            ]
-        );
-
-        $entry = UserLedgerEntry::where('user_id', $user->id)
-            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
-            ->firstOrFail();
-
-        $this->assertEquals(300, $entry->amount);
-        $this->assertNotNull($entry->refLink);
-        $this->assertEquals($refLink->id, $entry->refLink->id);
     }
 
-    public function testInactiveManualConfirmationWithBonus(): void
+    public function testAwardBonusOnActivationWhileManualConfirmation(): void
     {
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '0']);
 
         /** @var RefLink $refLink */
         $refLink = RefLink::factory()->create(['bonus' => 100, 'refund' => 0.5]);
-        $user = $this->registerUser($refLink->token);
-
-        self::assertSame(
-            [0, 0, 0],
+        $user = User::factory()->create(
             [
-                $user->getBalance(),
-                $user->getBonusBalance(),
-                $user->getWalletBalance(),
+                'admin_confirmed_at' => new DateTimeImmutable(),
+                'email' => $this->faker->email,
+                'ref_link_id' => $refLink->id,
             ]
         );
-
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-        $this->confirmUser($user);
+        Token::generate(Token::EMAIL_ACTIVATE, $user);
 
         self::assertSame(
             [0, 0, 0],
@@ -424,14 +386,6 @@ class AuthControllerTest extends TestCase
                 $user->getWalletBalance(),
             ]
         );
-
-        $entry = UserLedgerEntry::where('user_id', $user->id)
-            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
-            ->firstOrFail();
-
-        $this->assertEquals(300, $entry->amount);
-        $this->assertNotNull($entry->refLink);
-        $this->assertEquals($refLink->id, $entry->refLink->id);
     }
 
     public function testConfirmNonExistingUser(): void

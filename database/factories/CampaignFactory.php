@@ -25,6 +25,7 @@ namespace Database\Factories;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\ViewModel\MediumName;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CampaignFactory extends Factory
@@ -40,7 +41,7 @@ class CampaignFactory extends Factory
             'max_cpc' => '200000000000',
             'max_cpm' => '100000000000',
             'budget' => 100 * 1e11,
-            'medium' => 'web',
+            'medium' => MediumName::Web->value,
             'vendor' => null,
             'targeting_excludes' => [],
             'targeting_requires' => [],

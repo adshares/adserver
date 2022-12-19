@@ -22,11 +22,11 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
-use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
@@ -451,9 +451,9 @@ class Utils
     public static function getZoneTypeByBannerType(string $type): string
     {
         return match ($type) {
-            Banner::TEXT_TYPE_DIRECT_LINK => Size::TYPE_POP,
-            Banner::TEXT_TYPE_MODEL => Size::TYPE_MODEL,
-            default => Size::TYPE_DISPLAY,
+            Banner::TEXT_TYPE_DIRECT_LINK => Zone::TYPE_POP,
+            Banner::TEXT_TYPE_MODEL => Zone::TYPE_MODEL,
+            default => Zone::TYPE_DISPLAY,
         };
     }
 
