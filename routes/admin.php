@@ -39,10 +39,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     );
 });
 
-Route::middleware([Kernel::MODERATOR_ACCESS, Kernel::JSON_API])->group(function () {
-    Route::post('users/{id}/confirm', [AuthController::class, 'confirm']);//legacy
-});
-
 Route::middleware([Kernel::AGENCY_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('users', [UsersController::class, 'browse']);
     Route::get('advertisers', [UsersController::class, 'advertisers']);

@@ -140,13 +140,10 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function confirm(int $userId): JsonResponse
+    public function confirm(int $userId): User
     {
         /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
+        $user = (new User())->findOrFail($userId);
 
         DB::beginTransaction();
         $this->confirmAdmin($user);
@@ -157,7 +154,7 @@ class AuthController extends Controller
             Mail::to($user)->queue(new UserConfirmed());
         }
 
-        return self::json($user->toArray());
+        return $user;
     }
 
     public function emailActivateResend(Request $request): JsonResponse

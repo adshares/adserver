@@ -167,8 +167,8 @@ class ServerMonitoringController extends Controller
 
     public function confirmUser(AuthController $authController, int $userId): JsonResource
     {
-        $authController->confirm($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $authController->confirm($userId);
+        return new UserResource($user);
     }
 
     public function deleteUser(
@@ -211,7 +211,6 @@ class ServerMonitoringController extends Controller
 
     public function denyAdvertising(int $userId): JsonResource
     {
-
         $user = $this->getRegularUserById($userId);
         $user->is_advertiser = 0;
         $user->save();
