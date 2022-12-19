@@ -209,28 +209,37 @@ class ServerMonitoringController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function denyAdvertising(AdminController $adminController, int $userId): JsonResource
+    public function denyAdvertising(int $userId): JsonResource
     {
-        $adminController->denyAdvertising($userId);
-        return new UserResource(User::fetchById($userId));
+
+        $user = $this->getRegularUserById($userId);
+        $user->is_advertiser = 0;
+        $user->save();
+        return new UserResource($user);
     }
 
-    public function denyPublishing(AdminController $adminController, int $userId): JsonResource
+    public function denyPublishing(int $userId): JsonResource
     {
-        $adminController->denyPublishing($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->is_publisher = 0;
+        $user->save();
+        return new UserResource($user);
     }
 
-    public function grantAdvertising(AdminController $adminController, int $userId): JsonResource
+    public function grantAdvertising(int $userId): JsonResource
     {
-        $adminController->grantAdvertising($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->is_advertiser = 1;
+        $user->save();
+        return new UserResource($user);
     }
 
-    public function grantPublishing(AdminController $adminController, int $userId): JsonResource
+    public function grantPublishing(int $userId): JsonResource
     {
-        $adminController->grantPublishing($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->is_publisher = 1;
+        $user->save();
+        return new UserResource($user);
     }
 
     public function switchUserToAgency(int $userId): JsonResource

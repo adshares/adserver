@@ -41,11 +41,6 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
 
 Route::middleware([Kernel::MODERATOR_ACCESS, Kernel::JSON_API])->group(function () {
     Route::post('users/{id}/confirm', [AuthController::class, 'confirm']);//legacy
-
-    Route::post('users/{id}/grantAdvertising', [AdminController::class, 'grantAdvertising']);//legacy
-    Route::post('users/{id}/denyAdvertising', [AdminController::class, 'denyAdvertising']);//legacy
-    Route::post('users/{id}/grantPublishing', [AdminController::class, 'grantPublishing']);//legacy
-    Route::post('users/{id}/denyPublishing', [AdminController::class, 'denyPublishing']);//legacy
 });
 
 Route::middleware([Kernel::AGENCY_ACCESS, Kernel::JSON_API])->group(function () {
