@@ -19,7 +19,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\ViewModel\MediumName;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +26,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AddMediumToNetworkCampaigns extends Migration
 {
+    private const MEDIUM_METAVERSE = 'metaverse';
     private const METAVERSE_VENDORS = [
         'cryptovoxels' => 'cryptovoxels.com',
         'decentraland' => 'decentraland.org',
@@ -35,7 +35,7 @@ class AddMediumToNetworkCampaigns extends Migration
     public function up(): void
     {
         Schema::table('network_campaigns', function (Blueprint $table) {
-            $table->string('medium', 16)->default(MediumName::Web->value);
+            $table->string('medium', 16)->default('web');
             $table->string('vendor', 32)->nullable();
         });
 
@@ -60,7 +60,7 @@ SQL
                     DB::table('network_campaigns')
                         ->where('id', $row->id)
                         ->update([
-                            'medium' => MediumName::Metaverse->value,
+                            'medium' => self::MEDIUM_METAVERSE,
                             'vendor' => $vendor,
                         ]);
                     break;

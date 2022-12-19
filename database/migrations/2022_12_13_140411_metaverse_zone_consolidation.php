@@ -55,12 +55,10 @@ return new class extends Migration {
             if (null === $size || empty($uuids)) {
                 continue;
             }
-
             $zone = Zone::fetchOrCreate(
                 $site->id,
                 new ZoneSize(...Size::toDimensions($size)),
                 'Default (legacy)',
-                Zone::TYPE_DISPLAY,
             );
 
             $zoneUuid = '0x' . $zone->uuid;
