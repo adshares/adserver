@@ -309,6 +309,246 @@ final class UserLedgerEntryTest extends TestCase
         self::assertEquals(0, $user2->getBonusBalance());
     }
 
+    // Foreign ecosystem
+
+    public function testGetFirstRecordByBatchId(): void
+    {
+        $batchId = UserLedgerEntry::getNewBatchId();
+        $this->createBatchEntries($batchId);
+
+        $ledgerEntry2 = UserLedgerEntry::getFirstRecordByBatchId($batchId);
+        self::assertEquals(-100, $ledgerEntry2->amount);
+        self::assertEquals(UserLedgerEntry::STATUS_PENDING, $ledgerEntry2->status);
+
+        $batchId = 'and Invalid Batch Id';
+
+        $ledgerEntry2 = UserLedgerEntry::getFirstRecordByBatchId($batchId);
+        self::assertNull($ledgerEntry2);
+    }
+
+    public function testFailAllRecordsInBatch(): void
+    {
+        $batchId = UserLedgerEntry::getNewBatchId();
+        $this->createBatchEntries($batchId);
+        UserLedgerEntry::failAllRecordsInBatch($batchId, UserLedgerEntry::STATUS_NET_ERROR);
+        $ledgerEntry2 = UserLedgerEntry::getFirstRecordByBatchId($batchId);
+        self::assertEquals(UserLedgerEntry::STATUS_NET_ERROR, $ledgerEntry2->status);
+    }
+
+    public function testAcceptAllRecordsInBatch(): void
+    {
+        $batchId = UserLedgerEntry::getNewBatchId();
+        $this->createBatchEntries($batchId);
+        $txid = '1234';
+        UserLedgerEntry::acceptAllRecordsInBatch($batchId, $txid);
+        $ledgerEntry2 = UserLedgerEntry::getFirstRecordByBatchId($batchId);
+        self::assertEquals(UserLedgerEntry::STATUS_ACCEPTED, $ledgerEntry2->status);
+        self::assertEquals($txid, $ledgerEntry2->txid);
+    }
+
+    public function testBalancesByBatchId(): void
+    {
+        $batchId = UserLedgerEntry::getNewBatchId();
+        $this->createBatchEntries($batchId);
+        $txid = '1234';
+        UserLedgerEntry::acceptAllRecordsInBatch($batchId, $txid);
+        $balances = UserLedgerEntry::balancesByBatchId($batchId);
+
+        self::assertCount(4, $balances);
+        self::assertEquals('0x0002D752001721d43d8F04AC4FDfb7aE2784E001', $balances[0]['uid']);
+        self::assertEquals(100, $balances[0]['ads']);
+    }
+
+    public function testAllWalletBalanceIfAny(): void
+    {
+        $users = array(
+            User::factory()->create(),
+            User::factory()->create(),
+            User::factory()->create(),
+            User::factory()->create());
+        $users[0]->foreign_wallet_address = '0x0001D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[0]->saveOrFail();
+        $this->createSomeEntries($users[0]);
+
+        // User[1] has no any entires. sum is zero
+        $users[1]->foreign_wallet_address = '0x0002D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[1]->saveOrFail();
+
+        UserLedgerEntry::factory()->create(
+            [
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_AD_INCOME,
+                'amount' => 10,
+                'user_id' => $users[1]->id,
+            ]
+        );
+
+        UserLedgerEntry::factory()->create(
+            [
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                'amount' => -10,
+                'user_id' => $users[1]->id,
+            ]
+        );
+
+        // User[2]
+        $users[2]->foreign_wallet_address = '0x0003D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[2]->saveOrFail();
+        $this->createSomeEntries($users[2]);
+        // User3 has entires, but its not a foreign user
+        $this->createSomeEntries($users[3]);
+
+        $total = UserLedgerEntry::getWalletBalanceForForeignUsers();
+        $balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+        self::assertTrue($total < UserLedgerEntry::getWalletBalanceForAllUsers());
+        // user[3] is not a foreign user. its balance should affect getWalletBalanceForAllUsers, but not getWalletBalanceForForeignUsers
+
+        self::assertCount(2, $balances);
+        foreach ($balances as $entry) {
+            if($entry['wallet'] === $users[0]->foreign_wallet_address) {
+                self::assertEquals(50, $entry['share']);
+            }
+            if($entry['wallet'] === $users[1]->foreign_wallet_address) {
+                self::assertEquals(false, true);
+            }
+        }
+    }
+
+    public function testSuccessThenIfAny(): void
+    {
+        $batchId = UserLedgerEntry::getNewBatchId();
+        $users = array(User::factory()->create(),User::factory()->create(),User::factory()->create());
+        $users[0]->foreign_wallet_address = '0x0001D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[0]->saveOrFail();
+        $this->createAllEntries($users[0]);
+        $users[1]->foreign_wallet_address = '0x0002D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[1]->saveOrFail();
+        UserLedgerEntry::factory()->create(
+            [
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_AD_INCOME,
+                'amount' => 10,
+                'user_id' => $users[1]->id,
+            ]
+        );
+
+        UserLedgerEntry::factory()->create(
+            [
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                'amount' => -10,
+                'user_id' => $users[1]->id,
+            ]
+        );
+        // User2 has no any entires
+        $users[2]->foreign_wallet_address = '0x0003D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[2]->saveOrFail();
+        $this->createAllEntries($users[2]);
+
+        $balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+
+        foreach ($balances as $entry) {
+            $user = null;
+            foreach ($users as $uItem) {
+                if($uItem->foreign_wallet_address === $entry['wallet']){
+                    $user = $uItem;
+                }
+            }
+            UserLedgerEntry::constructForeignEntry(
+                $batchId,
+                $user->id,
+                -$entry['share']
+            )->save();
+        }
+        $balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+        self::assertCount(0, $balances);
+        $txid = '1234';
+        UserLedgerEntry::acceptAllRecordsInBatch($batchId, $txid);
+        $balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+        self::assertCount(0, $balances);
+    }
+
+    public function testFailThenIfAny(): void
+    {
+        $batchId = UserLedgerEntry::getNewBatchId();
+        $users = array(User::factory()->create(),User::factory()->create(),User::factory()->create());
+        $users[0]->foreign_wallet_address = '0x0001D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[0]->saveOrFail();
+        $this->createAllEntries($users[0]);
+        $users[1]->foreign_wallet_address = '0x0002D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[1]->saveOrFail();
+        UserLedgerEntry::factory()->create(
+            [
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_AD_INCOME,
+                'amount' => 10,
+                'user_id' => $users[1]->id,
+            ]
+        );
+
+        UserLedgerEntry::factory()->create(
+            [
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                'amount' => -10,
+                'user_id' => $users[1]->id,
+            ]
+        );
+        // User2 has no any entires
+        $users[2]->foreign_wallet_address = '0x0003D752001721d43d8F04AC4FDfb7aE2784E8AF';
+        $users[2]->saveOrFail();
+        $this->createAllEntries($users[2]);
+
+        $balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+
+        foreach ($balances as $entry) {
+            $user = null;
+            foreach ($users as $uItem) {
+                if($uItem->foreign_wallet_address === $entry['wallet']){
+                    $user = $uItem;
+                }
+            }
+            UserLedgerEntry::constructForeignEntry(
+                $batchId,
+                $user->id,
+                -$entry['share']
+            )->save();
+        }
+        $balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+        self::assertCount(0, $balances);
+        UserLedgerEntry::failAllRecordsInBatch($batchId, UserLedgerEntry::STATUS_NET_ERROR);
+        $balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+        // If a transaction is failed, it should be checked manually. 
+        self::assertCount(0, $balances);
+    }
+
+    private function createBatchEntries(string $batchId): void
+    {
+        $entries = [
+            100,
+            40,
+            1,
+            11,
+        ];
+        $row = 0;
+        foreach ($entries as $entry) {
+            $row = $row + 1;
+            $user = User::factory()->create();
+            $user->foreign_wallet_address = sprintf('0x0002D752001721d43d8F04AC4FDfb7aE2784E%03d', $row);
+            $user->save();
+            UserLedgerEntry::constructForeignEntry(
+                $batchId,
+                $user->id,
+                -$entry
+            )->save();
+
+        }
+    }
+
+    // End of tests for foreign ecosystem
+
+
     private function createSomeEntries(User $user): void
     {
         $entries = [

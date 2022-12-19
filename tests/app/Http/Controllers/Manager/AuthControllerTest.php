@@ -1131,4 +1131,47 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $user->refresh();
     }
+
+    /// Begin tests for foreign ecosystem
+    public function testRegisterForeign(): void
+    {
+
+        // Non Exists
+        /** @var User $user */
+        $rnd = User::generateRandomETHWallet();
+
+        $response = $this->postJson(
+            '/auth/foreign/register',
+            [
+                'address' => $rnd,
+            ]
+        );
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure([
+            'foreignId',
+            'zones' => [ 0 => ["name", "width", "height", "uuid"]]
+        ]);
+        $sadId = $response->json()['foreignId'];
+
+        $u = User::fetchByForeignWalletAddress($rnd);
+        $this->assertEquals($sadId, $u->wallet_address);
+        // Exists
+        /** @var User $user */
+
+        $response = $this->postJson(
+            '/auth/foreign/register',
+            [
+                'address' => $rnd,
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure([
+            'foreignId'
+        ]);
+
+        $this->assertEquals($sadId, $response->json()['foreignId']);
+    }
+
+    /// end tests for foreign ecosystem
 }
