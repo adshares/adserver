@@ -26,14 +26,24 @@ use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\BidStrategyDetail;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserSettings;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
@@ -1043,19 +1053,117 @@ final class ServerMonitoringControllerTest extends TestCase
         $this->assertEquals($refLink->id, $entry->refLink->id);
     }
 
-    public function testPatchUserDelete(): void
+    public function testDeleteUser(): void
     {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create([
+            'api_token' => '1234',
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+        ]);
+
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
+        /** @var ConversionDefinition $conversionDefinition */
+        $conversionDefinition = Conversiondefinition::factory()->create(
+            [
+                'campaign_id' => $campaign->id,
+                'limit_type' => 'in_budget',
+                'is_repeatable' => true,
+            ]
+        );
+
+        /** @var BidStrategy $bidStrategy */
+        $bidStrategy = BidStrategy::factory()->create(['user_id' => $user->id]);
+        $bidStrategyDetail = BidStrategyDetail::create('user:country:other', 0.2);
+        $bidStrategy->bidStrategyDetails()->saveMany([$bidStrategyDetail]);
+
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site->id]);
+
+        RefLink::factory()->create(['user_id' => $user->id]);
+        Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
+
+        /** @var NetworkCampaign $networkCampaign */
+        $networkCampaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $networkBanner */
+        $networkBanner = NetworkBanner::factory()->create(
+            ['network_campaign_id' => $networkCampaign->id]
+        );
+        Classification::factory()->create(
+            [
+                'banner_id' => $networkBanner->id,
+                'status' => Classification::STATUS_REJECTED,
+                'site_id' => $site->id,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $response = $this->delete(
+            sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertNotEmpty(User::withTrashed()->find($user->id)->deleted_at);
+        self::assertNull(User::withTrashed()->find($user->id)->api_token);
+        self::assertEmpty(User::withTrashed()->where('email', $user->email)->get());
+        self::assertEmpty(User::withTrashed()->where('wallet_address', $user->wallet_address)->get());
+        self::assertEmpty(UserSettings::where('user_id', $user->id)->get());
+        self::assertNotEmpty(Campaign::withTrashed()->find($campaign->id)->deleted_at);
+        self::assertNotEmpty(Banner::withTrashed()->find($banner->id)->deleted_at);
+        self::assertEmpty(BannerClassification::all());
+        self::assertNotEmpty(ConversionDefinition::withTrashed()->find($conversionDefinition->id)->deleted_at);
+        self::assertNotEmpty(BidStrategy::withTrashed()->find($bidStrategy->id)->deleted_at);
+        self::assertNotEmpty(BidStrategyDetail::withTrashed()->find($bidStrategyDetail->id)->deleted_at);
+        self::assertNotEmpty(Site::withTrashed()->find($site->id)->deleted_at);
+        self::assertNotEmpty(Zone::withTrashed()->find($zone->id)->deleted_at);
+        self::assertEmpty(RefLink::where('user_id', $user->id)->get());
+        self::assertEmpty(Token::where('user_id', $user->id)->get());
+        self::assertEmpty(Classification::where('user_id', $user->id)->get());
+    }
+
+    public function testDeleteUserWhileAdmin(): void
+    {
+        $this->setUpAdmin();
+        $user = User::factory()->admin()->create();
+
+        $response = $this->delete(
+            sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeleteUserWhileNotExist(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->delete(
+            sprintf('%s/%d', self::buildUriForKey('users'), PHP_INT_MAX),
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDeleteUserWhileDatabaseException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this->delete(
             sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
-            [],
         );
 
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
-        self::assertNotNull($user->refresh()->deleted_at);
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testPatchUserDenyAdvertising(): void
