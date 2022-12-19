@@ -74,35 +74,6 @@ final class AdminControllerTest extends TestCase
         $response->assertJsonStructure(self::SETTINGS_STRUCTURE);
     }
 
-    public function testUnbanUser(): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-        $userId = User::factory()->create()->id;
-
-        $response = $this->post(self::buildUriUnban($userId));
-
-        $response->assertStatus(Response::HTTP_OK);
-    }
-
-    public function testUnbanNotExistingUser(): void
-    {
-        $this->actingAs(User::factory()->admin()->create(), 'api');
-
-        $response = $this->post(self::buildUriUnban(-1));
-
-        $response->assertStatus(Response::HTTP_NOT_FOUND);
-    }
-
-    public function testUnbanUserByRegularUser(): void
-    {
-        $this->actingAs(User::factory()->create(), 'api');
-        $userId = User::factory()->create()->id;
-
-        $response = $this->post(self::buildUriUnban($userId));
-
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
-    }
-
     public function testDeleteUser(): void
     {
         $this->actingAs(User::factory()->admin()->create(), 'api');

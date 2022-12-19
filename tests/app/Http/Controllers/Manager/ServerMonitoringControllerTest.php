@@ -1330,6 +1330,17 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertFalse($user->isBanned());
     }
 
+    public function testPatchUserUnbanWhileNotExistingUser(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser(PHP_INT_MAX, 'unban'),
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     public function testPatchUserInvalidAction(): void
     {
         $this->setUpAdmin();
