@@ -85,6 +85,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(
         Route::get('wallet/connect/init', [WalletController::class, 'connectInit']);
         Route::patch('wallet/connect', [WalletController::class, 'connect']);
         Route::post('wallet/connect/confirm/{token}', [WalletController::class, 'connectConfirm']);
+        Route::post('foreign/withdraw-request', [WalletController::class, 'withdrawBatchSwash']);
+        Route::get('foreign/withdraw-status', [WalletController::class, 'withdrawSwashInfo']);
 
         Route::get('stats/report/list', [StatsController::class, 'reportList']);
         Route::get('stats/report/{uuid}', [StatsController::class, 'reportDownload']);

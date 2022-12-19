@@ -185,4 +185,18 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
     ],
+
+    'foreign_bsc_wallet' => env('FOREIGN_BSC_WALLET'),
+    'min_ads_batch_withdrawal' => env('MIN_ADS_BATCH_WITHDRAWAL'),
+    'use_random_wallet_for_foreign' => env('USE_RANDOM_WALLET_FOR_FOREIGN'),
+    'foreign_default_site_js' => env('FOREIGN_DEFAULT_SITE_JS'),
+    'foreign_preferred_zones' => [
+        ['name' => '320x100', 'width' => '320', 'height' => '100'],
+        ['name' => '250x250', 'width' => '250', 'height' => '250'],
+        ['name' => '512x512', 'width' => '512', 'height' => '512'],
+        ['name' => '234x60', 'width' => '234', 'height' => '60'],
+        ['name' => '980x120', 'width' => '980', 'height' => '120'],
+        ['name' => '300x600', 'width' => '300', 'height' => '600'],
+        ['name' => '240x400', 'width' => '240', 'height' => '400'],
+    ]
 ];

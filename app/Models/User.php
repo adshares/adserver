@@ -362,6 +362,17 @@ class User extends Authenticatable
         return self::whereNotNull('auto_withdrawal')->get();
     }
 
+    public static function fetchByForeignWalletAddress(string $address): ?self
+    {
+        return self::where('foreign_wallet_address', $address)->first();
+    }
+
+    public static function generateRandomETHWallet(): string {
+        // An eth address contains 40 hexadecimals. 
+        
+        return '0x' . substr( hash('sha256', strval(rand(1,1000000) * microtime(true)) ), 0, 40); 
+    }
+
     public function isAdvertiser(): bool
     {
         return (bool)$this->is_advertiser;

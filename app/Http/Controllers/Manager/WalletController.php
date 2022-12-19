@@ -26,6 +26,7 @@ use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
+use Adshares\Adserver\Jobs\AdsSendOneBatchWithdrawal;
 use Adshares\Adserver\Mail\WalletConnectConfirm;
 use Adshares\Adserver\Mail\WalletConnected;
 use Adshares\Adserver\Mail\WithdrawalApproval;
@@ -337,6 +338,120 @@ class WalletController extends Controller
         }
 
         return $this->withdrawAds($request, $rpcClient);
+    }
+
+    private function getForeignBSCAddress(): WalletAddress
+    {
+        try {
+            return new WalletAddress('BSC', config('app.foreign_bsc_wallet'));
+        } catch (InvalidArgumentException $e) {
+            Log::error(sprintf('Invalid BSC address is set: %s', $e->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function withdrawRequestBatch(Request $request, AdsRpcClient $rpcClient): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if(!$user->isModerator()){
+            return self::json(['Auth' => 'Only Moderator/Admin can run this API'], JsonResponse::HTTP_FORBIDDEN);
+        }
+
+        $addressFrom = $this->getAdServerAdsAddress();
+        $address = $this->getForeignBSCAddress();
+        $addressTo = $this->getWalletAdsAddress($rpcClient, $address);
+        $message = $this->getWalletAdsMessage($rpcClient, $address);
+        $batchId = UserLedgerEntry::getNewBatchId();
+
+        $balanceTotal = UserLedgerEntry::getWalletBalanceForForeignUsers();
+        $users_balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
+
+        $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balanceTotal);
+        $adsFee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+        $total = $amount + $adsFee;
+
+        if($total < config('app.min_ads_batch_withdrawal')){
+            $resp = array('code'=>  9, 'total'=> $total, 'min'=>config('app.min_ads_batch_withdrawal'), 'msg' => 'The value for transfer is less than the defined minimun.');
+            return self::json($resp);
+        }
+
+        if ($balanceTotal < $total) {
+            // not sure it is necessary
+            throw new UnprocessableEntityHttpException(sprintf('Insufficient total: %d, fee: %d', $balanceTotal, $adsFee));
+        }
+        DB::beginTransaction();
+
+        foreach ($users_balances as $item) {
+            $user_item = User::fetchById($item['uid']);
+            $ledgerEntry = UserLedgerEntry::constructForeignEntry(
+                $batchId,
+                $user_item->id,
+                -$item['share']
+            )->addressed($addressFrom, $addressTo);
+            if (!$ledgerEntry->save()) {
+                DB::rollBack();
+                throw new InternalErrorException();
+            }
+        }
+        DB::commit();
+        $logMessage = '[WalletController] Request batch withdrawal: Dispatching AdsSendOneBatchWithdrawal with batchId (%s) addressTo (%s) amount (%s) message (%s) users_balances (%s).';
+        Log::info(sprintf($logMessage, $batchId, $addressTo, $amount, $message, json_encode($users_balances)));
+        AdsSendOneBatchWithdrawal::dispatch(
+            $batchId,
+            $addressTo,
+            $amount,
+            $message
+        );
+
+        $resp = array('code'=>  0, 'msg' => 'Withdrawal request is submitted successfully.', 'total'=> $amount, 'usersCount' => count($users_balances), 'to' => config('app.foreign_bsc_wallet'), 'batch'=>$batchId);
+        return self::json($resp);
+    }
+
+    public function withdrawStatusBatch(Request $request, AdsRpcClient $rpcClient): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if(!$user->isModerator()){
+            return self::json(['Auth' => 'Only Moderator/Admin can run this API'], JsonResponse::HTTP_FORBIDDEN);
+        }
+        $batchId = $request->input('batch');
+        if (!$batchId){
+            return self::json([], Response::HTTP_BAD_REQUEST, ["param 'batch' is missing."]);
+        }
+        $userLedger = UserLedgerEntry::getFirstRecordByBatchId($batchId);
+        if (!$userLedger){
+            return self::json([], Response::HTTP_BAD_REQUEST, ["invalid 'batchId'. No record is found."]);
+        }
+        $status = null;
+        $txid = null;
+        if (UserLedgerEntry::STATUS_PENDING === $userLedger->status) {
+            $status = 'pending';
+        }
+        if (UserLedgerEntry::STATUS_ACCEPTED === $userLedger->status) {
+            $status = 'accepted';
+            $txid = $userLedger->txid;
+        }
+
+        if (UserLedgerEntry::STATUS_NET_ERROR === $userLedger->status) {
+            $status = 'failed';
+        }
+        if (UserLedgerEntry::STATUS_SYS_ERROR === $userLedger->status) {
+            $status = 'failed';
+        }
+        if ($status === null){
+            $status = 'unknown';
+        }
+
+        $resp = array('status'=> $status, 'code'=> $userLedger->status, 'batch'=>$batchId);
+        if ($txid){
+            $resp['txid'] = $txid;
+        }
+        if (UserLedgerEntry::STATUS_ACCEPTED === $userLedger->status){
+            $resp['shares'] = UserLedgerEntry::balancesByBatchId($batchId);
+        }
+        return self::json($resp);
     }
 
     private function withdrawAds(Request $request, AdsRpcClient $rpcClient): JsonResponse
