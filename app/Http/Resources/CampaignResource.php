@@ -11,11 +11,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CampaignResource extends JsonResource
 {
+    private const CLICKS_RESOLUTION = 1e11;
+
     public function toArray($request): array
     {
         /** @var Campaign $this */
-        $basicInformation = $this->basic_information;
-        $basicInformation['status'] = CampaignStatus::from($basicInformation['status'])->toString();
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
@@ -29,7 +29,16 @@ class CampaignResource extends JsonResource
             'creatives' => new BannerCollection($this->ads),
             'bidStrategyUuid' => $this->bid_strategy_uuid,
             'conversions' => $this->conversions,
-            ...$basicInformation,
+            'status' => CampaignStatus::from($this->status)->toString(),
+            'name' => $this->name,
+            'targetUrl' => $this->landing_url,
+            'maxCpc' => null === $this->max_cpc ? null : $this->max_cpc / self::CLICKS_RESOLUTION,
+            'maxCpm' => null === $this->max_cpm ? null : $this->max_cpm / self::CLICKS_RESOLUTION,
+            'budget' => $this->budget / self::CLICKS_RESOLUTION,
+            'medium' => $this->medium,
+            'vendor' => $this->vendor,
+            'dateStart' => $this->time_start,
+            'dateEnd' => $this->time_end,
         ];
     }
 }

@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.3] - 2022-12-19
+### Added
+- Zone scopes
+## Changed
+- Metaverse zones consolidation
+- Send medium and vendor to AdPay
+- Campaign amounts in USD (APIv2)
+- Legacy user actions which are handled by monitoring API
+### Fixed
+- Missing meta in event pagination
+
 ## [2.2.2] - 2022-12-12
 ### Added
 - Banner rotate
@@ -760,7 +771,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.1...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.3...develop
+[2.2.3]: https://github.com/adshares/adserver/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/adshares/adserver/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/adshares/adserver/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/adshares/adserver/compare/v2.1.1...v2.2.0

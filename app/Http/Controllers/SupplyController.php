@@ -39,8 +39,9 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
+use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -48,7 +49,6 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\UserRole;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
 use DateTime;
 use DateTimeInterface;
@@ -77,9 +77,6 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
     private const TTL_ONE_HOUR = 3600;
-    private const ZONE_DEPTH_DEFAULT = 0;
-    private const ZONE_MINIMAL_DPI_DEFAULT = 1;
-    private const ZONE_NAME_DEFAULT = 'default';
 
     private static string $adserverId;
 
@@ -92,7 +89,6 @@ class SupplyController extends Controller
         Request $request,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
-        ConfigurationRepository $configurationRepository
     ): BaseResponse {
         $type = $request->get('type');
         if (isset($type) && !is_array($type)) {
@@ -121,9 +117,9 @@ class SupplyController extends Controller
             ]
         );
 
-        $validated['min_dpi'] = $validated['min_dpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT;
-        $validated['zone_name'] = $validated['zone_name'] ?? self::ZONE_NAME_DEFAULT;
-        $validated['depth'] = $validated['depth'] ?? self::ZONE_DEPTH_DEFAULT;
+        $validated['min_dpi'] = $validated['min_dpi'] ?? Zone::DEFAULT_MINIMAL_DPI;
+        $validated['zone_name'] = $validated['zone_name'] ?? Zone::DEFAULT_NAME;
+        $validated['depth'] = $validated['depth'] ?? Zone::DEFAULT_DEPTH;
 
         $payoutAddress = WalletAddress::fromString($validated['pay_to']);
         $user = User::fetchByWalletAddress($payoutAddress);
@@ -141,38 +137,32 @@ class SupplyController extends Controller
         if (!$user->isPublisher()) {
             throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
         }
-        $site = Site::fetchOrCreate(
-            $user->id,
-            $validated['context']['site']['url'],
-            $validated['medium'],
-            $validated['vendor'] ?? null
-        );
+        try {
+            $site = Site::fetchOrCreate(
+                $user->id,
+                $validated['context']['site']['url'],
+                $validated['medium'],
+                $validated['vendor'] ?? null,
+            );
+        } catch (InvalidArgumentException $exception) {
+            return $this->sendError('site', $exception->getMessage());
+        }
         if ($site->status != Site::STATUS_ACTIVE) {
             return $this->sendError("site", "Site '" . $site->name . "' is not active");
         }
 
-        $medium = $configurationRepository->fetchMedium($validated['medium'], $validated['vendor']);
-        $zones = [];
+        $minDpi = (float)$validated['min_dpi'];
+        $zoneSize = ZoneSize::fromArray([
+            'width' => (float)$validated['width'] * $minDpi,
+            'height' => (float)$validated['height'] * $minDpi,
+            'depth' => (float)$validated['depth'],
+        ]);
 
-        $zoneSizes = Size::findBestFit(
-            $medium,
-            (float)$validated['width'],
-            (float)$validated['height'],
-            (float)$validated['depth'],
-            (float)$validated['min_dpi']
-        );
-
-        foreach ($zoneSizes as $zoneSize) {
+        try {
             $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
-            $zones[] = [
-                'zone' => $zone->uuid,
-                'options' => [
-                    'banner_type' => isset($validated['type']) ? ((array)$validated['type']) : null,
-                    'banner_mime' => $validated['mime_type'] ?? null
-                ]
-            ];
+        } catch (InvalidArgumentException $exception) {
+            return $this->sendError('zone', $exception->getMessage());
         }
-
         $queryData = [
             'page' => [
                 'iid' => $validated['view_id'],
@@ -180,7 +170,15 @@ class SupplyController extends Controller
                 'metamask' => $validated['context']['site']['metamask'] ?? 0,
             ],
             'user' => $validated['context']['user'] ?? [],
-            'zones' => $zones,
+            'zones' => [
+                [
+                    'zone' => $zone->uuid,
+                    'options' => [
+                        'banner_type' => isset($validated['type']) ? ((array)$validated['type']) : null,
+                        'banner_mime' => $validated['mime_type'] ?? null
+                    ],
+                ],
+            ],
             'zone_mode' => 'best_match'
         ];
 
@@ -192,7 +190,7 @@ class SupplyController extends Controller
                 'banners' => $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)
                     ->toArray(),
                 'zones' => $queryData['zones'],
-                'zoneSizes' => $zoneSizes,
+                'zoneSizes' => $zone->scopes,
                 'success' => true,
             ]
         );
@@ -274,7 +272,7 @@ class SupplyController extends Controller
                         $site = Site::fetchOrCreate(
                             $user->id,
                             $decodedQueryData['page']['url'],
-                            'website',
+                            MediumName::Web->value,
                             null
                         );
                         if ($site->status != Site::STATUS_ACTIVE) {
@@ -283,7 +281,7 @@ class SupplyController extends Controller
 
                         $zoneObject = Zone::fetchOrCreate(
                             $site->id,
-                            "{$zone['width']}x{$zone['height']}",
+                            ZoneSize::fromArray($zone),
                             $zone['zone']
                         );
                         $zone['zone'] = $zoneObject->uuid;
@@ -303,7 +301,6 @@ class SupplyController extends Controller
     public function find(
         AdUser $contextProvider,
         AdSelect $bannerFinder,
-        ConfigurationRepository $configurationRepository,
         Request $request,
     ): BaseResponse {
         $response = new Response();
@@ -389,41 +386,19 @@ class SupplyController extends Controller
         }
 
         if ($isDynamicFind) {
-            try {
-                $medium = $configurationRepository->fetchMedium(
-                    $context['medium'],
-                    $context['vendor'] ?? null
-                );
-            } catch (InvalidArgumentException $exception) {
-                throw new UnprocessableEntityHttpException($exception->getMessage());
-            }
             $site = $this->getSiteOrFail($context);
-
             foreach ($input['placements'] as $key => $placement) {
                 $zoneType = $this->getZoneType($placement);
-                $zoneSizes = Size::findBestFit(
-                    $medium,
-                    (float)$placement['width'],
-                    (float)$placement['height'],
-                    (float)($placement['depth'] ?? self::ZONE_DEPTH_DEFAULT),
-                    (float)($placement['minDpi'] ?? self::ZONE_MINIMAL_DPI_DEFAULT),
-                    zoneType: $zoneType,
-                );
-                if (empty($zoneSizes)) {
-                    throw new UnprocessableEntityHttpException(
-                        sprintf(
-                            'Cannot find placement matching width %s, height %s)',
-                            $placement['width'],
-                            $placement['height']
-                        )
+                try {
+                    $zoneObject = Zone::fetchOrCreate(
+                        $site->id,
+                        ZoneSize::fromArray($placement),
+                        $placement['name'] ?? Zone::DEFAULT_NAME,
+                        $zoneType,
                     );
+                } catch (InvalidArgumentException $exception) {
+                    throw new UnprocessableEntityHttpException($exception->getMessage());
                 }
-                $zoneObject = Zone::fetchOrCreate(
-                    $site->id,
-                    $zoneSizes[0],
-                    $placement['name'] ?? self::ZONE_NAME_DEFAULT,
-                    $zoneType,
-                );
                 $input['placements'][$key]['placementId'] = $zoneObject->uuid;
             }
         }
@@ -1183,11 +1158,13 @@ class SupplyController extends Controller
                     'Field `placements[].types` cannot contain conflicting types'
                 );
             }
-            $zoneType = $zoneTypes[0];
-        } else {
-            $zoneType = null;
+            if (Zone::TYPE_DISPLAY !== $zoneTypes[0]) {
+                throw new UnprocessableEntityHttpException(
+                    'Field `placements[].types` cannot contain non-displayable type'
+                );
+            }
         }
-        return $zoneType;
+        return Zone::TYPE_DISPLAY;
     }
 
     private static function mapFindInput(array $input): array

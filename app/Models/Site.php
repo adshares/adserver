@@ -31,8 +31,10 @@ use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Adserver\Utilities\SiteValidator;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -273,7 +275,7 @@ class Site extends Model
 
         if (null === $site) {
             $name = $domain;
-            if ('metaverse' === $medium) {
+            if (MediumName::Metaverse->value === $medium) {
                 if ('decentraland' === $vendor) {
                     $name = SiteUtils::extractNameFromDecentralandDomain($domain);
                 } elseif ('cryptovoxels' === $vendor) {
@@ -285,6 +287,7 @@ class Site extends Model
             if (!SiteValidator::isUrlValid($url)) {
                 throw new InvalidArgumentException('Invalid URL');
             }
+            resolve(ConfigurationRepository::class)->fetchMedium($medium, $vendor);
 
             $onlyAcceptedBanners =
                 Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT

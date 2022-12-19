@@ -23,42 +23,38 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Supply\Domain\Model\Banner;
 
 final class Size
 {
-    public const TYPE_DISPLAY = 'display';
-    public const TYPE_MODEL = 'model';
-    public const TYPE_POP = 'pop';
-
     private const MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING = 0.6;
 
     public static function findBestFit(
         Medium $medium,
-        float $width,
-        float $height,
-        float $depth,
-        float $minDpi,
-        int $count = 5,
-        ?string $zoneType = null,
+        ZoneSize $placementSize,
+        int $count = PHP_INT_MAX,
     ): array {
-        if (self::TYPE_POP === $zoneType) {
-            return self::getScopesByTypes($medium, [Banner::TYPE_DIRECT_LINK]);
-        }
-
-        if ((null === $zoneType && $depth > 0) || self::TYPE_MODEL === $zoneType) {
+        if ($placementSize->getDepth() > 0) {
             return self::getScopesByTypes($medium, [Banner::TYPE_MODEL]);
         }
 
-        $scopes = self::getScopesByTypes($medium, [Banner::TYPE_IMAGE, Banner::TYPE_VIDEO]);
+        $scopes = self::getScopesByTypes($medium, [Banner::TYPE_HTML, Banner::TYPE_IMAGE, Banner::TYPE_VIDEO]);
 
+        $width = $placementSize->getWidth();
+        $height = $placementSize->getHeight();
         $sizes = array_map(
-            function ($size) use ($width, $height, $minDpi) {
-                [$x, $y] = explode("x", $size);
+            function ($size) use ($width, $height) {
+                [$x, $y] = self::toDimensions($size);
 
                 $dpi = min($x / $width, $y / $height);
-                if ($dpi < $minDpi) {
+                if ($dpi < 1) {
+                    return false;
+                }
+
+                $occupiedField = $dpi * min($width / $x, $height / $y);
+                if ($occupiedField < self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING) {
                     return false;
                 }
 
@@ -133,23 +129,6 @@ final class Size
                 return $occupiedField >= self::MINIMAL_ALLOWED_OCCUPIED_FIELD_FOR_MATCHING;
             }
         );
-    }
-
-    public static function getAspect(int $width, int $height): string
-    {
-        if ($width === 0 || $height === 0) {
-            return '';
-        }
-
-        $a = $width;
-        $b = $height;
-        while ($b !== 0) {
-            $c = $a % $b;
-            $a = $b;
-            $b = $c;
-        }
-
-        return $width / $a . ':' . $height / $a;
     }
 
     private static function getScopesByTypes(Medium $medium, array $types): array

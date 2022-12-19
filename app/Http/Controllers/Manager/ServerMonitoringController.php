@@ -26,15 +26,23 @@ use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
+use Adshares\Adserver\Http\Resources\GenericCollection;
 use Adshares\Adserver\Http\Resources\HostCollection;
 use Adshares\Adserver\Http\Resources\UserCollection;
 use Adshares\Adserver\Http\Resources\UserResource;
 use Adshares\Adserver\Mail\AuthRecovery;
+use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Mail\UserEmailActivate;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\RefLink;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ServerEventLogRepository;
 use Adshares\Adserver\Repository\Common\UserRepository;
@@ -44,13 +52,14 @@ use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -61,7 +70,7 @@ class ServerMonitoringController extends Controller
     private const ADPANEL_EMAIL_ACTIVATION_URI = '/auth/email-activation/';
     private const ADPANEL_RESET_PASSWORD_URI = '/auth/reset-password/';
 
-    public function fetchEvents(Request $request, ServerEventLogRepository $repository): array
+    public function fetchEvents(Request $request, ServerEventLogRepository $repository): JsonResource
     {
         $limit = $request->query('limit', 10);
         $filters = FilterCollection::fromRequest($request, [
@@ -71,8 +80,7 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return $repository->fetchServerEvents($filters, $limit)
-            ->toArray();
+        return new GenericCollection($repository->fetchServerEvents($filters, $limit));
     }
 
     public function fetchHosts(Request $request): JsonResource
@@ -87,7 +95,7 @@ class ServerMonitoringController extends Controller
         return new HostCollection($paginator);
     }
 
-    public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): array
+    public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): JsonResource
     {
         $limit = $request->query('limit', 10);
         $filters = FilterCollection::fromRequest($request, [
@@ -96,8 +104,7 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return $repository->fetchLatestServerEvents($filters, $limit)
-            ->toArray();
+        return new GenericCollection($repository->fetchLatestServerEvents($filters, $limit));
     }
 
     public function fetchUsers(Request $request, UserRepository $userRepository): JsonResource
@@ -127,72 +134,163 @@ class ServerMonitoringController extends Controller
         ]);
     }
 
-    public function banUser(AdminController $adminController, Request $request, int $userId): JsonResource
+    public function banUser(Request $request, int $userId): JsonResource
     {
-        $adminController->banUser($userId, $request);
-        return new UserResource(User::fetchById($userId));
+        $reason = $request->input('reason');
+        if (!is_string($reason) || strlen(trim($reason)) < 1 || strlen(trim($reason)) > 255) {
+            throw new UnprocessableEntityHttpException('Invalid reason');
+        }
+
+        $user = $this->getRegularUserById($userId);
+
+        DB::beginTransaction();
+        try {
+            Campaign::deactivateAllForUserId($userId);
+            $user->sites()->get()->each(
+                function (Site $site) {
+                    $site->changestatus(Site::STATUS_INACTIVE);
+                    $site->save();
+                }
+            );
+            $user->ban($reason);
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Exception during user ban: (%s)', $throwable->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        Mail::to($user)->queue(new UserBanned($reason));
+
+        return new UserResource($user);
     }
 
     public function confirmUser(AuthController $authController, int $userId): JsonResource
     {
-        $authController->confirm($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $authController->confirm($userId);
+        return new UserResource($user);
     }
 
     public function deleteUser(
-        AdminController $adminController,
         CampaignRepository $campaignRepository,
         int $userId,
     ): JsonResponse {
-        return $adminController->deleteUser($userId, $campaignRepository);
+        $user = $this->getRegularUserById($userId);
+
+        DB::beginTransaction();
+        try {
+            $campaigns = $campaignRepository->findByUserId($userId);
+            foreach ($campaigns as $campaign) {
+                $campaignRepository->delete($campaign);
+            }
+            BidStrategy::deleteByUserId($userId);
+
+            $sites = $user->sites();
+            foreach ($sites->get() as $site) {
+                $site->zones()->delete();
+            }
+            $sites->delete();
+
+            RefLink::fetchByUser($userId)->each(fn(RefLink $refLink) => $refLink->delete());
+            Token::deleteByUserId($userId);
+            Classification::deleteByUserId($userId);
+            UserSettings::deleteByUserId($userId);
+
+            $user->maskEmailAndWalletAddress();
+            $user->clearApiKey();
+            $user->delete();
+
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Exception during user deletion: (%s)', $throwable->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function denyAdvertising(AdminController $adminController, int $userId): JsonResource
+    public function denyAdvertising(int $userId): JsonResource
     {
-        $adminController->denyAdvertising($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->is_advertiser = 0;
+        $user->save();
+        return new UserResource($user);
     }
 
-    public function denyPublishing(AdminController $adminController, int $userId): JsonResource
+    public function denyPublishing(int $userId): JsonResource
     {
-        $adminController->denyPublishing($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->is_publisher = 0;
+        $user->save();
+        return new UserResource($user);
     }
 
-    public function grantAdvertising(AdminController $adminController, int $userId): JsonResource
+    public function grantAdvertising(int $userId): JsonResource
     {
-        $adminController->grantAdvertising($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->is_advertiser = 1;
+        $user->save();
+        return new UserResource($user);
     }
 
-    public function grantPublishing(AdminController $adminController, int $userId): JsonResource
+    public function grantPublishing(int $userId): JsonResource
     {
-        $adminController->grantPublishing($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->is_publisher = 1;
+        $user->save();
+        return new UserResource($user);
     }
 
-    public function switchUserToAgency(AdminController $adminController, int $userId): JsonResource
+    public function switchUserToAgency(int $userId): JsonResource
     {
-        $adminController->switchUserToAgency($userId);
-        return new UserResource(User::fetchById($userId));
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isAgency()) {
+            throw new UnprocessableEntityHttpException();
+        }
+        $user->is_moderator = false;
+        $user->is_agency = true;
+        $user->save();
+
+        return new UserResource($user);
     }
 
-    public function switchUserToModerator(AdminController $adminController, int $userId): JsonResource
+    public function switchUserToModerator(int $userId): JsonResource
     {
-        $adminController->switchUserToModerator($userId);
-        return new UserResource(User::fetchById($userId));
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isModerator()) {
+            throw new UnprocessableEntityHttpException();
+        }
+        $user->is_moderator = true;
+        $user->is_agency = false;
+        $user->save();
+
+        return new UserResource($user);
     }
 
-    public function switchUserToRegular(AdminController $adminController, int $userId): JsonResource
+    public function switchUserToRegular(int $userId): JsonResource
     {
-        $adminController->switchUserToRegular($userId);
-        return new UserResource(User::fetchById($userId));
+        /** @var User $logged */
+        $logged = Auth::user();
+
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isModerator() && !$logged->isAdmin()) {
+            throw new HttpException(Response::HTTP_FORBIDDEN);
+        }
+        $user->is_moderator = false;
+        $user->is_agency = false;
+        $user->save();
+
+        return new UserResource($user);
     }
 
-    public function unbanUser(AdminController $adminController, int $userId): JsonResource
+    public function unbanUser(int $userId): JsonResource
     {
-        $adminController->unbanUser($userId);
-        return new UserResource(User::fetchById($userId));
+        $user = $this->getRegularUserById($userId);
+        $user->unban();
+        return new UserResource($user);
     }
 
     public function resetHost(int $hostId): JsonResponse
@@ -354,6 +452,16 @@ class ServerMonitoringController extends Controller
             throw new UnprocessableEntityHttpException('Duplicated email address');
         }
         return $email;
+    }
+
+    private function getRegularUserById(int $userId): User
+    {
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException('Administrator account cannot be changed');
+        }
+        return $user;
     }
 
     private static function getRoles(Request $request): ?array

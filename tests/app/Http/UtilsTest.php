@@ -25,10 +25,10 @@ namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\Request;
 
 class UtilsTest extends TestCase
@@ -87,11 +87,11 @@ class UtilsTest extends TestCase
     public function getZoneTypeByBannerTypeProvider(): array
     {
         return [
-            Banner::TEXT_TYPE_IMAGE => [Banner::TEXT_TYPE_IMAGE, Size::TYPE_DISPLAY],
-            Banner::TEXT_TYPE_HTML => [Banner::TEXT_TYPE_HTML, Size::TYPE_DISPLAY],
-            Banner::TEXT_TYPE_DIRECT_LINK => [Banner::TEXT_TYPE_DIRECT_LINK, Size::TYPE_POP],
-            Banner::TEXT_TYPE_VIDEO => [Banner::TEXT_TYPE_VIDEO, Size::TYPE_DISPLAY],
-            Banner::TEXT_TYPE_MODEL => [Banner::TEXT_TYPE_MODEL, Size::TYPE_MODEL],
+            Banner::TEXT_TYPE_IMAGE => [Banner::TEXT_TYPE_IMAGE, Zone::TYPE_DISPLAY],
+            Banner::TEXT_TYPE_HTML => [Banner::TEXT_TYPE_HTML, Zone::TYPE_DISPLAY],
+            Banner::TEXT_TYPE_DIRECT_LINK => [Banner::TEXT_TYPE_DIRECT_LINK, Zone::TYPE_POP],
+            Banner::TEXT_TYPE_VIDEO => [Banner::TEXT_TYPE_VIDEO, Zone::TYPE_DISPLAY],
+            Banner::TEXT_TYPE_MODEL => [Banner::TEXT_TYPE_MODEL, Zone::TYPE_MODEL],
         ];
     }
 

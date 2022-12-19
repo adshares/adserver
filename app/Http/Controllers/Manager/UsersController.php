@@ -92,12 +92,6 @@ class UsersController extends Controller
 
         foreach ((array)$request->get('f', []) as $filter) {
             switch ($filter) {
-                case 'email-unconfirmed':
-                    $builder->whereNull('email_confirmed_at');
-                    break;
-                case 'admin-unconfirmed':
-                    $builder->whereNull('admin_confirmed_at');
-                    break;
                 case 'advertisers':
                     $builder->where('is_advertiser', true);
                     break;

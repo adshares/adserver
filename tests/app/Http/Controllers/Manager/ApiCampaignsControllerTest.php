@@ -134,6 +134,9 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
         $response->assertJsonPath('data.status', 'active');
         $response->assertJsonPath('data.creatives.0.status', 'active');
+        $response->assertJsonPath('data.maxCpc', 0);
+        $response->assertJsonPath('data.maxCpm', null);
+        $response->assertJsonPath('data.budget', 10);
         $response->assertJsonPath('data.conversionClick', 'none');
         $campaign = Campaign::first();
         self::assertNotNull($campaign);
@@ -204,9 +207,9 @@ final class ApiCampaignsControllerTest extends TestCase
         $campaignData = [
             'name' => 'Edited campaign',
             'targetUrl' => 'https://exmaple.com/edited/landing',
-            'maxCpc' => (int)(2 * 1e11),
-            'maxCpm' => (int)(1e11),
-            'budget' => (int)(100 * 1e11),
+            'maxCpc' => 2,
+            'maxCpm' => 1,
+            'budget' => 100,
             'dateStart' => $dateStart,
             'dateEnd' => null,
             'targeting' => [
@@ -219,6 +222,9 @@ final class ApiCampaignsControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
+        $response->assertJsonPath('data.maxCpc', 2);
+        $response->assertJsonPath('data.maxCpm', 1);
+        $response->assertJsonPath('data.budget', 100);
         $campaign = Campaign::first();
         self::assertEquals(Campaign::STATUS_ACTIVE, $campaign->status);
         self::assertEquals('Edited campaign', $campaign->name);
@@ -326,7 +332,7 @@ final class ApiCampaignsControllerTest extends TestCase
             'targetUrl' => 'https://exmaple.com/landing',
             'maxCpc' => 0,
             'maxCpm' => null,
-            'budget' => (int)(10 * 1e11),
+            'budget' => 10,
             'medium' => 'web',
             'vendor' => null,
             'dateStart' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
