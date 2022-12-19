@@ -22,14 +22,28 @@
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\AuthRecovery;
+use Adshares\Adserver\Mail\UserBanned;
+use Adshares\Adserver\Mail\UserConfirmed;
 use Adshares\Adserver\Mail\UserEmailActivate;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\BidStrategyDetail;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserSettings;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
@@ -879,7 +893,13 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $this->setUpAdmin();
         /** @var User $user */
-        $user = User::factory()->create(['is_banned' => 0, 'ban_reason' => null]);
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11, 'is_banned' => 0, 'ban_reason' => null]);
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'ban'),
@@ -891,37 +911,259 @@ final class ServerMonitoringControllerTest extends TestCase
         $user = $user->refresh();
         self::assertTrue($user->isBanned());
         self::assertEquals('suspicious activity', $user->ban_reason);
+        self::assertNull($user->api_token);
+        self::assertNull($user->auto_withdrawal);
+        self::assertEquals(Campaign::STATUS_INACTIVE, (new Campaign())->find($campaign->id)->status);
+        self::assertEquals(Banner::STATUS_INACTIVE, (new Banner())->find($banner->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        Mail::assertQueued(UserBanned::class);
+    }
+
+    public function testPatchUserBanWhileBanAdmin(): void
+    {
+        $this->setUpAdmin();
+        $user = User::factory()->admin()->create();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testPatchUserBanWhileUserNotExist(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser(PHP_INT_MAX, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    /**
+     * @dataProvider patchUserBanFailProvider
+     */
+    public function testPatchUserBanFail(array $data): void
+    {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            $data,
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function patchUserBanFailProvider(): array
+    {
+        return [
+            'no reason' => [[]],
+            'empty reason' => [['reason' => '']],
+            'too long reason' => [['reason' => str_repeat('a', 256)]],
+        ];
+    }
+
+    public function testBanUserDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testPatchUserConfirm(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
-        $user = User::factory()->create(['admin_confirmed_at' => null]);
+        $user = User::factory()->create(
+            [
+                'admin_confirmed_at' => null,
+                'email' => $this->faker->email,
+                'email_confirmed_at' => new DateTimeImmutable(),
+            ]
+        );
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'confirm'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertNotNull($user->refresh()->admin_confirmed_at);
+        Mail::assertQueued(UserConfirmed::class);
     }
 
-    public function testPatchUserDelete(): void
+    public function testPatchUserConfirmWithBonus(): void
     {
+        $this->setUpAdmin();
+        /** @var RefLink $refLink */
+        $refLink = RefLink::factory()->create(['bonus' => 100, 'refund' => 0.5]);
+        /** @var User $user */
+        $user = User::factory()->create(
+            [
+                'admin_confirmed_at' => null,
+                'email' => $this->faker->email,
+                'email_confirmed_at' => new DateTimeImmutable(),
+                'ref_link_id' => $refLink->id,
+            ]
+        );
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'confirm'),
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertNotNull($user->refresh()->admin_confirmed_at);
+        Mail::assertQueued(UserConfirmed::class);
+
+        self::assertSame(
+            [300, 300, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]
+        );
+
+        $entry = UserLedgerEntry::where('user_id', $user->id)
+            ->where('type', UserLedgerEntry::TYPE_BONUS_INCOME)
+            ->firstOrFail();
+
+        $this->assertEquals(300, $entry->amount);
+        $this->assertNotNull($entry->refLink);
+        $this->assertEquals($refLink->id, $entry->refLink->id);
+    }
+
+    public function testDeleteUser(): void
+    {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create([
+            'api_token' => '1234',
+            'wallet_address' => WalletAddress::fromString('ads:0001-00000001-8B4E'),
+        ]);
+
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
+        /** @var ConversionDefinition $conversionDefinition */
+        $conversionDefinition = Conversiondefinition::factory()->create(
+            [
+                'campaign_id' => $campaign->id,
+                'limit_type' => 'in_budget',
+                'is_repeatable' => true,
+            ]
+        );
+
+        /** @var BidStrategy $bidStrategy */
+        $bidStrategy = BidStrategy::factory()->create(['user_id' => $user->id]);
+        $bidStrategyDetail = BidStrategyDetail::create('user:country:other', 0.2);
+        $bidStrategy->bidStrategyDetails()->saveMany([$bidStrategyDetail]);
+
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site->id]);
+
+        RefLink::factory()->create(['user_id' => $user->id]);
+        Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
+
+        /** @var NetworkCampaign $networkCampaign */
+        $networkCampaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $networkBanner */
+        $networkBanner = NetworkBanner::factory()->create(
+            ['network_campaign_id' => $networkCampaign->id]
+        );
+        Classification::factory()->create(
+            [
+                'banner_id' => $networkBanner->id,
+                'status' => Classification::STATUS_REJECTED,
+                'site_id' => $site->id,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $response = $this->delete(
+            sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertNotEmpty(User::withTrashed()->find($user->id)->deleted_at);
+        self::assertNull(User::withTrashed()->find($user->id)->api_token);
+        self::assertEmpty(User::withTrashed()->where('email', $user->email)->get());
+        self::assertEmpty(User::withTrashed()->where('wallet_address', $user->wallet_address)->get());
+        self::assertEmpty(UserSettings::where('user_id', $user->id)->get());
+        self::assertNotEmpty(Campaign::withTrashed()->find($campaign->id)->deleted_at);
+        self::assertNotEmpty(Banner::withTrashed()->find($banner->id)->deleted_at);
+        self::assertEmpty(BannerClassification::all());
+        self::assertNotEmpty(ConversionDefinition::withTrashed()->find($conversionDefinition->id)->deleted_at);
+        self::assertNotEmpty(BidStrategy::withTrashed()->find($bidStrategy->id)->deleted_at);
+        self::assertNotEmpty(BidStrategyDetail::withTrashed()->find($bidStrategyDetail->id)->deleted_at);
+        self::assertNotEmpty(Site::withTrashed()->find($site->id)->deleted_at);
+        self::assertNotEmpty(Zone::withTrashed()->find($zone->id)->deleted_at);
+        self::assertEmpty(RefLink::where('user_id', $user->id)->get());
+        self::assertEmpty(Token::where('user_id', $user->id)->get());
+        self::assertEmpty(Classification::where('user_id', $user->id)->get());
+    }
+
+    public function testDeleteUserWhileAdmin(): void
+    {
+        $this->setUpAdmin();
+        $user = User::factory()->admin()->create();
+
+        $response = $this->delete(
+            sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeleteUserWhileNotExist(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->delete(
+            sprintf('%s/%d', self::buildUriForKey('users'), PHP_INT_MAX),
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDeleteUserWhileDatabaseException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this->delete(
             sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
-            [],
         );
 
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
-        self::assertNotNull($user->refresh()->deleted_at);
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testPatchUserDenyAdvertising(): void
@@ -937,6 +1179,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertNotContains('advertiser', $response->json('data.roles'));
         self::assertFalse($user->refresh()->isAdvertiser());
     }
 
@@ -953,6 +1196,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertNotContains('publisher', $response->json('data.roles'));
         self::assertFalse($user->refresh()->isPublisher());
     }
 
@@ -969,6 +1213,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertContains('advertiser', $response->json('data.roles'));
         self::assertTrue($user->refresh()->isAdvertiser());
     }
 
@@ -980,11 +1225,11 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'grantPublishing'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertContains('publisher', $response->json('data.roles'));
         self::assertTrue($user->refresh()->isPublisher());
     }
 
@@ -1188,13 +1433,23 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'unban'),
-            ['reason' => 'suspicious activity'],
         );
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         $user = $user->refresh();
         self::assertFalse($user->isBanned());
+    }
+
+    public function testPatchUserUnbanWhileNotExistingUser(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser(PHP_INT_MAX, 'unban'),
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testPatchUserInvalidAction(): void

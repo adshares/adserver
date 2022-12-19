@@ -45,17 +45,18 @@ use Adshares\Config\RegistrationMode;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -140,24 +141,27 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function confirm(int $userId): JsonResponse
+    public function confirm(int $userId): User
     {
         /** @var User $user */
-        $user = User::find($userId);
-        if (empty($user)) {
-            throw new NotFoundHttpException();
-        }
+        $user = (new User())->findOrFail($userId);
 
         DB::beginTransaction();
-        $this->confirmAdmin($user);
-        $user->save();
-        DB::commit();
+        try {
+            $this->confirmAdmin($user);
+            $user->save();
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Exception during user confirmation: (%s)', $throwable->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         if ($user->is_confirmed && null !== $user->email) {
             Mail::to($user)->queue(new UserConfirmed());
         }
 
-        return self::json($user->toArray());
+        return $user;
     }
 
     public function emailActivateResend(Request $request): JsonResponse
