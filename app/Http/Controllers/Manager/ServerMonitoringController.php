@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
+use Adshares\Adserver\Http\Resources\GenericCollection;
 use Adshares\Adserver\Http\Resources\HostCollection;
 use Adshares\Adserver\Http\Resources\UserCollection;
 use Adshares\Adserver\Http\Resources\UserResource;
@@ -61,7 +62,7 @@ class ServerMonitoringController extends Controller
     private const ADPANEL_EMAIL_ACTIVATION_URI = '/auth/email-activation/';
     private const ADPANEL_RESET_PASSWORD_URI = '/auth/reset-password/';
 
-    public function fetchEvents(Request $request, ServerEventLogRepository $repository): array
+    public function fetchEvents(Request $request, ServerEventLogRepository $repository): JsonResource
     {
         $limit = $request->query('limit', 10);
         $filters = FilterCollection::fromRequest($request, [
@@ -71,8 +72,7 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return $repository->fetchServerEvents($filters, $limit)
-            ->toArray();
+        return new GenericCollection($repository->fetchServerEvents($filters, $limit));
     }
 
     public function fetchHosts(Request $request): JsonResource
@@ -87,7 +87,7 @@ class ServerMonitoringController extends Controller
         return new HostCollection($paginator);
     }
 
-    public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): array
+    public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): JsonResource
     {
         $limit = $request->query('limit', 10);
         $filters = FilterCollection::fromRequest($request, [
@@ -96,8 +96,7 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return $repository->fetchLatestServerEvents($filters, $limit)
-            ->toArray();
+        return new GenericCollection($repository->fetchLatestServerEvents($filters, $limit));
     }
 
     public function fetchUsers(Request $request, UserRepository $userRepository): JsonResource
