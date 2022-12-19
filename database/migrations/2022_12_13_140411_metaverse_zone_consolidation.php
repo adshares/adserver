@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
@@ -19,18 +20,21 @@
  */
 
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
+        Schema::table('zones', function (Blueprint $table) {
+            $table->json('scopes')->after('size');
+        });
+        DB::update('UPDATE zones SET scopes=JSON_ARRAY(size);');
+
         foreach (
             DB::select(
                 'SELECT id from sites WHERE medium="metaverse" AND deleted_at IS NULL'
@@ -40,7 +44,8 @@ return new class extends Migration {
             $size = null;
             foreach (
                 DB::select(
-                    'SELECT * from zones WHERE site_id=:id AND name="default" AND type="display" AND deleted_at IS NULL',
+                    'SELECT * from zones'
+                    . ' WHERE site_id=:id AND name="default" AND type="display" AND deleted_at IS NULL',
                     ['id' => $site->id]
                 ) as $row
             ) {
@@ -52,9 +57,8 @@ return new class extends Migration {
             }
             $zone = Zone::fetchOrCreate(
                 $site->id,
-                $size,
+                new ZoneSize(...Size::toDimensions($size)),
                 'Default (legacy)',
-                Size::TYPE_DISPLAY,
             );
 
             $zoneUuid = '0x' . $zone->uuid;
@@ -113,13 +117,10 @@ return new class extends Migration {
         }
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
-        // Lack of rollback is intended.
+        Schema::table('zones', function (Blueprint $table) {
+            $table->dropColumn('scopes');
+        });
     }
 };

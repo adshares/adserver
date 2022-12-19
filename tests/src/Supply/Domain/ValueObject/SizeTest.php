@@ -22,6 +22,8 @@
 namespace Adshares\Tests\Supply\Domain\ValueObject;
 
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Domain\ValueObject\Size;
@@ -36,14 +38,6 @@ final class SizeTest extends TestCase
         $this->assertEquals([0, 90], Size::toDimensions('x90'));
         $this->assertEquals([728, 0], Size::toDimensions('728'));
         $this->assertEquals([0, 0], Size::toDimensions(''));
-    }
-
-    public function testAspect(): void
-    {
-        $this->assertEquals('4:3', Size::getAspect(320, 240));
-        $this->assertEquals('6:5', Size::getAspect(300, 250));
-        $this->assertEquals('', Size::getAspect(320, 0));
-        $this->assertEquals('', Size::getAspect(0, 240));
     }
 
     public function testFindBestFit(): void
@@ -85,9 +79,19 @@ final class SizeTest extends TestCase
             ],
         ]);
 
-        $this->assertContains('300x250', Size::findBestFit($medium, 300, 250, 0, 1));
-        $this->assertContains('336x280', Size::findBestFit($medium, 330, 270, 0, 1));
-        $this->assertContains('cube', Size::findBestFit($medium, 330, 270, 10, 1));
+        $this->assertContains('300x250', Size::findBestFit($medium, new ZoneSize(300, 250, 0)));
+        $this->assertContains('336x280', Size::findBestFit($medium, new ZoneSize(330, 270, 0)));
+        $this->assertContains('cube', Size::findBestFit($medium, new ZoneSize(330, 270, 10)));
+    }
+
+    public function testFindBestFitDpi(): void
+    {
+        $medium = (new DummyConfigurationRepository())->fetchMedium(MediumName::Metaverse->value, 'decentraland');
+
+        $bestFit = Size::findBestFit($medium, new ZoneSize(600, 600, 0), PHP_INT_MAX);
+
+        self::assertContains('1024x1024', $bestFit);
+        self::assertNotContains('512x512', $bestFit);
     }
 
     public function testFindMatching(): void

@@ -29,7 +29,6 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
-use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Response;
@@ -214,8 +213,8 @@ class SitesControllerTest extends TestCase
         $response = $this->postJson(self::URI, ['site' => $siteData]);
 
         $response->assertStatus(Response::HTTP_CREATED);
-        self::assertDatabaseHas(Zone::class, ['size' => '300x250', 'type' => Size::TYPE_DISPLAY]);
-        self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Size::TYPE_POP]);
+        self::assertDatabaseHas(Zone::class, ['size' => '300x250', 'type' => Zone::TYPE_DISPLAY]);
+        self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Zone::TYPE_POP]);
     }
 
     /**

@@ -39,7 +39,6 @@ use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
-use Adshares\Supply\Domain\ValueObject\Size;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
@@ -258,7 +257,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonCount(1, 'data');
     }
 
-    public function testFindDynamicPopup(): void
+    public function testFindDynamicUnsupportedPopup(): void
     {
         $this->mockAdSelect();
         $data = self::getDynamicFindData([
@@ -269,10 +268,7 @@ final class SupplyControllerTest extends TestCase
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
-
-        self::assertDatabaseHas(Zone::class, ['type' => Size::TYPE_POP]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     /**
@@ -290,20 +286,44 @@ final class SupplyControllerTest extends TestCase
     public function findDynamicFailProvider(): array
     {
         return [
-            'invalid context type' => [self::getDynamicFindData(['context' => 1])],
+            'missing context.medium' => [
+                self::getDynamicFindData(['context' => self::getContextData(remove: 'medium')])
+            ],
             'missing context.url' => [self::getDynamicFindData(['context' => self::getContextData(remove: 'url')])],
+            'invalid context type' => [self::getDynamicFindData(['context' => 1])],
             'invalid context.url type' => [self::getDynamicFindData(['context' => self::getContextData(['url' => 1])])],
+            'invalid context.medium type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['medium' => 1])])
+            ],
+            'invalid context.medium value' => [
+                self::getDynamicFindData(['context' => self::getContextData(['medium' => 'invalid'])])
+            ],
             'invalid context.metamask type' => [
                 self::getDynamicFindData(['context' => self::getContextData(['metamask' => 'metamask'])])
+            ],
+            'invalid context.publisher type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['publisher' => 1])])
             ],
             'invalid context.uid type' => [
                 self::getDynamicFindData(['context' => self::getContextData(['uid' => 12])])
             ],
+            'invalid context.vendor type' => [
+                self::getDynamicFindData(['context' => self::getContextData(['vendor' => 12])])
+            ],
             'invalid placements type' => [self::getDynamicFindData(['placements' => 1])],
+            'invalid placements[] type' => [self::getDynamicFindData(['placements' => [1]])],
             'conflicting placement types' => [
                 self::getDynamicFindData([
                     'placements' => [
                         self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
+                    ],
+                ])
+            ],
+            'no matching scopes' => [
+                self::getDynamicFindData([
+                    'context' => self::getContextData(['medium' => 'metaverse', 'vendor' => 'decentraland']),
+                    'placements' => [
+                        self::getPlacementData(['width' => '30000'])
                     ],
                 ])
             ],
@@ -349,6 +369,27 @@ final class SupplyControllerTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider findJsonFailProvider
+     */
+    public function testFindJsonFail(array $data): void
+    {
+        Config::updateAdminSettings([Config::AUTO_REGISTRATION_ENABLED => '1']);
+        $this->mockAdSelect();
+
+        $response = self::post(self::SUPPLY_ANON_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function findJsonFailProvider(): array
+    {
+        return [
+            'invalid medium' => [self::findJsonData(['medium' => 'invalid'])],
+            'no matching scope' => [self::findJsonData(['width' => '30000'])],
+        ];
+    }
+
     public function testFindJsonWhenDefaultUserRoleDoesNotContainPublisher(): void
     {
         Config::updateAdminSettings([
@@ -387,22 +428,25 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    private static function findJsonData(): array
+    private static function findJsonData(array $merge = []): array
     {
-        return [
-            'pay_to' => 'ADS:0001-00000001-8B4E',
-            'view_id' => '0123456789ABCDEF0123456789ABCDEF',
-            'type' => 'image',
-            'width' => 300,
-            'height' => 250,
-            'context' => [
-                'user' => ['language' => 'en'],
-                'device' => ['os' => 'Windows'],
-                'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
+        return array_merge(
+            [
+                'pay_to' => 'ADS:0001-00000001-8B4E',
+                'view_id' => '0123456789ABCDEF0123456789ABCDEF',
+                'type' => 'image',
+                'width' => 300,
+                'height' => 250,
+                'context' => [
+                    'user' => ['language' => 'en'],
+                    'device' => ['os' => 'Windows'],
+                    'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
+                ],
+                'medium' => 'metaverse',
+                'vendor' => 'decentraland',
             ],
-            'medium' => 'metaverse',
-            'vendor' => 'decentraland',
-        ];
+            $merge,
+        );
     }
 
     private function mockAdSelect(): void
