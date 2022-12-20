@@ -45,6 +45,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class ApiCampaignsControllerTest extends TestCase
 {
     private const URI_CAMPAIGNS = '/api/v2/campaigns';
+    private const UUID_PATTERN = '/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/';
     private const CREATIVE_DATA_STRUCTURE = [
         'id',
         'createdAt',
@@ -137,6 +138,8 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertJsonPath('data.maxCpm', null);
         $response->assertJsonPath('data.budget', 10);
         $response->assertJsonPath('data.conversionClick', 'none');
+        self::assertMatchesRegularExpression(self::UUID_PATTERN, $response->json('data.id'));
+        self::assertMatchesRegularExpression(self::UUID_PATTERN, $response->json('data.creatives.0.id'));
         $campaign = Campaign::first();
         self::assertNotNull($campaign);
         self::assertEquals($campaign->uuid, str_replace('-', '', $this->getIdFromLocationHeader($response)));

@@ -136,7 +136,7 @@ class ApiCampaignsController extends Controller
         $campaignUuid = self::uuidFromString($campaignId);
         $bannerUuid = self::uuidFromString($bannerId);
         $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
-        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerUuid);
+        $banner = $this->campaignRepository->fetchBannerByUuid($campaign, $bannerUuid);
         return new BannerResource($banner);
     }
 
@@ -193,7 +193,7 @@ class ApiCampaignsController extends Controller
         }
 
         $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
-        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerUuid);
+        $banner = $this->campaignRepository->fetchBannerByUuid($campaign, $bannerUuid);
 
         try {
             $banner = $this->bannerCreator->updateBanner($input, $banner);
@@ -210,7 +210,7 @@ class ApiCampaignsController extends Controller
         $campaignUuid = self::uuidFromString($campaignId);
         $bannerUuid = self::uuidFromString($bannerId);
         $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
-        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerUuid);
+        $banner = $this->campaignRepository->fetchBannerByUuid($campaign, $bannerUuid);
 
         try {
             $this->campaignRepository->update($campaign, bannersToDelete: [$banner]);
