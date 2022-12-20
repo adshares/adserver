@@ -239,6 +239,13 @@ class CampaignRepository
 
             $this->bannerClassificationCreator->createForCampaign($campaign);
             $campaign->refresh();
+
+            if (
+                Campaign::STATUS_ACTIVE === $campaign->status
+                && !$campaign->banners()->where('status', Banner::STATUS_ACTIVE)->exists()
+            ) {
+                throw new InvalidArgumentException('Cannot update active campaign without banners');
+            }
             DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
