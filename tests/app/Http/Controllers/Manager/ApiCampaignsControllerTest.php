@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Laravel\Passport\Passport;
 use PDOException;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ApiCampaignsControllerTest extends TestCase
@@ -138,7 +139,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertJsonPath('data.conversionClick', 'none');
         $campaign = Campaign::first();
         self::assertNotNull($campaign);
-        self::assertEquals($campaign->id, $this->getIdFromLocationHeader($response));
+        self::assertEquals($campaign->uuid, str_replace('-', '', $this->getIdFromLocationHeader($response)));
         self::assertEquals(Campaign::STATUS_ACTIVE, $campaign->status);
         self::assertEquals('Test campaign', $campaign->name);
         self::assertEquals('https://exmaple.com/landing', $campaign->landing_url);
@@ -271,7 +272,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertHeader('Location');
         $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
         $bannerId = $this->getIdFromLocationHeader($response);
-        $banner = Banner::find($bannerId);
+        $banner = Banner::fetchBanner(str_replace('-', '', $bannerId));
         self::assertNotNull($banner);
         self::assertEquals($campaignId, $banner->campaign_id);
         self::assertEquals('IMAGE 2', $banner->name);
@@ -471,7 +472,7 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         $this->setUpUser();
 
-        $response = $this->get(sprintf('%s/%d', self::URI_CAMPAIGNS, PHP_INT_MAX));
+        $response = $this->get(sprintf('%s/%s', self::URI_CAMPAIGNS, Uuid::uuid4()->toString()));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
@@ -528,14 +529,14 @@ final class ApiCampaignsControllerTest extends TestCase
 
     private static function buildUriCampaign(Campaign $campaign): string
     {
-        return sprintf('%s/%d', self::URI_CAMPAIGNS, $campaign->id);
+        return sprintf('%s/%d', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
     }
 
     private static function buildUriBanner(Campaign $campaign, Banner $banner = null): string
     {
-        $uri = sprintf('%s/%d/creatives', self::URI_CAMPAIGNS, $campaign->id);
+        $uri = sprintf('%s/%d/creatives', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
         if (null !== $banner) {
-            $uri = sprintf('%s/%d', $uri, $banner->id);
+            $uri = sprintf('%s/%d', $uri, Uuid::fromString($banner->uuid)->toString());
         }
         return $uri;
     }
@@ -544,7 +545,7 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         $response->assertHeader('Location');
         $matches = [];
-        preg_match('~/(\d+)$~', $response->headers->get('Location'), $matches);
+        preg_match('~/([^/]+)$~', $response->headers->get('Location'), $matches);
 
         return $matches[1];
     }
