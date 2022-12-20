@@ -529,14 +529,14 @@ final class ApiCampaignsControllerTest extends TestCase
 
     private static function buildUriCampaign(Campaign $campaign): string
     {
-        return sprintf('%s/%d', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
+        return sprintf('%s/%s', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
     }
 
     private static function buildUriBanner(Campaign $campaign, Banner $banner = null): string
     {
-        $uri = sprintf('%s/%d/creatives', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
+        $uri = sprintf('%s/%s/creatives', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
         if (null !== $banner) {
-            $uri = sprintf('%s/%d', $uri, Uuid::fromString($banner->uuid)->toString());
+            $uri = sprintf('%s/%s', $uri, Uuid::fromString($banner->uuid)->toString());
         }
         return $uri;
     }
