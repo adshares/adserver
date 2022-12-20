@@ -163,6 +163,18 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
     }
 
+    public function testAddCampaignDraftWithoutCreatives(): void
+    {
+        $this->setUpUser();
+        $this->mockStorage();
+
+        $campaignData = self::getCampaignData(['status' => 'draft'], remove: 'creatives');
+
+        $response = $this->post(self::URI_CAMPAIGNS, $campaignData);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+    }
+
     /**
      * @dataProvider addCampaignFailProvider
      */
@@ -180,7 +192,8 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         return [
             'missing campaign' => [self::getCampaignData(remove: 'targetUrl')],
-            'missing creatives' => [self::getCampaignData(remove: 'creatives')],
+            'missing creatives while not draft' => [self::getCampaignData(remove: 'creatives')],
+            'empty creatives while not draft' => [self::getCampaignData(['creatives' => []])],
             'missing creatives[].type' => [self::getCampaignData(['creatives' => self::getBannerData(remove: 'type')])],
         ];
     }

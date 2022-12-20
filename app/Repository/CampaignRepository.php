@@ -106,6 +106,9 @@ class CampaignRepository
      */
     public function save(Campaign $campaign, array $banners = [], array $conversions = []): Campaign
     {
+        if (Campaign::STATUS_ACTIVE === $campaign->status && empty($banners)) {
+            throw new InvalidArgumentException('Cannot save active campaign without banners');
+        }
         DB::beginTransaction();
         $status = $campaign->status;
         $campaign->status = Campaign::STATUS_DRAFT;
