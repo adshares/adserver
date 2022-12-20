@@ -290,15 +290,15 @@ final class ServerMonitoringControllerTest extends TestCase
         $response = $this->getJson(self::buildUriForKey('events', ['limit' => 3]));
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(3, count($response->json('data')));
-        self::assertNull($response->json('prevPageUrl'));
-        self::assertNotNull($response->json('nextPageUrl'));
+        self::assertNull($response->json('links.prev'));
+        self::assertNotNull($response->json('links.next'));
 
-        $url = $response->json('nextPageUrl');
+        $url = $response->json('links.next');
         $response = $this->getJson($url);
         $response->assertJsonStructure(self::EVENTS_STRUCTURE);
         self::assertEquals(1, count($response->json('data')));
-        self::assertNotNull($response->json('prevPageUrl'));
-        self::assertNull($response->json('nextPageUrl'));
+        self::assertNotNull($response->json('links.prev'));
+        self::assertNull($response->json('links.next'));
     }
 
     public function testFetchEventsByType(): void
@@ -591,31 +591,31 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USERS_STRUCTURE);
         self::assertEquals(4, count($response->json('data')));
-        self::assertNull($response->json('prevPageUrl'));
-        self::assertNotNull($response->json('nextPageUrl'));
-        self::assertEquals(11, $response->json('total'));
+        self::assertNull($response->json('links.prev'));
+        self::assertNotNull($response->json('links.next'));
+        self::assertEquals(11, $response->json('meta.total'));
         $emails = array_map(fn($entry) => $entry['email'], $response->json(['data']));
         self::assertEquals(['user9@example.com', 'user8@example.com', 'user7@example.com', 'user6@example.com'],
             $emails);
 
-        $url = $response->json('nextPageUrl');
+        $url = $response->json('links.next');
         $response = $this->getJson($url);
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USERS_STRUCTURE);
         self::assertEquals(4, count($response->json('data')));
-        self::assertNotNull($response->json('prevPageUrl'));
-        self::assertNotNull($response->json('nextPageUrl'));
+        self::assertNotNull($response->json('links.prev'));
+        self::assertNotNull($response->json('links.next'));
         $emails = array_map(fn($entry) => $entry['email'], $response->json(['data']));
         self::assertEquals(['user5@example.com', 'user4@example.com', 'user3@example.com', 'user12@example.com'],
             $emails);
 
-        $url = $response->json('nextPageUrl');
+        $url = $response->json('links.next');
         $response = $this->getJson($url);
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USERS_STRUCTURE);
         self::assertEquals(3, count($response->json('data')));
-        self::assertNotNull($response->json('prevPageUrl'));
-        self::assertNull($response->json('nextPageUrl'));
+        self::assertNotNull($response->json('links.prev'));
+        self::assertNull($response->json('links.next'));
         $emails = array_map(fn($entry) => $entry['email'], $response->json(['data']));
         self::assertEquals(['user11@example.com', 'user10@example.com', 'user1@example.com'], $emails);
     }
