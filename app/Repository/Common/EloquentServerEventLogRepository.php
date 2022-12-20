@@ -45,8 +45,7 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
             }
         }
 
-        return $builder->tokenPaginate($perPage)
-            ->withQueryString();
+        return $builder->tokenPaginate($perPage);
     }
 
     public static function fetchLatestServerEvents(
@@ -68,8 +67,7 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
             ->joinSub($latestEvents, 'le', function ($join) {
                 $join->on('s.id', '=', 'le.max_id');
             })
-            ->tokenPaginate($perPage)
-            ->withQueryString();
+            ->tokenPaginate($perPage);
     }
 
     private static function appendFilter(Builder $builder, Filter $filter): Builder

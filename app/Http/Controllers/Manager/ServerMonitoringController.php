@@ -80,7 +80,8 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return new GenericCollection($repository->fetchServerEvents($filters, $limit));
+        return (new GenericCollection($repository->fetchServerEvents($filters, $limit)))
+            ->preserveQuery();
     }
 
     public function fetchHosts(Request $request): JsonResource
@@ -89,10 +90,10 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
 
         $paginator = NetworkHost::orderBy('id')
-            ->tokenPaginate($limit)
-            ->withQueryString();
+            ->tokenPaginate($limit);
 
-        return new HostCollection($paginator);
+        return (new HostCollection($paginator))
+            ->preserveQuery();
     }
 
     public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): JsonResource
@@ -104,7 +105,8 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return new GenericCollection($repository->fetchLatestServerEvents($filters, $limit));
+        return (new GenericCollection($repository->fetchLatestServerEvents($filters, $limit)))
+            ->preserveQuery();
     }
 
     public function fetchUsers(Request $request, UserRepository $userRepository): JsonResource
@@ -121,7 +123,8 @@ class ServerMonitoringController extends Controller
         self::validateUserFilters($filters);
         self::validateUserOrderBy($orderBy);
 
-        return new UserCollection($userRepository->fetchUsers($filters, $orderBy, $limit));
+        return (new UserCollection($userRepository->fetchUsers($filters, $orderBy, $limit)))
+            ->preserveQuery();
     }
 
     public function fetchWallet(): JsonResponse

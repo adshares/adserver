@@ -261,15 +261,13 @@ class CampaignRepository
     public function fetchBanners(Campaign $campaign, ?int $perPage = null): CursorPaginator
     {
         return $campaign->banners()->orderBy('id')
-            ->tokenPaginate($perPage)
-            ->withQueryString();
+            ->tokenPaginate($perPage);
     }
 
     public function fetchCampaigns(?int $perPage = null): CursorPaginator
     {
         return Campaign::query()->orderBy('id')
-            ->tokenPaginate($perPage)
-            ->withQueryString();
+            ->tokenPaginate($perPage);
     }
 
     private static function checkIfBidStrategyCanChanged(Campaign $campaign): void

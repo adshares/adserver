@@ -122,7 +122,7 @@ class ApiCampaignsController extends Controller
         $limit = $request->query('limit', 10);
         LimitValidator::validate($limit);
         $campaigns = $this->campaignRepository->fetchCampaigns($limit);
-        return new CampaignCollection($campaigns);
+        return (new CampaignCollection($campaigns))->preserveQuery();
     }
 
     public function fetchBanner(int $campaignId, int $bannerId): JsonResource
@@ -138,7 +138,7 @@ class ApiCampaignsController extends Controller
         LimitValidator::validate($limit);
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
         $banners = $this->campaignRepository->fetchBanners($campaign, $limit);
-        return new BannerCollection($banners);
+        return (new BannerCollection($banners))->preserveQuery();
     }
 
     public function addBanner(int $campaignId, Request $request): JsonResponse
