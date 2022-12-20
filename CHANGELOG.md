@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Do not allow to update active campaign without creatives
+- Use UUID as ID in campaign APIv2
 ### Removed
 - Redundant pagination data
 ### Fixed
