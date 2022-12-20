@@ -296,7 +296,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
     public function testEditBannerStatus(): void
     {
-        $campaignId = $this->getCampaignId();
+        $campaignId = $this->setupCampaignWithTwoBanners();
         $bannerId = Banner::first()->id;
         $bannerUri = self::buildUriBanner($campaignId, $bannerId);
 
@@ -321,7 +321,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
     public function testDeleteBanner(): void
     {
-        $campaignId = $this->getCampaignId();
+        $campaignId = $this->setupCampaignWithTwoBanners();
         $bannerId = Banner::first()->id;
         $bannerUri = self::buildUriBanner($campaignId, $bannerId);
 
@@ -570,7 +570,7 @@ final class ApiCampaignsControllerTest extends TestCase
         return self::buildUriCampaign($campaignId);
     }
 
-    private function getCampaignId(): int
+    private function setupCampaignWithTwoBanners(): int
     {
         $campaign = Campaign::factory()->create([
             'budget' => 50 * 1e11,
