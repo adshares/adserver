@@ -27,8 +27,7 @@ use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
 use Adshares\Adserver\Http\Resources\GenericCollection;
-use Adshares\Adserver\Http\Resources\HostCollection;
-use Adshares\Adserver\Http\Resources\UserCollection;
+use Adshares\Adserver\Http\Resources\HostResource;
 use Adshares\Adserver\Http\Resources\UserResource;
 use Adshares\Adserver\Mail\AuthRecovery;
 use Adshares\Adserver\Mail\UserBanned;
@@ -80,7 +79,8 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return new GenericCollection($repository->fetchServerEvents($filters, $limit));
+        return (new GenericCollection($repository->fetchServerEvents($filters, $limit)))
+            ->preserveQuery();
     }
 
     public function fetchHosts(Request $request): JsonResource
@@ -89,10 +89,9 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
 
         $paginator = NetworkHost::orderBy('id')
-            ->tokenPaginate($limit)
-            ->withQueryString();
+            ->tokenPaginate($limit);
 
-        return new HostCollection($paginator);
+        return HostResource::collection($paginator)->preserveQuery();
     }
 
     public function fetchLatestEvents(Request $request, ServerEventLogRepository $repository): JsonResource
@@ -104,7 +103,8 @@ class ServerMonitoringController extends Controller
         LimitValidator::validate($limit);
         self::validateEventFilters($filters);
 
-        return new GenericCollection($repository->fetchLatestServerEvents($filters, $limit));
+        return (new GenericCollection($repository->fetchLatestServerEvents($filters, $limit)))
+            ->preserveQuery();
     }
 
     public function fetchUsers(Request $request, UserRepository $userRepository): JsonResource
@@ -121,7 +121,8 @@ class ServerMonitoringController extends Controller
         self::validateUserFilters($filters);
         self::validateUserOrderBy($orderBy);
 
-        return new UserCollection($userRepository->fetchUsers($filters, $orderBy, $limit));
+        return UserResource::collection($userRepository->fetchUsers($filters, $orderBy, $limit))
+            ->preserveQuery();
     }
 
     public function fetchWallet(): JsonResponse

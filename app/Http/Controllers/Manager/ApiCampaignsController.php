@@ -23,9 +23,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
-use Adshares\Adserver\Http\Resources\BannerCollection;
 use Adshares\Adserver\Http\Resources\BannerResource;
-use Adshares\Adserver\Http\Resources\CampaignCollection;
 use Adshares\Adserver\Http\Resources\CampaignResource;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\User;
@@ -122,7 +120,7 @@ class ApiCampaignsController extends Controller
         $limit = $request->query('limit', 10);
         LimitValidator::validate($limit);
         $campaigns = $this->campaignRepository->fetchCampaigns($limit);
-        return new CampaignCollection($campaigns);
+        return CampaignResource::collection($campaigns)->preserveQuery();
     }
 
     public function fetchBanner(int $campaignId, int $bannerId): JsonResource
@@ -138,7 +136,7 @@ class ApiCampaignsController extends Controller
         LimitValidator::validate($limit);
         $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
         $banners = $this->campaignRepository->fetchBanners($campaign, $limit);
-        return new BannerCollection($banners);
+        return BannerResource::collection($banners)->preserveQuery();
     }
 
     public function addBanner(int $campaignId, Request $request): JsonResponse
