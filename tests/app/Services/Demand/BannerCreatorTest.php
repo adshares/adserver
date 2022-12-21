@@ -25,30 +25,28 @@ namespace Adshares\Adserver\Tests\Services\Demand;
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
-use Illuminate\Filesystem\FilesystemAdapter;
-use Illuminate\Support\Facades\Storage;
 
 final class BannerCreatorTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->mockStorage();
-    }
-
     public function testPrepareBannersFromInputVideo(): void
     {
         $campaign = Campaign::factory()->create();
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
+        $file = UploadedFile::factory()->create([
+            'mime' => 'video/mp4',
+            'scope' => '852x480',
+            'content' => file_get_contents(base_path('tests/mock/Files/Banners/adshares.mp4')),
+        ]);
         $input = [
             'creative_size' => '852x480',
             'creative_type' => Banner::TEXT_TYPE_VIDEO,
             'name' => 'video 1',
-            'url' => 'https://example.com/adshares.mp4',
+            'url' => 'https://example.com/video/' . $file->ulid,
         ];
 
         $banners = $creator->prepareBannersFromInput([$input], $campaign);
@@ -65,11 +63,16 @@ final class BannerCreatorTest extends TestCase
     {
         $campaign = Campaign::factory()->create();
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
+        $file = UploadedFile::factory()->create([
+            'mime' => 'text/html',
+            'scope' => '300x250',
+            'content' => file_get_contents(base_path('tests/mock/Files/Banners/adshares.mp4')),
+        ]);
         $input = [
             'creative_size' => '300x250',
             'creative_type' => Banner::TEXT_TYPE_HTML,
             'name' => 'html 1',
-            'url' => 'https://example.com/300x250.zip',
+            'url' => 'https://example.com/zip/' . $file->ulid,
         ];
 
         $banners = $creator->prepareBannersFromInput([$input], $campaign);
@@ -143,21 +146,5 @@ final class BannerCreatorTest extends TestCase
             'invalid status type' => [['name' => 'b', 'status' => [Banner::STATUS_INACTIVE]]],
             'invalid status value' => [['name' => 'b', 'status' => 'invalid']],
         ];
-    }
-
-    private function mockStorage(): void
-    {
-        $adPath = base_path('tests/mock/Files/Banners/');
-        $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('exists')->willReturnCallback(function ($fileName) use ($adPath) {
-            return file_exists($adPath . $fileName);
-        });
-        $filesystemMock->method('get')->willReturnCallback(function ($fileName) use ($adPath) {
-            return file_get_contents($adPath . $fileName);
-        });
-        $filesystemMock->method('path')->willReturnCallback(function ($fileName) use ($adPath) {
-            return $adPath . $fileName;
-        });
-        Storage::shouldReceive('disk')->andReturn($filesystemMock);
     }
 }
