@@ -31,6 +31,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -80,9 +81,9 @@ class ImageUploader implements Uploader
     public function removeTemporaryFile(string $fileName): void
     {
         try {
-            Storage::disk(self::IMAGE_DISK)->delete($fileName);
-        } catch (FileNotFoundException $exception) {
-            Log::warning(sprintf('Removing IMAGE file (%s) does not exist.', $fileName));
+            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+        } catch (ModelNotFoundException $exception) {
+            Log::warning(sprintf('Exception during image file deletion (%s)', $exception->getMessage()));
         }
     }
 

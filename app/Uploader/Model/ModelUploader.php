@@ -30,8 +30,10 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -71,7 +73,11 @@ class ModelUploader implements Uploader
 
     public function removeTemporaryFile(string $fileName): void
     {
-        Storage::disk(self::DISK)->delete($fileName);
+        try {
+            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+        } catch (ModelNotFoundException $exception) {
+            Log::warning(sprintf('Exception during model file deletion (%s)', $exception->getMessage()));
+        }
     }
 
     public function preview(string $fileName): Response

@@ -31,6 +31,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Lib\ZipToHtml;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -83,9 +84,9 @@ class ZipUploader implements Uploader
     public function removeTemporaryFile(string $fileName): void
     {
         try {
-            Storage::disk(self::ZIP_DISK)->delete($fileName);
-        } catch (FileNotFoundException $exception) {
-            Log::warning(sprintf('Removing ZIP file (%s) does not exist.', $fileName));
+            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+        } catch (ModelNotFoundException $exception) {
+            Log::warning(sprintf('Exception during zip file deletion (%s)', $exception->getMessage()));
         }
     }
 
