@@ -26,10 +26,7 @@ use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Uploader\Image\ImageUploader;
-use Adshares\Adserver\Uploader\Model\ModelUploader;
-use Adshares\Adserver\Uploader\Video\VideoUploader;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\ViewModel\BannerStatus;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -73,23 +70,16 @@ class BannerCreator
             try {
                 switch ($type) {
                     case Banner::TEXT_TYPE_IMAGE:
-                        $fileName = Utils::extractFilename($banner['url']);
-                        $content = ImageUploader::content($fileName);
-                        $mimeType = ImageUploader::contentMimeType($fileName);
-                        break;
                     case Banner::TEXT_TYPE_VIDEO:
-                        $fileName = Utils::extractFilename($banner['url']);
-                        $content = VideoUploader::content($fileName);
-                        $mimeType = VideoUploader::contentMimeType($fileName);
-                        break;
                     case Banner::TEXT_TYPE_MODEL:
-                        $fileName = Utils::extractFilename($banner['url']);
-                        $content = ModelUploader::content($fileName);
-                        $mimeType = ModelUploader::contentMimeType($content);
-                        break;
                     case Banner::TEXT_TYPE_HTML:
-                        $content = ZipUploader::content(Utils::extractFilename($banner['url']));
-                        $mimeType = 'text/html';
+                        $ulid = Utils::extractFilename($banner['url']);
+                        $file = UploadedFile::where('ulid', $ulid)->first();
+                        if (null === $file) {
+                            throw new FileNotFoundException(sprintf('File `%s` does not exist', $ulid));
+                        }
+                        $content = $file->content;
+                        $mime = $file->mime;
                         break;
                     case Banner::TEXT_TYPE_DIRECT_LINK:
                     default:
@@ -97,7 +87,7 @@ class BannerCreator
                             empty($banner['contents']) ? $campaign->landing_url : $banner['contents'],
                             $scope
                         );
-                        $mimeType = 'text/plain';
+                        $mime = 'text/plain';
                         break;
                 }
             } catch (FileNotFoundException $exception) {
@@ -116,7 +106,7 @@ class BannerCreator
             }
 
             $bannerModel->creative_contents = $content;
-            $bannerModel->creative_mime = $mimeType;
+            $bannerModel->creative_mime = $mime;
 
             $banners[] = $bannerModel;
         }
