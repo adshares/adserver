@@ -76,10 +76,7 @@ class ModelUploader implements Uploader
 
     public function preview(string $fileName): Response
     {
-        $file = UploadedFileModel::where('ulid', $fileName)->first();
-        if (null === $file) {
-            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
-        }
+        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
         $response = new Response($file->content);
         $response->header('Content-Type', $file->mime);
 

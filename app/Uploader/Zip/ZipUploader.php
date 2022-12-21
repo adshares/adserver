@@ -91,10 +91,7 @@ class ZipUploader implements Uploader
 
     public function preview(string $fileName): Response
     {
-        $file = UploadedFileModel::where('ulid', $fileName)->first();
-        if (null === $file) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
+        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
 
         return new Response($file->content);
     }

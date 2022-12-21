@@ -5,6 +5,7 @@ namespace Adshares\Adserver\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
 
 /**
@@ -39,8 +40,19 @@ class UploadedFile extends Model
         'content',
     ];
 
+    public static function fetchByUlidOrFail(string $ulid): self
+    {
+        $file = (new UploadedFile())->where('ulid', $ulid)->first();
+        if (null === $file) {
+            throw new ModelNotFoundException(sprintf('No query results for file %s', $ulid));
+        }
+        return $file;
+    }
+
     public function uniqueIds(): array
     {
-        return ['ulid'];
+        return [
+            'ulid',
+        ];
     }
 }

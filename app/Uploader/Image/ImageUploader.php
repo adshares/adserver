@@ -88,10 +88,7 @@ class ImageUploader implements Uploader
 
     public function preview(string $fileName): Response
     {
-        $file = UploadedFileModel::where('ulid', $fileName)->first();
-        if (null === $file) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
+        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
         $response = new Response($file->content);
         $response->header('Content-Type', $file->mime);
 
