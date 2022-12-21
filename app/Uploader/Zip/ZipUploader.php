@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Zip;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -52,20 +53,31 @@ class ZipUploader implements Uploader
             throw new RuntimeException('Invalid zip size');
         }
         $name = $file->store('', self::ZIP_DISK);
+        $content = $this->extractHtmlContent($name);
+        $this->removeTemporaryFile($name);
+
+        $model = new UploadedFileModel([
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => 'text/html',
+            'scope' => null,
+            'content' => $content,
+        ]);
+        $model->saveOrFail();
+
+        $name = $model->ulid;
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'name' => $name])
         );
 
-        $this->validateContent($name);
-
         return new UploadedZip($name, $previewUrl->toString());
     }
 
-    private function validateContent(string $name): void
+    private function extractHtmlContent(string $name): string
     {
         $path = Storage::disk(self::ZIP_DISK)->path($name);
         $zip = new ZipToHtml($path);
-        $zip->getHtml();
+        return $zip->getHtml();
     }
 
     public function removeTemporaryFile(string $fileName): void
@@ -79,12 +91,12 @@ class ZipUploader implements Uploader
 
     public function preview(string $fileName): Response
     {
-        $path = Storage::disk(self::ZIP_DISK)->path($fileName);
+        $file = UploadedFileModel::where('ulid', $fileName)->first();
+        if (null === $file) {
+            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
+        }
 
-        $zip = new ZipToHtml($path);
-        $html = $zip->getHtml();
-
-        return new Response($html);
+        return new Response($file->content);
     }
 
     public static function content(string $fileName): string

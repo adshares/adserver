@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Image;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -59,7 +60,16 @@ class ImageUploader implements Uploader
         $height = $imageSize[1];
         $this->validateDimensions($medium, $width, $height);
 
-        $name = $file->store('', self::IMAGE_DISK);
+        $model = new UploadedFileModel([
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => $file->getMimeType(),
+            'scope' => Size::fromDimensions($width, $height),
+            'content' => $file->getContent(),
+        ]);
+        $model->saveOrFail();
+
+        $name = $model->ulid;
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'name' => $name])
         );
@@ -78,11 +88,12 @@ class ImageUploader implements Uploader
 
     public function preview(string $fileName): Response
     {
-        $path = Storage::disk(self::IMAGE_DISK)->path($fileName);
-        $mime = mime_content_type($path);
-
-        $response = new Response(file_get_contents($path));
-        $response->header('Content-Type', $mime);
+        $file = UploadedFileModel::where('ulid', $fileName)->first();
+        if (null === $file) {
+            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
+        }
+        $response = new Response($file->content);
+        $response->header('Content-Type', $file->mime);
 
         return $response;
     }

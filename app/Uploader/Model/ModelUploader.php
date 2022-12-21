@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Model;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -50,7 +51,17 @@ class ModelUploader implements Uploader
         if (!$size || $size > config('app.upload_limit_model')) {
             throw new RuntimeException('Invalid model size');
         }
-        $name = $file->storeAs('', Str::random(40) . '.' . $file->getClientOriginalExtension(), self::DISK);
+
+        $model = new UploadedFileModel([
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => self::contentMimeType($file->getContent()),
+            'scope' => 'cube',
+            'content' => $file->getContent(),
+        ]);
+        $model->saveOrFail();
+
+        $name = $model->ulid;
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'name' => $name])
         );
@@ -65,11 +76,12 @@ class ModelUploader implements Uploader
 
     public function preview(string $fileName): Response
     {
-        $content = self::content($fileName);
-        $mime = self::contentMimeType($content);
-
-        $response = new Response($content);
-        $response->header('Content-Type', $mime);
+        $file = UploadedFileModel::where('ulid', $fileName)->first();
+        if (null === $file) {
+            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
+        }
+        $response = new Response($file->content);
+        $response->header('Content-Type', $file->mime);
 
         return $response;
     }
@@ -86,16 +98,10 @@ class ModelUploader implements Uploader
     public static function contentMimeType(string $content): string
     {
         $fileHeader = substr($content, 0, 4);
-        switch ($fileHeader) {
-            case 'glTF':
-                $mime = 'model/gltf-binary';
-                break;
-            case 'VOX ':
-                $mime = 'model/voxel';
-                break;
-            default:
-                throw new RuntimeException('Unsupported model file.');
-        }
-        return $mime;
+        return match ($fileHeader) {
+            'glTF' => 'model/gltf-binary',
+            'VOX ' => 'model/voxel',
+            default => throw new RuntimeException('Unsupported model file'),
+        };
     }
 }

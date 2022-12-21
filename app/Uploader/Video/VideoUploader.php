@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Video;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -58,7 +59,17 @@ class VideoUploader implements Uploader
         $height = $fileInfo['video']['resolution_y'];
 
         $this->validateDimensions($medium, $width, $height);
-        $name = $file->store('', self::VIDEO_DISK);
+
+        $model = new UploadedFileModel([
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => $file->getMimeType(),
+            'scope' => Size::fromDimensions($width, $height),
+            'content' => $file->getContent(),
+        ]);
+        $model->saveOrFail();
+
+        $name = $model->ulid;
         $previewUrl = new SecureUrl(
             route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'name' => $name])
         );
@@ -94,11 +105,12 @@ class VideoUploader implements Uploader
 
     public function preview(string $fileName): Response
     {
-        $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
-        $mime = mime_content_type($path);
-
-        $response = new Response(file_get_contents($path));
-        $response->header('Content-Type', $mime);
+        $file = UploadedFileModel::where('ulid', $fileName)->first();
+        if (null === $file) {
+            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
+        }
+        $response = new Response($file->content);
+        $response->header('Content-Type', $file->mime);
 
         return $response;
     }
