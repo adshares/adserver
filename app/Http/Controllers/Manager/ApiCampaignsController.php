@@ -62,11 +62,12 @@ class ApiCampaignsController extends Controller
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-        if (!isset($input['creatives']) || !is_array($input['creatives'])) {
+        $creatives = array_key_exists('creatives', $input) ? $input['creatives'] : [];
+        if (!is_array($creatives)) {
             throw new UnprocessableEntityHttpException('Field `creatives` must be an array');
         }
         try {
-            $banners = $this->bannerCreator->prepareBannersFromInput($input['creatives'], $campaign);
+            $banners = $this->bannerCreator->prepareBannersFromInput($creatives, $campaign);
             $campaign->user_id = $user->id;
             $campaign = $this->campaignRepository->save($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
@@ -74,7 +75,7 @@ class ApiCampaignsController extends Controller
         }
 
         CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
-        self::removeTemporaryUploadedFiles($input['creatives'], $request);
+        self::removeTemporaryUploadedFiles($creatives, $request);
 
         return (new CampaignResource($campaign))
             ->response()

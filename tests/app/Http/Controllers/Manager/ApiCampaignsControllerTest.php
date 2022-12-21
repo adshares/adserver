@@ -163,6 +163,18 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
     }
 
+    public function testAddCampaignDraftWithoutCreatives(): void
+    {
+        $this->setUpUser();
+        $this->mockStorage();
+
+        $campaignData = self::getCampaignData(['status' => 'draft'], remove: 'creatives');
+
+        $response = $this->post(self::URI_CAMPAIGNS, $campaignData);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+    }
+
     /**
      * @dataProvider addCampaignFailProvider
      */
@@ -180,7 +192,8 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         return [
             'missing campaign' => [self::getCampaignData(remove: 'targetUrl')],
-            'missing creatives' => [self::getCampaignData(remove: 'creatives')],
+            'missing creatives while not draft' => [self::getCampaignData(remove: 'creatives')],
+            'empty creatives while not draft' => [self::getCampaignData(['creatives' => []])],
             'missing creatives[].type' => [self::getCampaignData(['creatives' => self::getBannerData(remove: 'type')])],
         ];
     }
@@ -283,26 +296,51 @@ final class ApiCampaignsControllerTest extends TestCase
 
     public function testEditBannerStatus(): void
     {
-        $bannerUri = $this->setUpCampaignWithBanner();
+        $campaignId = $this->setupCampaignWithTwoBanners();
+        $bannerId = Banner::first()->id;
+        $bannerUri = self::buildUriBanner($campaignId, $bannerId);
 
         $response = $this->patch($bannerUri, ['status' => 'inactive']);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
-        self::assertDatabaseHas(Banner::class, ['status' => Banner::STATUS_INACTIVE]);
+        self::assertDatabaseHas(Banner::class, [
+            'id' => $bannerId,
+            'status' => Banner::STATUS_INACTIVE,
+        ]);
+    }
+
+    public function testEditBannerStatusFailWhenDeactivatingLastActiveBanner(): void
+    {
+        $bannerUri = $this->setUpCampaignWithBanner();
+
+        $response = $this->patch($bannerUri, ['status' => 'inactive']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testDeleteBanner(): void
+    {
+        $campaignId = $this->setupCampaignWithTwoBanners();
+        $bannerId = Banner::first()->id;
+        $bannerUri = self::buildUriBanner($campaignId, $bannerId);
+
+        $response = $this->delete($bannerUri);
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertTrue(Banner::withTrashed()->find($bannerId)->trashed());
+
+        $response = $this->get($bannerUri);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDeleteBannerFailWhileDeletingLastActiveBanner(): void
     {
         $bannerUri = $this->setUpCampaignWithBanner();
 
         $response = $this->delete($bannerUri);
 
-        $response->assertStatus(Response::HTTP_OK);
-        self::assertTrue(Banner::withTrashed()->first()->trashed());
-
-        $response = $this->get($bannerUri);
-        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFetchBannerById(): void
@@ -530,6 +568,18 @@ final class ApiCampaignsControllerTest extends TestCase
             $this->post(self::URI_CAMPAIGNS, self::getCampaignData())
         );
         return self::buildUriCampaign($campaignId);
+    }
+
+    private function setupCampaignWithTwoBanners(): int
+    {
+        $campaign = Campaign::factory()->create([
+            'budget' => 50 * 1e11,
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $this->setUpUser()->id,
+        ]);
+        $id = $campaign->id;
+        Banner::factory()->count(2)->create(['campaign_id' => $id]);
+        return $id;
     }
 
     private function setUpCampaignWithBanner(): string

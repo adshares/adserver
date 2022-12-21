@@ -69,12 +69,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddCampaignWithBanner(): void
     {
-        $adPath = base_path('tests/mock/Files/Banners/980x120.png');
-        $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('exists')->willReturn(true);
-        $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
-        $filesystemMock->method('path')->willReturn($adPath);
-        Storage::shouldReceive('disk')->andReturn($filesystemMock);
+        $this->mockFilesystem();
         $this->createUser();
         $campaignData = $this->getCampaignData();
         $campaignData['basicInformation']['budget'] = (int)1e11;
@@ -94,10 +89,7 @@ final class CampaignsControllerTest extends TestCase
      */
     public function testAddCampaignWithInvalidData(array $data): void
     {
-        $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('exists')->willReturn(false);
-        $filesystemMock->method('get')->willReturn(null);
-        Storage::shouldReceive('disk')->andReturn($filesystemMock);
+        $this->mockFilesystem();
         $this->createUser();
 
         $response = $this->postJson(self::URI, $data);
@@ -144,18 +136,6 @@ final class CampaignsControllerTest extends TestCase
             'ad with empty name' => [
                 ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['name' => ''])]])]
             ],
-            'ad with not existing name' => [
-                [
-                    'campaign' => $this->getCampaignData([
-                        'ads' => [
-                            $this->getBannerData([
-                                'url' => 'http://localhost:8010'
-                                    . '/upload-preview/image/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png',
-                            ])
-                        ]
-                    ])
-                ]
-            ],
             'ad without url' => [
                 ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'url')]])]
             ],
@@ -169,6 +149,19 @@ final class CampaignsControllerTest extends TestCase
                 ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => '600x600'])]])]
             ],
         ];
+    }
+
+    public function testAddCampaignFailWhileAdFilenameDoNotExist(): void
+    {
+        $filesystemMock = self::createMock(FilesystemAdapter::class);
+        $filesystemMock->method('exists')->willReturn(false);
+        $filesystemMock->method('get')->willReturn(null);
+        Storage::shouldReceive('disk')->andReturn($filesystemMock);
+        $this->createUser();
+
+        $response = $this->postJson(self::URI, ['campaign' => $this->getCampaignData()]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function getCampaignData(array $mergeData = []): array
@@ -211,6 +204,7 @@ final class CampaignsControllerTest extends TestCase
 
         $campaignInputData = $this->campaignInputData();
         $campaignInputData['basicInformation']['budget'] = $budget;
+        $campaignInputData['basicInformation']['status'] = Campaign::STATUS_DRAFT;
         $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
         $response->assertStatus($returnValue);
 
@@ -295,6 +289,7 @@ final class CampaignsControllerTest extends TestCase
             'user_id' => $user->id,
             'budget' => $campaignBudget,
         ]);
+        Banner::factory()->create(['campaign_id' => $campaign->id]);
 
         $response = $this->putJson(
             self::buildCampaignStatusUri($campaign->id),
@@ -337,6 +332,7 @@ final class CampaignsControllerTest extends TestCase
             'user_id' => $user->id,
             'budget' => 1e11,
         ]);
+        Banner::factory()->create(['campaign_id' => $campaign->id]);
 
         $response = $this->putJson(
             self::buildCampaignStatusUri($campaign->id),
@@ -526,6 +522,7 @@ final class CampaignsControllerTest extends TestCase
         int $bonus,
         int $status
     ): void {
+        $this->mockFilesystem();
         $entries = [
             [UserLedgerEntry::TYPE_DEPOSIT, $currency, UserLedgerEntry::STATUS_ACCEPTED],
             [UserLedgerEntry::TYPE_BONUS_INCOME, $bonus, UserLedgerEntry::STATUS_ACCEPTED],
@@ -553,7 +550,7 @@ final class CampaignsControllerTest extends TestCase
             }
         );
 
-        $campaignInputData = $this->campaignInputData();
+        $campaignInputData = $this->getCampaignData();
         $campaignInputData['basicInformation']['budget'] = $budget;
         $campaignInputData['basicInformation']['dateEnd'] = null;
         if ($hasDomainTargeting) {
@@ -944,6 +941,7 @@ final class CampaignsControllerTest extends TestCase
             'time_start' => (new DateTimeImmutable('-1 month'))->format(DATE_ATOM),
             'time_end' => (new DateTimeImmutable('-1 day'))->format(DATE_ATOM),
         ]);
+        Banner::factory()->create(['campaign_id' => $campaign->id]);
 
         $response = $this->patchJson(self::URI . '/' . $campaign->id . '/activate-outdated');
 
@@ -958,5 +956,15 @@ final class CampaignsControllerTest extends TestCase
     private static function buildCampaignStatusUri(int $campaignId): string
     {
         return sprintf('%s/%d/status', self::URI, $campaignId);
+    }
+
+    private function mockFilesystem(): void
+    {
+        $adPath = base_path('tests/mock/Files/Banners/980x120.png');
+        $filesystemMock = self::createMock(FilesystemAdapter::class);
+        $filesystemMock->method('exists')->willReturn(true);
+        $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
+        $filesystemMock->method('path')->willReturn($adPath);
+        Storage::shouldReceive('disk')->andReturn($filesystemMock);
     }
 }
