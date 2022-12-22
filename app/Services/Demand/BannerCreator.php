@@ -30,10 +30,7 @@ use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\ViewModel\BannerStatus;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
-use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BannerCreator
 {
@@ -55,7 +52,7 @@ class BannerCreator
 
         foreach ($input as $banner) {
             if (!is_array($banner)) {
-                throw new InvalidArgumentException('Invalid banner data type');
+                throw new InvalidArgumentException('Invalid creative data type');
             }
             $banner = $this->changeLegacyFields($banner);
             $bannerValidator->validateBanner($banner);
@@ -67,42 +64,33 @@ class BannerCreator
             $bannerModel->creative_size = $scope;
             $bannerModel->creative_type = $type;
 
-            try {
-                switch ($type) {
-                    case Banner::TEXT_TYPE_IMAGE:
-                    case Banner::TEXT_TYPE_VIDEO:
-                    case Banner::TEXT_TYPE_MODEL:
-                    case Banner::TEXT_TYPE_HTML:
-                        $ulid = Utils::extractFilename($banner['url']);
-                        $file = UploadedFile::where('ulid', $ulid)->first();
-                        if (null === $file) {
-                            throw new FileNotFoundException(sprintf('File `%s` does not exist', $ulid));
-                        }
-                        $content = $file->content;
-                        $mime = $file->mime;
-                        break;
-                    case Banner::TEXT_TYPE_DIRECT_LINK:
-                    default:
-                        $content = Utils::appendFragment(
-                            empty($banner['contents']) ? $campaign->landing_url : $banner['contents'],
-                            $scope
+            switch ($type) {
+                case Banner::TEXT_TYPE_IMAGE:
+                case Banner::TEXT_TYPE_VIDEO:
+                case Banner::TEXT_TYPE_MODEL:
+                case Banner::TEXT_TYPE_HTML:
+                    $ulid = Utils::extractFilename($banner['url']);
+                    try {
+                        $file = UploadedFile::fetchByUlidOrFail($ulid);
+                    } catch (ModelNotFoundException) {
+                        throw new InvalidArgumentException(sprintf('File `%s` does not exist', $ulid));
+                    }
+                    if (null !== $file->scope && $scope !== $file->scope) {
+                        throw new InvalidArgumentException(
+                            sprintf('Scope `%s` does not match uploaded file', $scope)
                         );
-                        $mime = 'text/plain';
-                        break;
-                }
-            } catch (FileNotFoundException $exception) {
-                throw new UnprocessableEntityHttpException($exception->getMessage());
-            } catch (RuntimeException $exception) {
-                Log::debug(
-                    sprintf(
-                        'Banner (name: %s, type: %s) could not be added (%s).',
-                        $banner['name'],
-                        $type,
-                        $exception->getMessage()
-                    )
-                );
-
-                continue;
+                    }
+                    $content = $file->content;
+                    $mime = $file->mime;
+                    break;
+                case Banner::TEXT_TYPE_DIRECT_LINK:
+                default:
+                    $content = Utils::appendFragment(
+                        empty($banner['contents']) ? $campaign->landing_url : $banner['contents'],
+                        $scope
+                    );
+                    $mime = 'text/plain';
+                    break;
             }
 
             $bannerModel->creative_contents = $content;
