@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Resources\BannerResource;
 use Adshares\Adserver\Http\Resources\CampaignResource;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Common\CrmNotifier;
@@ -37,6 +38,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -62,11 +66,12 @@ class ApiCampaignsController extends Controller
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-        if (!isset($input['creatives']) || !is_array($input['creatives'])) {
+        $creatives = array_key_exists('creatives', $input) ? $input['creatives'] : [];
+        if (!is_array($creatives)) {
             throw new UnprocessableEntityHttpException('Field `creatives` must be an array');
         }
         try {
-            $banners = $this->bannerCreator->prepareBannersFromInput($input['creatives'], $campaign);
+            $banners = $this->bannerCreator->prepareBannersFromInput($creatives, $campaign);
             $campaign->user_id = $user->id;
             $campaign = $this->campaignRepository->save($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
@@ -74,25 +79,26 @@ class ApiCampaignsController extends Controller
         }
 
         CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
-        self::removeTemporaryUploadedFiles($input['creatives'], $request);
+        self::removeTemporaryUploadedFiles($creatives, $request);
 
         return (new CampaignResource($campaign))
             ->response()
             ->header(
                 'Location',
                 route('api.campaigns.fetch', [
-                    'id' => $campaign->id,
+                    'id' => Uuid::fromString($campaign->uuid)->toString(),
                 ])
             );
     }
 
-    public function editCampaignById(int $id, Request $request): JsonResource
+    public function editCampaignById(string $id, Request $request): JsonResource
     {
+        $uuid = self::uuidFromString($id);
         $input = $request->input();
         if (!is_array($input)) {
             throw new UnprocessableEntityHttpException('Invalid body type');
         }
-        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($id);
+        $campaign = $this->campaignRepository->fetchCampaignByUuid($uuid);
         try {
             $campaign = $this->campaignCreator->updateCampaign($input, $campaign);
             $campaign = $this->campaignRepository->update($campaign);
@@ -103,16 +109,18 @@ class ApiCampaignsController extends Controller
         return new CampaignResource($campaign);
     }
 
-    public function deleteCampaignById(int $id): JsonResponse
+    public function deleteCampaignById(string $id): JsonResponse
     {
-        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($id);
+        $uuid = self::uuidFromString($id);
+        $campaign = $this->campaignRepository->fetchCampaignByUuid($uuid);
         $this->campaignRepository->delete($campaign);
         return new JsonResponse(['data' => []], Response::HTTP_OK);
     }
 
-    public function fetchCampaignById(int $id): JsonResource
+    public function fetchCampaignById(string $id): JsonResource
     {
-        return new CampaignResource($this->campaignRepository->fetchCampaignByIdSimple($id));
+        $uuid = self::uuidFromString($id);
+        return new CampaignResource($this->campaignRepository->fetchCampaignByUuid($uuid));
     }
 
     public function fetchCampaigns(Request $request): JsonResource
@@ -123,25 +131,29 @@ class ApiCampaignsController extends Controller
         return CampaignResource::collection($campaigns)->preserveQuery();
     }
 
-    public function fetchBanner(int $campaignId, int $bannerId): JsonResource
+    public function fetchBanner(string $campaignId, string $bannerId): JsonResource
     {
-        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
-        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
+        $campaignUuid = self::uuidFromString($campaignId);
+        $bannerUuid = self::uuidFromString($bannerId);
+        $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
+        $banner = $this->campaignRepository->fetchBannerByUuid($campaign, $bannerUuid);
         return new BannerResource($banner);
     }
 
-    public function fetchBanners(int $campaignId, Request $request): JsonResource
+    public function fetchBanners(string $campaignId, Request $request): JsonResource
     {
+        $campaignUuid = self::uuidFromString($campaignId);
         $limit = $request->query('limit', 10);
         LimitValidator::validate($limit);
-        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
         $banners = $this->campaignRepository->fetchBanners($campaign, $limit);
         return BannerResource::collection($banners)->preserveQuery();
     }
 
-    public function addBanner(int $campaignId, Request $request): JsonResponse
+    public function addBanner(string $campaignId, Request $request): JsonResponse
     {
-        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
+        $campaignUuid = self::uuidFromString($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
         $oldBannerIds = $campaign->banners()->pluck('id');
 
         try {
@@ -154,6 +166,7 @@ class ApiCampaignsController extends Controller
         $bannerIds = $campaign->refresh()->banners()->pluck('id');
         $bannerId = $bannerIds->diff($oldBannerIds)->first();
 
+        /** @var Banner $banner */
         $banner = $campaign->banners()->where('id', $bannerId)->first();
 
         self::removeTemporaryUploadedFiles([$request->input()], $request);
@@ -164,21 +177,23 @@ class ApiCampaignsController extends Controller
             ->header(
                 'Location',
                 route('api.campaigns.creatives.fetch', [
-                    'banner' => $bannerId,
+                    'banner' => Uuid::fromString($banner->uuid)->toString(),
                     'campaign' => $campaignId,
                 ])
             );
     }
 
-    public function editBanner(int $campaignId, int $bannerId, Request $request): JsonResource
+    public function editBanner(string $campaignId, string $bannerId, Request $request): JsonResource
     {
+        $campaignUuid = self::uuidFromString($campaignId);
+        $bannerUuid = self::uuidFromString($bannerId);
         $input = $request->input();
         if (!is_array($input)) {
             throw new UnprocessableEntityHttpException('Invalid body type');
         }
 
-        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
-        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
+        $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
+        $banner = $this->campaignRepository->fetchBannerByUuid($campaign, $bannerUuid);
 
         try {
             $banner = $this->bannerCreator->updateBanner($input, $banner);
@@ -190,10 +205,12 @@ class ApiCampaignsController extends Controller
         return new BannerResource($banner->refresh());
     }
 
-    public function deleteBanner(int $campaignId, int $bannerId): JsonResponse
+    public function deleteBanner(string $campaignId, string $bannerId): JsonResponse
     {
-        $campaign = $this->campaignRepository->fetchCampaignByIdSimple($campaignId);
-        $banner = $this->campaignRepository->fetchBanner($campaign, $bannerId);
+        $campaignUuid = self::uuidFromString($campaignId);
+        $bannerUuid = self::uuidFromString($bannerId);
+        $campaign = $this->campaignRepository->fetchCampaignByUuid($campaignUuid);
+        $banner = $this->campaignRepository->fetchBannerByUuid($campaign, $bannerUuid);
 
         try {
             $this->campaignRepository->update($campaign, bannersToDelete: [$banner]);
@@ -222,6 +239,15 @@ class ApiCampaignsController extends Controller
                 Factory::createFromType($banner['creative_type'], $request)
                     ->removeTemporaryFile(Utils::extractFilename($banner['url']));
             }
+        }
+    }
+
+    private static function uuidFromString(string $id): UuidInterface
+    {
+        try {
+            return Uuid::fromString($id);
+        } catch (InvalidUuidStringException) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid ID %s', $id));
         }
     }
 }

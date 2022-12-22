@@ -34,8 +34,10 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\Log;
+use Ramsey\Uuid\UuidInterface;
 use Throwable;
 
 class CampaignRepository
@@ -106,6 +108,9 @@ class CampaignRepository
      */
     public function save(Campaign $campaign, array $banners = [], array $conversions = []): Campaign
     {
+        if (Campaign::STATUS_ACTIVE === $campaign->status && empty($banners)) {
+            throw new InvalidArgumentException('Cannot save active campaign without creatives');
+        }
         DB::beginTransaction();
         $status = $campaign->status;
         $campaign->status = Campaign::STATUS_DRAFT;
@@ -236,6 +241,13 @@ class CampaignRepository
 
             $this->bannerClassificationCreator->createForCampaign($campaign);
             $campaign->refresh();
+
+            if (
+                Campaign::STATUS_ACTIVE === $campaign->status
+                && !$campaign->banners()->where('status', Banner::STATUS_ACTIVE)->exists()
+            ) {
+                throw new InvalidArgumentException('Cannot update active campaign without creatives');
+            }
             DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
@@ -248,14 +260,20 @@ class CampaignRepository
         return $campaign;
     }
 
-    public function fetchCampaignByIdSimple(int $id): Campaign
+    public function fetchCampaignByUuid(UuidInterface $id): Campaign
     {
-        return Campaign::findOrFail($id);
+        if (null === ($campaign = Campaign::fetchByUuid(str_replace('-', '', $id->toString())))) {
+            throw new ModelNotFoundException(sprintf('No query results for campaign %s', $id->toString()));
+        }
+        return $campaign;
     }
 
-    public function fetchBanner(Campaign $campaign, int $bannerId): Banner
+    public function fetchBannerByUuid(Campaign $campaign, UuidInterface $bannerId): Banner
     {
-        return $campaign->banners()->findOrFail($bannerId);
+        if (null === ($banner = $campaign->banners()->where('uuid', $bannerId->getBytes())->first())) {
+            throw new ModelNotFoundException(sprintf('No query results for banner %s', $bannerId->toString()));
+        }
+        return $banner;
     }
 
     public function fetchBanners(Campaign $campaign, ?int $perPage = null): CursorPaginator
