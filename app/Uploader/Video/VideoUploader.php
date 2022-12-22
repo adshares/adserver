@@ -72,7 +72,7 @@ class VideoUploader implements Uploader
 
         $name = $model->ulid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'uid' => $name])
         );
 
         return new UploadedVideo($name, $previewUrl->toString(), $width, $height);

@@ -23,13 +23,15 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Uploader\Model;
 
+use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
-use Adshares\Common\Exception\RuntimeException;
+use Adshares\Adserver\Uploader\Model\UploadedModel;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\File;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 final class ModelUploaderTest extends TestCase
@@ -41,23 +43,25 @@ final class ModelUploaderTest extends TestCase
         $request = self::createMock(Request::class);
         $request->expects(self::once())
             ->method('file')
-            ->willReturn(UploadedFile::fake()->create('a.glb', 1));
+            ->willReturn(new File(base_path('tests/mock/Files/Banners/model.vox')));
         $uploader = new ModelUploader($request);
-        $medium = (new DummyConfigurationRepository())->fetchMedium();
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
 
         $uploadedFile = $uploader->upload($medium);
-        [$name, $extension] = explode('.', $uploadedFile->toArray()['name']);
-        self::assertNotEquals('a', $name);
-        self::assertEquals('glb', $extension);
+
+        self::assertInstanceOf(UploadedModel::class, $uploadedFile);
     }
 
     public function testPreviewGltf(): void
     {
-        Storage::disk(self::DISK)->put('test_file', 'glTF test content');
+        $file = UploadedFile::factory()->create([
+            'mime' => 'model/gltf-binary',
+            'content' => 'glTF test content',
+        ]);
         $request = self::createMock(Request::class);
         $uploader = new ModelUploader($request);
 
-        $response = $uploader->preview('test_file');
+        $response = $uploader->preview($file->ulid);
 
         self::assertEquals('glTF test content', $response->getContent());
         self::assertEquals('model/gltf-binary', $response->headers->get('Content-Type'));
@@ -65,11 +69,15 @@ final class ModelUploaderTest extends TestCase
 
     public function testPreviewVox(): void
     {
+        $file = UploadedFile::factory()->create([
+            'mime' => 'model/voxel',
+            'content' => 'VOX test content',
+        ]);
         Storage::disk(self::DISK)->put('test_file', 'VOX test content');
         $request = self::createMock(Request::class);
         $uploader = new ModelUploader($request);
 
-        $response = $uploader->preview('test_file');
+        $response = $uploader->preview($file->ulid);
 
         self::assertEquals('VOX test content', $response->getContent());
         self::assertEquals('model/voxel', $response->headers->get('Content-Type'));
@@ -77,23 +85,22 @@ final class ModelUploaderTest extends TestCase
 
     public function testPreviewInvalidFile(): void
     {
-        Storage::disk(self::DISK)->put('test_file', 'test content');
         $request = self::createMock(Request::class);
         $uploader = new ModelUploader($request);
 
-        self::expectException(RuntimeException::class);
-        $uploader->preview('test_file');
+        self::expectException(ModelNotFoundException::class);
+        $uploader->preview('01gmt6dvqqm5h4d908hwrh82jh');
     }
 
     public function testRemove(): void
     {
-        Storage::disk(self::DISK)->put('exists', 'content');
+        $file = UploadedFile::factory()->create();
         $request = self::createMock(Request::class);
         $uploader = new ModelUploader($request);
 
-        $uploader->removeTemporaryFile('exists');
+        $uploader->removeTemporaryFile($file->ulid);
 
-        self::assertFalse(Storage::disk(self::DISK)->exists('exists'));
+        self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
     }
 
     public function testRemoveQuietError(): void
@@ -103,7 +110,7 @@ final class ModelUploaderTest extends TestCase
 
         self::expectNotToPerformAssertions();
 
-        $uploader->removeTemporaryFile('not_exist');
+        $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
     }
 
     public function testContentWhenFileMissing(): void

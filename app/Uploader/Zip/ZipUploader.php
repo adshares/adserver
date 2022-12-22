@@ -68,7 +68,7 @@ class ZipUploader implements Uploader
 
         $name = $model->ulid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'uid' => $name])
         );
 
         return new UploadedZip($name, $previewUrl->toString());

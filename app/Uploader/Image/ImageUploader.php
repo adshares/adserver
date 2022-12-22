@@ -72,7 +72,7 @@ class ImageUploader implements Uploader
 
         $name = $model->ulid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'uid' => $name])
         );
 
         return new UploadedImage($name, $previewUrl->toString(), $width, $height);

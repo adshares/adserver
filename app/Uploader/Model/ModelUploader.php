@@ -35,7 +35,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ModelUploader implements Uploader
 {
@@ -65,7 +64,7 @@ class ModelUploader implements Uploader
 
         $name = $model->ulid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'uid' => $name])
         );
 
         return new UploadedModel($name, $previewUrl->toString());
