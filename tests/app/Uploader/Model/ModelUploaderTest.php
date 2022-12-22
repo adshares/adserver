@@ -23,16 +23,20 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Uploader\Model;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Model\UploadedModel;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\MockObject\MockObject;
 
 final class ModelUploaderTest extends TestCase
 {
@@ -40,16 +44,24 @@ final class ModelUploaderTest extends TestCase
 
     public function testUpload(): void
     {
-        $request = self::createMock(Request::class);
-        $request->expects(self::once())
-            ->method('file')
-            ->willReturn(new File(base_path('tests/mock/Files/Banners/model.vox')));
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
 
         $uploadedFile = $uploader->upload($medium);
 
         self::assertInstanceOf(UploadedModel::class, $uploadedFile);
+    }
+
+    public function testUploadFailWhileSizeTooLarge(): void
+    {
+        Config::updateAdminSettings([Config::UPLOAD_LIMIT_MODEL => 0]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $uploader = new ModelUploader($this->getRequestMock());
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
     }
 
     public function testPreviewGltf(): void
@@ -118,5 +130,14 @@ final class ModelUploaderTest extends TestCase
         self::expectException(FileNotFoundException::class);
 
         ModelUploader::content('a.glb');
+    }
+
+    private function getRequestMock(): Request|MockObject
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::once())
+            ->method('file')
+            ->willReturn(new File(base_path('tests/mock/Files/Banners/model.vox')));
+        return $request;
     }
 }
