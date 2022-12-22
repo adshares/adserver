@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
@@ -37,13 +38,12 @@ use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Closure;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
-use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 final class CampaignsControllerTest extends TestCase
@@ -69,7 +69,6 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddCampaignWithBanner(): void
     {
-        $this->mockFilesystem();
         $this->createUser();
         $campaignData = $this->getCampaignData();
         $campaignData['basicInformation']['budget'] = (int)1e11;
@@ -87,10 +86,10 @@ final class CampaignsControllerTest extends TestCase
     /**
      * @dataProvider addCampaignWithInvalidDataProvider
      */
-    public function testAddCampaignWithInvalidData(array $data): void
+    public function testAddCampaignWithInvalidData(Closure $closure): void
     {
-        $this->mockFilesystem();
         $this->createUser();
+        $data = $closure();
 
         $response = $this->postJson(self::URI, $data);
 
@@ -100,68 +99,68 @@ final class CampaignsControllerTest extends TestCase
     public function addCampaignWithInvalidDataProvider(): array
     {
         return [
-            'missing campaign field' => [[$this->getCampaignData()]],
-            'invalid campaign type' => [['campaign' => 'set']],
+            'missing campaign field' => [fn() => [$this->getCampaignData()]],
+            'invalid campaign type' => [fn() => ['campaign' => 'set']],
             'ad without size' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeSize')]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeSize')]])]
             ],
             'ad with empty size' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => ''])]])]
+                fn() => [
+                    'campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => ''])]])
+                ]
             ],
             'ad with invalid size type' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => 1])]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => 1])]])]
             ],
             'ad without type' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeType')]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeType')]])]
             ],
             'ad with empty type' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => ''])]])]
+                fn() => [
+                    'campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => ''])]])
+                ]
             ],
             'ad with invalid type' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => 1])]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeType' => 1])]])]
             ],
             'ad without name' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'name')]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'name')]])]
             ],
             'ad with invalid name type' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['name' => 1])]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['name' => 1])]])]
             ],
             'ad with invalid name length' => [
-                [
+                fn() => [
                     'campaign' => $this->getCampaignData(
                         ['ads' => [$this->getBannerData(['name' => str_repeat('n', 256)])]]
                     )
                 ]
             ],
             'ad with empty name' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['name' => ''])]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['name' => ''])]])]
             ],
             'ad without url' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'url')]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'url')]])]
             ],
             'ad with empty url' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['url' => ''])]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['url' => ''])]])]
             ],
             'ad with invalid url type' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['url' => 1])]])]
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['url' => 1])]])]
+            ],
+            'ad with invalid url (not existing name)' => [
+                fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([
+                    'url' => 'https://example.com/preview/images/01gmt6dvqqm5h4d908hwrh82jh',
+                    ])]])]
             ],
             'ad size not in taxonomy' => [
-                ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData(['creativeSize' => '600x600'])]])]
+                fn() => [
+                    'campaign' => $this->getCampaignData(
+                        ['ads' => [$this->getBannerData(['creativeSize' => '600x600'])]]
+                    )
+                ]
             ],
         ];
-    }
-
-    public function testAddCampaignFailWhileAdFilenameDoNotExist(): void
-    {
-        $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('exists')->willReturn(false);
-        $filesystemMock->method('get')->willReturn(null);
-        Storage::shouldReceive('disk')->andReturn($filesystemMock);
-        $this->createUser();
-
-        $response = $this->postJson(self::URI, ['campaign' => $this->getCampaignData()]);
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function getCampaignData(array $mergeData = []): array
@@ -179,13 +178,13 @@ final class CampaignsControllerTest extends TestCase
 
     private function getBannerData(array $mergeData = [], string $remove = null): array
     {
+        $file = UploadedFileModel::factory()->create();
         $data = array_merge(
             [
                 'creativeSize' => '300x250',
                 'creativeType' => 'image',
                 'name' => 'IMAGE 1',
-                'url' =>
-                    'http://localhost:8010/upload-preview/image/nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png',
+                'url' => 'http://localhost:8010/upload-preview/image/' . $file->ulid,
             ],
             $mergeData,
         );
@@ -522,7 +521,6 @@ final class CampaignsControllerTest extends TestCase
         int $bonus,
         int $status
     ): void {
-        $this->mockFilesystem();
         $entries = [
             [UserLedgerEntry::TYPE_DEPOSIT, $currency, UserLedgerEntry::STATUS_ACCEPTED],
             [UserLedgerEntry::TYPE_BONUS_INCOME, $bonus, UserLedgerEntry::STATUS_ACCEPTED],
@@ -947,15 +945,5 @@ final class CampaignsControllerTest extends TestCase
     private static function buildCampaignStatusUri(int $campaignId): string
     {
         return sprintf('%s/%d/status', self::URI, $campaignId);
-    }
-
-    private function mockFilesystem(): void
-    {
-        $adPath = base_path('tests/mock/Files/Banners/980x120.png');
-        $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('exists')->willReturn(true);
-        $filesystemMock->method('get')->willReturn(file_get_contents($adPath));
-        $filesystemMock->method('path')->willReturn($adPath);
-        Storage::shouldReceive('disk')->andReturn($filesystemMock);
     }
 }
