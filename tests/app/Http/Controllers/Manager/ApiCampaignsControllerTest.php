@@ -274,10 +274,13 @@ final class ApiCampaignsControllerTest extends TestCase
         $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
         $campaign = Campaign::first();
         $campaignId = $campaign->id;
-        $file = UploadedFileModel::factory()->create();
+        $file = UploadedFileModel::factory()->create([
+            'scope' => '980x120',
+            'content' => file_get_contents(base_path('tests/mock/Files/Banners/980x120.png')),
+        ]);
 
         $response = $this->post(self::buildUriBanner($campaign), [
-            'creativeSize' => '728x90',
+            'creativeSize' => '980x120',
             'creativeType' => Banner::TEXT_TYPE_IMAGE,
             'name' => 'IMAGE 2',
             'url' => 'https://example.com/upload-preview/image/' . $file->ulid,
@@ -293,7 +296,7 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals('IMAGE 2', $banner->name);
         self::assertEquals(Banner::STATUS_ACTIVE, $banner->status);
         self::assertEquals('image/png', $banner->creative_mime);
-        self::assertEquals('728x90', $banner->creative_size);
+        self::assertEquals('980x120', $banner->creative_size);
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
     }
 
@@ -420,7 +423,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $data = array_merge(
             [
                 'name' => 'IMAGE 1',
-                'scope' => '300x250',
+                'scope' => $file->scope,
                 'type' => Banner::TEXT_TYPE_IMAGE,
                 'url' => 'https://example.com/upload-preview/image/' . $file->ulid,
             ],
