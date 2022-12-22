@@ -39,14 +39,15 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Laravel\Passport\Passport;
 use PDOException;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ApiCampaignsControllerTest extends TestCase
 {
     private const URI_CAMPAIGNS = '/api/v2/campaigns';
+    private const UUID_PATTERN = '/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/';
     private const CREATIVE_DATA_STRUCTURE = [
         'id',
-        'uuid',
         'createdAt',
         'updatedAt',
         'type',
@@ -60,7 +61,6 @@ final class ApiCampaignsControllerTest extends TestCase
     ];
     private const CAMPAIGN_DATA_STRUCTURE = [
         'id',
-        'uuid',
         'createdAt',
         'updatedAt',
         'classifications' => [
@@ -138,9 +138,11 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertJsonPath('data.maxCpm', null);
         $response->assertJsonPath('data.budget', 10);
         $response->assertJsonPath('data.conversionClick', 'none');
+        self::assertMatchesRegularExpression(self::UUID_PATTERN, $response->json('data.id'));
+        self::assertMatchesRegularExpression(self::UUID_PATTERN, $response->json('data.creatives.0.id'));
         $campaign = Campaign::first();
         self::assertNotNull($campaign);
-        self::assertEquals($campaign->id, $this->getIdFromLocationHeader($response));
+        self::assertEquals($campaign->uuid, str_replace('-', '', $this->getIdFromLocationHeader($response)));
         self::assertEquals(Campaign::STATUS_ACTIVE, $campaign->status);
         self::assertEquals('Test campaign', $campaign->name);
         self::assertEquals('https://exmaple.com/landing', $campaign->landing_url);
@@ -258,11 +260,11 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         $this->setUpUser();
         $this->mockStorage();
-        $campaignId = $this->getIdFromLocationHeader(
-            $this->post(self::URI_CAMPAIGNS, self::getCampaignData())
-        );
+        $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
+        $campaign = Campaign::first();
+        $campaignId = $campaign->id;
 
-        $response = $this->post(self::buildUriBanner($campaignId), [
+        $response = $this->post(self::buildUriBanner($campaign), [
             'creativeSize' => '728x90',
             'creativeType' => Banner::TEXT_TYPE_IMAGE,
             'name' => 'IMAGE 2',
@@ -273,7 +275,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertHeader('Location');
         $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
         $bannerId = $this->getIdFromLocationHeader($response);
-        $banner = Banner::find($bannerId);
+        $banner = Banner::fetchBanner(str_replace('-', '', $bannerId));
         self::assertNotNull($banner);
         self::assertEquals($campaignId, $banner->campaign_id);
         self::assertEquals('IMAGE 2', $banner->name);
@@ -296,16 +298,16 @@ final class ApiCampaignsControllerTest extends TestCase
 
     public function testEditBannerStatus(): void
     {
-        $campaignId = $this->setupCampaignWithTwoBanners();
-        $bannerId = Banner::first()->id;
-        $bannerUri = self::buildUriBanner($campaignId, $bannerId);
+        $campaign = $this->setupCampaignWithTwoBanners();
+        $banner = Banner::first();
+        $bannerUri = self::buildUriBanner($campaign, $banner);
 
         $response = $this->patch($bannerUri, ['status' => 'inactive']);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::CREATIVE_STRUCTURE);
         self::assertDatabaseHas(Banner::class, [
-            'id' => $bannerId,
+            'id' => $banner->id,
             'status' => Banner::STATUS_INACTIVE,
         ]);
     }
@@ -321,14 +323,14 @@ final class ApiCampaignsControllerTest extends TestCase
 
     public function testDeleteBanner(): void
     {
-        $campaignId = $this->setupCampaignWithTwoBanners();
-        $bannerId = Banner::first()->id;
-        $bannerUri = self::buildUriBanner($campaignId, $bannerId);
+        $campaign = $this->setupCampaignWithTwoBanners();
+        $banner = Banner::first();
+        $bannerUri = self::buildUriBanner($campaign, $banner);
 
         $response = $this->delete($bannerUri);
 
         $response->assertStatus(Response::HTTP_OK);
-        self::assertTrue(Banner::withTrashed()->find($bannerId)->trashed());
+        self::assertTrue(Banner::withTrashed()->find($banner->id)->trashed());
 
         $response = $this->get($bannerUri);
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -434,7 +436,7 @@ final class ApiCampaignsControllerTest extends TestCase
         ]);
         $bannerClassification = $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
 
-        $response = $this->delete(self::buildUriCampaign($campaign->id));
+        $response = $this->delete(self::buildUriCampaign($campaign));
         $response->assertStatus(Response::HTTP_OK);
         self::assertTrue($campaign->refresh()->trashed());
         self::assertTrue($conversion->refresh()->trashed());
@@ -455,7 +457,7 @@ final class ApiCampaignsControllerTest extends TestCase
             'user_id' => $user->id,
         ]);
 
-        $response = $this->delete(self::buildUriCampaign($campaign->id));
+        $response = $this->delete(self::buildUriCampaign($campaign));
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
@@ -464,24 +466,28 @@ final class ApiCampaignsControllerTest extends TestCase
         $user = $this->setUpUser();
         $campaign = Campaign::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->get(self::buildUriCampaign($campaign->id));
+        $response = $this->get(self::buildUriCampaign($campaign));
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
     }
 
-    public function testFetchCampaignByIdWhileMissingId(): void
+    public function testFetchCampaignByIdWhileUnknownId(): void
     {
         $this->setUpUser();
 
-        $response = $this->get(self::buildUriCampaign(PHP_INT_MAX));
+        $response = $this->get(sprintf('%s/%s', self::URI_CAMPAIGNS, Uuid::uuid4()->toString()));
+
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testFetchCampaignByIdWhileMissingScope(): void
     {
-        Passport::actingAs(User::factory()->create(), [], 'jwt');
+        $user = User::factory()->create();
+        Passport::actingAs($user, [], 'jwt');
+        $campaign = Campaign::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->get(self::buildUriCampaign(PHP_INT_MAX));
+        $response = $this->get(self::buildUriCampaign($campaign));
+
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
@@ -490,7 +496,8 @@ final class ApiCampaignsControllerTest extends TestCase
         $this->setUpUser();
         $campaign = Campaign::factory()->create();
 
-        $response = $this->get(self::buildUriCampaign($campaign->id));
+        $response = $this->get(self::buildUriCampaign($campaign));
+
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -523,16 +530,16 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertJsonPath('data.scope', '300x250');
     }
 
-    private static function buildUriCampaign(int $id): string
+    private static function buildUriCampaign(Campaign $campaign): string
     {
-        return sprintf('%s/%d', self::URI_CAMPAIGNS, $id);
+        return sprintf('%s/%s', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
     }
 
-    private static function buildUriBanner(int $campaignId, int $bannerId = null): string
+    private static function buildUriBanner(Campaign $campaign, Banner $banner = null): string
     {
-        $uri = sprintf('%s/%d/creatives', self::URI_CAMPAIGNS, $campaignId);
-        if (null !== $bannerId) {
-            $uri = sprintf('%s/%d', $uri, $bannerId);
+        $uri = sprintf('%s/%s/creatives', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
+        if (null !== $banner) {
+            $uri = sprintf('%s/%s', $uri, Uuid::fromString($banner->uuid)->toString());
         }
         return $uri;
     }
@@ -541,7 +548,7 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         $response->assertHeader('Location');
         $matches = [];
-        preg_match('~/(\d+)$~', $response->headers->get('Location'), $matches);
+        preg_match('~/([^/]+)$~', $response->headers->get('Location'), $matches);
 
         return $matches[1];
     }
@@ -564,33 +571,27 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         $this->setUpUser();
         $this->mockStorage();
-        $campaignId = $this->getIdFromLocationHeader(
-            $this->post(self::URI_CAMPAIGNS, self::getCampaignData())
-        );
-        return self::buildUriCampaign($campaignId);
+        $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
+        return self::buildUriCampaign(Campaign::first());
     }
 
-    private function setupCampaignWithTwoBanners(): int
+    private function setupCampaignWithTwoBanners(): Campaign
     {
         $campaign = Campaign::factory()->create([
             'budget' => 50 * 1e11,
             'status' => Campaign::STATUS_ACTIVE,
             'user_id' => $this->setUpUser()->id,
         ]);
-        $id = $campaign->id;
-        Banner::factory()->count(2)->create(['campaign_id' => $id]);
-        return $id;
+        Banner::factory()->count(2)->create(['campaign_id' => $campaign->id]);
+        return $campaign;
     }
 
     private function setUpCampaignWithBanner(): string
     {
         $this->setUpUser();
         $this->mockStorage();
-        $campaignId = $this->getIdFromLocationHeader(
-            $this->post(self::URI_CAMPAIGNS, self::getCampaignData())
-        );
-        $bannerId = Banner::first()->id;
-        return self::buildUriBanner($campaignId, $bannerId);
+        $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
+        return self::buildUriBanner(Campaign::first(), Banner::first());
     }
 
     private function setUpUser(): User
