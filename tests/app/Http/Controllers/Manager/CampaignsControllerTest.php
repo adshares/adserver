@@ -815,55 +815,37 @@ final class CampaignsControllerTest extends TestCase
         $this->assertEquals($banner->cdn_url, $cloned['cdnUrl']);
     }
 
-    public function testUploadBannerNoFile(): void
+    /**
+     * @dataProvider uploadBannerFailProvider
+     */
+    public function testUploadBannerFail(array $data): void
     {
         $this->createUser();
 
-        $response = $this->postJson('/api/campaigns/banner');
+        $response = $this->postJson('/api/campaigns/banner', $data);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testUploadBannerNoMedium(): void
+    public function uploadBannerFailProvider(): array
     {
-        $this->createUser();
-
-        $response = $this->postJson(
-            '/api/campaigns/banner',
-            [
-                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
-            ]
-        );
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testUploadBannerInvalidVendor(): void
-    {
-        $this->createUser();
-
-        $response = $this->postJson(
-            '/api/campaigns/banner',
-            [
-                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
-                'medium' => 'web',
-                'vendor' => 'premium',
-            ]
-        );
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testUploadBannerInvalidVendorType(): void
-    {
-        $this->createUser();
-
-        $response = $this->postJson(
-            '/api/campaigns/banner',
-            [
-                'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
-                'medium' => 'web',
-                'vendor' => 1,
-            ]
-        );
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        return [
+            'no file' => [[]],
+            'no medium' => [['file' => UploadedFile::fake()->image('photo.jpg', 300, 250)]],
+            'invalid vendor' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'medium' => 'web',
+                    'vendor' => 'premium',
+                ]
+            ],
+            'invalid vendor type' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'medium' => 'web',
+                    'vendor' => 1,
+                ]
+            ],
+        ];
     }
 
     public function testUploadBanner(): void
@@ -878,6 +860,15 @@ final class CampaignsControllerTest extends TestCase
             ]
         );
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testUploadPreviewInvalidUid(): void
+    {
+        $this->createUser();
+
+        $response = $this->get('/upload-preview/image/1');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     /**

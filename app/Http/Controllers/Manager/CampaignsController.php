@@ -57,6 +57,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Symfony\Component\Uid\Ulid;
 
 class CampaignsController extends Controller
 {
@@ -86,10 +87,13 @@ class CampaignsController extends Controller
         }
     }
 
-    public function uploadPreview(Request $request, string $type, string $name): Response
+    public function uploadPreview(Request $request, string $type, string $uid): Response
     {
+        if (!Ulid::isValid($uid)) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid ID (%s)', $uid));
+        }
         try {
-            return Factory::createFromType($type, $request)->preview($name);
+            return Factory::createFromType($type, $request)->preview($uid);
         } catch (RuntimeException $exception) {
             throw new BadRequestHttpException($exception->getMessage());
         }
