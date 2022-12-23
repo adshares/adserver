@@ -31,17 +31,13 @@ use Adshares\Adserver\Uploader\Model\UploadedModel;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\File;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\MockObject\MockObject;
 
 final class ModelUploaderTest extends TestCase
 {
-    private const DISK = 'banners';
-
     public function testUpload(): void
     {
         $uploader = new ModelUploader($this->getRequestMock());
@@ -85,7 +81,6 @@ final class ModelUploaderTest extends TestCase
             'mime' => 'model/voxel',
             'content' => 'VOX test content',
         ]);
-        Storage::disk(self::DISK)->put('test_file', 'VOX test content');
         $request = self::createMock(Request::class);
         $uploader = new ModelUploader($request);
 
@@ -123,13 +118,6 @@ final class ModelUploaderTest extends TestCase
         self::expectNotToPerformAssertions();
 
         $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
-    }
-
-    public function testContentWhenFileMissing(): void
-    {
-        self::expectException(FileNotFoundException::class);
-
-        ModelUploader::content('a.glb');
     }
 
     private function getRequestMock(): Request|MockObject

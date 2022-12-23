@@ -30,7 +30,6 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Lib\ZipToHtml;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -95,15 +94,5 @@ class ZipUploader implements Uploader
         $file = UploadedFileModel::fetchByUlidOrFail($fileName);
 
         return new Response($file->content);
-    }
-
-    public static function content(string $fileName): string
-    {
-        if (!Storage::disk(self::ZIP_DISK)->exists($fileName)) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
-        $zip = new ZipToHtml(Storage::disk(self::ZIP_DISK)->path($fileName));
-
-        return $zip->getHtml();
     }
 }

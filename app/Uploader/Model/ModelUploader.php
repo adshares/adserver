@@ -29,17 +29,14 @@ use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class ModelUploader implements Uploader
 {
     public const MODEL_FILE = 'model';
-    private const DISK = 'banners';
 
     public function __construct(private readonly Request $request)
     {
@@ -86,15 +83,6 @@ class ModelUploader implements Uploader
         $response->header('Content-Type', $file->mime);
 
         return $response;
-    }
-
-    public static function content(string $fileName): string
-    {
-        $content = Storage::disk(self::DISK)->get($fileName);
-        if (null === $content) {
-            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
-        }
-        return $content;
     }
 
     private static function contentMimeType(string $content): string

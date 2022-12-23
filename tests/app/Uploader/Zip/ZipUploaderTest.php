@@ -27,7 +27,6 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 
@@ -49,12 +48,5 @@ final class ZipUploaderTest extends TestCase
         self::expectException(RuntimeException::class);
 
         (new ZipUploader($request))->upload($medium);
-    }
-
-    public function testContentWhenFileMissing(): void
-    {
-        self::expectException(FileNotFoundException::class);
-
-        ZipUploader::content('a.html');
     }
 }

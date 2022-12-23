@@ -31,17 +31,14 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use getID3;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class VideoUploader implements Uploader
 {
     public const VIDEO_FILE = 'video';
-    private const VIDEO_DISK = 'banners';
     private const FORMAT_TYPE_VIDEO = 'video';
 
     public function __construct(private readonly Request $request)
@@ -111,14 +108,5 @@ class VideoUploader implements Uploader
         $response->header('Content-Type', $file->mime);
 
         return $response;
-    }
-
-    public static function content(string $fileName): string
-    {
-        $content = Storage::disk(self::VIDEO_DISK)->get($fileName);
-        if (null === $content) {
-            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
-        }
-        return $content;
     }
 }
