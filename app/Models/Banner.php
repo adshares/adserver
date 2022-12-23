@@ -211,7 +211,7 @@ class Banner extends Model
             $publicIds
         );
 
-        return self::whereIn('uuid', $binPublicIds)->get();
+        return self::whereIn('uuid', $binPublicIds)->get(self::ALL_COLUMNS_EXCEPT_CONTENT);
     }
 
     public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection
@@ -227,7 +227,7 @@ class Banner extends Model
             $builder->whereIn('id', $bannerIds);
         }
 
-        return $builder->get();
+        return $builder->get(self::ALL_COLUMNS_EXCEPT_CONTENT);
     }
 
     public function deactivate(): void
