@@ -33,6 +33,7 @@ use Adshares\Lib\ZipToHtml;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -63,7 +64,7 @@ class ZipUploader implements Uploader
             'scope' => null,
             'content' => $content,
         ]);
-        $model->saveOrFail();
+        Auth::user()->uploadedFiles()->save($model);
 
         $name = $model->ulid;
         $previewUrl = new SecureUrl(

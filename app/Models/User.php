@@ -402,6 +402,11 @@ class User extends Authenticatable
         return $this->hasMany(Site::class);
     }
 
+    public function uploadedFiles(): HasMany
+    {
+        return $this->hasMany(UploadedFile::class);
+    }
+
     public function getBalance(): int
     {
         return UserLedgerEntry::getBalanceByUserId($this->id);

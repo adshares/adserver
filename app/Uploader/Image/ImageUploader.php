@@ -33,6 +33,7 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class ImageUploader implements Uploader
@@ -63,7 +64,7 @@ class ImageUploader implements Uploader
             'scope' => Size::fromDimensions($width, $height),
             'content' => $file->getContent(),
         ]);
-        $model->saveOrFail();
+        Auth::user()->uploadedFiles()->save($model);
 
         $name = $model->ulid;
         $previewUrl = new SecureUrl(
