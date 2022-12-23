@@ -97,7 +97,7 @@ class ModelUploader implements Uploader
         return $content;
     }
 
-    public static function contentMimeType(string $content): string
+    private static function contentMimeType(string $content): string
     {
         $fileHeader = substr($content, 0, 4);
         return match ($fileHeader) {

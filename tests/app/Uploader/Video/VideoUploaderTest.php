@@ -35,11 +35,4 @@ final class VideoUploaderTest extends TestCase
 
         VideoUploader::content('a.mp4');
     }
-
-    public function testContentMimeTypeWhenFileMissing(): void
-    {
-        self::expectException(FileNotFoundException::class);
-
-        VideoUploader::contentMimeType('a.mp4');
-    }
 }

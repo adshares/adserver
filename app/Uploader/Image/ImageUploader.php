@@ -37,8 +37,6 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-use function mime_content_type;
-
 class ImageUploader implements Uploader
 {
     public const IMAGE_FILE = 'image';
@@ -103,16 +101,6 @@ class ImageUploader implements Uploader
             throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
         }
         return $content;
-    }
-
-    public static function contentMimeType(string $fileName): string
-    {
-        if (!Storage::disk(self::IMAGE_DISK)->exists($fileName)) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
-        $path = Storage::disk(self::IMAGE_DISK)->path($fileName);
-
-        return mime_content_type($path);
     }
 
     private function validateDimensions(Medium $medium, int $width, int $height): void

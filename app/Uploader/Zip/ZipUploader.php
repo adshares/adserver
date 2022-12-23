@@ -55,7 +55,7 @@ class ZipUploader implements Uploader
         }
         $name = $file->store('', self::ZIP_DISK);
         $content = $this->extractHtmlContent($name);
-        $this->removeTemporaryFile($name);
+        Storage::disk(self::ZIP_DISK)->delete($name);
 
         $model = new UploadedFileModel([
             'medium' => $medium->getName(),

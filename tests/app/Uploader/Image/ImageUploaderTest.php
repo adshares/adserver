@@ -35,11 +35,4 @@ final class ImageUploaderTest extends TestCase
 
         ImageUploader::content('a.png');
     }
-
-    public function testContentMimeTypeWhenFileMissing(): void
-    {
-        self::expectException(FileNotFoundException::class);
-
-        ImageUploader::contentMimeType('a.png');
-    }
 }
