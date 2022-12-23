@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\CampaignCreating;
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
@@ -42,6 +41,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property int id
@@ -267,7 +267,7 @@ class Campaign extends Model
 
     public function banners(): HasMany
     {
-        return $this->hasMany(Banner::class);
+        return $this->hasMany(Banner::class)->select(Banner::ALL_COLUMNS_EXCEPT_CONTENT);
     }
 
     public function conversions(): HasMany
@@ -280,7 +280,7 @@ class Campaign extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getAdsAttribute()
+    public function getAdsAttribute(): Collection
     {
         return $this->banners;
     }

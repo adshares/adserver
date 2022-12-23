@@ -80,6 +80,22 @@ class Banner extends Model
     public const SIZE_MAXIMAL_LENGTH = 16;
     public const TYPE_MAXIMAL_LENGTH = 32;
 
+    public const ALL_COLUMNS_EXCEPT_CONTENT = [
+        'id',
+        'uuid',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+        'campaign_id',
+        'creative_type',
+        'creative_mime',
+        'creative_sha1',
+        'creative_size',
+        'name',
+        'status',
+        'cdn_url',
+    ];
+
     protected $dates = [
         'deleted_at',
     ];
@@ -119,7 +135,7 @@ class Banner extends Model
 
     protected $touches = ['campaign'];
 
-    public function getHidden()
+    public function getHidden(): array
     {
         $hidden = $this->hidden;
         if ($this->creative_type !== self::TEXT_TYPE_DIRECT_LINK) {
@@ -221,6 +237,7 @@ class Banner extends Model
             $this->save();
         }
     }
+
     public function classifications(): HasMany
     {
         return $this->hasMany(BannerClassification::class);
