@@ -55,7 +55,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
 
             try {
                 $signature = $this->sign($message);
-            } catch (SodiumException $exception) {
+            } catch (SodiumException) {
                 throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot create signature');
             }
 

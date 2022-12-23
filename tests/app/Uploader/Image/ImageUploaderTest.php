@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Uploader\Image;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
@@ -45,6 +46,35 @@ final class ImageUploaderTest extends TestCase
         self::expectException(RuntimeException::class);
 
         $uploader->upload($medium);
+    }
+
+    public function testRemoveTemporaryFile(): void
+    {
+        $file = UploadedFile::factory()->create();
+        $uploader = new ImageUploader(self::createMock(Request::class));
+
+        $uploader->removeTemporaryFile($file->ulid);
+
+        self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
+    }
+
+    public function testRemoveTemporaryFileQuietError(): void
+    {
+        $uploader = new ImageUploader(self::createMock(Request::class));
+
+        self::expectNotToPerformAssertions();
+
+        $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
+    }
+
+    public function testPreview(): void
+    {
+        $file = UploadedFile::factory()->create();
+        $uploader = new ImageUploader(self::createMock(Request::class));
+
+        $response = $uploader->preview($file->ulid);
+
+        self::assertEquals('image/png', $response->headers->get('Content-Type'));
     }
 
     private function getRequestMock(): Request|MockObject

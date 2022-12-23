@@ -66,8 +66,7 @@ final class ModelUploaderTest extends TestCase
             'mime' => 'model/gltf-binary',
             'content' => 'glTF test content',
         ]);
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
         $response = $uploader->preview($file->ulid);
 
@@ -81,8 +80,7 @@ final class ModelUploaderTest extends TestCase
             'mime' => 'model/voxel',
             'content' => 'VOX test content',
         ]);
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
         $response = $uploader->preview($file->ulid);
 
@@ -92,28 +90,25 @@ final class ModelUploaderTest extends TestCase
 
     public function testPreviewInvalidFile(): void
     {
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
         self::expectException(ModelNotFoundException::class);
         $uploader->preview('01gmt6dvqqm5h4d908hwrh82jh');
     }
 
-    public function testRemove(): void
+    public function testRemoveTemporaryFile(): void
     {
         $file = UploadedFile::factory()->create();
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
         $uploader->removeTemporaryFile($file->ulid);
 
         self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
     }
 
-    public function testRemoveQuietError(): void
+    public function testRemoveTemporaryFileQuietError(): void
     {
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
         self::expectNotToPerformAssertions();
 

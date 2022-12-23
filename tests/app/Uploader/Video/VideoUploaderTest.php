@@ -24,7 +24,9 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Uploader\Video;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Uploader\Video\UploadedVideo;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
@@ -35,6 +37,20 @@ use PHPUnit\Framework\MockObject\MockObject;
 
 final class VideoUploaderTest extends TestCase
 {
+    public function testUpload(): void
+    {
+        $uploader = new VideoUploader($this->getRequestMock());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        $uploadedFile = $uploader->upload($medium);
+
+        self::assertInstanceOf(UploadedVideo::class, $uploadedFile);
+        self::assertDatabaseHas(UploadedFile::class, [
+            'mime' => 'video/mp4',
+            'scope' => '852x480'
+        ]);
+    }
+
     public function testUploadFailWhileSizeTooLarge(): void
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_VIDEO => 0]);
@@ -45,6 +61,37 @@ final class VideoUploaderTest extends TestCase
         self::expectException(RuntimeException::class);
 
         $uploader->upload($medium);
+    }
+
+    public function testPreview(): void
+    {
+        $file = UploadedFile::factory()->create([
+            'mime' => 'video/mp4',
+        ]);
+        $uploader = new VideoUploader(self::createMock(Request::class));
+
+        $response = $uploader->preview($file->ulid);
+
+        self::assertEquals('video/mp4', $response->headers->get('Content-Type'));
+    }
+
+    public function testRemoveTemporaryFile(): void
+    {
+        $file = UploadedFile::factory()->create();
+        $uploader = new VideoUploader(self::createMock(Request::class));
+
+        $uploader->removeTemporaryFile($file->ulid);
+
+        self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
+    }
+
+    public function testRemoveTemporaryFileQuietError(): void
+    {
+        $uploader = new VideoUploader(self::createMock(Request::class));
+
+        self::expectNotToPerformAssertions();
+
+        $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
     }
 
     private function getRequestMock(): Request|MockObject

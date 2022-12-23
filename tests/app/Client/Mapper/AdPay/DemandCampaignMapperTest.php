@@ -29,7 +29,6 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use DateTime;
 use Illuminate\Support\Collection;
 
