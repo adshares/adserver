@@ -178,7 +178,7 @@ final class CampaignsControllerTest extends TestCase
 
     private function getBannerData(array $mergeData = [], string $remove = null): array
     {
-        $file = UploadedFileModel::factory()->create();
+        $file = UploadedFileModel::factory()->create(['user_id' => User::first()]);
         $data = array_merge(
             [
                 'creativeSize' => '300x250',
@@ -859,21 +859,21 @@ final class CampaignsControllerTest extends TestCase
 
     public function testUploadPreview(): void
     {
-        $this->createUser();
+        $user = $this->createUser();
+        $file = UploadedFileModel::factory()->create(['user_id' => $user]);
 
-        $response = $this->get('/upload-preview/image/1');
+        $response = $this->get('/upload-preview/image/' . $file->ulid);
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_OK);
     }
 
     public function testUploadPreviewInvalidUid(): void
     {
         $this->createUser();
-        $file = UploadedFileModel::factory()->create();
 
-        $response = $this->get('/upload-preview/image/' . $file->ulid);
+        $response = $this->get('/upload-preview/image/1');
 
-        $response->assertStatus(Response::HTTP_OK);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUploadPreviewNonExistingFile(): void

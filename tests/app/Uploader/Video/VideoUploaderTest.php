@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Uploader\Video;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UploadedFile;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Video\UploadedVideo;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
@@ -33,6 +34,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Http\File;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
 
 final class VideoUploaderTest extends TestCase
@@ -97,6 +99,8 @@ final class VideoUploaderTest extends TestCase
 
     private function getRequestMock(): Request|MockObject
     {
+        Auth::shouldReceive('guard')->andReturnSelf()
+            ->shouldReceive('user')->andReturn(User::factory()->create());
         $request = self::createMock(Request::class);
         $request->expects(self::once())
             ->method('file')

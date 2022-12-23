@@ -270,11 +270,12 @@ final class ApiCampaignsControllerTest extends TestCase
 
     public function testAddBanner(): void
     {
-        $this->setUpUser();
+        $user = $this->setUpUser();
         $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
         $campaign = Campaign::first();
         $campaignId = $campaign->id;
         $file = UploadedFileModel::factory()->create([
+            'user_id' => $user,
             'scope' => '980x120',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/980x120.png')),
         ]);
@@ -419,7 +420,7 @@ final class ApiCampaignsControllerTest extends TestCase
 
     private function getBannerData(array $mergeData = [], ?string $remove = null): array
     {
-        $file = UploadedFileModel::factory()->create();
+        $file = UploadedFileModel::factory()->create(['user_id' => User::first()]);
         $data = array_merge(
             [
                 'name' => 'IMAGE 1',

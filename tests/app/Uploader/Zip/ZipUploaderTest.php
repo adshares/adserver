@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Uploader\Zip;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Zip\UploadedZip;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
@@ -33,6 +34,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
 
 final class ZipUploaderTest extends TestCase
@@ -117,6 +119,8 @@ final class ZipUploaderTest extends TestCase
 
     private function getRequestMock(): Request|MockObject
     {
+        Auth::shouldReceive('guard')->andReturnSelf()
+            ->shouldReceive('user')->andReturn(User::factory()->create());
         $request = self::createMock(Request::class);
         $request->expects(self::once())
             ->method('file')
