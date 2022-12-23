@@ -65,6 +65,7 @@ use Illuminate\Support\Facades\DB;
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection ads
  * @property Banner[]|Collection banners
+ * @property Banner[]|Collection bannersWithContent
  * @property Collection conversions
  * @property User user
  * @property string secret
@@ -268,6 +269,11 @@ class Campaign extends Model
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class)->select(Banner::ALL_COLUMNS_EXCEPT_CONTENT);
+    }
+
+    public function bannersWithContent(): HasMany
+    {
+        return $this->hasMany(Banner::class);
     }
 
     public function conversions(): HasMany

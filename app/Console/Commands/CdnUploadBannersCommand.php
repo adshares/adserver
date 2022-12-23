@@ -33,11 +33,11 @@ use Illuminate\Support\Facades\Log;
 class CdnUploadBannersCommand extends BaseCommand
 {
     protected $signature = 'ops:demand:cdn:upload {provider?} {--campaignIds=} {--f|force}';
-
     protected $description = 'Upload banners to CDN';
 
     public function __construct(
-        Locker $locker
+        private readonly CampaignRepository $campaignRepository,
+        Locker $locker,
     ) {
         parent::__construct($locker);
     }
@@ -46,7 +46,6 @@ class CdnUploadBannersCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-
             return;
         }
 
@@ -81,13 +80,12 @@ class CdnUploadBannersCommand extends BaseCommand
             $campaignIds = explode(',', $campaignIds);
         }
 
-        $campaignRepository = new CampaignRepository();
-        $campaigns = $campaignIds !== null ? $campaignRepository->fetchCampaignByIds($campaignIds)
-            : $campaignRepository->fetchActiveCampaigns();
+        $campaigns = $campaignIds !== null ? $this->campaignRepository->fetchCampaignByIds($campaignIds)
+            : $this->campaignRepository->fetchActiveCampaigns();
 
         $banners = [];
         foreach ($campaigns as $campaign) {
-            $builder = $campaign->banners();
+            $builder = $campaign->bannersWithContent();
             if (!$this->option('force')) {
                 $builder->whereNull('cdn_url');
             }
