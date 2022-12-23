@@ -92,12 +92,14 @@ class VideoUploader implements Uploader
         return [];
     }
 
-    public function removeTemporaryFile(string $fileName): void
+    public function removeTemporaryFile(string $fileName): bool
     {
         try {
             UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+            return true;
         } catch (ModelNotFoundException $exception) {
             Log::warning(sprintf('Exception during video file deletion (%s)', $exception->getMessage()));
+            return false;
         }
     }
 

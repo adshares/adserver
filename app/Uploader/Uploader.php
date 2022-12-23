@@ -30,5 +30,5 @@ interface Uploader
 
     public function preview(string $fileName): Response;
 
-    public function removeTemporaryFile(string $fileName): void;
+    public function removeTemporaryFile(string $fileName): bool;
 }

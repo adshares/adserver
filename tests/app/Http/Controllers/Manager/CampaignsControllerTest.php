@@ -857,13 +857,32 @@ final class CampaignsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
-    public function testUploadPreviewInvalidUid(): void
+    public function testUploadPreview(): void
     {
         $this->createUser();
 
         $response = $this->get('/upload-preview/image/1');
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUploadPreviewInvalidUid(): void
+    {
+        $this->createUser();
+        $file = UploadedFileModel::factory()->create();
+
+        $response = $this->get('/upload-preview/image/' . $file->ulid);
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testUploadPreviewNonExistingFile(): void
+    {
+        $this->createUser();
+
+        $response = $this->get('/upload-preview/image/01gmt6dvqqm5h4d908hwrh82jh');
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     /**

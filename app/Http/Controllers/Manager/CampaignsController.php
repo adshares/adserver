@@ -92,11 +92,7 @@ class CampaignsController extends Controller
         if (!Ulid::isValid($uid)) {
             throw new UnprocessableEntityHttpException(sprintf('Invalid ID (%s)', $uid));
         }
-        try {
-            return Factory::createFromType($type, $request)->preview($uid);
-        } catch (RuntimeException $exception) {
-            throw new BadRequestHttpException($exception->getMessage());
-        }
+        return Factory::createFromType($type, $request)->preview($uid);
     }
 
     public function preview($bannerPublicId): Response

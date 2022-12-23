@@ -53,8 +53,9 @@ final class ImageUploaderTest extends TestCase
         $file = UploadedFile::factory()->create();
         $uploader = new ImageUploader(self::createMock(Request::class));
 
-        $uploader->removeTemporaryFile($file->ulid);
+        $result = $uploader->removeTemporaryFile($file->ulid);
 
+        self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
     }
 
@@ -62,9 +63,9 @@ final class ImageUploaderTest extends TestCase
     {
         $uploader = new ImageUploader(self::createMock(Request::class));
 
-        self::expectNotToPerformAssertions();
+        $result = $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
 
-        $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
+        self::assertFalse($result);
     }
 
     public function testPreview(): void

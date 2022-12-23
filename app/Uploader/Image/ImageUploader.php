@@ -73,12 +73,14 @@ class ImageUploader implements Uploader
         return new UploadedImage($name, $previewUrl->toString(), $width, $height);
     }
 
-    public function removeTemporaryFile(string $fileName): void
+    public function removeTemporaryFile(string $fileName): bool
     {
         try {
             UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+            return true;
         } catch (ModelNotFoundException $exception) {
             Log::warning(sprintf('Exception during image file deletion (%s)', $exception->getMessage()));
+            return false;
         }
     }
 
