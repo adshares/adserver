@@ -29,6 +29,8 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
+use FFMpeg\Exception\ExecutableNotFoundException;
+use FFMpeg\FFProbe;
 use getID3;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -53,9 +55,7 @@ class VideoUploader implements Uploader
         if (!$size || $size > config('app.upload_limit_video')) {
             throw new RuntimeException('Invalid video size');
         }
-        $fileInfo = (new getID3())->analyze($file->getRealPath());
-        $width = $fileInfo['video']['resolution_x'];
-        $height = $fileInfo['video']['resolution_y'];
+        [$width, $height] = $this->getVideoDimensions($file->getRealPath());
 
         $this->validateDimensions($medium, $width, $height);
         $name = $file->store('', self::VIDEO_DISK);
@@ -120,5 +120,28 @@ class VideoUploader implements Uploader
         $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
 
         return mime_content_type($path);
+    }
+
+    private function getVideoDimensions(string $realPath): array
+    {
+        try {
+            $probe = FFProbe::create();
+        } catch (ExecutableNotFoundException $exception) {
+            Log::critical(sprintf('Check if ffmpeg is installed in system (%s)', $exception->getMessage()));
+            $fileInfo = (new getID3())->analyze($realPath);
+            return [
+                $fileInfo['video']['resolution_x'],
+                $fileInfo['video']['resolution_y'],
+            ];
+        }
+
+        $streams = $probe->streams($realPath);
+        foreach ($streams as $stream) {
+            if ('video' === $stream->get('codec_type')) {
+                $dimensions = $stream->getDimensions();
+                return [$dimensions->getWidth(), $dimensions->getHeight()];
+            }
+        }
+        throw new RuntimeException('No video stream');
     }
 }
