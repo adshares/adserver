@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Common\CrmNotifier;
+use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\AdsRpcClient;
@@ -455,14 +456,14 @@ MSG;
         $site = Site::fetchOrCreate(
             $user->id,
             config('app.foreign_default_site_js'),
-            'website',
+            'web',
             null
         );
         $ad_zones = array();
         foreach (config('app.foreign_preferred_zones') as $zone_info) {
             $zoneObject = Zone::fetchOrCreate(
                 $site->id,
-                "{$zone_info['width']}x{$zone_info['height']}",
+                new ZoneSize($zone_info['width'], $zone_info['height']),
                 $zone_info['name']
             );
             $ad_zones[] = array(
