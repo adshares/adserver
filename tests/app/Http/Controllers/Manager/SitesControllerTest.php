@@ -441,6 +441,23 @@ class SitesControllerTest extends TestCase
         self::assertEquals('unknown', $site->info);
     }
 
+    public function testUpdateSiteUrlFailWhenExists(): void
+    {
+        $user = $this->setupUser();
+        Site::factory()->create([
+            'domain' => 'example2.com',
+            'url' => 'https://example2.com',
+            'user_id' => $user->id,
+        ]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        $url = 'https://example2.com';
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => $url]]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testUpdateSiteOnlyAcceptedBanners(): void
     {
         $user = $this->setupUser();
