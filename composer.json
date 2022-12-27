@@ -28,6 +28,7 @@
         "laravel/tinker": "^2.0",
         "mikehaertl/phpwkhtmltopdf": "^2.5",
         "paragonie/sodium_compat": "^1.8",
+        "php-ffmpeg/php-ffmpeg": "^1.1",
         "phpoffice/phpspreadsheet": "^1.6",
         "ramsey/uuid": "^4.2.2",
         "spatie/fork": "^1.0.0",
