@@ -217,6 +217,16 @@ class SitesControllerTest extends TestCase
         self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Zone::TYPE_POP]);
     }
 
+    public function testCreateSiteWhileExist(): void
+    {
+        $user = $this->login();
+        Site::factory()->create(['user_id' => $user]);
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     /**
      * @dataProvider createSiteUnprocessableProvider
      *

@@ -218,6 +218,13 @@ class Site extends Model
         return self::where('uuid', hex2bin($publicId))->first();
     }
 
+    public static function fetchSite(int $userId, string $domain): ?Site
+    {
+        return Site::where('user_id', $userId)
+            ->where('domain', $domain)
+            ->first();
+    }
+
     public static function create(
         int $userId,
         string $url,

@@ -74,7 +74,9 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
         $url = (string)$input['url'];
-        self::validateDomain(DomainReader::domain($url));
+        $domain = DomainReader::domain($url);
+        self::validateDomain($domain);
+
 
         $medium = $input['medium'] ?? null;
         $vendor = $input['vendor'] ?? null;
@@ -106,6 +108,9 @@ class SitesController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        if (null !== Site::fetchSite($user->id, $domain)) {
+            throw new UnprocessableEntityHttpException('Site exists');
+        }
 
         DB::beginTransaction();
 
