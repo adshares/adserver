@@ -119,6 +119,7 @@ class Banner extends Model
 
     protected $hidden = [
         'campaign_id',
+        'creative_contents',
         'deleted_at',
     ];
 
@@ -134,16 +135,6 @@ class Banner extends Model
     ];
 
     protected $touches = ['campaign'];
-
-    public function getHidden(): array
-    {
-        $hidden = $this->hidden;
-        if ($this->creative_type !== self::TEXT_TYPE_DIRECT_LINK) {
-            $hidden[] = 'creative_contents';
-        }
-
-        return $hidden;
-    }
 
     public static function isStatusAllowed(int $status): bool
     {
