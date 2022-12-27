@@ -23,15 +23,17 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Zip;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Lib\ZipToHtml;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -52,48 +54,48 @@ class ZipUploader implements Uploader
             throw new RuntimeException('Invalid zip size');
         }
         $name = $file->store('', self::ZIP_DISK);
-        $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'name' => $name])
-        );
+        $content = $this->extractHtmlContent($name);
+        Storage::disk(self::ZIP_DISK)->delete($name);
 
-        $this->validateContent($name);
+        $model = new UploadedFileModel([
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => 'text/html',
+            'size' => null,
+            'content' => $content,
+        ]);
+        Auth::user()->uploadedFiles()->save($model);
+
+        $name = $model->ulid;
+        $previewUrl = new SecureUrl(
+            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'uid' => $name])
+        );
 
         return new UploadedZip($name, $previewUrl->toString());
     }
 
-    private function validateContent(string $name): void
+    private function extractHtmlContent(string $name): string
     {
         $path = Storage::disk(self::ZIP_DISK)->path($name);
         $zip = new ZipToHtml($path);
-        $zip->getHtml();
+        return $zip->getHtml();
     }
 
-    public function removeTemporaryFile(string $fileName): void
+    public function removeTemporaryFile(string $fileName): bool
     {
         try {
-            Storage::disk(self::ZIP_DISK)->delete($fileName);
-        } catch (FileNotFoundException $exception) {
-            Log::warning(sprintf('Removing ZIP file (%s) does not exist.', $fileName));
+            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+            return true;
+        } catch (ModelNotFoundException $exception) {
+            Log::warning(sprintf('Exception during zip file deletion (%s)', $exception->getMessage()));
+            return false;
         }
     }
 
     public function preview(string $fileName): Response
     {
-        $path = Storage::disk(self::ZIP_DISK)->path($fileName);
+        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
 
-        $zip = new ZipToHtml($path);
-        $html = $zip->getHtml();
-
-        return new Response($html);
-    }
-
-    public static function content(string $fileName): string
-    {
-        if (!Storage::disk(self::ZIP_DISK)->exists($fileName)) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
-        $zip = new ZipToHtml(Storage::disk(self::ZIP_DISK)->path($fileName));
-
-        return $zip->getHtml();
+        return new Response($file->content);
     }
 }

@@ -70,7 +70,7 @@ final class DummyAdSelectClient implements AdSelect
                     'publisher_id'  => $zone->site->user->uuid,
                     'zone_id'       => $zone->uuid,
                 ];
-            } catch (InvalidArgumentException $e) {
+            } catch (InvalidArgumentException) {
                 $bannerIds[] = '';
             }
         }

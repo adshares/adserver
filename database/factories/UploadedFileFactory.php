@@ -19,16 +19,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Uploader;
+declare(strict_types=1);
 
-use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
-use Illuminate\Http\Response;
+namespace Database\Factories;
 
-interface Uploader
+use Adshares\Adserver\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
+
+class UploadedFileFactory extends Factory
 {
-    public function upload(Medium $medium): UploadedFile;
-
-    public function preview(string $fileName): Response;
-
-    public function removeTemporaryFile(string $fileName): bool;
+    public function definition(): array
+    {
+        return [
+            'user_id' => User::factory(),
+            'ulid' => strtolower((string)Str::ulid()),
+            'medium' => 'web',
+            'vendor' => null,
+            'mime' => 'image/png',
+            'size' => '300x250',
+            'content' => file_get_contents(base_path('tests/mock/Files/Banners/300x250.png')),
+        ];
+    }
 }

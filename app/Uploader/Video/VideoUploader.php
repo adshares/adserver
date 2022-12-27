@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Video;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -32,16 +33,15 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use FFMpeg\Exception\ExecutableNotFoundException;
 use FFMpeg\FFProbe;
 use getID3;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class VideoUploader implements Uploader
 {
     public const VIDEO_FILE = 'video';
-    private const VIDEO_DISK = 'banners';
     private const FORMAT_TYPE_VIDEO = 'video';
 
     public function __construct(private readonly Request $request)
@@ -58,9 +58,19 @@ class VideoUploader implements Uploader
         [$width, $height] = $this->getVideoDimensions($file->getRealPath());
 
         $this->validateDimensions($medium, $width, $height);
-        $name = $file->store('', self::VIDEO_DISK);
+
+        $model = new UploadedFileModel([
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => $file->getMimeType(),
+            'size' => Size::fromDimensions($width, $height),
+            'content' => $file->getContent(),
+        ]);
+        Auth::user()->uploadedFiles()->save($model);
+
+        $name = $model->ulid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'uid' => $name])
         );
 
         return new UploadedVideo($name, $previewUrl->toString(), $width, $height);
@@ -83,43 +93,24 @@ class VideoUploader implements Uploader
         return [];
     }
 
-    public function removeTemporaryFile(string $fileName): void
+    public function removeTemporaryFile(string $fileName): bool
     {
         try {
-            Storage::disk(self::VIDEO_DISK)->delete($fileName);
-        } catch (FileNotFoundException $exception) {
-            Log::warning(sprintf('Removing VIDEO file (%s) does not exist.', $fileName));
+            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+            return true;
+        } catch (ModelNotFoundException $exception) {
+            Log::warning(sprintf('Exception during video file deletion (%s)', $exception->getMessage()));
+            return false;
         }
     }
 
     public function preview(string $fileName): Response
     {
-        $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
-        $mime = mime_content_type($path);
-
-        $response = new Response(file_get_contents($path));
-        $response->header('Content-Type', $mime);
+        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
+        $response = new Response($file->content);
+        $response->header('Content-Type', $file->mime);
 
         return $response;
-    }
-
-    public static function content(string $fileName): string
-    {
-        $content = Storage::disk(self::VIDEO_DISK)->get($fileName);
-        if (null === $content) {
-            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
-        }
-        return $content;
-    }
-
-    public static function contentMimeType(string $fileName): string
-    {
-        if (!Storage::disk(self::VIDEO_DISK)->exists($fileName)) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
-        $path = Storage::disk(self::VIDEO_DISK)->path($fileName);
-
-        return mime_content_type($path);
     }
 
     private function getVideoDimensions(string $realPath): array

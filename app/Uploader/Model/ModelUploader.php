@@ -23,21 +23,21 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Model;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ModelUploader implements Uploader
 {
     public const MODEL_FILE = 'model';
-    private const DISK = 'banners';
 
     public function __construct(private readonly Request $request)
     {
@@ -50,52 +50,51 @@ class ModelUploader implements Uploader
         if (!$size || $size > config('app.upload_limit_model')) {
             throw new RuntimeException('Invalid model size');
         }
-        $name = $file->storeAs('', Str::random(40) . '.' . $file->getClientOriginalExtension(), self::DISK);
+
+        $model = new UploadedFileModel([
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => self::contentMimeType($file->getContent()),
+            'size' => 'cube',
+            'content' => $file->getContent(),
+        ]);
+        Auth::user()->uploadedFiles()->save($model);
+
+        $name = $model->ulid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'uid' => $name])
         );
 
         return new UploadedModel($name, $previewUrl->toString());
     }
 
-    public function removeTemporaryFile(string $fileName): void
+    public function removeTemporaryFile(string $fileName): bool
     {
-        Storage::disk(self::DISK)->delete($fileName);
+        try {
+            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+            return true;
+        } catch (ModelNotFoundException $exception) {
+            Log::warning(sprintf('Exception during model file deletion (%s)', $exception->getMessage()));
+            return false;
+        }
     }
 
     public function preview(string $fileName): Response
     {
-        $content = self::content($fileName);
-        $mime = self::contentMimeType($content);
-
-        $response = new Response($content);
-        $response->header('Content-Type', $mime);
+        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
+        $response = new Response($file->content);
+        $response->header('Content-Type', $file->mime);
 
         return $response;
     }
 
-    public static function content(string $fileName): string
-    {
-        $content = Storage::disk(self::DISK)->get($fileName);
-        if (null === $content) {
-            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
-        }
-        return $content;
-    }
-
-    public static function contentMimeType(string $content): string
+    private static function contentMimeType(string $content): string
     {
         $fileHeader = substr($content, 0, 4);
-        switch ($fileHeader) {
-            case 'glTF':
-                $mime = 'model/gltf-binary';
-                break;
-            case 'VOX ':
-                $mime = 'model/voxel';
-                break;
-            default:
-                throw new RuntimeException('Unsupported model file.');
-        }
-        return $mime;
+        return match ($fileHeader) {
+            'glTF' => 'model/gltf-binary',
+            'VOX ' => 'model/voxel',
+            default => throw new RuntimeException('Unsupported model file'),
+        };
     }
 }

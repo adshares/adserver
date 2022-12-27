@@ -23,23 +23,67 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Uploader\Image;
 
+use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UploadedFile;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
+use Illuminate\Http\File;
+use Illuminate\Http\Request;
+use PHPUnit\Framework\MockObject\MockObject;
 
 final class ImageUploaderTest extends TestCase
 {
-    public function testContentWhenFileMissing(): void
+    public function testUploadFailWhileSizeTooLarge(): void
     {
-        self::expectException(FileNotFoundException::class);
+        Config::updateAdminSettings([Config::UPLOAD_LIMIT_IMAGE => 0]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $uploader = new ImageUploader($this->getRequestMock());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        ImageUploader::content('a.png');
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
     }
 
-    public function testContentMimeTypeWhenFileMissing(): void
+    public function testRemoveTemporaryFile(): void
     {
-        self::expectException(FileNotFoundException::class);
+        $file = UploadedFile::factory()->create();
+        $uploader = new ImageUploader(self::createMock(Request::class));
 
-        ImageUploader::contentMimeType('a.png');
+        $result = $uploader->removeTemporaryFile($file->ulid);
+
+        self::assertTrue($result);
+        self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
+    }
+
+    public function testRemoveTemporaryFileQuietError(): void
+    {
+        $uploader = new ImageUploader(self::createMock(Request::class));
+
+        $result = $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
+
+        self::assertFalse($result);
+    }
+
+    public function testPreview(): void
+    {
+        $file = UploadedFile::factory()->create();
+        $uploader = new ImageUploader(self::createMock(Request::class));
+
+        $response = $uploader->preview($file->ulid);
+
+        self::assertEquals('image/png', $response->headers->get('Content-Type'));
+    }
+
+    private function getRequestMock(): Request|MockObject
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::once())
+            ->method('file')
+            ->willReturn(new File(base_path('tests/mock/Files/Banners/980x120.png')));
+        return $request;
     }
 }
