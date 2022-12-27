@@ -75,7 +75,7 @@ class BannerCreator
                     } catch (ModelNotFoundException) {
                         throw new InvalidArgumentException(sprintf('File `%s` does not exist', $ulid));
                     }
-                    if (null !== $file->scope && $scope !== $file->scope) {
+                    if (null !== $file->size && $scope !== $file->size) {
                         throw new InvalidArgumentException(
                             sprintf('Scope `%s` does not match uploaded file', $scope)
                         );

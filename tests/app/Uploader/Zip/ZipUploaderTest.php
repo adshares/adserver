@@ -49,7 +49,7 @@ final class ZipUploaderTest extends TestCase
         self::assertInstanceOf(UploadedZip::class, $uploaded);
         self::assertDatabaseHas(UploadedFileModel::class, [
             'mime' => 'text/html',
-            'scope' => null,
+            'size' => null,
         ]);
     }
 

@@ -41,7 +41,7 @@ return new class extends Migration
             $table->string('medium', 16)->default('web');
             $table->string('vendor', 32)->nullable();
             $table->string('mime', self::MAXIMAL_MIME_TYPE_LENGTH);
-            $table->string('scope', 16)->nullable();
+            $table->string('size', 16)->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
         DB::statement('ALTER TABLE uploaded_files ADD content LONGBLOB');

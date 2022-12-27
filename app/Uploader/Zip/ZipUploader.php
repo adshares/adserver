@@ -61,7 +61,7 @@ class ZipUploader implements Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => 'text/html',
-            'scope' => null,
+            'size' => null,
             'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);

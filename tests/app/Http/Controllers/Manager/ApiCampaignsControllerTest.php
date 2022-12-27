@@ -276,7 +276,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $campaignId = $campaign->id;
         $file = UploadedFileModel::factory()->create([
             'user_id' => $user,
-            'scope' => '980x120',
+            'size' => '980x120',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/980x120.png')),
         ]);
 
@@ -424,7 +424,7 @@ final class ApiCampaignsControllerTest extends TestCase
         $data = array_merge(
             [
                 'name' => 'IMAGE 1',
-                'scope' => $file->scope,
+                'scope' => $file->size,
                 'type' => Banner::TEXT_TYPE_IMAGE,
                 'url' => 'https://example.com/upload-preview/image/' . $file->ulid,
             ],

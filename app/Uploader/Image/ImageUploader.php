@@ -61,7 +61,7 @@ class ImageUploader implements Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $file->getMimeType(),
-            'scope' => Size::fromDimensions($width, $height),
+            'size' => Size::fromDimensions($width, $height),
             'content' => $file->getContent(),
         ]);
         Auth::user()->uploadedFiles()->save($model);

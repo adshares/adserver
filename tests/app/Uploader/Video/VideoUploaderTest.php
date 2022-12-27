@@ -49,7 +49,7 @@ final class VideoUploaderTest extends TestCase
         self::assertInstanceOf(UploadedVideo::class, $uploadedFile);
         self::assertDatabaseHas(UploadedFile::class, [
             'mime' => 'video/mp4',
-            'scope' => '852x480'
+            'size' => '852x480'
         ]);
     }
 

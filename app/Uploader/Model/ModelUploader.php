@@ -55,7 +55,7 @@ class ModelUploader implements Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => self::contentMimeType($file->getContent()),
-            'scope' => 'cube',
+            'size' => 'cube',
             'content' => $file->getContent(),
         ]);
         Auth::user()->uploadedFiles()->save($model);

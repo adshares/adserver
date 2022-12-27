@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string medium
  * @property string|null vendor
  * @property string mime
- * @property string|null scope
+ * @property string|null $size
  * @property string content
  *
  * @mixin Builder
@@ -40,7 +40,7 @@ class UploadedFile extends Model
         'medium',
         'vendor',
         'mime',
-        'scope',
+        'size',
         'content',
     ];
 
