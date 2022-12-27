@@ -65,6 +65,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         Event::fake()->except([
             'eloquent.creating: Laravel\Passport\Client',
+            'eloquent.creating: Adshares\Adserver\Models\UploadedFile',
         ]);
         Mail::fake();
         Queue::fake();

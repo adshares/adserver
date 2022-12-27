@@ -26,16 +26,16 @@ use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\ScopeType;
+use Closure;
 use DateTimeImmutable;
 use DateTimeInterface;
-use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Laravel\Passport\Passport;
 use PDOException;
@@ -120,7 +120,6 @@ final class ApiCampaignsControllerTest extends TestCase
     public function testAddCampaign(): void
     {
         $this->setUpUser();
-        $this->mockStorage();
 
         $campaignData = self::getCampaignData();
         $dateStart = $campaignData['dateStart'];
@@ -168,7 +167,6 @@ final class ApiCampaignsControllerTest extends TestCase
     public function testAddCampaignDraftWithoutCreatives(): void
     {
         $this->setUpUser();
-        $this->mockStorage();
 
         $campaignData = self::getCampaignData(['status' => 'draft'], remove: 'creatives');
 
@@ -180,10 +178,10 @@ final class ApiCampaignsControllerTest extends TestCase
     /**
      * @dataProvider addCampaignFailProvider
      */
-    public function testAddCampaignFail(array $campaignData): void
+    public function testAddCampaignFail(Closure $closure): void
     {
         $this->setUpUser();
-        $this->mockStorage();
+        $campaignData = $closure();
 
         $response = $this->post(self::URI_CAMPAIGNS, $campaignData);
 
@@ -193,10 +191,13 @@ final class ApiCampaignsControllerTest extends TestCase
     public function addCampaignFailProvider(): array
     {
         return [
-            'missing campaign' => [self::getCampaignData(remove: 'targetUrl')],
-            'missing creatives while not draft' => [self::getCampaignData(remove: 'creatives')],
-            'empty creatives while not draft' => [self::getCampaignData(['creatives' => []])],
-            'missing creatives[].type' => [self::getCampaignData(['creatives' => self::getBannerData(remove: 'type')])],
+            'missing campaign' => [fn() => self::getCampaignData(remove: 'targetUrl')],
+            'missing creatives while not draft' => [fn() => self::getCampaignData(remove: 'creatives')],
+            'empty creatives while not draft' => [fn() => self::getCampaignData(['creatives' => []])],
+            'invalid creatives type' => [fn() => self::getCampaignData(['creatives' => 'no'])],
+            'missing creatives[].type' => [
+                fn() => self::getCampaignData(['creatives' => self::getBannerData(remove: 'type')])
+            ],
         ];
     }
 
@@ -256,19 +257,34 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals($bidStrategy->uuid, $campaign->bid_strategy_uuid);
     }
 
-    public function testAddBanner(): void
+    public function testEditCampaignFailWhileInvalidUid(): void
     {
         $this->setUpUser();
-        $this->mockStorage();
+        $uri = sprintf('%s/%d', self::URI_CAMPAIGNS, 1);
+        $campaignData = ['name' => 'Edited campaign'];
+
+        $response = $this->patch($uri, $campaignData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testAddBanner(): void
+    {
+        $user = $this->setUpUser();
         $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
         $campaign = Campaign::first();
         $campaignId = $campaign->id;
+        $file = UploadedFileModel::factory()->create([
+            'user_id' => $user,
+            'size' => '980x120',
+            'content' => file_get_contents(base_path('tests/mock/Files/Banners/980x120.png')),
+        ]);
 
         $response = $this->post(self::buildUriBanner($campaign), [
-            'creativeSize' => '728x90',
+            'creativeSize' => '980x120',
             'creativeType' => Banner::TEXT_TYPE_IMAGE,
             'name' => 'IMAGE 2',
-            'url' => 'https://example.com/upload-preview/image/nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png',
+            'url' => 'https://example.com/upload-preview/image/' . $file->ulid,
         ]);
 
         $response->assertStatus(Response::HTTP_CREATED);
@@ -281,7 +297,7 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertEquals('IMAGE 2', $banner->name);
         self::assertEquals(Banner::STATUS_ACTIVE, $banner->status);
         self::assertEquals('image/png', $banner->creative_mime);
-        self::assertEquals('728x90', $banner->creative_size);
+        self::assertEquals('980x120', $banner->creative_size);
         self::assertEquals(Banner::TEXT_TYPE_IMAGE, $banner->creative_type);
     }
 
@@ -404,12 +420,13 @@ final class ApiCampaignsControllerTest extends TestCase
 
     private function getBannerData(array $mergeData = [], ?string $remove = null): array
     {
+        $file = UploadedFileModel::factory()->create(['user_id' => User::first()]);
         $data = array_merge(
             [
                 'name' => 'IMAGE 1',
-                'scope' => '300x250',
+                'scope' => $file->size,
                 'type' => Banner::TEXT_TYPE_IMAGE,
-                'url' => 'https://example.com/upload-preview/image/nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png',
+                'url' => 'https://example.com/upload-preview/image/' . $file->ulid,
             ],
             $mergeData,
         );
@@ -553,24 +570,9 @@ final class ApiCampaignsControllerTest extends TestCase
         return $matches[1];
     }
 
-    private function mockStorage(): void
-    {
-        $adPath = base_path('tests/mock/Files/Banners/980x120.png');
-        $filesystemMock = self::createMock(FilesystemAdapter::class);
-        $filesystemMock->method('exists')->willReturn(function ($fileName) {
-            return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName;
-        });
-        $filesystemMock->method('get')->willReturnCallback(function ($fileName) use ($adPath) {
-            return 'nADwGi2vTk236I9yCZEBOP3f3qX0eyeiDuRItKeI.png' === $fileName ? file_get_contents($adPath) : null;
-        });
-        $filesystemMock->method('path')->willReturn($adPath);
-        Storage::shouldReceive('disk')->andReturn($filesystemMock);
-    }
-
     private function setUpCampaign(): string
     {
         $this->setUpUser();
-        $this->mockStorage();
         $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
         return self::buildUriCampaign(Campaign::first());
     }
@@ -589,7 +591,6 @@ final class ApiCampaignsControllerTest extends TestCase
     private function setUpCampaignWithBanner(): string
     {
         $this->setUpUser();
-        $this->mockStorage();
         $this->post(self::URI_CAMPAIGNS, self::getCampaignData());
         return self::buildUriBanner(Campaign::first(), Banner::first());
     }

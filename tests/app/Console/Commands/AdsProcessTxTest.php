@@ -228,7 +228,7 @@ class AdsProcessTxTest extends ConsoleTestCase
     {
         $this->app->bind(
             AdsLogReader::class,
-            function (Application $app) {
+            function () {
                 $mock = self::createMock(AdsLogReader::class);
                 $mock->method('parseLog')
                     ->willThrowException(new CommandException(new GetLogCommand(null), 'Text Exception'));

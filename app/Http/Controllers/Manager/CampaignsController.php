@@ -54,10 +54,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Symfony\Component\Uid\Ulid;
 use Throwable;
 
 class CampaignsController extends Controller
@@ -88,13 +88,12 @@ class CampaignsController extends Controller
         }
     }
 
-    public function uploadPreview(Request $request, string $type, string $name): Response
+    public function uploadPreview(Request $request, string $type, string $uid): Response
     {
-        try {
-            return Factory::createFromType($type, $request)->preview($name);
-        } catch (RuntimeException $exception) {
-            throw new BadRequestHttpException($exception->getMessage());
+        if (!Ulid::isValid($uid)) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid ID (%s)', $uid));
         }
+        return Factory::createFromType($type, $request)->preview($uid);
     }
 
     public function preview($bannerPublicId): Response
