@@ -273,12 +273,7 @@ class Site extends Model
         ?string $vendor,
     ): self {
         $domain = DomainReader::domain($url);
-
-        $site = self::where('user_id', $userId)
-            ->where('domain', $domain)
-            ->where('medium', $medium)
-            ->where('vendor', $vendor)
-            ->first();
+        $site = self::fetchSite($userId, $domain);
 
         if (null === $site) {
             $name = $domain;
@@ -300,6 +295,10 @@ class Site extends Model
                 Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT
                 !== config('app.site_classifier_local_banners');
             $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners);
+        } else {
+            if ($site->medium !== $medium || $site->vendor !== $vendor) {
+                throw new InvalidArgumentException('Site exists for another vendor');
+            }
         }
 
         return $site;
