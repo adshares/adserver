@@ -37,7 +37,7 @@ class UploadedFileFactory extends Factory
             'medium' => 'web',
             'vendor' => null,
             'mime' => 'image/png',
-            'scope' => '300x250',
+            'size' => '300x250',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/300x250.png')),
         ];
     }
