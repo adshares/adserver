@@ -437,11 +437,12 @@ class CampaignsController extends Controller
                 $clonedConversion->saveOrFail();
             }
 
-            foreach ($campaign->bannersWithContent as $banner) {
+            $campaign->bannersWithContent()->chunk(1, function ($chunk) use ($clonedCampaign) {
+                $banner = $chunk->first();
                 $clonedBanner = $banner->replicate();
                 $clonedBanner->campaign_id = $clonedCampaign->id;
                 $clonedBanner->saveOrFail();
-            }
+            });
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
