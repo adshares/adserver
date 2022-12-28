@@ -657,6 +657,7 @@ class SupplyController extends Controller
             config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
             '.' . CssUtils::normalizeClass(self::$adserverId),
             config('app.banner_rotate_interval'),
+            config('app.foreign_default_site_js'),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -669,6 +670,7 @@ class SupplyController extends Controller
                         '{{ ORIGIN }}',
                         '{{ SELECTOR }}',
                         '{{ ROTATE_INTERVAL }}',
+                        '{{ DEFAULT_LOCATION }}'
                     ],
                     $params,
                     file_get_contents($jsPath)

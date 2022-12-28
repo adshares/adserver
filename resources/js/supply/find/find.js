@@ -20,7 +20,7 @@
 var serverOrigin = '{{ ORIGIN }}';
 var selectorClass = '{{ SELECTOR }}';
 var rotateIntervalMs = parseInt('{{ ROTATE_INTERVAL }}') * 1000;
-
+var defaultLocation = '{{ DEFAULT_LOCATION }}';
 
 var topwin = window;
 try {
@@ -485,12 +485,16 @@ var getPageKeywords = function (doc) {
 
 var getBrowserContext = function () {
     const metamask = (typeof window.ethereum !== 'undefined') || (typeof window.web3 !== 'undefined');
+    var location = topwin.location.href;
+    if( defaultLocation.length > 0 ){
+        location = defaultLocation;
+    }
     return {
         iid: getImpressionId(),
         frame: (topwin == top ? 0 : 1),
         width: topwin.screen.width,
         height: topwin.screen.height,
-        url: topwin.location.href,
+        url: location,
         keywords: getPageKeywords(topdoc),
         metamask: metamask ? 1 : 0,
         ref: topdoc.referrer,
