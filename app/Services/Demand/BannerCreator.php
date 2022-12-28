@@ -76,6 +76,9 @@ class BannerCreator
                     } catch (ModelNotFoundException) {
                         throw new InvalidArgumentException(sprintf('File `%s` does not exist', $uuid));
                     }
+                    if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
+                        throw new InvalidArgumentException('File medium does not match campaign');
+                    }
                     if (null !== $file->size && $scope !== $file->size) {
                         throw new InvalidArgumentException(
                             sprintf('Scope `%s` does not match uploaded file', $scope)

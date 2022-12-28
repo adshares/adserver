@@ -143,6 +143,19 @@ final class BannerCreatorTest extends TestCase
                         . Uuid::fromString(UploadedFile::factory()->create()->uuid)->toString(),
                 ]]
             ],
+            'medium does not match campaign' => [
+                fn() => [[
+                    'scope' => '300x250',
+                    'type' => Banner::TEXT_TYPE_IMAGE,
+                    'name' => 'image 1',
+                    'url' =>
+                        'https://example.com/image/'
+                        . Uuid::fromString(UploadedFile::factory()->create([
+                            'medium' => 'metaverse',
+                            'vendor' => 'decentraland',
+                        ])->uuid)->toString(),
+                ]]
+            ],
         ];
     }
 
