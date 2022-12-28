@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @property int id
@@ -55,9 +56,9 @@ class UploadedFile extends Model
         'uuid' => 'BinHex',
     ];
 
-    public static function fetchByUuidOrFail(string $uuid): self
+    public static function fetchByUuidOrFail(UuidInterface $uuid): self
     {
-        $file = (new UploadedFile())->where('uuid', hex2bin($uuid))->first();
+        $file = (new UploadedFile())->where('uuid', $uuid->getBytes())->first();
         if (null === $file) {
             throw new ModelNotFoundException(sprintf('No query results for file %s', $uuid));
         }

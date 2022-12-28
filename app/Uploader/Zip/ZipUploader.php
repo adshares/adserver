@@ -36,6 +36,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Ramsey\Uuid\UuidInterface;
 
 class ZipUploader implements Uploader
 {
@@ -81,7 +82,7 @@ class ZipUploader implements Uploader
         return $zip->getHtml();
     }
 
-    public function removeTemporaryFile(string $uuid): bool
+    public function removeTemporaryFile(UuidInterface $uuid): bool
     {
         try {
             UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
@@ -92,7 +93,7 @@ class ZipUploader implements Uploader
         }
     }
 
-    public function preview(string $uuid): Response
+    public function preview(UuidInterface $uuid): Response
     {
         $file = UploadedFileModel::fetchByUuidOrFail($uuid);
 

@@ -31,6 +31,7 @@ use Adshares\Adserver\ViewModel\BannerStatus;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Ramsey\Uuid\Uuid;
 
 class BannerCreator
 {
@@ -69,7 +70,7 @@ class BannerCreator
                 case Banner::TEXT_TYPE_VIDEO:
                 case Banner::TEXT_TYPE_MODEL:
                 case Banner::TEXT_TYPE_HTML:
-                    $uuid = Utils::extractFilename($banner['url']);
+                    $uuid = Uuid::fromString(Utils::extractFilename($banner['url']));
                     try {
                         $file = UploadedFile::fetchByUuidOrFail($uuid);
                     } catch (ModelNotFoundException) {

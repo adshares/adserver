@@ -54,7 +54,6 @@ use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
@@ -95,7 +94,7 @@ class CampaignsController extends Controller
         } catch (InvalidUuidStringException) {
             throw new UnprocessableEntityHttpException(sprintf('Invalid ID %s', $uuid));
         }
-        return Factory::createFromType($type, $request)->preview($uuid);
+        return Factory::createFromType($type, $request)->preview($uuidObject);
     }
 
     public function preview($bannerPublicId): Response
@@ -178,7 +177,7 @@ class CampaignsController extends Controller
         foreach ($files as $file) {
             if (!isset($file['uuid']) && isset($file['creative_type']) && isset($file['url'])) {
                 Factory::createFromType($file['creative_type'], $request)
-                    ->removeTemporaryFile(Utils::extractFilename($file['url']));
+                    ->removeTemporaryFile(Uuid::fromString(Utils::extractFilename($file['url'])));
             }
         }
     }

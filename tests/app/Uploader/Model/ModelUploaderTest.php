@@ -37,6 +37,7 @@ use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
+use Ramsey\Uuid\Uuid;
 
 final class ModelUploaderTest extends TestCase
 {
@@ -70,7 +71,7 @@ final class ModelUploaderTest extends TestCase
         ]);
         $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->uuid);
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
 
         self::assertEquals('glTF test content', $response->getContent());
         self::assertEquals('model/gltf-binary', $response->headers->get('Content-Type'));
@@ -84,7 +85,7 @@ final class ModelUploaderTest extends TestCase
         ]);
         $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->uuid);
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
 
         self::assertEquals('VOX test content', $response->getContent());
         self::assertEquals('model/voxel', $response->headers->get('Content-Type'));
@@ -95,7 +96,7 @@ final class ModelUploaderTest extends TestCase
         $uploader = new ModelUploader(self::createMock(Request::class));
 
         self::expectException(ModelNotFoundException::class);
-        $uploader->preview('01gmt6dvqqm5h4d908hwrh82jh');
+        $uploader->preview(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
     }
 
     public function testRemoveTemporaryFile(): void
@@ -103,7 +104,7 @@ final class ModelUploaderTest extends TestCase
         $file = UploadedFile::factory()->create();
         $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile($file->uuid);
+        $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
 
         self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
@@ -113,7 +114,7 @@ final class ModelUploaderTest extends TestCase
     {
         $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
+        $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
 
         self::assertFalse($result);
     }

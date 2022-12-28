@@ -34,6 +34,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Ramsey\Uuid\UuidInterface;
 
 class ModelUploader implements Uploader
 {
@@ -68,7 +69,7 @@ class ModelUploader implements Uploader
         return new UploadedModel($name, $previewUrl->toString());
     }
 
-    public function removeTemporaryFile(string $uuid): bool
+    public function removeTemporaryFile(UuidInterface $uuid): bool
     {
         try {
             UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
@@ -79,7 +80,7 @@ class ModelUploader implements Uploader
         }
     }
 
-    public function preview(string $uuid): Response
+    public function preview(UuidInterface $uuid): Response
     {
         $file = UploadedFileModel::fetchByUuidOrFail($uuid);
         $response = new Response($file->content);

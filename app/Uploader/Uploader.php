@@ -23,12 +23,13 @@ namespace Adshares\Adserver\Uploader;
 
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Illuminate\Http\Response;
+use Ramsey\Uuid\UuidInterface;
 
 interface Uploader
 {
     public function upload(Medium $medium): UploadedFile;
 
-    public function preview(string $uuid): Response;
+    public function preview(UuidInterface $uuid): Response;
 
-    public function removeTemporaryFile(string $uuid): bool;
+    public function removeTemporaryFile(UuidInterface $uuid): bool;
 }

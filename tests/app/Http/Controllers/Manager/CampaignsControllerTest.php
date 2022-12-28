@@ -150,7 +150,7 @@ final class CampaignsControllerTest extends TestCase
             ],
             'ad with invalid url (not existing name)' => [
                 fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([
-                    'url' => 'https://example.com/preview/images/01gmt6dvqqm5h4d908hwrh82jh',
+                    'url' => 'https://example.com/preview/images/971a7dfe-feec-48fc-808a-4c50ccb3a9c6',
                     ])]])]
             ],
             'ad size not in taxonomy' => [
@@ -880,7 +880,7 @@ final class CampaignsControllerTest extends TestCase
     {
         $this->createUser();
 
-        $response = $this->get('/upload-preview/image/01gmt6dvqqm5h4d908hwrh82jh');
+        $response = $this->get('/upload-preview/image/971a7dfe-feec-48fc-808a-4c50ccb3a9c6');
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }

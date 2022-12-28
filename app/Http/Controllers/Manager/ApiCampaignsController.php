@@ -237,7 +237,7 @@ class ApiCampaignsController extends Controller
         foreach ($input as $banner) {
             if (isset($banner['creative_type']) && isset($banner['url'])) {
                 Factory::createFromType($banner['creative_type'], $request)
-                    ->removeTemporaryFile(Utils::extractFilename($banner['url']));
+                    ->removeTemporaryFile(Uuid::fromString(Utils::extractFilename($banner['url'])));
             }
         }
     }

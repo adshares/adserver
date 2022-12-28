@@ -129,7 +129,7 @@ final class BannerCreatorTest extends TestCase
                     'scope' => '300x250',
                     'type' => Banner::TEXT_TYPE_IMAGE,
                     'name' => 'image 1',
-                    'url' => 'https://example.com/image/01gmt6dvqqm5h4d908hwrh82jh',
+                    'url' => 'https://example.com/image/971a7dfe-feec-48fc-808a-4c50ccb3a9c6',
                 ]]
             ],
             'scope does not match DB' => [

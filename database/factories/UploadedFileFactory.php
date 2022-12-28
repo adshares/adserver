@@ -25,7 +25,6 @@ namespace Database\Factories;
 
 use Adshares\Adserver\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 class UploadedFileFactory extends Factory
 {
@@ -33,7 +32,6 @@ class UploadedFileFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'ulid' => strtolower((string)Str::ulid()),
             'medium' => 'web',
             'vendor' => null,
             'mime' => 'image/png',
