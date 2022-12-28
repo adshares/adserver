@@ -44,10 +44,10 @@ use Adshares\Common\Exception\InvalidArgumentException;
 use Closure;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -74,7 +74,9 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
         $url = (string)$input['url'];
-        self::validateDomain(DomainReader::domain($url));
+        $domain = DomainReader::domain($url);
+        self::validateDomain($domain);
+
 
         $medium = $input['medium'] ?? null;
         $vendor = $input['vendor'] ?? null;
@@ -106,6 +108,9 @@ class SitesController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        if (null !== Site::fetchSite($user->id, $domain)) {
+            throw new UnprocessableEntityHttpException(sprintf('Site with domain `%s` exists', $domain));
+        }
 
         DB::beginTransaction();
 
@@ -200,6 +205,9 @@ class SitesController extends Controller
 
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
+            if ($updateDomainAndUrl && null !== Site::fetchSite($site->user_id, $domain)) {
+                throw new UnprocessableEntityHttpException(sprintf('Site with domain `%s` exists', $domain));
+            }
         }
         if (isset($input['only_accepted_banners'])) {
             if (!is_bool($input['only_accepted_banners'])) {
@@ -381,7 +389,7 @@ class SitesController extends Controller
         $user = Auth::user();
 
         if (!$user->is_confirmed) {
-            return self::json(['message' => 'Confirm account to get code'], JsonResponse::HTTP_FORBIDDEN);
+            return self::json(['message' => 'Confirm account to get code'], Response::HTTP_FORBIDDEN);
         }
 
         return self::json(['codes' => SiteCodeGenerator::generate($site, $request->toConfig())]);
