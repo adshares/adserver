@@ -111,7 +111,7 @@ final class ApiCampaignsControllerTest extends TestCase
     ];
     private const UPLOAD_STRUCTURE = [
         'data' => [
-            'name',
+            'id',
             'scope',
             'url',
         ],
