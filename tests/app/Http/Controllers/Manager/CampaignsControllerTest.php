@@ -184,7 +184,7 @@ final class CampaignsControllerTest extends TestCase
                 'creativeSize' => '300x250',
                 'creativeType' => 'image',
                 'name' => 'IMAGE 1',
-                'url' => 'http://localhost:8010/upload-preview/image/' . $file->ulid,
+                'url' => 'http://localhost:8010/upload-preview/image/' . $file->uuid,
             ],
             $mergeData,
         );
@@ -862,7 +862,7 @@ final class CampaignsControllerTest extends TestCase
         $user = $this->createUser();
         $file = UploadedFileModel::factory()->create(['user_id' => $user]);
 
-        $response = $this->get('/upload-preview/image/' . $file->ulid);
+        $response = $this->get('/upload-preview/image/' . $file->uuid);
 
         $response->assertStatus(Response::HTTP_OK);
     }

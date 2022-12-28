@@ -72,7 +72,7 @@ final class VideoUploaderTest extends TestCase
         ]);
         $uploader = new VideoUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->ulid);
+        $response = $uploader->preview($file->uuid);
 
         self::assertEquals('video/mp4', $response->headers->get('Content-Type'));
     }
@@ -82,7 +82,7 @@ final class VideoUploaderTest extends TestCase
         $file = UploadedFile::factory()->create();
         $uploader = new VideoUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile($file->ulid);
+        $result = $uploader->removeTemporaryFile($file->uuid);
 
         self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);

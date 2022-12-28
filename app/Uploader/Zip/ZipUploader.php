@@ -66,9 +66,9 @@ class ZipUploader implements Uploader
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
-        $name = $model->ulid;
+        $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'uid' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'uuid' => $name])
         );
 
         return new UploadedZip($name, $previewUrl->toString());
@@ -81,10 +81,10 @@ class ZipUploader implements Uploader
         return $zip->getHtml();
     }
 
-    public function removeTemporaryFile(string $fileName): bool
+    public function removeTemporaryFile(string $uuid): bool
     {
         try {
-            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+            UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
             return true;
         } catch (ModelNotFoundException $exception) {
             Log::warning(sprintf('Exception during zip file deletion (%s)', $exception->getMessage()));
@@ -92,9 +92,9 @@ class ZipUploader implements Uploader
         }
     }
 
-    public function preview(string $fileName): Response
+    public function preview(string $uuid): Response
     {
-        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
+        $file = UploadedFileModel::fetchByUuidOrFail($uuid);
 
         return new Response($file->content);
     }

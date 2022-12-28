@@ -47,7 +47,7 @@ final class BannerCreatorTest extends TestCase
             'creative_size' => '852x480',
             'creative_type' => Banner::TEXT_TYPE_VIDEO,
             'name' => 'video 1',
-            'url' => 'https://example.com/video/' . $file->ulid,
+            'url' => 'https://example.com/video/' . $file->uuid,
         ];
 
         $banners = $creator->prepareBannersFromInput([$input], $campaign);
@@ -73,7 +73,7 @@ final class BannerCreatorTest extends TestCase
             'creative_size' => '300x250',
             'creative_type' => Banner::TEXT_TYPE_HTML,
             'name' => 'html 1',
-            'url' => 'https://example.com/zip/' . $file->ulid,
+            'url' => 'https://example.com/zip/' . $file->uuid,
         ];
 
         $banners = $creator->prepareBannersFromInput([$input], $campaign);
@@ -137,7 +137,7 @@ final class BannerCreatorTest extends TestCase
                     'scope' => '336x280',
                     'type' => Banner::TEXT_TYPE_IMAGE,
                     'name' => 'image 1',
-                    'url' => 'https://example.com/image/' . UploadedFile::factory()->create()->ulid,
+                    'url' => 'https://example.com/image/' . UploadedFile::factory()->create()->uuid,
                 ]]
             ],
         ];

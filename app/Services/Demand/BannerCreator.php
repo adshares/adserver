@@ -69,11 +69,11 @@ class BannerCreator
                 case Banner::TEXT_TYPE_VIDEO:
                 case Banner::TEXT_TYPE_MODEL:
                 case Banner::TEXT_TYPE_HTML:
-                    $ulid = Utils::extractFilename($banner['url']);
+                    $uuid = Utils::extractFilename($banner['url']);
                     try {
-                        $file = UploadedFile::fetchByUlidOrFail($ulid);
+                        $file = UploadedFile::fetchByUuidOrFail($uuid);
                     } catch (ModelNotFoundException) {
-                        throw new InvalidArgumentException(sprintf('File `%s` does not exist', $ulid));
+                        throw new InvalidArgumentException(sprintf('File `%s` does not exist', $uuid));
                     }
                     if (null !== $file->size && $scope !== $file->size) {
                         throw new InvalidArgumentException(

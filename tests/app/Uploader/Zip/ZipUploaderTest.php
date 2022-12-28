@@ -88,7 +88,7 @@ final class ZipUploaderTest extends TestCase
         $file = UploadedFileModel::factory()->create();
         $uploader = new ZipUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile($file->ulid);
+        $result = $uploader->removeTemporaryFile($file->uuid);
 
         self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFileModel::class, ['id' => $file->id]);
@@ -111,7 +111,7 @@ final class ZipUploaderTest extends TestCase
         ]);
         $uploader = new ZipUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->ulid);
+        $response = $uploader->preview($file->uuid);
 
         self::assertEquals(200, $response->getStatusCode());
         self::assertEquals('html content', $response->getContent());

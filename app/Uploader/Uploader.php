@@ -28,7 +28,7 @@ interface Uploader
 {
     public function upload(Medium $medium): UploadedFile;
 
-    public function preview(string $fileName): Response;
+    public function preview(string $uuid): Response;
 
-    public function removeTemporaryFile(string $fileName): bool;
+    public function removeTemporaryFile(string $uuid): bool;
 }

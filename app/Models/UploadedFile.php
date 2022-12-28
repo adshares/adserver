@@ -2,9 +2,11 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -14,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int id
  * @property Carbon created_at
  * @property Carbon|null deleted_at
- * @property string ulid
+ * @property string $uuid
  * @property string medium
  * @property string|null vendor
  * @property string mime
@@ -25,8 +27,9 @@ use Illuminate\Support\Carbon;
  */
 class UploadedFile extends Model
 {
+    use AutomateMutators;
+    use BinHex;
     use HasFactory;
-    use HasUlids;
     use Ownership;
 
     public $timestamps = false;
@@ -34,6 +37,10 @@ class UploadedFile extends Model
     protected $dates = [
         'created_at',
         'deleted_at',
+    ];
+
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
     ];
 
     protected $fillable = [
@@ -44,19 +51,16 @@ class UploadedFile extends Model
         'content',
     ];
 
-    public static function fetchByUlidOrFail(string $ulid): self
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
+
+    public static function fetchByUuidOrFail(string $uuid): self
     {
-        $file = (new UploadedFile())->where('ulid', $ulid)->first();
+        $file = (new UploadedFile())->where('uuid', hex2bin($uuid))->first();
         if (null === $file) {
-            throw new ModelNotFoundException(sprintf('No query results for file %s', $ulid));
+            throw new ModelNotFoundException(sprintf('No query results for file %s', $uuid));
         }
         return $file;
-    }
-
-    public function uniqueIds(): array
-    {
-        return [
-            'ulid',
-        ];
     }
 }

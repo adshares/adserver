@@ -52,11 +52,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
-use Symfony\Component\Uid\Ulid;
 
 class CampaignsController extends Controller
 {
@@ -86,12 +88,14 @@ class CampaignsController extends Controller
         }
     }
 
-    public function uploadPreview(Request $request, string $type, string $uid): Response
+    public function uploadPreview(Request $request, string $type, string $uuid): Response
     {
-        if (!Ulid::isValid($uid)) {
-            throw new UnprocessableEntityHttpException(sprintf('Invalid ID (%s)', $uid));
+        try {
+            $uuidObject = Uuid::fromString($uuid);
+        } catch (InvalidUuidStringException) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid ID %s', $uuid));
         }
-        return Factory::createFromType($type, $request)->preview($uid);
+        return Factory::createFromType($type, $request)->preview($uuid);
     }
 
     public function preview($bannerPublicId): Response

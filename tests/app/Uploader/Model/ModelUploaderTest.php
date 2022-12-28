@@ -70,7 +70,7 @@ final class ModelUploaderTest extends TestCase
         ]);
         $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->ulid);
+        $response = $uploader->preview($file->uuid);
 
         self::assertEquals('glTF test content', $response->getContent());
         self::assertEquals('model/gltf-binary', $response->headers->get('Content-Type'));
@@ -84,7 +84,7 @@ final class ModelUploaderTest extends TestCase
         ]);
         $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->ulid);
+        $response = $uploader->preview($file->uuid);
 
         self::assertEquals('VOX test content', $response->getContent());
         self::assertEquals('model/voxel', $response->headers->get('Content-Type'));
@@ -103,7 +103,7 @@ final class ModelUploaderTest extends TestCase
         $file = UploadedFile::factory()->create();
         $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile($file->ulid);
+        $result = $uploader->removeTemporaryFile($file->uuid);
 
         self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);

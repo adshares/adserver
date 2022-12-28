@@ -284,7 +284,7 @@ final class ApiCampaignsControllerTest extends TestCase
             'creativeSize' => '980x120',
             'creativeType' => Banner::TEXT_TYPE_IMAGE,
             'name' => 'IMAGE 2',
-            'url' => 'https://example.com/upload-preview/image/' . $file->ulid,
+            'url' => 'https://example.com/upload-preview/image/' . $file->uuid,
         ]);
 
         $response->assertStatus(Response::HTTP_CREATED);
@@ -426,7 +426,7 @@ final class ApiCampaignsControllerTest extends TestCase
                 'name' => 'IMAGE 1',
                 'scope' => $file->size,
                 'type' => Banner::TEXT_TYPE_IMAGE,
-                'url' => 'https://example.com/upload-preview/image/' . $file->ulid,
+                'url' => 'https://example.com/upload-preview/image/' . $file->uuid,
             ],
             $mergeData,
         );

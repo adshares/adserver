@@ -60,18 +60,18 @@ class ModelUploader implements Uploader
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
-        $name = $model->ulid;
+        $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'uid' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'uuid' => $name])
         );
 
         return new UploadedModel($name, $previewUrl->toString());
     }
 
-    public function removeTemporaryFile(string $fileName): bool
+    public function removeTemporaryFile(string $uuid): bool
     {
         try {
-            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
+            UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
             return true;
         } catch (ModelNotFoundException $exception) {
             Log::warning(sprintf('Exception during model file deletion (%s)', $exception->getMessage()));
@@ -79,9 +79,9 @@ class ModelUploader implements Uploader
         }
     }
 
-    public function preview(string $fileName): Response
+    public function preview(string $uuid): Response
     {
-        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
+        $file = UploadedFileModel::fetchByUuidOrFail($uuid);
         $response = new Response($file->content);
         $response->header('Content-Type', $file->mime);
 
