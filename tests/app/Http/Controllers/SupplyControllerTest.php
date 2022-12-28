@@ -49,6 +49,7 @@ final class SupplyControllerTest extends TestCase
     private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
     private const SUPPLY_ANON_URI = '/supply/anon';
+    private const MAIN_JS_URI = '/main.js';
     private const LEGACY_FOUND_BANNERS_STRUCTURE = [
         'id',
         'publisher_id',
@@ -96,6 +97,15 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testMainJs(): void
+    {
+        $response = $this->get(self::MAIN_JS_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $js_content = $response->streamedContent();
+        $this->assertStringContainsString(config('app.foreign_default_site_js'), $js_content);
     }
 
     public function testPageWhyInvalidBannerId(): void
