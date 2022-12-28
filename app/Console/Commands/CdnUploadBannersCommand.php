@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,12 +32,13 @@ use Illuminate\Support\Facades\Log;
 
 class CdnUploadBannersCommand extends BaseCommand
 {
-    protected $signature = 'ops:demand:cdn:upload {provider?} {--campaignIds=} {--f|force}';
-
+    public const COMMAND_SIGNATURE = 'ops:demand:cdn:upload';
+    protected $signature = self::COMMAND_SIGNATURE . ' {provider?} {--campaignIds=} {--f|force}';
     protected $description = 'Upload banners to CDN';
 
     public function __construct(
-        Locker $locker
+        private readonly CampaignRepository $campaignRepository,
+        Locker $locker,
     ) {
         parent::__construct($locker);
     }
@@ -45,12 +46,11 @@ class CdnUploadBannersCommand extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command ' . $this->signature . ' already running');
-
+            $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
             return;
         }
 
-        $this->info('Start command ' . $this->signature);
+        $this->info('Start command ' . self::COMMAND_SIGNATURE);
 
         $cdn = CdnProviderFactory::getProvider($this->argument('provider'));
         if (null === $cdn) {
@@ -59,7 +59,8 @@ class CdnUploadBannersCommand extends BaseCommand
         }
 
         /** @var Banner $banner */
-        foreach ($this->getBanners() as $banner) {
+        foreach ($this->getBannerIds() as $bannerId) {
+            $banner = (new Banner())->find($bannerId);
             $this->getOutput()->write(sprintf('Uploading banner %s ', $banner->uuid));
             try {
                 $url = $cdn->uploadBanner($banner);
@@ -72,30 +73,29 @@ class CdnUploadBannersCommand extends BaseCommand
             }
         }
 
-        $this->info('Finish command ' . $this->signature);
+        $this->info('Finish command ' . self::COMMAND_SIGNATURE);
     }
 
-    private function getBanners(): array
+    private function getBannerIds(): array
     {
         if (null !== ($campaignIds = $this->option('campaignIds'))) {
             $campaignIds = explode(',', $campaignIds);
         }
 
-        $campaignRepository = new CampaignRepository();
-        $campaigns = $campaignIds !== null ? $campaignRepository->fetchCampaignByIds($campaignIds)
-            : $campaignRepository->fetchActiveCampaigns();
+        $campaigns = $campaignIds !== null ? $this->campaignRepository->fetchCampaignByIds($campaignIds)
+            : $this->campaignRepository->fetchActiveCampaigns();
 
-        $banners = [];
+        $bannerIds = [];
         foreach ($campaigns as $campaign) {
             $builder = $campaign->banners();
             if (!$this->option('force')) {
                 $builder->whereNull('cdn_url');
             }
-            foreach ($builder->get() as $banner) {
-                $banners[] = $banner;
-            }
+
+            $collection = $builder->get()->pluck('id')->toArray();
+            array_push($bannerIds, ...$collection);
         }
 
-        return $banners;
+        return $bannerIds;
     }
 }

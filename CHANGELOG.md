@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Allow creating campaign draft without creatives
 - Reading video dimensions with ffmpeg
+- Banner's content lazy loading
 - Forbid site duplicates
 
 ## [2.2.3] - 2022-12-19

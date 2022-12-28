@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,10 +32,10 @@ use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -43,21 +43,12 @@ use function sprintf;
 
 class ClassificationController extends Controller
 {
-    /** @var ClassifierExternalRepository */
-    private $classifierRepository;
-
-    /** @var ClassifierExternalSignatureVerifier */
-    private $signatureVerifier;
-
-    /** @var array */
-    private $notifyUserIds = [];
+    private array $notifyUserIds = [];
 
     public function __construct(
-        ClassifierExternalRepository $classifierRepository,
-        ClassifierExternalSignatureVerifier $signatureVerifier
+        private readonly ClassifierExternalRepository $classifierRepository,
+        private readonly ClassifierExternalSignatureVerifier $signatureVerifier,
     ) {
-        $this->classifierRepository = $classifierRepository;
-        $this->signatureVerifier = $signatureVerifier;
     }
 
     public function updateClassification(string $classifier, Request $request): JsonResponse

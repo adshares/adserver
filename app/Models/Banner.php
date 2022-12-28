@@ -80,6 +80,22 @@ class Banner extends Model
     public const SIZE_MAXIMAL_LENGTH = 16;
     public const TYPE_MAXIMAL_LENGTH = 32;
 
+    public const ALL_COLUMNS_EXCEPT_CONTENT = [
+        'id',
+        'uuid',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+        'campaign_id',
+        'creative_type',
+        'creative_mime',
+        'creative_sha1',
+        'creative_size',
+        'name',
+        'status',
+        'cdn_url',
+    ];
+
     protected $dates = [
         'deleted_at',
     ];
@@ -103,6 +119,7 @@ class Banner extends Model
 
     protected $hidden = [
         'campaign_id',
+        'creative_contents',
         'deleted_at',
     ];
 
@@ -118,16 +135,6 @@ class Banner extends Model
     ];
 
     protected $touches = ['campaign'];
-
-    public function getHidden()
-    {
-        $hidden = $this->hidden;
-        if ($this->creative_type !== self::TEXT_TYPE_DIRECT_LINK) {
-            $hidden[] = 'creative_contents';
-        }
-
-        return $hidden;
-    }
 
     public static function isStatusAllowed(int $status): bool
     {
@@ -195,7 +202,7 @@ class Banner extends Model
             $publicIds
         );
 
-        return self::whereIn('uuid', $binPublicIds)->get();
+        return self::whereIn('uuid', $binPublicIds)->get(self::ALL_COLUMNS_EXCEPT_CONTENT);
     }
 
     public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection
@@ -211,7 +218,7 @@ class Banner extends Model
             $builder->whereIn('id', $bannerIds);
         }
 
-        return $builder->get();
+        return $builder->get(self::ALL_COLUMNS_EXCEPT_CONTENT);
     }
 
     public function deactivate(): void
@@ -221,6 +228,7 @@ class Banner extends Model
             $this->save();
         }
     }
+
     public function classifications(): HasMany
     {
         return $this->hasMany(BannerClassification::class);
