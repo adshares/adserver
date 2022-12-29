@@ -217,6 +217,16 @@ class SitesControllerTest extends TestCase
         self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Zone::TYPE_POP]);
     }
 
+    public function testCreateSiteWhileExist(): void
+    {
+        $user = $this->login();
+        Site::factory()->create(['user_id' => $user]);
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     /**
      * @dataProvider createSiteUnprocessableProvider
      *
@@ -429,6 +439,23 @@ class SitesControllerTest extends TestCase
         $site->refresh();
         self::assertEquals(0, $site->rank);
         self::assertEquals('unknown', $site->info);
+    }
+
+    public function testUpdateSiteUrlFailWhenExists(): void
+    {
+        $user = $this->setupUser();
+        Site::factory()->create([
+            'domain' => 'example2.com',
+            'url' => 'https://example2.com',
+            'user_id' => $user->id,
+        ]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        $url = 'https://example2.com';
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => $url]]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUpdateSiteOnlyAcceptedBanners(): void

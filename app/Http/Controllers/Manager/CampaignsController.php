@@ -49,6 +49,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
@@ -58,6 +59,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Throwable;
 
 class CampaignsController extends Controller
 {
@@ -423,23 +425,32 @@ class CampaignsController extends Controller
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
-        $clonedCampaign = $campaign->replicate();
-        $clonedCampaign->status = Campaign::STATUS_DRAFT;
-        $clonedCampaign->name = sprintf('%s (Cloned)', $campaign->name);
-        $clonedCampaign->saveOrFail();
+        DB::beginTransaction();
+        try {
+            $clonedCampaign = $campaign->replicate();
+            $clonedCampaign->status = Campaign::STATUS_DRAFT;
+            $clonedCampaign->name = sprintf('%s (Cloned)', $campaign->name);
+            $clonedCampaign->saveOrFail();
 
-        foreach ($campaign->conversions as $conversion) {
-            $clonedConversion = $conversion->replicate();
-            $clonedConversion->campaign_id = $clonedCampaign->id;
-            $clonedConversion->cost = 0;
-            $clonedConversion->occurrences = 0;
-            $clonedConversion->saveOrFail();
-        }
+            foreach ($campaign->conversions as $conversion) {
+                $clonedConversion = $conversion->replicate();
+                $clonedConversion->campaign_id = $clonedCampaign->id;
+                $clonedConversion->cost = 0;
+                $clonedConversion->occurrences = 0;
+                $clonedConversion->saveOrFail();
+            }
 
-        foreach ($campaign->banners as $banner) {
-            $clonedBanner = $banner->replicate();
-            $clonedBanner->campaign_id = $clonedCampaign->id;
-            $clonedBanner->saveOrFail();
+            $campaign->bannersWithContent()->chunk(1, function ($chunk) use ($clonedCampaign) {
+                $banner = $chunk->first();
+                $clonedBanner = $banner->replicate();
+                $clonedBanner->campaign_id = $clonedCampaign->id;
+                $clonedBanner->saveOrFail();
+            });
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Exception during cloning campaign (%s)', $throwable->getMessage()));
+            throw $throwable;
         }
 
         return self::json($clonedCampaign->toArray(), Response::HTTP_CREATED)->header(
