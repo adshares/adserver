@@ -47,7 +47,7 @@ class ZipUploader implements Uploader
     {
     }
 
-    public function upload(Medium $medium): UploadedFile
+    public function upload(Medium $medium, string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
         $size = $file->getSize();
@@ -62,7 +62,7 @@ class ZipUploader implements Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => 'text/html',
-            'size' => null,
+            'size' => $scope,
             'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);

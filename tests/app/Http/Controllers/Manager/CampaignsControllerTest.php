@@ -825,12 +825,24 @@ final class CampaignsControllerTest extends TestCase
     {
         return [
             'no file' => [[]],
-            'no medium' => [['file' => UploadedFile::fake()->image('photo.jpg', 300, 250)]],
+            'no medium' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'type' => 'image',
+                ]
+            ],
+            'no type' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'medium' => 'web',
+                ]
+            ],
             'invalid vendor' => [
                 [
                     'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                     'medium' => 'web',
                     'vendor' => 'premium',
+                    'type' => 'image',
                 ]
             ],
             'invalid vendor type' => [
@@ -838,6 +850,14 @@ final class CampaignsControllerTest extends TestCase
                     'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                     'medium' => 'web',
                     'vendor' => 1,
+                    'type' => 'image',
+                ]
+            ],
+            'invalid type of type' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'medium' => 'web',
+                    'type' => 1,
                 ]
             ],
         ];
@@ -852,6 +872,7 @@ final class CampaignsControllerTest extends TestCase
             [
                 'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                 'medium' => 'web',
+                'type' => 'image',
             ]
         );
         $response->assertStatus(Response::HTTP_OK);

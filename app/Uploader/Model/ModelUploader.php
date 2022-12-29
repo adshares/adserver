@@ -44,7 +44,7 @@ class ModelUploader implements Uploader
     {
     }
 
-    public function upload(Medium $medium): UploadedFile
+    public function upload(Medium $medium, string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
         $size = $file->getSize();

@@ -45,12 +45,12 @@ final class ZipUploaderTest extends TestCase
         $uploader = new ZipUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        $uploaded = $uploader->upload($medium);
+        $uploaded = $uploader->upload($medium, '300x250');
 
         self::assertInstanceOf(UploadedZip::class, $uploaded);
         self::assertDatabaseHas(UploadedFileModel::class, [
             'mime' => 'text/html',
-            'size' => null,
+            'size' => '300x250',
         ]);
     }
 
@@ -69,7 +69,7 @@ final class ZipUploaderTest extends TestCase
 
         self::expectException(RuntimeException::class);
 
-        (new ZipUploader($request))->upload($medium);
+        (new ZipUploader($request))->upload($medium, '300x250');
     }
 
     public function testUploadFailWhileSizeTooLarge(): void
@@ -81,7 +81,7 @@ final class ZipUploaderTest extends TestCase
 
         self::expectException(RuntimeException::class);
 
-        $uploader->upload($medium);
+        $uploader->upload($medium, '300x250');
     }
 
     public function testRemoveTemporaryFile(): void

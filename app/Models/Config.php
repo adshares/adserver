@@ -170,6 +170,7 @@ class Config extends Model
     public const SUPPORT_EMAIL = 'support-email';
     public const SUPPORT_TELEGRAM = 'support-telegram';
     public const TECHNICAL_EMAIL = 'technical-email';
+    public const UPLOAD_LIMIT_DIRECT_LINK = 'upload-limit-direct-link';
     public const UPLOAD_LIMIT_IMAGE = 'upload-limit-image';
     public const UPLOAD_LIMIT_MODEL = 'upload-limit-model';
     public const UPLOAD_LIMIT_VIDEO = 'upload-limit-video';
@@ -255,6 +256,7 @@ class Config extends Model
         self::REFERRAL_REFUND_COMMISSION => ConfigTypes::Float,
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
+        self::UPLOAD_LIMIT_DIRECT_LINK => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_VIDEO => ConfigTypes::Integer,
@@ -531,6 +533,7 @@ class Config extends Model
             self::SUPPORT_EMAIL => 'mail@example.com',
             self::SUPPORT_TELEGRAM => null,
             self::TECHNICAL_EMAIL => 'mail@example.com',
+            self::UPLOAD_LIMIT_DIRECT_LINK => 1024,
             self::UPLOAD_LIMIT_IMAGE => 512 * 1024,
             self::UPLOAD_LIMIT_MODEL => 1024 * 1024,
             self::UPLOAD_LIMIT_VIDEO => 1024 * 1024,

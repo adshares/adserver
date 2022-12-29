@@ -112,7 +112,6 @@ final class ApiCampaignsControllerTest extends TestCase
     private const UPLOAD_STRUCTURE = [
         'data' => [
             'id',
-            'scope',
             'url',
         ],
     ];
@@ -544,7 +543,6 @@ final class ApiCampaignsControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::UPLOAD_STRUCTURE);
-        $response->assertJsonPath('data.scope', '300x250');
     }
 
     private static function buildUriCampaign(Campaign $campaign): string

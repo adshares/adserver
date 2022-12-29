@@ -75,15 +75,23 @@ class CampaignsController extends Controller
     {
         $mediumName = $request->get('medium');
         $vendor = $request->get('vendor');
+        $type = $request->get('type');
+        $scope = $request->get('scope');
         if (!is_string($mediumName)) {
             throw new UnprocessableEntityHttpException('Field `medium` must be a string');
         }
         if (null !== $vendor && !is_string($vendor)) {
             throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null');
         }
+        if (!is_string($type)) {
+            throw new UnprocessableEntityHttpException('Field `type` must be a string');
+        }
+        if (null !== $scope && !is_string($scope)) {
+            throw new UnprocessableEntityHttpException('Field `scope` must be a string or null');
+        }
         try {
             $medium = $this->configurationRepository->fetchMedium($mediumName, $vendor);
-            return Factory::create($request)->upload($medium);
+            return Factory::create($request)->upload($medium, $scope);
         } catch (InvalidArgumentException | RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }

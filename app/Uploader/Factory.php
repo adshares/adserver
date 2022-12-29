@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader;
 
+use Adshares\Adserver\Uploader\DirectLink\DirectLinkUploader;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
@@ -57,6 +58,10 @@ class Factory
             return new VideoUploader($request);
         }
 
+        if ('text/plain' === $mimeType) {
+            return new DirectLinkUploader($request);
+        }
+
         if ('application/octet-stream' === $mimeType) {
             $filePrefix = substr($file->get(), 0, 4);
             if ('glTF' === $filePrefix || 'VOX ' === $filePrefix) {
@@ -73,18 +78,12 @@ class Factory
 
     public static function createFromType(string $type, Request $request): Uploader
     {
-        if ($type === ZipUploader::ZIP_FILE) {
-            return new ZipUploader($request);
-        }
-
-        if ($type === VideoUploader::VIDEO_FILE) {
-            return new VideoUploader($request);
-        }
-
-        if ($type === ModelUploader::MODEL_FILE) {
-            return new ModelUploader($request);
-        }
-
-        return new ImageUploader($request);
+        return match ($type) {
+            ZipUploader::ZIP_FILE => new ZipUploader($request),
+            DirectLinkUploader::DIRECT_LINK_FILE => new DirectLinkUploader($request),
+            VideoUploader::VIDEO_FILE => new VideoUploader($request),
+            ModelUploader::MODEL_FILE => new ModelUploader($request),
+            default => new ImageUploader($request),
+        };
     }
 }

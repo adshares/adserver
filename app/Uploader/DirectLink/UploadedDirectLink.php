@@ -19,17 +19,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Uploader;
+declare(strict_types=1);
 
-use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
-use Illuminate\Http\Response;
-use Ramsey\Uuid\UuidInterface;
+namespace Adshares\Adserver\Uploader\DirectLink;
 
-interface Uploader
+use Adshares\Adserver\Uploader\UploadedFile;
+
+class UploadedDirectLink implements UploadedFile
 {
-    public function upload(Medium $medium, string $scope = null): UploadedFile;
+    public function __construct(
+        private readonly string $name,
+        private readonly string $previewUrl,
+    ) {
+    }
 
-    public function preview(UuidInterface $uuid): Response;
-
-    public function removeTemporaryFile(UuidInterface $uuid): bool;
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'url' => $this->previewUrl,
+        ];
+    }
 }

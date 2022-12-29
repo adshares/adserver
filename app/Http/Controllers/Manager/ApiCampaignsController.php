@@ -225,13 +225,7 @@ class ApiCampaignsController extends Controller
     {
         $file = $campaignsController->upload($request);
         $data = $file->toArray();
-        $data['id'] = $data['name'];
-        unset($data['name']);
-        if (array_key_exists('size', $data)) {
-            $data['scope'] = $data['size'];
-            unset($data['size']);
-        }
-        return new JsonResponse(['data' => $data]);
+        return new JsonResponse(['data' => ['id' => $data['name'], 'url' => $data['url']]]);
     }
 
     private static function removeTemporaryUploadedFiles(array $input, Request $request): void

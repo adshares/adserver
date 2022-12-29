@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Uploader\Image;
+namespace Adshares\Adserver\Uploader\DirectLink;
 
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -29,7 +29,6 @@ use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -37,10 +36,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\UuidInterface;
 
-class ImageUploader implements Uploader
+class DirectLinkUploader implements Uploader
 {
-    public const IMAGE_FILE = 'image';
-    private const FORMAT_TYPE_IMAGE = 'image';
+    public const DIRECT_LINK_FILE = 'direct';
 
     public function __construct(private readonly Request $request)
     {
@@ -49,30 +47,27 @@ class ImageUploader implements Uploader
     public function upload(Medium $medium, string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
+        $content = $file->getContent();
         $size = $file->getSize();
-        if (!$size || $size > config('app.upload_limit_image')) {
-            throw new RuntimeException('Invalid image size');
+        if ($size > config('app.upload_limit_direct_link')) {
+            throw new RuntimeException('Invalid direct link length');
         }
-        $imageSize = getimagesize($file->getRealPath());
-        $width = $imageSize[0];
-        $height = $imageSize[1];
-        $this->validateDimensions($medium, $width, $height);
 
         $model = new UploadedFileModel([
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $file->getMimeType(),
-            'size' => Size::fromDimensions($width, $height),
-            'content' => $file->getContent(),
+            'size' => $scope,
+            'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
         $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'uuid' => $name])
+            route('app.campaigns.upload_preview', ['type' => self::DIRECT_LINK_FILE, 'uuid' => $name])
         );
 
-        return new UploadedImage($name, $previewUrl->toString(), $width, $height);
+        return new UploadedDirectLink($name, $previewUrl->toString());
     }
 
     public function removeTemporaryFile(UuidInterface $uuid): bool
@@ -81,7 +76,7 @@ class ImageUploader implements Uploader
             UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
             return true;
         } catch (ModelNotFoundException $exception) {
-            Log::warning(sprintf('Exception during image file deletion (%s)', $exception->getMessage()));
+            Log::warning(sprintf('Exception during direct link file deletion (%s)', $exception->getMessage()));
             return false;
         }
     }
@@ -93,17 +88,5 @@ class ImageUploader implements Uploader
         $response->header('Content-Type', $file->mime);
 
         return $response;
-    }
-
-    private function validateDimensions(Medium $medium, int $width, int $height): void
-    {
-        $size = Size::fromDimensions($width, $height);
-        foreach ($medium->getFormats() as $format) {
-            if (self::FORMAT_TYPE_IMAGE === $format->getType() && in_array($size, array_keys($format->getScopes()))) {
-                return;
-            }
-        }
-
-        throw new RuntimeException('Unsupported image size');
     }
 }
