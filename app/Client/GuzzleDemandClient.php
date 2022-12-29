@@ -35,7 +35,6 @@ use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Common\UrlInterface;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -236,7 +235,7 @@ final class GuzzleDemandClient implements DemandClient
     {
         $decoded = json_decode($body, true);
         if (!is_array($decoded)) {
-            throw new DomainRuntimeException('Invalid json data.');
+            throw new UnexpectedClientResponseException('Invalid json data.');
         }
         return $decoded;
     }
