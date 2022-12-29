@@ -21,11 +21,11 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Uploader\Zip;
+namespace Adshares\Adserver\Uploader\Html;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 
-class UploadedZip implements UploadedFile
+class UploadedHtml implements UploadedFile
 {
     public function __construct(private readonly string $name, private readonly string $previewUrl)
     {

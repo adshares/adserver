@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Uploader\Zip;
+namespace Adshares\Adserver\Uploader\Html;
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
@@ -39,7 +39,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Ramsey\Uuid\UuidInterface;
 
-class ZipUploader implements Uploader
+class HtmlUploader implements Uploader
 {
     private const MIME_ZIP_LIST = [
         'application/zip',
@@ -87,7 +87,7 @@ class ZipUploader implements Uploader
             route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_HTML, 'uuid' => $name])
         );
 
-        return new UploadedZip($name, $previewUrl->toString());
+        return new UploadedHtml($name, $previewUrl->toString());
     }
 
     private function extractHtmlContent(string $name): string

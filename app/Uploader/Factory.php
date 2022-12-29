@@ -28,7 +28,7 @@ use Adshares\Adserver\Uploader\DirectLink\DirectLinkUploader;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Illuminate\Http\Request;
 
 class Factory
@@ -66,7 +66,7 @@ class Factory
     public static function createFromType(string $type, Request $request): Uploader
     {
         return match ($type) {
-            Banner::TEXT_TYPE_HTML => new ZipUploader($request),
+            Banner::TEXT_TYPE_HTML => new HtmlUploader($request),
             Banner::TEXT_TYPE_DIRECT_LINK => new DirectLinkUploader($request),
             Banner::TEXT_TYPE_VIDEO => new VideoUploader($request),
             Banner::TEXT_TYPE_MODEL => new ModelUploader($request),

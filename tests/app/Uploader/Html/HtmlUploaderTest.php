@@ -21,14 +21,14 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Tests\Uploader\Zip;
+namespace Adshares\Adserver\Tests\Uploader\Html;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Adserver\Uploader\Zip\UploadedZip;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\Uploader\Html\UploadedHtml;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
@@ -38,16 +38,16 @@ use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
 use Ramsey\Uuid\Uuid;
 
-final class ZipUploaderTest extends TestCase
+final class HtmlUploaderTest extends TestCase
 {
     public function testUpload(): void
     {
-        $uploader = new ZipUploader($this->getRequestMock());
+        $uploader = new HtmlUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         $uploaded = $uploader->upload($medium, '300x250');
 
-        self::assertInstanceOf(UploadedZip::class, $uploaded);
+        self::assertInstanceOf(UploadedHtml::class, $uploaded);
         self::assertDatabaseHas(UploadedFileModel::class, [
             'mime' => 'text/html',
             'size' => '300x250',
@@ -69,14 +69,14 @@ final class ZipUploaderTest extends TestCase
 
         self::expectException(RuntimeException::class);
 
-        (new ZipUploader($request))->upload($medium, '300x250');
+        (new HtmlUploader($request))->upload($medium, '300x250');
     }
 
     public function testUploadFailWhileSizeTooLarge(): void
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_ZIP => 0]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $uploader = new ZipUploader($this->getRequestMock());
+        $uploader = new HtmlUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
@@ -87,7 +87,7 @@ final class ZipUploaderTest extends TestCase
     public function testRemoveTemporaryFile(): void
     {
         $file = UploadedFileModel::factory()->create();
-        $uploader = new ZipUploader(self::createMock(Request::class));
+        $uploader = new HtmlUploader(self::createMock(Request::class));
 
         $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
 
@@ -97,7 +97,7 @@ final class ZipUploaderTest extends TestCase
 
     public function testRemoveTemporaryFileQuietError(): void
     {
-        $uploader = new ZipUploader(self::createMock(Request::class));
+        $uploader = new HtmlUploader(self::createMock(Request::class));
 
         $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
 
@@ -110,7 +110,7 @@ final class ZipUploaderTest extends TestCase
             'mime' => 'text/html',
             'content' => 'html content',
         ]);
-        $uploader = new ZipUploader(self::createMock(Request::class));
+        $uploader = new HtmlUploader(self::createMock(Request::class));
 
         $response = $uploader->preview(Uuid::fromString($file->uuid));
 

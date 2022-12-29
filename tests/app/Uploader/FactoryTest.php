@@ -29,7 +29,7 @@ use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Illuminate\Http\Request;
 
 final class FactoryTest extends TestCase
@@ -48,7 +48,7 @@ final class FactoryTest extends TestCase
     public function typesProvider(): array
     {
         return [
-            ['html', ZipUploader::class],
+            ['html', HtmlUploader::class],
             ['video', VideoUploader::class],
             ['model', ModelUploader::class],
             ['image', ImageUploader::class],
