@@ -91,7 +91,7 @@ class CampaignsController extends Controller
         }
         try {
             $medium = $this->configurationRepository->fetchMedium($mediumName, $vendor);
-            return Factory::create($request)->upload($medium, $scope);
+            return Factory::createFromType($type, $request)->upload($medium, $scope);
         } catch (InvalidArgumentException | RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }

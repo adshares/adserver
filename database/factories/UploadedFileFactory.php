@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -32,6 +33,7 @@ class UploadedFileFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'type' => Banner::TEXT_TYPE_IMAGE,
             'medium' => 'web',
             'vendor' => null,
             'mime' => 'image/png',

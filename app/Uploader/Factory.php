@@ -23,66 +23,53 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader;
 
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Uploader\DirectLink\DirectLinkUploader;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
-use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Http\Request;
 
 class Factory
 {
-    private const MIME_VIDEO_LIST = [
-        'video/mp4',
-    ];
-
-    private const MIME_ZIP_LIST = [
-        'application/zip',
-        'application/x-compressed',
-        'multipart/x-zip',
-        'application/octet-stream',
-        'application/x-zip',
-        'application/x-zip-compressed',
-    ];
-
-    public static function create(Request $request): Uploader
-    {
-        $file = $request->file('file');
-        if (null === $file) {
-            throw new RuntimeException('File is required');
-        }
-        $mimeType = $file->getMimeType();
-
-        if (in_array($mimeType, self::MIME_VIDEO_LIST, true)) {
-            return new VideoUploader($request);
-        }
-
-        if ('text/plain' === $mimeType) {
-            return new DirectLinkUploader($request);
-        }
-
-        if ('application/octet-stream' === $mimeType) {
-            $filePrefix = substr($file->get(), 0, 4);
-            if ('glTF' === $filePrefix || 'VOX ' === $filePrefix) {
-                return new ModelUploader($request);
-            }
-        }
-
-        if (in_array($mimeType, self::MIME_ZIP_LIST, true)) {
-            return new ZipUploader($request);
-        }
-
-        return new ImageUploader($request);
-    }
+    //TODO clean up
+//    private const MIME_VIDEO_LIST = [
+//        'video/mp4',
+//    ];
+//    public static function create(Request $request): Uploader
+//    {
+//        $file = $request->file('file');
+//        if (null === $file) {
+//            throw new RuntimeException('File is required');
+//        }
+//        $mimeType = $file->getMimeType();
+//
+//        if (in_array($mimeType, self::MIME_VIDEO_LIST, true)) {
+//            return new VideoUploader($request);
+//        }
+//
+//        if ('text/plain' === $mimeType) {
+//            return new DirectLinkUploader($request);
+//        }
+//
+//        if ('application/octet-stream' === $mimeType) {
+//            $filePrefix = substr($file->get(), 0, 4);
+//            if ('glTF' === $filePrefix || 'VOX ' === $filePrefix) {
+//                return new ModelUploader($request);
+//            }
+//        }
+//
+//        return new ImageUploader($request);
+//    }
 
     public static function createFromType(string $type, Request $request): Uploader
     {
         return match ($type) {
-            ZipUploader::ZIP_FILE => new ZipUploader($request),
-            DirectLinkUploader::DIRECT_LINK_FILE => new DirectLinkUploader($request),
-            VideoUploader::VIDEO_FILE => new VideoUploader($request),
-            ModelUploader::MODEL_FILE => new ModelUploader($request),
+            Banner::TEXT_TYPE_HTML => new ZipUploader($request),
+            Banner::TEXT_TYPE_DIRECT_LINK => new DirectLinkUploader($request),
+            Banner::TEXT_TYPE_VIDEO => new VideoUploader($request),
+            Banner::TEXT_TYPE_MODEL => new ModelUploader($request),
             default => new ImageUploader($request),
         };
     }

@@ -38,6 +38,7 @@ return new class extends Migration
             $table->binary('uuid');
             $table->timestamp('created_at')->useCurrent()->index();
             $table->unsignedBigInteger('user_id');
+            $table->string('type', 32);
             $table->string('medium', 16)->default('web');
             $table->string('vendor', 32)->nullable();
             $table->string('mime', self::MAXIMAL_MIME_TYPE_LENGTH);

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Zip;
 
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
@@ -40,8 +41,15 @@ use Ramsey\Uuid\UuidInterface;
 
 class ZipUploader implements Uploader
 {
-    public const ZIP_FILE = 'zip';
-    private const ZIP_DISK = 'banners';
+    private const MIME_ZIP_LIST = [
+        'application/zip',
+        'application/x-compressed',
+        'multipart/x-zip',
+        'application/octet-stream',
+        'application/x-zip',
+        'application/x-zip-compressed',
+    ];
+    private const HTML_DISK = 'banners';
 
     public function __construct(private readonly Request $request)
     {
@@ -50,15 +58,22 @@ class ZipUploader implements Uploader
     public function upload(Medium $medium, string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
+        if (!in_array($file->getMimeType(), self::MIME_ZIP_LIST, true)) {
+            throw new RuntimeException('File must be a zip archive');
+        }
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_zip')) {
             throw new RuntimeException('Invalid zip size');
         }
-        $name = $file->store('', self::ZIP_DISK);
+        $name = $file->store('', self::HTML_DISK);
         $content = $this->extractHtmlContent($name);
-        Storage::disk(self::ZIP_DISK)->delete($name);
+        Storage::disk(self::HTML_DISK)->delete($name);
 
         $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_HTML,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => 'text/html',
@@ -69,7 +84,7 @@ class ZipUploader implements Uploader
 
         $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'uuid' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_HTML, 'uuid' => $name])
         );
 
         return new UploadedZip($name, $previewUrl->toString());
@@ -77,7 +92,7 @@ class ZipUploader implements Uploader
 
     private function extractHtmlContent(string $name): string
     {
-        $path = Storage::disk(self::ZIP_DISK)->path($name);
+        $path = Storage::disk(self::HTML_DISK)->path($name);
         $zip = new ZipToHtml($path);
         return $zip->getHtml();
     }

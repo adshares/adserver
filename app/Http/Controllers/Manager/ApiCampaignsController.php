@@ -231,8 +231,8 @@ class ApiCampaignsController extends Controller
     private static function removeTemporaryUploadedFiles(array $input, Request $request): void
     {
         foreach ($input as $banner) {
-            if (isset($banner['creative_type']) && isset($banner['url'])) {
-                Factory::createFromType($banner['creative_type'], $request)
+            if (isset($banner['type']) && isset($banner['url'])) {
+                Factory::createFromType($banner['type'], $request)
                     ->removeTemporaryFile(Uuid::fromString(Utils::extractFilename($banner['url'])));
             }
         }

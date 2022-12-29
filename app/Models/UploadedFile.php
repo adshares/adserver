@@ -45,6 +45,7 @@ class UploadedFile extends Model
     ];
 
     protected $fillable = [
+        'type',
         'medium',
         'vendor',
         'mime',

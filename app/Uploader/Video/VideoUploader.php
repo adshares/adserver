@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Video;
 
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
@@ -42,7 +43,6 @@ use Ramsey\Uuid\UuidInterface;
 
 class VideoUploader implements Uploader
 {
-    public const VIDEO_FILE = 'video';
     private const FORMAT_TYPE_VIDEO = 'video';
 
     public function __construct(private readonly Request $request)
@@ -52,6 +52,9 @@ class VideoUploader implements Uploader
     public function upload(Medium $medium, string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_video')) {
             throw new RuntimeException('Invalid video size');
@@ -61,6 +64,7 @@ class VideoUploader implements Uploader
         $this->validateDimensions($medium, $width, $height);
 
         $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_VIDEO,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $file->getMimeType(),
@@ -71,7 +75,7 @@ class VideoUploader implements Uploader
 
         $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::VIDEO_FILE, 'uuid' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_VIDEO, 'uuid' => $name])
         );
 
         return new UploadedVideo($name, $previewUrl->toString(), $width, $height);

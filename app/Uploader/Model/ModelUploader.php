@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Model;
 
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
@@ -38,8 +39,6 @@ use Ramsey\Uuid\UuidInterface;
 
 class ModelUploader implements Uploader
 {
-    public const MODEL_FILE = 'model';
-
     public function __construct(private readonly Request $request)
     {
     }
@@ -47,23 +46,28 @@ class ModelUploader implements Uploader
     public function upload(Medium $medium, string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_model')) {
             throw new RuntimeException('Invalid model size');
         }
 
+        $content = $file->getContent();
         $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_MODEL,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => self::contentMimeType($file->getContent()),
+            'mime' => self::contentMimeType($content),
             'size' => 'cube',
-            'content' => $file->getContent(),
+            'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
         $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'uuid' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_MODEL, 'uuid' => $name])
         );
 
         return new UploadedModel($name, $previewUrl->toString());

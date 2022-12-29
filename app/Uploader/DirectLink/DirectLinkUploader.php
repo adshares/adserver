@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\DirectLink;
 
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
@@ -38,8 +39,6 @@ use Ramsey\Uuid\UuidInterface;
 
 class DirectLinkUploader implements Uploader
 {
-    public const DIRECT_LINK_FILE = 'direct';
-
     public function __construct(private readonly Request $request)
     {
     }
@@ -47,6 +46,9 @@ class DirectLinkUploader implements Uploader
     public function upload(Medium $medium, string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
         $content = $file->getContent();
         $size = $file->getSize();
         if ($size > config('app.upload_limit_direct_link')) {
@@ -54,6 +56,7 @@ class DirectLinkUploader implements Uploader
         }
 
         $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_DIRECT_LINK,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $file->getMimeType(),
@@ -64,7 +67,7 @@ class DirectLinkUploader implements Uploader
 
         $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::DIRECT_LINK_FILE, 'uuid' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_DIRECT_LINK, 'uuid' => $name])
         );
 
         return new UploadedDirectLink($name, $previewUrl->toString());
