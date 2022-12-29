@@ -235,7 +235,7 @@ final class GuzzleDemandClient implements DemandClient
     {
         $decoded = json_decode($body, true);
         if (!is_array($decoded)) {
-            throw new RuntimeException('Invalid json data.');
+            throw new UnexpectedClientResponseException('Invalid json data.');
         }
         return $decoded;
     }

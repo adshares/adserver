@@ -28,7 +28,6 @@ use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -83,7 +82,7 @@ class InventoryImporterCommand extends BaseCommand
 
                 $networkHost->connectionSuccessful();
                 ++$networkHostSuccessfulConnectionCount;
-            } catch (UnexpectedClientResponseException | RuntimeException $exception) {
+            } catch (UnexpectedClientResponseException $exception) {
                 $networkHost->connectionFailed();
 
                 $this->warn(
