@@ -25,14 +25,13 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Resources\BannerResource;
 use Adshares\Adserver\Http\Resources\CampaignResource;
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Services\Demand\CampaignCreator;
-use Adshares\Adserver\Uploader\Factory;
+use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -79,7 +78,7 @@ class ApiCampaignsController extends Controller
         }
 
         CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
-        self::removeTemporaryUploadedFiles($creatives, $request);
+        self::removeTemporaryUploadedFiles($creatives);
 
         return (new CampaignResource($campaign))
             ->response()
@@ -169,7 +168,7 @@ class ApiCampaignsController extends Controller
         /** @var Banner $banner */
         $banner = $campaign->banners()->where('id', $bannerId)->first();
 
-        self::removeTemporaryUploadedFiles([$request->input()], $request);
+        self::removeTemporaryUploadedFiles([$request->input()]);
 
         return (new BannerResource($banner))
             ->response()
@@ -228,13 +227,10 @@ class ApiCampaignsController extends Controller
         return new JsonResponse(['data' => ['id' => $data['name'], 'url' => $data['url']]]);
     }
 
-    private static function removeTemporaryUploadedFiles(array $input, Request $request): void
+    private static function removeTemporaryUploadedFiles(array $input): void
     {
-        foreach ($input as $banner) {
-            if (isset($banner['type']) && isset($banner['url'])) {
-                Factory::createFromType($banner['type'], $request)
-                    ->removeTemporaryFile(Uuid::fromString(Utils::extractFilename($banner['url'])));
-            }
+        foreach ($input as $bannerMetaData) {
+            Uploader::removeTemporaryFile(Uuid::fromString($bannerMetaData['id']));
         }
     }
 

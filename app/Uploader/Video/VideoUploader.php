@@ -34,14 +34,11 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use FFMpeg\Exception\ExecutableNotFoundException;
 use FFMpeg\FFProbe;
 use getID3;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Ramsey\Uuid\UuidInterface;
 
-class VideoUploader implements Uploader
+class VideoUploader extends Uploader
 {
     private const FORMAT_TYPE_VIDEO = 'video';
 
@@ -96,26 +93,6 @@ class VideoUploader implements Uploader
             }
         }
         return [];
-    }
-
-    public function removeTemporaryFile(UuidInterface $uuid): bool
-    {
-        try {
-            UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
-            return true;
-        } catch (ModelNotFoundException $exception) {
-            Log::warning(sprintf('Exception during video file deletion (%s)', $exception->getMessage()));
-            return false;
-        }
-    }
-
-    public function preview(UuidInterface $uuid): Response
-    {
-        $file = UploadedFileModel::fetchByUuidOrFail($uuid);
-        $response = new Response($file->content);
-        $response->header('Content-Type', $file->mime);
-
-        return $response;
     }
 
     private function getVideoDimensions(string $realPath): array

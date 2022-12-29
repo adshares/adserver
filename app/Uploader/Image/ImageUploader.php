@@ -31,14 +31,10 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Ramsey\Uuid\UuidInterface;
 
-class ImageUploader implements Uploader
+class ImageUploader extends Uploader
 {
     private const FORMAT_TYPE_IMAGE = 'image';
 
@@ -77,26 +73,6 @@ class ImageUploader implements Uploader
         );
 
         return new UploadedImage($name, $previewUrl->toString(), $width, $height);
-    }
-
-    public function removeTemporaryFile(UuidInterface $uuid): bool
-    {
-        try {
-            UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
-            return true;
-        } catch (ModelNotFoundException $exception) {
-            Log::warning(sprintf('Exception during image file deletion (%s)', $exception->getMessage()));
-            return false;
-        }
-    }
-
-    public function preview(UuidInterface $uuid): Response
-    {
-        $file = UploadedFileModel::fetchByUuidOrFail($uuid);
-        $response = new Response($file->content);
-        $response->header('Content-Type', $file->mime);
-
-        return $response;
     }
 
     private function validateDimensions(Medium $medium, int $width, int $height): void

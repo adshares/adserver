@@ -21,15 +21,33 @@
 
 namespace Adshares\Adserver\Uploader;
 
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\UuidInterface;
 
-interface Uploader
+abstract class Uploader
 {
-    public function upload(Medium $medium, string $scope = null): UploadedFile;
+    abstract public function upload(Medium $medium, string $scope = null): UploadedFile;
 
-    public function preview(UuidInterface $uuid): Response;
+    public function preview(UuidInterface $uuid): Response
+    {
+        $file = UploadedFileModel::fetchByUuidOrFail($uuid);
+        $response = new Response($file->content);
+        $response->header('Content-Type', $file->mime);
+        return $response;
+    }
 
-    public function removeTemporaryFile(UuidInterface $uuid): bool;
+    public static function removeTemporaryFile(UuidInterface $uuid): bool
+    {
+        try {
+            UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
+            return true;
+        } catch (ModelNotFoundException $exception) {
+            Log::warning(sprintf('Exception during uploaded file deletion (%s)', $exception->getMessage()));
+            return false;
+        }
+    }
 }

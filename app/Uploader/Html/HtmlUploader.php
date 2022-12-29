@@ -31,15 +31,11 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Lib\ZipToHtml;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Ramsey\Uuid\UuidInterface;
 
-class HtmlUploader implements Uploader
+class HtmlUploader extends Uploader
 {
     private const MIME_ZIP_LIST = [
         'application/zip',
@@ -95,23 +91,5 @@ class HtmlUploader implements Uploader
         $path = Storage::disk(self::HTML_DISK)->path($name);
         $zip = new ZipToHtml($path);
         return $zip->getHtml();
-    }
-
-    public function removeTemporaryFile(UuidInterface $uuid): bool
-    {
-        try {
-            UploadedFileModel::fetchByUuidOrFail($uuid)->delete();
-            return true;
-        } catch (ModelNotFoundException $exception) {
-            Log::warning(sprintf('Exception during zip file deletion (%s)', $exception->getMessage()));
-            return false;
-        }
-    }
-
-    public function preview(UuidInterface $uuid): Response
-    {
-        $file = UploadedFileModel::fetchByUuidOrFail($uuid);
-
-        return new Response($file->content);
     }
 }
