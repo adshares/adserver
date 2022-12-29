@@ -41,7 +41,7 @@ final class BannerCreatorTest extends TestCase
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
         $file = UploadedFile::factory()->create([
             'mime' => 'video/mp4',
-            'size' => '852x480',
+            'scope' => '852x480',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/adshares.mp4')),
         ]);
         $input = [
@@ -67,7 +67,7 @@ final class BannerCreatorTest extends TestCase
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
         $file = UploadedFile::factory()->create([
             'mime' => 'text/html',
-            'size' => '300x250',
+            'scope' => '300x250',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/adshares.mp4')),
         ]);
         $input = [

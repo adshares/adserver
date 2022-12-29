@@ -56,7 +56,7 @@ class DirectLinkUploader extends Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $file->getMimeType(),
-            'size' => $scope,
+            'scope' => $scope,
             'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);

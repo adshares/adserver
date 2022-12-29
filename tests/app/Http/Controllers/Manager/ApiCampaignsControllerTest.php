@@ -195,7 +195,7 @@ final class ApiCampaignsControllerTest extends TestCase
             'empty creatives while not draft' => [fn() => self::getCampaignData(['creatives' => []])],
             'invalid creatives type' => [fn() => self::getCampaignData(['creatives' => 'no'])],
             'missing creatives[].id' => [
-                fn() => self::getCampaignData(['creatives' => self::getBannerData('id')])
+                fn() => self::getCampaignData(['creatives' => self::getBannerData('fileId')])
             ],
         ];
     }
@@ -280,7 +280,7 @@ final class ApiCampaignsControllerTest extends TestCase
         ]);
 
         $response = $this->post(self::buildUriBanner($campaign), [
-            'id' => $file->uuid,
+            'fileId' => $file->uuid,
             'name' => 'IMAGE 2',
         ]);
 
@@ -419,7 +419,7 @@ final class ApiCampaignsControllerTest extends TestCase
     {
         $file = UploadedFileModel::factory()->create(['user_id' => User::first()]);
         $data = [
-            'id' => $file->uuid,
+            'fileId' => $file->uuid,
             'name' => 'IMAGE 1',
         ];
 

@@ -65,7 +65,7 @@ class VideoUploader extends Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $file->getMimeType(),
-            'size' => Size::fromDimensions($width, $height),
+            'scope' => Size::fromDimensions($width, $height),
             'content' => $file->getContent(),
         ]);
         Auth::user()->uploadedFiles()->save($model);

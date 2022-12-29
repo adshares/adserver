@@ -21,90 +21,61 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Tests\Uploader\Video;
+namespace Adshares\Adserver\Tests\Uploader\DirectLink;
 
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\UploadedFile;
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Adserver\Uploader\Video\UploadedVideo;
-use Adshares\Adserver\Uploader\Video\VideoUploader;
+use Adshares\Adserver\Uploader\DirectLink\DirectLinkUploader;
+use Adshares\Adserver\Uploader\DirectLink\UploadedDirectLink;
+use Adshares\Adserver\Uploader\Html\UploadedHtml;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
-use Illuminate\Http\File;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
 use Ramsey\Uuid\Uuid;
 
-final class VideoUploaderTest extends TestCase
+final class DirectLinkUploaderTest extends TestCase
 {
     public function testUpload(): void
     {
-        $uploader = new VideoUploader($this->getRequestMock());
+        $uploader = new DirectLinkUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        $uploadedFile = $uploader->upload($medium);
+        $uploaded = $uploader->upload($medium, 'pop-up');
 
-        self::assertInstanceOf(UploadedVideo::class, $uploadedFile);
-        self::assertDatabaseHas(UploadedFile::class, [
-            'mime' => 'video/mp4',
-            'scope' => '852x480',
+        self::assertInstanceOf(UploadedDirectLink::class, $uploaded);
+        self::assertDatabaseHas(UploadedFileModel::class, [
+            'mime' => 'text/plain',
+            'scope' => 'pop-up',
         ]);
     }
+
     public function testUploadFailWhileFileIsMissing(): void
     {
-        $uploader = new VideoUploader(new Request());
+        $uploader = new DirectLinkUploader(new Request());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
 
-        $uploader->upload($medium);
+        $uploader->upload($medium, 'pop-up');
     }
 
     public function testUploadFailWhileSizeTooLarge(): void
     {
-        Config::updateAdminSettings([Config::UPLOAD_LIMIT_VIDEO => 0]);
+        Config::updateAdminSettings([Config::UPLOAD_LIMIT_DIRECT_LINK => 10]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $uploader = new VideoUploader($this->getRequestMock());
+        $uploader = new HtmlUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
 
-        $uploader->upload($medium);
-    }
-
-    public function testPreview(): void
-    {
-        $file = UploadedFile::factory()->create([
-            'mime' => 'video/mp4',
-        ]);
-        $uploader = new VideoUploader(self::createMock(Request::class));
-
-        $response = $uploader->preview(Uuid::fromString($file->uuid));
-
-        self::assertEquals('video/mp4', $response->headers->get('Content-Type'));
-    }
-
-    public function testRemoveTemporaryFile(): void
-    {
-        $file = UploadedFile::factory()->create();
-        $uploader = new VideoUploader(self::createMock(Request::class));
-
-        $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
-
-        self::assertTrue($result);
-        self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
-    }
-
-    public function testRemoveTemporaryFileQuietError(): void
-    {
-        $uploader = new VideoUploader(self::createMock(Request::class));
-
-        $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
-
-        self::assertFalse($result);
+        $uploader->upload($medium, '300x250');
     }
 
     private function getRequestMock(): Request|MockObject
@@ -114,7 +85,10 @@ final class VideoUploaderTest extends TestCase
         $request = self::createMock(Request::class);
         $request->expects(self::once())
             ->method('file')
-            ->willReturn(new File(base_path('tests/mock/Files/Banners/adshares.mp4')));
+            ->willReturn(UploadedFile::fake()->createWithContent(
+                'a.txt',
+                'https://example.com'
+            ));
         return $request;
     }
 }

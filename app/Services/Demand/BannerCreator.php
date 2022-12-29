@@ -121,7 +121,7 @@ class BannerCreator
                 throw new InvalidArgumentException('Invalid creative data type');
             }
             $bannerValidator->validateBannerMetaData($bannerMetaData);
-            $uuid = Uuid::fromString($bannerMetaData['id']);
+            $uuid = Uuid::fromString($bannerMetaData['file_id']);
             try {
                 $file = UploadedFile::fetchByUuidOrFail($uuid);
             } catch (ModelNotFoundException) {

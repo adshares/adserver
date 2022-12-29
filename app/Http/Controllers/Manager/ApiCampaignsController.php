@@ -230,7 +230,7 @@ class ApiCampaignsController extends Controller
     private static function removeTemporaryUploadedFiles(array $input): void
     {
         foreach ($input as $bannerMetaData) {
-            Uploader::removeTemporaryFile(Uuid::fromString($bannerMetaData['id']));
+            Uploader::removeTemporaryFile(Uuid::fromString($bannerMetaData['file_id']));
         }
     }
 

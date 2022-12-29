@@ -73,7 +73,7 @@ class HtmlUploader extends Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => 'text/html',
-            'size' => $scope,
+            'scope' => $scope,
             'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);

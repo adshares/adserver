@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Illuminate\Support\Str;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use Ramsey\Uuid\Uuid;
 
@@ -91,11 +92,11 @@ class BannerValidator
         self::validateField($banner, 'name');
         self::validateFieldMaximumLength($banner['name'], Banner::NAME_MAXIMAL_LENGTH, 'name');
 
-        self::validateField($banner, 'id');
+        self::validateField($banner, 'file_id');
         try {
-            Uuid::fromString($banner['id']);
+            Uuid::fromString($banner['file_id']);
         } catch (InvalidUuidStringException) {
-            throw new InvalidArgumentException('Field `id` must be an ID');
+            throw new InvalidArgumentException('Field `fileId` must be an ID');
         }
     }
 
@@ -113,10 +114,10 @@ class BannerValidator
     private static function validateField(array $banner, string $field): void
     {
         if (!isset($banner[$field])) {
-            throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
+            throw new InvalidArgumentException(sprintf('Field `%s` is required', Str::camel($field)));
         }
         if (!is_string($banner[$field]) || 0 === strlen($banner[$field])) {
-            throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
+            throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', Str::camel($field)));
         }
     }
 

@@ -100,6 +100,17 @@ final class BannerValidatorTest extends TestCase
         ];
     }
 
+    public function testValidateBannerMetaDataFail(): void
+    {
+        $banner = [
+            'file_id' => '1',
+            'name' => 'example',
+        ];
+        self::expectException(InvalidArgumentException::class);
+
+        $this->bannerValidator()->validateBannerMetaData($banner);
+    }
+
     private function bannerValidator(): BannerValidator
     {
         return new BannerValidator((new DummyConfigurationRepository())->fetchMedium());

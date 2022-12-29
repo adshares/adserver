@@ -37,6 +37,16 @@ use Ramsey\Uuid\Uuid;
 
 final class ImageUploaderTest extends TestCase
 {
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $uploader = new ImageUploader(new Request());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
+    }
+
     public function testUploadFailWhileSizeTooLarge(): void
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_IMAGE => 0]);

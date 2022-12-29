@@ -51,6 +51,16 @@ final class ModelUploaderTest extends TestCase
         self::assertInstanceOf(UploadedModel::class, $uploadedFile);
     }
 
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $uploader = new ModelUploader(new Request());
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
+    }
+
     public function testUploadFailWhileSizeTooLarge(): void
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_MODEL => 0]);

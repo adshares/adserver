@@ -50,8 +50,18 @@ final class HtmlUploaderTest extends TestCase
         self::assertInstanceOf(UploadedHtml::class, $uploaded);
         self::assertDatabaseHas(UploadedFileModel::class, [
             'mime' => 'text/html',
-            'size' => '300x250',
+            'scope' => '300x250',
         ]);
+    }
+
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $uploader = new HtmlUploader(new Request());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium, '300x250');
     }
 
     public function testUploadEmpty(): void
@@ -63,6 +73,24 @@ final class HtmlUploaderTest extends TestCase
                 UploadedFile::fake()->createWithContent(
                     'a.zip',
                     file_get_contents(base_path('tests/mock/Files/Banners/empty.zip'))
+                )
+            );
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        (new HtmlUploader($request))->upload($medium, '300x250');
+    }
+
+    public function testUploadImageInsteadOfZip(): void
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::once())
+            ->method('file')
+            ->willReturn(
+                UploadedFile::fake()->createWithContent(
+                    'a.png',
+                    file_get_contents(base_path('tests/mock/Files/Banners/980x120.png'))
                 )
             );
         $medium = (new DummyConfigurationRepository())->fetchMedium();
