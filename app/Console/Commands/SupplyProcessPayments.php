@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -39,8 +39,6 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use DateTimeImmutable;
 use stdClass;
 use Throwable;
-
-use function sprintf;
 
 class SupplyProcessPayments extends BaseCommand
 {
@@ -168,7 +166,7 @@ SQL;
                     $offset
                 );
                 $paymentDetailsSize = count($paymentDetails);
-            } catch (EmptyInventoryException | UnexpectedClientResponseException $clientException) {
+            } catch (EmptyInventoryException | UnexpectedClientResponseException) {
                 return;
             }
 
