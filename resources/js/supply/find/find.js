@@ -486,7 +486,7 @@ var getPageKeywords = function (doc) {
 var getBrowserContext = function () {
     const metamask = (typeof window.ethereum !== 'undefined') || (typeof window.web3 !== 'undefined');
     var location = topwin.location.href;
-    if( defaultLocation.length > 0 ){
+    if( !location.startsWith('http') && defaultLocation.length > 0 ){
         location = defaultLocation;
     }
     return {

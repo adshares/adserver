@@ -105,7 +105,12 @@ final class SupplyControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $js_content = $response->streamedContent();
-        $this->assertStringContainsString(config('app.foreign_default_site_js'), $js_content);
+        // I test here manually by removing the key from .env file
+        if (strlen(config('app.foreign_default_site_js')) === 0){
+            $this->assertStringContainsString('defaultLocation=""', $js_content);    
+        }else{
+            $this->assertStringContainsString('defaultLocation="'. config('app.foreign_default_site_js'). '"', $js_content);
+        }
     }
 
     public function testPageWhyInvalidBannerId(): void
