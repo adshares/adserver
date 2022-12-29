@@ -18,10 +18,11 @@ use Ramsey\Uuid\UuidInterface;
  * @property Carbon created_at
  * @property Carbon|null deleted_at
  * @property string $uuid
+ * @property string type
  * @property string medium
  * @property string|null vendor
  * @property string mime
- * @property string|null $size
+ * @property string|null $scope
  * @property string content
  *
  * @mixin Builder
@@ -49,7 +50,7 @@ class UploadedFile extends Model
         'medium',
         'vendor',
         'mime',
-        'size',
+        'scope',
         'content',
     ];
 

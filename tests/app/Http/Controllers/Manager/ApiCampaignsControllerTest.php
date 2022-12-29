@@ -194,8 +194,8 @@ final class ApiCampaignsControllerTest extends TestCase
             'missing creatives while not draft' => [fn() => self::getCampaignData(remove: 'creatives')],
             'empty creatives while not draft' => [fn() => self::getCampaignData(['creatives' => []])],
             'invalid creatives type' => [fn() => self::getCampaignData(['creatives' => 'no'])],
-            'missing creatives[].type' => [
-                fn() => self::getCampaignData(['creatives' => self::getBannerData(remove: 'type')])
+            'missing creatives[].id' => [
+                fn() => self::getCampaignData(['creatives' => self::getBannerData('id')])
             ],
         ];
     }
@@ -275,15 +275,13 @@ final class ApiCampaignsControllerTest extends TestCase
         $campaignId = $campaign->id;
         $file = UploadedFileModel::factory()->create([
             'user_id' => $user,
-            'size' => '980x120',
+            'scope' => '980x120',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/980x120.png')),
         ]);
 
         $response = $this->post(self::buildUriBanner($campaign), [
-            'creativeSize' => '980x120',
-            'creativeType' => Banner::TEXT_TYPE_IMAGE,
+            'id' => $file->uuid,
             'name' => 'IMAGE 2',
-            'url' => 'https://example.com/upload-preview/image/' . $file->uuid,
         ]);
 
         $response->assertStatus(Response::HTTP_CREATED);
@@ -417,18 +415,13 @@ final class ApiCampaignsControllerTest extends TestCase
         return $data;
     }
 
-    private function getBannerData(array $mergeData = [], ?string $remove = null): array
+    private function getBannerData(?string $remove = null): array
     {
         $file = UploadedFileModel::factory()->create(['user_id' => User::first()]);
-        $data = array_merge(
-            [
-                'name' => 'IMAGE 1',
-                'scope' => $file->size,
-                'type' => Banner::TEXT_TYPE_IMAGE,
-                'url' => 'https://example.com/upload-preview/image/' . $file->uuid,
-            ],
-            $mergeData,
-        );
+        $data = [
+            'id' => $file->uuid,
+            'name' => 'IMAGE 1',
+        ];
 
         if (null !== $remove) {
             unset($data[$remove]);
@@ -538,6 +531,7 @@ final class ApiCampaignsControllerTest extends TestCase
             [
                 'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                 'medium' => 'web',
+                'type' => 'image',
             ]
         );
 

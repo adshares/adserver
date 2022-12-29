@@ -71,7 +71,7 @@ class ApiCampaignsController extends Controller
             throw new UnprocessableEntityHttpException('Field `creatives` must be an array');
         }
         try {
-            $banners = $this->bannerCreator->prepareBannersFromInput($creatives, $campaign);
+            $banners = $this->bannerCreator->prepareBannersFromMetaData($creatives, $campaign);
             $campaign->user_id = $user->id;
             $campaign = $this->campaignRepository->save($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
@@ -157,7 +157,7 @@ class ApiCampaignsController extends Controller
         $oldBannerIds = $campaign->banners()->pluck('id');
 
         try {
-            $banners = $this->bannerCreator->prepareBannersFromInput([$request->input()], $campaign);
+            $banners = $this->bannerCreator->prepareBannersFromMetaData([$request->input()], $campaign);
             $this->campaignRepository->update($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());

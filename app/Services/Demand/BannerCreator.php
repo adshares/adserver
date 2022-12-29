@@ -79,7 +79,7 @@ class BannerCreator
                     if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
                         throw new InvalidArgumentException('File medium does not match campaign');
                     }
-                    if (null !== $file->size && $scope !== $file->size) {
+                    if (null !== $file->scope && $scope !== $file->scope) {
                         throw new InvalidArgumentException(
                             sprintf('Scope `%s` does not match uploaded file', $scope)
                         );
@@ -103,6 +103,51 @@ class BannerCreator
             $banners[] = $bannerModel;
         }
 
+        $mimesValidator = new MimeTypesValidator($medium);
+        $mimesValidator->validateMimeTypes($banners);
+
+        return $banners;
+    }
+
+    public function prepareBannersFromMetaData(array $metaData, Campaign $campaign): array
+    {
+        $medium = $this->configurationRepository->fetchMedium($campaign->medium, $campaign->vendor);
+        $bannerValidator = new BannerValidator($medium);
+
+        $banners = [];
+
+        foreach ($metaData as $bannerMetaData) {
+            if (!is_array($bannerMetaData)) {
+                throw new InvalidArgumentException('Invalid creative data type');
+            }
+            $bannerValidator->validateBannerMetaData($bannerMetaData);
+            $uuid = Uuid::fromString($bannerMetaData['id']);
+            try {
+                $file = UploadedFile::fetchByUuidOrFail($uuid);
+            } catch (ModelNotFoundException) {
+                throw new InvalidArgumentException(sprintf('File `%s` does not exist', $bannerMetaData['id']));
+            }
+            if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
+                throw new InvalidArgumentException('File medium does not match campaign');
+            }
+
+            $bannerModel = new Banner();
+            $bannerModel->name = $bannerMetaData['name'];
+            $bannerModel->status = Banner::STATUS_ACTIVE;
+            $bannerModel->creative_type = $file->type;
+            $bannerModel->creative_mime = $file->mime;
+            $bannerModel->creative_size = $file->scope;
+            if (Banner::TEXT_TYPE_DIRECT_LINK === $file->type) {
+                $bannerModel->creative_contents = Utils::appendFragment(
+                    empty($file->content) ? $campaign->landing_url : $file->content,
+                    $file->scope,
+                );
+            } else {
+                $bannerModel->creative_contents = $file->content;
+            }
+
+            $banners[] = $bannerModel;
+        }
         $mimesValidator = new MimeTypesValidator($medium);
         $mimesValidator->validateMimeTypes($banners);
 

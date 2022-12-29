@@ -27,6 +27,8 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
+use Ramsey\Uuid\Uuid;
 
 class BannerValidator
 {
@@ -46,7 +48,7 @@ class BannerValidator
             ] as $field => $maxLength
         ) {
             self::validateField($banner, $field);
-            $this->validateFieldMaximumLength($banner[$field], $maxLength, $field);
+            self::validateFieldMaximumLength($banner[$field], $maxLength, $field);
         }
         $type = $banner['type'];
         if (Banner::TEXT_TYPE_DIRECT_LINK !== $type) {
@@ -81,6 +83,19 @@ class BannerValidator
 
         if (!isset($this->supportedScopesByTypes[$type][$size])) {
             throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $size));
+        }
+    }
+
+    public function validateBannerMetaData(array $banner): void
+    {
+        self::validateField($banner, 'name');
+        self::validateFieldMaximumLength($banner['name'], Banner::NAME_MAXIMAL_LENGTH, 'name');
+
+        self::validateField($banner, 'id');
+        try {
+            Uuid::fromString($banner['id']);
+        } catch (InvalidUuidStringException) {
+            throw new InvalidArgumentException('Field `id` must be an ID');
         }
     }
 
