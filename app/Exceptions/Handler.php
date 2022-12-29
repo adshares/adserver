@@ -58,9 +58,9 @@ class Handler extends ExceptionHandler
         if ($exception instanceof QueryException) {
             if ($prev = $exception->getPrevious()) {
                 return $this->response(
-                    $exception->getMessage(),
+                    $prev->getMessage(),
                     Response::HTTP_INTERNAL_SERVER_ERROR,
-                    $exception->getTrace()
+                    $prev->getTrace(),
                 );
             }
 
