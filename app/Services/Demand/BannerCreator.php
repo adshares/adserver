@@ -75,9 +75,7 @@ class BannerCreator
                     } catch (ModelNotFoundException) {
                         throw new InvalidArgumentException(sprintf('File `%s` does not exist', $uuid));
                     }
-                    if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
-                        throw new InvalidArgumentException("File's medium does not match campaign");
-                    }
+                    self::validateMediumMatch($campaign, $file);
                     if (null !== $file->scope && $scope !== $file->scope) {
                         throw new InvalidArgumentException(
                             sprintf('Scope `%s` does not match uploaded file', $scope)
@@ -122,9 +120,7 @@ class BannerCreator
             } catch (ModelNotFoundException) {
                 throw new InvalidArgumentException(sprintf('File `%s` does not exist', $bannerMetaData['id']));
             }
-            if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
-                throw new InvalidArgumentException("File's medium does not match campaign");
-            }
+            self::validateMediumMatch($campaign, $file);
 
             $bannerModel = new Banner();
             $bannerModel->name = $bannerMetaData['name'];
@@ -195,5 +191,12 @@ class BannerCreator
             }
         }
         return $banner;
+    }
+
+    private static function validateMediumMatch(Campaign $campaign, UploadedFile $file): void
+    {
+        if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
+            throw new InvalidArgumentException("File's medium does not match campaign");
+        }
     }
 }

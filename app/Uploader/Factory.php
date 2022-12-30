@@ -33,36 +33,6 @@ use Illuminate\Http\Request;
 
 class Factory
 {
-    //TODO clean up
-//    private const MIME_VIDEO_LIST = [
-//        'video/mp4',
-//    ];
-//    public static function create(Request $request): Uploader
-//    {
-//        $file = $request->file('file');
-//        if (null === $file) {
-//            throw new RuntimeException('File is required');
-//        }
-//        $mimeType = $file->getMimeType();
-//
-//        if (in_array($mimeType, self::MIME_VIDEO_LIST, true)) {
-//            return new VideoUploader($request);
-//        }
-//
-//        if ('text/plain' === $mimeType) {
-//            return new DirectLinkUploader($request);
-//        }
-//
-//        if ('application/octet-stream' === $mimeType) {
-//            $filePrefix = substr($file->get(), 0, 4);
-//            if ('glTF' === $filePrefix || 'VOX ' === $filePrefix) {
-//                return new ModelUploader($request);
-//            }
-//        }
-//
-//        return new ImageUploader($request);
-//    }
-
     public static function createFromType(string $type, Request $request): Uploader
     {
         return match ($type) {
