@@ -30,7 +30,6 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Url;
-use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -79,7 +78,7 @@ class GuzzleDemandClientTest extends TestCase
         $client = $this->getClientMock($responseMock);
         $demandClient = $this->createGuzzleDemandClient($client);
 
-        self::expectException(RuntimeException::class);
+        self::expectException(UnexpectedClientResponseException::class);
         $demandClient->fetchInfo(new Url('https://example.com/info.json'));
     }
 
@@ -88,20 +87,8 @@ class GuzzleDemandClientTest extends TestCase
         return [
             'empty' => [''],
             'malformed' => ['{"mo'],
+            'missing fields' => ['[]'],
         ];
-    }
-
-    public function testFetchInfoExceptionDueToMissingFields(): void
-    {
-        $responseMock = self::createMock(ResponseInterface::class);
-        $responseMock->method('getStatusCode')->willReturn(Response::HTTP_OK);
-        $responseMock->method('getBody')->willReturn('[]');
-        /** @var ResponseInterface $responseMock */
-        $client = $this->getClientMock($responseMock);
-        $demandClient = $this->createGuzzleDemandClient($client);
-
-        self::expectException(UnexpectedClientResponseException::class);
-        $demandClient->fetchInfo(new Url('https://example.com/info.json'));
     }
 
     public function testFetchInfoExceptionDueToClientException(): void
@@ -138,7 +125,7 @@ class GuzzleDemandClientTest extends TestCase
 
     private static function getInfoJson(): string
     {
-        return file_get_contents('tests/mock/info.json');
+        return file_get_contents(base_path('tests/mock/info.json'));
     }
 
     private function getClientMock(ResponseInterface $responseMock): Client

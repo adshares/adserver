@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Banner's content lazy loading
 - Forbid site duplicates
 
+## [2.2.4] - 2022-12-29
+### Fixed
+- Importing inventory while AdServer does not return JSON
+
 ## [2.2.3] - 2022-12-19
 ### Added
 - Zone scopes
@@ -782,7 +786,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.3...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.4...develop
+[2.2.4]: https://github.com/adshares/adserver/compare/v2.2.3...v2.2.4
 [2.2.3]: https://github.com/adshares/adserver/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/adshares/adserver/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/adshares/adserver/compare/v2.2.0...v2.2.1
