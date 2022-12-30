@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Services\Demand;
 
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
-use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
@@ -77,7 +76,7 @@ class BannerCreator
                         throw new InvalidArgumentException(sprintf('File `%s` does not exist', $uuid));
                     }
                     if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
-                        throw new InvalidArgumentException('File medium does not match campaign');
+                        throw new InvalidArgumentException("File's medium does not match campaign");
                     }
                     if (null !== $file->scope && $scope !== $file->scope) {
                         throw new InvalidArgumentException(
@@ -99,12 +98,8 @@ class BannerCreator
 
             $bannerModel->creative_contents = $content;
             $bannerModel->creative_mime = $mime;
-
             $banners[] = $bannerModel;
         }
-
-        $mimesValidator = new MimeTypesValidator($medium);
-        $mimesValidator->validateMimeTypes($banners);
 
         return $banners;
     }
@@ -128,7 +123,7 @@ class BannerCreator
                 throw new InvalidArgumentException(sprintf('File `%s` does not exist', $bannerMetaData['id']));
             }
             if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
-                throw new InvalidArgumentException('File medium does not match campaign');
+                throw new InvalidArgumentException("File's medium does not match campaign");
             }
 
             $bannerModel = new Banner();
@@ -148,8 +143,6 @@ class BannerCreator
 
             $banners[] = $bannerModel;
         }
-        $mimesValidator = new MimeTypesValidator($medium);
-        $mimesValidator->validateMimeTypes($banners);
 
         return $banners;
     }

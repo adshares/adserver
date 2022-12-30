@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Html;
 
+use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -46,6 +47,7 @@ class HtmlUploader extends Uploader
         'application/x-zip-compressed',
     ];
     private const HTML_DISK = 'banners';
+    private const RESULTANT_MIME_TYPE = 'text/html';
 
     public function __construct(private readonly Request $request)
     {
@@ -64,6 +66,10 @@ class HtmlUploader extends Uploader
         if (!$size || $size > config('app.upload_limit_zip')) {
             throw new RuntimeException('Invalid zip size');
         }
+
+        (new MimeTypesValidator($medium))
+            ->validateMimeTypeForBannerType(Banner::TEXT_TYPE_HTML, self::RESULTANT_MIME_TYPE);
+
         $name = $file->store('', self::HTML_DISK);
         $content = $this->extractHtmlContent($name);
         Storage::disk(self::HTML_DISK)->delete($name);
@@ -72,7 +78,7 @@ class HtmlUploader extends Uploader
             'type' => Banner::TEXT_TYPE_HTML,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => 'text/html',
+            'mime' => self::RESULTANT_MIME_TYPE,
             'scope' => $scope,
             'content' => $content,
         ]);

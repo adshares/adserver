@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Video;
 
+use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -40,8 +41,6 @@ use Illuminate\Support\Facades\Log;
 
 class VideoUploader extends Uploader
 {
-    private const FORMAT_TYPE_VIDEO = 'video';
-
     public function __construct(private readonly Request $request)
     {
     }
@@ -60,11 +59,14 @@ class VideoUploader extends Uploader
 
         $this->validateDimensions($medium, $width, $height);
 
+        $mimeType = $file->getMimeType();
+        (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_VIDEO, $mimeType);
+
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_VIDEO,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => $file->getMimeType(),
+            'mime' => $mimeType,
             'scope' => Size::fromDimensions($width, $height),
             'content' => $file->getContent(),
         ]);
@@ -88,7 +90,7 @@ class VideoUploader extends Uploader
     private function extractSizesFromMedium(Medium $medium): array
     {
         foreach ($medium->getFormats() as $format) {
-            if (self::FORMAT_TYPE_VIDEO === $format->getType()) {
+            if (Banner::TEXT_TYPE_VIDEO === $format->getType()) {
                 return array_keys($format->getScopes());
             }
         }

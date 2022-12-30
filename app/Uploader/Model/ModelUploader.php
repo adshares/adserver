@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Model;
 
+use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -51,11 +52,14 @@ class ModelUploader extends Uploader
         }
 
         $content = $file->getContent();
+        $mimeType = self::contentMimeType($content);
+        (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_MODEL, $mimeType);
+
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_MODEL,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => self::contentMimeType($content),
+            'mime' => $mimeType,
             'scope' => 'cube',
             'content' => $content,
         ]);

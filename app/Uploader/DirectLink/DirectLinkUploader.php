@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\DirectLink;
 
+use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -51,11 +52,14 @@ class DirectLinkUploader extends Uploader
             throw new RuntimeException('Invalid direct link length');
         }
 
+        $mimeType = $file->getMimeType();
+        (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_DIRECT_LINK, $mimeType);
+
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_DIRECT_LINK,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => $file->getMimeType(),
+            'mime' => $mimeType,
             'scope' => $scope,
             'content' => $content,
         ]);
