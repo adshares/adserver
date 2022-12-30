@@ -29,8 +29,6 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\DirectLink\DirectLinkUploader;
 use Adshares\Adserver\Uploader\DirectLink\UploadedDirectLink;
-use Adshares\Adserver\Uploader\Html\UploadedHtml;
-use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
@@ -38,7 +36,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
-use Ramsey\Uuid\Uuid;
 
 final class DirectLinkUploaderTest extends TestCase
 {
@@ -70,7 +67,7 @@ final class DirectLinkUploaderTest extends TestCase
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_DIRECT_LINK => 10]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $uploader = new HtmlUploader($this->getRequestMock());
+        $uploader = new DirectLinkUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);

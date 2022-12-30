@@ -50,7 +50,7 @@ class MimeTypesValidator
             $arrayDiff = array_diff(array_unique($mimes), $supported[$bannerType]);
             if (!empty($arrayDiff)) {
                 throw new InvalidArgumentException(
-                    sprintf('Not supported ad mime type `%s` for %s banner', join(', ', $arrayDiff), $bannerType)
+                    sprintf('Not supported ad mime type `%s` for %s creative', join(', ', $arrayDiff), $bannerType)
                 );
             }
         }
@@ -75,5 +75,27 @@ class MimeTypesValidator
             $supported[$format->getType()] = $format->getMimes();
         }
         return $supported;
+    }
+
+    private function getSupportedMimesForBannerType(string $type): array
+    {
+        foreach ($this->medium->getFormats() as $format) {
+            if ($format->getType() === $type) {
+                return $format->getMimes();
+            }
+        }
+        throw new InvalidArgumentException(sprintf('Not supported ad type `%s`', $type));
+    }
+
+    public function validateMimeTypeForBannerType(string $bannerType, ?string $mimeType): void
+    {
+        if (null === $mimeType) {
+            throw new InvalidArgumentException('Unknown mime');
+        }
+        if (!in_array($mimeType, $this->getSupportedMimesForBannerType($bannerType), true)) {
+            throw new InvalidArgumentException(
+                sprintf('Not supported ad mime type `%s` for %s creative', $mimeType, $bannerType)
+            );
+        }
     }
 }
