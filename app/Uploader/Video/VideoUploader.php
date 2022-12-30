@@ -59,9 +59,10 @@ class VideoUploader extends Uploader
         [$width, $height] = $this->getVideoDimensions($file->getRealPath());
 
         $scope = Size::fromDimensions($width, $height);
-        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_VIDEO, $scope);
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_VIDEO, $scope);
         $mimeType = $file->getMimeType();
-        (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_VIDEO, $mimeType);
+        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_VIDEO, $mimeType);
 
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_VIDEO,

@@ -53,9 +53,10 @@ class DirectLinkUploader extends Uploader
             throw new RuntimeException('Invalid direct link length');
         }
 
-        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_DIRECT_LINK, $scope);
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_DIRECT_LINK, $scope);
         $mimeType = $file->getMimeType();
-        (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_DIRECT_LINK, $mimeType);
+        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_DIRECT_LINK, $mimeType);
 
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_DIRECT_LINK,

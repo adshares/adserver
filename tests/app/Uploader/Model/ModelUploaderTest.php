@@ -44,7 +44,7 @@ final class ModelUploaderTest extends TestCase
     public function testUpload(): void
     {
         $uploader = new ModelUploader($this->getRequestMock());
-        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'cryptovoxels');
 
         $uploadedFile = $uploader->upload($medium);
 
@@ -54,7 +54,7 @@ final class ModelUploaderTest extends TestCase
     public function testUploadFailWhileFileIsMissing(): void
     {
         $uploader = new ModelUploader(new Request());
-        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'cryptovoxels');
 
         self::expectException(RuntimeException::class);
 
@@ -66,7 +66,7 @@ final class ModelUploaderTest extends TestCase
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_MODEL => 0]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $uploader = new ModelUploader($this->getRequestMock());
-        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'cryptovoxels');
 
         self::expectException(RuntimeException::class);
 

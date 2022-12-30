@@ -68,9 +68,9 @@ class HtmlUploader extends Uploader
             throw new RuntimeException('Invalid zip size');
         }
 
-        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_HTML, $scope);
-        (new MimeTypesValidator($medium))
-            ->validateMimeTypeForBannerType(Banner::TEXT_TYPE_HTML, self::RESULTANT_MIME_TYPE);
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_HTML, $scope);
+        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_HTML, self::RESULTANT_MIME_TYPE);
 
         $name = $file->store('', self::HTML_DISK);
         $content = $this->extractHtmlContent($name);

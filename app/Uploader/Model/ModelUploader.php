@@ -54,9 +54,10 @@ class ModelUploader extends Uploader
 
         $content = $file->getContent();
         $scope = 'cube';
-        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_MODEL, $scope);
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_MODEL, $scope);
         $mimeType = self::contentMimeType($content);
-        (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_MODEL, $mimeType);
+        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_MODEL, $mimeType);
 
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_MODEL,

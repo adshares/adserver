@@ -57,9 +57,10 @@ class ImageUploader extends Uploader
         $height = $imageSize[1];
 
         $scope = Size::fromDimensions($width, $height);
-        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_IMAGE, $scope);
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_IMAGE, $scope);
         $mimeType = $file->getMimeType();
-        (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_IMAGE, $mimeType);
+        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_IMAGE, $mimeType);
 
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_IMAGE,

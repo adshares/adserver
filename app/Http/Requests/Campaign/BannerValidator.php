@@ -141,4 +141,26 @@ class BannerValidator
             throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $scope));
         }
     }
+
+    public function validateMimeTypeForBannerType(string $bannerType, ?string $mimeType): void
+    {
+        if (null === $mimeType) {
+            throw new InvalidArgumentException('Unknown mime');
+        }
+        if (!in_array($mimeType, $this->getSupportedMimesForBannerType($bannerType), true)) {
+            throw new InvalidArgumentException(
+                sprintf('Not supported ad mime type `%s` for %s creative', $mimeType, $bannerType)
+            );
+        }
+    }
+
+    private function getSupportedMimesForBannerType(string $type): array
+    {
+        foreach ($this->medium->getFormats() as $format) {
+            if ($format->getType() === $type) {
+                return $format->getMimes();
+            }
+        }
+        throw new InvalidArgumentException(sprintf('Not supported ad type `%s`', $type));
+    }
 }

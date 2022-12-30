@@ -115,4 +115,19 @@ final class BannerValidatorTest extends TestCase
     {
         return new BannerValidator((new DummyConfigurationRepository())->fetchMedium());
     }
+
+
+    public function testUnsupportedMimeType(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+
+        self::bannerValidator()->validateMimeTypeForBannerType(Banner::TEXT_TYPE_IMAGE, 'image/bmp');
+    }
+
+    public function testUnsupportedBannerType(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+
+        self::bannerValidator()->validateMimeTypeForBannerType(Banner::TEXT_TYPE_MODEL, 'image/invalid');
+    }
 }
