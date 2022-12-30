@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not allow to update active campaign without creatives
 - Use UUID as ID in campaign APIv2
 - Store uploaded files (creatives) in database
+- Extend validation during file upload
 ### Removed
 - Redundant pagination data
 ### Fixed

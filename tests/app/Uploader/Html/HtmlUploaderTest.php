@@ -21,14 +21,14 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Tests\Uploader\Zip;
+namespace Adshares\Adserver\Tests\Uploader\Html;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Adserver\Uploader\Zip\UploadedZip;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\Uploader\Html\UploadedHtml;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
@@ -36,21 +36,54 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
+use Ramsey\Uuid\Uuid;
 
-final class ZipUploaderTest extends TestCase
+final class HtmlUploaderTest extends TestCase
 {
     public function testUpload(): void
     {
-        $uploader = new ZipUploader($this->getRequestMock());
+        $uploader = new HtmlUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         $uploaded = $uploader->upload($medium);
 
-        self::assertInstanceOf(UploadedZip::class, $uploaded);
+        self::assertInstanceOf(UploadedHtml::class, $uploaded);
         self::assertDatabaseHas(UploadedFileModel::class, [
             'mime' => 'text/html',
-            'size' => null,
+            'scope' => '300x250',
         ]);
+    }
+
+    public function testUploadFailWhileScopeIsMissing(): void
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::any())
+            ->method('file')
+            ->willReturn(UploadedFile::fake()->createWithContent(
+                'a.zip',
+                file_get_contents(base_path('tests/mock/Files/Banners/300x250.zip'))
+            ));
+        $uploader = new HtmlUploader($request);
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
+    }
+
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::any())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
+        $uploader = new HtmlUploader($request);
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
     }
 
     public function testUploadEmpty(): void
@@ -64,18 +97,44 @@ final class ZipUploaderTest extends TestCase
                     file_get_contents(base_path('tests/mock/Files/Banners/empty.zip'))
                 )
             );
+        $request->expects(self::once())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
 
-        (new ZipUploader($request))->upload($medium);
+        (new HtmlUploader($request))->upload($medium);
+    }
+
+    public function testUploadImageInsteadOfZip(): void
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::once())
+            ->method('file')
+            ->willReturn(
+                UploadedFile::fake()->createWithContent(
+                    'a.png',
+                    file_get_contents(base_path('tests/mock/Files/Banners/980x120.png'))
+                )
+            );
+        $request->expects(self::once())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        (new HtmlUploader($request))->upload($medium);
     }
 
     public function testUploadFailWhileSizeTooLarge(): void
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_ZIP => 0]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $uploader = new ZipUploader($this->getRequestMock());
+        $uploader = new HtmlUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
@@ -86,9 +145,9 @@ final class ZipUploaderTest extends TestCase
     public function testRemoveTemporaryFile(): void
     {
         $file = UploadedFileModel::factory()->create();
-        $uploader = new ZipUploader(self::createMock(Request::class));
+        $uploader = new HtmlUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile($file->ulid);
+        $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
 
         self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFileModel::class, ['id' => $file->id]);
@@ -96,9 +155,9 @@ final class ZipUploaderTest extends TestCase
 
     public function testRemoveTemporaryFileQuietError(): void
     {
-        $uploader = new ZipUploader(self::createMock(Request::class));
+        $uploader = new HtmlUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
+        $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
 
         self::assertFalse($result);
     }
@@ -109,9 +168,9 @@ final class ZipUploaderTest extends TestCase
             'mime' => 'text/html',
             'content' => 'html content',
         ]);
-        $uploader = new ZipUploader(self::createMock(Request::class));
+        $uploader = new HtmlUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->ulid);
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
 
         self::assertEquals(200, $response->getStatusCode());
         self::assertEquals('html content', $response->getContent());
@@ -128,6 +187,10 @@ final class ZipUploaderTest extends TestCase
                 'a.zip',
                 file_get_contents(base_path('tests/mock/Files/Banners/300x250.zip'))
             ));
+        $request->expects(self::once())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
         return $request;
     }
 }

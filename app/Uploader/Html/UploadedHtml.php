@@ -21,24 +21,21 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Adserver\Uploader\Html;
 
-use Adshares\Adserver\Models\Banner;
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Adshares\Adserver\Uploader\UploadedFile;
 
-class UploadedFileFactory extends Factory
+class UploadedHtml implements UploadedFile
 {
-    public function definition(): array
+    public function __construct(private readonly string $name, private readonly string $previewUrl)
+    {
+    }
+
+    public function toArray(): array
     {
         return [
-            'user_id' => User::factory(),
-            'type' => Banner::TEXT_TYPE_IMAGE,
-            'medium' => 'web',
-            'vendor' => null,
-            'mime' => 'image/png',
-            'scope' => '300x250',
-            'content' => file_get_contents(base_path('tests/mock/Files/Banners/300x250.png')),
+            'name' => $this->name,
+            'url' => $this->previewUrl,
         ];
     }
 }

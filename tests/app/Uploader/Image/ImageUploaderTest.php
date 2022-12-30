@@ -33,9 +33,20 @@ use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use PHPUnit\Framework\MockObject\MockObject;
+use Ramsey\Uuid\Uuid;
 
 final class ImageUploaderTest extends TestCase
 {
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $uploader = new ImageUploader(new Request());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
+    }
+
     public function testUploadFailWhileSizeTooLarge(): void
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_IMAGE => 0]);
@@ -53,7 +64,7 @@ final class ImageUploaderTest extends TestCase
         $file = UploadedFile::factory()->create();
         $uploader = new ImageUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile($file->ulid);
+        $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
 
         self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
@@ -63,7 +74,7 @@ final class ImageUploaderTest extends TestCase
     {
         $uploader = new ImageUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
+        $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
 
         self::assertFalse($result);
     }
@@ -73,7 +84,7 @@ final class ImageUploaderTest extends TestCase
         $file = UploadedFile::factory()->create();
         $uploader = new ImageUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->ulid);
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
 
         self::assertEquals('image/png', $response->headers->get('Content-Type'));
     }

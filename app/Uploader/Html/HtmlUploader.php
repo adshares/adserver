@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Uploader\Video;
+namespace Adshares\Adserver\Uploader\Html;
 
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
 use Adshares\Adserver\Models\Banner;
@@ -31,76 +31,76 @@ use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Supply\Domain\ValueObject\Size;
-use FFMpeg\Exception\ExecutableNotFoundException;
-use FFMpeg\FFProbe;
-use getID3;
+use Adshares\Lib\ZipToHtml;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
-class VideoUploader extends Uploader
+class HtmlUploader extends Uploader
 {
+    private const MIME_ZIP_LIST = [
+        'application/zip',
+        'application/x-compressed',
+        'multipart/x-zip',
+        'application/octet-stream',
+        'application/x-zip',
+        'application/x-zip-compressed',
+    ];
+    private const RESULTANT_MIME_TYPE = 'text/html';
+    private const ZIP_DISK = 'banners';
+
     public function __construct(private readonly Request $request)
     {
     }
 
     public function upload(Medium $medium): UploadedFile
     {
+        $scope = $this->request->get('scope');
+        if (!is_string($scope)) {
+            throw new RuntimeException('Field `scope` must be a string');
+        }
         $file = $this->request->file('file');
         if (null === $file) {
             throw new RuntimeException('Field `file` is required');
         }
-        $size = $file->getSize();
-        if (!$size || $size > config('app.upload_limit_video')) {
-            throw new RuntimeException('Invalid video size');
+        if (!in_array($file->getMimeType(), self::MIME_ZIP_LIST, true)) {
+            throw new RuntimeException('File must be a zip archive');
         }
-        [$width, $height] = $this->getVideoDimensions($file->getRealPath());
+        $size = $file->getSize();
+        if (!$size || $size > config('app.upload_limit_zip')) {
+            throw new RuntimeException('Invalid zip size');
+        }
 
-        $scope = Size::fromDimensions($width, $height);
         $bannerValidator = new BannerValidator($medium);
-        $bannerValidator->validateScope(Banner::TEXT_TYPE_VIDEO, $scope);
-        $mimeType = $file->getMimeType();
-        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_VIDEO, $mimeType);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_HTML, $scope);
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_HTML, self::RESULTANT_MIME_TYPE);
+
+        $name = $file->store('', self::ZIP_DISK);
+        $content = $this->extractHtmlContent($name);
+        Storage::disk(self::ZIP_DISK)->delete($name);
 
         $model = new UploadedFileModel([
-            'type' => Banner::TEXT_TYPE_VIDEO,
+            'type' => Banner::TEXT_TYPE_HTML,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => $mimeType,
+            'mime' => self::RESULTANT_MIME_TYPE,
             'scope' => $scope,
-            'content' => $file->getContent(),
+            'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
         $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_VIDEO, 'uuid' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_HTML, 'uuid' => $name])
         );
 
-        return new UploadedVideo($name, $previewUrl->toString(), $width, $height);
+        return new UploadedHtml($name, $previewUrl->toString());
     }
 
-    private function getVideoDimensions(string $realPath): array
+    private function extractHtmlContent(string $name): string
     {
-        try {
-            $probe = FFProbe::create();
-        } catch (ExecutableNotFoundException $exception) {
-            Log::critical(sprintf('Check if ffmpeg is installed in system (%s)', $exception->getMessage()));
-            $fileInfo = (new getID3())->analyze($realPath);
-            return [
-                $fileInfo['video']['resolution_x'],
-                $fileInfo['video']['resolution_y'],
-            ];
-        }
-
-        $streams = $probe->streams($realPath);
-        foreach ($streams as $stream) {
-            if ('video' === $stream->get('codec_type')) {
-                $dimensions = $stream->getDimensions();
-                return [$dimensions->getWidth(), $dimensions->getHeight()];
-            }
-        }
-        throw new RuntimeException('No video stream');
+        $path = Storage::disk(self::ZIP_DISK)->path($name);
+        $zip = new ZipToHtml($path);
+        return $zip->getHtml();
     }
 }

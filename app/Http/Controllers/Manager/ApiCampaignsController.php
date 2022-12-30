@@ -25,14 +25,13 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
 use Adshares\Adserver\Http\Resources\BannerResource;
 use Adshares\Adserver\Http\Resources\CampaignResource;
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Common\CrmNotifier;
 use Adshares\Adserver\Services\Demand\BannerCreator;
 use Adshares\Adserver\Services\Demand\CampaignCreator;
-use Adshares\Adserver\Uploader\Factory;
+use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -71,7 +70,7 @@ class ApiCampaignsController extends Controller
             throw new UnprocessableEntityHttpException('Field `creatives` must be an array');
         }
         try {
-            $banners = $this->bannerCreator->prepareBannersFromInput($creatives, $campaign);
+            $banners = $this->bannerCreator->prepareBannersFromMetaData($creatives, $campaign);
             $campaign->user_id = $user->id;
             $campaign = $this->campaignRepository->save($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
@@ -79,7 +78,7 @@ class ApiCampaignsController extends Controller
         }
 
         CrmNotifier::sendCrmMailOnCampaignCreated($user, $campaign);
-        self::removeTemporaryUploadedFiles($creatives, $request);
+        self::removeTemporaryUploadedFiles($creatives);
 
         return (new CampaignResource($campaign))
             ->response()
@@ -157,7 +156,7 @@ class ApiCampaignsController extends Controller
         $oldBannerIds = $campaign->banners()->pluck('id');
 
         try {
-            $banners = $this->bannerCreator->prepareBannersFromInput([$request->input()], $campaign);
+            $banners = $this->bannerCreator->prepareBannersFromMetaData([$request->input()], $campaign);
             $this->campaignRepository->update($campaign, $banners);
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
@@ -169,7 +168,7 @@ class ApiCampaignsController extends Controller
         /** @var Banner $banner */
         $banner = $campaign->banners()->where('id', $bannerId)->first();
 
-        self::removeTemporaryUploadedFiles([$request->input()], $request);
+        self::removeTemporaryUploadedFiles([$request->input()]);
 
         return (new BannerResource($banner))
             ->response()
@@ -225,20 +224,13 @@ class ApiCampaignsController extends Controller
     {
         $file = $campaignsController->upload($request);
         $data = $file->toArray();
-        if (array_key_exists('size', $data)) {
-            $data['scope'] = $data['size'];
-            unset($data['size']);
-        }
-        return new JsonResponse(['data' => $data]);
+        return new JsonResponse(['data' => ['id' => $data['name'], 'url' => $data['url']]]);
     }
 
-    private static function removeTemporaryUploadedFiles(array $input, Request $request): void
+    private static function removeTemporaryUploadedFiles(array $input): void
     {
-        foreach ($input as $banner) {
-            if (isset($banner['creative_type']) && isset($banner['url'])) {
-                Factory::createFromType($banner['creative_type'], $request)
-                    ->removeTemporaryFile(Utils::extractFilename($banner['url']));
-            }
+        foreach ($input as $bannerMetaData) {
+            Uploader::removeTemporaryFile(Uuid::fromString($bannerMetaData['file_id']));
         }
     }
 

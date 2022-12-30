@@ -53,11 +53,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
-use Symfony\Component\Uid\Ulid;
 use Throwable;
 
 class CampaignsController extends Controller
@@ -74,26 +75,32 @@ class CampaignsController extends Controller
     {
         $mediumName = $request->get('medium');
         $vendor = $request->get('vendor');
+        $type = $request->get('type');
         if (!is_string($mediumName)) {
             throw new UnprocessableEntityHttpException('Field `medium` must be a string');
         }
         if (null !== $vendor && !is_string($vendor)) {
             throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null');
         }
+        if (!is_string($type)) {
+            throw new UnprocessableEntityHttpException('Field `type` must be a string');
+        }
         try {
             $medium = $this->configurationRepository->fetchMedium($mediumName, $vendor);
-            return Factory::create($request)->upload($medium);
+            return Factory::createFromType($type, $request)->upload($medium);
         } catch (InvalidArgumentException | RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
     }
 
-    public function uploadPreview(Request $request, string $type, string $uid): Response
+    public function uploadPreview(Request $request, string $type, string $uuid): Response
     {
-        if (!Ulid::isValid($uid)) {
-            throw new UnprocessableEntityHttpException(sprintf('Invalid ID (%s)', $uid));
+        try {
+            $uuidObject = Uuid::fromString($uuid);
+        } catch (InvalidUuidStringException) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid ID %s', $uuid));
         }
-        return Factory::createFromType($type, $request)->preview($uid);
+        return Factory::createFromType($type, $request)->preview($uuidObject);
     }
 
     public function preview($bannerPublicId): Response
@@ -176,7 +183,7 @@ class CampaignsController extends Controller
         foreach ($files as $file) {
             if (!isset($file['uuid']) && isset($file['creative_type']) && isset($file['url'])) {
                 Factory::createFromType($file['creative_type'], $request)
-                    ->removeTemporaryFile(Utils::extractFilename($file['url']));
+                    ->removeTemporaryFile(Uuid::fromString(Utils::extractFilename($file['url'])));
             }
         }
     }

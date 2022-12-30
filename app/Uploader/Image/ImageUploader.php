@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Image;
 
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
@@ -30,17 +32,11 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
-class ImageUploader implements Uploader
+class ImageUploader extends Uploader
 {
-    public const IMAGE_FILE = 'image';
-    private const FORMAT_TYPE_IMAGE = 'image';
-
     public function __construct(private readonly Request $request)
     {
     }
@@ -48,6 +44,9 @@ class ImageUploader implements Uploader
     public function upload(Medium $medium): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_image')) {
             throw new RuntimeException('Invalid image size');
@@ -55,54 +54,28 @@ class ImageUploader implements Uploader
         $imageSize = getimagesize($file->getRealPath());
         $width = $imageSize[0];
         $height = $imageSize[1];
-        $this->validateDimensions($medium, $width, $height);
+
+        $scope = Size::fromDimensions($width, $height);
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_IMAGE, $scope);
+        $mimeType = $file->getMimeType();
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_IMAGE, $mimeType);
 
         $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_IMAGE,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => $file->getMimeType(),
-            'size' => Size::fromDimensions($width, $height),
+            'mime' => $mimeType,
+            'scope' => $scope,
             'content' => $file->getContent(),
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
-        $name = $model->ulid;
+        $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'uid' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_IMAGE, 'uuid' => $name])
         );
 
         return new UploadedImage($name, $previewUrl->toString(), $width, $height);
-    }
-
-    public function removeTemporaryFile(string $fileName): bool
-    {
-        try {
-            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
-            return true;
-        } catch (ModelNotFoundException $exception) {
-            Log::warning(sprintf('Exception during image file deletion (%s)', $exception->getMessage()));
-            return false;
-        }
-    }
-
-    public function preview(string $fileName): Response
-    {
-        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
-        $response = new Response($file->content);
-        $response->header('Content-Type', $file->mime);
-
-        return $response;
-    }
-
-    private function validateDimensions(Medium $medium, int $width, int $height): void
-    {
-        $size = Size::fromDimensions($width, $height);
-        foreach ($medium->getFormats() as $format) {
-            if (self::FORMAT_TYPE_IMAGE === $format->getType() && in_array($size, array_keys($format->getScopes()))) {
-                return;
-            }
-        }
-
-        throw new RuntimeException('Unsupported image size');
     }
 }

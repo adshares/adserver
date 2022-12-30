@@ -36,6 +36,7 @@ use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use PHPUnit\Framework\MockObject\MockObject;
+use Ramsey\Uuid\Uuid;
 
 final class VideoUploaderTest extends TestCase
 {
@@ -49,8 +50,17 @@ final class VideoUploaderTest extends TestCase
         self::assertInstanceOf(UploadedVideo::class, $uploadedFile);
         self::assertDatabaseHas(UploadedFile::class, [
             'mime' => 'video/mp4',
-            'size' => '852x480'
+            'scope' => '852x480',
         ]);
+    }
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $uploader = new VideoUploader(new Request());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
     }
 
     public function testUploadFailWhileSizeTooLarge(): void
@@ -72,7 +82,7 @@ final class VideoUploaderTest extends TestCase
         ]);
         $uploader = new VideoUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview($file->ulid);
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
 
         self::assertEquals('video/mp4', $response->headers->get('Content-Type'));
     }
@@ -82,7 +92,7 @@ final class VideoUploaderTest extends TestCase
         $file = UploadedFile::factory()->create();
         $uploader = new VideoUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile($file->ulid);
+        $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
 
         self::assertTrue($result);
         self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
@@ -92,7 +102,7 @@ final class VideoUploaderTest extends TestCase
     {
         $uploader = new VideoUploader(self::createMock(Request::class));
 
-        $result = $uploader->removeTemporaryFile('01gmt6dvqqm5h4d908hwrh82jh');
+        $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
 
         self::assertFalse($result);
     }

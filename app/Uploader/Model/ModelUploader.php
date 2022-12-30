@@ -23,22 +23,19 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Model;
 
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
-class ModelUploader implements Uploader
+class ModelUploader extends Uploader
 {
-    public const MODEL_FILE = 'model';
-
     public function __construct(private readonly Request $request)
     {
     }
@@ -46,46 +43,37 @@ class ModelUploader implements Uploader
     public function upload(Medium $medium): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_model')) {
             throw new RuntimeException('Invalid model size');
         }
 
+        $content = $file->getContent();
+        $scope = 'cube';
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_MODEL, $scope);
+        $mimeType = self::contentMimeType($content);
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_MODEL, $mimeType);
+
         $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_MODEL,
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
-            'mime' => self::contentMimeType($file->getContent()),
-            'size' => 'cube',
-            'content' => $file->getContent(),
+            'mime' => $mimeType,
+            'scope' => $scope,
+            'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
-        $name = $model->ulid;
+        $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'uid' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_MODEL, 'uuid' => $name])
         );
 
         return new UploadedModel($name, $previewUrl->toString());
-    }
-
-    public function removeTemporaryFile(string $fileName): bool
-    {
-        try {
-            UploadedFileModel::fetchByUlidOrFail($fileName)->delete();
-            return true;
-        } catch (ModelNotFoundException $exception) {
-            Log::warning(sprintf('Exception during model file deletion (%s)', $exception->getMessage()));
-            return false;
-        }
-    }
-
-    public function preview(string $fileName): Response
-    {
-        $file = UploadedFileModel::fetchByUlidOrFail($fileName);
-        $response = new Response($file->content);
-        $response->header('Content-Type', $file->mime);
-
-        return $response;
     }
 
     private static function contentMimeType(string $content): string

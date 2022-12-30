@@ -31,6 +31,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Closure;
+use Ramsey\Uuid\Uuid;
 
 final class BannerCreatorTest extends TestCase
 {
@@ -40,14 +41,14 @@ final class BannerCreatorTest extends TestCase
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
         $file = UploadedFile::factory()->create([
             'mime' => 'video/mp4',
-            'size' => '852x480',
+            'scope' => '852x480',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/adshares.mp4')),
         ]);
         $input = [
             'creative_size' => '852x480',
             'creative_type' => Banner::TEXT_TYPE_VIDEO,
             'name' => 'video 1',
-            'url' => 'https://example.com/video/' . $file->ulid,
+            'url' => 'https://example.com/video/' . Uuid::fromString($file->uuid)->toString(),
         ];
 
         $banners = $creator->prepareBannersFromInput([$input], $campaign);
@@ -66,14 +67,14 @@ final class BannerCreatorTest extends TestCase
         $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
         $file = UploadedFile::factory()->create([
             'mime' => 'text/html',
-            'size' => '300x250',
+            'scope' => '300x250',
             'content' => file_get_contents(base_path('tests/mock/Files/Banners/adshares.mp4')),
         ]);
         $input = [
             'creative_size' => '300x250',
             'creative_type' => Banner::TEXT_TYPE_HTML,
             'name' => 'html 1',
-            'url' => 'https://example.com/zip/' . $file->ulid,
+            'url' => 'https://example.com/zip/' . Uuid::fromString($file->uuid)->toString(),
         ];
 
         $banners = $creator->prepareBannersFromInput([$input], $campaign);
@@ -129,7 +130,7 @@ final class BannerCreatorTest extends TestCase
                     'scope' => '300x250',
                     'type' => Banner::TEXT_TYPE_IMAGE,
                     'name' => 'image 1',
-                    'url' => 'https://example.com/image/01gmt6dvqqm5h4d908hwrh82jh',
+                    'url' => 'https://example.com/image/971a7dfe-feec-48fc-808a-4c50ccb3a9c6',
                 ]]
             ],
             'scope does not match DB' => [
@@ -137,7 +138,78 @@ final class BannerCreatorTest extends TestCase
                     'scope' => '336x280',
                     'type' => Banner::TEXT_TYPE_IMAGE,
                     'name' => 'image 1',
-                    'url' => 'https://example.com/image/' . UploadedFile::factory()->create()->ulid,
+                    'url' =>
+                        'https://example.com/image/'
+                        . Uuid::fromString(UploadedFile::factory()->create()->uuid)->toString(),
+                ]]
+            ],
+            'medium does not match campaign' => [
+                fn() => [[
+                    'scope' => '300x250',
+                    'type' => Banner::TEXT_TYPE_IMAGE,
+                    'name' => 'image 1',
+                    'url' =>
+                        'https://example.com/image/'
+                        . Uuid::fromString(UploadedFile::factory()->create([
+                            'medium' => 'metaverse',
+                            'vendor' => 'decentraland',
+                        ])->uuid)->toString(),
+                ]]
+            ],
+        ];
+    }
+
+    public function testPrepareBannersFromInputEmptyDirectLink(): void
+    {
+        $campaign = Campaign::factory()->create();
+        $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
+        $input = [[
+            'name' => 'image 1',
+            'file_id' =>
+                Uuid::fromString(UploadedFile::factory()->create([
+                    'type' => Banner::TEXT_TYPE_DIRECT_LINK,
+                    'mime' => 'text/plain',
+                    'scope' => 'pop-up',
+                    'content' => '',
+                ])->uuid)->toString(),
+        ]];
+
+        $banners = $creator->prepareBannersFromMetaData($input, $campaign);
+
+        self::assertStringStartsWith($campaign->landing_url, $banners[0]->creative_contents);
+    }
+
+    /**
+     * @dataProvider prepareBannersFromMetaDataFailProvider
+     */
+    public function testPrepareBannersFromMetaDataFail(Closure $closure): void
+    {
+        $campaign = Campaign::factory()->create();
+        $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
+        $input = $closure();
+        self::expectException(InvalidArgumentException::class);
+
+        $creator->prepareBannersFromMetaData($input, $campaign);
+    }
+
+    public function prepareBannersFromMetaDataFailProvider(): array
+    {
+        return [
+            'banner data is not an array' => [fn() => ['name' => 'banner']],
+            'id for non existing resource' => [
+                fn() => [[
+                    'name' => 'image 1',
+                    'file_id' => '971a7dfe-feec-48fc-808a-4c50ccb3a9c6',
+                ]]
+            ],
+            'medium does not match campaign' => [
+                fn() => [[
+                    'name' => 'image 1',
+                    'file_id' =>
+                        Uuid::fromString(UploadedFile::factory()->create([
+                            'medium' => 'metaverse',
+                            'vendor' => 'decentraland',
+                        ])->uuid)->toString(),
                 ]]
             ],
         ];

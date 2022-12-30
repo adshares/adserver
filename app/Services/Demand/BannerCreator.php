@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Services\Demand;
 
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
-use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
@@ -31,6 +30,7 @@ use Adshares\Adserver\ViewModel\BannerStatus;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Ramsey\Uuid\Uuid;
 
 class BannerCreator
 {
@@ -69,13 +69,14 @@ class BannerCreator
                 case Banner::TEXT_TYPE_VIDEO:
                 case Banner::TEXT_TYPE_MODEL:
                 case Banner::TEXT_TYPE_HTML:
-                    $ulid = Utils::extractFilename($banner['url']);
+                    $uuid = Uuid::fromString(Utils::extractFilename($banner['url']));
                     try {
-                        $file = UploadedFile::fetchByUlidOrFail($ulid);
+                        $file = UploadedFile::fetchByUuidOrFail($uuid);
                     } catch (ModelNotFoundException) {
-                        throw new InvalidArgumentException(sprintf('File `%s` does not exist', $ulid));
+                        throw new InvalidArgumentException(sprintf('File `%s` does not exist', $uuid));
                     }
-                    if (null !== $file->size && $scope !== $file->size) {
+                    self::validateMediumMatch($campaign, $file);
+                    if (null !== $file->scope && $scope !== $file->scope) {
                         throw new InvalidArgumentException(
                             sprintf('Scope `%s` does not match uploaded file', $scope)
                         );
@@ -95,12 +96,49 @@ class BannerCreator
 
             $bannerModel->creative_contents = $content;
             $bannerModel->creative_mime = $mime;
-
             $banners[] = $bannerModel;
         }
 
-        $mimesValidator = new MimeTypesValidator($medium);
-        $mimesValidator->validateMimeTypes($banners);
+        return $banners;
+    }
+
+    public function prepareBannersFromMetaData(array $metaData, Campaign $campaign): array
+    {
+        $medium = $this->configurationRepository->fetchMedium($campaign->medium, $campaign->vendor);
+        $bannerValidator = new BannerValidator($medium);
+
+        $banners = [];
+
+        foreach ($metaData as $bannerMetaData) {
+            if (!is_array($bannerMetaData)) {
+                throw new InvalidArgumentException('Invalid creative data type');
+            }
+            $bannerValidator->validateBannerMetaData($bannerMetaData);
+            $uuid = Uuid::fromString($bannerMetaData['file_id']);
+            try {
+                $file = UploadedFile::fetchByUuidOrFail($uuid);
+            } catch (ModelNotFoundException) {
+                throw new InvalidArgumentException(sprintf('File `%s` does not exist', $bannerMetaData['file_id']));
+            }
+            self::validateMediumMatch($campaign, $file);
+
+            $bannerModel = new Banner();
+            $bannerModel->name = $bannerMetaData['name'];
+            $bannerModel->status = Banner::STATUS_ACTIVE;
+            $bannerModel->creative_type = $file->type;
+            $bannerModel->creative_mime = $file->mime;
+            $bannerModel->creative_size = $file->scope;
+            if (Banner::TEXT_TYPE_DIRECT_LINK === $file->type) {
+                $bannerModel->creative_contents = Utils::appendFragment(
+                    empty($file->content) ? $campaign->landing_url : $file->content,
+                    $file->scope,
+                );
+            } else {
+                $bannerModel->creative_contents = $file->content;
+            }
+
+            $banners[] = $bannerModel;
+        }
 
         return $banners;
     }
@@ -153,5 +191,12 @@ class BannerCreator
             }
         }
         return $banner;
+    }
+
+    private static function validateMediumMatch(Campaign $campaign, UploadedFile $file): void
+    {
+        if ($campaign->medium !== $file->medium || $campaign->vendor !== $file->vendor) {
+            throw new InvalidArgumentException("File's medium does not match campaign");
+        }
     }
 }

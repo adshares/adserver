@@ -27,6 +27,9 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Illuminate\Support\Str;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
+use Ramsey\Uuid\Uuid;
 
 class BannerValidator
 {
@@ -46,41 +49,27 @@ class BannerValidator
             ] as $field => $maxLength
         ) {
             self::validateField($banner, $field);
-            $this->validateFieldMaximumLength($banner[$field], $maxLength, $field);
+            self::validateFieldMaximumLength($banner[$field], $maxLength, $field);
         }
         $type = $banner['type'];
         if (Banner::TEXT_TYPE_DIRECT_LINK !== $type) {
             self::validateField($banner, 'url');
         }
 
-        if (null === $this->supportedScopesByTypes) {
-            $this->initializeSupportedScopesByTypes();
-        }
-
-        if (!isset($this->supportedScopesByTypes[$type])) {
-            throw new InvalidArgumentException(sprintf('Invalid type (%s)', $type));
-        }
-
         $size = $banner['scope'];
-        if (Banner::TEXT_TYPE_VIDEO === $type) {
-            if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
-                throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $size));
-            }
-            if (
-                empty(
-                    Size::findMatchingWithSizes(
-                        array_keys($this->supportedScopesByTypes[$type]),
-                        ...Size::toDimensions($size)
-                    )
-                )
-            ) {
-                throw new InvalidArgumentException(sprintf('Invalid scope (%s). No match', $size));
-            }
-            return;
-        }
+        $this->validateScope($type, $size);
+    }
 
-        if (!isset($this->supportedScopesByTypes[$type][$size])) {
-            throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $size));
+    public function validateBannerMetaData(array $banner): void
+    {
+        self::validateField($banner, 'name');
+        self::validateFieldMaximumLength($banner['name'], Banner::NAME_MAXIMAL_LENGTH, 'name');
+
+        self::validateField($banner, 'file_id');
+        try {
+            Uuid::fromString($banner['file_id']);
+        } catch (InvalidUuidStringException) {
+            throw new InvalidArgumentException('Field `fileId` must be an ID');
         }
     }
 
@@ -98,10 +87,10 @@ class BannerValidator
     private static function validateField(array $banner, string $field): void
     {
         if (!isset($banner[$field])) {
-            throw new InvalidArgumentException(sprintf('Field `%s` is required', $field));
+            throw new InvalidArgumentException(sprintf('Field `%s` is required', Str::camel($field)));
         }
         if (!is_string($banner[$field]) || 0 === strlen($banner[$field])) {
-            throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', $field));
+            throw new InvalidArgumentException(sprintf('Field `%s` must be a non-empty string', Str::camel($field)));
         }
     }
 
@@ -119,5 +108,59 @@ class BannerValidator
         $field = 'name';
         self::validateField([$field => $name], $field);
         self::validateFieldMaximumLength($name, Banner::NAME_MAXIMAL_LENGTH, $field);
+    }
+
+    public function validateScope(string $type, string $scope): void
+    {
+        if (null === $this->supportedScopesByTypes) {
+            $this->initializeSupportedScopesByTypes();
+        }
+
+        if (!isset($this->supportedScopesByTypes[$type])) {
+            throw new InvalidArgumentException(sprintf('Invalid type (%s)', $type));
+        }
+
+        if (Banner::TEXT_TYPE_VIDEO === $type) {
+            if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $scope)) {
+                throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $scope));
+            }
+            if (
+                empty(
+                    Size::findMatchingWithSizes(
+                        array_keys($this->supportedScopesByTypes[$type]),
+                        ...Size::toDimensions($scope)
+                    )
+                )
+            ) {
+                throw new InvalidArgumentException(sprintf('Invalid scope (%s). No match', $scope));
+            }
+            return;
+        }
+
+        if (!isset($this->supportedScopesByTypes[$type][$scope])) {
+            throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $scope));
+        }
+    }
+
+    public function validateMimeType(string $bannerType, ?string $mimeType): void
+    {
+        if (null === $mimeType) {
+            throw new InvalidArgumentException('Unknown mime');
+        }
+        if (!in_array($mimeType, $this->getSupportedMimesForBannerType($bannerType), true)) {
+            throw new InvalidArgumentException(
+                sprintf('Not supported ad mime type `%s` for %s creative', $mimeType, $bannerType)
+            );
+        }
+    }
+
+    private function getSupportedMimesForBannerType(string $type): array
+    {
+        foreach ($this->medium->getFormats() as $format) {
+            if ($format->getType() === $type) {
+                return $format->getMimes();
+            }
+        }
+        throw new InvalidArgumentException(sprintf('Not supported ad type `%s`', $type));
     }
 }

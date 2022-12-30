@@ -44,6 +44,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use PDOException;
 use Symfony\Component\HttpFoundation\Response;
 
 final class CampaignsControllerTest extends TestCase
@@ -150,7 +151,7 @@ final class CampaignsControllerTest extends TestCase
             ],
             'ad with invalid url (not existing name)' => [
                 fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([
-                    'url' => 'https://example.com/preview/images/01gmt6dvqqm5h4d908hwrh82jh',
+                    'url' => 'https://example.com/preview/images/971a7dfe-feec-48fc-808a-4c50ccb3a9c6',
                     ])]])]
             ],
             'ad size not in taxonomy' => [
@@ -184,7 +185,7 @@ final class CampaignsControllerTest extends TestCase
                 'creativeSize' => '300x250',
                 'creativeType' => 'image',
                 'name' => 'IMAGE 1',
-                'url' => 'http://localhost:8010/upload-preview/image/' . $file->ulid,
+                'url' => 'http://localhost:8010/upload-preview/image/' . $file->uuid,
             ],
             $mergeData,
         );
@@ -733,6 +734,24 @@ final class CampaignsControllerTest extends TestCase
         $this->assertEmpty($cloned['ads']);
     }
 
+    public function testCloneEmptyCampaignFail(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $user = $this->login();
+        $campaign = $this->createCampaignForUser(
+            $user,
+            [
+                'status' => Campaign::STATUS_ACTIVE,
+            ]
+        );
+
+        $response = $this->postJson(self::URI . "/{$campaign->id}/clone");
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
     public function testCloneCampaignWithConversions(): void
     {
         $user = $this->createUser();
@@ -825,12 +844,24 @@ final class CampaignsControllerTest extends TestCase
     {
         return [
             'no file' => [[]],
-            'no medium' => [['file' => UploadedFile::fake()->image('photo.jpg', 300, 250)]],
+            'no medium' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'type' => 'image',
+                ]
+            ],
+            'no type' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'medium' => 'web',
+                ]
+            ],
             'invalid vendor' => [
                 [
                     'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                     'medium' => 'web',
                     'vendor' => 'premium',
+                    'type' => 'image',
                 ]
             ],
             'invalid vendor type' => [
@@ -838,6 +869,14 @@ final class CampaignsControllerTest extends TestCase
                     'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                     'medium' => 'web',
                     'vendor' => 1,
+                    'type' => 'image',
+                ]
+            ],
+            'invalid type of type' => [
+                [
+                    'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
+                    'medium' => 'web',
+                    'type' => 1,
                 ]
             ],
         ];
@@ -852,6 +891,7 @@ final class CampaignsControllerTest extends TestCase
             [
                 'file' => UploadedFile::fake()->image('photo.jpg', 300, 250),
                 'medium' => 'web',
+                'type' => 'image',
             ]
         );
         $response->assertStatus(Response::HTTP_OK);
@@ -862,7 +902,7 @@ final class CampaignsControllerTest extends TestCase
         $user = $this->createUser();
         $file = UploadedFileModel::factory()->create(['user_id' => $user]);
 
-        $response = $this->get('/upload-preview/image/' . $file->ulid);
+        $response = $this->get('/upload-preview/image/' . $file->uuid);
 
         $response->assertStatus(Response::HTTP_OK);
     }
@@ -880,7 +920,7 @@ final class CampaignsControllerTest extends TestCase
     {
         $this->createUser();
 
-        $response = $this->get('/upload-preview/image/01gmt6dvqqm5h4d908hwrh82jh');
+        $response = $this->get('/upload-preview/image/971a7dfe-feec-48fc-808a-4c50ccb3a9c6');
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }

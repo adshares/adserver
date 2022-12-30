@@ -35,16 +35,21 @@ return new class extends Migration
     {
         Schema::create('uploaded_files', function (Blueprint $table) {
             $table->id();
-            $table->ulid('ulid')->index();
+            $table->binary('uuid');
             $table->timestamp('created_at')->useCurrent()->index();
             $table->unsignedBigInteger('user_id');
+            $table->string('type', 32);
             $table->string('medium', 16)->default('web');
             $table->string('vendor', 32)->nullable();
             $table->string('mime', self::MAXIMAL_MIME_TYPE_LENGTH);
-            $table->string('size', 16)->nullable();
+            $table->string('scope', 16)->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
+        DB::statement('ALTER TABLE uploaded_files MODIFY uuid VARBINARY(16) NOT NULL');
         DB::statement('ALTER TABLE uploaded_files ADD content LONGBLOB');
+        Schema::table('uploaded_files', static function (Blueprint $table) {
+            $table->unique('uuid');
+        });
     }
 
     public function down(): void
