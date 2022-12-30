@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Video;
 
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
 use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
@@ -45,7 +46,7 @@ class VideoUploader extends Uploader
     {
     }
 
-    public function upload(Medium $medium, string $scope = null): UploadedFile
+    public function upload(Medium $medium, ?string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
         if (null === $file) {
@@ -57,8 +58,8 @@ class VideoUploader extends Uploader
         }
         [$width, $height] = $this->getVideoDimensions($file->getRealPath());
 
-        $this->validateDimensions($medium, $width, $height);
-
+        $scope = Size::fromDimensions($width, $height);
+        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_VIDEO, $scope);
         $mimeType = $file->getMimeType();
         (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_VIDEO, $mimeType);
 
@@ -67,7 +68,7 @@ class VideoUploader extends Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $mimeType,
-            'scope' => Size::fromDimensions($width, $height),
+            'scope' => $scope,
             'content' => $file->getContent(),
         ]);
         Auth::user()->uploadedFiles()->save($model);
@@ -78,23 +79,6 @@ class VideoUploader extends Uploader
         );
 
         return new UploadedVideo($name, $previewUrl->toString(), $width, $height);
-    }
-
-    private function validateDimensions(Medium $medium, $width, $height): void
-    {
-        if (empty(Size::findMatchingWithSizes($this->extractSizesFromMedium($medium), $width, $height))) {
-            throw new RuntimeException('Unsupported video size');
-        }
-    }
-
-    private function extractSizesFromMedium(Medium $medium): array
-    {
-        foreach ($medium->getFormats() as $format) {
-            if (Banner::TEXT_TYPE_VIDEO === $format->getType()) {
-                return array_keys($format->getScopes());
-            }
-        }
-        return [];
     }
 
     private function getVideoDimensions(string $realPath): array

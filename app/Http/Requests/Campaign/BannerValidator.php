@@ -56,35 +56,8 @@ class BannerValidator
             self::validateField($banner, 'url');
         }
 
-        if (null === $this->supportedScopesByTypes) {
-            $this->initializeSupportedScopesByTypes();
-        }
-
-        if (!isset($this->supportedScopesByTypes[$type])) {
-            throw new InvalidArgumentException(sprintf('Invalid type (%s)', $type));
-        }
-
         $size = $banner['scope'];
-        if (Banner::TEXT_TYPE_VIDEO === $type) {
-            if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $size)) {
-                throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $size));
-            }
-            if (
-                empty(
-                    Size::findMatchingWithSizes(
-                        array_keys($this->supportedScopesByTypes[$type]),
-                        ...Size::toDimensions($size)
-                    )
-                )
-            ) {
-                throw new InvalidArgumentException(sprintf('Invalid scope (%s). No match', $size));
-            }
-            return;
-        }
-
-        if (!isset($this->supportedScopesByTypes[$type][$size])) {
-            throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $size));
-        }
+        $this->validateScope($type, $size);
     }
 
     public function validateBannerMetaData(array $banner): void
@@ -135,5 +108,37 @@ class BannerValidator
         $field = 'name';
         self::validateField([$field => $name], $field);
         self::validateFieldMaximumLength($name, Banner::NAME_MAXIMAL_LENGTH, $field);
+    }
+
+    public function validateScope(string $type, string $scope): void
+    {
+        if (null === $this->supportedScopesByTypes) {
+            $this->initializeSupportedScopesByTypes();
+        }
+
+        if (!isset($this->supportedScopesByTypes[$type])) {
+            throw new InvalidArgumentException(sprintf('Invalid type (%s)', $type));
+        }
+
+        if (Banner::TEXT_TYPE_VIDEO === $type) {
+            if (1 !== preg_match('/^[0-9]+x[0-9]+$/', $scope)) {
+                throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $scope));
+            }
+            if (
+                empty(
+                    Size::findMatchingWithSizes(
+                        array_keys($this->supportedScopesByTypes[$type]),
+                        ...Size::toDimensions($scope)
+                    )
+                )
+            ) {
+                throw new InvalidArgumentException(sprintf('Invalid scope (%s). No match', $scope));
+            }
+            return;
+        }
+
+        if (!isset($this->supportedScopesByTypes[$type][$scope])) {
+            throw new InvalidArgumentException(sprintf('Invalid scope (%s)', $scope));
+        }
     }
 }

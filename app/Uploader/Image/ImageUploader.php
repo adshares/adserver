@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Image;
 
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
 use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
@@ -41,7 +42,7 @@ class ImageUploader extends Uploader
     {
     }
 
-    public function upload(Medium $medium, string $scope = null): UploadedFile
+    public function upload(Medium $medium, ?string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
         if (null === $file) {
@@ -54,8 +55,9 @@ class ImageUploader extends Uploader
         $imageSize = getimagesize($file->getRealPath());
         $width = $imageSize[0];
         $height = $imageSize[1];
-        $this->validateDimensions($medium, $width, $height);
 
+        $scope = Size::fromDimensions($width, $height);
+        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_IMAGE, $scope);
         $mimeType = $file->getMimeType();
         (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_IMAGE, $mimeType);
 
@@ -64,7 +66,7 @@ class ImageUploader extends Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $mimeType,
-            'scope' => Size::fromDimensions($width, $height),
+            'scope' => $scope,
             'content' => $file->getContent(),
         ]);
         Auth::user()->uploadedFiles()->save($model);
@@ -75,17 +77,5 @@ class ImageUploader extends Uploader
         );
 
         return new UploadedImage($name, $previewUrl->toString(), $width, $height);
-    }
-
-    private function validateDimensions(Medium $medium, int $width, int $height): void
-    {
-        $size = Size::fromDimensions($width, $height);
-        foreach ($medium->getFormats() as $format) {
-            if (Banner::TEXT_TYPE_IMAGE === $format->getType() && in_array($size, array_keys($format->getScopes()))) {
-                return;
-            }
-        }
-
-        throw new RuntimeException('Unsupported image size');
     }
 }

@@ -30,7 +30,7 @@ use Ramsey\Uuid\UuidInterface;
 
 abstract class Uploader
 {
-    abstract public function upload(Medium $medium, string $scope = null): UploadedFile;
+    abstract public function upload(Medium $medium, ?string $scope = null): UploadedFile;
 
     public function preview(UuidInterface $uuid): Response
     {

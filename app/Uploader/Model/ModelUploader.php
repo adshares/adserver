@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Model;
 
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
 use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
@@ -40,7 +41,7 @@ class ModelUploader extends Uploader
     {
     }
 
-    public function upload(Medium $medium, string $scope = null): UploadedFile
+    public function upload(Medium $medium, ?string $scope = null): UploadedFile
     {
         $file = $this->request->file('file');
         if (null === $file) {
@@ -52,6 +53,8 @@ class ModelUploader extends Uploader
         }
 
         $content = $file->getContent();
+        $scope = 'cube';
+        (new BannerValidator($medium))->validateScope(Banner::TEXT_TYPE_MODEL, $scope);
         $mimeType = self::contentMimeType($content);
         (new MimeTypesValidator($medium))->validateMimeTypeForBannerType(Banner::TEXT_TYPE_MODEL, $mimeType);
 
@@ -60,7 +63,7 @@ class ModelUploader extends Uploader
             'medium' => $medium->getName(),
             'vendor' => $medium->getVendor(),
             'mime' => $mimeType,
-            'scope' => 'cube',
+            'scope' => $scope,
             'content' => $content,
         ]);
         Auth::user()->uploadedFiles()->save($model);
