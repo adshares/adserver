@@ -118,7 +118,7 @@ class BannerCreator
             try {
                 $file = UploadedFile::fetchByUuidOrFail($uuid);
             } catch (ModelNotFoundException) {
-                throw new InvalidArgumentException(sprintf('File `%s` does not exist', $bannerMetaData['id']));
+                throw new InvalidArgumentException(sprintf('File `%s` does not exist', $bannerMetaData['file_id']));
             }
             self::validateMediumMatch($campaign, $file);
 

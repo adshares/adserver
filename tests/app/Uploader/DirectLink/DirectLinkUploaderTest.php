@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\DirectLink\DirectLinkUploader;
 use Adshares\Adserver\Uploader\DirectLink\UploadedDirectLink;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
@@ -53,9 +54,31 @@ final class DirectLinkUploaderTest extends TestCase
         ]);
     }
 
+    public function testUploadFailWhileScopeIsMissing(): void
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::any())
+            ->method('file')
+            ->willReturn(UploadedFile::fake()->createWithContent(
+                'a.txt',
+                'https://example.com'
+            ));
+        $uploader = new HtmlUploader($request);
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
+    }
+
     public function testUploadFailWhileFileIsMissing(): void
     {
-        $uploader = new DirectLinkUploader(new Request());
+        $request = self::createMock(Request::class);
+        $request->expects(self::any())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('pop-up');
+        $uploader = new HtmlUploader($request);
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);

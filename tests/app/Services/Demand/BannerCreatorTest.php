@@ -159,6 +159,62 @@ final class BannerCreatorTest extends TestCase
         ];
     }
 
+    public function testPrepareBannersFromInputEmptyDirectLink(): void
+    {
+        $campaign = Campaign::factory()->create();
+        $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
+        $input = [[
+            'name' => 'image 1',
+            'file_id' =>
+                Uuid::fromString(UploadedFile::factory()->create([
+                    'type' => Banner::TEXT_TYPE_DIRECT_LINK,
+                    'mime' => 'text/plain',
+                    'scope' => 'pop-up',
+                    'content' => '',
+                ])->uuid)->toString(),
+        ]];
+
+        $banners = $creator->prepareBannersFromMetaData($input, $campaign);
+
+        self::assertStringStartsWith($campaign->landing_url, $banners[0]->creative_contents);
+    }
+
+    /**
+     * @dataProvider prepareBannersFromMetaDataFailProvider
+     */
+    public function testPrepareBannersFromMetaDataFail(Closure $closure): void
+    {
+        $campaign = Campaign::factory()->create();
+        $creator = new BannerCreator($this->app->make(ConfigurationRepository::class));
+        $input = $closure();
+        self::expectException(InvalidArgumentException::class);
+
+        $creator->prepareBannersFromMetaData($input, $campaign);
+    }
+
+    public function prepareBannersFromMetaDataFailProvider(): array
+    {
+        return [
+            'banner data is not an array' => [fn() => ['name' => 'banner']],
+            'id for non existing resource' => [
+                fn() => [[
+                    'name' => 'image 1',
+                    'file_id' => '971a7dfe-feec-48fc-808a-4c50ccb3a9c6',
+                ]]
+            ],
+            'medium does not match campaign' => [
+                fn() => [[
+                    'name' => 'image 1',
+                    'file_id' =>
+                        Uuid::fromString(UploadedFile::factory()->create([
+                            'medium' => 'metaverse',
+                            'vendor' => 'decentraland',
+                        ])->uuid)->toString(),
+                ]]
+            ],
+        ];
+    }
+
     public function testUpdateBanner(): void
     {
         /** @var Banner $banner */
