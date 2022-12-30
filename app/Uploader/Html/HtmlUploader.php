@@ -46,8 +46,8 @@ class HtmlUploader extends Uploader
         'application/x-zip',
         'application/x-zip-compressed',
     ];
-    private const HTML_DISK = 'banners';
     private const RESULTANT_MIME_TYPE = 'text/html';
+    private const ZIP_DISK = 'banners';
 
     public function __construct(private readonly Request $request)
     {
@@ -73,11 +73,11 @@ class HtmlUploader extends Uploader
 
         $bannerValidator = new BannerValidator($medium);
         $bannerValidator->validateScope(Banner::TEXT_TYPE_HTML, $scope);
-        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_HTML, self::RESULTANT_MIME_TYPE);
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_HTML, self::RESULTANT_MIME_TYPE);
 
-        $name = $file->store('', self::HTML_DISK);
+        $name = $file->store('', self::ZIP_DISK);
         $content = $this->extractHtmlContent($name);
-        Storage::disk(self::HTML_DISK)->delete($name);
+        Storage::disk(self::ZIP_DISK)->delete($name);
 
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_HTML,
@@ -99,7 +99,7 @@ class HtmlUploader extends Uploader
 
     private function extractHtmlContent(string $name): string
     {
-        $path = Storage::disk(self::HTML_DISK)->path($name);
+        $path = Storage::disk(self::ZIP_DISK)->path($name);
         $zip = new ZipToHtml($path);
         return $zip->getHtml();
     }

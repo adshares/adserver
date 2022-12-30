@@ -56,7 +56,7 @@ class ModelUploader extends Uploader
         $bannerValidator = new BannerValidator($medium);
         $bannerValidator->validateScope(Banner::TEXT_TYPE_MODEL, $scope);
         $mimeType = self::contentMimeType($content);
-        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_MODEL, $mimeType);
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_MODEL, $mimeType);
 
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_MODEL,

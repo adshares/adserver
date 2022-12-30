@@ -142,7 +142,7 @@ class BannerValidator
         }
     }
 
-    public function validateMimeTypeForBannerType(string $bannerType, ?string $mimeType): void
+    public function validateMimeType(string $bannerType, ?string $mimeType): void
     {
         if (null === $mimeType) {
             throw new InvalidArgumentException('Unknown mime');

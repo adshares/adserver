@@ -59,7 +59,7 @@ class DirectLinkUploader extends Uploader
         $bannerValidator = new BannerValidator($medium);
         $bannerValidator->validateScope(Banner::TEXT_TYPE_DIRECT_LINK, $scope);
         $mimeType = $file->getMimeType();
-        $bannerValidator->validateMimeTypeForBannerType(Banner::TEXT_TYPE_DIRECT_LINK, $mimeType);
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_DIRECT_LINK, $mimeType);
 
         $model = new UploadedFileModel([
             'type' => Banner::TEXT_TYPE_DIRECT_LINK,
