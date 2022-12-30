@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Uploader\Image;
 
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
-use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -42,7 +41,7 @@ class ImageUploader extends Uploader
     {
     }
 
-    public function upload(Medium $medium, ?string $scope = null): UploadedFile
+    public function upload(Medium $medium): UploadedFile
     {
         $file = $this->request->file('file');
         if (null === $file) {

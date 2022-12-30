@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Uploader\Html;
 
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
-use Adshares\Adserver\Http\Requests\Campaign\MimeTypesValidator;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -54,8 +53,12 @@ class HtmlUploader extends Uploader
     {
     }
 
-    public function upload(Medium $medium, ?string $scope = null): UploadedFile
+    public function upload(Medium $medium): UploadedFile
     {
+        $scope = $this->request->get('scope');
+        if (!is_string($scope)) {
+            throw new RuntimeException('Field `scope` must be a string');
+        }
         $file = $this->request->file('file');
         if (null === $file) {
             throw new RuntimeException('Field `file` is required');
