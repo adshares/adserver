@@ -45,7 +45,7 @@ final class HtmlUploaderTest extends TestCase
         $uploader = new HtmlUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        $uploaded = $uploader->upload($medium, '300x250');
+        $uploaded = $uploader->upload($medium);
 
         self::assertInstanceOf(UploadedHtml::class, $uploaded);
         self::assertDatabaseHas(UploadedFileModel::class, [
@@ -54,14 +54,36 @@ final class HtmlUploaderTest extends TestCase
         ]);
     }
 
-    public function testUploadFailWhileFileIsMissing(): void
+    public function testUploadFailWhileScopeIsMissing(): void
     {
-        $uploader = new HtmlUploader(new Request());
+        $request = self::createMock(Request::class);
+        $request->expects(self::any())
+            ->method('file')
+            ->willReturn(UploadedFile::fake()->createWithContent(
+                'a.zip',
+                file_get_contents(base_path('tests/mock/Files/Banners/300x250.zip'))
+            ));
+        $uploader = new HtmlUploader($request);
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
 
-        $uploader->upload($medium, '300x250');
+        $uploader->upload($medium);
+    }
+
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $request = self::createMock(Request::class);
+        $request->expects(self::any())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
+        $uploader = new HtmlUploader($request);
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
     }
 
     public function testUploadEmpty(): void
@@ -75,11 +97,15 @@ final class HtmlUploaderTest extends TestCase
                     file_get_contents(base_path('tests/mock/Files/Banners/empty.zip'))
                 )
             );
+        $request->expects(self::once())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
 
-        (new HtmlUploader($request))->upload($medium, '300x250');
+        (new HtmlUploader($request))->upload($medium);
     }
 
     public function testUploadImageInsteadOfZip(): void
@@ -93,11 +119,15 @@ final class HtmlUploaderTest extends TestCase
                     file_get_contents(base_path('tests/mock/Files/Banners/980x120.png'))
                 )
             );
+        $request->expects(self::once())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
 
-        (new HtmlUploader($request))->upload($medium, '300x250');
+        (new HtmlUploader($request))->upload($medium);
     }
 
     public function testUploadFailWhileSizeTooLarge(): void
@@ -109,7 +139,7 @@ final class HtmlUploaderTest extends TestCase
 
         self::expectException(RuntimeException::class);
 
-        $uploader->upload($medium, '300x250');
+        $uploader->upload($medium);
     }
 
     public function testRemoveTemporaryFile(): void
@@ -157,6 +187,10 @@ final class HtmlUploaderTest extends TestCase
                 'a.zip',
                 file_get_contents(base_path('tests/mock/Files/Banners/300x250.zip'))
             ));
+        $request->expects(self::once())
+            ->method('get')
+            ->with('scope')
+            ->willReturn('300x250');
         return $request;
     }
 }

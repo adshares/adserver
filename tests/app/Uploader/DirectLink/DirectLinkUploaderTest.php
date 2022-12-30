@@ -44,7 +44,7 @@ final class DirectLinkUploaderTest extends TestCase
         $uploader = new DirectLinkUploader($this->getRequestMock());
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        $uploaded = $uploader->upload($medium, 'pop-up');
+        $uploaded = $uploader->upload($medium);
 
         self::assertInstanceOf(UploadedDirectLink::class, $uploaded);
         self::assertDatabaseHas(UploadedFileModel::class, [
@@ -60,22 +60,22 @@ final class DirectLinkUploaderTest extends TestCase
 
         self::expectException(RuntimeException::class);
 
-        $uploader->upload($medium, 'pop-up');
+        $uploader->upload($medium);
     }
 
     public function testUploadFailWhileSizeTooLarge(): void
     {
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_DIRECT_LINK => 10]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $uploader = new DirectLinkUploader($this->getRequestMock());
+        $uploader = new DirectLinkUploader($this->getRequestMock('300x250'));
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
         self::expectException(RuntimeException::class);
 
-        $uploader->upload($medium, '300x250');
+        $uploader->upload($medium);
     }
 
-    private function getRequestMock(): Request|MockObject
+    private function getRequestMock(string $scope = 'pop-up'): Request|MockObject
     {
         Auth::shouldReceive('guard')->andReturnSelf()
             ->shouldReceive('user')->andReturn(User::factory()->create());
@@ -86,6 +86,10 @@ final class DirectLinkUploaderTest extends TestCase
                 'a.txt',
                 'https://example.com'
             ));
+        $request->expects(self::once())
+            ->method('get')
+            ->with('scope')
+            ->willReturn($scope);
         return $request;
     }
 }
