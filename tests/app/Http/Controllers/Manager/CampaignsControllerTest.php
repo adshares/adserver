@@ -44,6 +44,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use PDOException;
 use Symfony\Component\HttpFoundation\Response;
 
 final class CampaignsControllerTest extends TestCase
@@ -731,6 +732,24 @@ final class CampaignsControllerTest extends TestCase
         $this->assertEmpty($cloned['conversions']);
         $this->assertEmpty($cloned['classifications']);
         $this->assertEmpty($cloned['ads']);
+    }
+
+    public function testCloneEmptyCampaignFail(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $user = $this->login();
+        $campaign = $this->createCampaignForUser(
+            $user,
+            [
+                'status' => Campaign::STATUS_ACTIVE,
+            ]
+        );
+
+        $response = $this->postJson(self::URI . "/{$campaign->id}/clone");
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testCloneCampaignWithConversions(): void
