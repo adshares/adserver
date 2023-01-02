@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -38,8 +38,7 @@ final class AccountId implements Id
 {
     private const LOOSELY_VALID_CHECKSUM = 'XXXX';
 
-    /** @var string */
-    private $value;
+    private string $value;
 
     public function __construct(string $value, bool $strict = false)
     {
@@ -137,6 +136,6 @@ final class AccountId implements Id
             return $this->value === $other->value;
         }
 
-        return strpos($other->value, substr($this->value, 0, 13)) === 0;
+        return str_starts_with($other->value, substr($this->value, 0, 13));
     }
 }
