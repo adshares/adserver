@@ -34,7 +34,9 @@ use Adshares\Supply\Application\Service\InventoryImporter;
 
 class InventoryImporterCommand extends BaseCommand
 {
-    protected $signature = 'ops:demand:inventory:import';
+    public const SIGNATURE = 'ops:demand:inventory:import';
+
+    protected $signature = self::SIGNATURE;
     protected $description = 'Import data from all defined inventories';
 
     public function __construct(Locker $locker, private readonly InventoryImporter $inventoryImporterService)

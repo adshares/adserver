@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\Log;
 
 class AdsFetchHosts extends BaseCommand
 {
+    public const SIGNATURE = 'ads:fetch-hosts';
     /**
      * Length of block in seconds
      */
@@ -52,7 +53,7 @@ class AdsFetchHosts extends BaseCommand
      */
     private const BROADCAST_PERIOD = 24 * 3600;
 
-    protected $signature = 'ads:fetch-hosts';
+    protected $signature = self::SIGNATURE;
     protected $description = 'Fetches Demand AdServers';
 
     private ?array $whitelist = null;

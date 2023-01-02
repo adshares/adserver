@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,6 +21,9 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Console\Commands\AdsFetchHosts;
+use Adshares\Adserver\Console\Commands\InventoryImporterCommand;
+use Adshares\Adserver\Jobs\ExecuteCommand;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -28,6 +31,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Currency;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
@@ -126,6 +130,26 @@ final class ServerConfigurationControllerTest extends TestCase
             'key' => Config::SUPPORT_EMAIL,
             'value' => 'sup@example.com',
         ]);
+        Bus::assertNothingDispatched();
+    }
+
+    public function testStoreWhitelist(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->putJson(
+            self::URI_CONFIG . '/inventoryImportWhitelist',
+            ['value' => '0001-00000001-8B4E,0001-00000002-BB2D'],
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('inventoryImportWhitelist', ['0001-00000001-8B4E', '0001-00000002-BB2D']);
+        self::assertDatabaseHas(Config::class, [
+            'key' => Config::INVENTORY_IMPORT_WHITELIST,
+            'value' => '0001-00000001-8B4E,0001-00000002-BB2D',
+        ]);
+        Bus::assertDispatched(fn (ExecuteCommand $job) => AdsFetchHosts::SIGNATURE === $job->getSignature());
+        Bus::assertDispatched(fn (ExecuteCommand $job) => InventoryImporterCommand::SIGNATURE === $job->getSignature());
     }
 
     public function testStoreError(): void
