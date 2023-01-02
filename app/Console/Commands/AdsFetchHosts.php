@@ -43,7 +43,6 @@ use Illuminate\Support\Facades\Log;
 
 class AdsFetchHosts extends BaseCommand
 {
-    public const SIGNATURE = 'ads:fetch-hosts';
     /**
      * Length of block in seconds
      */
@@ -53,7 +52,7 @@ class AdsFetchHosts extends BaseCommand
      */
     private const BROADCAST_PERIOD = 24 * 3600;
 
-    protected $signature = self::SIGNATURE;
+    protected $signature = 'ads:fetch-hosts';
     protected $description = 'Fetches Demand AdServers';
 
     public function __construct(Locker $locker, private readonly DemandClient $client)
@@ -90,6 +89,7 @@ class AdsFetchHosts extends BaseCommand
         $added = NetworkHost::all()->count() - $hostsCount;
         $removed = $this->removeOldHosts();
         $marked = $this->markHostsWhichDoesNotBroadcast();
+        NetworkHost::handleWhitelist();
         ServerEvent::dispatch(ServerEventType::HostBroadcastProcessed, [
             'added' => $added,
             'found' => $found,

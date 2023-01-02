@@ -22,13 +22,13 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsConverter;
-use Adshares\Adserver\Console\Commands\AdsFetchHosts;
 use Adshares\Adserver\Console\Commands\InventoryImporterCommand;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\ExecuteCommand;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -334,7 +334,7 @@ class ServerConfigurationController extends Controller
             array_key_exists(Config::INVENTORY_WHITELIST, $settings)
             || array_key_exists(Config::INVENTORY_IMPORT_WHITELIST, $settings)
         ) {
-            ExecuteCommand::dispatch(AdsFetchHosts::SIGNATURE);
+            NetworkHost::handleWhitelist();
             ExecuteCommand::dispatch(InventoryImporterCommand::SIGNATURE);
         }
 

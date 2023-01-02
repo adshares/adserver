@@ -137,15 +137,29 @@ class NetworkHost extends Model
             $networkHost->status = HostStatus::Failure;
         }
         $networkHost->error = $error;
-
-        if (!self::isWhitelisted($address)) {
-            $networkHost->status = HostStatus::Excluded;
-            $networkHost->error = self::MESSAGE_WHILE_EXCLUDED;
-        }
-
         $networkHost->save();
 
         return $networkHost;
+    }
+
+    public static function handleWhitelist(): void
+    {
+        /** @var NetworkHost $networkHost */
+        foreach (self::all() as $networkHost) {
+            $isWhitelisted = self::isWhitelisted($networkHost->address);
+            if (
+                !$isWhitelisted
+                && in_array($networkHost->status, [HostStatus::Initialization, HostStatus::Operational], true)
+            ) {
+                $networkHost->status = HostStatus::Excluded;
+                $networkHost->error = self::MESSAGE_WHILE_EXCLUDED;
+                $networkHost->update();
+            } elseif ($isWhitelisted && HostStatus::Excluded === $networkHost->status) {
+                $networkHost->status = HostStatus::Initialization;
+                $networkHost->error = null;
+                $networkHost->update();
+            }
+        }
     }
 
     private static function isWhitelisted(string $address): bool
