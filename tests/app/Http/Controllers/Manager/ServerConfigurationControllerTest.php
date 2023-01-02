@@ -31,8 +31,8 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Currency;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use PDOException;
@@ -130,7 +130,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'key' => Config::SUPPORT_EMAIL,
             'value' => 'sup@example.com',
         ]);
-        Bus::assertNothingDispatched();
+        Queue::assertNothingPushed();
     }
 
     public function testStoreWhitelist(): void
@@ -148,8 +148,8 @@ final class ServerConfigurationControllerTest extends TestCase
             'key' => Config::INVENTORY_IMPORT_WHITELIST,
             'value' => '0001-00000001-8B4E,0001-00000002-BB2D',
         ]);
-        Bus::assertDispatched(fn (ExecuteCommand $job) => AdsFetchHosts::SIGNATURE === $job->getSignature());
-        Bus::assertDispatched(fn (ExecuteCommand $job) => InventoryImporterCommand::SIGNATURE === $job->getSignature());
+        Queue::assertPushed(fn (ExecuteCommand $job) => AdsFetchHosts::SIGNATURE === $job->getSignature());
+        Queue::assertPushed(fn (ExecuteCommand $job) => InventoryImporterCommand::SIGNATURE === $job->getSignature());
     }
 
     public function testStoreError(): void

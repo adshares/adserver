@@ -64,7 +64,6 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Bus::fake();
         Event::fake()->except([
             'eloquent.creating: Laravel\Passport\Client',
             'eloquent.creating: Adshares\Adserver\Models\UploadedFile',
