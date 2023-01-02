@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -54,6 +54,8 @@ class AdsFetchHosts extends BaseCommand
 
     protected $signature = 'ads:fetch-hosts';
     protected $description = 'Fetches Demand AdServers';
+
+    private ?array $whitelist = null;
 
     public function __construct(Locker $locker, private readonly DemandClient $client)
     {
@@ -143,6 +145,9 @@ class AdsFetchHosts extends BaseCommand
     private function handleBroadcast(Broadcast $broadcast): bool
     {
         $address = $broadcast->getAddress();
+        if (!$this->isWhiteListed($address)) {
+            return false;
+        }
         $time = new DateTimeImmutable('@' . $broadcast->getTime()->getTimestamp());
 
         try {
@@ -195,5 +200,16 @@ class AdsFetchHosts extends BaseCommand
     {
         $period = new DateTimeImmutable(sprintf('-%d hours', config('app.hours_until_inactive_host_removal')));
         return NetworkHost::deleteBroadcastedBefore($period);
+    }
+
+    private function isWhiteListed(string $address): bool
+    {
+        if (null === $this->whitelist) {
+            $this->whitelist = config('app.inventory_import_whitelist');
+        }
+        if (empty($this->whitelist)) {
+            return true;
+        }
+        return in_array($address, $this->whitelist);
     }
 }

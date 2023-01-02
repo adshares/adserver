@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,6 +27,7 @@ use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\GetBroadcastResponse;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
@@ -60,6 +61,17 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
         $this->assertNotNull($host);
         $this->assertEquals('https://app.example.com/', $host->host);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
+    }
+
+    public function testFetchingHostsWhileNotWhitelisted(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_IMPORT_WHITELIST => '0001-00000004-DBEB']);
+        $this->setupAdsClient();
+        $this->setupDemandClientInfo(self::getInfoData());
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        self::assertEmpty(NetworkHost::all());
         self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
