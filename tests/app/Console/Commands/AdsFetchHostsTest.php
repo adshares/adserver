@@ -71,7 +71,9 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $this->setupDemandClientInfo(self::getInfoData());
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
-        self::assertEmpty(NetworkHost::all());
+        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
+        self::assertNotNull($host);
+        self::assertEquals(HostStatus::Excluded, $host->status);
         self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 

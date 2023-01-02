@@ -58,6 +58,7 @@ class NetworkHost extends Model
     use SoftDeletes;
 
     private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    private const MESSAGE_WHILE_EXCLUDED = 'Server is not on a whitelist';
 
     protected $fillable = [
         'address',
@@ -136,9 +137,22 @@ class NetworkHost extends Model
             $networkHost->status = HostStatus::Failure;
         }
         $networkHost->error = $error;
+
+        if (!self::isWhitelisted($address)) {
+            $networkHost->status = HostStatus::Excluded;
+            $networkHost->error = self::MESSAGE_WHILE_EXCLUDED;
+        }
+
         $networkHost->save();
 
         return $networkHost;
+    }
+
+    private static function isWhitelisted(string $address): bool
+    {
+        $whitelist = config('app.inventory_import_whitelist');
+
+        return empty($whitelist) || in_array($address, $whitelist);
     }
 
     public static function fetchHosts(array $whitelist = []): Collection
