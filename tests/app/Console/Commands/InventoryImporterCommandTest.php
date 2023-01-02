@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -77,11 +77,13 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
             ->expectsOutput('[Inventory Importer] Finished importing data from 2/2 inventories')
             ->doesntExpectOutput('[Inventory Importer] Importing inventory from 0001-00000002-BB2D')
             ->assertExitCode(0);
+        self::assertTrue(NetworkHost::withTrashed()->where('address', '0001-00000002-BB2D')->first()->trashed());
 
         Config::updateAdminSettings([Config::INVENTORY_IMPORT_WHITELIST => '0001-00000004-DBEB']);
         $this->artisan('ops:demand:inventory:import')
             ->expectsOutput('[Inventory Importer] Stopped importing - no hosts found')
             ->assertExitCode(0);
+        self::assertEmpty(NetworkHost::all());
     }
 
     public function testNoHosts(): void

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -79,17 +79,17 @@ class NetworkHost extends Model
 
     public static function fetchByAddress(string $address): ?self
     {
-        return self::where('address', $address)->first();
+        return (new self())->where('address', $address)->first();
     }
 
     public static function fetchByHost(string $host): ?self
     {
-        return self::where('host', $host)->first();
+        return (new self())->where('host', $host)->first();
     }
 
     public static function failHostsBroadcastedBefore(DateTimeInterface $date): int
     {
-        $hosts = self::where('last_broadcast', '<', $date)->get();
+        $hosts = (new self())->where('last_broadcast', '<', $date)->get();
         $counter = $hosts->count();
         /** @var NetworkHost $host */
         foreach ($hosts as $host) {
@@ -102,7 +102,7 @@ class NetworkHost extends Model
 
     public static function deleteBroadcastedBefore(DateTimeInterface $date): int
     {
-        $hosts = self::where('last_broadcast', '<', $date);
+        $hosts = (new self())->where('last_broadcast', '<', $date);
         $counter = $hosts->count();
         $hosts->delete();
         return $counter;
@@ -143,7 +143,7 @@ class NetworkHost extends Model
 
     public static function fetchHosts(array $whitelist = []): Collection
     {
-        $query = self::whereIn(
+        $query = (new self())->whereIn(
             'status',
             [HostStatus::Initialization, HostStatus::Operational],
         );
@@ -215,5 +215,10 @@ class NetworkHost extends Model
             ->where('network_campaigns.status', '=', Status::STATUS_ACTIVE);
 
         return $query->get()->pluck('address')->toArray();
+    }
+
+    public static function deleteByNotEnlistedAddresses(array $addresses): void
+    {
+        (new self())->whereNotIn('address', $addresses)->delete();
     }
 }
