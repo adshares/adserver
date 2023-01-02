@@ -230,9 +230,4 @@ class NetworkHost extends Model
 
         return $query->get()->pluck('address')->toArray();
     }
-
-    public static function deleteByNotEnlistedAddresses(array $addresses): void
-    {
-        (new self())->whereNotIn('address', $addresses)->delete();
-    }
 }
