@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -513,6 +513,17 @@ final class ServerMonitoringControllerTest extends TestCase
             'type' => ServerEventType::HostBroadcastProcessed,
             'properties' => ['test' => 3],
         ]);
+    }
+
+    public function testFetchEventTypes(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->getJson(self::buildUriForKey('event-types'));
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(['data' => []])
+            ->assertJsonFragment(['BroadcastSent']);
     }
 
     public function testFetchUsers(): void

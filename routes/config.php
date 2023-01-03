@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,6 +33,7 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
     Route::patch('config', [ServerConfigurationController::class, 'store']);
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 
+    Route::get('event-types', [ServerMonitoringController::class, 'fetchEventTypes']);
     Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
     Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
 

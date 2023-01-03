@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,13 +28,15 @@ use Illuminate\Pagination\CursorPaginator;
 
 interface ServerEventLogRepository
 {
-    public static function fetchServerEvents(
+    public function fetchServerEvents(
         ?FilterCollection $filters = null,
         ?int $perPage = null,
     ): CursorPaginator;
 
-    public static function fetchLatestServerEvents(
+    public function fetchLatestServerEvents(
         ?FilterCollection $filters = null,
         ?int $perPage = null,
     ): CursorPaginator;
+
+    public function fetchServerEventTypes(): array;
 }
