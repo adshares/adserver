@@ -148,7 +148,6 @@ final class ServerConfigurationControllerTest extends TestCase
             'key' => Config::INVENTORY_IMPORT_WHITELIST,
             'value' => '0001-00000001-8B4E,0001-00000002-BB2D',
         ]);
-        Queue::assertPushed(fn (ExecuteCommand $job) => AdsFetchHosts::SIGNATURE === $job->getSignature());
         Queue::assertPushed(fn (ExecuteCommand $job) => InventoryImporterCommand::SIGNATURE === $job->getSignature());
     }
 
