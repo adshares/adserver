@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,10 +22,13 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Adserver\Console\Commands\InventoryImporterCommand;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Jobs\ExecuteCommand;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -325,6 +328,14 @@ class ServerConfigurationController extends Controller
         $settings = array_intersect_key(Config::fetchAdminSettings(), $mappedData);
         if ($appendRejectedDomains) {
             $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
+        }
+
+        if (
+            array_key_exists(Config::INVENTORY_WHITELIST, $settings)
+            || array_key_exists(Config::INVENTORY_IMPORT_WHITELIST, $settings)
+        ) {
+            NetworkHost::handleWhitelist();
+            ExecuteCommand::dispatch(InventoryImporterCommand::SIGNATURE);
         }
 
         return $settings;

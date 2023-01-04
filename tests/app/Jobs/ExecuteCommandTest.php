@@ -19,19 +19,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types=1);
 
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Supply\Domain\Repository\CampaignRepository;
+namespace Adshares\Adserver\Tests\Jobs;
 
-class MarkedCampaignsAsDeleted
+use Adshares\Adserver\Jobs\ExecuteCommand;
+use Adshares\Adserver\Tests\TestCase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
+
+class ExecuteCommandTest extends TestCase
 {
-    public function __construct(private readonly CampaignRepository $campaignRepository)
+    public function testHandleOK(): void
     {
-    }
+        Log::spy();
+        Artisan::command('ads:test', fn() => 1);
+        $job = new ExecuteCommand('ads:test');
 
-    public function execute(AccountId $sourceAddress): void
-    {
-        $this->campaignRepository->markedAsDeletedBySourceAddress($sourceAddress);
+        $job->handle();
+
+        Log::shouldHaveReceived('error')->once()->with('Job (command ads:test) failed');
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -58,6 +58,7 @@ class NetworkHost extends Model
     use SoftDeletes;
 
     private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    private const MESSAGE_WHILE_EXCLUDED = 'Server is not on a whitelist';
 
     protected $fillable = [
         'address',
@@ -79,17 +80,17 @@ class NetworkHost extends Model
 
     public static function fetchByAddress(string $address): ?self
     {
-        return self::where('address', $address)->first();
+        return (new self())->where('address', $address)->first();
     }
 
     public static function fetchByHost(string $host): ?self
     {
-        return self::where('host', $host)->first();
+        return (new self())->where('host', $host)->first();
     }
 
     public static function failHostsBroadcastedBefore(DateTimeInterface $date): int
     {
-        $hosts = self::where('last_broadcast', '<', $date)->get();
+        $hosts = (new self())->where('last_broadcast', '<', $date)->get();
         $counter = $hosts->count();
         /** @var NetworkHost $host */
         foreach ($hosts as $host) {
@@ -102,7 +103,7 @@ class NetworkHost extends Model
 
     public static function deleteBroadcastedBefore(DateTimeInterface $date): int
     {
-        $hosts = self::where('last_broadcast', '<', $date);
+        $hosts = (new self())->where('last_broadcast', '<', $date);
         $counter = $hosts->count();
         $hosts->delete();
         return $counter;
@@ -141,9 +142,36 @@ class NetworkHost extends Model
         return $networkHost;
     }
 
+    public static function handleWhitelist(): void
+    {
+        /** @var NetworkHost $networkHost */
+        foreach (self::all() as $networkHost) {
+            $isWhitelisted = self::isWhitelisted($networkHost->address);
+            if ($isWhitelisted && HostStatus::Excluded === $networkHost->status) {
+                $networkHost->status = HostStatus::Initialization;
+                $networkHost->error = null;
+                $networkHost->update();
+            } elseif (
+                !$isWhitelisted
+                && in_array($networkHost->status, [HostStatus::Initialization, HostStatus::Operational], true)
+            ) {
+                $networkHost->status = HostStatus::Excluded;
+                $networkHost->error = self::MESSAGE_WHILE_EXCLUDED;
+                $networkHost->update();
+            }
+        }
+    }
+
+    private static function isWhitelisted(string $address): bool
+    {
+        $whitelist = config('app.inventory_import_whitelist');
+
+        return empty($whitelist) || in_array($address, $whitelist);
+    }
+
     public static function fetchHosts(array $whitelist = []): Collection
     {
-        $query = self::whereIn(
+        $query = (new self())->whereIn(
             'status',
             [HostStatus::Initialization, HostStatus::Operational],
         );
