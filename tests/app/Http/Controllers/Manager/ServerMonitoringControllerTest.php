@@ -519,7 +519,7 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $this->setUpAdmin();
 
-        $response = $this->getJson(self::buildUriForKey('event-types'));
+        $response = $this->getJson(self::buildUriForKey('events/types'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(['data' => []])
