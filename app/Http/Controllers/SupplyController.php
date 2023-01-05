@@ -160,9 +160,7 @@ class SupplyController extends Controller
         $response = $this->find($contextProvider, $bannerFinder, $request);
         $content = $response->getContent();
         $banners = json_decode($content, true)['data'];
-        if (empty($banners)) {
-            $banners = [null];
-        } else {
+        if (!empty($banners)) {
             $banners = [self::unmapResult($banners[0])];
         }
         return self::json(
