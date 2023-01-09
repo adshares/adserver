@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,7 +34,8 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\UserContext;
-use DateTime;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use DateTimeImmutable;
 use DateTimeInterface;
 
 class AdPayEventExportCommandTest extends ConsoleTestCase
@@ -70,6 +71,47 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
+    }
+
+    public function testExportViewRecoverableAdPayError(): void
+    {
+        $this->bindAdUser();
+
+        $adPay = $this->createMock(AdPay::class);
+        $adPay->expects(self::exactly(3))->method('addViews')->willReturnOnConsecutiveCalls(
+            self::throwException(new UnexpectedClientResponseException('test-exception')),
+            null,
+        );
+        $this->instance(AdPay::class, $adPay);
+
+        $dateFrom = new DateTimeImmutable('-5 minutes');
+        $dateTo = new DateTimeImmutable();
+        self::insertTwoPackagesOfViewEvent($dateFrom, $dateTo);
+        $from = $dateFrom->format(DateTimeInterface::ATOM);
+        $to = $dateTo->format(DateTimeInterface::ATOM);
+
+        $this->artisan('ops:adpay:event:export', ['--from' => $from, '--to' => $to, '--threads' => 2])
+            ->assertExitCode(0);
+    }
+
+    public function testExportViewNotRecoverableAdPayError(): void
+    {
+        $this->bindAdUser();
+
+        $adPay = $this->createMock(AdPay::class);
+        $adPay->expects(self::atLeastOnce())->method('addViews')->will(
+            self::throwException(new UnexpectedClientResponseException('test-exception')),
+        );
+        $this->instance(AdPay::class, $adPay);
+
+        $dateFrom = new DateTimeImmutable('-5 minutes');
+        $dateTo = new DateTimeImmutable();
+        self::insertTwoPackagesOfViewEvent($dateFrom, $dateTo);
+        $from = $dateFrom->format(DateTimeInterface::ATOM);
+        $to = $dateTo->format(DateTimeInterface::ATOM);
+
+        $this->artisan('ops:adpay:event:export', ['--from' => $from, '--to' => $to, '--threads' => 2])
+            ->assertExitCode(1);
     }
 
     private static function checkEventCount(int $eventCount)
@@ -139,7 +181,8 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         $adPay->expects(self::never())->method('addConversions');
         $this->instance(AdPay::class, $adPay);
 
-        $this->artisan('ops:adpay:event:export', ['--from' => $from, '--to' => $to])->assertExitCode(0);
+        $this->artisan('ops:adpay:event:export', ['--from' => $from, '--to' => $to])
+            ->assertExitCode(1);
     }
 
     public function invalidOptionsProvider(): array
@@ -207,7 +250,7 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         /** @var EventLog $eventLog */
         $eventLog = EventLog::factory()->create(
             [
-                'created_at' => new DateTime('-1 hour'),
+                'created_at' => new DateTimeImmutable('-1 hour'),
                 'event_type' => EventLog::TYPE_VIEW,
                 'campaign_id' => $campaign->uuid,
             ]
@@ -259,5 +302,34 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
                 'campaign_id' => $campaign->uuid,
             ]
         );
+    }
+
+    private static function insertTwoPackagesOfViewEvent(DateTimeInterface $from, DateTimeInterface $to): void
+    {
+        $user = User::factory()->create();
+        $campaign = Campaign::factory()->create(
+            [
+                'user_id' => $user->id,
+                'budget' => 100000000000,
+            ]
+        );
+
+        $count = 1000;
+        $start = $from->getTimestamp();
+        $period = $to->getTimestamp() - $start;
+        $delay = $period / $count;
+
+        EventLog::factory()
+            ->count($count)
+            ->sequence(function ($sequence) use ($start, $delay) {
+                $timestamp = $start + (int)floor($sequence->index * $delay);
+                return ['created_at' => new DateTimeImmutable('@' . $timestamp)];
+            })
+            ->create(
+                [
+                    'event_type' => EventLog::TYPE_VIEW,
+                    'campaign_id' => $campaign->uuid,
+                ]
+            );
     }
 }
