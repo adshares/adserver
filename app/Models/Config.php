@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -447,7 +447,7 @@ class Config extends Model
             self::AUTO_WITHDRAWAL_LIMIT_BTC => 1_000_000_000_000_00,
             self::AUTO_WITHDRAWAL_LIMIT_ETH => 1_000_000_000_000_00,
             self::BANNER_FORCE_HTTPS => true,
-            self::BANNER_ROTATE_INTERVAL => 30,
+            self::BANNER_ROTATE_INTERVAL => 86400,
             self::BTC_WITHDRAW => false,
             self::BTC_WITHDRAW_FEE => 0.05,
             self::BTC_WITHDRAW_MAX_AMOUNT => 1000000000000000,
