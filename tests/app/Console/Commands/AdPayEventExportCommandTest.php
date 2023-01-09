@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
@@ -37,6 +38,9 @@ use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\Lock;
+use Symfony\Component\Lock\Store\FlockStore;
 
 class AdPayEventExportCommandTest extends ConsoleTestCase
 {
@@ -192,6 +196,30 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
             'invalid to' => ['2019-12-01', 'zzz'],
             'invalid range' => ['2019-12-01 12:00:01', '2019-12-01 12:00:00'],
         ];
+    }
+
+    public function testInvalidOptionsConversionRange(): void
+    {
+        Config::updateAdminSettings([
+            Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME => (new DateTimeImmutable())->format(DateTimeInterface::ATOM)
+        ]);
+        $adPay = $this->createMock(AdPay::class);
+        $adPay->expects(self::never())->method('addViews');
+        $adPay->expects(self::never())->method('addClicks');
+        $adPay->expects(self::never())->method('addConversions');
+        $this->instance(AdPay::class, $adPay);
+
+        $this->artisan('ops:adpay:event:export')
+            ->assertExitCode(1);
+    }
+
+    public function testLock(): void
+    {
+        $lock = new Lock(new Key('ops:adpay:event:export'), new FlockStore(), null, false);
+        $lock->acquire();
+
+        $this->artisan('ops:adpay:event:export')
+            ->assertExitCode(1);
     }
 
     private function bindAdUser(): void
