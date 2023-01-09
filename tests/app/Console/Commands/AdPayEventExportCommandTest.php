@@ -77,10 +77,9 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
     {
         $this->bindAdUser();
 
-        $adPay = $this->createMock(AdPay::class);
-        $adPay->method('addViews')->willReturnOnConsecutiveCalls(
+        $adPay = self::createMock(AdPay::class);
+        $adPay->expects(self::exactly(2))->method('addViews')->willReturnOnConsecutiveCalls(
             self::throwException(new UnexpectedClientResponseException('test-exception')),
-            null,
         );
         $this->instance(AdPay::class, $adPay);
 
@@ -98,9 +97,9 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
     {
         $this->bindAdUser();
 
-        $adPay = $this->createMock(AdPay::class);
-        $adPay->method('addViews')->will(
-            self::throwException(new UnexpectedClientResponseException('test-exception')),
+        $adPay = self::createMock(AdPay::class);
+        $adPay->method('addViews')->willThrowException(
+            new UnexpectedClientResponseException('test-exception'),
         );
         $this->instance(AdPay::class, $adPay);
 

@@ -57,7 +57,7 @@ class AdPayEventExportCommand extends BaseCommand
 
     private const DEFAULT_EXPORT_TIME_TO = '-10 minutes';
 
-    private const THREAD_RETRIES = 3;
+    private const MAXIMAL_THREAD_RETRIES = 3;
 
     protected $signature = 'ops:adpay:event:export {--from=} {--to=} {--t|threads=4}';
 
@@ -279,8 +279,7 @@ class AdPayEventExportCommand extends BaseCommand
             }
 
             $threads[] = function () use ($adPay, $adUser, $dateFromTemporary, $dateToTemporary, $pack) {
-                $attempt = 0;
-                while ($attempt++ < self::THREAD_RETRIES) {
+                for ($attempt = 0; $attempt < self::MAXIMAL_THREAD_RETRIES; $attempt++) {
                     try {
                         $this->exportEventsPack($adPay, $adUser, $pack, $dateFromTemporary, $dateToTemporary);
                         return self::SUCCESS;
@@ -288,7 +287,7 @@ class AdPayEventExportCommand extends BaseCommand
                         Log::error(sprintf(
                             '[AdPayEventExport] Error during exporting pack %d (attempt: %d, %s -> %s, %s s) %s',
                             $pack + 1,
-                            $attempt,
+                            $attempt + 1,
                             $dateFromTemporary->format(DateTimeInterface::ATOM),
                             $dateToTemporary->format(DateTimeInterface::ATOM),
                             $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp(),
@@ -306,11 +305,11 @@ class AdPayEventExportCommand extends BaseCommand
             $results = Fork::new()
                 ->concurrent((int)$this->option('threads'))
                 ->before(fn () => DB::connection()->reconnect())
+                ->after(parent: DB::connection()->reconnect())
                 ->run(...$threads);
-            if (in_array(self::FAILURE, $results)) {
+            if (in_array(self::FAILURE, $results, true)) {
                 throw new RuntimeException('Cannot export events');
             }
-            DB::connection()->reconnect();
         }
 
         if ($isCommandExecutedAutomatically && $packCount > 0) {
@@ -331,10 +330,6 @@ class AdPayEventExportCommand extends BaseCommand
             EventLog::where('created_at', '>', $dateFrom)
                 ->where('created_at', '<=', $dateTo)
                 ->get();
-        $count =
-            EventLog::where('created_at', '>', $dateFrom)
-                ->where('created_at', '<=', $dateTo)
-                ->count();
 
         Log::debug(
             sprintf(
