@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -86,8 +86,6 @@ final class SupplyControllerTest extends TestCase
         'banners' => [
             '*' => self::LEGACY_FOUND_BANNERS_STRUCTURE,
         ],
-        'zones',
-        'zoneSizes',
         'success',
     ];
 

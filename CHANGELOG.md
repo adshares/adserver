@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use UUID as ID in campaign APIv2
 - Store uploaded files (creatives) in database
 - Extend validation during file upload
+- Do not duplicate code for Decentraland find
 ### Removed
 - Redundant pagination data
 ### Fixed
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reading video dimensions with ffmpeg
 - Banner's content lazy loading
 - Forbid site duplicates
+- Clear not whitelisted hosts
 
 ## [2.2.4] - 2022-12-29
 ### Fixed
