@@ -305,15 +305,12 @@ class AdPayEventExportCommand extends BaseCommand
         } else {
             $results = Fork::new()
                 ->concurrent((int)$this->option('threads'))
-                ->before(
-                    function () {
-                        DB::connection()->reconnect();
-                    }
-                )
+                ->before(fn () => DB::connection()->reconnect())
                 ->run(...$threads);
             if (in_array(self::FAILURE, $results)) {
                 throw new RuntimeException('Cannot export events');
             }
+            DB::connection()->reconnect();
         }
 
         if ($isCommandExecutedAutomatically && $packCount > 0) {
@@ -334,6 +331,10 @@ class AdPayEventExportCommand extends BaseCommand
             EventLog::where('created_at', '>', $dateFrom)
                 ->where('created_at', '<=', $dateTo)
                 ->get();
+        $count =
+            EventLog::where('created_at', '>', $dateFrom)
+                ->where('created_at', '<=', $dateTo)
+                ->count();
 
         Log::debug(
             sprintf(

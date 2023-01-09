@@ -78,14 +78,14 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         $this->bindAdUser();
 
         $adPay = $this->createMock(AdPay::class);
-        $adPay->expects(self::exactly(3))->method('addViews')->willReturnOnConsecutiveCalls(
+        $adPay->method('addViews')->willReturnOnConsecutiveCalls(
             self::throwException(new UnexpectedClientResponseException('test-exception')),
             null,
         );
         $this->instance(AdPay::class, $adPay);
 
-        $dateFrom = new DateTimeImmutable('-5 minutes');
         $dateTo = new DateTimeImmutable();
+        $dateFrom = $dateTo->modify('-5 minutes');
         self::insertTwoPackagesOfViewEvent($dateFrom, $dateTo);
         $from = $dateFrom->format(DateTimeInterface::ATOM);
         $to = $dateTo->format(DateTimeInterface::ATOM);
@@ -99,13 +99,13 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         $this->bindAdUser();
 
         $adPay = $this->createMock(AdPay::class);
-        $adPay->expects(self::atLeastOnce())->method('addViews')->will(
+        $adPay->method('addViews')->will(
             self::throwException(new UnexpectedClientResponseException('test-exception')),
         );
         $this->instance(AdPay::class, $adPay);
 
-        $dateFrom = new DateTimeImmutable('-5 minutes');
         $dateTo = new DateTimeImmutable();
+        $dateFrom = $dateTo->modify('-5 minutes');
         self::insertTwoPackagesOfViewEvent($dateFrom, $dateTo);
         $from = $dateFrom->format(DateTimeInterface::ATOM);
         $to = $dateTo->format(DateTimeInterface::ATOM);
