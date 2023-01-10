@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -65,6 +65,7 @@ final class CampaignMapperTest extends TestCase
             ],
             'filters' => [
                 'require' => [
+                    'site:quality' => ['high'],
                     'site:medium' => ['web'],
                     'site:vendor' => ['unknown'],
                 ],
@@ -183,7 +184,7 @@ final class CampaignMapperTest extends TestCase
             'medium' => 'web',
             'vendor' => null,
             'targeting_excludes' => [],
-            'targeting_requires' => [],
+            'targeting_requires' => ['site' => ['quality' => ['high']]],
         ];
     }
 

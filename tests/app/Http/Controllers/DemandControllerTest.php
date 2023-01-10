@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,9 +29,9 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Crypt;
@@ -62,7 +62,7 @@ final class DemandControllerTest extends TestCase
             }
         );
 
-        $this->setupUser();
+        $this->login();
 
         $accountAddress = '0001-00000001-8B4E';
         $accountAddressDifferentUser = '0001-00000002-BB2D';
@@ -109,7 +109,7 @@ final class DemandControllerTest extends TestCase
     public function testInventoryList(): void
     {
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
-        $user = $this->setupUser();
+        $user = $this->login();
 
         /** @var Campaign $campaignDraft */
         $campaignDraft = Campaign::factory()->create(
@@ -179,7 +179,7 @@ final class DemandControllerTest extends TestCase
     {
         Config::updateAdminSettings([Config::CDN_PROVIDER => 'skynet']);
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
-        $user = $this->setupUser();
+        $user = $this->login();
 
         /** @var Campaign $campaignActive */
         $campaignActive = Campaign::factory()->create(
@@ -233,7 +233,7 @@ final class DemandControllerTest extends TestCase
     public function testWhitelistInventoryList(): void
     {
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
-        $user = $this->setupUser();
+        $user = $this->login();
 
         /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
@@ -286,7 +286,7 @@ final class DemandControllerTest extends TestCase
 
     public function testServeDeletedBanner(): void
     {
-        $user = $this->setupUser();
+        $user = $this->login();
         /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
             [
@@ -306,17 +306,32 @@ final class DemandControllerTest extends TestCase
         $response->assertStatus(404);
     }
 
+    public function testContext(): void
+    {
+        Config::updateAdminSettings([Config::SERVE_BASE_URL => 'https://adshares.net']);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        /** @var EventLog $event */
+        $event = EventLog::factory()->create();
+
+        $response = self::getJson(self::buildContextUri($event->event_id));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertDatabaseHas(
+            EventLog::class,
+            [
+                'event_id' => hex2bin($event->event_id),
+                'domain' => 'example.com',
+            ],
+        );
+    }
+
     private static function buildServeUri(string $uuid): string
     {
         return sprintf('/serve/%s', $uuid);
     }
 
-    private function setupUser(): User
+    private static function buildContextUri(string $uuid): string
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
-
-        return $user;
+        return sprintf('/context/%s', $uuid);
     }
 }
