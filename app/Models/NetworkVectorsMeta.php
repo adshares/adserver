@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -36,6 +37,8 @@ use Illuminate\Support\Collection;
  */
 class NetworkVectorsMeta extends Model
 {
+    use HasFactory;
+
     protected $visible = [];
 
     protected $fillable = [

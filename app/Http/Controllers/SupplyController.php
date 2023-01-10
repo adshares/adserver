@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -51,6 +52,7 @@ use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
 use Closure;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
 use GuzzleHttp\Psr7\Query;
@@ -67,6 +69,7 @@ use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -1001,20 +1004,24 @@ class SupplyController extends Controller
         return SupplyBlacklistedDomain::isDomainBlacklisted($domain);
     }
 
-    public function targetingReachList(): Response
+    public function targetingReachList(AdsAuthenticator $authenticator, Request $request): JsonResponse
     {
+        $whitelist = config('app.inventory_export_whitelist');
+        if (!empty($whitelist)) {
+            $account = $authenticator->verifyRequest($request);
+            if (!in_array($account, $whitelist)) {
+                throw new AccessDeniedHttpException();
+            }
+        }
+
         if (null === ($networkHost = NetworkHost::fetchByAddress(config('app.adshares_address')))) {
-            return response(
-                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
-                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
-            );
+            Log::error('[Supply Targeting Reach] Cannot get adserver ID');
+            return self::targetingReachResponse();
         }
 
         if (null === ($meta = NetworkVectorsMeta::fetchByNetworkHostId($networkHost->id))) {
-            return response(
-                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver meta'],
-                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
-            );
+            Log::error('[Supply Targeting Reach] Cannot get adserver meta');
+            return self::targetingReachResponse();
         }
 
         $rows = DB::table('network_vectors')->select(
@@ -1046,14 +1053,22 @@ class SupplyController extends Controller
             ];
         }
 
-        return response(
+        return self::targetingReachResponse($meta->total_events_count, $meta->updated_at, $result);
+    }
+
+    private static function targetingReachResponse(
+        int $eventsCount = 0,
+        ?DateTimeInterface $updateDateTime = null,
+        array $categories = [],
+    ): JsonResponse {
+        return self::json(
             [
                 'meta' => [
-                    'total_events_count' => $meta->total_events_count,
-                    'updated_at' => $meta->updated_at->format(DateTimeInterface::ATOM),
+                    'total_events_count' => $eventsCount,
+                    'updated_at' => ($updateDateTime ?: new DateTimeImmutable())->format(DateTimeInterface::ATOM),
                 ],
-                'categories' => $result,
-            ]
+                'categories' => $categories,
+            ],
         );
     }
 
