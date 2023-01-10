@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -452,7 +452,7 @@ SQL;
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $decodedContext;
             if (!$event->domain && isset($event->their_context)) {
-                $event->domain = EventLog::getDomainFromContext($event->their_context);
+                $event->domain = EventLog::getDomainFromContext(json_decode(json_encode($event->their_context), true));
             }
             if (!$event->domain && isset($decodedContext->url)) {
                 $event->domain = DomainReader::domain($decodedContext->url);

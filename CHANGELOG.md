@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Forbid site duplicates
 - Clear not whitelisted hosts
 
+## [2.2.6] - 2023-01-10
+### Fixed
+- Exporting events to AdPay (check response)
+- Saving event's domain while fetching context
+
+## [2.2.5] - 2023-01-05
+### Fixed
+- Exporting campaign's targeting to AdSelect
+
 ## [2.2.4] - 2022-12-29
 ### Fixed
 - Importing inventory while AdServer does not return JSON
@@ -789,7 +798,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.4...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.6...develop
+[2.2.6]: https://github.com/adshares/adserver/compare/v2.2.5...v2.2.6
+[2.2.5]: https://github.com/adshares/adserver/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/adshares/adserver/compare/v2.2.3...v2.2.4
 [2.2.3]: https://github.com/adshares/adserver/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/adshares/adserver/compare/v2.2.1...v2.2.2
