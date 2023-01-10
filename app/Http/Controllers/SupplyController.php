@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -68,6 +69,7 @@ use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -1002,8 +1004,16 @@ class SupplyController extends Controller
         return SupplyBlacklistedDomain::isDomainBlacklisted($domain);
     }
 
-    public function targetingReachList(): JsonResponse
+    public function targetingReachList(AdsAuthenticator $authenticator, Request $request): JsonResponse
     {
+        $whitelist = config('app.inventory_export_whitelist');
+        if (!empty($whitelist)) {
+            $account = $authenticator->verifyRequest($request);
+            if (!in_array($account, $whitelist)) {
+                throw new AccessDeniedHttpException();
+            }
+        }
+
         if (null === ($networkHost = NetworkHost::fetchByAddress(config('app.adshares_address')))) {
             Log::error('[Supply Targeting Reach] Cannot get adserver ID');
             return self::targetingReachResponse();

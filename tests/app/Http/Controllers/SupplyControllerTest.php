@@ -34,6 +34,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
@@ -42,6 +43,7 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -440,6 +442,7 @@ final class SupplyControllerTest extends TestCase
 
     public function testTargetingReachList(): void
     {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => config('app.adshares_address')]);
         /** @var NetworkHost $networkHost */
         $networkHost = NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
         NetworkVectorsMeta::factory()->create(['network_host_id' => $networkHost->id]);
@@ -470,8 +473,18 @@ final class SupplyControllerTest extends TestCase
             );",
             [':hostId' => $networkHost->id],
         );
+        /** @var AdsAuthenticator $authenticator */
+        $authenticator = $this->app->make(AdsAuthenticator::class);
 
-        $response = self::getJson(self::TARGETING_REACH_URI);
+        $response = self::getJson(
+            self::TARGETING_REACH_URI,
+            [
+                'Authorization' => $authenticator->getHeader(
+                    config('app.adshares_address'),
+                    Crypt::decryptString(config('app.adshares_secret')),
+                ),
+            ],
+        );
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
@@ -479,7 +492,18 @@ final class SupplyControllerTest extends TestCase
 
     public function testTargetingReachWhileNotAuthorized(): void
     {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+
         $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testTargetingReachWhileInvalidCredentials(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI, ['Authorization' => '']);
 
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
