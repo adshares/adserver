@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -41,6 +42,7 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\DB;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -49,6 +51,7 @@ final class SupplyControllerTest extends TestCase
     private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
     private const SUPPLY_ANON_URI = '/supply/anon';
+    private const TARGETING_REACH_URI = '/supply/targeting-reach';
     private const LEGACY_FOUND_BANNERS_STRUCTURE = [
         'id',
         'publisher_id',
@@ -87,6 +90,15 @@ final class SupplyControllerTest extends TestCase
             '*' => self::LEGACY_FOUND_BANNERS_STRUCTURE,
         ],
         'success',
+    ];
+    private const TARGETING_REACH_STRUCTURE = [
+        'meta' => [
+            'total_events_count',
+            'updated_at',
+        ],
+        'categories' => [
+            '*' => [],
+        ],
     ];
 
     public function testPageWhyNoParameters(): void
@@ -424,6 +436,70 @@ final class SupplyControllerTest extends TestCase
     {
         $response = self::post(self::SUPPLY_ANON_URI);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testTargetingReachList(): void
+    {
+        /** @var NetworkHost $networkHost */
+        $networkHost = NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+        NetworkVectorsMeta::factory()->create(['network_host_id' => $networkHost->id]);
+        DB::insert(
+            "INSERT INTO network_vectors (
+                network_host_id,
+                `key`,
+                occurrences,
+                cpm_25,
+                cpm_50,
+                cpm_75,
+                negation_cpm_25,
+                negation_cpm_50,
+                negation_cpm_75,
+                data
+            )
+            VALUES (
+                :hostId,
+                'site:domain:adshares.net',
+                1,
+                2814662,
+                2814662,
+                2814662,
+                1107544,
+                3339398,
+                3339398,
+                0
+            );",
+            [':hostId' => $networkHost->id],
+        );
+
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
+    }
+
+    public function testTargetingReachWhileNotAuthorized(): void
+    {
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testTargetingReachListWhileHostIsMissing(): void
+    {
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
+    }
+
+    public function testTargetingReachListWhileMetaDataIsMissing(): void
+    {
+        NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
     }
 
     private static function findJsonData(array $merge = []): array
