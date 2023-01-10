@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -81,6 +81,12 @@ class ServerMonitoringController extends Controller
 
         return (new GenericCollection($repository->fetchServerEvents($filters, $limit)))
             ->preserveQuery();
+    }
+
+    public function fetchEventTypes(ServerEventLogRepository $repository): JsonResponse
+    {
+        $types = $repository->fetchServerEventTypes();
+        return new JsonResponse(['data' => $types]);
     }
 
     public function fetchHosts(Request $request): JsonResource

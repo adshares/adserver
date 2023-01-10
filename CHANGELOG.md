@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Server event type list to monitoring API
 - Command to upsert configuration
 ### Changed
 - Authorize targeting reach fetches

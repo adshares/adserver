@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,13 +27,14 @@ use Adshares\Adserver\Http\Requests\Filter\DateFilter;
 use Adshares\Adserver\Http\Requests\Filter\Filter;
 use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\ServerEventLog;
+use Adshares\Adserver\ViewModel\ServerEventType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\DB;
 
 class EloquentServerEventLogRepository implements ServerEventLogRepository
 {
-    public static function fetchServerEvents(
+    public function fetchServerEvents(
         ?FilterCollection $filters = null,
         ?int $perPage = null,
     ): CursorPaginator {
@@ -48,7 +49,7 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
         return $builder->tokenPaginate($perPage);
     }
 
-    public static function fetchLatestServerEvents(
+    public function fetchLatestServerEvents(
         ?FilterCollection $filters = null,
         ?int $perPage = null,
     ): CursorPaginator {
@@ -88,5 +89,10 @@ class EloquentServerEventLogRepository implements ServerEventLogRepository
                 break;
         }
         return $builder;
+    }
+
+    public function fetchServerEventTypes(): array
+    {
+        return ServerEventType::cases();
     }
 }
