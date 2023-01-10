@@ -66,7 +66,7 @@ class UpsertConfigurationCommandTest extends ConsoleTestCase
         $lockerMock->expects(self::once())->method('lock')->willReturn(false);
         $this->instance(Locker::class, $lockerMock);
 
-        $this->artisan(self::COMMAND_SIGNATURE)
+        self::artisan(join(' ', [self::COMMAND_SIGNATURE, 'adshares-secret']))
             ->expectsOutput('Command config:upsert already running')
             ->assertExitCode(Command::FAILURE);
     }

@@ -27,9 +27,9 @@ use Symfony\Component\Console\Command\Command;
 
 class UpsertConfigurationCommand extends BaseCommand
 {
-    private const COMMAND_SIGNATURE = 'config:upsert {key} {value?}';
+    private const COMMAND_SIGNATURE = 'config:upsert';
 
-    protected $signature = self::COMMAND_SIGNATURE;
+    protected $signature = self::COMMAND_SIGNATURE . ' {key} {value?}';
     protected $description = 'Updates or inserts config entry';
 
     public function handle(): int
