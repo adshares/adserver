@@ -87,9 +87,9 @@ final class MySqlStatsRepositoryTest extends TestCase
         self::assertEquals(0, $hourlyStatsGroupedByBanner->clicks_all);
         self::assertEquals(1, $hourlyStatsGroupedByBanner->views_all);
         self::assertEquals(1, $hourlyStatsGroupedByBanner->views_unique);
-        self::assertEquals($event->advertiser_id, bin2hex($hourly->advertiser_id));
-        self::assertEquals($event->campaign_id, bin2hex($hourly->campaign_id));
-        self::assertEquals($event->banner_id, bin2hex($hourly->banner_id));
+        self::assertEquals($event->advertiser_id, bin2hex($hourlyStatsGroupedByBanner->advertiser_id));
+        self::assertEquals($event->campaign_id, bin2hex($hourlyStatsGroupedByBanner->campaign_id));
+        self::assertEquals($event->banner_id, bin2hex($hourlyStatsGroupedByBanner->banner_id));
     }
 
     public function testAggregateStatisticsTwoEventsSameCampaignSameBannerSameDomainDifferentUser(): void
@@ -163,9 +163,9 @@ final class MySqlStatsRepositoryTest extends TestCase
         self::assertEquals(0, $hourlyStatsGroupedByBanner->clicks_all);
         self::assertEquals(2, $hourlyStatsGroupedByBanner->views_all);
         self::assertEquals(2, $hourlyStatsGroupedByBanner->views_unique);
-        self::assertEquals($advertiserId, bin2hex($hourlyStatsGroupedByCampaign->advertiser_id));
-        self::assertEquals($campaignId, bin2hex($hourlyStatsGroupedByCampaign->campaign_id));
-        self::assertEquals($bannerId, bin2hex($hourly->banner_id));
+        self::assertEquals($advertiserId, bin2hex($hourlyStatsGroupedByBanner->advertiser_id));
+        self::assertEquals($campaignId, bin2hex($hourlyStatsGroupedByBanner->campaign_id));
+        self::assertEquals($bannerId, bin2hex($hourlyStatsGroupedByBanner->banner_id));
     }
 
     public function testAggregateStatisticsTwoEventsSameCampaignSameBannerSameDomainSameUser(): void
@@ -242,9 +242,101 @@ final class MySqlStatsRepositoryTest extends TestCase
         self::assertEquals(0, $hourlyStatsGroupedByBanner->clicks_all);
         self::assertEquals(2, $hourlyStatsGroupedByBanner->views_all);
         self::assertEquals(1, $hourlyStatsGroupedByBanner->views_unique);
+        self::assertEquals($advertiserId, bin2hex($hourlyStatsGroupedByBanner->advertiser_id));
+        self::assertEquals($campaignId, bin2hex($hourlyStatsGroupedByBanner->campaign_id));
+        self::assertEquals($bannerId, bin2hex($hourlyStatsGroupedByBanner->banner_id));
+    }
+
+    public function testAggregateStatisticsTwoEventsSameCampaignSameBannerDifferentDomainSameUser(): void
+    {
+        $payment = Payment::factory()->create(['state' => Payment::STATE_SUCCESSFUL]);
+
+        $advertiserId = $this->randomUuid();
+        $campaignId = $this->randomUuid();
+        $bannerId = $this->randomUuid();
+        $userId = $this->randomUuid();
+        EventLog::factory()->create([
+            'advertiser_id' => $advertiserId,
+            'campaign_id' => $campaignId,
+            'banner_id' => $bannerId,
+            'domain' => 'e1.com',
+            'event_type' => EventLog::TYPE_VIEW,
+            'event_value_currency' => 1000,
+            'payment_id' => $payment,
+            'user_id' => $userId,
+        ]);
+        EventLog::factory()->create([
+            'advertiser_id' => $advertiserId,
+            'campaign_id' => $campaignId,
+            'banner_id' => $bannerId,
+            'domain' => 'e2.com',
+            'event_type' => EventLog::TYPE_VIEW,
+            'event_value_currency' => 500,
+            'payment_id' => $payment,
+            'user_id' => $userId,
+        ]);
+        $repository = new MysqlAdvertiserStatsRepository();
+        $dateTo = new DateTimeImmutable();
+        $dateFrom = $dateTo->modify('-5 minutes');
+
+        $repository->aggregateStatistics($dateFrom, $dateTo);
+
+        $hourlyRows = DB::select('SELECT * FROM event_logs_hourly');
+        self::assertCount(2, $hourlyRows);
+        $hourlyE1 = array_values(
+            array_filter($hourlyRows, fn($row) => 'e1.com' === $row->domain)
+        )[0];
+        self::assertEquals(1000, $hourlyE1->cost);
+        self::assertEquals(1000, $hourlyE1->cost_payment);
+        self::assertEquals(0, $hourlyE1->clicks);
+        self::assertEquals(1, $hourlyE1->views);
+        self::assertEquals(0, $hourlyE1->clicks_all);
+        self::assertEquals(1, $hourlyE1->views_all);
+        self::assertEquals(1, $hourlyE1->views_unique);
+        self::assertEquals($advertiserId, bin2hex($hourlyE1->advertiser_id));
+        self::assertEquals($campaignId, bin2hex($hourlyE1->campaign_id));
+        self::assertEquals($bannerId, bin2hex($hourlyE1->banner_id));
+        $hourlyE1 = array_values(
+            array_filter($hourlyRows, fn($row) => 'e2.com' === $row->domain)
+        )[0];
+        self::assertEquals(500, $hourlyE1->cost);
+        self::assertEquals(500, $hourlyE1->cost_payment);
+        self::assertEquals(0, $hourlyE1->clicks);
+        self::assertEquals(1, $hourlyE1->views);
+        self::assertEquals(0, $hourlyE1->clicks_all);
+        self::assertEquals(1, $hourlyE1->views_all);
+        self::assertEquals(1, $hourlyE1->views_unique);
+        self::assertEquals($advertiserId, bin2hex($hourlyE1->advertiser_id));
+        self::assertEquals($campaignId, bin2hex($hourlyE1->campaign_id));
+        self::assertEquals($bannerId, bin2hex($hourlyE1->banner_id));
+        $hourlyStatsRows = DB::select('SELECT * FROM event_logs_hourly_stats');
+        self::assertCount(2, $hourlyStatsRows);
+        $hourlyStatsGroupedByCampaign = array_values(
+            array_filter($hourlyStatsRows, fn($row) => null === $row->banner_id)
+        )[0];
+        self::assertEquals(1500, $hourlyStatsGroupedByCampaign->cost);
+        self::assertEquals(1500, $hourlyStatsGroupedByCampaign->cost_payment);
+        self::assertEquals(0, $hourlyStatsGroupedByCampaign->clicks);
+        self::assertEquals(2, $hourlyStatsGroupedByCampaign->views);
+        self::assertEquals(0, $hourlyStatsGroupedByCampaign->clicks_all);
+        self::assertEquals(2, $hourlyStatsGroupedByCampaign->views_all);
+        self::assertEquals(1, $hourlyStatsGroupedByCampaign->views_unique);
         self::assertEquals($advertiserId, bin2hex($hourlyStatsGroupedByCampaign->advertiser_id));
         self::assertEquals($campaignId, bin2hex($hourlyStatsGroupedByCampaign->campaign_id));
-        self::assertEquals($bannerId, bin2hex($hourly->banner_id));
+        self::assertNull($hourlyStatsGroupedByCampaign->banner_id);
+        $hourlyStatsGroupedByBanner = array_values(
+            array_filter($hourlyStatsRows, fn($row) => null !== $row->banner_id)
+        )[0];
+        self::assertEquals(1500, $hourlyStatsGroupedByBanner->cost);
+        self::assertEquals(1500, $hourlyStatsGroupedByBanner->cost_payment);
+        self::assertEquals(0, $hourlyStatsGroupedByBanner->clicks);
+        self::assertEquals(2, $hourlyStatsGroupedByBanner->views);
+        self::assertEquals(0, $hourlyStatsGroupedByBanner->clicks_all);
+        self::assertEquals(2, $hourlyStatsGroupedByBanner->views_all);
+        self::assertEquals(1, $hourlyStatsGroupedByBanner->views_unique);
+        self::assertEquals($advertiserId, bin2hex($hourlyStatsGroupedByBanner->advertiser_id));
+        self::assertEquals($campaignId, bin2hex($hourlyStatsGroupedByBanner->campaign_id));
+        self::assertEquals($bannerId, bin2hex($hourlyStatsGroupedByBanner->banner_id));
     }
 
     public function testAggregateStatisticsWhileNoEvents(): void
