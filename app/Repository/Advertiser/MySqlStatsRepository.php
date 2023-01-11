@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -876,7 +876,7 @@ SQL;
         return new DataCollection(array_merge($result, $resultWithoutEvents));
     }
 
-    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    public function aggregateStatistics(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): void
     {
         if (
             empty(
