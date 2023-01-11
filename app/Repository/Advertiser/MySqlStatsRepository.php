@@ -84,10 +84,10 @@ SELECT s.advertiser_id                                            AS advertiser_
        SUM(s.views)                                               AS views,
        SUM(s.cost)                                                AS cost,
        SUM(s.cost_payment)                                        AS cost_payment,
-       SUM(s.is_click)                                            AS clicksAll,
-       SUM(s.is_view)                                             AS viewsAll,
-       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS viewsUnique,
-       ?                                      AS start_date
+       SUM(s.is_click)                                            AS clicks_all,
+       SUM(s.is_view)                                             AS views_all,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS views_unique,
+       ?                                                          AS hour_timestamp
 FROM (
          SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
                    e.payment_status = 0, 1, 0)                                                            AS clicks,
@@ -152,9 +152,9 @@ HAVING clicks > 0
     OR views > 0
     OR cost > 0
     OR cost_payment > 0
-    OR clicksAll > 0
-    OR viewsAll > 0
-    OR viewsUnique > 0;
+    OR clicks_all > 0
+    OR views_all > 0
+    OR views_unique > 0;
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_STATS = <<<SQL
@@ -176,10 +176,10 @@ SELECT s.advertiser_id                                            AS advertiser_
        SUM(s.cost_payment)                                        AS cost_payment,
        SUM(s.clicks)                                              AS clicks,
        SUM(s.views)                                               AS views,
-       SUM(s.is_click)                                            AS clicksAll,
-       SUM(s.is_view)                                             AS viewsAll,
-       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS viewsUnique,
-       ?                                                          AS start_date
+       SUM(s.is_click)                                            AS clicks_all,
+       SUM(s.is_view)                                             AS views_all,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS views_unique,
+       ?                                                          AS hour_timestamp
 FROM (
          SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
                    e.payment_status = 0, 1, 0)                                                            AS clicks,
@@ -241,9 +241,9 @@ HAVING clicks > 0
     OR views > 0
     OR cost > 0
     OR cost_payment > 0
-    OR clicksAll > 0
-    OR viewsAll > 0
-    OR viewsUnique > 0;
+    OR clicks_all > 0
+    OR views_all > 0
+    OR views_unique > 0;
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_STATS_GROUPED_BY_CAMPAIGN = <<<SQL
@@ -255,10 +255,10 @@ SELECT s.advertiser_id                                            AS advertiser_
        SUM(s.views)                                               AS views,
        SUM(s.cost)                                                AS cost,
        SUM(s.cost_payment)                                        AS cost_payment,
-       SUM(s.is_click)                                            AS clicksAll,
-       SUM(s.is_view)                                             AS viewsAll,
-       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS viewsUnique,
-       ?                                      AS start_date
+       SUM(s.is_click)                                            AS clicks_all,
+       SUM(s.is_view)                                             AS views_all,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS views_unique,
+       ?                                                          AS hour_timestamp
 FROM (
          SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
                    e.payment_status = 0, 1, 0)                                                            AS clicks,
@@ -317,9 +317,9 @@ HAVING clicks > 0
     OR views > 0
     OR cost > 0
     OR cost_payment > 0
-    OR clicksAll > 0
-    OR viewsAll > 0
-    OR viewsUnique > 0;
+    OR clicks_all > 0
+    OR views_all > 0
+    OR views_unique > 0;
 SQL;
 
     private const INSERT_CONVERSIONS_HOURLY = <<<SQL
