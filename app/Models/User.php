@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -267,11 +267,15 @@ class User extends Authenticatable
 
     public function setRolesAttribute($value): void
     {
-        $this->is_admin = in_array(Role::Admin->value, $value);
-        $this->is_advertiser = in_array(Role::Advertiser->value, $value);
+        $isAdmin = in_array(Role::Admin->value, $value);
+        $isModerator = in_array(Role::Moderator->value, $value);
+        $hasImpersonationAbility = $isAdmin || $isModerator;
+
+        $this->is_admin = $isAdmin;
+        $this->is_advertiser = in_array(Role::Advertiser->value, $value) || $hasImpersonationAbility;
         $this->is_agency = in_array(Role::Agency->value, $value);
-        $this->is_moderator = in_array(Role::Moderator->value, $value);
-        $this->is_publisher = in_array(Role::Publisher->value, $value);
+        $this->is_moderator = $isModerator;
+        $this->is_publisher = in_array(Role::Publisher->value, $value) || $hasImpersonationAbility;
     }
 
     public function setPasswordAttribute($value): void
@@ -489,8 +493,11 @@ class User extends Authenticatable
         return $user;
     }
 
-    public function updateEmailWalletAndRoles(?string $email, ?WalletAddress $walletAddress, ?array $roles): void
-    {
+    public function updateEmailWalletAndRoles(
+        ?string $email = null,
+        ?WalletAddress $walletAddress = null,
+        ?array $roles = null,
+    ): void {
         if (null !== $email) {
             $this->email = $email;
         }
