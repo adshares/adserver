@@ -267,15 +267,11 @@ class User extends Authenticatable
 
     public function setRolesAttribute($value): void
     {
-        $isAdmin = in_array(Role::Admin->value, $value);
-        $isModerator = in_array(Role::Moderator->value, $value);
-        $hasImpersonationAbility = $isAdmin || $isModerator;
-
-        $this->is_admin = $isAdmin;
-        $this->is_advertiser = in_array(Role::Advertiser->value, $value) || $hasImpersonationAbility;
+        $this->is_admin = in_array(Role::Admin->value, $value);
+        $this->is_advertiser = in_array(Role::Advertiser->value, $value);
         $this->is_agency = in_array(Role::Agency->value, $value);
-        $this->is_moderator = $isModerator;
-        $this->is_publisher = in_array(Role::Publisher->value, $value) || $hasImpersonationAbility;
+        $this->is_moderator = in_array(Role::Moderator->value, $value);
+        $this->is_publisher = in_array(Role::Publisher->value, $value);
     }
 
     public function setPasswordAttribute($value): void
