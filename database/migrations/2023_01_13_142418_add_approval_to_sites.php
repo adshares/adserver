@@ -21,6 +21,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -31,10 +32,29 @@ return new class extends Migration
             $table->timestamp('accepted_at')->after('deleted_at')->nullable();
             $table->string('reject_reason', 255)->nullable();
         });
+
+        DB::insert(
+            <<<SQL
+INSERT IGNORE INTO sites_rejected_domains (created_at, updated_at, domain)
+SELECT NOW(), NOW(), domain FROM supply_blacklisted_domains;
+SQL
+        );
+        Schema::drop('supply_blacklisted_domains');
     }
 
     public function down(): void
     {
+        Schema::create('supply_blacklisted_domains', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('domain', 255)->unique();
+        });
+        DB::insert(
+            <<<SQL
+INSERT INTO supply_blacklisted_domains (domain)
+SELECT domain FROM sites_rejected_domains;
+SQL
+        );
+
         Schema::table('sites', function (Blueprint $table) {
             $table->dropColumn(['accepted_at', 'reject_reason']);
         });
