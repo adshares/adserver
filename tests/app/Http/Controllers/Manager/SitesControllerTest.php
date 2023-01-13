@@ -445,6 +445,7 @@ class SitesControllerTest extends TestCase
         $site->refresh();
         self::assertEquals(0, $site->rank);
         self::assertEquals('unknown', $site->info);
+        self::assertNull($site->accepted_at);
     }
 
     public function testUpdateSiteUrlFailWhenExists(): void

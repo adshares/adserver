@@ -49,6 +49,7 @@ use Illuminate\Support\Collection;
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
+ * @property Carbon|null accepted_at
  * @property int user_id
  * @property string name
  * @property string domain

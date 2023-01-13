@@ -237,6 +237,9 @@ class SitesController extends Controller
 
         try {
             $site->fill($input);
+            if ($updateDomainAndUrl) {
+                $site->accepted_at = null;
+            }
             $site->push();
             resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
 
