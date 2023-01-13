@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -290,6 +290,12 @@ class SitesControllerTest extends TestCase
             'invalid filtering.excludes 3' => [
                 self::simpleSiteData(['filtering' => self::filtering(['excludes' => ['category' => [1]]])]),
             ],
+            'invalid medium' => [
+                self::simpleSiteData(['medium' => 'invalid']),
+            ],
+            'invalid vendor' => [
+                self::simpleSiteData(['vendor' => 'invalid']),
+            ],
         ];
     }
 
@@ -508,6 +514,26 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testUpdateSiteFailWhileInvalidStatus(): void
+    {
+        $user = $this->setupUser();
+        /** @var  Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['status' => 100]]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUpdateSiteFailWhilePendingApproval(): void
+    {
+        $user = $this->setupUser();
+        /** @var  Site $site */
+        $site = Site::factory()->create(['status' => Site::STATUS_PENDING_APPROVAL, 'user_id' => $user]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['status' => Site::STATUS_ACTIVE]]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testUpdateSiteRestorePopUp(): void
     {
         $user = $this->setupUser();
@@ -712,24 +738,24 @@ class SitesControllerTest extends TestCase
     public function updateDataProvider(): array
     {
         return [
-            [
+            'status, name, language' => [
                 [
                     "status" => 1,
                     "name" => "name1",
                     "primaryLanguage" => "xx",
                 ],
             ],
-            [
+            'status' => [
                 [
                     'status' => 1,
                 ],
             ],
-            [
+            'name' => [
                 [
                     "name" => "name2",
                 ],
             ],
-            [
+            'language' => [
                 [
                     "primaryLanguage" => "xx",
                 ],
@@ -999,38 +1025,6 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::RANK_STRUCTURE);
         self::assertEquals(0.2, $response->json('rank'));
         self::assertEquals(AdUser::PAGE_INFO_LOW_CTR, $response->json('info'));
-    }
-
-    public function testChangeStatus(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => Site::STATUS_INACTIVE]])
-            ->assertStatus(Response::HTTP_OK);
-        $site->refresh();
-        self::assertEquals(Site::STATUS_INACTIVE, $site->status);
-    }
-
-    public function testChangeStatusInvalid(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => -1]])
-            ->assertStatus(Response::HTTP_BAD_REQUEST);
-    }
-
-    public function testChangeStatusMissing(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['stat' => -1]])
-            ->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
     public function testGetCryptovoxelsCode(): void

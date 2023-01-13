@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,8 +25,6 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Adserver\ViewModel\MediumName;
-use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Exception\InvalidArgumentException;
 
 class SiteTest extends TestCase
@@ -39,5 +37,20 @@ class SiteTest extends TestCase
         self::expectException(InvalidArgumentException::class);
 
         Site::fetchOrCreate($user->id, 'https://example.com', 'metaverse', 'decentraland');
+    }
+
+    public function testSetStatusAttribute(): void
+    {
+        $user = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user, 'status' => Site::STATUS_DRAFT]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site, 'status' => Zone::STATUS_DRAFT]);
+
+        $site->status = Site::STATUS_ACTIVE;
+        $site->push();
+
+        self::assertEquals(Site::STATUS_ACTIVE, $site->refresh()->status);
+        self::assertEquals(Zone::STATUS_ACTIVE, $zone->refresh()->status);
     }
 }

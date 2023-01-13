@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -216,8 +216,6 @@ Route::middleware([Kernel::PUBLISHER_ACCESS, Kernel::JSON_API])->group(
             ->name('app.sites.delete');
         Route::get('sites', [SitesController::class, 'list'])
             ->name('app.sites.browse');
-        Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
-            ->name('app.sites.change_status');
         Route::get('sites/{site}/codes', [SitesController::class, 'sitesCodes'])
             ->name('app.sites.code');
         Route::get('sites/cryptovoxels/code', [SitesController::class, 'sitesCryptovoxelsCode']);

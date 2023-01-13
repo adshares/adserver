@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -82,6 +82,8 @@ class Site extends Model
     public const STATUS_DRAFT = 0;
     public const STATUS_INACTIVE = 1;
     public const STATUS_ACTIVE = 2;
+    public const STATUS_PENDING_APPROVAL = 3;
+    public const STATUS_REJECTED = 4;
 
     public const ALLOWED_STATUSES = [
         self::STATUS_DRAFT,
@@ -93,6 +95,8 @@ class Site extends Model
         Site::STATUS_DRAFT => Zone::STATUS_DRAFT,
         Site::STATUS_INACTIVE => Zone::STATUS_ARCHIVED,
         Site::STATUS_ACTIVE => Zone::STATUS_ACTIVE,
+        Site::STATUS_PENDING_APPROVAL => Zone::STATUS_DRAFT,
+        Site::STATUS_REJECTED => Zone::STATUS_ARCHIVED,
     ];
 
     public static $rules = [
@@ -201,9 +205,10 @@ class Site extends Model
     public function setStatusAttribute($value): void
     {
         $this->attributes['status'] = $value;
+        $zoneStatus = Site::ZONE_STATUS[$value];
         $this->zones->map(
-            function (Zone $zone) use ($value) {
-                $zone->status = Site::ZONE_STATUS[$value];
+            function (Zone $zone) use ($zoneStatus) {
+                $zone->status = $zoneStatus;
             }
         );
     }
