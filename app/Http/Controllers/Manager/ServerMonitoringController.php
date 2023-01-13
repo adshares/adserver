@@ -271,8 +271,6 @@ class ServerMonitoringController extends Controller
         }
         $user->is_moderator = true;
         $user->is_agency = false;
-        $user->is_advertiser = true;
-        $user->is_publisher = true;
         $user->save();
 
         return new UserResource($user);

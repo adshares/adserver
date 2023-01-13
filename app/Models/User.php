@@ -368,12 +368,12 @@ class User extends Authenticatable
 
     public function isAdvertiser(): bool
     {
-        return (bool)$this->is_advertiser;
+        return (bool)$this->is_advertiser || $this->isModerator() || $this->isAdmin();
     }
 
     public function isPublisher(): bool
     {
-        return (bool)$this->is_publisher;
+        return (bool)$this->is_publisher || $this->isModerator() || $this->isAdmin();
     }
 
     public function isAdmin(): bool
