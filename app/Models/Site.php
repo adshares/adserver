@@ -262,7 +262,7 @@ class Site extends Model
         $site->name = $name;
         $site->only_accepted_banners = $onlyAcceptedBanners;
         $site->primary_language = $primaryLanguage;
-        $site->status = $status;
+        $site->status = self::isAcceptanceRequired($medium) ? Site::STATUS_PENDING_APPROVAL : $status;
         $site->url = $url;
         $site->user_id = $userId;
         $site->save();
@@ -347,5 +347,11 @@ class Site extends Model
     {
         $this->categories = $categories;
         $this->save();
+    }
+
+    public static function isAcceptanceRequired(string $medium): bool
+    {
+        $mediumList = config('app.site_acceptance_required');
+        return in_array($medium, $mediumList) || in_array('*', $mediumList);
     }
 }

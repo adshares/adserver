@@ -112,10 +112,6 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException(sprintf('Site with domain `%s` exists', $domain));
         }
 
-        if ($this->isSiteAcceptanceRequired($medium)) {
-            $input['status'] = Site::STATUS_PENDING_APPROVAL;
-        }
-
         DB::beginTransaction();
 
         try {
@@ -241,7 +237,7 @@ class SitesController extends Controller
 
         try {
             if ($updateDomainAndUrl) {
-                if ($this->isSiteAcceptanceRequired($site->medium)) {
+                if (Site::isAcceptanceRequired($site->medium)) {
                     $input['status'] = Site::STATUS_PENDING_APPROVAL;
                 }
                 $site->accepted_at = null;
@@ -530,9 +526,4 @@ class SitesController extends Controller
         return $labelBySize;
     }
 
-    private function isSiteAcceptanceRequired(string $medium): bool
-    {
-        $mediumList = config('app.site_acceptance_required');
-        return in_array($medium, $mediumList) || in_array('*', $mediumList);
-    }
 }
