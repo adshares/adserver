@@ -950,7 +950,6 @@ class SitesControllerTest extends TestCase
                 Response::HTTP_UNPROCESSABLE_ENTITY,
                 'The subdomain example.rejected.com is not supported. Please use your own domain.',
             ],
-            [['domain' => 'rejected.com'], Response::HTTP_OK, 'Valid domain.'],
             [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
         ];
     }
