@@ -31,7 +31,7 @@ use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\SupplyBlacklistedDomain;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
@@ -1000,8 +1000,7 @@ class SupplyController extends Controller
     private function isPageBlacklisted(string $url): bool
     {
         $domain = DomainReader::domain($url);
-
-        return SupplyBlacklistedDomain::isDomainBlacklisted($domain);
+        return SitesRejectedDomain::isDomainRejected($domain);
     }
 
     public function targetingReachList(AdsAuthenticator $authenticator, Request $request): JsonResponse
