@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Mail\SiteAcceptancePending;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -31,6 +32,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -136,6 +138,7 @@ class SitesControllerTest extends TestCase
             'id' => $id,
             'status' => Site::STATUS_PENDING_APPROVAL,
         ]);
+        Mail::assertQueued(SiteAcceptancePending::class);
     }
 
     private function getIdFromLocation($location): string

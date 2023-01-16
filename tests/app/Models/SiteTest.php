@@ -21,11 +21,16 @@
 
 namespace Adshares\Adserver\Tests\Models;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Closure;
+use DateTimeImmutable;
 
 class SiteTest extends TestCase
 {
@@ -52,5 +57,51 @@ class SiteTest extends TestCase
 
         self::assertEquals(Site::STATUS_ACTIVE, $site->refresh()->status);
         self::assertEquals(Zone::STATUS_ACTIVE, $zone->refresh()->status);
+    }
+
+    /**
+     * @dataProvider acceptanceProcedureProvider
+     */
+    public function testAcceptanceProcedure(Closure $closure, int $expectedStatus): void
+    {
+        $site = $closure();
+        $site->acceptanceProcedure();
+
+        self::assertEquals($expectedStatus, $site->status);
+    }
+
+    public function acceptanceProcedureProvider(): array
+    {
+        return [
+            'already accepted' => [
+                fn() => Site::factory()->make(['accepted_at' => new DateTimeImmutable()]),
+                Site::STATUS_ACTIVE,
+            ],
+            'site rejected' => [
+                function () {
+                    $domain = 'rejected.com';
+                    SitesRejectedDomain::factory()->create(['domain' => $domain]);
+                    return Site::factory()->make([
+                        'accepted_at' => null,
+                        'domain' => $domain,
+                        'url' => 'https://' . $domain,
+                    ]);
+                },
+                Site::STATUS_REJECTED,
+            ],
+            'acceptance required' => [
+                function () {
+                    Config::updateAdminSettings([Config::SITE_ACCEPTANCE_REQUIRED => '*']);
+                    DatabaseConfigReader::overwriteAdministrationConfig();
+                    $user = User::factory()->create();
+                    return Site::factory()->make(['accepted_at' => null, 'user_id' => $user]);
+                },
+                Site::STATUS_PENDING_APPROVAL,
+            ],
+            'auto acceptance' => [
+                fn () => Site::factory()->make(['accepted_at' => null]),
+                Site::STATUS_ACTIVE,
+            ],
+        ];
     }
 }

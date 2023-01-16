@@ -236,13 +236,13 @@ class SitesController extends Controller
         DB::beginTransaction();
 
         try {
+            $site->fill($input);
             if ($updateDomainAndUrl) {
-                if (Site::isAcceptanceRequired($site->medium)) {
-                    $input['status'] = Site::STATUS_PENDING_APPROVAL;
-                }
                 $site->accepted_at = null;
             }
-            $site->fill($input);
+            if (Site::STATUS_ACTIVE === $site->status) {
+                $site->acceptanceProcedure();
+            }
             $site->push();
             resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
 
@@ -525,5 +525,4 @@ class SitesController extends Controller
         }
         return $labelBySize;
     }
-
 }

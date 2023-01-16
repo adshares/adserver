@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Mail\SiteAcceptancePending;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
@@ -36,12 +37,14 @@ use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * @property int id
@@ -67,6 +70,7 @@ use Illuminate\Support\Collection;
  * @property array|null categories
  * @property array|null categories_by_user
  * @property bool $only_accepted_banners
+ * @property string|null reject_reason
  * @property Zone[]|Collection zones
  * @property User user
  * @method static get()
@@ -99,6 +103,9 @@ class Site extends Model
         Site::STATUS_PENDING_APPROVAL => Zone::STATUS_DRAFT,
         Site::STATUS_REJECTED => Zone::STATUS_ARCHIVED,
     ];
+
+    private const ALL = '*';
+    private const REJECT_REASON_ON_REJECTED_DOMAIN = 'Domain rejected';
 
     public static $rules = [
         'name' => 'required|max:64',
@@ -262,9 +269,13 @@ class Site extends Model
         $site->name = $name;
         $site->only_accepted_banners = $onlyAcceptedBanners;
         $site->primary_language = $primaryLanguage;
-        $site->status = self::isAcceptanceRequired($medium) ? Site::STATUS_PENDING_APPROVAL : $status;
         $site->url = $url;
         $site->user_id = $userId;
+        if (Site::STATUS_ACTIVE === $status) {
+            $site->acceptanceProcedure();
+        } else {
+            $site->status = $status;
+        }
         $site->save();
 
         resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
@@ -349,9 +360,29 @@ class Site extends Model
         $this->save();
     }
 
-    public static function isAcceptanceRequired(string $medium): bool
+    public function acceptanceProcedure(): void
+    {
+        if (null !== $this->accepted_at) {
+            $this->status = self::STATUS_ACTIVE;
+            return;
+        }
+        if (SitesRejectedDomain::isDomainRejected($this->domain)) {
+            $this->status = self::STATUS_REJECTED;
+            $this->reject_reason = self::REJECT_REASON_ON_REJECTED_DOMAIN;
+            return;
+        }
+        if (self::isAcceptanceRequired($this->medium)) {
+            $this->status = self::STATUS_PENDING_APPROVAL;
+            Mail::to(config('app.support_email'))->queue(new SiteAcceptancePending($this->user_id, $this->url));
+            return;
+        }
+        $this->status = self::STATUS_ACTIVE;
+        $this->accepted_at = new DateTimeImmutable();
+    }
+
+    private static function isAcceptanceRequired(string $medium): bool
     {
         $mediumList = config('app.site_acceptance_required');
-        return in_array($medium, $mediumList) || in_array('*', $mediumList);
+        return in_array($medium, $mediumList) || in_array(self::ALL, $mediumList);
     }
 }
