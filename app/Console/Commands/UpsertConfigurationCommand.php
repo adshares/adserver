@@ -30,7 +30,7 @@ class UpsertConfigurationCommand extends BaseCommand
     private const COMMAND_SIGNATURE = 'config:upsert';
 
     protected $signature = self::COMMAND_SIGNATURE . ' {key} {value?}';
-    protected $description = 'Updates or inserts config entry';
+    protected $description = 'Updates or inserts configuration entry';
 
     public function handle(): int
     {
