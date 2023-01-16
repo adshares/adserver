@@ -122,6 +122,22 @@ class SitesControllerTest extends TestCase
             ->assertJsonCount(0, 'filtering.excludes');
     }
 
+    public function testCreateSiteWhileAcceptanceRequired(): void
+    {
+        $this->login();
+        Config::updateAdminSettings([Config::SITE_ACCEPTANCE_REQUIRED => '*']);
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        self::assertDatabaseHas(Site::class, [
+            'id' => $id,
+            'status' => Site::STATUS_PENDING_APPROVAL,
+        ]);
+    }
+
     private function getIdFromLocation($location): string
     {
         $matches = [];
@@ -430,7 +446,8 @@ class SitesControllerTest extends TestCase
 
     public function testUpdateSiteUrl(): void
     {
-        $user = $this->setupUser();
+        Config::updateAdminSettings([Config::SITE_ACCEPTANCE_REQUIRED => '*']);
+        $user = $this->login();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         $url = 'https://example2.com';
@@ -446,6 +463,7 @@ class SitesControllerTest extends TestCase
         self::assertEquals(0, $site->rank);
         self::assertEquals('unknown', $site->info);
         self::assertNull($site->accepted_at);
+        self::assertEquals(Site::STATUS_PENDING_APPROVAL, $site->status);
     }
 
     public function testUpdateSiteUrlFailWhenExists(): void
@@ -948,7 +966,7 @@ class SitesControllerTest extends TestCase
             [
                 ['domain' => 'example.rejected.com'],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
-                'The subdomain example.rejected.com is not supported. Please use your own domain.',
+                'The domain example.rejected.com is rejected.',
             ],
             [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
         ];
