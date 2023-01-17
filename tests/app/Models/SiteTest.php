@@ -60,17 +60,18 @@ class SiteTest extends TestCase
     }
 
     /**
-     * @dataProvider acceptanceProcedureProvider
+     * @dataProvider approvalProcedureProvider
      */
-    public function testAcceptanceProcedure(Closure $closure, int $expectedStatus): void
+    public function testApprovalProcedure(Closure $closure, int $expectedStatus): void
     {
+        /** @var Site $site */
         $site = $closure();
-        $site->acceptanceProcedure();
+        $site->approvalProcedure();
 
         self::assertEquals($expectedStatus, $site->status);
     }
 
-    public function acceptanceProcedureProvider(): array
+    public function approvalProcedureProvider(): array
     {
         return [
             'already accepted' => [
