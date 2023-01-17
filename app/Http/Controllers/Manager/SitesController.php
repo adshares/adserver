@@ -241,7 +241,7 @@ class SitesController extends Controller
                 $site->accepted_at = null;
             }
             if (Site::STATUS_ACTIVE === $site->status) {
-                $site->acceptanceProcedure();
+                $site->approvalProcedure();
             }
             $site->push();
             resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);

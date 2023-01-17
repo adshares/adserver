@@ -21,7 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
-use Adshares\Adserver\Mail\SiteAcceptancePending;
+use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -127,7 +127,7 @@ class SitesControllerTest extends TestCase
     public function testCreateSiteWhileAcceptanceRequired(): void
     {
         $this->login();
-        Config::updateAdminSettings([Config::SITE_ACCEPTANCE_REQUIRED => '*']);
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
 
         $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
 
@@ -138,7 +138,7 @@ class SitesControllerTest extends TestCase
             'id' => $id,
             'status' => Site::STATUS_PENDING_APPROVAL,
         ]);
-        Mail::assertQueued(SiteAcceptancePending::class);
+        Mail::assertQueued(SiteApprovalPending::class);
     }
 
     private function getIdFromLocation($location): string
@@ -449,7 +449,7 @@ class SitesControllerTest extends TestCase
 
     public function testUpdateSiteUrl(): void
     {
-        Config::updateAdminSettings([Config::SITE_ACCEPTANCE_REQUIRED => '*']);
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
         $user = $this->login();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);

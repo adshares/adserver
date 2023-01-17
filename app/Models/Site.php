@@ -22,7 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
-use Adshares\Adserver\Mail\SiteAcceptancePending;
+use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
@@ -272,7 +272,7 @@ class Site extends Model
         $site->url = $url;
         $site->user_id = $userId;
         if (Site::STATUS_ACTIVE === $status) {
-            $site->acceptanceProcedure();
+            $site->approvalProcedure();
         } else {
             $site->status = $status;
         }
@@ -360,7 +360,7 @@ class Site extends Model
         $this->save();
     }
 
-    public function acceptanceProcedure(): void
+    public function approvalProcedure(): void
     {
         if (null !== $this->accepted_at) {
             $this->status = self::STATUS_ACTIVE;
@@ -371,18 +371,19 @@ class Site extends Model
             $this->reject_reason = self::REJECT_REASON_ON_REJECTED_DOMAIN;
             return;
         }
-        if (self::isAcceptanceRequired($this->medium)) {
+        if (self::isApprovalRequired($this->medium)) {
             $this->status = self::STATUS_PENDING_APPROVAL;
-            Mail::to(config('app.support_email'))->queue(new SiteAcceptancePending($this->user_id, $this->url));
+            Mail::to(config('app.support_email'))
+                ->queue(new SiteApprovalPending($this->user_id, $this->url));
             return;
         }
         $this->status = self::STATUS_ACTIVE;
         $this->accepted_at = new DateTimeImmutable();
     }
 
-    private static function isAcceptanceRequired(string $medium): bool
+    private static function isApprovalRequired(string $medium): bool
     {
-        $mediumList = config('app.site_acceptance_required');
+        $mediumList = config('app.site_approval_required');
         return in_array($medium, $mediumList) || in_array(self::ALL, $mediumList);
     }
 }

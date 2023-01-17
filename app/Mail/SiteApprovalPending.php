@@ -19,19 +19,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Mail;
+namespace Adshares\Adserver\Mail;
 
-use Adshares\Adserver\Mail\SiteAcceptancePending;
 use Adshares\Adserver\Models\User;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-class SiteAcceptancePendingTest extends MailTestCase
+class SiteApprovalPending extends Mailable
 {
-    public function testBuild(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $mailable = new SiteAcceptancePending($user->id, 'https://example.com');
+    use Queueable;
+    use SerializesModels;
 
-        $mailable->assertSeeInText('https://example.com');
+    public function __construct(private readonly string $userId, private readonly string $url)
+    {
+    }
+
+    public function build(): self
+    {
+        $user = User::fetchById($this->userId);
+        return $this->markdown('emails.site-approval-pending')->with([
+            'url' => $this->url,
+            'user' => $user->label,
+        ]);
     }
 }

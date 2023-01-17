@@ -159,7 +159,7 @@ class Config extends Model
     public const REGISTRATION_MODE = 'registration-mode';
     public const SERVE_BASE_URL = 'serve-base-url';
     public const SITE_ACCEPT_BANNERS_MANUALLY = 'site-accept-banners-manually';
-    public const SITE_ACCEPTANCE_REQUIRED = 'site-acceptance-required';
+    public const SITE_APPROVAL_REQUIRED = 'site-approval-required';
     public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
     public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
     public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
@@ -257,7 +257,7 @@ class Config extends Model
         self::REFERRAL_REFUND_COMMISSION => ConfigTypes::Float,
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
-        self::SITE_ACCEPTANCE_REQUIRED => ConfigTypes::Array,
+        self::SITE_APPROVAL_REQUIRED => ConfigTypes::Array,
         self::UPLOAD_LIMIT_DIRECT_LINK => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
@@ -525,7 +525,7 @@ class Config extends Model
             self::REGISTRATION_MODE => RegistrationMode::PRIVATE,
             self::SERVE_BASE_URL => $fetched[self::URL] ?? '',
             self::SITE_ACCEPT_BANNERS_MANUALLY => false,
-            self::SITE_ACCEPTANCE_REQUIRED => [],
+            self::SITE_APPROVAL_REQUIRED => [],
             self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
             self::SITE_FILTERING_EXCLUDE => '',
             self::SITE_FILTERING_REQUIRE => '',

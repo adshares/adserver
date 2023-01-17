@@ -91,7 +91,7 @@ class SiteTest extends TestCase
             ],
             'acceptance required' => [
                 function () {
-                    Config::updateAdminSettings([Config::SITE_ACCEPTANCE_REQUIRED => '*']);
+                    Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
                     DatabaseConfigReader::overwriteAdministrationConfig();
                     $user = User::factory()->create();
                     return Site::factory()->make(['accepted_at' => null, 'user_id' => $user]);

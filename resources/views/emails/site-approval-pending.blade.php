@@ -3,7 +3,7 @@
 
 Hello,
 
-User {{ $user }} requested <a href="{{ $url }}" target="_blank">site {{ $url }}</a> acceptance.
+User {{ $user }} added <a href="{{ $url }}" target="_blank">site {{ $url }}</a> which needs approval.
 
 Thanks,
 
