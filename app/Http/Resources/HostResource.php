@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
