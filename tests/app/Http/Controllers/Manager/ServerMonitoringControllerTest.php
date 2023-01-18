@@ -238,7 +238,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForResetHostConnectionErrorCounter($host->id),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK);
@@ -252,7 +251,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForResetHostConnectionErrorCounter($nonExistingHostId),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -1190,7 +1188,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'denyAdvertising'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1207,7 +1204,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'denyPublishing'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1224,7 +1220,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'grantAdvertising'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1257,7 +1252,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1273,7 +1267,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1288,7 +1281,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -1306,7 +1298,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToAgency'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -1317,16 +1308,17 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $this->setUpAdmin();
         /** @var User $user */
-        $user = User::factory()->create(['is_moderator' => 0]);
+        $user = User::factory()->create(['is_moderator' => 0, 'is_publisher' => 0]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertTrue($user->refresh()->isModerator());
+        self::assertTrue($user->isAdvertiser());
+        self::assertTrue($user->isPublisher());
     }
 
     public function testPatchUserSwitchUserToModeratorByModerator(): void
@@ -1337,7 +1329,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1352,7 +1343,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -1370,7 +1360,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToModerator'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -1385,7 +1374,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToRegular'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -1401,7 +1389,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($moderator->id, 'switchToRegular'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1416,7 +1403,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToRegular'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
@@ -1434,7 +1420,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'switchToRegular'),
-            [],
         );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -1476,7 +1461,6 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'invalid'),
-            [],
         );
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
