@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @property int id
@@ -42,6 +43,9 @@ class SitesRejectedDomain extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    private const CACHE_KEY = 'sites_rejected_domain';
+    private const CACHE_TTL = 10 * 60;
 
     protected $fillable = [
         'domain',
@@ -93,28 +97,29 @@ class SitesRejectedDomain extends Model
             DB::rollBack();
             throw $exception;
         }
+        Cache::forget(self::CACHE_KEY);
     }
 
     public static function isDomainRejected(string $domain): bool
     {
-        $domainParts = explode('.', $domain);
-        if (!$domainParts) {
+        if ('' === $domain || !str_contains($domain, '.') || false !== filter_var($domain, FILTER_VALIDATE_IP)) {
             return true;
         }
+
+        $rejected = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+            return self::all()->pluck('domain', 'domain')->toArray();
+        });
+
+        $domainParts = explode('.', $domain);
         $domainPartsCount = count($domainParts);
-        if ($domainPartsCount < 2) {
-            return false;
-        }
 
-        array_shift($domainParts);
-        --$domainPartsCount;
-
-        $domains = [];
         for ($i = 0; $i < $domainPartsCount; $i++) {
-            $domains[] = implode('.', $domainParts);
+            if (isset($rejected[implode('.', $domainParts)])) {
+                return true;
+            }
             array_shift($domainParts);
         }
 
-        return self::whereIn('domain', $domains)->get()->count() > 0;
+        return false;
     }
 }

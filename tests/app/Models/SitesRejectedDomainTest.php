@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -41,5 +41,38 @@ class SitesRejectedDomainTest extends TestCase
 
         SitesRejectedDomain::storeDomains($domainsToReject);
         self::assertTrue(SitesRejectedDomain::isDomainRejected($rejectedDomain));
+    }
+
+    public function testBlacklistedExampleCom(): void
+    {
+        SitesRejectedDomain::storeDomains(['example.com']);
+
+        self::assertFalse(SitesRejectedDomain::isDomainRejected('adshares.net'));
+        self::assertFalse(SitesRejectedDomain::isDomainRejected('dot.com'));
+
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('example.com'));
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('one.example.com'));
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('www.one.example.com'));
+
+        SitesRejectedDomain::storeDomains(['adshares.net']);
+
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('adshares.net'));
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('all.adshares.net'));
+    }
+
+    public function testBlacklistedSpecial(): void
+    {
+        self::assertTrue(SitesRejectedDomain::isDomainRejected(''));
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('localhost'));
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('127.0.0.1'));
+        self::assertTrue(SitesRejectedDomain::isDomainRejected('fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'));
+    }
+
+    public function testBlacklistTwice(): void
+    {
+        SitesRejectedDomain::storeDomains(['example.com']);
+        SitesRejectedDomain::storeDomains(['example.com']);
+
+        self::assertCount(1, SitesRejectedDomain::all());
     }
 }

@@ -269,14 +269,11 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonCount(1, 'data');
     }
 
-    public function testFindDynamicUnsupportedPopup(): void
+    public function testFindDynamicWhileSiteApprovalRequired(): void
     {
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
         $this->mockAdSelect();
-        $data = self::getDynamicFindData([
-            'placements' => [
-                self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
-            ]
-        ]);
+        $data = self::getDynamicFindData();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -298,6 +295,11 @@ final class SupplyControllerTest extends TestCase
     public function findDynamicFailProvider(): array
     {
         return [
+            'unsupported popup' => [
+                self::getDynamicFindData(['placements' => [
+                    self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
+                ]]),
+            ],
             'missing context.medium' => [
                 self::getDynamicFindData(['context' => self::getContextData(remove: 'medium')])
             ],

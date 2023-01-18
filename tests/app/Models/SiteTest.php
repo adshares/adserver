@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,13 +21,16 @@
 
 namespace Adshares\Adserver\Tests\Models;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Adserver\ViewModel\MediumName;
-use Adshares\Adserver\ViewModel\ZoneSize;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Closure;
+use DateTimeImmutable;
 
 class SiteTest extends TestCase
 {
@@ -39,5 +42,67 @@ class SiteTest extends TestCase
         self::expectException(InvalidArgumentException::class);
 
         Site::fetchOrCreate($user->id, 'https://example.com', 'metaverse', 'decentraland');
+    }
+
+    public function testSetStatusAttribute(): void
+    {
+        $user = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user, 'status' => Site::STATUS_DRAFT]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site, 'status' => Zone::STATUS_DRAFT]);
+
+        $site->status = Site::STATUS_ACTIVE;
+        $site->push();
+
+        self::assertEquals(Site::STATUS_ACTIVE, $site->refresh()->status);
+        self::assertEquals(Zone::STATUS_ACTIVE, $zone->refresh()->status);
+    }
+
+    /**
+     * @dataProvider approvalProcedureProvider
+     */
+    public function testApprovalProcedure(Closure $closure, int $expectedStatus): void
+    {
+        /** @var Site $site */
+        $site = $closure();
+        $site->approvalProcedure();
+
+        self::assertEquals($expectedStatus, $site->status);
+    }
+
+    public function approvalProcedureProvider(): array
+    {
+        return [
+            'already accepted' => [
+                fn() => Site::factory()->make(['accepted_at' => new DateTimeImmutable()]),
+                Site::STATUS_ACTIVE,
+            ],
+            'site rejected' => [
+                function () {
+                    $domain = 'rejected.com';
+                    SitesRejectedDomain::factory()->create(['domain' => $domain]);
+                    return Site::factory()->make([
+                        'accepted_at' => null,
+                        'domain' => $domain,
+                        'url' => 'https://' . $domain,
+                    ]);
+                },
+                Site::STATUS_REJECTED,
+            ],
+            'acceptance required' => [
+                function () {
+                    Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+                    DatabaseConfigReader::overwriteAdministrationConfig();
+                    $user = User::factory()->create();
+                    return Site::factory()->make(['accepted_at' => null, 'user_id' => $user]);
+                },
+                Site::STATUS_PENDING_APPROVAL,
+            ],
+            'auto acceptance' => [
+                fn () => Site::factory()->make(['accepted_at' => null]),
+                Site::STATUS_ACTIVE,
+            ],
+        ];
     }
 }
