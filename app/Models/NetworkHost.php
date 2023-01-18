@@ -60,6 +60,7 @@ class NetworkHost extends Model
     use SoftDeletes;
 
     private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    private const MAXIMAL_PERIOD_FOR_SYNCHRONIZATION_RETRY_HOURS = 256;
     private const MESSAGE_WHILE_EXCLUDED = 'Server is not on a whitelist';
 
     protected $fillable = [
@@ -194,8 +195,9 @@ class NetworkHost extends Model
         return $query->get()->filter(function ($networkHost) {
             /** @var self $networkHost */
             $hours = 2 ** max(0, $networkHost->failed_connection - config('app.inventory_failed_connection_limit'));
-            $lastSynchronization = $networkHost->last_synchronization ?? $networkHost->created_at;
-            return new DateTimeImmutable() > $lastSynchronization->addHours($hours);
+            return $hours <= self::MAXIMAL_PERIOD_FOR_SYNCHRONIZATION_RETRY_HOURS ||
+                null === $networkHost->last_synchronization_attempt ||
+                (new DateTimeImmutable(sprintf('-%d hours', $hours)) > $networkHost->last_synchronization_attempt);
         });
     }
 

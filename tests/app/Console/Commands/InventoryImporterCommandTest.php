@@ -35,6 +35,7 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 
 final class InventoryImporterCommandTest extends ConsoleTestCase
 {
@@ -82,18 +83,19 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
             }
         );
         NetworkHost::factory()->create(['address' => '0001-00000002-BB2D', 'status' => HostStatus::Initialization]);
-        NetworkHost::factory()->create([
-            'address' => '0001-00000003-AB0C',
-            'failed_connection' => 10,
-            'last_synchronization' => new DateTimeImmutable('-1 hour'),
-            'status' => HostStatus::Unreachable,
-        ]);
-        NetworkHost::factory()->create([
-            'address' => '0001-00000004-DBEB',
-            'failed_connection' => 11,
-            'last_synchronization' => new DateTimeImmutable('-1 hour'),
-            'status' => HostStatus::Unreachable,
-        ]);
+        NetworkHost::factory()
+            ->count(2)
+            ->state(
+                new Sequence(
+                    ['address' => '0001-00000003-AB0C', 'failed_connection' => 10],
+                    ['address' => '0001-00000004-DBEB', 'failed_connection' => 11],
+                )
+            )
+            ->create([
+                'last_synchronization' => new DateTimeImmutable('-2 days'),
+                'last_synchronization_attempt' => new DateTimeImmutable('-1 hour'),
+                'status' => HostStatus::Unreachable,
+            ]);
 
         $this->artisan('ops:demand:inventory:import')
             ->expectsOutput(
