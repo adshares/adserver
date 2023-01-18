@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Banner's content lazy loading
 - Forbid site duplicates
 - Clear not whitelisted hosts
+- User which receives administrator or moderator privileges can impersonate
 
 ## [2.2.6] - 2023-01-10
 ### Fixed
