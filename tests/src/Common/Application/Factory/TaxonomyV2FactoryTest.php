@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,10 +23,10 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Common\Application\Factory;
 
+use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Factory\TaxonomyV2Factory;
 use Adshares\Common\Exception\InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
 
 class TaxonomyV2FactoryTest extends TestCase
 {
@@ -205,7 +205,7 @@ class TaxonomyV2FactoryTest extends TestCase
 
     private static function jsonTaxonomy(): string
     {
-        return file_get_contents('tests/mock/targeting_schema_v2.json');
+        return file_get_contents(base_path('tests/mock/targeting_schema_v2.json'));
     }
 
     private static function customVendor(array $mergeData = [], string $remove = null): array

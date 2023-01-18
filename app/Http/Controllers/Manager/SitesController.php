@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -192,9 +192,15 @@ class SitesController extends Controller
 
     public function update(Request $request, Site $site): JsonResponse
     {
+        if (Site::STATUS_PENDING_APPROVAL === $site->status) {
+            throw new UnprocessableEntityHttpException('Site is pending approval');
+        }
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
         $updateDomainAndUrl = false;
+        if (isset($input['status']) && !in_array($input['status'], Site::ALLOWED_STATUSES, true)) {
+            throw new UnprocessableEntityHttpException('Invalid status');
+        }
         if (isset($input['url'])) {
             if (!SiteValidator::isUrlValid($input['url'])) {
                 throw new UnprocessableEntityHttpException('Invalid URL');
@@ -231,6 +237,12 @@ class SitesController extends Controller
 
         try {
             $site->fill($input);
+            if ($updateDomainAndUrl) {
+                $site->accepted_at = null;
+            }
+            if (Site::STATUS_ACTIVE === $site->status) {
+                $site->approvalProcedure();
+            }
             $site->push();
             resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
 
@@ -351,24 +363,6 @@ class SitesController extends Controller
         }
 
         return self::json($sites);
-    }
-
-    public function changeStatus(Site $site, Request $request): JsonResponse
-    {
-        if (!$request->has('site.status')) {
-            throw new InvalidArgumentException('No status provided');
-        }
-
-        $status = (int)$request->input('site.status');
-
-        $site->changeStatus($status);
-        $site->save();
-
-        return self::json([
-            'site' => [
-                'status' => $site->status,
-            ],
-        ]);
     }
 
     public function readSitesSizes(?int $siteId = null): JsonResponse
@@ -502,9 +496,7 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException('Invalid domain.');
         }
         if (SitesRejectedDomain::isDomainRejected($domain)) {
-            throw new UnprocessableEntityHttpException(
-                'The subdomain ' . $domain . ' is not supported. Please use your own domain.'
-            );
+            throw new UnprocessableEntityHttpException(sprintf('The domain %s is rejected.', $domain));
         }
     }
 
