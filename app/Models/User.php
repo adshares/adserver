@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -364,12 +364,12 @@ class User extends Authenticatable
 
     public function isAdvertiser(): bool
     {
-        return (bool)$this->is_advertiser;
+        return (bool)$this->is_advertiser || $this->isModerator() || $this->isAdmin();
     }
 
     public function isPublisher(): bool
     {
-        return (bool)$this->is_publisher;
+        return (bool)$this->is_publisher || $this->isModerator() || $this->isAdmin();
     }
 
     public function isAdmin(): bool
@@ -489,8 +489,11 @@ class User extends Authenticatable
         return $user;
     }
 
-    public function updateEmailWalletAndRoles(?string $email, ?WalletAddress $walletAddress, ?array $roles): void
-    {
+    public function updateEmailWalletAndRoles(
+        ?string $email = null,
+        ?WalletAddress $walletAddress = null,
+        ?array $roles = null,
+    ): void {
         if (null !== $email) {
             $this->email = $email;
         }
