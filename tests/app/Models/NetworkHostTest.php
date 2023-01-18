@@ -133,4 +133,31 @@ class NetworkHostTest extends TestCase
         self::assertEquals(HostStatus::Excluded, $host4->refresh()->status);
         self::assertEquals(HostStatus::Failure, $host5->refresh()->status);
     }
+
+    public function testFetchUnreachableHostsForImportingInventory(): void
+    {
+        NetworkHost::factory()->create([
+            'address' => '0001-00000001-8B4E',
+            'failed_connection' => 10,
+            'last_synchronization' => new DateTimeImmutable('-70 minutes'),
+            'status' => HostStatus::Unreachable,
+        ]);
+        NetworkHost::factory()->create([
+            'address' => '0001-00000002-BB2D',
+            'failed_connection' => 20,
+            'last_synchronization' => new DateTimeImmutable('-70 minutes'),
+            'status' => HostStatus::Unreachable,
+        ]);
+        NetworkHost::factory()->create([
+            'address' => '0001-00000003-AB0C',
+            'failed_connection' => 10,
+            'last_synchronization' => new DateTimeImmutable('-70 minutes'),
+            'status' => HostStatus::Unreachable,
+        ]);
+
+        $hosts = NetworkHost::fetchUnreachableHostsForImportingInventory(['0001-00000001-8B4E', '0001-00000002-BB2D']);
+
+        self::assertCount(1, $hosts);
+        self::assertEquals('0001-00000001-8B4E', $hosts->first()->address);
+    }
 }

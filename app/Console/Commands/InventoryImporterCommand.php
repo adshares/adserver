@@ -60,7 +60,8 @@ class InventoryImporterCommand extends BaseCommand
         $whitelist = config('app.inventory_import_whitelist');
         $this->removeInventoryFromNonExistentHosts($whitelist);
 
-        $networkHosts = NetworkHost::fetchHosts($whitelist);
+        $networkHosts = NetworkHost::fetchHosts($whitelist)
+            ->concat(NetworkHost::fetchUnreachableHostsForImportingInventory($whitelist));
 
         $networkHostCount = $networkHosts->count();
         if ($networkHostCount === 0) {

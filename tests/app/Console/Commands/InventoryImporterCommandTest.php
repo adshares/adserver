@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -60,8 +61,58 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
         );
         $host = NetworkHost::fetchByAddress('0001-00000002-BB2D');
         self::assertNotNull($host->last_synchronization);
+        self::assertNotNull($host->last_synchronization_attempt);
         self::assertGreaterThanOrEqual($testStartTime->getTimestamp(), $host->last_synchronization->getTimestamp());
+        self::assertGreaterThanOrEqual(
+            $testStartTime->getTimestamp(),
+            $host->last_synchronization_attempt->getTimestamp(),
+        );
         self::assertServerEventDispatched(ServerEventType::InventorySynchronized);
+    }
+
+    public function testImportUnreachable(): void
+    {
+        $this->app->bind(
+            DemandClient::class,
+            function () {
+                $mock = self::createMock(DemandClient::class);
+                $mock->method('fetchAllInventory')
+                    ->willThrowException(new UnexpectedClientResponseException('test-exception'));
+                return $mock;
+            }
+        );
+        NetworkHost::factory()->create(['address' => '0001-00000002-BB2D', 'status' => HostStatus::Initialization]);
+        NetworkHost::factory()->create([
+            'address' => '0001-00000003-AB0C',
+            'failed_connection' => 10,
+            'last_synchronization' => new DateTimeImmutable('-1 hour'),
+            'status' => HostStatus::Unreachable,
+        ]);
+        NetworkHost::factory()->create([
+            'address' => '0001-00000004-DBEB',
+            'failed_connection' => 11,
+            'last_synchronization' => new DateTimeImmutable('-1 hour'),
+            'status' => HostStatus::Unreachable,
+        ]);
+
+        $this->artisan('ops:demand:inventory:import')
+            ->expectsOutput(
+                '[Inventory Importer] Inventory (0001-00000002-BB2D) is unavailable (Exception: test-exception)'
+            )
+            ->expectsOutput(
+                '[Inventory Importer] Inventory (0001-00000003-AB0C) is unavailable (Exception: test-exception)'
+            )
+            ->expectsOutput('[Inventory Importer] Inventory (0001-00000003-AB0C) has been removed')
+            ->expectsOutput('[Inventory Importer] Finished importing data from 0/2 inventories')
+            ->assertExitCode(0);
+        self::assertDatabaseHas(
+            NetworkHost::class,
+            [
+                'address' => '0001-00000003-AB0C',
+                'failed_connection' => 11,
+                'status' => HostStatus::Unreachable,
+            ]
+        );
     }
 
     public function testWhitelistImport(): void

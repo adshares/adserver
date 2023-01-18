@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Adshares\Supply\Domain\ValueObject\Status;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -44,6 +45,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null deleted_at
  * @property Carbon last_broadcast
  * @property Carbon|null last_synchronization
+ * @property Carbon|null last_synchronization_attempt
  * @property int failed_connection
  * @property Info info
  * @property string info_url
@@ -76,6 +78,7 @@ class NetworkHost extends Model
     protected $dates = [
         'last_broadcast',
         'last_synchronization',
+        'last_synchronization_attempt',
     ];
 
     public static function fetchByAddress(string $address): ?self
@@ -181,9 +184,26 @@ class NetworkHost extends Model
         return $query->get();
     }
 
+    public static function fetchUnreachableHostsForImportingInventory(array $whitelist = []): Collection
+    {
+        $query = (new self())->where('status', HostStatus::Unreachable);
+        if (!empty($whitelist)) {
+            $query->whereIn('address', $whitelist);
+        }
+
+        return $query->get()->filter(function ($networkHost) {
+            /** @var self $networkHost */
+            $hours = 2 ** max(0, $networkHost->failed_connection - config('app.inventory_failed_connection_limit'));
+            $lastSynchronization = $networkHost->last_synchronization ?? $networkHost->created_at;
+            return new DateTimeImmutable() > $lastSynchronization->addHours($hours);
+        });
+    }
+
     public function connectionSuccessful(): void
     {
-        $this->last_synchronization = new Carbon();
+        $now = new Carbon();
+        $this->last_synchronization = $now;
+        $this->last_synchronization_attempt = $now;
         $this->failed_connection = 0;
         $this->status = HostStatus::Operational;
         $this->update();
@@ -191,6 +211,7 @@ class NetworkHost extends Model
 
     public function connectionFailed(): void
     {
+        $this->last_synchronization_attempt = new Carbon();
         ++$this->failed_connection;
         if ($this->failed_connection >= config('app.inventory_failed_connection_limit')) {
             $this->status = HostStatus::Unreachable;
