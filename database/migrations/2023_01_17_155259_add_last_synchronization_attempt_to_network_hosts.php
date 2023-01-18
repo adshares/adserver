@@ -19,6 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -30,6 +31,7 @@ return new class extends Migration
         Schema::table('network_hosts', function (Blueprint $table) {
             $table->timestamp('last_synchronization_attempt')->after('last_synchronization')->nullable();
         });
+        DB::update('UPDATE network_hosts SET `last_synchronization_attempt`=`last_synchronization`');
     }
 
     public function down(): void
