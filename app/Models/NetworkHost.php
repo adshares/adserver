@@ -195,9 +195,11 @@ class NetworkHost extends Model
         return $query->get()->filter(function ($networkHost) {
             /** @var self $networkHost */
             $hours = 2 ** max(0, $networkHost->failed_connection - config('app.inventory_failed_connection_limit'));
-            return $hours <= self::MAXIMAL_PERIOD_FOR_SYNCHRONIZATION_RETRY_HOURS ||
-                null === $networkHost->last_synchronization_attempt ||
-                (new DateTimeImmutable(sprintf('-%d hours', $hours)) > $networkHost->last_synchronization_attempt);
+            return $hours <= self::MAXIMAL_PERIOD_FOR_SYNCHRONIZATION_RETRY_HOURS &&
+                (
+                    null === $networkHost->last_synchronization_attempt ||
+                    (new DateTimeImmutable(sprintf('-%d hours', $hours)) > $networkHost->last_synchronization_attempt)
+                );
         });
     }
 
