@@ -81,6 +81,7 @@ final class ServerMonitoringControllerTest extends TestCase
                 'walletAddress',
                 'lastBroadcast',
                 'lastSynchronization',
+                'lastSynchronizationAttempt',
                 'campaignCount',
                 'siteCount',
                 'connectionErrorCount',
@@ -150,12 +151,14 @@ final class ServerMonitoringControllerTest extends TestCase
             'address' => '0001-00000001-8B4E',
             'status' => HostStatus::Initialization,
             'last_synchronization' => null,
+            'last_synchronization_attempt' => null,
         ]);
         $carbon = (new Carbon())->subMinutes(10);
         NetworkHost::factory()->create([
             'address' => '0001-00000002-BB2D',
             'status' => HostStatus::Operational,
             'last_synchronization' => $carbon,
+            'last_synchronization_attempt' => $carbon,
         ]);
 
         $response = $this->getJson(self::buildUriForKey('hosts'));
@@ -166,11 +169,13 @@ final class ServerMonitoringControllerTest extends TestCase
             'walletAddress' => '0001-00000001-8B4E',
             'status' => HostStatus::Initialization,
             'lastSynchronization' => null,
+            'lastSynchronizationAttempt' => null,
         ]);
         $response->assertJsonFragment([
             'walletAddress' => '0001-00000002-BB2D',
             'status' => HostStatus::Operational,
             'lastSynchronization' => $carbon->format(DateTimeInterface::ATOM),
+            'lastSynchronizationAttempt' => $carbon->format(DateTimeInterface::ATOM),
         ]);
     }
 

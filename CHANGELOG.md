@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store uploaded files (creatives) in database
 - Extend validation during file upload
 - Do not duplicate code for Decentraland find
+- Synchronize unreachable hosts 
 ### Removed
 - Redundant pagination data
 ### Fixed
