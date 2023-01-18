@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,6 +33,7 @@ use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
+use DateTimeInterface;
 
 class DummyStatsRepository implements StatsRepository
 {
@@ -315,8 +316,7 @@ class DummyStatsRepository implements StatsRepository
         // TODO: Implement fetchStatsConversion() method.
     }
 
-    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    public function aggregateStatistics(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): void
     {
-        // TODO: Implement cacheStatistics() method.
     }
 }
