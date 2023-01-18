@@ -1,0 +1,85 @@
+<?php
+
+/**
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
+ */
+
+declare(strict_types=1);
+
+namespace Adshares\Adserver\Tests\Services\Supply;
+
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
+use Adshares\Adserver\Tests\TestCase;
+
+class SiteFilteringUpdaterTest extends TestCase
+{
+    public function testAddClassificationToFilteringImmutability(): void
+    {
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => User::factory()->create()]);
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+        $r1 = $site->site_requires;
+        $e1 = $site->site_excludes;
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+        $r2 = $site->site_requires;
+        $e2 = $site->site_excludes;
+
+        self::assertEquals($r1, $r2);
+        self::assertEquals($e1, $e2);
+    }
+
+    public function testAddClassificationToFilteringInitialInternalRequirements(): void
+    {
+        /** @var Site $site */
+        $site = Site::factory()->make(['user_id' => User::factory()->create()]);
+        $site->site_requires = ['classify' => ['0:1']];
+        $site->site_excludes = ['classify' => ['0:0']];
+        $site->save();
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+
+        self::assertArrayNotHasKey('classify:classified', $site->site_requires);
+        self::assertContains('0:1', $site->site_requires['classify']);
+        self::assertContains('0:0', $site->site_excludes['classify']);
+    }
+
+    public function testAddClassificationToFilteringSwitchOnlyAcceptedBanners(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['only_accepted_banners' => true, 'user_id' => $user]);
+        $expectedKey = sprintf('%d:%d:1', $user->id, $site->id);
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+
+        self::assertArrayHasKey('classify', $site->site_requires);
+        self::assertContains($expectedKey, $site->site_requires['classify']);
+
+        $site->only_accepted_banners = false;
+        $site->save();
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+
+        self::assertArrayNotHasKey('classify', $site->site_requires);
+    }
+}

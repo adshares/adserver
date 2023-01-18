@@ -162,7 +162,9 @@ class Config extends Model
     public const SITE_APPROVAL_REQUIRED = 'site-approval-required';
     public const SITE_CLASSIFIER_LOCAL_BANNERS = 'site-classifier-local-banners';
     public const SITE_FILTERING_EXCLUDE = 'site-filtering-exclude';
+    public const SITE_FILTERING_EXCLUDE_ON_AUTO_CREATE = 'site-filtering-exclude-on-auto-create';
     public const SITE_FILTERING_REQUIRE = 'site-filtering-require';
+    public const SITE_FILTERING_REQUIRE_ON_AUTO_CREATE = 'site-filtering-require-on-auto-create';
     public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
     public const SKYNET_API_KEY = 'skynet-api-key';
     public const SKYNET_API_URL = 'skynet-api-url';
@@ -258,6 +260,8 @@ class Config extends Model
         self::REFERRAL_REFUND_ENABLED => ConfigTypes::Bool,
         self::SITE_ACCEPT_BANNERS_MANUALLY => ConfigTypes::Bool,
         self::SITE_APPROVAL_REQUIRED => ConfigTypes::Array,
+        self::SITE_FILTERING_EXCLUDE_ON_AUTO_CREATE => ConfigTypes::Json,
+        self::SITE_FILTERING_REQUIRE_ON_AUTO_CREATE => ConfigTypes::Json,
         self::UPLOAD_LIMIT_DIRECT_LINK => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
@@ -528,7 +532,9 @@ class Config extends Model
             self::SITE_APPROVAL_REQUIRED => [],
             self::SITE_CLASSIFIER_LOCAL_BANNERS => self::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT,
             self::SITE_FILTERING_EXCLUDE => '',
+            self::SITE_FILTERING_EXCLUDE_ON_AUTO_CREATE => [],
             self::SITE_FILTERING_REQUIRE => '',
+            self::SITE_FILTERING_REQUIRE_ON_AUTO_CREATE => [],
             self::SKYNET_API_KEY => '',
             self::SKYNET_API_URL => 'https://siasky.net',
             self::SKYNET_CDN_URL => '',
