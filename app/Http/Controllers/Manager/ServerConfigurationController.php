@@ -30,6 +30,7 @@ use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\SiteValidator;
@@ -310,9 +311,12 @@ class ServerConfigurationController extends Controller
     {
         $mappedData = [];
         $appendRejectedDomains = false;
+        DB::beginTransaction();
         try {
             if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
-                SitesRejectedDomain::storeDomains(array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? '')));
+                $domains = array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? ''));
+                SitesRejectedDomain::storeDomains($domains);
+                Site::rejectByDomains($domains);
                 unset($data[self::REJECTED_DOMAINS]);
                 $appendRejectedDomains = true;
             }
@@ -320,7 +324,9 @@ class ServerConfigurationController extends Controller
                 $mappedData[Str::kebab($key)] = $value;
             }
             Config::updateAdminSettings($mappedData);
+            DB::commit();
         } catch (Throwable $exception) {
+            DB::rollBack();
             Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
             throw new RuntimeException('Cannot store configuration');
         }

@@ -21,11 +21,11 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
-use Adshares\Adserver\Console\Commands\AdsFetchHosts;
 use Adshares\Adserver\Console\Commands\InventoryImporterCommand;
 use Adshares\Adserver\Jobs\ExecuteCommand;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -170,7 +170,6 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::URI_CONFIG,
-            [],
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -259,6 +258,24 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreRejectedDomains(): void
     {
+        /** @var Site $siteMatching */
+        $siteMatching = Site::factory()->create([
+            'domain' => 'malware.example.com',
+            'url' => 'https://malware.example.com',
+            'user_id' => User::factory()->create(),
+        ]);
+        /** @var Site $siteExactMatch */
+        $siteExactMatch = Site::factory()->create([
+            'domain' => 'example.com',
+            'url' => 'https://example.com',
+            'user_id' => User::factory()->create(),
+        ]);
+        /** @var Site $siteNotMatching */
+        $siteNotMatching = Site::factory()->create([
+            'domain' => 'malwareexample.com',
+            'url' => 'https://malwareexample.com',
+            'user_id' => User::factory()->create(),
+        ]);
         $this->setUpAdmin();
         $data = ['rejectedDomains' => 'example.com'];
 
@@ -270,6 +287,21 @@ final class ServerConfigurationControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson(['rejectedDomains' => ['example.com']]);
         self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
+        self::assertDatabaseHas(Site::class, [
+            'id' => $siteMatching->id,
+            'reject_reason' => 'Domain rejected',
+            'status' => Site::STATUS_REJECTED,
+        ]);
+        self::assertDatabaseHas(Site::class, [
+            'id' => $siteExactMatch->id,
+            'reject_reason' => 'Domain rejected',
+            'status' => Site::STATUS_REJECTED,
+        ]);
+        self::assertDatabaseHas(Site::class, [
+            'id' => $siteNotMatching->id,
+            'reject_reason' => null,
+            'status' => Site::STATUS_ACTIVE,
+        ]);
     }
 
     public function testStoreRejectedDomainsEmpty(): void
