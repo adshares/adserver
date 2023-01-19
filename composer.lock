@@ -9855,12 +9855,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCompatibility/PHPCompatibility.git",
-                "reference": "08e90090ddd0a2e0b0cc39ad2c1b11c3d68f80bd"
+                "reference": "2fb82334bbefe513e2522ea585cd5ba32bb4d763"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCompatibility/PHPCompatibility/zipball/08e90090ddd0a2e0b0cc39ad2c1b11c3d68f80bd",
-                "reference": "08e90090ddd0a2e0b0cc39ad2c1b11c3d68f80bd",
+                "url": "https://api.github.com/repos/PHPCompatibility/PHPCompatibility/zipball/2fb82334bbefe513e2522ea585cd5ba32bb4d763",
+                "reference": "2fb82334bbefe513e2522ea585cd5ba32bb4d763",
                 "shasum": ""
             },
             "require": {
@@ -9922,24 +9922,24 @@
                 "issues": "https://github.com/PHPCompatibility/PHPCompatibility/issues",
                 "source": "https://github.com/PHPCompatibility/PHPCompatibility"
             },
-            "time": "2022-11-01T22:05:35+00:00"
+            "time": "2023-01-08T20:35:34+00:00"
         },
         {
             "name": "phpcsstandards/phpcsutils",
-            "version": "1.0.0-alpha4",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHPCSUtils.git",
-                "reference": "37c6da9a0aede973974ae02ef1af2dd641355e86"
+                "reference": "4fd2e30c7465112ca2e3646037bfb9e6f0f4d4f3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/37c6da9a0aede973974ae02ef1af2dd641355e86",
-                "reference": "37c6da9a0aede973974ae02ef1af2dd641355e86",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/4fd2e30c7465112ca2e3646037bfb9e6f0f4d4f3",
+                "reference": "4fd2e30c7465112ca2e3646037bfb9e6f0f4d4f3",
                 "shasum": ""
             },
             "require": {
-                "dealerdirect/phpcodesniffer-composer-installer": "^0.4.1 || ^0.5 || ^0.6.2 || ^0.7",
+                "dealerdirect/phpcodesniffer-composer-installer": "^0.4.1 || ^0.5 || ^0.6.2 || ^0.7 || ^1.0",
                 "php": ">=5.4",
                 "squizlabs/php_codesniffer": "^3.7.1 || 4.0.x-dev@dev"
             },
@@ -9996,7 +9996,7 @@
                 "issues": "https://github.com/PHPCSStandards/PHPCSUtils/issues",
                 "source": "https://github.com/PHPCSStandards/PHPCSUtils"
             },
-            "time": "2022-10-25T13:57:45+00:00"
+            "time": "2023-01-05T12:08:37+00:00"
         },
         {
             "name": "phpdocumentor/reflection-common",
