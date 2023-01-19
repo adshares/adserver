@@ -70,15 +70,8 @@ class SiteFilteringUpdater
             $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $excludeKeyword->keyword();
         }
 
-        $baseRequires = json_decode(config('app.site_filtering_require') ?? '', true);
-        if (is_array($baseRequires)) {
-            $siteRequires = array_merge_recursive($siteRequires, $baseRequires);
-        }
-
-        $baseExcludes = json_decode(config('app.site_filtering_exclude') ?? '', true);
-        if (is_array($baseExcludes)) {
-            $siteExcludes = array_merge_recursive($siteExcludes, $baseExcludes);
-        }
+        $siteRequires = array_merge_recursive($siteRequires, config('app.site_filtering_require'));
+        $siteExcludes = array_merge_recursive($siteExcludes, config('app.site_filtering_exclude'));
 
         $site->site_excludes = array_map([__CLASS__, 'normalize'], $siteExcludes);
         $site->site_requires = array_map([__CLASS__, 'normalize'], $siteRequires);
