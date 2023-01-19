@@ -23,10 +23,12 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Services\Supply;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 
 class SiteFilteringUpdaterTest extends TestCase
 {
@@ -81,5 +83,39 @@ class SiteFilteringUpdaterTest extends TestCase
         (new SiteFilteringUpdater())->addClassificationToFiltering($site);
 
         self::assertArrayNotHasKey('classify', $site->site_requires);
+    }
+
+    public function testAddClassificationToFilteringGlobalFiltering(): void
+    {
+        Config::updateAdminSettings([
+            Config::SITE_FILTERING_EXCLUDE => '{"000100000024ff89:category": ["adult", "annoying", "malware"]}',
+            Config::SITE_FILTERING_REQUIRE =>
+                '{"000100000024ff89:quality": ["high"], "000100000024ff89:classified": ["1"]}',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $user = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user]);
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+
+        self::assertEquals(['adult', 'annoying', 'malware'], $site->site_excludes['000100000024ff89:category']);
+        self::assertEquals(['high'], $site->site_requires['000100000024ff89:quality']);
+        self::assertEquals(['1'], $site->site_requires['000100000024ff89:classified']);
+    }
+
+    public function testAddClassificationToFilteringAppendClassified(): void
+    {
+        $user = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'site_requires' => ['000100000024ff89:quality' => ['high']],
+            'user_id' => $user,
+        ]);
+
+        (new SiteFilteringUpdater())->addClassificationToFiltering($site);
+
+        self::assertEquals(['high'], $site->site_requires['000100000024ff89:quality']);
+        self::assertEquals(['1'], $site->site_requires['000100000024ff89:classified']);
     }
 }

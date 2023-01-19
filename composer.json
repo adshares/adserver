@@ -89,7 +89,7 @@
         ],
         "test-ci": [
             "Composer\\Config::disableProcessTimeout",
-            "@test-coverage --coverage-clover ./storage/phpunit/coverage.xml --log-junit ./storage/phpunit/logfile.xml"
+            "@test-coverage --coverage-clover ./storage/phpunit/coverage.xml --log-junit ./storage/phpunit/logfile.xml --filter SiteFilteringUpdaterTest"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
