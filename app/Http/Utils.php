@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -220,7 +220,7 @@ class Utils
 
         $page = $context['page'];
 
-        if (!isset($page['url'])) {
+        if (!isset($page['url']) || !is_string($page['url'])) {
             $page['url'] = $request->headers->get('Referer');
         }
         $url = parse_url($page['url']);
