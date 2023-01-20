@@ -1244,6 +1244,23 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertTrue($user->refresh()->isPublisher());
     }
 
+    public function testPatchUserSwitchUserToAdmin(): void
+    {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create(['is_admin' => 0, 'is_publisher' => 0]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'switchToAdmin'),
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::USER_STRUCTURE);
+        self::assertTrue($user->refresh()->isAdmin());
+        self::assertTrue($user->isAdvertiser());
+        self::assertTrue($user->isPublisher());
+    }
+
     public function testPatchUserSwitchUserToAgency(): void
     {
         $this->setUpAdmin();

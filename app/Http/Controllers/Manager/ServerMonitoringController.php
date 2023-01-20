@@ -248,6 +248,21 @@ class ServerMonitoringController extends Controller
         return new UserResource($user);
     }
 
+    public function switchToAdmin(int $userId): JsonResource
+    {
+        /** @var User $user */
+        $user = (new User())->findOrFail($userId);
+        if ($user->isAdmin()) {
+            throw new UnprocessableEntityHttpException();
+        }
+        $user->is_admin = true;
+        $user->is_moderator = false;
+        $user->is_agency = false;
+        $user->save();
+
+        return new UserResource($user);
+    }
+
     public function switchUserToAgency(int $userId): JsonResource
     {
         /** @var User $user */
@@ -255,6 +270,7 @@ class ServerMonitoringController extends Controller
         if ($user->isAgency()) {
             throw new UnprocessableEntityHttpException();
         }
+        $user->is_admin = false;
         $user->is_moderator = false;
         $user->is_agency = true;
         $user->save();
@@ -269,6 +285,7 @@ class ServerMonitoringController extends Controller
         if ($user->isModerator()) {
             throw new UnprocessableEntityHttpException();
         }
+        $user->is_admin = false;
         $user->is_moderator = true;
         $user->is_agency = false;
         $user->save();
@@ -286,6 +303,7 @@ class ServerMonitoringController extends Controller
         if ($user->isModerator() && !$logged->isAdmin()) {
             throw new HttpException(Response::HTTP_FORBIDDEN);
         }
+        $user->is_admin = false;
         $user->is_moderator = false;
         $user->is_agency = false;
         $user->save();

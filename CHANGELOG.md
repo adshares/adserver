@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server event type list to monitoring API
 - Command to upsert configuration
 - Option to require site approval for specific medium
+- Possibility to grant user administrator privileges
 ### Changed
 - Authorize targeting reach fetches
 - Do not allow to update active campaign without creatives
