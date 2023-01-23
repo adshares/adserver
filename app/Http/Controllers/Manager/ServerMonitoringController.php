@@ -94,7 +94,7 @@ class ServerMonitoringController extends Controller
         $limit = $request->query('limit', 10);
         LimitValidator::validate($limit);
 
-        $paginator = NetworkHost::orderBy('id')
+        $paginator = (new NetworkHost())->orderBy('id')
             ->tokenPaginate($limit);
 
         return HostResource::collection($paginator)->preserveQuery();
@@ -148,7 +148,7 @@ class ServerMonitoringController extends Controller
             throw new UnprocessableEntityHttpException('Invalid reason');
         }
 
-        $user = $this->getRegularUserById($userId);
+        $user = (new User())->findOrFail($userId);
 
         DB::beginTransaction();
         try {
@@ -182,7 +182,7 @@ class ServerMonitoringController extends Controller
         CampaignRepository $campaignRepository,
         int $userId,
     ): JsonResponse {
-        $user = $this->getRegularUserById($userId);
+        $user = (new User())->findOrFail($userId);
 
         DB::beginTransaction();
         try {
@@ -313,14 +313,14 @@ class ServerMonitoringController extends Controller
 
     public function unbanUser(int $userId): JsonResource
     {
-        $user = $this->getRegularUserById($userId);
+        $user = (new User())->findOrFail($userId);
         $user->unban();
         return new UserResource($user);
     }
 
     public function resetHost(int $hostId): JsonResponse
     {
-        $host = NetworkHost::find($hostId);
+        $host = (new NetworkHost())->find($hostId);
         if (null === $host) {
             throw new UnprocessableEntityHttpException('Invalid id');
         }

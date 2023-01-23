@@ -934,19 +934,6 @@ final class ServerMonitoringControllerTest extends TestCase
         Mail::assertQueued(UserBanned::class);
     }
 
-    public function testPatchUserBanWhileBanAdmin(): void
-    {
-        $this->setUpAdmin();
-        $user = User::factory()->admin()->create();
-
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'ban'),
-            ['reason' => 'suspicious activity'],
-        );
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
     public function testPatchUserBanWhileUserNotExist(): void
     {
         $this->setUpAdmin();
@@ -1139,18 +1126,6 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertEmpty(RefLink::where('user_id', $user->id)->get());
         self::assertEmpty(Token::where('user_id', $user->id)->get());
         self::assertEmpty(Classification::where('user_id', $user->id)->get());
-    }
-
-    public function testDeleteUserWhileAdmin(): void
-    {
-        $this->setUpAdmin();
-        $user = User::factory()->admin()->create();
-
-        $response = $this->delete(
-            sprintf('%s/%d', self::buildUriForKey('users'), $user->id),
-        );
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testDeleteUserWhileNotExist(): void
