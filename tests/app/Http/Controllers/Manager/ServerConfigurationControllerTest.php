@@ -256,6 +256,22 @@ final class ServerConfigurationControllerTest extends TestCase
         ];
     }
 
+    public function testStoreDataFail(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->setUpAdmin();
+        $data = [Str::camel(Config::ADSHARES_ADDRESS) => '0001-00000003-AB0C'];
+
+        $response = $this->patchJson(
+            self::URI_CONFIG,
+            $data,
+        );
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
     public function testStoreRejectedDomains(): void
     {
         /** @var Site $siteMatching */
