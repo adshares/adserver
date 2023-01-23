@@ -60,7 +60,6 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
 
@@ -377,11 +376,7 @@ class ServerMonitoringController extends Controller
 
     public function editUser(int $userId, Request $request): JsonResource
     {
-        $user = User::fetchById($userId);
-        if (null === $user) {
-            throw new NotFoundHttpException('User not found');
-        }
-
+        $user = (new User())->findOrFail($userId);
         $email = self::getEmailAddress($request);
         $walletAddress = self::getWalletAddress($request);
         $roles = self::getRoles($request);
@@ -505,10 +500,18 @@ class ServerMonitoringController extends Controller
                 );
             }
         }
-        if (in_array(Role::Agency->value, $roles, true) && in_array(Role::Moderator->value, $roles, true)) {
-            throw new UnprocessableEntityHttpException(
-                sprintf('User cannot have `%s` and `%s` roles together', Role::Agency->value, Role::Moderator->value)
-            );
+        if (in_array(Role::Agency->value, $roles, true)) {
+            $conflictWithAgencyRoles = [
+                Role::Admin->value,
+                Role::Moderator->value,
+            ];
+            foreach ($conflictWithAgencyRoles as $role) {
+                if (in_array(Role::Agency->value, $roles, true) && in_array($role, $roles, true)) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('User cannot have `%s` and `%s` roles together', Role::Agency->value, $role)
+                    );
+                }
+            }
         }
         return $roles;
     }
