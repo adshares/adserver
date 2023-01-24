@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -196,8 +196,10 @@ class GuzzleAdPayClient implements AdPay
             );
         } catch (RequestException $exception) {
             switch ($code = $exception->getCode()) {
-                case Response::HTTP_NOT_FOUND:
-                    throw new AdPayReportNotReadyException(sprintf('Report for %d is not ready', $timestamp));
+                case Response::HTTP_TOO_EARLY:
+                    throw new AdPayReportNotReadyException(
+                        sprintf('Report for %d is not ready', $timestamp)
+                    );
                 case Response::HTTP_UNPROCESSABLE_ENTITY:
                     throw new AdPayReportMissingEventsException(
                         sprintf('Missing events for %d', $timestamp)
@@ -216,11 +218,10 @@ class GuzzleAdPayClient implements AdPay
         }
 
         $body = json_decode((string)$response->getBody(), true);
-
-        if (!array_key_exists('payments', $body) || !is_array($payments = $body['payments'])) {
+        $payments = $body['data'] ?? $body['payments'] ?? null;
+        if (!is_array($payments)) {
             throw new RuntimeException('Unexpected response format from the adpay');
         }
-
         return $payments;
     }
 }

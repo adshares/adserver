@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extend validation during file upload
 - Do not duplicate code for Decentraland find
 - Synchronize unreachable hosts
+- Support new adpay response
 ### Removed
 - Redundant pagination data
 ### Fixed
