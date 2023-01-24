@@ -31,7 +31,6 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
     Route::patch('config', [ServerConfigurationController::class, 'store']);
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 
-    Route::post('users', [ServerMonitoringController::class, 'addUser']);
     Route::patch('users/{userId}/switchToAdmin', [ServerMonitoringController::class, 'switchUserToAdmin']);
     Route::patch(
         'users/{userId}/switchToModerator',
@@ -52,6 +51,7 @@ Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->pr
     Route::get('hosts', [ServerMonitoringController::class, 'fetchHosts']);
     Route::patch('hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
 
+    Route::post('users', [ServerMonitoringController::class, 'addUser']);
     Route::get('users', [ServerMonitoringController::class, 'fetchUsers']);
     Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
     Route::patch('users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
