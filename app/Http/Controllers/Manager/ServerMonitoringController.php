@@ -379,11 +379,10 @@ class ServerMonitoringController extends Controller
         $user = (new User())->findOrFail($userId);
         $email = self::getEmailAddress($request);
         $walletAddress = self::getWalletAddress($request);
-        $roles = self::getRoles($request);
 
         DB::beginTransaction();
         try {
-            $user->updateEmailWalletAndRoles($email, $walletAddress, $roles);
+            $user->updateEmailWalletAndRoles($email, $walletAddress);
             if (null !== $email) {
                 $this->notifyUserAboutRegistration($user);
             }

@@ -1749,27 +1749,6 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
     }
 
-    public function testEditUserRole(): void
-    {
-        $this->setUpAdmin();
-        /** @var User $user */
-        $user = User::factory()->create();
-        $data = [
-            'role' => [
-                Role::Advertiser->value,
-            ],
-        ];
-
-        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
-
-        $response->assertStatus(Response::HTTP_OK)
-            ->assertJsonStructure(self::USER_STRUCTURE);
-        self::assertDatabaseHas(User::class, [
-            'is_advertiser' => 1,
-            'is_publisher' => 0,
-        ]);
-    }
-
     public function testEditUserInvalid(): void
     {
         $this->setUpAdmin();
@@ -1811,9 +1790,7 @@ final class ServerMonitoringControllerTest extends TestCase
                 ]
             ],
             'invalid email' => [['email' => 'invalid']],
-            'invalid role' => [['role' => ['invalid']]],
             'invalid wallet' => [['wallet' => ['address' => 'invalid', 'network' => WalletAddress::NETWORK_ADS]]],
-            'roles conflict' => [['role' => [Role::Agency->value, Role::Moderator->value]]],
         ];
     }
 
