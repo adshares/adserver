@@ -1439,7 +1439,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertTrue($user->refresh()->isModerator());
     }
 
-    public function testPatchUserUnban(): void
+    public function testUnbanUser(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
@@ -1455,7 +1455,16 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertFalse($user->isBanned());
     }
 
-    public function testPatchUserUnbanWhileNotExistingUser(): void
+    public function testUnbanUserFailWhileAdminUnbansHimself(): void
+    {
+        $user = $this->setUpAdmin();
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'unban'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUnbanUserWhileNotExistingUser(): void
     {
         $this->setUpAdmin();
 

@@ -318,6 +318,9 @@ class ServerMonitoringController extends Controller
 
     public function unbanUser(int $userId): JsonResource
     {
+        if (Auth::user()->id === $userId) {
+            throw new UnprocessableEntityHttpException();
+        }
         $user = (new User())->findOrFail($userId);
         $user->unban();
         return new UserResource($user);
