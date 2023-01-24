@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server event type list to monitoring API
 - Command to upsert configuration
 - Option to require site approval for specific medium
+- Option to set site's filtering during automatic creation
+- Reject matching sites on rejecting domains
 - Possibility to grant user administrator privileges
 ### Changed
 - Authorize targeting reach fetches
@@ -19,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store uploaded files (creatives) in database
 - Extend validation during file upload
 - Do not duplicate code for Decentraland find
-- Synchronize unreachable hosts 
+- Synchronize unreachable hosts
+- Support new adpay response
 ### Removed
 - Redundant pagination data
 ### Fixed

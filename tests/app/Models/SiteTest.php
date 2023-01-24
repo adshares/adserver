@@ -36,12 +36,28 @@ class SiteTest extends TestCase
 {
     public function testFetchOrCreateWhileInvalidSiteId(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
         Site::factory()->create(['user_id' => $user]);
 
         self::expectException(InvalidArgumentException::class);
 
         Site::fetchOrCreate($user->id, 'https://example.com', 'metaverse', 'decentraland');
+    }
+
+    public function testFetchOrCreateFiltering(): void
+    {
+        Config::updateAdminSettings([
+            Config::SITE_FILTERING_EXCLUDE_ON_AUTO_CREATE => '{"classify": ["0:0"]}',
+            Config::SITE_FILTERING_REQUIRE_ON_AUTO_CREATE => '{"classify": ["0:1"]}',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $site = Site::fetchOrCreate($user->id, 'https://example.com', 'web', null);
+        self::assertContains('0:0', $site->site_excludes['classify']);
+        self::assertContains('0:1', $site->site_requires['classify']);
     }
 
     public function testSetStatusAttribute(): void

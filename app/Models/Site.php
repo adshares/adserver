@@ -69,7 +69,7 @@ use Illuminate\Support\Facades\Mail;
  * @property array|null|string site_excludes
  * @property array|null categories
  * @property array|null categories_by_user
- * @property bool $only_accepted_banners
+ * @property bool only_accepted_banners
  * @property string|null reject_reason
  * @property Zone[]|Collection zones
  * @property User user
@@ -311,7 +311,11 @@ class Site extends Model
             $onlyAcceptedBanners =
                 Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT
                 !== config('app.site_classifier_local_banners');
-            $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners);
+            $filtering = [
+                'requires' => config('app.site_filtering_require_on_auto_create'),
+                'excludes' => config('app.site_filtering_exclude_on_auto_create'),
+            ];
+            $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners, filtering: $filtering);
         } else {
             if ($site->medium !== $medium || $site->vendor !== $vendor) {
                 throw new InvalidArgumentException('Site exists for another vendor');
@@ -331,6 +335,20 @@ class Site extends Model
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)
             ->where('info', AdUser::PAGE_INFO_UNKNOWN)
             ->get();
+    }
+
+    public static function rejectByDomains(array $domains): void
+    {
+        foreach ($domains as $domain) {
+            self::whereNot('status', self::STATUS_REJECTED)
+                ->where(function (Builder $sub) use ($domain) {
+                    $sub->where('domain', 'like', '%.' . $domain)->orWhere('domain', $domain);
+                })
+                ->update([
+                    'reject_reason' => self::REJECT_REASON_ON_REJECTED_DOMAIN,
+                    'status' => self::STATUS_REJECTED,
+                ]);
+        }
     }
 
     private static function getSitesChunkBuilder(int $previousChunkLastId, int $limit): Builder
