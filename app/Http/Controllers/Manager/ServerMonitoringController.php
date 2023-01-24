@@ -162,7 +162,7 @@ class ServerMonitoringController extends Controller
             $user->sites()->get()->each(
                 function (Site $site) {
                     $site->changestatus(Site::STATUS_INACTIVE);
-                    $site->save();
+                    $site->push();
                 }
             );
             $user->ban($reason);
@@ -232,16 +232,39 @@ class ServerMonitoringController extends Controller
     public function denyAdvertising(int $userId): JsonResource
     {
         $user = $this->getRegularUserById($userId);
-        $user->is_advertiser = 0;
-        $user->save();
+        DB::beginTransaction();
+        try {
+            Campaign::deactivateAllForUserId($userId);
+            $user->is_advertiser = 0;
+            $user->saveOrFail();
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Exception during user ban: (%s)', $throwable->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
         return new UserResource($user);
     }
 
     public function denyPublishing(int $userId): JsonResource
     {
         $user = $this->getRegularUserById($userId);
-        $user->is_publisher = 0;
-        $user->save();
+        DB::beginTransaction();
+        try {
+            $user->sites()->get()->each(
+                function (Site $site) {
+                    $site->changestatus(Site::STATUS_INACTIVE);
+                    $site->push();
+                }
+            );
+            $user->is_publisher = 0;
+            $user->saveOrFail();
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Exception during user ban: (%s)', $throwable->getMessage()));
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
         return new UserResource($user);
     }
 

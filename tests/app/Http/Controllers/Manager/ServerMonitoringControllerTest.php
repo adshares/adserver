@@ -56,6 +56,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Passport\Passport;
+use PDOException;
 use Symfony\Component\HttpFoundation\Response;
 
 // phpcs:ignoreFile PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
@@ -909,11 +910,13 @@ final class ServerMonitoringControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11, 'is_banned' => 0, 'ban_reason' => null]);
         /** @var Campaign $campaign */
-        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        $campaign = Campaign::factory()->create(['user_id' => $user, 'status' => Campaign::STATUS_ACTIVE]);
         /** @var Banner $banner */
-        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        $banner = Banner::factory()->create(['campaign_id' => $campaign, 'status' => Banner::STATUS_ACTIVE]);
         /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
+        $site = Site::factory()->create(['user_id' => $user]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
 
         $response = $this->patchJson(
             self::buildUriForPatchUser($user->id, 'ban'),
@@ -927,10 +930,10 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertEquals('suspicious activity', $user->ban_reason);
         self::assertNull($user->api_token);
         self::assertNull($user->auto_withdrawal);
-        self::assertEquals(Campaign::STATUS_INACTIVE, (new Campaign())->find($campaign->id)->status);
-        self::assertEquals(Banner::STATUS_INACTIVE, (new Banner())->find($banner->id)->status);
-        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
-        self::assertEquals(Site::STATUS_INACTIVE, (new Site())->find($site->id)->status);
+        self::assertEquals(Campaign::STATUS_INACTIVE, $campaign->refresh()->status);
+        self::assertEquals(Banner::STATUS_INACTIVE, $banner->refresh()->status);
+        self::assertEquals(Site::STATUS_INACTIVE, $site->refresh()->status);
+        self::assertEquals(Zone::STATUS_ARCHIVED, $zone->refresh()->status);
         Mail::assertQueued(UserBanned::class);
     }
 
@@ -1201,36 +1204,72 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function testPatchUserDenyAdvertising(): void
+    public function testDenyAdvertising(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_advertiser' => 1]);
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'denyAdvertising'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'denyAdvertising'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertNotContains('advertiser', $response->json('data.roles'));
         self::assertFalse($user->refresh()->isAdvertiser());
+        self::assertEquals(Campaign::STATUS_INACTIVE, $campaign->refresh()->status);
+        self::assertEquals(Banner::STATUS_INACTIVE, $banner->refresh()->status);
     }
 
-    public function testPatchUserDenyPublishing(): void
+    public function testDenyAdvertisingFailWhileDatabaseError(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create(['is_advertiser' => 1]);
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'denyAdvertising'));
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testDenyPublishing(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_publisher' => 1]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'denyPublishing'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'denyPublishing'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertNotContains('publisher', $response->json('data.roles'));
         self::assertFalse($user->refresh()->isPublisher());
+        self::assertEquals(Site::STATUS_INACTIVE, $site->refresh()->status);
+        self::assertEquals(Zone::STATUS_ARCHIVED, $zone->refresh()->status);
+    }
+
+    public function testDenyPublishingFailWhileDatabaseError(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create(['is_publisher' => 1]);
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'denyPublishing'));
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testPatchUserGrantAdvertising(): void
