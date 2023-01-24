@@ -38,7 +38,6 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
         'users/{userId}/switchToModerator',
         [ServerMonitoringController::class, 'switchUserToModerator']
     );
-    Route::delete('users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
 
     Route::get('wallet', [ServerMonitoringController::class, 'fetchWallet']);
 });
@@ -67,4 +66,5 @@ Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->pr
         [ServerMonitoringController::class, 'switchUserToRegular']
     );
     Route::patch('users/{userId}/unban', [ServerMonitoringController::class, 'unbanUser']);
+    Route::delete('users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
 });

@@ -149,8 +149,10 @@ class ServerMonitoringController extends Controller
         if (Auth::user()->id === $userId) {
             throw new UnprocessableEntityHttpException();
         }
-
         $user = (new User())->findOrFail($userId);
+        if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
+            throw new UnprocessableEntityHttpException(sprintf('User %d cannot be banned', $userId));
+        }
 
         DB::beginTransaction();
         try {
@@ -188,6 +190,9 @@ class ServerMonitoringController extends Controller
             throw new UnprocessableEntityHttpException();
         }
         $user = (new User())->findOrFail($userId);
+        if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
+            throw new UnprocessableEntityHttpException(sprintf('User %d cannot be deleted', $userId));
+        }
 
         DB::beginTransaction();
         try {
@@ -322,6 +327,9 @@ class ServerMonitoringController extends Controller
             throw new UnprocessableEntityHttpException();
         }
         $user = (new User())->findOrFail($userId);
+        if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
+            throw new UnprocessableEntityHttpException(sprintf('User %d cannot be unbanned', $userId));
+        }
         $user->unban();
         return new UserResource($user);
     }
@@ -483,8 +491,8 @@ class ServerMonitoringController extends Controller
     {
         /** @var User $user */
         $user = (new User())->findOrFail($userId);
-        if ($user->isAdmin()) {
-            throw new UnprocessableEntityHttpException('Administrator account cannot be changed');
+        if (!$user->isRegular()) {
+            throw new UnprocessableEntityHttpException('User\'s account cannot be changed');
         }
         return $user;
     }

@@ -946,7 +946,21 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testBanUserWhileUserNotExist(): void
+    public function testBanUserFailWhileModeratorBansOtherModerator(): void
+    {
+        $this->setUpUser(User::factory()->create(['is_moderator' => 1]));
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUserFailWhileUserNotExist(): void
     {
         $this->setUpAdmin();
 
@@ -1143,6 +1157,17 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testDeleteUserFailWhileAdminDeletedHimself(): void
     {
         $user = $this->setUpAdmin();
+
+        $response = $this->delete(sprintf('%s/%d', self::buildUriForKey('users'), $user->id));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeleteUserFailWhileModeratorDeletesOtherModerator(): void
+    {
+        $this->setUpUser(User::factory()->create(['is_moderator' => 1]));
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
 
         $response = $this->delete(sprintf('%s/%d', self::buildUriForKey('users'), $user->id));
 
@@ -1445,9 +1470,7 @@ final class ServerMonitoringControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create(['is_banned' => 1, 'ban_reason' => 'suspicious activity']);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'unban'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'unban'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
@@ -1464,13 +1487,22 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testUnbanUserFailWhileModeratorBansOtherModerator(): void
+    {
+        $this->setUpUser(User::factory()->create(['is_moderator' => 1]));
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'unban'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testUnbanUserWhileNotExistingUser(): void
     {
         $this->setUpAdmin();
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser(PHP_INT_MAX, 'unban'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser(PHP_INT_MAX, 'unban'));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
@@ -1844,8 +1876,11 @@ final class ServerMonitoringControllerTest extends TestCase
         return $user;
     }
 
-    private function setUpUser(): void
+    private function setUpUser(User $user = null): void
     {
-        Passport::actingAs(User::factory()->create(), [], 'jwt');
+        if (null === $user) {
+            $user = User::factory()->create();
+        }
+        Passport::actingAs($user, [], 'jwt');
     }
 }
