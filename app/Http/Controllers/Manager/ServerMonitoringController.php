@@ -149,7 +149,7 @@ class ServerMonitoringController extends Controller
         /** @var User $authenticatedUser */
         $authenticatedUser = Auth::user();
         if ($authenticatedUser->id === $userId) {
-            throw new UnprocessableEntityHttpException();
+            throw new UnprocessableEntityHttpException('Cannot edit self');
         }
         $user = (new User())->findOrFail($userId);
         if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
@@ -190,7 +190,7 @@ class ServerMonitoringController extends Controller
     ): JsonResponse {
         $authenticatedUser = Auth::user();
         if ($authenticatedUser->id === $userId) {
-            throw new UnprocessableEntityHttpException();
+            throw new UnprocessableEntityHttpException('Cannot delete self');
         }
         $user = (new User())->findOrFail($userId);
         if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
@@ -322,7 +322,7 @@ class ServerMonitoringController extends Controller
         /** @var User $authenticatedUser */
         $authenticatedUser = Auth::user();
         if ($authenticatedUser->id === $userId) {
-            throw new UnprocessableEntityHttpException();
+            throw new UnprocessableEntityHttpException('Cannot edit self');
         }
         /** @var User $user */
         $user = (new User())->findOrFail($userId);
@@ -342,7 +342,7 @@ class ServerMonitoringController extends Controller
         /** @var User $authenticatedUser */
         $authenticatedUser = Auth::user();
         if ($authenticatedUser->id === $userId) {
-            throw new UnprocessableEntityHttpException();
+            throw new UnprocessableEntityHttpException('Cannot edit self');
         }
         $user = (new User())->findOrFail($userId);
         if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
