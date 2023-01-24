@@ -333,6 +333,20 @@ class Site extends Model
             ->get();
     }
 
+    public static function rejectByDomains(array $domains): void
+    {
+        foreach ($domains as $domain) {
+            self::whereNot('status', self::STATUS_REJECTED)
+                ->where(function (Builder $sub) use ($domain) {
+                    $sub->where('domain', 'like', '%.' . $domain)->orWhere('domain', $domain);
+                })
+                ->update([
+                    'reject_reason' => self::REJECT_REASON_ON_REJECTED_DOMAIN,
+                    'status' => self::STATUS_REJECTED,
+                ]);
+        }
+    }
+
     private static function getSitesChunkBuilder(int $previousChunkLastId, int $limit): Builder
     {
         return self::where('id', '>', $previousChunkLastId)->limit($limit);
