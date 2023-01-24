@@ -151,7 +151,7 @@ class ServerMonitoringController extends Controller
         }
         $user = (new User())->findOrFail($userId);
         if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
-            throw new UnprocessableEntityHttpException(sprintf('User %d cannot be banned', $userId));
+            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
         }
 
         DB::beginTransaction();
@@ -191,7 +191,7 @@ class ServerMonitoringController extends Controller
         }
         $user = (new User())->findOrFail($userId);
         if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
-            throw new UnprocessableEntityHttpException(sprintf('User %d cannot be deleted', $userId));
+            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
         }
 
         DB::beginTransaction();
@@ -258,16 +258,10 @@ class ServerMonitoringController extends Controller
         return new UserResource($user);
     }
 
-    public function switchToAdmin(int $userId): JsonResource
+    public function switchUserToAdmin(int $userId): JsonResource
     {
-        /** @var User $user */
-        $user = (new User())->findOrFail($userId);
-        if ($user->isAdmin()) {
-            throw new UnprocessableEntityHttpException();
-        }
+        $user = $this->getRegularUserById($userId);
         $user->is_admin = true;
-        $user->is_moderator = false;
-        $user->is_agency = false;
         $user->save();
 
         return new UserResource($user);
@@ -275,13 +269,7 @@ class ServerMonitoringController extends Controller
 
     public function switchUserToAgency(int $userId): JsonResource
     {
-        /** @var User $user */
-        $user = (new User())->findOrFail($userId);
-        if ($user->isAgency()) {
-            throw new UnprocessableEntityHttpException();
-        }
-        $user->is_admin = false;
-        $user->is_moderator = false;
+        $user = $this->getRegularUserById($userId);
         $user->is_agency = true;
         $user->save();
 
@@ -290,14 +278,8 @@ class ServerMonitoringController extends Controller
 
     public function switchUserToModerator(int $userId): JsonResource
     {
-        /** @var User $user */
-        $user = (new User())->findOrFail($userId);
-        if ($user->isModerator()) {
-            throw new UnprocessableEntityHttpException();
-        }
-        $user->is_admin = false;
+        $user = $this->getRegularUserById($userId);
         $user->is_moderator = true;
-        $user->is_agency = false;
         $user->save();
 
         return new UserResource($user);
@@ -328,7 +310,7 @@ class ServerMonitoringController extends Controller
         }
         $user = (new User())->findOrFail($userId);
         if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
-            throw new UnprocessableEntityHttpException(sprintf('User %d cannot be unbanned', $userId));
+            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
         }
         $user->unban();
         return new UserResource($user);

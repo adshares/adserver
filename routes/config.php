@@ -33,7 +33,7 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
 
     Route::post('users', [ServerMonitoringController::class, 'addUser']);
     Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
-    Route::patch('users/{userId}/switchToAdmin', [ServerMonitoringController::class, 'switchToAdmin']);
+    Route::patch('users/{userId}/switchToAdmin', [ServerMonitoringController::class, 'switchUserToAdmin']);
     Route::patch(
         'users/{userId}/switchToModerator',
         [ServerMonitoringController::class, 'switchUserToModerator']

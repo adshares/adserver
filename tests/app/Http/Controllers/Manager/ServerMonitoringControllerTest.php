@@ -957,7 +957,7 @@ final class ServerMonitoringControllerTest extends TestCase
             ['reason' => 'suspicious activity'],
         );
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testBanUserFailWhileUserNotExist(): void
@@ -1171,7 +1171,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->delete(sprintf('%s/%d', self::buildUriForKey('users'), $user->id));
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testDeleteUserWhileNotExist(): void
@@ -1265,15 +1265,13 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertTrue($user->refresh()->isPublisher());
     }
 
-    public function testPatchUserSwitchUserToAdmin(): void
+    public function testSwitchUserToAdmin(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_admin' => 0, 'is_publisher' => 0]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToAdmin'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToAdmin'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
@@ -1282,50 +1280,54 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertTrue($user->isPublisher());
     }
 
-    public function testPatchUserSwitchUserToAgency(): void
+    public function testSwitchUserToAdminFailWhileUserIsNotRegularType(): void
+    {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToAdmin'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testSwitchUserToAgency(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_agency' => 0]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToAgency'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToAgency'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertTrue($user->refresh()->isAgency());
     }
 
-    public function testPatchUserSwitchUserToAgencyByRegularUser(): void
+    public function testSwitchUserToAgencyByRegularUser(): void
     {
         /** @var User $user */
         $user = User::factory()->create(['is_agency' => 0]);
         $this->setUpAdmin($user);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToAgency'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToAgency'));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
         self::assertFalse($user->refresh()->isAgency());
     }
 
-    public function testPatchUserSwitchUserToAgencyWhileUserIsAgency(): void
+    public function testSwitchUserToAgencyWhileUserIsNotRegularType(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_agency' => 1]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToAgency'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToAgency'));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertTrue($user->refresh()->isAgency());
     }
 
-    public function testPatchUserSwitchUserToAgencyWhileUserDeleted(): void
+    public function testSwitchUserToAgencyWhileUserDeleted(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
@@ -1334,23 +1336,19 @@ final class ServerMonitoringControllerTest extends TestCase
             'is_agency' => 0,
         ]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToAgency'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToAgency'));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
         self::assertFalse($user->refresh()->isAgency());
     }
 
-    public function testPatchUserSwitchUserToModerator(): void
+    public function testSwitchUserToModerator(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 0, 'is_publisher' => 0]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToModerator'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToModerator'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
@@ -1359,35 +1357,30 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertTrue($user->isPublisher());
     }
 
-    public function testPatchUserSwitchUserToModeratorByModerator(): void
+    public function testSwitchUserToModeratorByModerator(): void
     {
         $this->setUpAdmin(User::factory()->create(['is_moderator' => 1]));
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 0]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToModerator'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToModerator'));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
         self::assertFalse($user->refresh()->isModerator());
     }
 
-    public function testPatchUserSwitchUserToModeratorWhileUserIsModerator(): void
+    public function testSwitchUserToModeratorWhileUserIsNotRegularType(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
-        $user = User::factory()->create(['is_moderator' => 1]);
+        $user = User::factory()->create(['is_agency' => 1]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToModerator'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToModerator'));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertTrue($user->refresh()->isModerator());
     }
 
-    public function testPatchUserSwitchUserToModeratorWhileUserDeleted(): void
+    public function testSwitchUserToModeratorWhileUserDeleted(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
@@ -1404,22 +1397,20 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertFalse($user->refresh()->isModerator());
     }
 
-    public function testPatchUserSwitchUserToRegular(): void
+    public function testSwitchUserToRegular(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 1]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToRegular'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToRegular'));
 
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::USER_STRUCTURE);
         self::assertFalse($user->refresh()->isModerator());
     }
 
-    public function testPatchUserSwitchUserToRegularByRegularUser(): void
+    public function testSwitchUserToRegularByRegularUser(): void
     {
         $this->setUpAdmin(User::factory()->create());
         /** @var User $moderator */
@@ -1433,7 +1424,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertTrue($moderator->refresh()->isModerator());
     }
 
-    public function testPatchUserSwitchUserToRegularByModeratorWhileUserIsModerator(): void
+    public function testSwitchUserToRegularByModeratorWhileUserIsModerator(): void
     {
         $this->setUpAdmin(User::factory()->create(['is_moderator' => 1]));
         /** @var User $user */
@@ -1447,7 +1438,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertTrue($user->refresh()->isModerator());
     }
 
-    public function testPatchUserSwitchUserToRegularWhileUserDeleted(): void
+    public function testSwitchUserToRegularWhileUserDeleted(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
@@ -1495,7 +1486,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'unban'));
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function testUnbanUserWhileNotExistingUser(): void
