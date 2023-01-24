@@ -146,11 +146,13 @@ class ServerMonitoringController extends Controller
         if (!is_string($reason) || strlen(trim($reason)) < 1 || strlen(trim($reason)) > 255) {
             throw new UnprocessableEntityHttpException('Invalid reason');
         }
-        if (Auth::user()->id === $userId) {
+        /** @var User $authenticatedUser */
+        $authenticatedUser = Auth::user();
+        if ($authenticatedUser->id === $userId) {
             throw new UnprocessableEntityHttpException();
         }
         $user = (new User())->findOrFail($userId);
-        if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
+        if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
             throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
         }
 
@@ -186,12 +188,13 @@ class ServerMonitoringController extends Controller
         CampaignRepository $campaignRepository,
         int $userId,
     ): JsonResponse {
-        if (Auth::user()->id === $userId) {
+        $authenticatedUser = Auth::user();
+        if ($authenticatedUser->id === $userId) {
             throw new UnprocessableEntityHttpException();
         }
         $user = (new User())->findOrFail($userId);
-        if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
+        if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
+            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be deleted', $userId));
         }
 
         DB::beginTransaction();
@@ -311,11 +314,13 @@ class ServerMonitoringController extends Controller
 
     public function unbanUser(int $userId): JsonResource
     {
-        if (Auth::user()->id === $userId) {
+        /** @var User $authenticatedUser */
+        $authenticatedUser = Auth::user();
+        if ($authenticatedUser->id === $userId) {
             throw new UnprocessableEntityHttpException();
         }
         $user = (new User())->findOrFail($userId);
-        if (Auth::user()->isModerator() && ($user->isAdmin() || $user->isModerator())) {
+        if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
             throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
         }
         $user->unban();
@@ -379,7 +384,13 @@ class ServerMonitoringController extends Controller
     public function editUser(int $userId, Request $request): JsonResource
     {
         $user = (new User())->findOrFail($userId);
-        if (Auth::user()->isModerator() && Auth::user()->id !== $userId && ($user->isAdmin() || $user->isModerator())) {
+        /** @var User $authenticatedUser */
+        $authenticatedUser = Auth::user();
+        if (
+            !$authenticatedUser->isAdmin() &&
+            $authenticatedUser->id !== $userId &&
+            ($user->isAdmin() || $user->isModerator())
+        ) {
             throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be edited', $userId));
         }
         $email = self::getEmailAddress($request);
