@@ -146,6 +146,9 @@ class ServerMonitoringController extends Controller
         if (!is_string($reason) || strlen(trim($reason)) < 1 || strlen(trim($reason)) > 255) {
             throw new UnprocessableEntityHttpException('Invalid reason');
         }
+        if (Auth::user()->id === $userId) {
+            throw new UnprocessableEntityHttpException();
+        }
 
         $user = (new User())->findOrFail($userId);
 
@@ -181,6 +184,9 @@ class ServerMonitoringController extends Controller
         CampaignRepository $campaignRepository,
         int $userId,
     ): JsonResponse {
+        if (Auth::user()->id === $userId) {
+            throw new UnprocessableEntityHttpException();
+        }
         $user = (new User())->findOrFail($userId);
 
         DB::beginTransaction();

@@ -903,7 +903,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertJsonPath('data.0.email', 'user1@example.com');
     }
 
-    public function testPatchUserBan(): void
+    public function testBanUser(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
@@ -934,7 +934,19 @@ final class ServerMonitoringControllerTest extends TestCase
         Mail::assertQueued(UserBanned::class);
     }
 
-    public function testPatchUserBanWhileUserNotExist(): void
+    public function testBanUserFailWhileAdminBansHimself(): void
+    {
+        $user = $this->setUpAdmin();
+
+        $response = $this->patchJson(
+            self::buildUriForPatchUser($user->id, 'ban'),
+            ['reason' => 'suspicious activity'],
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testBanUserWhileUserNotExist(): void
     {
         $this->setUpAdmin();
 
@@ -947,9 +959,9 @@ final class ServerMonitoringControllerTest extends TestCase
     }
 
     /**
-     * @dataProvider patchUserBanFailProvider
+     * @dataProvider banUserFailProvider
      */
-    public function testPatchUserBanFail(array $data): void
+    public function testBanUserFail(array $data): void
     {
         $this->setUpAdmin();
         /** @var User $user */
@@ -963,7 +975,7 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function patchUserBanFailProvider(): array
+    public function banUserFailProvider(): array
     {
         return [
             'no reason' => [[]],
@@ -1126,6 +1138,15 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertEmpty(RefLink::where('user_id', $user->id)->get());
         self::assertEmpty(Token::where('user_id', $user->id)->get());
         self::assertEmpty(Classification::where('user_id', $user->id)->get());
+    }
+
+    public function testDeleteUserFailWhileAdminDeletedHimself(): void
+    {
+        $user = $this->setUpAdmin();
+
+        $response = $this->delete(sprintf('%s/%d', self::buildUriForKey('users'), $user->id));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testDeleteUserWhileNotExist(): void
@@ -1805,12 +1826,13 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    private function setUpAdmin(User $user = null): void
+    private function setUpAdmin(User $user = null): User
     {
         if (null === $user) {
             $user = User::factory()->admin()->create();
         }
         Passport::actingAs($user, [], 'jwt');
+        return $user;
     }
 
     private function setUpUser(): void
