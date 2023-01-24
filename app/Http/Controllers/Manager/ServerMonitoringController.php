@@ -379,6 +379,9 @@ class ServerMonitoringController extends Controller
     public function editUser(int $userId, Request $request): JsonResource
     {
         $user = (new User())->findOrFail($userId);
+        if (Auth::user()->isModerator() && Auth::user()->id !== $userId && ($user->isAdmin() || $user->isModerator())) {
+            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be edited', $userId));
+        }
         $email = self::getEmailAddress($request);
         $walletAddress = self::getWalletAddress($request);
 

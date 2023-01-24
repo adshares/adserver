@@ -1822,6 +1822,23 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
     }
 
+    public function testEditUserWalletAddressFailWhileModeratorEditsOtherModerator(): void
+    {
+        $this->setUpUser(User::factory()->create(['is_moderator' => 1]));
+        /** @var User $user */
+        $user = User::factory()->create(['is_moderator' => 1]);
+        $data = [
+            'wallet' => [
+                'address' => '0001-00000001-8B4E',
+                'network' => WalletAddress::NETWORK_ADS,
+            ],
+        ];
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id), $data);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     public function testEditUserInvalid(): void
     {
         $this->setUpAdmin();
