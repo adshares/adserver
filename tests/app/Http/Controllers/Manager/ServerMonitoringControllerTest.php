@@ -1291,6 +1291,18 @@ final class ServerMonitoringControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testSwitchUserToAdminFailWhileUserHasCampaign(): void
+    {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create();
+        Campaign::factory()->create(['user_id' => $user]);
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToAdmin'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testSwitchUserToAgency(): void
     {
         $this->setUpAdmin();
@@ -1369,11 +1381,23 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertFalse($user->refresh()->isModerator());
     }
 
-    public function testSwitchUserToModeratorWhileUserIsNotRegularType(): void
+    public function testSwitchUserToModeratorFailWhileUserIsNotRegularType(): void
     {
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create(['is_agency' => 1]);
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToModerator'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testSwitchUserToModeratorFailWhileUserHasSite(): void
+    {
+        $this->setUpAdmin();
+        /** @var User $user */
+        $user = User::factory()->create();
+        Site::factory()->create(['user_id' => $user]);
 
         $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToModerator'));
 

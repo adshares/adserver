@@ -261,6 +261,9 @@ class ServerMonitoringController extends Controller
     public function switchUserToAdmin(int $userId): JsonResource
     {
         $user = $this->getRegularUserById($userId);
+        if ($user->campaigns()->count() > 0 || $user->sites()->count()) {
+            throw new UnprocessableEntityHttpException('User has campaigns or sites');
+        }
         $user->is_admin = true;
         $user->save();
 
@@ -279,6 +282,9 @@ class ServerMonitoringController extends Controller
     public function switchUserToModerator(int $userId): JsonResource
     {
         $user = $this->getRegularUserById($userId);
+        if ($user->campaigns()->count() > 0 || $user->sites()->count()) {
+            throw new UnprocessableEntityHttpException('User has campaigns or sites');
+        }
         $user->is_moderator = true;
         $user->save();
 
