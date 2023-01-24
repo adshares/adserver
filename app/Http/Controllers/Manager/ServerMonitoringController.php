@@ -296,12 +296,14 @@ class ServerMonitoringController extends Controller
 
     public function switchUserToRegular(int $userId): JsonResource
     {
-        /** @var User $logged */
-        $logged = Auth::user();
-
+        /** @var User $authenticatedUser */
+        $authenticatedUser = Auth::user();
+        if ($authenticatedUser->id === $userId) {
+            throw new UnprocessableEntityHttpException();
+        }
         /** @var User $user */
         $user = (new User())->findOrFail($userId);
-        if ($user->isModerator() && !$logged->isAdmin()) {
+        if (!$authenticatedUser->isAdmin() && !$user->isAgency()) {
             throw new HttpException(Response::HTTP_FORBIDDEN);
         }
         $user->is_admin = false;

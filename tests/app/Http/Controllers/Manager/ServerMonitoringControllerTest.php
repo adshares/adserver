@@ -1413,9 +1413,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'is_moderator' => 0,
         ]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToModerator'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToModerator'));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
         self::assertFalse($user->refresh()->isModerator());
@@ -1440,9 +1438,7 @@ final class ServerMonitoringControllerTest extends TestCase
         /** @var User $moderator */
         $moderator = User::factory()->create(['is_moderator' => 1]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($moderator->id, 'switchToRegular'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($moderator->id, 'switchToRegular'));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
         self::assertTrue($moderator->refresh()->isModerator());
@@ -1454,12 +1450,19 @@ final class ServerMonitoringControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create(['is_moderator' => 1]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToRegular'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToRegular'));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
         self::assertTrue($user->refresh()->isModerator());
+    }
+
+    public function testSwitchUserToRegularByAdminWhoChangesHimself(): void
+    {
+        $user = $this->setUpAdmin();
+
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToRegular'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testSwitchUserToRegularWhileUserDeleted(): void
@@ -1471,9 +1474,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'is_moderator' => 1,
         ]);
 
-        $response = $this->patchJson(
-            self::buildUriForPatchUser($user->id, 'switchToRegular'),
-        );
+        $response = $this->patchJson(self::buildUriForPatchUser($user->id, 'switchToRegular'));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
         self::assertTrue($user->refresh()->isModerator());
