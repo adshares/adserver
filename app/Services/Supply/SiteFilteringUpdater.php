@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,18 +43,25 @@ class SiteFilteringUpdater
         $siteRequires = $site->site_requires ?: [];
         $siteExcludes = $site->site_excludes ?: [];
 
-        unset($siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE]);
-        unset($siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE]);
-
         foreach ($this->extractClassifiers($siteExcludes, $siteRequires) as $classifier) {
             $siteRequires[$classifier . self::NAMESPACE_SEPARATOR . self::KEYWORD_CLASSIFIED] =
                 self::KEYWORD_CLASSIFIED_VALUE;
         }
 
+        $requireKeywords = $this->getClassificationForAcceptedBanners($site->user_id, $site->id);
         if ($site->only_accepted_banners) {
-            $requireKeywords = $this->getClassificationForAcceptedBanners($site->user_id, $site->id);
             foreach ($requireKeywords as $requireKeyword) {
                 $siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $requireKeyword->keyword();
+            }
+        } elseif (array_key_exists(self::INTERNAL_CLASSIFIER_NAMESPACE, $siteRequires)) {
+            $arrayDiff = array_diff(
+                $siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE],
+                array_map(fn($requireKeyword) => $requireKeyword->keyword(), $requireKeywords),
+            );
+            if (empty($arrayDiff)) {
+                unset($siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE]);
+            } else {
+                $siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE] = $arrayDiff;
             }
         }
 
@@ -63,15 +70,8 @@ class SiteFilteringUpdater
             $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $excludeKeyword->keyword();
         }
 
-        $baseRequires = json_decode(config('app.site_filtering_require') ?? '', true);
-        if (is_array($baseRequires)) {
-            $siteRequires = array_merge_recursive($siteRequires, $baseRequires);
-        }
-
-        $baseExcludes = json_decode(config('app.site_filtering_exclude') ?? '', true);
-        if (is_array($baseExcludes)) {
-            $siteExcludes = array_merge_recursive($siteExcludes, $baseExcludes);
-        }
+        $siteRequires = array_merge_recursive($siteRequires, config('app.site_filtering_require'));
+        $siteExcludes = array_merge_recursive($siteExcludes, config('app.site_filtering_exclude'));
 
         $site->site_excludes = array_map([__CLASS__, 'normalize'], $siteExcludes);
         $site->site_requires = array_map([__CLASS__, 'normalize'], $siteRequires);
@@ -115,7 +115,7 @@ class SiteFilteringUpdater
         $keys = array_merge(array_keys($siteExcludes), array_keys($siteRequires));
         $classifiers = [];
         foreach ($keys as $key) {
-            if (self::RESERVED_NAMESPACE_TYPE === $key) {
+            if (self::INTERNAL_CLASSIFIER_NAMESPACE === $key || self::RESERVED_NAMESPACE_TYPE === $key) {
                 continue;
             }
 

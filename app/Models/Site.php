@@ -69,7 +69,7 @@ use Illuminate\Support\Facades\Mail;
  * @property array|null|string site_excludes
  * @property array|null categories
  * @property array|null categories_by_user
- * @property bool $only_accepted_banners
+ * @property bool only_accepted_banners
  * @property string|null reject_reason
  * @property Zone[]|Collection zones
  * @property User user
@@ -311,7 +311,11 @@ class Site extends Model
             $onlyAcceptedBanners =
                 Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT
                 !== config('app.site_classifier_local_banners');
-            $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners);
+            $filtering = [
+                'requires' => config('app.site_filtering_require_on_auto_create'),
+                'excludes' => config('app.site_filtering_exclude_on_auto_create'),
+            ];
+            $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners, filtering: $filtering);
         } else {
             if ($site->medium !== $medium || $site->vendor !== $vendor) {
                 throw new InvalidArgumentException('Site exists for another vendor');

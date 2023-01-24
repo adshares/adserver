@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server event type list to monitoring API
 - Command to upsert configuration
 - Option to require site approval for specific medium
+- Option to set site's filtering during automatic creation
 - Reject matching sites on rejecting domains
 ### Changed
 - Authorize targeting reach fetches
