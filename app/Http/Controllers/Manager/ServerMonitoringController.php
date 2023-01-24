@@ -153,7 +153,7 @@ class ServerMonitoringController extends Controller
         }
         $user = (new User())->findOrFail($userId);
         if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'User cannot be banned');
         }
 
         DB::beginTransaction();
@@ -194,7 +194,7 @@ class ServerMonitoringController extends Controller
         }
         $user = (new User())->findOrFail($userId);
         if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be deleted', $userId));
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'User cannot be deleted');
         }
 
         DB::beginTransaction();
@@ -240,7 +240,7 @@ class ServerMonitoringController extends Controller
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
-            Log::error(sprintf('Exception during user ban: (%s)', $throwable->getMessage()));
+            Log::error(sprintf('Exception during deny advertising: (%s)', $throwable->getMessage()));
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
         return new UserResource($user);
@@ -262,7 +262,7 @@ class ServerMonitoringController extends Controller
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
-            Log::error(sprintf('Exception during user ban: (%s)', $throwable->getMessage()));
+            Log::error(sprintf('Exception during deny publishing: (%s)', $throwable->getMessage()));
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
         return new UserResource($user);
@@ -346,7 +346,7 @@ class ServerMonitoringController extends Controller
         }
         $user = (new User())->findOrFail($userId);
         if (!$authenticatedUser->isAdmin() && ($user->isAdmin() || $user->isModerator())) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be banned', $userId));
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'User cannot be banned');
         }
         $user->unban();
         return new UserResource($user);
@@ -416,7 +416,7 @@ class ServerMonitoringController extends Controller
             $authenticatedUser->id !== $userId &&
             ($user->isAdmin() || $user->isModerator())
         ) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf('User %d cannot be edited', $userId));
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'User cannot be edited');
         }
         $email = self::getEmailAddress($request);
         $walletAddress = self::getWalletAddress($request);
