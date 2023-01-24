@@ -1636,7 +1636,6 @@ final class ServerMonitoringControllerTest extends TestCase
             ],
             'invalid email' => [self::getUserData(['email' => 'invalid'])],
             'invalid force password change' => [self::getUserData(['forcePasswordChange' => 'user@example.com'])],
-            'invalid role' => [self::getUserData(['role' => ['invalid']])],
             'invalid wallet' => [
                 self::getUserData([
                     'wallet' => [
@@ -1647,8 +1646,6 @@ final class ServerMonitoringControllerTest extends TestCase
             ],
             'missing email while notify' => [self::getUserData([], 'email')],
             'missing email and wallet' => [['role' => Role::Publisher->value]],
-            'missing role' => [self::getUserData([], 'role')],
-            'role conflict' => [self::getUserData(['role' => [Role::Agency->value, Role::Moderator->value]])],
         ];
     }
 
@@ -1668,7 +1665,6 @@ final class ServerMonitoringControllerTest extends TestCase
     {
         $data = array_merge([
             'email' => 'user@example.com',
-            'role' => [Role::Advertiser->value, Role::Publisher->value],
             'wallet' => [
                 'address' => '0001-00000001-8B4E',
                 'network' => WalletAddress::NETWORK_ADS,

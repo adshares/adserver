@@ -331,15 +331,12 @@ class ServerMonitoringController extends Controller
 
     public function addUser(Request $request): JsonResponse
     {
-        $roles = self::getRoles($request);
-        if (null === $roles) {
-            throw new UnprocessableEntityHttpException('Field `role` is required');
-        }
         $email = self::getEmailAddress($request);
         $walletAddress = self::getWalletAddress($request);
         if (null === $email && null === $walletAddress) {
             throw new UnprocessableEntityHttpException('Wallet address is required if email is not set');
         }
+        $roles = config('app.default_user_roles');
         $forcePasswordChange = self::forcePasswordChange($request);
         if ($forcePasswordChange && null === $email) {
             throw new UnprocessableEntityHttpException('Email is required if user should change password');
@@ -481,38 +478,6 @@ class ServerMonitoringController extends Controller
             throw new UnprocessableEntityHttpException('Administrator account cannot be changed');
         }
         return $user;
-    }
-
-    private static function getRoles(Request $request): ?array
-    {
-        if (null === ($roles = $request->input('role'))) {
-            return null;
-        }
-        if (!is_array($roles)) {
-            $roles = [$roles];
-        }
-        $availableRoles = array_map(fn($role) => $role->value, Role::cases());
-        foreach ($roles as $role) {
-            if (!in_array($role, $availableRoles, true)) {
-                throw new UnprocessableEntityHttpException(
-                    sprintf('Role `%s` is not supported', $role)
-                );
-            }
-        }
-        if (in_array(Role::Agency->value, $roles, true)) {
-            $conflictWithAgencyRoles = [
-                Role::Admin->value,
-                Role::Moderator->value,
-            ];
-            foreach ($conflictWithAgencyRoles as $role) {
-                if (in_array(Role::Agency->value, $roles, true) && in_array($role, $roles, true)) {
-                    throw new UnprocessableEntityHttpException(
-                        sprintf('User cannot have `%s` and `%s` roles together', Role::Agency->value, $role)
-                    );
-                }
-            }
-        }
-        return $roles;
     }
 
     private static function getWalletAddress(Request $request): ?WalletAddress
