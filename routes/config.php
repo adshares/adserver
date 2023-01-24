@@ -27,15 +27,9 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
-    Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
     Route::patch('config/placeholders', [ServerConfigurationController::class, 'storePlaceholders']);
-    Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
     Route::patch('config', [ServerConfigurationController::class, 'store']);
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
-
-    Route::get('events/types', [ServerMonitoringController::class, 'fetchEventTypes']);
-    Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
-    Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
 
     Route::post('users', [ServerMonitoringController::class, 'addUser']);
     Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
@@ -50,6 +44,13 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
 });
 
 Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
+    Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
+    Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
+
+    Route::get('events/types', [ServerMonitoringController::class, 'fetchEventTypes']);
+    Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
+    Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
+
     Route::get('hosts', [ServerMonitoringController::class, 'fetchHosts']);
     Route::patch('hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
 
