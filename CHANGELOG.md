@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Option to set site's filtering during automatic creation
 - Reject matching sites on rejecting domains
 - Possibility to grant user administrator privileges
+- Extend user data with roles
 ### Changed
 - Authorize targeting reach fetches
 - Do not allow to update active campaign without creatives
