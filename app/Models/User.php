@@ -147,21 +147,21 @@ class User extends Authenticatable
         'is_publisher',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $visible = [
         'id',
         'uuid',
         'email',
         'name',
         'has_password',
+        /** @deprecated use roles instead */
         'is_advertiser',
+        /** @deprecated use roles instead */
         'is_publisher',
+        /** @deprecated use roles instead */
         'is_admin',
+        /** @deprecated use roles instead */
         'is_moderator',
+        /** @deprecated use roles instead */
         'is_agency',
         'api_token',
         'is_email_confirmed',
@@ -171,6 +171,7 @@ class User extends Authenticatable
         'adserver_wallet',
         'is_banned',
         'ban_reason',
+        'roles',
     ];
 
     protected $traitAutomate = [
@@ -185,6 +186,7 @@ class User extends Authenticatable
         'is_admin_confirmed',
         'is_confirmed',
         'is_subscribed',
+        'roles',
     ];
 
     protected function toArrayExtras($array)
