@@ -141,7 +141,7 @@ class SitesController extends Controller
 
         CrmNotifier::sendCrmMailOnSiteAdded($user, $site);
 
-        return self::json([], Response::HTTP_CREATED)
+        return self::json(['data' => $site->refresh()->toArray()], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site->id]));
     }
 
@@ -261,7 +261,7 @@ class SitesController extends Controller
 
         DB::commit();
 
-        return self::json(['message' => 'Successfully edited']);
+        return self::json(['data' => $site->refresh()->toArray()]);
     }
 
     private function processInputZones(Site $site, array $inputZones): array
