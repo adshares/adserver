@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clear not whitelisted hosts
 - Statistics computation in case of same user visiting different domains
 - User which receives administrator or moderator privileges can impersonate
+- Do not return code for sites that have not been positively verified
 
 ## [2.2.6] - 2023-01-10
 ### Fixed

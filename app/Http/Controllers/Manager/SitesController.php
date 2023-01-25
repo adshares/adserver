@@ -50,6 +50,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
@@ -381,11 +382,12 @@ class SitesController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-
         if (!$user->is_confirmed) {
-            return self::json(['message' => 'Confirm account to get code'], Response::HTTP_FORBIDDEN);
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'Confirm account to get code');
         }
-
+        if (in_array($site->status, [Site::STATUS_PENDING_APPROVAL, Site::STATUS_REJECTED], true)) {
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'Site must be verified');
+        }
         return self::json(['codes' => SiteCodeGenerator::generate($site, $request->toConfig())]);
     }
 

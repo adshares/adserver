@@ -1012,6 +1012,23 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
+    public function testSiteCodesFailWhileSiteIsPending(): void
+    {
+        $user = $this->login(User::factory()->create([
+            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
+            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
+        ]));
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'status' => Site::STATUS_PENDING_APPROVAL,
+            'user_id' => $user,
+        ]);
+
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     public function testSiteSizes(): void
     {
         $user = $this->setupUser();
