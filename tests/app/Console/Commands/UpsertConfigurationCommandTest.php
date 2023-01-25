@@ -41,6 +41,14 @@ class UpsertConfigurationCommandTest extends ConsoleTestCase
         self::assertDatabaseHas(Config::class, ['key' => 'support-email', 'value' => 'custom@example.com']);
     }
 
+    public function testHandleWithKeyAndValueZeroArguments(): void
+    {
+        self::artisan(join(' ', [self::COMMAND_SIGNATURE, 'auto-confirmation-enabled', '0']))
+            ->assertExitCode(Command::SUCCESS);
+
+        self::assertDatabaseHas(Config::class, ['key' => 'auto-confirmation-enabled', 'value' => '0']);
+    }
+
     public function testHandleWithKeyArgument(): void
     {
         self::artisan(join(' ', [self::COMMAND_SIGNATURE, 'adshares-secret']))
