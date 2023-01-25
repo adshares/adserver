@@ -389,6 +389,11 @@ class User extends Authenticatable
         return (bool)$this->is_agency;
     }
 
+    public function isRegular(): bool
+    {
+        return !$this->isAdmin() && !$this->isModerator() && !$this->isAgency();
+    }
+
     public function isBanned(): bool
     {
         return (bool)$this->is_banned;

@@ -182,4 +182,15 @@ class UserTest extends TestCase
         self::assertFalse($user->isAdmin());
         self::assertFalse($user->isAgency());
     }
+
+    public function testIsRegular(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->admin()->create();
+        /** @var User $regular */
+        $regular = User::factory()->create();
+
+        self::assertFalse($admin->isRegular());
+        self::assertTrue($regular->isRegular());
+    }
 }
