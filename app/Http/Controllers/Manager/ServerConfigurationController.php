@@ -33,6 +33,7 @@ use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -333,6 +334,7 @@ class ServerConfigurationController extends Controller
             throw new RuntimeException('Cannot store configuration');
         }
 
+        DatabaseConfigReader::overwriteAdministrationConfig();
         $settings = array_intersect_key(Config::fetchAdminSettings(), $mappedData);
         if ($appendRejectedDomains) {
             $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();

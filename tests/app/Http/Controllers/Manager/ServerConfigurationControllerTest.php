@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Console\Commands\InventoryImporterCommand;
 use Adshares\Adserver\Jobs\ExecuteCommand;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -31,6 +32,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Currency;
+use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -135,6 +137,14 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreWhitelist(): void
     {
+        Config::updateAdminSettings([
+            Config::INVENTORY_IMPORT_WHITELIST => '0001-00000001-8B4E,0001-00000002-BB2D,0001-00000003-AB0C',
+        ]);
+        /** @var NetworkHost $host */
+        $host = NetworkHost::factory()->create([
+            'address' => '0001-00000003-AB0C',
+            'status' => HostStatus::Operational,
+        ]);
         $this->setUpAdmin();
 
         $response = $this->putJson(
@@ -148,6 +158,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'key' => Config::INVENTORY_IMPORT_WHITELIST,
             'value' => '0001-00000001-8B4E,0001-00000002-BB2D',
         ]);
+        self::assertEquals(HostStatus::Excluded, $host->refresh()->status);
         Queue::assertPushed(fn (ExecuteCommand $job) => InventoryImporterCommand::SIGNATURE === $job->getSignature());
     }
 
