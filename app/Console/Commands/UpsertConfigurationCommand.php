@@ -40,7 +40,9 @@ class UpsertConfigurationCommand extends BaseCommand
         }
 
         $key = $this->argument('key');
-        $value = $this->argument('value') ?: $this->secret(sprintf('Set value of %s', $key));
+        $value = null !== $this->argument('value')
+            ? $this->argument('value')
+            : $this->secret(sprintf('Set value of %s', $key));
 
         Config::updateAdminSettings([$key => $value]);
         DatabaseConfigReader::overwriteAdministrationConfig();
