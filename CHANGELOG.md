@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User which receives administrator or moderator privileges can impersonate
 - Do not return code for sites that have not been positively verified
 
+## [2.2.7] - 2023-01-19
+### Fixed
+- Exporting events to AdPay (overwrite invalid page url)
+
 ## [2.2.6] - 2023-01-10
 ### Fixed
 - Exporting events to AdPay (check response)
@@ -815,7 +819,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0]
 
 [Unreleased]: https://github.com/adshares/adserver/compare/v2.3.0...develop
-[2.3.0]: https://github.com/adshares/adserver/compare/v2.2.6...v2.3.0
+[2.3.0]: https://github.com/adshares/adserver/compare/v2.2.7...v2.3.0
+[2.2.7]: https://github.com/adshares/adserver/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/adshares/adserver/compare/v2.2.5...v2.2.6
 [2.2.5]: https://github.com/adshares/adserver/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/adshares/adserver/compare/v2.2.3...v2.2.4
