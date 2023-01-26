@@ -38,7 +38,7 @@ class GuzzleAdPayClient implements AdPay
 {
     private const URI_BID_STRATEGIES = '/api/v1/bid-strategies';
     private const URI_CAMPAIGNS = '/api/v1/campaigns';
-    private const URI_PAYMENTS_TEMPLATE = '/api/v1/payments/%d';
+    private const URI_PAYMENTS_TEMPLATE = '/api/v1/reports/%d/payments';
     private const URI_VIEWS = '/api/v1/events/views';
     private const URI_CLICKS = '/api/v1/events/clicks';
     private const URI_CONVERSIONS = '/api/v1/events/conversions';
