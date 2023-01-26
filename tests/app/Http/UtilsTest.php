@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -126,6 +126,16 @@ class UtilsTest extends TestCase
         $request->headers->set('Referer', 'https://example.com/site/8');
         $context = [
             'page' => [],
+        ];
+        self::assertEquals('example.com', Utils::getSiteContext($request, $context)['domain']);
+    }
+
+    public function testGetSiteContextOnInvalidUrl(): void
+    {
+        $request = new Request();
+        $request->headers->set('Referer', 'https://example.com/site/8');
+        $context = [
+            'page' => ['url' => -1],
         ];
         self::assertEquals('example.com', Utils::getSiteContext($request, $context)['domain']);
     }
