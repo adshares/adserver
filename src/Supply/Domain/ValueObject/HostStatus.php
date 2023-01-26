@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,6 +27,7 @@ enum HostStatus: string
 {
     case Operational = 'operational';
     case Initialization = 'initialization';
+    case Excluded = 'excluded';
     case Failure = 'failure';
     case Unreachable = 'unreachable';
 }

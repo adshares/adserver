@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -147,21 +147,21 @@ class User extends Authenticatable
         'is_publisher',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $visible = [
         'id',
         'uuid',
         'email',
         'name',
         'has_password',
+        /** @deprecated use roles instead */
         'is_advertiser',
+        /** @deprecated use roles instead */
         'is_publisher',
+        /** @deprecated use roles instead */
         'is_admin',
+        /** @deprecated use roles instead */
         'is_moderator',
+        /** @deprecated use roles instead */
         'is_agency',
         'api_token',
         'is_email_confirmed',
@@ -171,6 +171,7 @@ class User extends Authenticatable
         'adserver_wallet',
         'is_banned',
         'ban_reason',
+        'roles',
     ];
 
     protected $traitAutomate = [
@@ -185,6 +186,7 @@ class User extends Authenticatable
         'is_admin_confirmed',
         'is_confirmed',
         'is_subscribed',
+        'roles',
     ];
 
     protected function toArrayExtras($array)
@@ -364,12 +366,12 @@ class User extends Authenticatable
 
     public function isAdvertiser(): bool
     {
-        return (bool)$this->is_advertiser;
+        return (bool)$this->is_advertiser || $this->isModerator() || $this->isAdmin();
     }
 
     public function isPublisher(): bool
     {
-        return (bool)$this->is_publisher;
+        return (bool)$this->is_publisher || $this->isModerator() || $this->isAdmin();
     }
 
     public function isAdmin(): bool
@@ -387,6 +389,11 @@ class User extends Authenticatable
         return (bool)$this->is_agency;
     }
 
+    public function isRegular(): bool
+    {
+        return !$this->isAdmin() && !$this->isModerator() && !$this->isAgency();
+    }
+
     public function isBanned(): bool
     {
         return (bool)$this->is_banned;
@@ -400,6 +407,11 @@ class User extends Authenticatable
     public function sites(): HasMany
     {
         return $this->hasMany(Site::class);
+    }
+
+    public function uploadedFiles(): HasMany
+    {
+        return $this->hasMany(UploadedFile::class);
     }
 
     public function getBalance(): int
@@ -484,8 +496,11 @@ class User extends Authenticatable
         return $user;
     }
 
-    public function updateEmailWalletAndRoles(?string $email, ?WalletAddress $walletAddress, ?array $roles): void
-    {
+    public function updateEmailWalletAndRoles(
+        ?string $email = null,
+        ?WalletAddress $walletAddress = null,
+        ?array $roles = null,
+    ): void {
         if (null !== $email) {
             $this->email = $email;
         }

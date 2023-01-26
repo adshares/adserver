@@ -24,36 +24,16 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Uploader;
 
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Uploader\DirectLink\DirectLinkUploader;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
-use Adshares\Common\Exception\RuntimeException;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 
 final class FactoryTest extends TestCase
 {
-    public function testCreateFromRequest(): void
-    {
-        $request = self::createMock(Request::class);
-        $request->expects(self::once())
-            ->method('file')
-            ->willReturn(UploadedFile::fake()->image('photo.jpg', 300, 250));
-
-        $uploader = Factory::create($request);
-        self::assertInstanceOf(ImageUploader::class, $uploader);
-    }
-
-    public function testCreateFromRequestNoFile(): void
-    {
-        $request = self::createMock(Request::class);
-
-        self::expectException(RuntimeException::class);
-        Factory::create($request);
-    }
-
     /**
      * @dataProvider typesProvider
      */
@@ -68,10 +48,11 @@ final class FactoryTest extends TestCase
     public function typesProvider(): array
     {
         return [
-            ['zip', ZipUploader::class],
+            ['html', HtmlUploader::class],
             ['video', VideoUploader::class],
             ['model', ModelUploader::class],
             ['image', ImageUploader::class],
+            ['direct', DirectLinkUploader::class],
             ['default', ImageUploader::class],
         ];
     }

@@ -23,41 +23,65 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Uploader\Model;
 
+use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UploadedFile;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\Model\ModelUploader;
+use Adshares\Adserver\Uploader\Model\UploadedModel;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\File;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use PHPUnit\Framework\MockObject\MockObject;
+use Ramsey\Uuid\Uuid;
 
 final class ModelUploaderTest extends TestCase
 {
-    private const DISK = 'banners';
-
     public function testUpload(): void
     {
-        $request = self::createMock(Request::class);
-        $request->expects(self::once())
-            ->method('file')
-            ->willReturn(UploadedFile::fake()->create('a.glb', 1));
-        $uploader = new ModelUploader($request);
-        $medium = (new DummyConfigurationRepository())->fetchMedium();
+        $uploader = new ModelUploader($this->getRequestMock());
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'cryptovoxels');
 
         $uploadedFile = $uploader->upload($medium);
-        [$name, $extension] = explode('.', $uploadedFile->toArray()['name']);
-        self::assertNotEquals('a', $name);
-        self::assertEquals('glb', $extension);
+
+        self::assertInstanceOf(UploadedModel::class, $uploadedFile);
+    }
+
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $uploader = new ModelUploader(new Request());
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'cryptovoxels');
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
+    }
+
+    public function testUploadFailWhileSizeTooLarge(): void
+    {
+        Config::updateAdminSettings([Config::UPLOAD_LIMIT_MODEL => 0]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $uploader = new ModelUploader($this->getRequestMock());
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'cryptovoxels');
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
     }
 
     public function testPreviewGltf(): void
     {
-        Storage::disk(self::DISK)->put('test_file', 'glTF test content');
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $file = UploadedFile::factory()->create([
+            'mime' => 'model/gltf-binary',
+            'content' => 'glTF test content',
+        ]);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview('test_file');
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
 
         self::assertEquals('glTF test content', $response->getContent());
         self::assertEquals('model/gltf-binary', $response->headers->get('Content-Type'));
@@ -65,11 +89,13 @@ final class ModelUploaderTest extends TestCase
 
     public function testPreviewVox(): void
     {
-        Storage::disk(self::DISK)->put('test_file', 'VOX test content');
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $file = UploadedFile::factory()->create([
+            'mime' => 'model/voxel',
+            'content' => 'VOX test content',
+        ]);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $response = $uploader->preview('test_file');
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
 
         self::assertEquals('VOX test content', $response->getContent());
         self::assertEquals('model/voxel', $response->headers->get('Content-Type'));
@@ -77,39 +103,40 @@ final class ModelUploaderTest extends TestCase
 
     public function testPreviewInvalidFile(): void
     {
-        Storage::disk(self::DISK)->put('test_file', 'test content');
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
-        self::expectException(RuntimeException::class);
-        $uploader->preview('test_file');
+        self::expectException(ModelNotFoundException::class);
+        $uploader->preview(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
     }
 
-    public function testRemove(): void
+    public function testRemoveTemporaryFile(): void
     {
-        Storage::disk(self::DISK)->put('exists', 'content');
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $file = UploadedFile::factory()->create();
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
-        $uploader->removeTemporaryFile('exists');
+        $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
 
-        self::assertFalse(Storage::disk(self::DISK)->exists('exists'));
+        self::assertTrue($result);
+        self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
     }
 
-    public function testRemoveQuietError(): void
+    public function testRemoveTemporaryFileQuietError(): void
     {
-        $request = self::createMock(Request::class);
-        $uploader = new ModelUploader($request);
+        $uploader = new ModelUploader(self::createMock(Request::class));
 
-        self::expectNotToPerformAssertions();
+        $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
 
-        $uploader->removeTemporaryFile('not_exist');
+        self::assertFalse($result);
     }
 
-    public function testContentWhenFileMissing(): void
+    private function getRequestMock(): Request|MockObject
     {
-        self::expectException(FileNotFoundException::class);
-
-        ModelUploader::content('a.glb');
+        Auth::shouldReceive('guard')->andReturnSelf()
+            ->shouldReceive('user')->andReturn(User::factory()->create());
+        $request = self::createMock(Request::class);
+        $request->expects(self::once())
+            ->method('file')
+            ->willReturn(new File(base_path('tests/mock/Files/Banners/model.vox')));
+        return $request;
     }
 }

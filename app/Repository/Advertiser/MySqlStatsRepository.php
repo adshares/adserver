@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -73,6 +73,66 @@ SQL;
 DELETE FROM conversions_hourly WHERE hour_timestamp = ?;
 SQL;
 
+    private const EVENT_LOG_STATISTICS_SUBQUERY = <<<SQL
+SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
+           e.payment_status = 0, 1, 0)                                                            AS clicks,
+        IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.payment_status = 0, 1,
+           0)                                                                                     AS views,
+        IF(e.event_value_currency IS NOT NULL AND e.payment_status = 0, e.event_value_currency, 0) +
+        IFNULL((SELECT SUM(event_value_currency) FROM conversions WHERE event_logs_id = e.id), 0) AS cost,
+        0                                                                                         AS cost_payment,
+        IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)                                 AS is_click,
+        IF(e.event_type = 'view', 1, 0)                                                           AS is_view,
+        IFNULL(e.user_id, e.tracking_id)                                                          AS user_id,
+        IFNULL(e.domain, '')                                                                      AS domain,
+        e.banner_id                                                                               AS banner_id,
+        e.campaign_id                                                                             AS campaign_id,
+        e.advertiser_id                                                                           AS advertiser_id
+ FROM event_logs e
+ WHERE e.created_at BETWEEN ? AND ?
+
+ UNION ALL
+
+ SELECT 0                               AS clicks,
+        0                               AS views,
+        0                               AS cost,
+        IFNULL(event_value_currency, 0) AS cost_payment,
+        0                               AS is_click,
+        0                               AS is_view,
+        ''                              AS user_id,
+        IFNULL(domain, '')              AS domain,
+        banner_id                       AS banner_id,
+        campaign_id                     AS campaign_id,
+        advertiser_id                   AS advertiser_id
+ FROM event_logs
+ WHERE payment_id IN (
+     SELECT id
+     FROM payments
+     WHERE created_at BETWEEN ? AND ?
+ )
+
+ UNION ALL
+
+ SELECT 0                                 AS clicks,
+        0                                 AS views,
+        0                                 AS cost,
+        IFNULL(c.event_value_currency, 0) AS cost_payment,
+        0                                 AS is_click,
+        0                                 AS is_view,
+        ''                                AS user_id,
+        IFNULL(e.domain, '')              AS domain,
+        e.banner_id                       AS banner_id,
+        e.campaign_id                     AS campaign_id,
+        e.advertiser_id                   AS advertiser_id
+ FROM conversions c
+          JOIN event_logs e ON e.id = c.event_logs_id
+ WHERE c.payment_id IN (
+     SELECT id
+     FROM payments
+     WHERE created_at BETWEEN ? AND ?
+ )
+SQL;
+
     private const INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_DOMAIN = <<<SQL
 INSERT INTO event_logs_hourly (`advertiser_id`, `campaign_id`, `banner_id`, `domain`, `clicks`, `views`, `cost`,
                                `cost_payment`, `clicks_all`, `views_all`, `views_unique`, `hour_timestamp`)
@@ -84,77 +144,19 @@ SELECT s.advertiser_id                                            AS advertiser_
        SUM(s.views)                                               AS views,
        SUM(s.cost)                                                AS cost,
        SUM(s.cost_payment)                                        AS cost_payment,
-       SUM(s.is_click)                                            AS clicksAll,
-       SUM(s.is_view)                                             AS viewsAll,
-       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS viewsUnique,
-       ?                                      AS start_date
-FROM (
-         SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
-                   e.payment_status = 0, 1, 0)                                                            AS clicks,
-                IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.payment_status = 0, 1,
-                   0)                                                                                     AS views,
-                IF(e.event_value_currency IS NOT NULL AND e.payment_status = 0, e.event_value_currency, 0) +
-                IFNULL((SELECT SUM(event_value_currency) FROM conversions WHERE event_logs_id = e.id), 0) AS cost,
-                0                                                                                       AS cost_payment,
-                IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)                                 AS is_click,
-                IF(e.event_type = 'view', 1, 0)                                                           AS is_view,
-                IFNULL(e.user_id, e.tracking_id)                                                          AS user_id,
-                IFNULL(e.domain, '')                                                                      AS domain,
-                e.banner_id                                                                               AS banner_id,
-                e.campaign_id                                                                            AS campaign_id,
-                e.advertiser_id                                                                         AS advertiser_id
-         FROM event_logs e
-         WHERE e.created_at BETWEEN ? AND ?
-
-         UNION ALL
-
-         SELECT 0                               AS clicks,
-                0                               AS views,
-                0                               AS cost,
-                IFNULL(event_value_currency, 0) AS cost_payment,
-                0                               AS is_click,
-                0                               AS is_view,
-                ''                              AS user_id,
-                IFNULL(domain, '')              AS domain,
-                banner_id                       AS banner_id,
-                campaign_id                     AS campaign_id,
-                advertiser_id                   AS advertiser_id
-         FROM event_logs
-         WHERE payment_id IN (
-             SELECT id
-             FROM payments
-             WHERE created_at BETWEEN ? AND ?
-         )
-
-         UNION ALL
-
-         SELECT 0                                 AS clicks,
-                0                                 AS views,
-                0                                 AS cost,
-                IFNULL(c.event_value_currency, 0) AS cost_payment,
-                0                                 AS is_click,
-                0                                 AS is_view,
-                ''                                AS user_id,
-                IFNULL(e.domain, '')              AS domain,
-                e.banner_id                       AS banner_id,
-                e.campaign_id                     AS campaign_id,
-                e.advertiser_id                   AS advertiser_id
-         FROM conversions c
-                  JOIN event_logs e ON e.id = c.event_logs_id
-         WHERE c.payment_id IN (
-             SELECT id
-             FROM payments
-             WHERE created_at BETWEEN ? AND ?
-         )
-     ) s
+       SUM(s.is_click)                                            AS clicks_all,
+       SUM(s.is_view)                                             AS views_all,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS views_unique,
+       ?                                                          AS hour_timestamp
+FROM (%s) s
 GROUP BY 1, 2, 3, 4
 HAVING clicks > 0
     OR views > 0
     OR cost > 0
     OR cost_payment > 0
-    OR clicksAll > 0
-    OR viewsAll > 0
-    OR viewsUnique > 0;
+    OR clicks_all > 0
+    OR views_all > 0
+    OR views_unique > 0;
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_STATS = <<<SQL
@@ -169,20 +171,26 @@ INSERT INTO event_logs_hourly_stats (advertiser_id,
                                      views_all,
                                      views_unique,
                                      hour_timestamp)
-SELECT advertiser_id,
-       campaign_id,
-       banner_id,
-       SUM(cost),
-       SUM(cost_payment),
-       SUM(clicks),
-       SUM(views),
-       SUM(clicks_all),
-       SUM(views_all),
-       SUM(views_unique),
-       ? as hour_timestamp
-FROM event_logs_hourly
-WHERE hour_timestamp = ?
-GROUP BY 1, 2, 3;
+SELECT s.advertiser_id                                            AS advertiser_id,
+       s.campaign_id                                              AS campaign_id,
+       s.banner_id                                                AS banner_id,
+       SUM(s.cost)                                                AS cost,
+       SUM(s.cost_payment)                                        AS cost_payment,
+       SUM(s.clicks)                                              AS clicks,
+       SUM(s.views)                                               AS views,
+       SUM(s.is_click)                                            AS clicks_all,
+       SUM(s.is_view)                                             AS views_all,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS views_unique,
+       ?                                                          AS hour_timestamp
+FROM (%s) s
+GROUP BY 1, 2, 3
+HAVING clicks > 0
+    OR views > 0
+    OR cost > 0
+    OR cost_payment > 0
+    OR clicks_all > 0
+    OR views_all > 0
+    OR views_unique > 0;
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_STATS_GROUPED_BY_CAMPAIGN = <<<SQL
@@ -194,71 +202,19 @@ SELECT s.advertiser_id                                            AS advertiser_
        SUM(s.views)                                               AS views,
        SUM(s.cost)                                                AS cost,
        SUM(s.cost_payment)                                        AS cost_payment,
-       SUM(s.is_click)                                            AS clicksAll,
-       SUM(s.is_view)                                             AS viewsAll,
-       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS viewsUnique,
-       ?                                      AS start_date
-FROM (
-         SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
-                   e.payment_status = 0, 1, 0)                                                            AS clicks,
-                IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.payment_status = 0, 1,
-                   0)                                                                                     AS views,
-                IF(e.event_value_currency IS NOT NULL AND e.payment_status = 0, e.event_value_currency, 0) +
-                IFNULL((SELECT SUM(event_value_currency) FROM conversions WHERE event_logs_id = e.id), 0) AS cost,
-                0                                                                                       AS cost_payment,
-                IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)                                 AS is_click,
-                IF(e.event_type = 'view', 1, 0)                                                           AS is_view,
-                IFNULL(e.user_id, e.tracking_id)                                                          AS user_id,
-                e.campaign_id                                                                            AS campaign_id,
-                e.advertiser_id                                                                         AS advertiser_id
-         FROM event_logs e
-         WHERE e.created_at BETWEEN ? AND ?
-
-         UNION ALL
-
-         SELECT 0                               AS clicks,
-                0                               AS views,
-                0                               AS cost,
-                IFNULL(event_value_currency, 0) AS cost_payment,
-                0                               AS is_click,
-                0                               AS is_view,
-                ''                              AS user_id,
-                campaign_id                     AS campaign_id,
-                advertiser_id                   AS advertiser_id
-         FROM event_logs
-         WHERE payment_id IN (
-             SELECT id
-             FROM payments
-             WHERE created_at BETWEEN ? AND ?
-         )
-
-         UNION ALL
-
-         SELECT 0                                 AS clicks,
-                0                                 AS views,
-                0                                 AS cost,
-                IFNULL(c.event_value_currency, 0) AS cost_payment,
-                0                                 AS is_click,
-                0                                 AS is_view,
-                ''                                AS user_id,
-                e.campaign_id                     AS campaign_id,
-                e.advertiser_id                   AS advertiser_id
-         FROM conversions c
-                  JOIN event_logs e ON e.id = c.event_logs_id
-         WHERE c.payment_id IN (
-             SELECT id
-             FROM payments
-             WHERE created_at BETWEEN ? AND ?
-         )
-     ) s
+       SUM(s.is_click)                                            AS clicks_all,
+       SUM(s.is_view)                                             AS views_all,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS views_unique,
+       ?                                                          AS hour_timestamp
+FROM (%s) s
 GROUP BY 1, 2
 HAVING clicks > 0
     OR views > 0
     OR cost > 0
     OR cost_payment > 0
-    OR clicksAll > 0
-    OR viewsAll > 0
-    OR viewsUnique > 0;
+    OR clicks_all > 0
+    OR views_all > 0
+    OR views_unique > 0;
 SQL;
 
     private const INSERT_CONVERSIONS_HOURLY = <<<SQL
@@ -876,7 +832,7 @@ SQL;
         return new DataCollection(array_merge($result, $resultWithoutEvents));
     }
 
-    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    public function aggregateStatistics(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): void
     {
         if (
             empty(
@@ -903,7 +859,7 @@ SQL;
             [$dateStart]
         );
         $this->executeQuery(
-            self::INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_DOMAIN,
+            sprintf(self::INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_DOMAIN, self::EVENT_LOG_STATISTICS_SUBQUERY),
             $dateStart,
             [$dateStart, $dateStart, $dateEnd, $dateStart, $dateEnd, $dateStart, $dateEnd]
         );
@@ -914,12 +870,12 @@ SQL;
             [$dateStart]
         );
         $this->executeQuery(
-            self::INSERT_EVENT_LOGS_HOURLY_STATS,
+            sprintf(self::INSERT_EVENT_LOGS_HOURLY_STATS, self::EVENT_LOG_STATISTICS_SUBQUERY),
             $dateStart,
-            [$dateStart, $dateStart]
+            [$dateStart, $dateStart, $dateEnd, $dateStart, $dateEnd, $dateStart, $dateEnd]
         );
         $this->executeQuery(
-            self::INSERT_EVENT_LOGS_HOURLY_STATS_GROUPED_BY_CAMPAIGN,
+            sprintf(self::INSERT_EVENT_LOGS_HOURLY_STATS_GROUPED_BY_CAMPAIGN, self::EVENT_LOG_STATISTICS_SUBQUERY),
             $dateStart,
             [$dateStart, $dateStart, $dateEnd, $dateStart, $dateEnd, $dateStart, $dateEnd]
         );

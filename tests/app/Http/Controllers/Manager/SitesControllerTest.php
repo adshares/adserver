@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -31,6 +32,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -120,6 +122,23 @@ class SitesControllerTest extends TestCase
             ->assertJsonCount(2, 'filtering')
             ->assertJsonCount(1, 'filtering.requires')
             ->assertJsonCount(0, 'filtering.excludes');
+    }
+
+    public function testCreateSiteWhileAcceptanceRequired(): void
+    {
+        $this->login();
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        self::assertDatabaseHas(Site::class, [
+            'id' => $id,
+            'status' => Site::STATUS_PENDING_APPROVAL,
+        ]);
+        Mail::assertQueued(SiteApprovalPending::class);
     }
 
     private function getIdFromLocation($location): string
@@ -217,6 +236,16 @@ class SitesControllerTest extends TestCase
         self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Zone::TYPE_POP]);
     }
 
+    public function testCreateSiteWhileExist(): void
+    {
+        $user = $this->login();
+        Site::factory()->create(['user_id' => $user]);
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     /**
      * @dataProvider createSiteUnprocessableProvider
      *
@@ -279,6 +308,12 @@ class SitesControllerTest extends TestCase
             ],
             'invalid filtering.excludes 3' => [
                 self::simpleSiteData(['filtering' => self::filtering(['excludes' => ['category' => [1]]])]),
+            ],
+            'invalid medium' => [
+                self::simpleSiteData(['medium' => 'invalid']),
+            ],
+            'invalid vendor' => [
+                self::simpleSiteData(['vendor' => 'invalid']),
             ],
         ];
     }
@@ -414,7 +449,8 @@ class SitesControllerTest extends TestCase
 
     public function testUpdateSiteUrl(): void
     {
-        $user = $this->setupUser();
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+        $user = $this->login();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         $url = 'https://example2.com';
@@ -429,6 +465,25 @@ class SitesControllerTest extends TestCase
         $site->refresh();
         self::assertEquals(0, $site->rank);
         self::assertEquals('unknown', $site->info);
+        self::assertNull($site->accepted_at);
+        self::assertEquals(Site::STATUS_PENDING_APPROVAL, $site->status);
+    }
+
+    public function testUpdateSiteUrlFailWhenExists(): void
+    {
+        $user = $this->setupUser();
+        Site::factory()->create([
+            'domain' => 'example2.com',
+            'url' => 'https://example2.com',
+            'user_id' => $user->id,
+        ]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        $url = 'https://example2.com';
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => $url]]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUpdateSiteOnlyAcceptedBanners(): void
@@ -478,6 +533,26 @@ class SitesControllerTest extends TestCase
         $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => 'ftp://example']]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUpdateSiteFailWhileInvalidStatus(): void
+    {
+        $user = $this->setupUser();
+        /** @var  Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['status' => 100]]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUpdateSiteFailWhilePendingApproval(): void
+    {
+        $user = $this->setupUser();
+        /** @var  Site $site */
+        $site = Site::factory()->create(['status' => Site::STATUS_PENDING_APPROVAL, 'user_id' => $user]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['status' => Site::STATUS_ACTIVE]]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -685,24 +760,24 @@ class SitesControllerTest extends TestCase
     public function updateDataProvider(): array
     {
         return [
-            [
+            'status, name, language' => [
                 [
                     "status" => 1,
                     "name" => "name1",
                     "primaryLanguage" => "xx",
                 ],
             ],
-            [
+            'status' => [
                 [
                     'status' => 1,
                 ],
             ],
-            [
+            'name' => [
                 [
                     "name" => "name2",
                 ],
             ],
-            [
+            'language' => [
                 [
                     "primaryLanguage" => "xx",
                 ],
@@ -894,9 +969,8 @@ class SitesControllerTest extends TestCase
             [
                 ['domain' => 'example.rejected.com'],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
-                'The subdomain example.rejected.com is not supported. Please use your own domain.',
+                'The domain example.rejected.com is rejected.',
             ],
-            [['domain' => 'rejected.com'], Response::HTTP_OK, 'Valid domain.'],
             [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
         ];
     }
@@ -938,6 +1012,23 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
+    public function testSiteCodesFailWhileSiteIsPending(): void
+    {
+        $user = $this->login(User::factory()->create([
+            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
+            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
+        ]));
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'status' => Site::STATUS_PENDING_APPROVAL,
+            'user_id' => $user,
+        ]);
+
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     public function testSiteSizes(): void
     {
         $user = $this->setupUser();
@@ -972,38 +1063,6 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::RANK_STRUCTURE);
         self::assertEquals(0.2, $response->json('rank'));
         self::assertEquals(AdUser::PAGE_INFO_LOW_CTR, $response->json('info'));
-    }
-
-    public function testChangeStatus(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => Site::STATUS_INACTIVE]])
-            ->assertStatus(Response::HTTP_OK);
-        $site->refresh();
-        self::assertEquals(Site::STATUS_INACTIVE, $site->status);
-    }
-
-    public function testChangeStatusInvalid(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => -1]])
-            ->assertStatus(Response::HTTP_BAD_REQUEST);
-    }
-
-    public function testChangeStatusMissing(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['stat' => -1]])
-            ->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
     public function testGetCryptovoxelsCode(): void

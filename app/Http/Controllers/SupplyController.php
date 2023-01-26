@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,10 +31,11 @@ use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\SupplyBlacklistedDomain;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -51,6 +52,7 @@ use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
 use Closure;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
 use GuzzleHttp\Psr7\Query;
@@ -67,6 +69,7 @@ use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -120,77 +123,52 @@ class SupplyController extends Controller
         $validated['min_dpi'] = $validated['min_dpi'] ?? Zone::DEFAULT_MINIMAL_DPI;
         $validated['zone_name'] = $validated['zone_name'] ?? Zone::DEFAULT_NAME;
         $validated['depth'] = $validated['depth'] ?? Zone::DEFAULT_DEPTH;
-
-        $payoutAddress = WalletAddress::fromString($validated['pay_to']);
-        $user = User::fetchByWalletAddress($payoutAddress);
-
-        if (!$user) {
-            if (config('app.auto_registration_enabled')) {
-                if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
-                    throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
-                }
-                $user = User::registerWithWallet($payoutAddress, true);
-            } else {
-                return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
-            }
-        }
-        if (!$user->isPublisher()) {
-            throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
-        }
-        try {
-            $site = Site::fetchOrCreate(
-                $user->id,
-                $validated['context']['site']['url'],
-                $validated['medium'],
-                $validated['vendor'] ?? null,
-            );
-        } catch (InvalidArgumentException $exception) {
-            return $this->sendError('site', $exception->getMessage());
-        }
-        if ($site->status != Site::STATUS_ACTIVE) {
-            return $this->sendError("site", "Site '" . $site->name . "' is not active");
-        }
-
         $minDpi = (float)$validated['min_dpi'];
-        $zoneSize = ZoneSize::fromArray([
-            'width' => (float)$validated['width'] * $minDpi,
-            'height' => (float)$validated['height'] * $minDpi,
-            'depth' => (float)$validated['depth'],
-        ]);
 
-        try {
-            $zone = Zone::fetchOrCreate($site->id, $zoneSize, $validated['zone_name']);
-        } catch (InvalidArgumentException $exception) {
-            return $this->sendError('zone', $exception->getMessage());
+        $context = [
+            'iid' => $validated['view_id'],
+            'publisher' => $validated['pay_to'],
+            'url' => $validated['context']['site']['url'],
+            'medium' => $validated['medium'],
+            'vendor' => $validated['vendor'] ?? null,
+            'metamask' => (bool)($validated['context']['site']['metamask'] ?? 0),
+        ];
+        if (isset($validated['context']['user']['account'])) {
+            $context['uid'] = $validated['context']['user']['account'];
         }
-        $queryData = [
-            'page' => [
-                'iid' => $validated['view_id'],
-                'url' => $validated['context']['site']['url'],
-                'metamask' => $validated['context']['site']['metamask'] ?? 0,
-            ],
-            'user' => $validated['context']['user'] ?? [],
-            'zones' => [
-                [
-                    'zone' => $zone->uuid,
-                    'options' => [
-                        'banner_type' => isset($validated['type']) ? ((array)$validated['type']) : null,
-                        'banner_mime' => $validated['mime_type'] ?? null
-                    ],
-                ],
-            ],
-            'zone_mode' => 'best_match'
+        $placement = [
+            'id' => '1',
+            'name' => $validated['zone_name'] ?? Zone::DEFAULT_NAME,
+            'width' => (int)((float)$validated['width'] * $minDpi),
+            'height' => (int)((float)$validated['height'] * $minDpi),
+            'depth' => (int)((float)$validated['depth'] ?? Zone::DEFAULT_DEPTH),
+        ];
+        if (isset($validated['type'])) {
+            $placement['types'] = (array)$validated['type'];
+        }
+        if (isset($validated['mime_type'])) {
+            $placement['mimes'] = (array)$validated['mime_type'];
+        }
+        $input = [
+            'context' => $context,
+            'placements' => [$placement],
         ];
 
+        if ('POST' === $request->getRealMethod()) {
+            $request->merge($input);
+        } elseif ('GET' === $request->getRealMethod()) {
+            $request->offsetSet('data', Utils::urlSafeBase64Encode(json_encode($input)));
+        }
 
-        $response = new Response();
-
+        $response = $this->find($contextProvider, $bannerFinder, $request);
+        $content = $response->getContent();
+        $banners = json_decode($content, true)['data'];
+        if (!empty($banners)) {
+            $banners = [self::unmapResult($banners[0])];
+        }
         return self::json(
             [
-                'banners' => $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)
-                    ->toArray(),
-                'zones' => $queryData['zones'],
-                'zoneSizes' => $zone->scopes,
+                'banners' => $banners,
                 'success' => true,
             ]
         );
@@ -522,10 +500,7 @@ class SupplyController extends Controller
         if (!$zones) {
             throw new BadRequestHttpException('Site not accepted');
         }
-        if (($decodedQueryData['zone_mode'] ?? '') !== 'best_match') {
-            $zones = array_slice($zones, 0, config('app.max_page_zones'));
-        }
-        return $zones;
+        return array_slice($zones, 0, config('app.max_page_zones'));
     }
 
     /**
@@ -584,12 +559,6 @@ class SupplyController extends Controller
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context);
-
-        if (($decodedQueryData['zone_mode'] ?? '') === 'best_match') {
-            $values = $foundBanners->filter(fn($element) => $element != null)->getValues();
-            shuffle($values);
-            $foundBanners = new FoundBanners(array_slice($values, 0, 1));
-        }
 
         if ($foundBanners->exists(fn($key, $element) => $element != null)) {
             NetworkImpression::register(
@@ -1031,24 +1000,27 @@ class SupplyController extends Controller
     private function isPageBlacklisted(string $url): bool
     {
         $domain = DomainReader::domain($url);
-
-        return SupplyBlacklistedDomain::isDomainBlacklisted($domain);
+        return SitesRejectedDomain::isDomainRejected($domain);
     }
 
-    public function targetingReachList(): Response
+    public function targetingReachList(AdsAuthenticator $authenticator, Request $request): JsonResponse
     {
+        $whitelist = config('app.inventory_export_whitelist');
+        if (!empty($whitelist)) {
+            $account = $authenticator->verifyRequest($request);
+            if (!in_array($account, $whitelist)) {
+                throw new AccessDeniedHttpException();
+            }
+        }
+
         if (null === ($networkHost = NetworkHost::fetchByAddress(config('app.adshares_address')))) {
-            return response(
-                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
-                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
-            );
+            Log::error('[Supply Targeting Reach] Cannot get adserver ID');
+            return self::targetingReachResponse();
         }
 
         if (null === ($meta = NetworkVectorsMeta::fetchByNetworkHostId($networkHost->id))) {
-            return response(
-                ['code' => BaseResponse::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver meta'],
-                BaseResponse::HTTP_INTERNAL_SERVER_ERROR
-            );
+            Log::error('[Supply Targeting Reach] Cannot get adserver meta');
+            return self::targetingReachResponse();
         }
 
         $rows = DB::table('network_vectors')->select(
@@ -1080,14 +1052,22 @@ class SupplyController extends Controller
             ];
         }
 
-        return response(
+        return self::targetingReachResponse($meta->total_events_count, $meta->updated_at, $result);
+    }
+
+    private static function targetingReachResponse(
+        int $eventsCount = 0,
+        ?DateTimeInterface $updateDateTime = null,
+        array $categories = [],
+    ): JsonResponse {
+        return self::json(
             [
                 'meta' => [
-                    'total_events_count' => $meta->total_events_count,
-                    'updated_at' => $meta->updated_at->format(DateTimeInterface::ATOM),
+                    'total_events_count' => $eventsCount,
+                    'updated_at' => ($updateDateTime ?: new DateTimeImmutable())->format(DateTimeInterface::ATOM),
                 ],
-                'categories' => $result,
-            ]
+                'categories' => $categories,
+            ],
         );
     }
 
@@ -1217,6 +1197,26 @@ class SupplyController extends Controller
                 'rpm' => $item['rpm'],
             ];
         };
+    }
+
+    private static function unmapResult(array $item): array
+    {
+        return [
+            'request_id' => $item['id'],
+            'id' => $item['placementId'],
+            'zone_id' => $item['zoneId'],
+            'publisher_id' => $item['publisherId'],
+            'pay_from' => $item['demandServer'],
+            'pay_to' => $item['supplyServer'],
+            'type' => $item['type'],
+            'size' => $item['scope'],
+            'creative_sha1' => $item['hash'],
+            'serve_url' => $item['serveUrl'],
+            'view_url' => $item['viewUrl'],
+            'click_url' => $item['clickUrl'],
+            'info_box' => $item['infoBox'],
+            'rpm' => $item['rpm'],
+        ];
     }
 
     private static function validatePlacementCommonFields(array $placement): void

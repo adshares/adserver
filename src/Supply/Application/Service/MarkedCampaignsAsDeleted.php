@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,12 +26,8 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 
 class MarkedCampaignsAsDeleted
 {
-    /** @var CampaignRepository */
-    private $campaignRepository;
-
-    public function __construct(CampaignRepository $campaignRepository)
+    public function __construct(private readonly CampaignRepository $campaignRepository)
     {
-        $this->campaignRepository = $campaignRepository;
     }
 
     public function execute(AccountId $sourceAddress): void

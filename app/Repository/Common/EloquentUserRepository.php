@@ -62,8 +62,7 @@ class EloquentUserRepository implements UserRepository
         }
 
         return $builder->orderBy('id')
-            ->tokenPaginate($perPage)
-            ->withQueryString();
+            ->tokenPaginate($perPage);
     }
 
     private function appendFilter(Builder $builder, Filter $filter): Builder

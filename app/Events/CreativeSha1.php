@@ -32,7 +32,7 @@ class CreativeSha1
 
     public function __construct(Banner $model)
     {
-        if ($model->creative_sha1 !== ($sha1 = sha1($model->creative_contents))) {
+        if (null !== $model->creative_contents && $model->creative_sha1 !== ($sha1 = sha1($model->creative_contents))) {
             $model->creative_sha1 = $sha1;
             $model->cdn_url = null;
             $model->classifications()->delete();

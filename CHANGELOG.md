@@ -7,6 +7,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.3.0] - 2023-01-26
+### Added
+- Server event type list to monitoring API
+- Command to upsert configuration
+- Option to require site approval for specific medium
+- Option to set site's filtering during automatic creation
+- Reject matching sites on rejecting domains
+- Possibility to grant user administrator privileges
+- Extend user data with roles
+### Changed
+- Authorize targeting reach fetches
+- Do not allow to update active campaign without creatives
+- Use UUID as ID in campaign APIv2
+- Store uploaded files (creatives) in database
+- Extend validation during file upload
+- Do not duplicate code for Decentraland find
+- Synchronize unreachable hosts
+- Support new adpay response
+### Removed
+- Redundant pagination data
+### Fixed
+- Allow creating campaign draft without creatives
+- Reading video dimensions with ffmpeg
+- Banner's content lazy loading
+- Forbid site duplicates
+- Clear not whitelisted hosts
+- Statistics computation in case of same user visiting different domains
+- User which receives administrator or moderator privileges can impersonate
+- Do not return code for sites that have not been positively verified
+
 ## [2.2.7] - 2023-01-19
 ### Fixed
 - Exporting events to AdPay (overwrite invalid page url)
@@ -787,8 +818,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.7...develop
-[2.2.6]: https://github.com/adshares/adserver/compare/v2.2.6...v2.2.7
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.3.0...develop
+[2.3.0]: https://github.com/adshares/adserver/compare/v2.2.7...v2.3.0
+[2.2.7]: https://github.com/adshares/adserver/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/adshares/adserver/compare/v2.2.5...v2.2.6
 [2.2.5]: https://github.com/adshares/adserver/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/adshares/adserver/compare/v2.2.3...v2.2.4

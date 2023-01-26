@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,31 +27,33 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
-    Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
     Route::patch('config/placeholders', [ServerConfigurationController::class, 'storePlaceholders']);
-    Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
     Route::patch('config', [ServerConfigurationController::class, 'store']);
     Route::put('config/{key}', [ServerConfigurationController::class, 'storeOne']);
 
-    Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
-    Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
-
-    Route::post('users', [ServerMonitoringController::class, 'addUser']);
-    Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
+    Route::patch('users/{userId}/switchToAdmin', [ServerMonitoringController::class, 'switchUserToAdmin']);
     Route::patch(
         'users/{userId}/switchToModerator',
         [ServerMonitoringController::class, 'switchUserToModerator']
     );
-    Route::delete('users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
 
     Route::get('wallet', [ServerMonitoringController::class, 'fetchWallet']);
 });
 
 Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
+    Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
+    Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
+
+    Route::get('events/types', [ServerMonitoringController::class, 'fetchEventTypes']);
+    Route::get('events/latest', [ServerMonitoringController::class, 'fetchLatestEvents']);
+    Route::get('events', [ServerMonitoringController::class, 'fetchEvents']);
+
     Route::get('hosts', [ServerMonitoringController::class, 'fetchHosts']);
     Route::patch('hosts/{hostId}/reset', [ServerMonitoringController::class, 'resetHost']);
 
+    Route::post('users', [ServerMonitoringController::class, 'addUser']);
     Route::get('users', [ServerMonitoringController::class, 'fetchUsers']);
+    Route::patch('users/{userId}', [ServerMonitoringController::class, 'editUser']);
     Route::patch('users/{userId}/ban', [ServerMonitoringController::class, 'banUser']);
     Route::patch('users/{userId}/confirm', [ServerMonitoringController::class, 'confirmUser']);
     Route::patch('users/{userId}/denyAdvertising', [ServerMonitoringController::class, 'denyAdvertising']);
@@ -64,4 +66,5 @@ Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->pr
         [ServerMonitoringController::class, 'switchUserToRegular']
     );
     Route::patch('users/{userId}/unban', [ServerMonitoringController::class, 'unbanUser']);
+    Route::delete('users/{userId}', [ServerMonitoringController::class, 'deleteUser']);
 });

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,14 +21,20 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Console\Commands\InventoryImporterCommand;
+use Adshares\Adserver\Jobs\ExecuteCommand;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Currency;
+use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use PDOException;
@@ -126,6 +132,34 @@ final class ServerConfigurationControllerTest extends TestCase
             'key' => Config::SUPPORT_EMAIL,
             'value' => 'sup@example.com',
         ]);
+        Queue::assertNothingPushed();
+    }
+
+    public function testStoreWhitelist(): void
+    {
+        Config::updateAdminSettings([
+            Config::INVENTORY_IMPORT_WHITELIST => '0001-00000001-8B4E,0001-00000002-BB2D,0001-00000003-AB0C',
+        ]);
+        /** @var NetworkHost $host */
+        $host = NetworkHost::factory()->create([
+            'address' => '0001-00000003-AB0C',
+            'status' => HostStatus::Operational,
+        ]);
+        $this->setUpAdmin();
+
+        $response = $this->putJson(
+            self::URI_CONFIG . '/inventoryImportWhitelist',
+            ['value' => '0001-00000001-8B4E,0001-00000002-BB2D'],
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('inventoryImportWhitelist', ['0001-00000001-8B4E', '0001-00000002-BB2D']);
+        self::assertDatabaseHas(Config::class, [
+            'key' => Config::INVENTORY_IMPORT_WHITELIST,
+            'value' => '0001-00000001-8B4E,0001-00000002-BB2D',
+        ]);
+        self::assertEquals(HostStatus::Excluded, $host->refresh()->status);
+        Queue::assertPushed(fn (ExecuteCommand $job) => InventoryImporterCommand::SIGNATURE === $job->getSignature());
     }
 
     public function testStoreError(): void
@@ -147,7 +181,6 @@ final class ServerConfigurationControllerTest extends TestCase
 
         $response = $this->patchJson(
             self::URI_CONFIG,
-            [],
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -234,8 +267,42 @@ final class ServerConfigurationControllerTest extends TestCase
         ];
     }
 
+    public function testStoreDataFail(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->setUpAdmin();
+        $data = [Str::camel(Config::ADSHARES_ADDRESS) => '0001-00000003-AB0C'];
+
+        $response = $this->patchJson(
+            self::URI_CONFIG,
+            $data,
+        );
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
     public function testStoreRejectedDomains(): void
     {
+        /** @var Site $siteMatching */
+        $siteMatching = Site::factory()->create([
+            'domain' => 'malware.example.com',
+            'url' => 'https://malware.example.com',
+            'user_id' => User::factory()->create(),
+        ]);
+        /** @var Site $siteExactMatch */
+        $siteExactMatch = Site::factory()->create([
+            'domain' => 'example.com',
+            'url' => 'https://example.com',
+            'user_id' => User::factory()->create(),
+        ]);
+        /** @var Site $siteNotMatching */
+        $siteNotMatching = Site::factory()->create([
+            'domain' => 'malwareexample.com',
+            'url' => 'https://malwareexample.com',
+            'user_id' => User::factory()->create(),
+        ]);
         $this->setUpAdmin();
         $data = ['rejectedDomains' => 'example.com'];
 
@@ -247,6 +314,21 @@ final class ServerConfigurationControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson(['rejectedDomains' => ['example.com']]);
         self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
+        self::assertDatabaseHas(Site::class, [
+            'id' => $siteMatching->id,
+            'reject_reason' => 'Domain rejected',
+            'status' => Site::STATUS_REJECTED,
+        ]);
+        self::assertDatabaseHas(Site::class, [
+            'id' => $siteExactMatch->id,
+            'reject_reason' => 'Domain rejected',
+            'status' => Site::STATUS_REJECTED,
+        ]);
+        self::assertDatabaseHas(Site::class, [
+            'id' => $siteNotMatching->id,
+            'reject_reason' => null,
+            'status' => Site::STATUS_ACTIVE,
+        ]);
     }
 
     public function testStoreRejectedDomainsEmpty(): void

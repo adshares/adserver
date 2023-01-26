@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,6 +28,7 @@ use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use DateTime;
+use DateTimeInterface;
 
 interface StatsRepository
 {
@@ -178,5 +179,5 @@ interface StatsRepository
         ?int $campaignId = null
     ): ConversionDataCollection;
 
-    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void;
+    public function aggregateStatistics(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): void;
 }

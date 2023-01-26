@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -65,6 +65,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         Event::fake()->except([
             'eloquent.creating: Laravel\Passport\Client',
+            'eloquent.creating: Adshares\Adserver\Models\UploadedFile',
         ]);
         Mail::fake();
         Queue::fake();

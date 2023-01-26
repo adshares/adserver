@@ -140,7 +140,7 @@ class CampaignCreator
             self::validateStatus($value);
             $checkLimits = true;
             $checkOutdated = true;
-            $campaign->status =  CampaignStatus::fromString($value)->value;
+            $campaign->status = CampaignStatus::fromString($value)->value;
         }
 
         if (array_key_exists('target_url', $input)) {

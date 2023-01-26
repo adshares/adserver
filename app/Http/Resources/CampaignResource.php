@@ -8,6 +8,7 @@ use Adshares\Adserver\ViewModel\CampaignStatus;
 use Adshares\Adserver\ViewModel\ClickConversionType;
 use DateTimeInterface;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Ramsey\Uuid\Uuid;
 
 class CampaignResource extends JsonResource
 {
@@ -17,8 +18,7 @@ class CampaignResource extends JsonResource
     {
         /** @var Campaign $this */
         return [
-            'id' => $this->id,
-            'uuid' => $this->uuid,
+            'id' => Uuid::fromString($this->uuid)->toString(),
             'createdAt' => $this->created_at->format(DateTimeInterface::ATOM),
             'updatedAt' => $this->updated_at->format(DateTimeInterface::ATOM),
             'secret' => $this->secret,
@@ -26,7 +26,7 @@ class CampaignResource extends JsonResource
             'classifications' => BannerClassification::fetchCampaignClassifications($this->id),
             'conversionClickLink' => $this->conversion_click_link,
             'targeting' => $this->targeting,
-            'creatives' => new BannerCollection($this->ads),
+            'creatives' => BannerResource::collection($this->ads),
             'bidStrategyUuid' => $this->bid_strategy_uuid,
             'conversions' => $this->conversions,
             'status' => CampaignStatus::from($this->status)->toString(),

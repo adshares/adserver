@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,10 +29,12 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
@@ -41,6 +43,8 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -49,6 +53,7 @@ final class SupplyControllerTest extends TestCase
     private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
     private const SUPPLY_ANON_URI = '/supply/anon';
+    private const TARGETING_REACH_URI = '/supply/targeting-reach';
     private const LEGACY_FOUND_BANNERS_STRUCTURE = [
         'id',
         'publisher_id',
@@ -86,9 +91,16 @@ final class SupplyControllerTest extends TestCase
         'banners' => [
             '*' => self::LEGACY_FOUND_BANNERS_STRUCTURE,
         ],
-        'zones',
-        'zoneSizes',
         'success',
+    ];
+    private const TARGETING_REACH_STRUCTURE = [
+        'meta' => [
+            'total_events_count',
+            'updated_at',
+        ],
+        'categories' => [
+            '*' => [],
+        ],
     ];
 
     public function testPageWhyNoParameters(): void
@@ -257,14 +269,11 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonCount(1, 'data');
     }
 
-    public function testFindDynamicUnsupportedPopup(): void
+    public function testFindDynamicWhileSiteApprovalRequired(): void
     {
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
         $this->mockAdSelect();
-        $data = self::getDynamicFindData([
-            'placements' => [
-                self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
-            ]
-        ]);
+        $data = self::getDynamicFindData();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -286,6 +295,11 @@ final class SupplyControllerTest extends TestCase
     public function findDynamicFailProvider(): array
     {
         return [
+            'unsupported popup' => [
+                self::getDynamicFindData(['placements' => [
+                    self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
+                ]]),
+            ],
             'missing context.medium' => [
                 self::getDynamicFindData(['context' => self::getContextData(remove: 'medium')])
             ],
@@ -426,6 +440,92 @@ final class SupplyControllerTest extends TestCase
     {
         $response = self::post(self::SUPPLY_ANON_URI);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testTargetingReachList(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => config('app.adshares_address')]);
+        /** @var NetworkHost $networkHost */
+        $networkHost = NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+        NetworkVectorsMeta::factory()->create(['network_host_id' => $networkHost->id]);
+        DB::insert(
+            "INSERT INTO network_vectors (
+                network_host_id,
+                `key`,
+                occurrences,
+                cpm_25,
+                cpm_50,
+                cpm_75,
+                negation_cpm_25,
+                negation_cpm_50,
+                negation_cpm_75,
+                data
+            )
+            VALUES (
+                :hostId,
+                'site:domain:adshares.net',
+                1,
+                2814662,
+                2814662,
+                2814662,
+                1107544,
+                3339398,
+                3339398,
+                0
+            );",
+            [':hostId' => $networkHost->id],
+        );
+        /** @var AdsAuthenticator $authenticator */
+        $authenticator = $this->app->make(AdsAuthenticator::class);
+
+        $response = self::getJson(
+            self::TARGETING_REACH_URI,
+            [
+                'Authorization' => $authenticator->getHeader(
+                    config('app.adshares_address'),
+                    Crypt::decryptString(config('app.adshares_secret')),
+                ),
+            ],
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
+    }
+
+    public function testTargetingReachWhileNotAuthorized(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testTargetingReachWhileInvalidCredentials(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI, ['Authorization' => '']);
+
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testTargetingReachListWhileHostIsMissing(): void
+    {
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
+    }
+
+    public function testTargetingReachListWhileMetaDataIsMissing(): void
+    {
+        NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
     }
 
     private static function findJsonData(array $merge = []): array

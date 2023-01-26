@@ -21,40 +21,33 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Tests\Uploader\Zip;
+namespace Adshares\Adserver\Tests\Uploader\Html;
 
+use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\Uploader\Html\UploadedHtml;
+use Adshares\Adserver\Uploader\Html\HtmlUploader;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
+use PHPUnit\Framework\MockObject\MockObject;
+use Ramsey\Uuid\Uuid;
 
-final class ZipUploaderTest extends TestCase
+final class UploadedHtmlTest extends TestCase
 {
-    public function testUploadEmpty(): void
+    public function testToArray(): void
     {
-        $request = self::createMock(Request::class);
-        $request->expects(self::once())
-            ->method('file')
-            ->willReturn(
-                UploadedFile::fake()->createWithContent(
-                    'a.zip',
-                    file_get_contents(base_path('tests/mock/Files/Banners/empty.zip'))
-                )
-            );
-        $medium = (new DummyConfigurationRepository())->fetchMedium();
+        $uuid = Uuid::uuid4()->toString();
+        $url = 'https://exmaple.com/' . $uuid;
+        $uploaded = new UploadedHtml($uuid, $url);
 
-        self::expectException(RuntimeException::class);
-
-        (new ZipUploader($request))->upload($medium);
-    }
-
-    public function testContentWhenFileMissing(): void
-    {
-        self::expectException(FileNotFoundException::class);
-
-        ZipUploader::content('a.html');
+        $data = $uploaded->toArray();
+        self::assertEquals($uuid, $data['name']);
+        self::assertEquals($url, $data['url']);
     }
 }

@@ -23,23 +23,98 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Uploader\Video;
 
+use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\UploadedFile;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Uploader\Video\UploadedVideo;
 use Adshares\Adserver\Uploader\Video\VideoUploader;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
+use Illuminate\Http\File;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use PHPUnit\Framework\MockObject\MockObject;
+use Ramsey\Uuid\Uuid;
 
 final class VideoUploaderTest extends TestCase
 {
-    public function testContentWhenFileMissing(): void
+    public function testUpload(): void
     {
-        self::expectException(FileNotFoundException::class);
+        $uploader = new VideoUploader($this->getRequestMock());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        VideoUploader::content('a.mp4');
+        $uploadedFile = $uploader->upload($medium);
+
+        self::assertInstanceOf(UploadedVideo::class, $uploadedFile);
+        self::assertDatabaseHas(UploadedFile::class, [
+            'mime' => 'video/mp4',
+            'scope' => '852x480',
+        ]);
+    }
+    public function testUploadFailWhileFileIsMissing(): void
+    {
+        $uploader = new VideoUploader(new Request());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
     }
 
-    public function testContentMimeTypeWhenFileMissing(): void
+    public function testUploadFailWhileSizeTooLarge(): void
     {
-        self::expectException(FileNotFoundException::class);
+        Config::updateAdminSettings([Config::UPLOAD_LIMIT_VIDEO => 0]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $uploader = new VideoUploader($this->getRequestMock());
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
 
-        VideoUploader::contentMimeType('a.mp4');
+        self::expectException(RuntimeException::class);
+
+        $uploader->upload($medium);
+    }
+
+    public function testPreview(): void
+    {
+        $file = UploadedFile::factory()->create([
+            'mime' => 'video/mp4',
+        ]);
+        $uploader = new VideoUploader(self::createMock(Request::class));
+
+        $response = $uploader->preview(Uuid::fromString($file->uuid));
+
+        self::assertEquals('video/mp4', $response->headers->get('Content-Type'));
+    }
+
+    public function testRemoveTemporaryFile(): void
+    {
+        $file = UploadedFile::factory()->create();
+        $uploader = new VideoUploader(self::createMock(Request::class));
+
+        $result = $uploader->removeTemporaryFile(Uuid::fromString($file->uuid));
+
+        self::assertTrue($result);
+        self::assertDatabaseMissing(UploadedFile::class, ['id' => $file->id]);
+    }
+
+    public function testRemoveTemporaryFileQuietError(): void
+    {
+        $uploader = new VideoUploader(self::createMock(Request::class));
+
+        $result = $uploader->removeTemporaryFile(Uuid::fromString('971a7dfe-feec-48fc-808a-4c50ccb3a9c6'));
+
+        self::assertFalse($result);
+    }
+
+    private function getRequestMock(): Request|MockObject
+    {
+        Auth::shouldReceive('guard')->andReturnSelf()
+            ->shouldReceive('user')->andReturn(User::factory()->create());
+        $request = self::createMock(Request::class);
+        $request->expects(self::once())
+            ->method('file')
+            ->willReturn(new File(base_path('tests/mock/Files/Banners/adshares.mp4')));
+        return $request;
     }
 }
