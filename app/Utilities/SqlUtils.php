@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,5 +35,16 @@ class SqlUtils
     {
         return self::SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION === (int)$queryException->errorInfo[0]
             && self::SQL_ERROR_CODE_DUPLICATE_ENTRY === (int)$queryException->errorInfo[1];
+    }
+
+    public static function quotAndJoin(array $values): string
+    {
+        return join(
+            ',',
+            array_map(
+                fn($value) => "'" . $value . "'",
+                $values,
+            ),
+        );
     }
 }

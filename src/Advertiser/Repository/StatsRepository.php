@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Advertiser\Repository;
 
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
@@ -154,14 +155,16 @@ interface StatsRepository
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): DataCollection;
 
     public function fetchStatsTotal(
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): Total;
 
     public function fetchStatsToReport(

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Advertiser\Repository;
 
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\Result\ChartResult;
@@ -226,7 +227,8 @@ class DummyStatsRepository implements StatsRepository
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): DataCollection {
         $user = User::fetchByEmail(self::USER_EMAIL);
 
@@ -290,7 +292,8 @@ class DummyStatsRepository implements StatsRepository
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): Total {
         $calculation = new Calculation(1, 1, 1, 1, 1, 1);
 

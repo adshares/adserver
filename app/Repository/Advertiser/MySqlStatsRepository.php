@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Utilities\DateUtils;
@@ -576,7 +577,8 @@ SQL;
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): DataCollection {
         $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
@@ -588,7 +590,8 @@ SQL;
                 $advertiserId,
                 $dateStart,
                 min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
-                $campaignId
+                $campaignId,
+                $filters
             );
         }
 
@@ -597,7 +600,8 @@ SQL;
                 $advertiserId,
                 max($dateStart, $dateThreshold),
                 $dateEnd,
-                $campaignId
+                $campaignId,
+                $filters,
             );
         }
 
@@ -683,7 +687,8 @@ SQL;
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): Total {
         $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
@@ -697,7 +702,8 @@ SQL;
                 $advertiserId,
                 $dateStart,
                 min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
-                $campaignId
+                $campaignId,
+                $filters,
             );
         }
 
@@ -706,7 +712,8 @@ SQL;
                 $advertiserId,
                 max($dateStart, $dateThreshold),
                 $dateEnd,
-                $campaignId
+                $campaignId,
+                $filters,
             );
         }
 
@@ -1323,7 +1330,8 @@ SQL;
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId
+        ?string $campaignId,
+        ?FilterCollection $filters = null,
     ): array {
         $queryBuilder =
             (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
@@ -1341,6 +1349,12 @@ SQL;
         } else {
             $queryBuilder->appendAnyBannerId();
         }
+        if (null !== $filters) {
+            $queryBuilder->appendMediumWhereClause(
+                $filters->getFilterByName('medium'),
+                $filters->getFilterByName('vendor'),
+            );
+        }
 
         $query = $queryBuilder->build();
 
@@ -1351,7 +1365,8 @@ SQL;
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId
+        ?string $campaignId,
+        ?FilterCollection $filters = null,
     ): array {
         $queryBuilder =
             (new MySqlLiveStatsQueryBuilder(StatsRepository::TYPE_STATS))
@@ -1367,6 +1382,12 @@ SQL;
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId)->appendBannerIdGroupBy();
         }
+        if (null !== $filters) {
+            $queryBuilder->appendMediumWhereClause(
+                $filters->getFilterByName('medium'),
+                $filters->getFilterByName('vendor'),
+            );
+        }
 
         $query = $queryBuilder->build();
 
@@ -1377,7 +1398,8 @@ SQL;
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId
+        ?string $campaignId,
+        ?FilterCollection $filters = null,
     ): array {
         $queryBuilder =
             (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
@@ -1390,6 +1412,12 @@ SQL;
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId)->appendCampaignIdGroupBy();
         }
+        if (null !== $filters) {
+            $queryBuilder->appendMediumWhereClause(
+                $filters->getFilterByName('medium'),
+                $filters->getFilterByName('vendor'),
+            );
+        }
         $queryBuilder->appendAnyBannerId();
 
         $query = $queryBuilder->build();
@@ -1401,7 +1429,8 @@ SQL;
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId
+        ?string $campaignId,
+        ?FilterCollection $filters = null,
     ): array {
         $queryBuilder =
             (new MySqlLiveStatsQueryBuilder(StatsRepository::TYPE_STATS))
@@ -1413,6 +1442,12 @@ SQL;
 
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId)->appendCampaignIdGroupBy();
+        }
+        if (null !== $filters) {
+            $queryBuilder->appendMediumWhereClause(
+                $filters->getFilterByName('medium'),
+                $filters->getFilterByName('vendor'),
+            );
         }
 
         $query = $queryBuilder->build();
