@@ -101,6 +101,49 @@ final class StatsControllerTest extends TestCase
         }
     }
 
+    public function testAdvertiserChartViewsWithFilterByMediumAndVendor(): void
+    {
+        app()->bind(
+            StatsRepository::class,
+            function () {
+                return new MySqlStatsRepository();
+            }
+        );
+        $user = $this->login();
+        $campaign1 = Campaign::factory()
+            ->create(['medium' => 'web', 'vendor' => null, 'user_id' => $user]);
+        $banner1 = Banner::factory()->create(['campaign_id' => $campaign1]);
+        $campaign2 = Campaign::factory()
+            ->create(['medium' => 'metaverse', 'vendor' => 'decentraland', 'user_id' => $user]);
+        $banner2 = Banner::factory()->create(['campaign_id' => $campaign2]);
+        $campaign3 = Campaign::factory()
+            ->create(['medium' => 'metaverse', 'vendor' => 'cryptovoxels', 'user_id' => $user]);
+        $banner3 = Banner::factory()->create(['campaign_id' => $campaign3]);
+        $dateEnd = new DateTimeImmutable();
+        $dateStart = $dateEnd->modify('-1 day');
+        $this->insertView($dateStart->modify('+5 hours'), $user, $campaign1, $banner1);
+        $this->insertView($dateStart->modify('+5 hours'), $user, $campaign1);
+        $this->insertView($dateStart->modify('+5 hours'), $user, $campaign2, $banner2);
+        $this->insertView($dateStart->modify('+5 hours'), $user, $campaign2);
+        $this->insertView($dateStart->modify('+5 hours'), $user, $campaign3, $banner3);
+        $this->insertView($dateStart->modify('+5 hours'), $user, $campaign3);
+        $query = http_build_query(['filter' => ['medium' => 'metaverse', 'vendor' => 'decentraland']]);
+        $url = sprintf(
+            '%s/%s/%s/%s/%s?%s',
+            self::ADVERTISER_CHART_URI,
+            StatsRepository::TYPE_VIEW,
+            'year',
+            $dateStart->format(DateTimeInterface::ATOM),
+            $dateEnd->format(DateTimeInterface::ATOM),
+            $query,
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('0', [$dateStart->format(DateTimeInterface::ATOM), 1]);
+    }
+
     public function testAdvertiserStats(): void
     {
         $repository = new DummyStatsRepository();
