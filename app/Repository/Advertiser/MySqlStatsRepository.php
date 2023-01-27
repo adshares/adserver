@@ -250,7 +250,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::TYPE_VIEW,
@@ -258,7 +259,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         return new ChartResult($result);
@@ -269,7 +271,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::TYPE_VIEW_ALL,
@@ -277,7 +280,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         return new ChartResult($result);
@@ -288,7 +292,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $resultViewsAll = $this->fetch(
             StatsRepository::TYPE_VIEW_ALL,
@@ -296,7 +301,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $resultViews = $this->fetch(
@@ -305,7 +311,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $result = [];
@@ -327,7 +334,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::TYPE_VIEW_UNIQUE,
@@ -335,7 +343,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         return new ChartResult($result);
@@ -346,7 +355,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::TYPE_CLICK,
@@ -354,7 +364,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         return new ChartResult($result);
@@ -365,7 +376,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::TYPE_CLICK_ALL,
@@ -373,7 +385,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         return new ChartResult($result);
@@ -384,7 +397,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $resultClicksAll = $this->fetch(
             StatsRepository::TYPE_CLICK_ALL,
@@ -392,7 +406,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $resultClicks = $this->fetch(
@@ -401,7 +416,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $result = [];
@@ -423,7 +439,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $resultSum = $this->fetch(
             StatsRepository::TYPE_SUM,
@@ -431,7 +448,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $resultClicks = $this->fetch(
@@ -440,7 +458,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $result = [];
@@ -462,7 +481,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $resultSum = $this->fetch(
             StatsRepository::TYPE_SUM,
@@ -470,7 +490,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $resultViews = $this->fetch(
@@ -479,7 +500,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $result = [];
@@ -501,7 +523,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::TYPE_SUM,
@@ -509,7 +532,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         return new ChartResult($result);
@@ -520,7 +544,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::TYPE_SUM_BY_PAYMENT,
@@ -528,7 +553,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         return new ChartResult($result);
@@ -539,7 +565,8 @@ SQL;
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $resultClicks = $this->fetch(
             StatsRepository::TYPE_CLICK,
@@ -547,7 +574,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $resultViews = $this->fetch(
@@ -556,7 +584,8 @@ SQL;
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $campaignId,
+            $filters,
         );
 
         $result = [];
@@ -919,7 +948,7 @@ SQL;
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId,
-        ?string $bannerId = null
+        ?FilterCollection $filters = null,
     ): array {
         $dateTimeZone = $dateStart->getTimezone();
         $dateThreshold = $this->getDateThresholdForLiveData($dateTimeZone);
@@ -934,7 +963,7 @@ SQL;
                 $dateStart,
                 min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
                 $campaignId,
-                $bannerId
+                $filters,
             );
 
             $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
@@ -948,7 +977,7 @@ SQL;
                 max($dateStart, $dateThreshold),
                 $dateEnd,
                 $campaignId,
-                $bannerId
+                $filters,
             );
 
             $concatenatedResultLive = self::concatenateDateColumns($dateTimeZone, $queryResultLive, $resolution);
@@ -968,7 +997,7 @@ SQL;
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId,
-        ?string $bannerId
+        ?FilterCollection $filters = null,
     ): array {
         $queryBuilder = (new MySqlAggregatedStatsQueryBuilder($type))
             ->setAdvertiserIds([$advertiserId])
@@ -978,11 +1007,12 @@ SQL;
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId);
         }
-
-        if ($bannerId) {
-            $queryBuilder->appendBannerIdWhereClause($bannerId);
-        } else {
-            $queryBuilder->appendAnyBannerId();
+        $queryBuilder->appendAnyBannerId();
+        if (null !== $filters) {
+            $queryBuilder->appendMediumWhereClause(
+                $filters->getFilterByName('medium'),
+                $filters->getFilterByName('vendor'),
+            );
         }
 
         $query = $queryBuilder->build();
@@ -997,7 +1027,7 @@ SQL;
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId,
-        ?string $bannerId
+        ?FilterCollection $filters = null,
     ): array {
         if (
             in_array($type, [
@@ -1016,9 +1046,11 @@ SQL;
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId);
         }
-
-        if ($bannerId) {
-            $queryBuilder->appendBannerIdWhereClause($bannerId);
+        if (null !== $filters) {
+            $queryBuilder->appendMediumWhereClause(
+                $filters->getFilterByName('medium'),
+                $filters->getFilterByName('vendor'),
+            );
         }
 
         $query = $queryBuilder->build();

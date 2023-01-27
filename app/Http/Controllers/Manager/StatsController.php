@@ -77,7 +77,6 @@ class StatsController extends Controller
             'medium' => FilterType::String,
             'vendor' => FilterType::String,
         ]);
-        //TODO filter by medium
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
         $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
@@ -94,7 +93,8 @@ class StatsController extends Controller
                 $resolution,
                 $from,
                 $to,
-                $campaignUuid
+                $campaignUuid,
+                $filters,
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Advertiser\Dto\Input;
 
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 use DateTimeInterface;
@@ -61,7 +62,8 @@ final class ChartInput
         private readonly string $resolution,
         private readonly DateTime $dateStart,
         private readonly DateTime $dateEnd,
-        private readonly ?string $campaignId = null
+        private readonly ?string $campaignId = null,
+        private readonly ?FilterCollection $filters = null,
     ) {
         if (!in_array($type, self::ALLOWED_TYPES, true)) {
             throw new InvalidInputException(sprintf('Unsupported chart type `%s`.', $type));
@@ -108,5 +110,10 @@ final class ChartInput
     public function getCampaignId(): ?string
     {
         return $this->campaignId;
+    }
+
+    public function getFilters(): ?FilterCollection
+    {
+        return $this->filters;
     }
 }

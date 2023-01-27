@@ -45,7 +45,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 1],
@@ -62,7 +63,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         return $this->fetchView($advertiserId, $resolution, $dateStart, $dateEnd, $campaignId);
     }
@@ -72,7 +74,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 0.01],
@@ -89,7 +92,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         return $this->fetchView($advertiserId, $resolution, $dateStart, $dateEnd, $campaignId);
     }
@@ -99,7 +103,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 11],
@@ -116,7 +121,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         return $this->fetchClick($advertiserId, $resolution, $dateStart, $dateEnd, $campaignId);
     }
@@ -126,7 +132,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 0.02],
@@ -143,7 +150,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 12],
@@ -160,7 +168,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 13],
@@ -177,7 +186,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 14],
@@ -194,7 +204,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 141],
@@ -211,7 +222,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 0.03],
