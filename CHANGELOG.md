@@ -1,5 +1,4 @@
 
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -12,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Acceptance for active sites
 - Account confirmation in case of registration during find
+- Filtering by non-empty string which casts to false, e.g. '0'
 
 ## [2.3.0] - 2023-01-26
 ### Added
