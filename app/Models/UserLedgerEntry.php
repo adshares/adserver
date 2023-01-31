@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -148,6 +148,7 @@ class UserLedgerEntry extends Model
     public static function waitingPayments(): int
     {
         return (int)self::queryModificationForAwaitingPayments(self::query())
+            ->join('users', 'users.id', 'user_ledger_entries.user_id')->whereNull('users.deleted_at')
             ->sum('amount');
     }
 
