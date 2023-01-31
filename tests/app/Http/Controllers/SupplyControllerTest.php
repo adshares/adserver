@@ -257,8 +257,9 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testFindDynamicWithExistingUser(): void
+    public function testFindDynamicWithoutExistingUser(): void
     {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
         $this->mockAdSelect();
         $data = self::getDynamicFindData();
 
@@ -267,6 +268,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(1, 'data');
+        self::assertNotNull(User::firstOrFail()->admin_confirmed_at);
     }
 
     public function testFindDynamicWhileSiteApprovalRequired(): void

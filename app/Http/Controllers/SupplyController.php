@@ -240,6 +240,10 @@ class SupplyController extends Controller
                                     throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
                                 }
                                 $user = User::registerWithWallet($payoutAddress, true);
+                                if (config('app.auto_confirmation_enabled')) {
+                                    $user->confirmAdmin();
+                                    $user->saveOrFail();
+                                }
                             } else {
                                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
                             }
@@ -1089,6 +1093,10 @@ class SupplyController extends Controller
                     throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                 }
                 $user = User::registerWithWallet($payoutAddress, true);
+                if (config('app.auto_confirmation_enabled')) {
+                    $user->confirmAdmin();
+                    $user->saveOrFail();
+                }
             }
         }
 
