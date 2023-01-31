@@ -1130,8 +1130,10 @@ class SupplyController extends Controller
     private function getZoneType(array $placement): ?string
     {
         if (isset($placement['types'])) {
-            $zoneTypes = array_unique(
-                array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+            $zoneTypes = array_values(
+                array_unique(
+                    array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+                )
             );
             if (count($zoneTypes) > 1) {
                 throw new UnprocessableEntityHttpException(
@@ -1236,6 +1238,11 @@ class SupplyController extends Controller
                 if (!is_array($placement[$field])) {
                     throw new UnprocessableEntityHttpException(
                         sprintf('Field `placements[].%s` must be an array', $field)
+                    );
+                }
+                if (empty($placement[$field])) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('Field `placements[].%s` must be a non-empty array', $field)
                     );
                 }
                 foreach ($placement[$field] as $entry) {
