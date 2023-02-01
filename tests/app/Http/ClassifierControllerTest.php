@@ -353,6 +353,7 @@ final class ClassifierControllerTest extends TestCase
     public function testSiteWhenThereIsGlobalAndSiteClassificationFilteringByLandingUrl(string $url): void
     {
         $user = $this->login();
+        /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user]);
         $campaignExample = NetworkCampaign::factory()->create(['id' => 1, 'landing_url' => 'https://example.com']);
         $campaignAdshares = NetworkCampaign::factory()->create(['id' => 2, 'landing_url' => 'https://adshares.net']);
@@ -364,7 +365,7 @@ final class ClassifierControllerTest extends TestCase
         Classification::factory()->create(['banner_id' => $b3, 'status' => 1, 'site_id' => $site, 'user_id' => $user]);
         $url = urlencode($url);
 
-        $response = $this->getJson(self::CLASSIFICATION_LIST . '/3?landingUrl=' . $url);
+        $response = $this->getJson(sprintf('%s/%d?landingUrl=%s', self::CLASSIFICATION_LIST, $site->id, $url));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1, 'items');
