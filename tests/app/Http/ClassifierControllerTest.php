@@ -380,4 +380,13 @@ final class ClassifierControllerTest extends TestCase
             ['adshares.net'],
         ];
     }
+    public function testFetchInvalidSiteId(): void
+    {
+        $user = $this->login();
+        Site::factory()->create(['user_id' => $user]);
+
+        $response = $this->getJson(sprintf('%s/%d', self::CLASSIFICATION_LIST, 1));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
 }

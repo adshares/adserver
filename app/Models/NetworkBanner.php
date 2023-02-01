@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -323,7 +324,9 @@ class NetworkBanner extends Model
             }
 
             if (null !== ($siteId = $networkBannerFilter->getSiteId())) {
-                $site = Site::fetchById($siteId);
+                if (null === ($site = Site::fetchById($siteId))) {
+                    throw new InvalidArgumentException(sprintf('Cannot find site for id %d', $siteId));
+                }
                 $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $site->medium);
                 if (null !== ($vendor = $site->vendor)) {
                     $query->where(function (Builder $sub) use ($vendor) {
