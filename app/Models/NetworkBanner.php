@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -72,42 +72,28 @@ class NetworkBanner extends Model
     ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
-
     private const NETWORK_BANNERS_COLUMN_SERVE_URL = 'network_banners.serve_url';
-
     private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
-
     private const NETWORK_BANNERS_COLUMN_MIME = 'network_banners.mime';
-
     private const NETWORK_BANNERS_COLUMN_SIZE = 'network_banners.size';
-
     private const NETWORK_BANNERS_COLUMN_STATUS = 'network_banners.status';
-
     private const NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID = 'network_banners.network_campaign_id';
-
     private const NETWORK_BANNERS_COLUMN_CLASSIFICATION = 'network_banners.classification';
 
     private const CLASSIFICATIONS_COLUMN_BANNER_ID = 'classifications.banner_id';
-
     private const CLASSIFICATIONS_COLUMN_STATUS = 'classifications.status';
-
     private const CLASSIFICATIONS_COLUMN_SITE_ID = 'classifications.site_id';
-
     private const CLASSIFICATIONS_COLUMN_USER_ID = 'classifications.user_id';
 
     private const NETWORK_CAMPAIGNS_COLUMN_ID = 'network_campaigns.id';
-
     private const NETWORK_CAMPAIGNS_COLUMN_LANDING_URL = 'network_campaigns.landing_url';
-
     private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS = 'network_campaigns.source_address';
-
     private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST = 'network_campaigns.source_host';
-
     private const NETWORK_CAMPAIGNS_COLUMN_BUDGET = 'network_campaigns.budget';
-
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPM = 'network_campaigns.max_cpm';
-
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPC = 'network_campaigns.max_cpc';
+    private const NETWORK_CAMPAIGNS_COLUMN_MEDIUM = 'network_campaigns.medium';
+    private const NETWORK_CAMPAIGNS_COLUMN_VENDOR = 'network_campaigns.vendor';
 
     /**
      * The attributes that are mass assignable.
@@ -182,6 +168,11 @@ class NetworkBanner extends Model
         return self::queryPaging($query, $limit, $offset)->get();
     }
 
+    /**
+     * @param NetworkBannerFilter $networkBannerFilter
+     * @param Collection<Site> $sites
+     * @return Collection<self>
+     */
     public static function fetchByFilter(
         NetworkBannerFilter $networkBannerFilter,
         Collection $sites
@@ -309,9 +300,7 @@ class NetworkBanner extends Model
         $whereClause = [];
         $whereClause[] = [self::NETWORK_BANNERS_COLUMN_STATUS, '=', Status::STATUS_ACTIVE];
         if (null !== $networkBannerFilter) {
-            $type = $networkBannerFilter->getType();
-
-            if (null !== $type) {
+            if (null !== ($type = $networkBannerFilter->getType())) {
                 $whereClause[] = [self::NETWORK_BANNERS_COLUMN_TYPE, '=', $type];
             }
         }
@@ -331,6 +320,17 @@ class NetworkBanner extends Model
 
             if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
                 $query->where('network_banners.uuid', $networkBannerPublicId->bin());
+            }
+
+            if (null !== ($siteId = $networkBannerFilter->getSiteId())) {
+                $site = Site::fetchById($siteId);
+                $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $site->medium);
+                if (null !== ($vendor = $site->vendor)) {
+                    $query->where(function (Builder $sub) use ($vendor) {
+                        $sub->where(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR, $vendor)
+                            ->orWhereNull(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR);
+                    });
+                }
             }
         }
 

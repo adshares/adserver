@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,11 +27,14 @@ use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
-use Illuminate\Http\Response;
 use SodiumException;
+use Symfony\Component\HttpFoundation\Response;
 
 use function bin2hex;
 use function hash;
@@ -48,6 +51,29 @@ class ClassificationControllerTest extends TestCase
     private const URI_UPDATE = '/callback/classifications/';
 
     private const CLASSIFIER_NAME = 'test_classifier';
+
+    public function testFetch(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['medium' => 'metaverse', 'user_id' => $user, 'vendor' => 'decentraland']);
+        $campaignDecentraland = NetworkCampaign::factory()
+            ->create(['medium' => 'metaverse', 'vendor' => 'decentraland']);
+        /** @var NetworkBanner $bannerDecentraland */
+        $bannerDecentraland = NetworkBanner::factory()->create(['network_campaign_id' => $campaignDecentraland]);
+        $campaignMetaverse = NetworkCampaign::factory()->create(['medium' => 'metaverse', 'vendor' => null]);
+        /** @var NetworkBanner $bannerMetaverse */
+        $bannerMetaverse = NetworkBanner::factory()->create(['network_campaign_id' => $campaignMetaverse]);
+        $campaignWeb = NetworkCampaign::factory()->create(['medium' => 'web', 'vendor' => null]);
+        NetworkBanner::factory()->create(['network_campaign_id' => $campaignWeb]);
+        $expectedBannerIds = [$bannerDecentraland->id, $bannerMetaverse->id];
+
+        $response = $this->getJson(sprintf('/api/classifications/%d', $site->id));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('itemsCount', 2);
+        self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
+    }
 
     public function testUpdateClassification(): void
     {
