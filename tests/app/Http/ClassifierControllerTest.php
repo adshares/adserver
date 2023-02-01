@@ -352,42 +352,29 @@ final class ClassifierControllerTest extends TestCase
      */
     public function testSiteWhenThereIsGlobalAndSiteClassificationFilteringByLandingUrl(string $url): void
     {
-        $user = User::factory()->create(['id' => 1]);
-        Site::factory()->create(['user_id' => $user->id]);
-        $this->actingAs($user, 'api');
-
-        $site = Site::factory()->create(['id' => 1, 'user_id' => $user->id]);
-
-        NetworkCampaign::factory()->create(['id' => 1, 'landing_url' => 'http://example.com']);
-        NetworkCampaign::factory()->create(['id' => 2, 'landing_url' => 'http://adshares.net']);
-        NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => 1]);
-        NetworkBanner::factory()->create(['id' => 2, 'network_campaign_id' => 1]);
-        NetworkBanner::factory()->create(['id' => 3, 'network_campaign_id' => 2]);
-        Classification::factory()->create(
-            ['banner_id' => 1, 'status' => 0, 'site_id' => $site->id, 'user_id' => 1]
-        );
-        Classification::factory()->create(
-            ['banner_id' => 1, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
-        );
-        Classification::factory()->create(
-            ['banner_id' => 3, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
-        );
-
+        $user = $this->login();
+        $site = Site::factory()->create(['user_id' => $user]);
+        $campaignExample = NetworkCampaign::factory()->create(['id' => 1, 'landing_url' => 'https://example.com']);
+        $campaignAdshares = NetworkCampaign::factory()->create(['id' => 2, 'landing_url' => 'https://adshares.net']);
+        $b1 = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignExample]);
+        $b2 = NetworkBanner::factory()->create(['id' => 2, 'network_campaign_id' => $campaignExample]);
+        $b3 = NetworkBanner::factory()->create(['id' => 3, 'network_campaign_id' => $campaignAdshares]);
+        Classification::factory()->create(['banner_id' => $b1, 'status' => 0, 'site_id' => $site, 'user_id' => $user]);
+        Classification::factory()->create(['banner_id' => $b2, 'status' => 1, 'site_id' => $site, 'user_id' => $user]);
+        Classification::factory()->create(['banner_id' => $b3, 'status' => 1, 'site_id' => $site, 'user_id' => $user]);
         $url = urlencode($url);
 
         $response = $this->getJson(self::CLASSIFICATION_LIST . '/3?landingUrl=' . $url);
-        $response->assertStatus(Response::HTTP_OK);
-        $content = json_decode($response->getContent(), true);
-        $items = $content['items'];
 
-        $this->assertCount(1, $items);
-        $this->assertEquals('http://adshares.net', $items[0]['landingUrl']);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1, 'items');
+        $response->assertJsonPath('items.0.landingUrl', 'https://adshares.net');
     }
 
     public function provideLandingUrl(): array
     {
         return [
-            ['http://adshares.net'],
+            ['https://adshares.net'],
             ['adshares'],
             ['adshares.net'],
         ];
