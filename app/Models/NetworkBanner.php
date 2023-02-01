@@ -163,13 +163,6 @@ class NetworkBanner extends Model
         );
     }
 
-    public static function fetch(int $limit, int $offset): Collection
-    {
-        $query = self::queryBannersWithCampaign();
-
-        return self::queryPaging($query, $limit, $offset)->get();
-    }
-
     /**
      * @param NetworkBannerFilter $networkBannerFilter
      * @param Collection<Site> $sites
@@ -253,11 +246,6 @@ class NetworkBanner extends Model
         return $query;
     }
 
-    public static function fetchCount(): int
-    {
-        return self::where(self::NETWORK_BANNERS_COLUMN_STATUS, Status::STATUS_ACTIVE)->count();
-    }
-
     private static function queryByFilter(NetworkBannerFilter $networkBannerFilter): Builder
     {
         $query = self::getBaseQuery($networkBannerFilter);
@@ -299,52 +287,42 @@ class NetworkBanner extends Model
         return self::fetchAll($networkBannerFilter);
     }
 
-    private static function queryPaging(Builder $query, int $limit, int $offset): Builder
-    {
-        return $query->skip($offset)->take($limit);
-    }
-
-    private static function queryBannersWithCampaign(?NetworkBannerFilter $networkBannerFilter = null): Builder
+    private static function queryBannersWithCampaign(NetworkBannerFilter $networkBannerFilter): Builder
     {
         $whereClause = [];
         $whereClause[] = [self::NETWORK_BANNERS_COLUMN_STATUS, '=', Status::STATUS_ACTIVE];
-        if (null !== $networkBannerFilter) {
-            if (null !== ($type = $networkBannerFilter->getType())) {
-                $whereClause[] = [self::NETWORK_BANNERS_COLUMN_TYPE, '=', $type];
-            }
+        if (null !== ($type = $networkBannerFilter->getType())) {
+            $whereClause[] = [self::NETWORK_BANNERS_COLUMN_TYPE, '=', $type];
         }
 
         /** @var Builder $query */
-        $query = self::where($whereClause)->orderBy(
+        $query = (new self())->where($whereClause)->orderBy(
             self::NETWORK_BANNERS_COLUMN_ID,
             'desc'
         );
 
-        if (null !== $networkBannerFilter) {
-            $sizes = $networkBannerFilter->getSizes();
+        $sizes = $networkBannerFilter->getSizes();
+        if ($sizes) {
+            $query->where(function (Builder $sub) use ($sizes) {
+                $sub->whereIn('network_banners.size', $sizes)
+                    ->orWhere(self::NETWORK_BANNERS_COLUMN_TYPE, self::TYPE_VIDEO);
+            });
+        }
 
-            if ($sizes) {
-                $query->where(function (Builder $sub) use ($sizes) {
-                    $sub->whereIn('network_banners.size', $sizes)
-                        ->orWhere(self::NETWORK_BANNERS_COLUMN_TYPE, self::TYPE_VIDEO);
+        if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
+            $query->where('network_banners.uuid', $networkBannerPublicId->bin());
+        }
+
+        if (null !== ($siteId = $networkBannerFilter->getSiteId())) {
+            if (null === ($site = Site::fetchById($siteId))) {
+                throw new InvalidArgumentException(sprintf('Cannot find site for id %d', $siteId));
+            }
+            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $site->medium);
+            if (null !== ($vendor = $site->vendor)) {
+                $query->where(function (Builder $sub) use ($vendor) {
+                    $sub->where(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR, $vendor)
+                        ->orWhereNull(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR);
                 });
-            }
-
-            if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
-                $query->where('network_banners.uuid', $networkBannerPublicId->bin());
-            }
-
-            if (null !== ($siteId = $networkBannerFilter->getSiteId())) {
-                if (null === ($site = Site::fetchById($siteId))) {
-                    throw new InvalidArgumentException(sprintf('Cannot find site for id %d', $siteId));
-                }
-                $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $site->medium);
-                if (null !== ($vendor = $site->vendor)) {
-                    $query->where(function (Builder $sub) use ($vendor) {
-                        $sub->where(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR, $vendor)
-                            ->orWhereNull(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR);
-                    });
-                }
             }
         }
 
