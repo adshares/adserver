@@ -59,12 +59,38 @@ final class ClassifierControllerTest extends TestCase
         self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
     }
 
+    public function testFetchWithFilterBySize(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['medium' => 'metaverse', 'user_id' => $user, 'vendor' => 'decentraland']);
+        $campaignDecentraland = NetworkCampaign::factory()
+            ->create(['medium' => 'metaverse', 'vendor' => 'decentraland']);
+        /** @var NetworkBanner $bannerDecentraland */
+        $bannerDecentraland = NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaignDecentraland,
+            'size' => '2040x2040',
+            'type' => 'video',
+        ]);
+        NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaignDecentraland,
+            'size' => '100x100',
+            'type' => 'video',
+        ]);
+        $sizes = urlencode(json_encode(['2048x2048','1024x1024']));
+        $expectedBannerIds = [$bannerDecentraland->id];
+
+        $response = $this->getJson(sprintf('%s/%d?sizes=%s', self::CLASSIFICATION_LIST, $site->id, $sizes));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('itemsCount', 1);
+        self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
+    }
+
     public function testFetchWithInvalidFilter(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
+        $user = $this->login();
         Site::factory()->create(['user_id' => $user->id]);
-        $this->actingAs($user, 'api');
 
         $response = $this->getJson(self::CLASSIFICATION_LIST . '?banner_id=1');
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

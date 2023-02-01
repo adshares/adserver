@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -61,7 +62,7 @@ class NetworkBanner extends Model
     private const TYPE_HTML = 'html';
     private const TYPE_IMAGE = 'image';
     private const TYPE_DIRECT_LINK = 'direct';
-    private const TYPE_VIDEO = 'video';
+    public const TYPE_VIDEO = 'video';
     private const TYPE_MODEL = 'model';
 
     public const ALLOWED_TYPES = [
@@ -181,8 +182,15 @@ class NetworkBanner extends Model
         if ($sites->isEmpty()) {
             return new Collection();
         }
+        $sizes = $networkBannerFilter->getSizes();
         return self::queryByFilter($networkBannerFilter)->get()->filter(
-            function (NetworkBanner $banner) use ($sites) {
+            function (NetworkBanner $banner) use ($sites, $sizes) {
+                if ($sizes && self::TYPE_VIDEO === $banner->type) {
+                    $matching = Size::findMatchingWithSizes($sizes, ...Size::toDimensions($banner->size));
+                    if (empty($matching)) {
+                        return false;
+                    }
+                }
                 foreach ($sites as $site) {
                     if ($site->matchFiltering($banner->classification ?? [])) {
                         return true;
@@ -316,7 +324,10 @@ class NetworkBanner extends Model
             $sizes = $networkBannerFilter->getSizes();
 
             if ($sizes) {
-                $query->whereIn('network_banners.size', $sizes);
+                $query->where(function (Builder $sub) use ($sizes) {
+                    $sub->whereIn('network_banners.size', $sizes)
+                        ->orWhere(self::NETWORK_BANNERS_COLUMN_TYPE, self::TYPE_VIDEO);
+                });
             }
 
             if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
