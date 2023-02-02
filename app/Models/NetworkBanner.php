@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,6 +25,8 @@ use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -60,7 +62,7 @@ class NetworkBanner extends Model
     private const TYPE_HTML = 'html';
     private const TYPE_IMAGE = 'image';
     private const TYPE_DIRECT_LINK = 'direct';
-    private const TYPE_VIDEO = 'video';
+    public const TYPE_VIDEO = 'video';
     private const TYPE_MODEL = 'model';
 
     public const ALLOWED_TYPES = [
@@ -72,42 +74,28 @@ class NetworkBanner extends Model
     ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
-
     private const NETWORK_BANNERS_COLUMN_SERVE_URL = 'network_banners.serve_url';
-
     private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
-
     private const NETWORK_BANNERS_COLUMN_MIME = 'network_banners.mime';
-
     private const NETWORK_BANNERS_COLUMN_SIZE = 'network_banners.size';
-
     private const NETWORK_BANNERS_COLUMN_STATUS = 'network_banners.status';
-
     private const NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID = 'network_banners.network_campaign_id';
-
     private const NETWORK_BANNERS_COLUMN_CLASSIFICATION = 'network_banners.classification';
 
     private const CLASSIFICATIONS_COLUMN_BANNER_ID = 'classifications.banner_id';
-
     private const CLASSIFICATIONS_COLUMN_STATUS = 'classifications.status';
-
     private const CLASSIFICATIONS_COLUMN_SITE_ID = 'classifications.site_id';
-
     private const CLASSIFICATIONS_COLUMN_USER_ID = 'classifications.user_id';
 
     private const NETWORK_CAMPAIGNS_COLUMN_ID = 'network_campaigns.id';
-
     private const NETWORK_CAMPAIGNS_COLUMN_LANDING_URL = 'network_campaigns.landing_url';
-
     private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_ADDRESS = 'network_campaigns.source_address';
-
     private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST = 'network_campaigns.source_host';
-
     private const NETWORK_CAMPAIGNS_COLUMN_BUDGET = 'network_campaigns.budget';
-
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPM = 'network_campaigns.max_cpm';
-
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPC = 'network_campaigns.max_cpc';
+    private const NETWORK_CAMPAIGNS_COLUMN_MEDIUM = 'network_campaigns.medium';
+    private const NETWORK_CAMPAIGNS_COLUMN_VENDOR = 'network_campaigns.vendor';
 
     /**
      * The attributes that are mass assignable.
@@ -175,13 +163,11 @@ class NetworkBanner extends Model
         );
     }
 
-    public static function fetch(int $limit, int $offset): Collection
-    {
-        $query = self::queryBannersWithCampaign();
-
-        return self::queryPaging($query, $limit, $offset)->get();
-    }
-
+    /**
+     * @param NetworkBannerFilter $networkBannerFilter
+     * @param Collection<Site> $sites
+     * @return Collection<self>
+     */
     public static function fetchByFilter(
         NetworkBannerFilter $networkBannerFilter,
         Collection $sites
@@ -189,8 +175,15 @@ class NetworkBanner extends Model
         if ($sites->isEmpty()) {
             return new Collection();
         }
+        $sizes = $networkBannerFilter->getSizes();
         return self::queryByFilter($networkBannerFilter)->get()->filter(
-            function (NetworkBanner $banner) use ($sites) {
+            function (NetworkBanner $banner) use ($sites, $sizes) {
+                if ($sizes && self::TYPE_VIDEO === $banner->type) {
+                    $matching = Size::findMatchingWithSizes($sizes, ...Size::toDimensions($banner->size));
+                    if (empty($matching)) {
+                        return false;
+                    }
+                }
                 foreach ($sites as $site) {
                     if ($site->matchFiltering($banner->classification ?? [])) {
                         return true;
@@ -253,11 +246,6 @@ class NetworkBanner extends Model
         return $query;
     }
 
-    public static function fetchCount(): int
-    {
-        return self::where(self::NETWORK_BANNERS_COLUMN_STATUS, Status::STATUS_ACTIVE)->count();
-    }
-
     private static function queryByFilter(NetworkBannerFilter $networkBannerFilter): Builder
     {
         $query = self::getBaseQuery($networkBannerFilter);
@@ -299,38 +287,42 @@ class NetworkBanner extends Model
         return self::fetchAll($networkBannerFilter);
     }
 
-    private static function queryPaging(Builder $query, int $limit, int $offset): Builder
-    {
-        return $query->skip($offset)->take($limit);
-    }
-
-    private static function queryBannersWithCampaign(?NetworkBannerFilter $networkBannerFilter = null): Builder
+    private static function queryBannersWithCampaign(NetworkBannerFilter $networkBannerFilter): Builder
     {
         $whereClause = [];
         $whereClause[] = [self::NETWORK_BANNERS_COLUMN_STATUS, '=', Status::STATUS_ACTIVE];
-        if (null !== $networkBannerFilter) {
-            $type = $networkBannerFilter->getType();
-
-            if (null !== $type) {
-                $whereClause[] = [self::NETWORK_BANNERS_COLUMN_TYPE, '=', $type];
-            }
+        if (null !== ($type = $networkBannerFilter->getType())) {
+            $whereClause[] = [self::NETWORK_BANNERS_COLUMN_TYPE, '=', $type];
         }
 
         /** @var Builder $query */
-        $query = self::where($whereClause)->orderBy(
+        $query = (new self())->where($whereClause)->orderBy(
             self::NETWORK_BANNERS_COLUMN_ID,
             'desc'
         );
 
-        if (null !== $networkBannerFilter) {
-            $sizes = $networkBannerFilter->getSizes();
+        $sizes = $networkBannerFilter->getSizes();
+        if ($sizes) {
+            $query->where(function (Builder $sub) use ($sizes) {
+                $sub->whereIn('network_banners.size', $sizes)
+                    ->orWhere(self::NETWORK_BANNERS_COLUMN_TYPE, self::TYPE_VIDEO);
+            });
+        }
 
-            if ($sizes) {
-                $query->whereIn('network_banners.size', $sizes);
+        if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
+            $query->where('network_banners.uuid', $networkBannerPublicId->bin());
+        }
+
+        if (null !== ($siteId = $networkBannerFilter->getSiteId())) {
+            if (null === ($site = Site::fetchById($siteId))) {
+                throw new InvalidArgumentException(sprintf('Cannot find site for id %d', $siteId));
             }
-
-            if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
-                $query->where('network_banners.uuid', $networkBannerPublicId->bin());
+            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $site->medium);
+            if (null !== ($vendor = $site->vendor)) {
+                $query->where(function (Builder $sub) use ($vendor) {
+                    $sub->where(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR, $vendor)
+                        ->orWhereNull(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR);
+                });
             }
         }
 

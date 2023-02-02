@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -72,6 +72,6 @@ class SiteFilteringMatcher
 
     private static function parseKey(string $key): array
     {
-        return strpos($key, ':') !== false ? explode(':', $key) : [$key, $key];
+        return str_contains($key, ':') ? explode(':', $key) : [$key, $key];
     }
 }

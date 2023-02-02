@@ -335,6 +335,20 @@ final class SupplyControllerTest extends TestCase
                     ],
                 ])
             ],
+            'empty placement types' => [
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['types' => []])
+                    ],
+                ])
+            ],
+            'empty placement mimes' => [
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['mimes' => []])
+                    ],
+                ])
+            ],
             'no matching scopes' => [
                 self::getDynamicFindData([
                     'context' => self::getContextData(['medium' => 'metaverse', 'vendor' => 'decentraland']),
