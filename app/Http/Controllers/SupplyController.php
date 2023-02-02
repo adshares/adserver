@@ -989,7 +989,7 @@ class SupplyController extends Controller
         }
 
         if ($case->banner_id !== $bannerId) {
-            throw new BadRequestHttpException('Wrong banner id');
+            throw new UnprocessableEntityHttpException('Wrong banner id');
         }
 
         $userId = User::fetchByUuid($case->publisher_id)->id;
