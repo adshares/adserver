@@ -951,6 +951,7 @@ class SupplyController extends Controller
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
             'demand' => false,
+            'bannerSize' => $banner->size,
             'bannerType' => $banner->type,
         ];
 
