@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,8 +30,8 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
-use Illuminate\Http\Response;
 use SodiumException;
+use Symfony\Component\HttpFoundation\Response;
 
 use function bin2hex;
 use function hash;

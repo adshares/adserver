@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,12 +36,61 @@ final class ClassifierControllerTest extends TestCase
 {
     private const CLASSIFICATION_LIST = '/api/classifications';
 
+    public function testFetch(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['medium' => 'metaverse', 'user_id' => $user, 'vendor' => 'decentraland']);
+        $campaignDecentraland = NetworkCampaign::factory()
+            ->create(['medium' => 'metaverse', 'vendor' => 'decentraland']);
+        /** @var NetworkBanner $bannerDecentraland */
+        $bannerDecentraland = NetworkBanner::factory()->create(['network_campaign_id' => $campaignDecentraland]);
+        $campaignMetaverse = NetworkCampaign::factory()->create(['medium' => 'metaverse', 'vendor' => null]);
+        /** @var NetworkBanner $bannerMetaverse */
+        $bannerMetaverse = NetworkBanner::factory()->create(['network_campaign_id' => $campaignMetaverse]);
+        $campaignWeb = NetworkCampaign::factory()->create(['medium' => 'web', 'vendor' => null]);
+        NetworkBanner::factory()->create(['network_campaign_id' => $campaignWeb]);
+        $expectedBannerIds = [$bannerDecentraland->id, $bannerMetaverse->id];
+
+        $response = $this->getJson(sprintf('%s/%d', self::CLASSIFICATION_LIST, $site->id));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('itemsCount', 2);
+        self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
+    }
+
+    public function testFetchWithFilterBySize(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['medium' => 'metaverse', 'user_id' => $user, 'vendor' => 'decentraland']);
+        $campaignDecentraland = NetworkCampaign::factory()
+            ->create(['medium' => 'metaverse', 'vendor' => 'decentraland']);
+        /** @var NetworkBanner $bannerDecentraland */
+        $bannerDecentraland = NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaignDecentraland,
+            'size' => '2040x2040',
+            'type' => 'video',
+        ]);
+        NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaignDecentraland,
+            'size' => '100x100',
+            'type' => 'video',
+        ]);
+        $sizes = urlencode(json_encode(['2048x2048','1024x1024']));
+        $expectedBannerIds = [$bannerDecentraland->id];
+
+        $response = $this->getJson(sprintf('%s/%d?sizes=%s', self::CLASSIFICATION_LIST, $site->id, $sizes));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('itemsCount', 1);
+        self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
+    }
+
     public function testFetchWithInvalidFilter(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
+        $user = $this->login();
         Site::factory()->create(['user_id' => $user->id]);
-        $this->actingAs($user, 'api');
 
         $response = $this->getJson(self::CLASSIFICATION_LIST . '?banner_id=1');
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -329,44 +378,41 @@ final class ClassifierControllerTest extends TestCase
      */
     public function testSiteWhenThereIsGlobalAndSiteClassificationFilteringByLandingUrl(string $url): void
     {
-        $user = User::factory()->create(['id' => 1]);
-        Site::factory()->create(['user_id' => $user->id]);
-        $this->actingAs($user, 'api');
-
-        $site = Site::factory()->create(['id' => 1, 'user_id' => $user->id]);
-
-        NetworkCampaign::factory()->create(['id' => 1, 'landing_url' => 'http://example.com']);
-        NetworkCampaign::factory()->create(['id' => 2, 'landing_url' => 'http://adshares.net']);
-        NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => 1]);
-        NetworkBanner::factory()->create(['id' => 2, 'network_campaign_id' => 1]);
-        NetworkBanner::factory()->create(['id' => 3, 'network_campaign_id' => 2]);
-        Classification::factory()->create(
-            ['banner_id' => 1, 'status' => 0, 'site_id' => $site->id, 'user_id' => 1]
-        );
-        Classification::factory()->create(
-            ['banner_id' => 1, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
-        );
-        Classification::factory()->create(
-            ['banner_id' => 3, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
-        );
-
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user]);
+        $campaignExample = NetworkCampaign::factory()->create(['id' => 1, 'landing_url' => 'https://example.com']);
+        $campaignAdshares = NetworkCampaign::factory()->create(['id' => 2, 'landing_url' => 'https://adshares.net']);
+        $b1 = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignExample]);
+        $b2 = NetworkBanner::factory()->create(['id' => 2, 'network_campaign_id' => $campaignExample]);
+        $b3 = NetworkBanner::factory()->create(['id' => 3, 'network_campaign_id' => $campaignAdshares]);
+        Classification::factory()->create(['banner_id' => $b1, 'status' => 0, 'site_id' => $site, 'user_id' => $user]);
+        Classification::factory()->create(['banner_id' => $b2, 'status' => 1, 'site_id' => $site, 'user_id' => $user]);
+        Classification::factory()->create(['banner_id' => $b3, 'status' => 1, 'site_id' => $site, 'user_id' => $user]);
         $url = urlencode($url);
 
-        $response = $this->getJson(self::CLASSIFICATION_LIST . '/3?landingUrl=' . $url);
-        $response->assertStatus(Response::HTTP_OK);
-        $content = json_decode($response->getContent(), true);
-        $items = $content['items'];
+        $response = $this->getJson(sprintf('%s/%d?landingUrl=%s', self::CLASSIFICATION_LIST, $site->id, $url));
 
-        $this->assertCount(1, $items);
-        $this->assertEquals('http://adshares.net', $items[0]['landingUrl']);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1, 'items');
+        $response->assertJsonPath('items.0.landingUrl', 'https://adshares.net');
     }
 
     public function provideLandingUrl(): array
     {
         return [
-            ['http://adshares.net'],
+            ['https://adshares.net'],
             ['adshares'],
             ['adshares.net'],
         ];
+    }
+    public function testFetchInvalidSiteId(): void
+    {
+        $user = $this->login();
+        Site::factory()->create(['user_id' => $user]);
+
+        $response = $this->getJson(sprintf('%s/%d', self::CLASSIFICATION_LIST, 1));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

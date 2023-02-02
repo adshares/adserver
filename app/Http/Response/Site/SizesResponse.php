@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,29 +24,25 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Response\Site;
 
 use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\Zone;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 
 class SizesResponse implements Arrayable
 {
-    /** @var array */
-    private $sizes;
+    private Collection $sizes;
 
     public function __construct(?int $siteId = null)
     {
-        $zones = $this->getZones($siteId);
-
-        $this->sizes = $zones->map(
-            function (Zone $zone) {
-                return $zone->size;
-            }
-        )->unique()->values();
+        $this->sizes = $this->getZones($siteId)
+            ->map(fn ($zone) => $zone->scopes)
+            ->flatten()
+            ->unique()
+            ->values();
     }
 
     public function toArray(): array
     {
-        return ['sizes' => $this->sizes];
+        return ['sizes' => $this->sizes->toArray()];
     }
 
     private function getZones(?int $siteId): Collection
@@ -56,18 +52,13 @@ class SizesResponse implements Arrayable
             if (!$sites) {
                 return new Collection();
             }
-
-            $zones = $sites->map(
-                function (Site $site) {
-                    return $site->zones;
-                }
-            )->flatten();
+            $zones = $sites->map(fn ($site) => $site->zones)
+                ->flatten();
         } else {
             $site = Site::fetchById($siteId);
             if (!$site) {
                 return new Collection();
             }
-
             $zones = $site->zones;
         }
 
