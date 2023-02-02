@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
     <head>
         <link href="<?php use Adshares\Common\Domain\ValueObject\SecureUrl;echo SecureUrl::change(
             asset('css/why.css')
@@ -6,6 +6,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+        <title>{{ $supplyName }}</title>
     </head>
 
     <body>
