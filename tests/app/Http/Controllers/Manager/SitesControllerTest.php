@@ -1029,21 +1029,28 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testSiteSizes(): void
+    public function testReadSitesSizes(): void
     {
-        $user = $this->setupUser();
+        $user = $this->login();
         /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
-
-        $sizes = ['300x250', '336x280', '728x90'];
-        foreach ($sizes as $size) {
-            Zone::factory()->create(['site_id' => $site->id, 'size' => $size]);
+        $site = Site::factory()->create(['user_id' => $user]);
+        $expectedSizes = ['300x250', '336x280', '728x90', '4096x4096', '2048x2048', '1024x1024', '512x512', '480x640',
+            '640x480', '3072x4096', '4096x3072', '1536x2048', '2048x1536', '768x1024', '1024x768'];
+        foreach (['300x250', '336x280', '728x90'] as $size) {
+            Zone::factory()->create(['scopes' => [$size], 'site_id' => $site, 'size' => $size]);
         }
+        Zone::factory([
+            'scopes' => ['4096x4096', '2048x2048', '1024x1024', '512x512', '480x640', '640x480', '3072x4096',
+                '4096x3072', '1536x2048', '2048x1536', '768x1024', '1024x768'],
+            'site_id' => $site,
+            'size' => '10x10',
+        ])->create();
 
         $response = $this->getJson('/api/sites/sizes/' . $site->id);
 
-        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SIZES_STRUCTURE);
-        self::assertEquals($sizes, $response->json('sizes'));
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::SIZES_STRUCTURE);
+        self::assertEqualsCanonicalizing($expectedSizes, $response->json('sizes'));
     }
 
     public function testSiteRank(): void

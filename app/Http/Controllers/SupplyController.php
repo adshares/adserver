@@ -240,6 +240,10 @@ class SupplyController extends Controller
                                     throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
                                 }
                                 $user = User::registerWithWallet($payoutAddress, true);
+                                if (config('app.auto_confirmation_enabled')) {
+                                    $user->confirmAdmin();
+                                    $user->saveOrFail();
+                                }
                             } else {
                                 return $this->sendError("pay_to", "User not found for " . $payoutAddress->toString());
                             }
@@ -1090,6 +1094,10 @@ class SupplyController extends Controller
                     throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                 }
                 $user = User::registerWithWallet($payoutAddress, true);
+                if (config('app.auto_confirmation_enabled')) {
+                    $user->confirmAdmin();
+                    $user->saveOrFail();
+                }
             }
         }
 
@@ -1131,8 +1139,10 @@ class SupplyController extends Controller
     private function getZoneType(array $placement): ?string
     {
         if (isset($placement['types'])) {
-            $zoneTypes = array_unique(
-                array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+            $zoneTypes = array_values(
+                array_unique(
+                    array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+                )
             );
             if (count($zoneTypes) > 1) {
                 throw new UnprocessableEntityHttpException(
@@ -1237,6 +1247,11 @@ class SupplyController extends Controller
                 if (!is_array($placement[$field])) {
                     throw new UnprocessableEntityHttpException(
                         sprintf('Field `placements[].%s` must be an array', $field)
+                    );
+                }
+                if (empty($placement[$field])) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('Field `placements[].%s` must be a non-empty array', $field)
                     );
                 }
                 foreach ($placement[$field] as $entry) {
