@@ -338,27 +338,43 @@ final class ServerConfigurationControllerTest extends TestCase
         SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
         $data = ['rejectedDomains' => ''];
 
-        $response = $this->patchJson(
-            self::URI_REJECTED_DOMAINS,
-            $data,
-        );
+        $response = $this->patchJson(self::URI_REJECTED_DOMAINS, $data);
 
         $response->assertStatus(Response::HTTP_OK);
         self::assertEmpty(SitesRejectedDomain::all());
     }
 
-    public function testStoreRejectedDomainsInvalid(): void
+    public function testStoreRejectedDomainsNull(): void
     {
         $this->setUpModerator();
         SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
-        $data = ['rejectedDomains' => 'a,b'];
+        $data = ['rejectedDomains' => null];
 
-        $response = $this->patchJson(
-            self::URI_REJECTED_DOMAINS,
-            $data,
-        );
+        $response = $this->patchJson(self::URI_REJECTED_DOMAINS, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertEmpty(SitesRejectedDomain::all());
+    }
+
+    /**
+     * @dataProvider storeRejectedDomainsInvalidProvider
+     */
+    public function testStoreRejectedDomainsInvalid(array $data): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->patchJson(self::URI_REJECTED_DOMAINS, $data);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function storeRejectedDomainsInvalidProvider(): array
+    {
+        return [
+            'invalid key' => [['domains' => 'rejected.com']],
+            'invalid domains type' => [['rejectedDomains' => 1]],
+            'invalid domains values' => [['rejectedDomains' => 'a,b']],
+        ];
     }
 
     /**
