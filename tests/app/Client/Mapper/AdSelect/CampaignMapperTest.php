@@ -67,7 +67,6 @@ final class CampaignMapperTest extends TestCase
                 'require' => [
                     'site:quality' => ['high'],
                     'site:medium' => ['web'],
-                    'site:vendor' => ['unknown'],
                 ],
                 'exclude' => new stdClass(),
             ],
@@ -79,6 +78,28 @@ final class CampaignMapperTest extends TestCase
         $campaign = CampaignFactory::createFromArray($campaignData);
 
         $this->assertEquals($expected, CampaignMapper::map($this->getMedium(), $campaign));
+    }
+
+    public function testMappingCampaignWithVendor(): void
+    {
+        $medium = (new DummyConfigurationRepository())->fetchMedium('metaverse', 'decentraland');
+        $campaignData = array_merge(
+            $this->getCampaignData(),
+            [
+                'medium' => 'metaverse',
+                'vendor' => 'decentraland',
+            ]
+        );
+        $campaign = CampaignFactory::createFromArray($campaignData);
+        $expected = [
+            'site:quality' => ['high'],
+            'site:medium' => ['metaverse'],
+            'site:vendor' => ['decentraland'],
+        ];
+
+        $mapped = CampaignMapper::map($medium, $campaign);
+
+        $this->assertEquals($expected, $mapped['filters']['require']);
     }
 
     public function testMappingCampaignWithClassification(): void
@@ -111,7 +132,6 @@ final class CampaignMapperTest extends TestCase
                 'require' => [
                     'device:type' => ['desktop'],
                     'site:medium' => ['web'],
-                    'site:vendor' => ['unknown'],
                 ],
                 'exclude' => new stdClass(),
             ],
