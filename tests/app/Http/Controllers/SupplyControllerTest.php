@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
@@ -45,6 +46,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -52,6 +54,7 @@ final class SupplyControllerTest extends TestCase
 {
     private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
+    private const REPORT_AD_URI = '/supply/ad/report';
     private const SUPPLY_ANON_URI = '/supply/anon';
     private const TARGETING_REACH_URI = '/supply/targeting-reach';
     private const LEGACY_FOUND_BANNERS_STRUCTURE = [
@@ -139,6 +142,70 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI . '?bid=' . $banner->uuid . '&cid=0123456789abcdef0123456789abcdef');
 
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testReportAd(): void
+    {
+        Storage::fake('local');
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var NetworkCampaign $campaign */
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        /** @var NetworkCase $case */
+        $case = NetworkCase::factory()->create([
+            'banner_id' => $banner->uuid,
+            'campaign_id' => $campaign->uuid,
+            'publisher_id' => $user->uuid,
+        ]);
+
+        $response = $this->get(self::buildUriReportAd($case->case_id, $banner->uuid));
+
+        $response->assertStatus(Response::HTTP_OK);
+        Storage::disk('local')->assertExists('reported-ads.txt');
+    }
+
+    public function testReportAdWhileInvalidCaseFormat(): void
+    {
+        $response = $this->get(self::buildUriReportAd('00', 'asdf'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testReportAdWhileNotExistingCase(): void
+    {
+        $response = $this->get(self::buildUriReportAd(
+            '00000000000000000000000000000000',
+            '00000000000000000000000000000000',
+        ));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testReportAdWhileBannerIdDoesNotMatchCase(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var NetworkCampaign $campaign */
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        /** @var NetworkCase $case */
+        $case = NetworkCase::factory()->create([
+            'banner_id' => $banner->uuid,
+            'campaign_id' => $campaign->uuid,
+            'publisher_id' => $user->uuid,
+        ]);
+
+        $response = $this->get(self::buildUriReportAd($case->case_id, '00000000000000000000000000000000'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    private static function buildUriReportAd(string $caseId, string $bannerId): string
+    {
+        return sprintf('%s/%s/%s', self::REPORT_AD_URI, $caseId, $bannerId);
     }
 
     public function testFind(): void

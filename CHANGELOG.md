@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Extract rejected domains from configuration API
+- Page "Why" appearance 
 ### Fixed
 - Dynamic find with empty types or mimes
 - Banner classification list (correct medium)
