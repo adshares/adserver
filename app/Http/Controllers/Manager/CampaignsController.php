@@ -25,6 +25,8 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
@@ -195,9 +197,13 @@ class CampaignsController extends Controller
         return $input;
     }
 
-    public function browse(): JsonResponse
+    public function browse(Request $request): JsonResponse
     {
-        $campaigns = $this->campaignRepository->find();
+        $filters = FilterCollection::fromRequest($request, [
+            'medium' => FilterType::String,
+            'vendor' => FilterType::String,
+        ]);
+        $campaigns = $this->campaignRepository->find($filters);
 
         foreach ($campaigns as $campaign) {
             $campaign->classifications = BannerClassification::fetchCampaignClassifications($campaign->id);
