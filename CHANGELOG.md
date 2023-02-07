@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Campaign can target any vendor of medium
+### Added
+- Filtering campaigns by medium and vendor
+### Changed
+- Extract rejected domains from configuration API
+- Page "Why" appearance 
 ### Fixed
 - Dynamic find with empty types or mimes
-
-### Fixed
 - Banner classification list (correct medium)
 
 ## [2.3.2] - 2023-01-31

@@ -41,6 +41,8 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
 });
 
 Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
+    Route::patch('config/rejectedDomains', [ServerConfigurationController::class, 'storeRejectedDomains']);
+    Route::get('config/rejectedDomains', [ServerConfigurationController::class, 'fetchRejectedDomains']);
     Route::get('config/placeholders/{key?}', [ServerConfigurationController::class, 'fetchPlaceholders']);
     Route::get('config/{key?}', [ServerConfigurationController::class, 'fetch']);
 

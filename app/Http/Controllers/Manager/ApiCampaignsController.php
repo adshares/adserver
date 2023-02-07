@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Resources\BannerResource;
 use Adshares\Adserver\Http\Resources\CampaignResource;
 use Adshares\Adserver\Models\Banner;
@@ -125,8 +127,12 @@ class ApiCampaignsController extends Controller
     public function fetchCampaigns(Request $request): JsonResource
     {
         $limit = $request->query('limit', 10);
+        $filters = FilterCollection::fromRequest($request, [
+            'medium' => FilterType::String,
+            'vendor' => FilterType::String,
+        ]);
         LimitValidator::validate($limit);
-        $campaigns = $this->campaignRepository->fetchCampaigns($limit);
+        $campaigns = $this->campaignRepository->fetchCampaigns($filters, $limit);
         return CampaignResource::collection($campaigns)->preserveQuery();
     }
 

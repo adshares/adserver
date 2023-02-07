@@ -42,6 +42,7 @@ use Closure;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use PDOException;
@@ -51,13 +52,52 @@ final class CampaignsControllerTest extends TestCase
 {
     private const URI = '/api/campaigns';
 
-    public function testBrowseCampaignRequestWhenNoCampaigns(): void
+    public function testBrowse(): void
+    {
+        $user = $this->createUser();
+        Campaign::factory()
+            ->count(3)
+            ->state(
+                new Sequence(
+                    ['medium' => 'web', 'vendor' => null],
+                    ['medium' => 'metaverse', 'vendor' => 'decentraland'],
+                    ['medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
+                )
+            )->create(['user_id' => $user]);
+
+        $response = $this->getJson(self::URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(3);
+    }
+
+    public function testBrowseWhenNoCampaigns(): void
     {
         $this->createUser();
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
+    }
+
+    public function testBrowseCampaignWithFilterByMediumAndVendor(): void
+    {
+        $user = $this->createUser();
+        Campaign::factory()
+            ->count(3)
+            ->state(
+                new Sequence(
+                    ['medium' => 'web', 'vendor' => null],
+                    ['medium' => 'metaverse', 'vendor' => 'decentraland'],
+                    ['medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
+                )
+            )->create(['user_id' => $user]);
+
+        $query = http_build_query(['filter' => ['medium' => 'metaverse', 'vendor' => 'decentraland']]);
+        $response = $this->getJson(sprintf('%s?%s', self::URI, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1);
     }
 
     public function testCampaignRequestWhenCampaignIsNotFound(): void

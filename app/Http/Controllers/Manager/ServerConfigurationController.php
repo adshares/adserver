@@ -170,7 +170,6 @@ class ServerConfigurationController extends Controller
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|integer|min:0',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|integer|min:0',
         Config::URL => 'url',
-        'rejected-domains' => 'nullable|list:domain',
     ];
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
     private const MAX_VALUE_LENGTH = 65535;
@@ -188,10 +187,6 @@ class ServerConfigurationController extends Controller
             $data = Config::fetchAdminSettings();
         }
 
-        if (null === $key || self::REJECTED_DOMAINS === $key) {
-            $data[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
-        }
-
         return self::json($data);
     }
 
@@ -206,6 +201,11 @@ class ServerConfigurationController extends Controller
         $data = $this->getPanelPlaceholdersWithNulls(PanelPlaceholder::TYPES_ALLOWED);
 
         return self::json($data);
+    }
+
+    public function fetchRejectedDomains(): JsonResponse
+    {
+        return self::json([self::REJECTED_DOMAINS => SitesRejectedDomain::fetchAll()]);
     }
 
     private function getPanelPlaceholdersWithNulls(array $types): array
@@ -310,19 +310,40 @@ class ServerConfigurationController extends Controller
         return $this->getPanelPlaceholdersWithNulls($types);
     }
 
+    public function storeRejectedDomains(Request $request): JsonResponse
+    {
+        $data = $request->all();
+        self::validateRejectedDomains($data);
+
+        $domains = array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? ''));
+        SitesRejectedDomain::storeDomains($domains);
+        Site::rejectByDomains($domains);
+
+        return $this->fetchRejectedDomains();
+    }
+
+    private static function validateRejectedDomains(array $data): void
+    {
+        if (!array_key_exists(self::REJECTED_DOMAINS, $data)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', self::REJECTED_DOMAINS));
+        }
+
+        if (null === $data[self::REJECTED_DOMAINS]) {
+            return;
+        }
+
+        if (!is_string($data[self::REJECTED_DOMAINS])) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a string', self::REJECTED_DOMAINS));
+        }
+
+        self::validateList(self::REJECTED_DOMAINS, $data[self::REJECTED_DOMAINS], 'domain');
+    }
+
     private function storeData(array $data): array
     {
         $mappedData = [];
-        $appendRejectedDomains = false;
         DB::beginTransaction();
         try {
-            if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
-                $domains = array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? ''));
-                SitesRejectedDomain::storeDomains($domains);
-                Site::rejectByDomains($domains);
-                unset($data[self::REJECTED_DOMAINS]);
-                $appendRejectedDomains = true;
-            }
             foreach ($data as $key => $value) {
                 $mappedData[Str::kebab($key)] = $value;
             }
@@ -336,9 +357,6 @@ class ServerConfigurationController extends Controller
 
         DatabaseConfigReader::overwriteAdministrationConfig();
         $settings = array_intersect_key(Config::fetchAdminSettings(), $mappedData);
-        if ($appendRejectedDomains) {
-            $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
-        }
 
         if (
             array_key_exists(Config::INVENTORY_WHITELIST, $settings)

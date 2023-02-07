@@ -34,6 +34,7 @@ use Adshares\Adserver\ViewModel\ScopeType;
 use Closure;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -519,6 +520,28 @@ final class ApiCampaignsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::CAMPAIGNS_STRUCTURE);
         $response->assertJsonCount(3, 'data');
+    }
+
+    public function testFetchCampaignsWithFilterByMediumAndVendor(): void
+    {
+        $user = $this->setUpUser();
+        Campaign::factory()
+            ->count(3)
+            ->state(
+                new Sequence(
+                    ['medium' => 'web', 'vendor' => null],
+                    ['medium' => 'metaverse', 'vendor' => 'decentraland'],
+                    ['medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
+                )
+            )->create(['user_id' => $user]);
+
+        $query = http_build_query(['filter' => ['medium' => 'metaverse', 'vendor' => 'decentraland']]);
+        $response = $this->get(sprintf('%s?%s', self::URI_CAMPAIGNS, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGNS_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonFragment(['medium' => 'metaverse', 'vendor' => 'decentraland']);
     }
 
     public function testUpload(): void

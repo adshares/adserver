@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,6 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Response\Stats\AdvertiserReportResponse;
 use Adshares\Adserver\Http\Response\Stats\PublisherReportResponse;
 use Adshares\Adserver\Http\Response\Stats\ReportsListResponse;
@@ -71,6 +73,10 @@ class StatsController extends Controller
         string $dateStart,
         string $dateEnd
     ): JsonResponse {
+        $filters = FilterCollection::fromRequest($request, [
+            'medium' => FilterType::String,
+            'vendor' => FilterType::String,
+        ]);
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
         $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
@@ -87,7 +93,8 @@ class StatsController extends Controller
                 $resolution,
                 $from,
                 $to,
-                $campaignUuid
+                $campaignUuid,
+                $filters,
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -178,6 +185,10 @@ class StatsController extends Controller
         string $dateStart,
         string $dateEnd
     ): JsonResponse {
+        $filters = FilterCollection::fromRequest($request, [
+            'medium' => FilterType::String,
+            'vendor' => FilterType::String,
+        ]);
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
         $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
@@ -192,7 +203,8 @@ class StatsController extends Controller
                 [$user->uuid],
                 $from,
                 $to,
-                $campaignUuid
+                $campaignUuid,
+                filters: $filters,
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
