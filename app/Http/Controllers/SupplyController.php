@@ -955,6 +955,7 @@ class SupplyController extends Controller
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
             'demand' => false,
+            'bannerSize' => $banner->size,
             'bannerType' => $banner->type,
         ];
 
@@ -988,7 +989,7 @@ class SupplyController extends Controller
         }
 
         if ($case->banner_id !== $bannerId) {
-            throw new BadRequestHttpException('Wrong banner id');
+            throw new UnprocessableEntityHttpException('Wrong banner id');
         }
 
         $userId = User::fetchByUuid($case->publisher_id)->id;
