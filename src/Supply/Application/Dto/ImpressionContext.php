@@ -129,7 +129,9 @@ final class ImpressionContext
             $userId = $this->userId();
             $siteKeywords = $this->site;
             $siteKeywords['medium'] = $siteMap['medium'];
-            $siteKeywords['vendor'] = $siteMap['vendor'];
+            if (isset($siteMap['vendor'])) {
+                $siteKeywords['vendor'] = $siteMap['vendor'];
+            }
             $params[] = [
                 'keywords' => array_merge(
                     AbstractFilterMapper::generateNestedStructure(['site' => $siteKeywords]),
