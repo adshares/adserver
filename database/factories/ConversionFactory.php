@@ -23,23 +23,29 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\EventLog;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class ConversionDefinitionFactory extends Factory
+class ConversionFactory extends Factory
 {
     public function definition(): array
     {
         return [
-            'campaign_id' => Campaign::factory()->create(),
-            'name' => $this->faker->word,
-            'limit_type' => 'in_budget',
-            'event_type' => 'Add to cart',
-            'type' => ConversionDefinition::ADVANCED_TYPE,
-            'value' => null,
-            'is_value_mutable' => true,
-            'is_repeatable' => true,
+            'uuid' => $this->faker->uuid,
+            'created_at' => new DateTimeImmutable(),
+            'updated_at' => new DateTimeImmutable(),
+            'event_logs_id' => EventLog::factory()->create(['payment_id' => 0]),
+            'case_id' => $this->faker->uuid,
+            'group_id' => $this->faker->uuid,
+            'conversion_definition_id' => ConversionDefinition::factory()->create(),
+            'value' => 1e11,
+            'event_value_currency' => 1e11,
+            'weight' => 1,
+            'pay_to' => AccountId::fromIncompleteString('0001-00000001'),
+
         ];
     }
 }

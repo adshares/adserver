@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Adserver\Console\Commands\DemandPreparePayments;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
@@ -128,6 +129,55 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
         self::assertEquals(500, $event->license_fee);
         self::assertEquals(250, $event->operator_fee);
         self::assertEquals(125, $event->community_fee);
+        self::assertEquals(125, $event->paid_amount);
+
+        $payments = Payment::all();
+        self::assertCount(3, $payments);// adserver + license + community
+
+        $payments->each(function (Payment $payment) {
+            self::assertNotEmpty($payment->account_address);
+            self::assertEquals(Payment::STATE_NEW, $payment->state);
+            $payment->events->each(function (EventLog $entry) use ($payment) {
+                self::assertEquals($entry->pay_to, $payment->account_address);
+            });
+        });
+    }
+
+    public function testHandleConversionFees(): void
+    {
+        Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $communityFeeReader = self::createMock(CommunityFeeReader::class);
+        $communityFeeReader->method('getAddress')->willReturn(new AccountId('0001-00000024-FF89'));
+        $communityFeeReader->method('getFee')->willReturn(1 / 3);
+        $this->instance(CommunityFeeReader::class, $communityFeeReader);
+        $licenseReader = self::createMock(LicenseReader::class);
+        $licenseReader->method('getAddress')->willReturn(new AccountId('0001-00000002-BB2D'));
+        $licenseReader->method('getFee')->willReturn(0.1);
+        $this->instance(LicenseReader::class, $licenseReader);
+        /** @var Conversion $event */
+        $event = Conversion::factory()->create([
+            'event_value_currency' => 1000,
+            'exchange_rate' => 1,
+            'event_value' => 1000,
+            'payment_status' => AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED,
+            'pay_to' => new AccountId('0001-00000001-8B4E'),
+        ]);
+
+        $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE)
+            ->expectsOutput('Found 1 payable conversions.')
+            ->expectsOutput('In that, there are 1 recipients')
+            ->expectsOutput('and a license fee of 100 clicks payable to 0001-00000002-BB2D')
+            ->expectsOutput('and a community fee of 150 clicks payable to 0001-00000024-FF89')
+            ->assertExitCode(0);
+
+        $event->refresh();
+
+        self::assertNotEmpty($event->payment_id);
+        self::assertEquals(100, $event->license_fee);
+        self::assertEquals(450, $event->operator_fee);
+        self::assertEquals(150, $event->community_fee);
+        self::assertEquals(300, $event->paid_amount);
 
         $payments = Payment::all();
         self::assertCount(3, $payments);// adserver + license + community
