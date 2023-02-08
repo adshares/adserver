@@ -79,10 +79,15 @@ final class LicenseFeeSender
         );
     }
 
-    public function sendAllLicensePayments(): NetworkPayment
+    public function sendAllLicensePayments(): ?NetworkPayment
     {
+        $receiverAddress = $this->licenseReader->getAddress()?->toString();
+        if (null === $receiverAddress) {
+            return null;
+        }
+
         $payment = NetworkPayment::registerNetworkPayment(
-            $this->fetchLicenseAccount(),
+            $receiverAddress,
             config('app.adshares_address'),
             $this->licenseFeeSum(),
             $this->adsPayment
@@ -124,16 +129,5 @@ final class LicenseFeeSender
                 $payment->amount
             ));
         }
-    }
-
-    private function fetchLicenseAccount(): string
-    {
-        try {
-            $licenseAccount = $this->licenseReader->getAddress()->toString();
-        } catch (ModelNotFoundException) {
-            throw new MissingInitialConfigurationException('No config entry for license account.');
-        }
-
-        return $licenseAccount;
     }
 }

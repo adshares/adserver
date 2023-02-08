@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,6 +33,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
@@ -284,6 +285,47 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
         self::assertAdPaymentProcessedEventDispatched();
+    }
+
+    public function testAdsProcessEventPaymentWithNoLicense(): void
+    {
+        $demandClient = new DummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+
+        /** @var NetworkImpression $networkImpression */
+        $networkImpression = NetworkImpression::factory()->create();
+        $paymentDetail = $demandClient->fetchPaymentDetails('', '', 1, 0)[0];
+
+        $licenseVault = self::createMock(LicenseVault::class);
+        $licenseVault->method('read')->willThrowException(new RuntimeException('test-exception'));
+        $licenseReader = new LicenseReader($licenseVault);
+        $this->instance(LicenseReader::class, $licenseReader);
+
+        NetworkCase::factory()->create(
+            [
+                'case_id' => $paymentDetail['case_id'],
+                'network_impression_id' => $networkImpression->id,
+                'publisher_id' => $paymentDetail['publisher_id'],
+            ]
+        );
+
+        $totalAmount = (int)$paymentDetail['event_value'];
+
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => $totalAmount,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])
+            ->expectsOutput('No license payment')
+            ->assertExitCode(0);
+
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
+        $this->assertDatabaseCount(NetworkPayment::class, 0);
+        self::assertAdPaymentProcessedEventDispatched(1);
     }
 
     public function testLock(): void
