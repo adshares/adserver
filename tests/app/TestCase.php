@@ -33,6 +33,8 @@ use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Mock\Client\DummyAdClassifyClient;
 use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdSelectClient;
@@ -136,6 +138,15 @@ abstract class TestCase extends BaseTestCase
             DemandClient::class,
             static function () {
                 return new DummyDemandClient();
+            }
+        );
+        $this->app->bind(
+            LicenseReader::class,
+            function () {
+                $licenseReader = self::createMock(LicenseReader::class);
+                $licenseReader->method('getAddress')->willReturn(new AccountId('FFFF-00000000-3F2E'));
+                $licenseReader->method('getFee')->willReturn(0.01);
+                return $licenseReader;
             }
         );
     }
