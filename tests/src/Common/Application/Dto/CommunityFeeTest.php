@@ -58,5 +58,4 @@ class CommunityFeeTest extends TestCase
             'no fee' => [['accountAddress' => '0001-00000024-FF89']],
         ];
     }
-
 }
