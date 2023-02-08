@@ -32,12 +32,12 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use DateTimeInterface;
@@ -80,21 +80,11 @@ SQL;
     private const PLACEHOLDER_SITE_ID = '{sid}';
     private const PLACEHOLDER_ZONE_ID = '{zid}';
 
-    private PaymentDetailsVerify $paymentDetailsVerify;
-    private CampaignRepository $campaignRepository;
-    private LicenseReader $licenseReader;
-    private AdsAuthenticator $authenticator;
-
     public function __construct(
-        PaymentDetailsVerify $paymentDetailsVerify,
-        CampaignRepository $campaignRepository,
-        LicenseReader $licenseReader,
-        AdsAuthenticator $authenticator
+        private readonly AdsAuthenticator $authenticator,
+        private readonly CampaignRepository $campaignRepository,
+        private readonly PaymentDetailsVerify $paymentDetailsVerify,
     ) {
-        $this->paymentDetailsVerify = $paymentDetailsVerify;
-        $this->campaignRepository = $campaignRepository;
-        $this->licenseReader = $licenseReader;
-        $this->authenticator = $authenticator;
     }
 
     public function serve(Request $request, $id): Response
@@ -523,10 +513,9 @@ SQL;
         return DB::select($query, array_merge($paymentIds, $paymentIds, [$limit, $offset]));
     }
 
-    public function inventoryList(Request $request): JsonResponse
+    public function inventoryList(Request $request, TotalFeeReader $totalFeeReader): JsonResponse
     {
-        $licenceTxFee = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
-        $operatorTxFee = config('app.payment_tx_fee');
+        $totalFee = $totalFeeReader->getTotalFeeDemand();
 
         $campaigns = [];
 
@@ -589,7 +578,7 @@ SQL;
                 'vendor' => $campaign->vendor,
                 'max_cpc' => $campaign->max_cpc,
                 'max_cpm' => $campaign->max_cpm,
-                'budget' => $this->calculateBudgetAfterFees($campaign->budget, $licenceTxFee, $operatorTxFee),
+                'budget' => self::calculateBudgetAfterFees($campaign->budget, $totalFee),
                 'banners' => $banners,
                 'targeting_requires' => (array)$campaign->targeting_requires,
                 'targeting_excludes' => (array)$campaign->targeting_excludes,
@@ -617,13 +606,9 @@ SQL;
         return BannerClassification::fetchClassifiedByBannerIds($bannerIds);
     }
 
-    private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
+    private static function calculateBudgetAfterFees(int $budget, float $totalFee): int
     {
-        $licenceFee = (int)floor($budget * $licenceTxFee);
-        $budgetAfterFee = $budget - $licenceFee;
-        $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
-
-        return $budgetAfterFee - $operatorFee;
+        return $budget - (int)floor($budget * $totalFee);
     }
 
     private function replaceLandingUrlPlaceholders(
@@ -635,10 +620,10 @@ SQL;
         string $siteId,
         string $zoneId
     ): string {
-        if (false === strpos($landingUrl, self::PLACEHOLDER_CASE_ID)) {
-            $landingUrl = Utils::addUrlParameter($landingUrl, 'cid', $caseId);
-        } else {
+        if (str_contains($landingUrl, self::PLACEHOLDER_CASE_ID)) {
             $landingUrl = str_replace(self::PLACEHOLDER_CASE_ID, $caseId, $landingUrl);
+        } else {
+            $landingUrl = Utils::addUrlParameter($landingUrl, 'cid', $caseId);
         }
 
         return str_replace(
