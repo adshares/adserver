@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,11 +29,8 @@ class TotalFeeReader
 {
     private const FEE_PRECISION_MAXIMUM = 4;
 
-    private LicenseReader $licenseReader;
-
-    public function __construct(LicenseReader $licenseReader)
+    public function __construct(private readonly LicenseReader $licenseReader)
     {
-        $this->licenseReader = $licenseReader;
     }
 
     public function getTotalFeeDemand(): float

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -47,12 +47,8 @@ class DemandPreparePayments extends BaseCommand
 
     protected $description = 'Prepares payments for events and license';
 
-    private LicenseReader $licenseReader;
-
-    public function __construct(Locker $locker, LicenseReader $licenseReader)
+    public function __construct(Locker $locker, private readonly LicenseReader $licenseReader)
     {
-        $this->licenseReader = $licenseReader;
-
         parent::__construct($locker);
     }
 
@@ -60,7 +56,6 @@ class DemandPreparePayments extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
-
             return;
         }
 
@@ -69,7 +64,6 @@ class DemandPreparePayments extends BaseCommand
         $to = $this->getDateTimeFromOption('to');
         if ($from !== null && $to !== null && $to < $from) {
             $this->release();
-
             throw new InvalidArgumentException(
                 sprintf(
                     '[DemandPreparePayments] Invalid period from (%s) to (%s)',
