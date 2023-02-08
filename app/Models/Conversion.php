@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -54,6 +54,7 @@ use Illuminate\Support\Collection;
  * @property int event_value
  * @property int license_fee
  * @property int operator_fee
+ * @property int community_fee
  * @property int paid_amount
  * @property int payment_id
  * @property string pay_to
