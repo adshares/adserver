@@ -59,6 +59,8 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
 
     public function testHandle(): void
     {
+        $this->mockCommunityFeeReader(0.01);
+        $this->mockLicenseReader(0.0);
         /** @var Collection|EventLog[] $events */
         EventLog::factory()
             ->times(3)
@@ -99,14 +101,8 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
     {
         Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $communityFeeReader = self::createMock(CommunityFeeReader::class);
-        $communityFeeReader->method('getAddress')->willReturn(new AccountId('0001-00000024-FF89'));
-        $communityFeeReader->method('getFee')->willReturn(0.5);
-        $this->instance(CommunityFeeReader::class, $communityFeeReader);
-        $licenseReader = self::createMock(LicenseReader::class);
-        $licenseReader->method('getAddress')->willReturn(new AccountId('0001-00000002-BB2D'));
-        $licenseReader->method('getFee')->willReturn(0.5);
-        $this->instance(LicenseReader::class, $licenseReader);
+        $this->mockCommunityFeeReader(0.5);
+        $this->mockLicenseReader(0.5);
         /** @var EventLog $event */
         $event = EventLog::factory()->create([
             'event_value_currency' => 1000,
@@ -147,16 +143,10 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
     {
         Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $communityFeeReader = self::createMock(CommunityFeeReader::class);
-        $communityFeeReader->method('getAddress')->willReturn(new AccountId('0001-00000024-FF89'));
-        $communityFeeReader->method('getFee')->willReturn(1 / 3);
-        $this->instance(CommunityFeeReader::class, $communityFeeReader);
-        $licenseReader = self::createMock(LicenseReader::class);
-        $licenseReader->method('getAddress')->willReturn(new AccountId('0001-00000002-BB2D'));
-        $licenseReader->method('getFee')->willReturn(0.1);
-        $this->instance(LicenseReader::class, $licenseReader);
-        /** @var Conversion $event */
-        $event = Conversion::factory()->create([
+        $this->mockCommunityFeeReader(1 / 3);
+        $this->mockLicenseReader(0.1);
+        /** @var Conversion $conversion */
+        $conversion = Conversion::factory()->create([
             'event_value_currency' => 1000,
             'exchange_rate' => 1,
             'event_value' => 1000,
@@ -171,13 +161,13 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             ->expectsOutput('and a community fee of 150 clicks payable to 0001-00000024-FF89')
             ->assertExitCode(0);
 
-        $event->refresh();
+        $conversion->refresh();
 
-        self::assertNotEmpty($event->payment_id);
-        self::assertEquals(100, $event->license_fee);
-        self::assertEquals(450, $event->operator_fee);
-        self::assertEquals(150, $event->community_fee);
-        self::assertEquals(300, $event->paid_amount);
+        self::assertNotEmpty($conversion->payment_id);
+        self::assertEquals(100, $conversion->license_fee);
+        self::assertEquals(450, $conversion->operator_fee);
+        self::assertEquals(150, $conversion->community_fee);
+        self::assertEquals(300, $conversion->paid_amount);
 
         $payments = Payment::all();
         self::assertCount(3, $payments);// adserver + license + community
@@ -189,5 +179,71 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
                 self::assertEquals($entry->pay_to, $payment->account_address);
             });
         });
+    }
+
+    public function testHandleNoLicenseAddress(): void
+    {
+        Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->mockCommunityFeeReader(0.5);
+        $licenseReader = self::createMock(LicenseReader::class);
+        $licenseReader->method('getAddress')->willReturn(null);
+        $licenseReader->method('getFee')->willReturn(0.0);
+        $this->instance(LicenseReader::class, $licenseReader);
+        /** @var EventLog $event */
+        $event = EventLog::factory()->create([
+            'event_value_currency' => 1000,
+            'exchange_rate' => 1,
+            'event_value' => 1000,
+            'payment_status' => AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED,
+            'pay_to' => new AccountId('0001-00000001-8B4E'),
+        ]);
+        /** @var Conversion $conversion */
+        $conversion = Conversion::factory()->create([
+            'event_value_currency' => 1000,
+            'exchange_rate' => 1,
+            'event_value' => 1000,
+            'payment_status' => AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED,
+            'pay_to' => new AccountId('0001-00000001-8B4E'),
+        ]);
+
+        $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE)
+            ->expectsOutput('Found 1 payable conversions.')
+            ->expectsOutput('In that, there are 1 recipients')
+            ->expectsOutput('and a community fee of 250 clicks payable to 0001-00000024-FF89')
+            ->expectsOutput('Found 1 payable events.')
+            ->expectsOutput('In that, there are 1 recipients')
+            ->expectsOutput('and a community fee of 250 clicks payable to 0001-00000024-FF89')
+            ->assertExitCode(0);
+
+        $event->refresh();
+        $conversion->refresh();
+
+        self::assertNotEmpty($event->payment_id);
+        self::assertEquals(0, $event->license_fee);
+        self::assertEquals(500, $event->operator_fee);
+        self::assertEquals(250, $event->community_fee);
+        self::assertEquals(250, $event->paid_amount);
+        self::assertNotEmpty($conversion->payment_id);
+        self::assertEquals(0, $conversion->license_fee);
+        self::assertEquals(500, $conversion->operator_fee);
+        self::assertEquals(250, $conversion->community_fee);
+        self::assertEquals(250, $conversion->paid_amount);
+    }
+
+    private function mockCommunityFeeReader(float $fee): void
+    {
+        $communityFeeReader = self::createMock(CommunityFeeReader::class);
+        $communityFeeReader->method('getAddress')->willReturn(new AccountId('0001-00000024-FF89'));
+        $communityFeeReader->method('getFee')->willReturn($fee);
+        $this->instance(CommunityFeeReader::class, $communityFeeReader);
+    }
+
+    private function mockLicenseReader(float $fee): void
+    {
+        $licenseReader = self::createMock(LicenseReader::class);
+        $licenseReader->method('getAddress')->willReturn(new AccountId('0001-00000002-BB2D'));
+        $licenseReader->method('getFee')->willReturn($fee);
+        $this->instance(LicenseReader::class, $licenseReader);
     }
 }

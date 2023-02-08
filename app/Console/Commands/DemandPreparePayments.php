@@ -77,7 +77,7 @@ class DemandPreparePayments extends BaseCommand
             );
         }
 
-        $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
+        $licenseAccountAddress = $this->licenseReader->getAddress()?->toString();
         $demandLicenseFeeCoefficient = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
         $demandOperatorFeeCoefficient = config('app.payment_tx_fee');
         $communityAccountAddress = $this->communityFeeReader->getAddress()->toString();
@@ -125,18 +125,17 @@ class DemandPreparePayments extends BaseCommand
                 }
             );
 
-            $licensePayment = $this->savePayment($licenseAccountAddress, $totalLicenseFee);
+            if (null !== $licenseAccountAddress) {
+                $licensePayment = $this->savePayment($licenseAccountAddress, $totalLicenseFee);
+                $this->info(
+                    sprintf(
+                        'and a license fee of %d clicks payable to %s',
+                        $licensePayment->fee,
+                        $licensePayment->account_address,
+                    )
+                );
+            }
             $communityPayment = $this->savePayment($communityAccountAddress, $totalCommunityFee);
-
-            DB::commit();
-
-            $this->info(
-                sprintf(
-                    'and a license fee of %d clicks payable to %s',
-                    $licensePayment->fee,
-                    $licensePayment->account_address,
-                )
-            );
             $this->info(
                 sprintf(
                     'and a community fee of %d clicks payable to %s',
@@ -144,6 +143,8 @@ class DemandPreparePayments extends BaseCommand
                     $communityPayment->account_address,
                 )
             );
+
+            DB::commit();
         }
         while (true) {
             $events = EventLog::fetchUnpaidEvents($from, $to, (int)$this->option('chunkSize'));
@@ -189,18 +190,17 @@ class DemandPreparePayments extends BaseCommand
                 }
             );
 
-            $licensePayment = $this->savePayment($licenseAccountAddress, $totalLicenseFee);
+            if (null !== $licenseAccountAddress) {
+                $licensePayment = $this->savePayment($licenseAccountAddress, $totalLicenseFee);
+                $this->info(
+                    sprintf(
+                        'and a license fee of %d clicks payable to %s',
+                        $licensePayment->fee,
+                        $licensePayment->account_address,
+                    )
+                );
+            }
             $communityPayment = $this->savePayment($communityAccountAddress, $totalCommunityFee);
-
-            DB::commit();
-
-            $this->info(
-                sprintf(
-                    'and a license fee of %d clicks payable to %s',
-                    $licensePayment->fee,
-                    $licensePayment->account_address,
-                )
-            );
             $this->info(
                 sprintf(
                     'and a community fee of %d clicks payable to %s',
@@ -208,6 +208,8 @@ class DemandPreparePayments extends BaseCommand
                     $communityPayment->account_address,
                 )
             );
+
+            DB::commit();
         }
 
         $this->invalidateStatisticsForPreparedEvents($from, $to);
