@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,6 +32,7 @@ use Carbon\Carbon;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
@@ -54,6 +55,7 @@ use Illuminate\Support\Collection;
  * @property int event_value
  * @property int license_fee
  * @property int operator_fee
+ * @property int community_fee
  * @property int paid_amount
  * @property int payment_id
  * @property string pay_to
@@ -64,6 +66,7 @@ class Conversion extends Model
     use AccountAddress;
     use AutomateMutators;
     use BinHex;
+    use HasFactory;
 
     public const TYPE = 'conversion';
 

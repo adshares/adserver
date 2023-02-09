@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -42,23 +42,14 @@ use function sprintf;
 
 final class LicenseFeeSender
 {
-    /** @var AdsClient */
-    private $adsClient;
-
     /** @var PaymentProcessingResult[] */
-    private $results = [];
+    private array $results = [];
 
-    /** @var LicenseReader */
-    private $licenseReader;
-
-    /** @var AdsPayment */
-    private $adsPayment;
-
-    public function __construct(AdsClient $adsClient, LicenseReader $licenseReader, AdsPayment $adsPayment)
-    {
-        $this->adsClient = $adsClient;
-        $this->licenseReader = $licenseReader;
-        $this->adsPayment = $adsPayment;
+    public function __construct(
+        private readonly AdsClient $adsClient,
+        private readonly LicenseReader $licenseReader,
+        private readonly AdsPayment $adsPayment,
+    ) {
     }
 
     public function add(PaymentProcessingResult $processPaymentDetails): void
@@ -88,10 +79,15 @@ final class LicenseFeeSender
         );
     }
 
-    public function sendAllLicensePayments(): NetworkPayment
+    public function sendAllLicensePayments(): ?NetworkPayment
     {
+        $receiverAddress = $this->licenseReader->getAddress()?->toString();
+        if (null === $receiverAddress) {
+            return null;
+        }
+
         $payment = NetworkPayment::registerNetworkPayment(
-            $this->fetchLicenseAccount(),
+            $receiverAddress,
             config('app.adshares_address'),
             $this->licenseFeeSum(),
             $this->adsPayment
@@ -133,16 +129,5 @@ final class LicenseFeeSender
                 $payment->amount
             ));
         }
-    }
-
-    private function fetchLicenseAccount(): string
-    {
-        try {
-            $licenseAccount = $this->licenseReader->getAddress()->toString();
-        } catch (ModelNotFoundException $modelNotFoundException) {
-            throw new MissingInitialConfigurationException('No config entry for license account.');
-        }
-
-        return $licenseAccount;
     }
 }

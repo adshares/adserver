@@ -21,25 +21,24 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Tests\Common\Infrastructure\Service;
 
-use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\ConversionDefinition;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Infrastructure\Service\CommunityFeeReader;
 
-class ConversionDefinitionFactory extends Factory
+class CommunityFeeReaderTest extends TestCase
 {
-    public function definition(): array
+    public function testGetAddress(): void
     {
-        return [
-            'campaign_id' => Campaign::factory()->create(),
-            'name' => $this->faker->word,
-            'limit_type' => 'in_budget',
-            'event_type' => 'Add to cart',
-            'type' => ConversionDefinition::ADVANCED_TYPE,
-            'value' => null,
-            'is_value_mutable' => true,
-            'is_repeatable' => true,
-        ];
+        $reader = new CommunityFeeReader();
+
+        self::assertEquals('0001-00000024-FF89', $reader->getAddress()->toString());
+    }
+
+    public function testGetFee(): void
+    {
+        $reader = new CommunityFeeReader();
+
+        self::assertEquals(0.01, $reader->getFee());
     }
 }

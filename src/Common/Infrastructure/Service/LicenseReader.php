@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,11 +26,11 @@ namespace Adshares\Common\Infrastructure\Service;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
+use Illuminate\Support\Facades\Log;
 
 class LicenseReader
 {
-    private const CE_LICENSE_ACCOUNT = '0001-00000024-FF89';
-    private const CE_LICENSE_FEE = 0.01;
+    private const DEFAULT_FEE = 0.0;
     private const LICENSE_ACCOUNT = 'licence-account';
     public const LICENSE_RX_FEE = 'licence-rx-fee';
     public const LICENSE_TX_FEE = 'licence-tx-fee';
@@ -42,7 +42,7 @@ class LicenseReader
         $this->licenseVault = $licenseVault;
     }
 
-    public function getAddress(): AccountId
+    public function getAddress(): ?AccountId
     {
         $value = apcu_fetch(self::LICENSE_ACCOUNT);
 
@@ -53,7 +53,8 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return new AccountId(self::CE_LICENSE_ACCOUNT);
+            Log::error(sprintf('License read failed: %s', $exception->getMessage()));
+            return null;
         }
 
         $value = $license->getPaymentAddress();
@@ -78,7 +79,8 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return self::CE_LICENSE_FEE;
+            Log::error(sprintf('License read failed: %s', $exception->getMessage()));
+            return self::DEFAULT_FEE;
         }
 
         if (self::LICENSE_TX_FEE === $type) {

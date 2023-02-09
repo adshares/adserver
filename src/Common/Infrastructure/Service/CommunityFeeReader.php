@@ -21,25 +21,22 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Common\Infrastructure\Service;
 
-use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\ConversionDefinition;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Adshares\Common\Domain\ValueObject\AccountId;
 
-class ConversionDefinitionFactory extends Factory
+class CommunityFeeReader
 {
-    public function definition(): array
+    private const CE_LICENSE_ACCOUNT = '0001-00000024-FF89';
+    private const CE_LICENSE_FEE = 0.01;
+
+    public function getAddress(): AccountId
     {
-        return [
-            'campaign_id' => Campaign::factory()->create(),
-            'name' => $this->faker->word,
-            'limit_type' => 'in_budget',
-            'event_type' => 'Add to cart',
-            'type' => ConversionDefinition::ADVANCED_TYPE,
-            'value' => null,
-            'is_value_mutable' => true,
-            'is_repeatable' => true,
-        ];
+        return new AccountId(self::CE_LICENSE_ACCOUNT);
+    }
+
+    public function getFee(): float
+    {
+        return self::CE_LICENSE_FEE;
     }
 }
