@@ -63,7 +63,13 @@ class CommunityFeeReader
     private function init(): void
     {
         try {
-            $response = $this->client->get(self::URI);
+            $response = $this->client->get(
+                self::URI,
+                [
+                    'headers' => ['Content-Type' => 'application/json'],
+                    'timeout' => 5.0,
+                ]
+            );
         } catch (GuzzleException $exception) {
             Log::error(sprintf('Cannot init community fee: %s', $exception->getMessage()));
             return;
