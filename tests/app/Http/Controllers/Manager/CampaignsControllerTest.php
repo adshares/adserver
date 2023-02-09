@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -142,6 +142,13 @@ final class CampaignsControllerTest extends TestCase
         return [
             'missing campaign field' => [fn() => [$this->getCampaignData()]],
             'invalid campaign type' => [fn() => ['campaign' => 'set']],
+            'invalid medium' => [
+                function () {
+                    $data = $this->getCampaignData();
+                    $data['basicInformation'] = [...$data['basicInformation'], 'medium' => 'invalid'];
+                    return ['campaign' => $data];
+                }
+            ],
             'ad without size' => [
                 fn() => ['campaign' => $this->getCampaignData(['ads' => [$this->getBannerData([], 'creativeSize')]])]
             ],
@@ -254,16 +261,6 @@ final class CampaignsControllerTest extends TestCase
             $response = $this->getJson(self::URI . '/' . $id);
             $response->assertStatus(Response::HTTP_OK);
         }
-    }
-
-    public function testCreateCampaignWithInvalidMedium(): void
-    {
-        $this->createUser();
-
-        $campaignInputData = $this->campaignInputData();
-        $campaignInputData['basicInformation']['medium'] = 'invalid';
-        $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     private function campaignInputData(): array
