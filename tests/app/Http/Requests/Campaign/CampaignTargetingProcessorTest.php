@@ -84,4 +84,36 @@ final class CampaignTargetingProcessorTest extends TestCase
             ['metaverse', 'cryptovoxels', 'example.com'],
         ];
     }
+
+    /**
+     * @dataProvider processTargetingValidSiteDomain
+     */
+    public function testProcessTargetingRequireValidSiteDomain(string $medium, ?string $vendor, string $domain): void
+    {
+        $processor = new CampaignTargetingProcessor(
+            (new DummyConfigurationRepository())->fetchMedium($medium, $vendor)
+        );
+        $targeting = [
+            'site' => [
+                'domain' => [
+                    $domain,
+                ],
+            ],
+        ];
+
+        $result = $processor->processTargetingRequire($targeting);
+
+        $this->assertEquals([$domain], $result['site']['domain']);
+    }
+
+    public function processTargetingValidSiteDomain(): array
+    {
+        return [
+            ['web', null, 'example.com'],
+            ['metaverse', 'decentraland', 'decentraland.org'],
+            ['metaverse', 'decentraland', 'scene-3-n7.decentraland.org'],
+            ['metaverse', 'cryptovoxels', 'cryptovoxels.com'],
+            ['metaverse', 'cryptovoxels', 'scene-3.cryptovoxels.com'],
+        ];
+    }
 }

@@ -85,16 +85,21 @@ class CampaignTargetingProcessor
             }
             if (MediumName::Metaverse->value === $this->mediumName) {
                 if ('decentraland' === $this->vendor) {
+                    if ('decentraland.org' === $domain) {
+                        continue;
+                    }
                     if (!SiteUtils::isValidDecentralandUrl('https://' . $domain)) {
                         throw new InvalidArgumentException(sprintf('Invalid Decentraland domain %s', $domain));
                     }
                 } elseif ('cryptovoxels' === $this->vendor) {
+                    if ('cryptovoxels.com' === $domain) {
+                        continue;
+                    }
                     if (!SiteUtils::isValidCryptovoxelsUrl('https://' . $domain)) {
                         throw new InvalidArgumentException(sprintf('Invalid Cryptovoxels domain %s', $domain));
                     }
                 }
             }
-
         }
     }
 }
