@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -54,5 +54,8 @@ final class DomainReaderTest extends TestCase
         $this->assertFalse(DomainReader::checkDomain('https://example.com', 'sub1.example.com'));
         $this->assertFalse(DomainReader::checkDomain('https://www.example.com', 'sub1.example.com'));
         $this->assertFalse(DomainReader::checkDomain('https://sub1.sub2.example.com', 'sub1.example.com'));
+
+        $this->assertTrue(DomainReader::checkDomain('https://example.com', 'com'));
+        $this->assertFalse(DomainReader::checkDomain('https://example.com', 'om'));
     }
 }
