@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
@@ -48,9 +49,15 @@ class CampaignRepository
     ) {
     }
 
-    public function find()
+    public function find(?FilterCollection $filters = null): Collection
     {
-        return (new Campaign())->with('conversions')->get();
+        $builder = (new Campaign())->with('conversions');
+        if (null !== $filters) {
+            foreach ($filters->getFilters() as $filter) {
+                $builder->whereIn($filter->getName(), $filter->getValues());
+            }
+        }
+        return $builder->get();
     }
 
     /**
@@ -282,9 +289,15 @@ class CampaignRepository
             ->tokenPaginate($perPage);
     }
 
-    public function fetchCampaigns(?int $perPage = null): CursorPaginator
+    public function fetchCampaigns(?FilterCollection $filters = null, ?int $perPage = null): CursorPaginator
     {
-        return Campaign::query()->orderBy('id')
+        $builder = Campaign::query();
+        if (null !== $filters) {
+            foreach ($filters->getFilters() as $filter) {
+                $builder->whereIn($filter->getName(), $filter->getValues());
+            }
+        }
+        return $builder->orderBy('id')
             ->tokenPaginate($perPage);
     }
 

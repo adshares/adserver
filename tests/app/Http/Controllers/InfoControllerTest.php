@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -52,7 +52,7 @@ class InfoControllerTest extends TestCase
                 'inventoryUrl' => 'https://example.com/adshares/inventory/list',
                 'adsAddress' => '0001-00000005-CBCA',
                 'supportEmail' => 'mail@example.com',
-                'demandFee' => 0.0199,
+                'demandFee' => 0.0297,
                 'supplyFee' => 0.0199,
                 'registrationMode' => 'public',
                 'statistics' => [

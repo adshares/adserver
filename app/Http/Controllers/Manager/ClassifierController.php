@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -50,10 +50,10 @@ class ClassifierController extends Controller
 
         try {
             $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
+            $banners = NetworkBanner::fetchByFilter($networkBannerFilter, Site::fetchAll());
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
-        $banners = NetworkBanner::fetchByFilter($networkBannerFilter, Site::fetchAll());
 
         $paginated = $banners->slice($offset, $limit);
 

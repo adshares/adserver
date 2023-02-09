@@ -44,6 +44,7 @@ final class ServerConfigurationControllerTest extends TestCase
 {
     private const URI_CONFIG = '/api/v2/config';
     private const URI_PLACEHOLDERS = '/api/v2/config/placeholders';
+    private const URI_REJECTED_DOMAINS = '/api/v2/config/rejectedDomains';
 
     public function testAccessAdminNoJwt(): void
     {
@@ -303,11 +304,11 @@ final class ServerConfigurationControllerTest extends TestCase
             'url' => 'https://malwareexample.com',
             'user_id' => User::factory()->create(),
         ]);
-        $this->setUpAdmin();
+        $this->setUpModerator();
         $data = ['rejectedDomains' => 'example.com'];
 
         $response = $this->patchJson(
-            self::URI_CONFIG,
+            self::URI_REJECTED_DOMAINS,
             $data,
         );
 
@@ -333,17 +334,47 @@ final class ServerConfigurationControllerTest extends TestCase
 
     public function testStoreRejectedDomainsEmpty(): void
     {
-        $this->setUpAdmin();
+        $this->setUpModerator();
         SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
         $data = ['rejectedDomains' => ''];
 
-        $response = $this->patchJson(
-            self::URI_CONFIG,
-            $data,
-        );
+        $response = $this->patchJson(self::URI_REJECTED_DOMAINS, $data);
 
         $response->assertStatus(Response::HTTP_OK);
         self::assertEmpty(SitesRejectedDomain::all());
+    }
+
+    public function testStoreRejectedDomainsNull(): void
+    {
+        $this->setUpModerator();
+        SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
+        $data = ['rejectedDomains' => null];
+
+        $response = $this->patchJson(self::URI_REJECTED_DOMAINS, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertEmpty(SitesRejectedDomain::all());
+    }
+
+    /**
+     * @dataProvider storeRejectedDomainsInvalidProvider
+     */
+    public function testStoreRejectedDomainsInvalid(array $data): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->patchJson(self::URI_REJECTED_DOMAINS, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function storeRejectedDomainsInvalidProvider(): array
+    {
+        return [
+            'invalid key' => [['domains' => 'rejected.com']],
+            'invalid domains type' => [['rejectedDomains' => 1]],
+            'invalid domains values' => [['rejectedDomains' => 'a,b']],
+        ];
     }
 
     /**
@@ -403,7 +434,6 @@ final class ServerConfigurationControllerTest extends TestCase
             'invalid country' => [[Config::INVOICE_COMPANY_COUNTRY => 'invalid']],
             'invalid user role (empty)' => [[Config::DEFAULT_USER_ROLES => '']],
             'invalid user role (invalid)' => [[Config::DEFAULT_USER_ROLES => 'invalid']],
-            'invalid rejected domains' => [['rejected-domains' => 'a,b']],
             'invalid inventory failed connection limit' => [[Config::INVENTORY_FAILED_CONNECTION_LIMIT => '0']],
             'invalid inactive host removal period' => [[Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL => '0']],
         ];
@@ -567,10 +597,7 @@ final class ServerConfigurationControllerTest extends TestCase
     {
         $this->setUpAdmin();
 
-        $response = $this->patchJson(
-            self::URI_PLACEHOLDERS,
-            [],
-        );
+        $response = $this->patchJson(self::URI_PLACEHOLDERS);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -595,6 +622,12 @@ final class ServerConfigurationControllerTest extends TestCase
     private function setUpAdmin(): void
     {
         Passport::actingAs(User::factory()->admin()->create(), [], 'jwt');
+    }
+
+    private function setUpModerator(): void
+    {
+        $moderator = User::factory()->create(['is_moderator' => true]);
+        Passport::actingAs($moderator, [], 'jwt');
     }
 
     private function setUpUser(): void

@@ -955,6 +955,7 @@ class SupplyController extends Controller
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
             'demand' => false,
+            'bannerSize' => $banner->size,
             'bannerType' => $banner->type,
         ];
 
@@ -988,7 +989,7 @@ class SupplyController extends Controller
         }
 
         if ($case->banner_id !== $bannerId) {
-            throw new BadRequestHttpException('Wrong banner id');
+            throw new UnprocessableEntityHttpException('Wrong banner id');
         }
 
         $userId = User::fetchByUuid($case->publisher_id)->id;
@@ -1138,8 +1139,10 @@ class SupplyController extends Controller
     private function getZoneType(array $placement): ?string
     {
         if (isset($placement['types'])) {
-            $zoneTypes = array_unique(
-                array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+            $zoneTypes = array_values(
+                array_unique(
+                    array_map(fn($type) => Utils::getZoneTypeByBannerType($type), $placement['types'])
+                )
             );
             if (count($zoneTypes) > 1) {
                 throw new UnprocessableEntityHttpException(
@@ -1244,6 +1247,11 @@ class SupplyController extends Controller
                 if (!is_array($placement[$field])) {
                     throw new UnprocessableEntityHttpException(
                         sprintf('Field `placements[].%s` must be an array', $field)
+                    );
+                }
+                if (empty($placement[$field])) {
+                    throw new UnprocessableEntityHttpException(
+                        sprintf('Field `placements[].%s` must be a non-empty array', $field)
                     );
                 }
                 foreach ($placement[$field] as $entry) {

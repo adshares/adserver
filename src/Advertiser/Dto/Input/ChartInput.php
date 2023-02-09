@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Advertiser\Dto\Input;
 
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 use DateTimeInterface;
@@ -55,31 +56,14 @@ final class ChartInput
         StatsRepository::RESOLUTION_YEAR,
     ];
 
-    /** @var string */
-    private $advertiserId;
-
-    /** @var string  */
-    private $type;
-
-    /** @var string  */
-    private $resolution;
-
-    /** @var DateTime */
-    private $dateStart;
-
-    /** @var DateTime */
-    private $dateEnd;
-
-    /** @var string|null */
-    private $campaignId;
-
     public function __construct(
-        string $advertiserId,
-        string $type,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?string $campaignId = null
+        private readonly string $advertiserId,
+        private readonly string $type,
+        private readonly string $resolution,
+        private readonly DateTime $dateStart,
+        private readonly DateTime $dateEnd,
+        private readonly ?string $campaignId = null,
+        private readonly ?FilterCollection $filters = null,
     ) {
         if (!in_array($type, self::ALLOWED_TYPES, true)) {
             throw new InvalidInputException(sprintf('Unsupported chart type `%s`.', $type));
@@ -96,13 +80,6 @@ final class ChartInput
                 $dateEnd->format(DateTimeInterface::ATOM)
             ));
         }
-
-        $this->type = $type;
-        $this->resolution = $resolution;
-        $this->advertiserId = $advertiserId;
-        $this->campaignId = $campaignId;
-        $this->dateStart = $dateStart;
-        $this->dateEnd = $dateEnd;
     }
 
     public function getAdvertiserId(): string
@@ -133,5 +110,10 @@ final class ChartInput
     public function getCampaignId(): ?string
     {
         return $this->campaignId;
+    }
+
+    public function getFilters(): ?FilterCollection
+    {
+        return $this->filters;
     }
 }

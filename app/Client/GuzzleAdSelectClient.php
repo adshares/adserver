@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -173,8 +173,10 @@ class GuzzleAdSelectClient implements AdSelect
                         'publisher_id' => $user->uuid,
                         'uuid'         => $site->uuid,
                         'medium'       => $site->medium,
-                        'vendor'       => $site->vendor ?? CampaignMapper::DEFAULT_VENDOR,
                     ];
+                    if (null !== $site->vendor) {
+                        $sitesMap[$siteId]['vendor'] = $site->vendor;
+                    }
                     if (isset($zones[$i]['options']['banner_type'])) {
                         $sitesMap[$siteId]['filters']['require']['type'] = (array)$zones[$i]['options']['banner_type'];
                     }
