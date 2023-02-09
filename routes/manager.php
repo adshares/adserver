@@ -119,6 +119,8 @@ Route::middleware([Kernel::ADVERTISER_ACCESS, Kernel::JSON_API])->group(
             [BidStrategyController::class, 'deleteBidStrategy']
         );
 
+        Route::get('campaigns/media', [CampaignsController::class, 'fetchCampaignsMedia']);
+
         Route::get('campaigns', [CampaignsController::class, 'browse'])
             ->name('app.campaigns.browse');
         Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])
