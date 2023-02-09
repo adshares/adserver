@@ -25,20 +25,65 @@ namespace Adshares\Tests\Common\Infrastructure\Service;
 
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Infrastructure\Service\CommunityFeeReader;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 
 class CommunityFeeReaderTest extends TestCase
 {
     public function testGetAddress(): void
     {
-        $reader = new CommunityFeeReader();
+        $reader = $this->getCommunityFeeReader();
 
         self::assertEquals('0001-00000024-FF89', $reader->getAddress()->toString());
     }
 
     public function testGetFee(): void
     {
-        $reader = new CommunityFeeReader();
+        $reader = $this->getCommunityFeeReader();
 
         self::assertEquals(0.01, $reader->getFee());
+    }
+
+    /**
+     * @dataProvider getFeeInvalidProvider
+     */
+    public function testGetFeeInvalid(string $body): void
+    {
+        $handlerStack = HandlerStack::create(new MockHandler([new Response(body: $body)]));
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $reader = new CommunityFeeReader($client);
+
+        self::assertEquals(0.01, $reader->getFee());
+    }
+
+    public function getFeeInvalidProvider(): array
+    {
+        return [
+            'no community field' => ['{}'],
+            'invalid community type' => ['{"community": 0.01}'],
+        ];
+    }
+
+    public function testGetFeeOnClientError(): void
+    {
+        $handlerStack = HandlerStack::create(new MockHandler([new Response(404)]));
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $reader = new CommunityFeeReader($client);
+
+        self::assertEquals(0.01, $reader->getFee());
+    }
+
+    private function getCommunityFeeReader(): CommunityFeeReader
+    {
+        $handlerStack = HandlerStack::create(
+            new MockHandler([
+                new Response(body: file_get_contents(base_path('tests/mock/network.json'))),
+            ])
+        );
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+
+        return new CommunityFeeReader($client);
     }
 }
