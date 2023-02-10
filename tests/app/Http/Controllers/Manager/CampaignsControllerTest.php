@@ -1086,6 +1086,27 @@ final class CampaignsControllerTest extends TestCase
         $response->assertExactJson(['campaignsMedia' => []]);
     }
 
+    public function testFetchCampaignsMediaWhileTaxonomyChanged(): void
+    {
+        $user = $this->login();
+        Campaign::factory()
+            ->count(3)
+            ->state(
+                new Sequence(
+                    ['medium' => 'metaverse', 'vendor' => 'legacy'],
+                )
+            )->create(['user_id' => $user]);
+
+        $response = $this->getJson(self::URI_FILTERS);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(
+            [
+                'campaignsMedia' => []
+            ]
+        );
+    }
+
     private static function buildCampaignStatusUri(int $campaignId): string
     {
         return sprintf('%s/%d/status', self::URI, $campaignId);
