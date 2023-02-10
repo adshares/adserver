@@ -965,13 +965,44 @@ class SitesControllerTest extends TestCase
     {
         return [
             [['invalid' => 1], Response::HTTP_BAD_REQUEST, 'Field `domain` is required.'],
-            [['domain' => 1], Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid domain.'],
+            [['domain' => 1, 'medium' => 'web'], Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid domain.'],
             [
-                ['domain' => 'example.rejected.com'],
+                ['domain' => 'example.rejected.com', 'medium' => 'web'],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
                 'The domain example.rejected.com is rejected.',
             ],
-            [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
+            [['domain' => 'example.com', 'medium' => 'web'], Response::HTTP_OK, 'Valid domain.'],
+            [['domain' => 'example.com'], Response::HTTP_UNPROCESSABLE_ENTITY, 'Field `medium` is required.'],
+            [
+                ['domain' => 'example.com', 'medium' => 0],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Field `medium` must be a string.',
+            ],
+            [
+                ['domain' => 'example.com', 'medium' => 'web', 'vendor' => 0],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Field `vendor` must be a string or null.',
+            ],
+            [
+                ['domain' => 'example.com', 'medium' => 'metaverse', 'vendor' => 'decentraland'],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Invalid Decentraland domain example.com',
+            ],
+            [
+                ['domain' => 'example.com', 'medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Invalid Cryptovoxels domain example.com',
+            ],
+            [
+                ['domain' => 'scene-2-n5.decentraland.org', 'medium' => 'metaverse', 'vendor' => 'decentraland'],
+                Response::HTTP_OK,
+                'Valid domain.',
+            ],
+            [
+                ['domain' => 'scene-4745.cryptovoxels.com', 'medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
+                Response::HTTP_OK,
+                'Valid domain.',
+            ],
         ];
     }
 

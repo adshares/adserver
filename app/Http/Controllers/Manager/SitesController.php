@@ -80,7 +80,8 @@ class SitesController extends Controller
         $domain = DomainReader::domain($url);
         $medium = $input['medium'] ?? null;
         $vendor = $input['vendor'] ?? null;
-        //TODO move validation from processCategories
+        self::validateMedium($medium);
+        self::validateVendor($vendor);
         self::validateDomain($domain, $medium, $vendor);
 
         try {
@@ -488,7 +489,8 @@ class SitesController extends Controller
         if (null === $domain) {
             throw new BadRequestHttpException('Field `domain` is required.');
         }
-        //TODO add validation
+        self::validateMedium($medium);
+        self::validateVendor($vendor);
         self::validateDomain($domain, $medium, $vendor);
 
         return self::json(
@@ -509,13 +511,30 @@ class SitesController extends Controller
         if (MediumName::Metaverse->value === $medium) {
             if ('decentraland' === $vendor) {
                 if (!SiteUtils::isValidDecentralandUrl('https://' . $domain)) {
-                    throw new InvalidArgumentException(sprintf('Invalid Decentraland domain %s', $domain));
+                    throw new UnprocessableEntityHttpException(sprintf('Invalid Decentraland domain %s', $domain));
                 }
             } elseif ('cryptovoxels' === $vendor) {
                 if (!SiteUtils::isValidCryptovoxelsUrl('https://' . $domain)) {
-                    throw new InvalidArgumentException(sprintf('Invalid Cryptovoxels domain %s', $domain));
+                    throw new UnprocessableEntityHttpException(sprintf('Invalid Cryptovoxels domain %s', $domain));
                 }
             }
+        }
+    }
+
+    private static function validateMedium(mixed $medium): void
+    {
+        if (null === $medium) {
+            throw new UnprocessableEntityHttpException('Field `medium` is required.');
+        }
+        if (!is_string($medium)) {
+            throw new UnprocessableEntityHttpException('Field `medium` must be a string.');
+        }
+    }
+
+    private static function validateVendor(mixed $vendor): void
+    {
+        if ($vendor !== null && !is_string($vendor)) {
+            throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null.');
         }
     }
 
