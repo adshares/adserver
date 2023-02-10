@@ -60,7 +60,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -391,94 +390,6 @@ class SupplyController extends Controller
             ->map($this->mapFoundBannerToResult())
             ->getValues();
         return self::json(['data' => $foundBanners]);
-    }
-
-    public function findSimple(
-        Request $request,
-        AdUser $contextProvider,
-        AdSelect $bannerFinder,
-        string $zone_id,
-        string $impression_id
-    ): BaseResponse {
-        $zone = Zone::fetchByPublicId($zone_id);
-        $response = new Response();
-        $queryData = [
-            'page' => [
-                "iid" => $impression_id,
-                "url" => $zone->site->url,
-            ],
-            'zones' => [
-                [
-                    'zone' => $zone_id,
-                    'options' => [
-                        'banner_type' => [
-                            $request->get('type')
-                        ]
-                    ]
-                ],
-            ],
-        ];
-
-        $foundBanner = $this->findBanners($queryData, $request, $response, $contextProvider, $bannerFinder)->first();
-        if ($foundBanner) {
-            return $this->sendForeignBrandedBanner($foundBanner);
-        }
-        throw new NotFoundHttpException('Could not find banner');
-    }
-
-    private function watermarkImage(\Imagick $im, \Imagick $watermark)
-    {
-        $w = $im->getImageWidth();
-        $box = new \ImagickDraw();
-        $box->setFillColor(new \ImagickPixel('white'));
-        $box->rectangle($w - 16, 0, $w, 16);
-        $im->drawImage($box);
-        $im->compositeImage($watermark, \Imagick::COMPOSITE_ATOP, $w - 16, 0);
-    }
-
-    private function sendForeignBrandedBanner($foundBanner): BaseResponse
-    {
-        $response = new Response();
-        $img = Cache::remember(
-            'banner_cache.' . $foundBanner['serve_url'],
-            self::TTL_ONE_HOUR,
-            function () use ($foundBanner) {
-                $bannerContent = file_get_contents($foundBanner['serve_url']);
-                $hash = sha1($bannerContent);
-
-                if ($hash != $foundBanner['creative_sha1']) {
-                    throw new NotFoundHttpException('Content hash mismatch');
-                }
-
-                $watermark = new \Imagick(public_path('img/watermark.png'));
-                $watermark->resizeImage(16, 16, \Imagick::FILTER_BOX, 0);
-
-                $im = new \Imagick();
-                $im->readImageBlob($bannerContent);
-
-                if ($im->getImageFormat() == 'GIF') {
-                    $parts = $im->coalesceImages();
-                    do {
-                        $this->watermarkImage($parts, $watermark);
-                    } while ($parts->nextImage());
-                    $im = $parts->deconstructImages();
-                } else {
-                    $this->watermarkImage($im, $watermark);
-                }
-
-                return [
-                    'data' => $im->getImagesBlob(),
-                    'mime' => $im->getImageMimeType()
-                ];
-            }
-        );
-
-
-        $response->setContent($img['data']);
-
-        $response->headers->set('Content-Type', $img['mime']);
-
-        return $response;
     }
 
     private function checkDecodedQueryData(array $decodedQueryData): void
