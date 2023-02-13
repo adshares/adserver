@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,7 +30,6 @@ Route::post('/supply/find', [SupplyController::class, 'find']);
 
 Route::get('/supply/anon', [SupplyController::class, 'findJson']);
 Route::post('/supply/anon', [SupplyController::class, 'findJson']);
-Route::get('/supply/s/{zone_id}/{impression_id}', [SupplyController::class, 'findSimple']);
 
 Route::get('/main.js', [SupplyController::class, 'webScript']);
 Route::get('/supply/find.js', [SupplyController::class, 'webScript']);
