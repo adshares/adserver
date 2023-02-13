@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
@@ -35,6 +36,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -51,6 +53,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class CampaignsControllerTest extends TestCase
 {
     private const URI = '/api/campaigns';
+    private const URI_FILTERS = '/api/campaigns/media';
 
     public function testBrowse(): void
     {
@@ -1039,6 +1042,69 @@ final class CampaignsControllerTest extends TestCase
             'status' => Campaign::STATUS_ACTIVE,
             'time_end' => null,
         ]);
+    }
+
+    public function testFetchCampaignsMedia(): void
+    {
+        $user = $this->login();
+        Campaign::factory()
+            ->count(3)
+            ->state(
+                new Sequence(
+                    ['medium' => 'web', 'vendor' => null],
+                    ['medium' => 'metaverse', 'vendor' => 'decentraland'],
+                )
+            )->create(['user_id' => $user]);
+
+        $response = $this->getJson(self::URI_FILTERS);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(
+            [
+                'campaignsMedia' => [
+                    ['medium' => 'metaverse', 'vendor' => null, 'label' => 'Metaverse'],
+                    ['medium' => 'metaverse', 'vendor' => 'decentraland', 'label' => 'Metaverse - Decentraland'],
+                    ['medium' => 'web', 'vendor' => null, 'label' => 'Website'],
+                ]
+            ]
+        );
+    }
+
+    public function testFetchCampaignsMediaWhileNoTaxonomy(): void
+    {
+        $user = $this->login();
+        $mock = self::createMock(ConfigurationRepository::class);
+        foreach (['fetchFilteringOptions', 'fetchMedia', 'fetchMedium', 'fetchTaxonomy'] as $functionName) {
+            $mock->method($functionName)->willThrowException(new MissingInitialConfigurationException('test'));
+        }
+        $this->app->bind(ConfigurationRepository::class, fn() => $mock);
+        Campaign::factory()->create(['user_id' => $user]);
+
+        $response = $this->getJson(self::URI_FILTERS);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(['campaignsMedia' => []]);
+    }
+
+    public function testFetchCampaignsMediaWhileTaxonomyChanged(): void
+    {
+        $user = $this->login();
+        Campaign::factory()
+            ->count(3)
+            ->state(
+                new Sequence(
+                    ['medium' => 'metaverse', 'vendor' => 'legacy'],
+                )
+            )->create(['user_id' => $user]);
+
+        $response = $this->getJson(self::URI_FILTERS);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertExactJson(
+            [
+                'campaignsMedia' => []
+            ]
+        );
     }
 
     private static function buildCampaignStatusUri(int $campaignId): string
