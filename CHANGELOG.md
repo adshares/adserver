@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Do not accept invalid metaverse URLs and domains
+### Added
+- Landing URL to info.json
+- Users' campaign media endpoint
+### Changed
+- Favicons and watermark compliant with brand book
 
 ## [2.4.0] - 2023-02-09
 ### Added

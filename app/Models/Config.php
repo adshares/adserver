@@ -128,6 +128,7 @@ class Config extends Model
     public const INVOICE_CURRENCIES = 'invoice-currencies';
     public const INVOICE_ENABLED = 'invoice-enabled';
     public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
+    public const LANDING_URL = 'landing-url';
     public const LAST_UPDATED_IMPRESSION_ID = 'last-updated-impression-id';
     public const MAIL_FROM_ADDRESS = 'mail-from-address';
     public const MAIL_FROM_NAME = 'mail-from-name';
@@ -504,6 +505,7 @@ class Config extends Model
             self::INVOICE_CURRENCIES => [],
             self::INVOICE_ENABLED => false,
             self::INVOICE_NUMBER_FORMAT => 'INV NNNN/MM/YYYY',
+            self::LANDING_URL => 'https://adshares.net',
             self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
             self::MAIL_FROM_NAME => 'Adshares AdServer',
             self::MAIL_MAILER => 'smtp',

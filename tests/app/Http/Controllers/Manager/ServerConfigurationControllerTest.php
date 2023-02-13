@@ -232,6 +232,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'ADSHARES_ADDRESS' => [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
             'HOURS_UNTIL_INACTIVE_HOST_REMOVAL' => [Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL, '168'],
             'INVENTORY_FAILED_CONNECTION_LIMIT' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '8'],
+            'LANDING_URL' => [Config::LANDING_URL, 'https://example.com'],
             'REFERRAL_REFUND_COMMISSION' => [Config::REFERRAL_REFUND_COMMISSION, '0'],
             'REFERRAL_REFUND_ENABLED' => [Config::REFERRAL_REFUND_ENABLED, '1'],
             'SUPPORT_EMAIL' => [Config::SUPPORT_EMAIL, 'sup@example.com'],

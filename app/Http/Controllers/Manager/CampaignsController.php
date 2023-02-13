@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
 use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
@@ -509,5 +510,53 @@ class CampaignsController extends Controller
         if (!is_array($input)) {
             throw new UnprocessableEntityHttpException('Field `campaign` must be an array');
         }
+    }
+
+    public function fetchCampaignsMedia(): JsonResponse
+    {
+        try {
+            $taxonomy = $this->configurationRepository->fetchTaxonomy();
+        } catch (MissingInitialConfigurationException $exception) {
+            Log::error(sprintf('Error during fetching campaigns\' media: %s', $exception->getMessage()));
+            return self::json(['campaignsMedia' => []]);
+        }
+
+        $mediaFromTaxonomy = [];
+        foreach ($taxonomy->getMedia() as $mediumObject) {
+            $mediaFromTaxonomy[$mediumObject->getName()][$mediumObject->getVendor()] =
+                null === $mediumObject->getVendor()
+                    ? $mediumObject->getLabel()
+                    : sprintf('%s - %s', $mediumObject->getLabel(), $mediumObject->getVendorLabel());
+        }
+
+        $campaignsMedia = [];
+        $previousMedium = null;
+        $previousVendor = 'null';
+        foreach ($this->campaignRepository->fetchCampaignsMedia() as $item) {
+            if (!isset($mediaFromTaxonomy[$item->medium][$item->vendor])) {
+                continue;
+            }
+            if (
+                null !== $item->vendor
+                && null !== $previousVendor
+                && $item->medium !== $previousMedium
+                && isset($mediaFromTaxonomy[$item->medium][$item->vendor])
+            ) {
+                $campaignsMedia[] = [
+                    'medium' => $item->medium,
+                    'vendor' => null,
+                    'label' => $mediaFromTaxonomy[$item->medium][null]
+                ];
+            }
+            $campaignsMedia[] = [
+                'medium' => $item->medium,
+                'vendor' => $item->vendor,
+                'label' => $mediaFromTaxonomy[$item->medium][$item->vendor]
+            ];
+            $previousMedium = $item->medium;
+            $previousVendor = $item->vendor;
+        }
+
+        return new JsonResponse(['campaignsMedia' => $campaignsMedia]);
     }
 }
