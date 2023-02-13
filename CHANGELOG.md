@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Landing URL to info.json
 - Users' campaign media endpoint
 ### Changed
 - Favicons and watermark compliant with brand book
