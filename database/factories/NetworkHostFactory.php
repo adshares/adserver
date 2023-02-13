@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -56,6 +56,7 @@ class NetworkHostFactory extends Factory
             '0.1',
             new Url($host),
             new Url($host . ':4200'),
+            new Url($host),
             new Url($host . '/policies/privacy.html'),
             new Url($host . '/policies/terms.html'),
             new Url($host . '/adshares/inventory/list'),

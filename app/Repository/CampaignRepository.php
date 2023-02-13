@@ -327,4 +327,14 @@ class CampaignRepository
         }
         return $exchangeRate;
     }
+
+    public function fetchCampaignsMedia(): Collection
+    {
+        return Campaign::query()
+            ->select(['medium', 'vendor'])
+            ->groupBy(['medium', 'vendor'])
+            ->orderBy('medium')
+            ->orderBy('vendor')
+            ->get();
+    }
 }

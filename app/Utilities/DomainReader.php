@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,7 +35,7 @@ class DomainReader
     {
         $host = parse_url($url, PHP_URL_HOST);
 
-        return strtolower($host && strpos($host, 'www.') === 0 ? substr($host, 4) : (string)$host);
+        return strtolower($host && str_starts_with($host, 'www.') ? substr($host, 4) : (string)$host);
     }
 
     public static function checkDomain(string $url, string $domain): bool
@@ -46,7 +46,7 @@ class DomainReader
             return true;
         }
 
-        if (strpos($urlDomain, '.' . $domain) !== false) {
+        if (str_contains($urlDomain, '.' . $domain)) {
             return true;
         }
 

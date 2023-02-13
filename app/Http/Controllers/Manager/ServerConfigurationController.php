@@ -126,6 +126,7 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_CURRENCIES => 'nullable|notEmpty|list:currency',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
+        Config::LANDING_URL => 'nullable|url',
         Config::MAIL_SMTP_ENCRYPTION => 'nullable|notEmpty',
         Config::MAIL_FROM_ADDRESS => 'email',
         Config::MAIL_FROM_NAME => 'nullable|notEmpty',

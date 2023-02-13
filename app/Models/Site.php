@@ -294,15 +294,21 @@ class Site extends Model
 
         if (null === $site) {
             $name = $domain;
+            $url = rtrim($url, '/');
             if (MediumName::Metaverse->value === $medium) {
                 if ('decentraland' === $vendor) {
+                    if (!SiteUtils::isValidDecentralandUrl($url)) {
+                        throw new InvalidArgumentException('Invalid Decentraland URL');
+                    }
                     $name = SiteUtils::extractNameFromDecentralandDomain($domain);
                 } elseif ('cryptovoxels' === $vendor) {
+                    if (!SiteUtils::isValidCryptovoxelsUrl($url)) {
+                        throw new InvalidArgumentException('Invalid Cryptovoxels URL');
+                    }
                     $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
                 }
             }
 
-            $url = rtrim($url, '/');
             if (!SiteValidator::isUrlValid($url)) {
                 throw new InvalidArgumentException('Invalid URL');
             }

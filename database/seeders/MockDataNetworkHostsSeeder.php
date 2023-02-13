@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -44,6 +44,7 @@ class MockDataNetworkHostsSeeder extends Seeder
             '0.1',
             new Url('http://webserver'),
             new Url('http://localhost:4200'),
+            new Url('https://example.com'),
             new Url('http://webserver/policies/privacy.html'),
             new Url('http://webserver/policies/terms.html'),
             new Url('http://webserver/adshares/inventory/list'),

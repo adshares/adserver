@@ -35,7 +35,9 @@ use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Adserver\Utilities\SiteValidator;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -76,11 +78,12 @@ class SitesController extends Controller
         }
         $url = (string)$input['url'];
         $domain = DomainReader::domain($url);
-        self::validateDomain($domain);
-
-
         $medium = $input['medium'] ?? null;
         $vendor = $input['vendor'] ?? null;
+        self::validateMedium($medium);
+        self::validateVendor($vendor);
+        self::validateDomain($domain, $medium, $vendor);
+
         try {
             $categoriesByUser = $this->siteCategoriesValidator->processCategories(
                 $input['categories'] ?? null,
@@ -208,7 +211,7 @@ class SitesController extends Controller
             }
             $url = (string)$input['url'];
             $domain = DomainReader::domain($url);
-            self::validateDomain($domain);
+            self::validateDomain($domain, $site->medium, $site->vendor);
 
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
@@ -481,10 +484,14 @@ class SitesController extends Controller
     public function verifyDomain(Request $request): JsonResponse
     {
         $domain = $request->get('domain');
+        $medium = $request->get('medium');
+        $vendor = $request->get('vendor');
         if (null === $domain) {
             throw new BadRequestHttpException('Field `domain` is required.');
         }
-        self::validateDomain($domain);
+        self::validateMedium($medium);
+        self::validateVendor($vendor);
+        self::validateDomain($domain, $medium, $vendor);
 
         return self::json(
             ['code' => Response::HTTP_OK, 'message' => 'Valid domain.'],
@@ -492,13 +499,42 @@ class SitesController extends Controller
         );
     }
 
-    private static function validateDomain(string $domain): void
+    private static function validateDomain(string $domain, string $medium, ?string $vendor): void
     {
         if (!SiteValidator::isDomainValid($domain)) {
             throw new UnprocessableEntityHttpException('Invalid domain.');
         }
         if (SitesRejectedDomain::isDomainRejected($domain)) {
             throw new UnprocessableEntityHttpException(sprintf('The domain %s is rejected.', $domain));
+        }
+
+        if (MediumName::Metaverse->value === $medium) {
+            if ('decentraland' === $vendor) {
+                if (!SiteUtils::isValidDecentralandUrl('https://' . $domain)) {
+                    throw new UnprocessableEntityHttpException(sprintf('Invalid Decentraland domain %s', $domain));
+                }
+            } elseif ('cryptovoxels' === $vendor) {
+                if (!SiteUtils::isValidCryptovoxelsUrl('https://' . $domain)) {
+                    throw new UnprocessableEntityHttpException(sprintf('Invalid Cryptovoxels domain %s', $domain));
+                }
+            }
+        }
+    }
+
+    private static function validateMedium(mixed $medium): void
+    {
+        if (null === $medium) {
+            throw new UnprocessableEntityHttpException('Field `medium` is required.');
+        }
+        if (!is_string($medium)) {
+            throw new UnprocessableEntityHttpException('Field `medium` must be a string.');
+        }
+    }
+
+    private static function validateVendor(mixed $vendor): void
+    {
+        if ($vendor !== null && !is_string($vendor)) {
+            throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null.');
         }
     }
 
