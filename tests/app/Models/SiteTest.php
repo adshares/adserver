@@ -45,6 +45,27 @@ class SiteTest extends TestCase
         Site::fetchOrCreate($user->id, 'https://example.com', 'metaverse', 'decentraland');
     }
 
+    /**
+     * @dataProvider fetchOrCreateWhileInvalidMetaverseUrlProvider
+     */
+    public function testFetchOrCreateWhileInvalidMetaverseUrl(string $vendor, string $url): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        self::expectException(InvalidArgumentException::class);
+
+        Site::fetchOrCreate($user->id, $url, 'metaverse', $vendor);
+    }
+
+    public function fetchOrCreateWhileInvalidMetaverseUrlProvider(): array
+    {
+        return [
+            'cryptovoxels' => ['cryptovoxels', 'https://example.com'],
+            'decentraland' => ['decentraland', 'https://example.com'],
+        ];
+    }
+
     public function testFetchOrCreateFiltering(): void
     {
         Config::updateAdminSettings([

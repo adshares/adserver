@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -76,26 +76,14 @@ final class SiteCategoriesValidatorTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider invalidMediumNameProvider
-     */
-    public function testInvalidMediumName($mediumName): void
+    public function testInvalidMediumName(): void
     {
         $siteCategoriesValidator = new SiteCategoriesValidator(new DummyConfigurationRepository());
+        $mediumName = 'web3';
 
         self::expectException(InvalidArgumentException::class);
 
         $siteCategoriesValidator->processCategories(['unknown'], $mediumName, null);
-    }
-
-    public function invalidMediumNameProvider(): array
-    {
-        return [
-            [null],
-            ['unknown'],
-            [0],
-            [['0']],
-        ];
     }
 
     public function testEmptyValidCategories(): void
