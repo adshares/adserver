@@ -81,7 +81,7 @@ final class SiteUtilsTest extends TestCase
             ['https://scene-0.cryptovoxels.com', true],
             ['https://scene-1.cryptovoxels.com', true],
             ['https://scene-127.cryptovoxels.com', true],
-            ['https://scene-c858cff6-be79-41bb-8e13-3ce55cdbf5b0.cryptovoxels.com', true],
+            ['https://scene-c858cff6-be79-41bb-8e13-3ce55cdbf5b0.cryptovoxels.com', false],
             ['http://scene-1.cryptovoxels.com', false],
             ['https://new.scene-127.cryptovoxels.com', false],
             ['https://play.cryptovoxels.com', false],
