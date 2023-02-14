@@ -79,14 +79,15 @@ final class Info
     {
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
         $adsAddress = isset($data['adsAddress']) ? new AccountId($data['adsAddress']) : new EmptyAccountId();
-        $landingUrl = isset($data['landingUrl']) ? new Url($data['landingUrl']) : new Url('https://adshares.net');
+        $panelUrl = new Url($data['panelUrl']);
+        $landingUrl = isset($data['landingUrl']) ? new Url($data['landingUrl']) : $panelUrl;
 
         $info = new self(
             $data['module'],
             $data['name'],
             $data['version'],
             new Url($data['serverUrl']),
-            new Url($data['panelUrl']),
+            $panelUrl,
             $landingUrl,
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
