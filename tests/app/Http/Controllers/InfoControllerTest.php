@@ -47,7 +47,7 @@ class InfoControllerTest extends TestCase
                 ],
                 'serverUrl' => 'https://example.com',
                 'panelUrl' => 'http://adpanel',
-                'landingUrl' => 'https://adshares.net',
+                'landingUrl' => 'http://adpanel',
                 'privacyUrl' => 'https://example.com/policies/privacy.html',
                 'termsUrl' => 'https://example.com/policies/terms.html',
                 'inventoryUrl' => 'https://example.com/adshares/inventory/list',

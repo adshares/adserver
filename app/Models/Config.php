@@ -428,8 +428,9 @@ class Config extends Model
 
     private static function getDefaultAdminSettings(array $fetched = []): array
     {
+        $adpanelUrlDefault = 'http://localhost:8080';
         return [
-            self::ADPANEL_URL => 'http://localhost:8080',
+            self::ADPANEL_URL => $adpanelUrlDefault,
             self::ADPAY_URL => 'http://localhost:8012',
             self::ADS_OPERATOR_SERVER_URL => 'https://ads-operator.adshares.net',
             self::ADS_RPC_URL => 'https://rpc.adshares.net',
@@ -505,7 +506,7 @@ class Config extends Model
             self::INVOICE_CURRENCIES => [],
             self::INVOICE_ENABLED => false,
             self::INVOICE_NUMBER_FORMAT => 'INV NNNN/MM/YYYY',
-            self::LANDING_URL => 'https://adshares.net',
+            self::LANDING_URL => $fetched[self::ADPANEL_URL] ?? $adpanelUrlDefault,
             self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
             self::MAIL_FROM_NAME => 'Adshares AdServer',
             self::MAIL_MAILER => 'smtp',
