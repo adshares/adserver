@@ -197,7 +197,7 @@ var prepareElement = function (context, banner, element, contextParam) {
 };
 
 var prepareInfoBox = function (context, banner, contextParam) {
-    var url = addUrlParam(serverOrigin + '/supply/why', {
+    const url = addUrlParam(serverOrigin + '/supply/why', {
         'bid': banner.placementId,
         'cid': context.cid,
         'ctx': contextParam,
@@ -205,17 +205,17 @@ var prepareInfoBox = function (context, banner, contextParam) {
         'url': banner.serveUrl,
     });
 
-    var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important; height: 14px; width: 14px; overflow: hidden; padding: 1px;z-index:1');
+    const div = document.createElement('div');
+    div.setAttribute('style', 'all: revert; position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important; height: 16px; width: 16px; overflow: hidden; padding: 0;z-index:1');
 
-    var link = document.createElement('a');
+    const link = document.createElement('a');
     link.target = '_blank';
     link.href = url;
-
-    link.setAttribute('style', 'text-decoration: none !important;background-color: #fff !important');
-
-    link.innerHTML = '<svg width="14" height="14" viewBox="0 2 44 33" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-        '<path d="M35.201 0V9.49417C33.8245 9.0092 32.3435 8.74691 30.8027 8.74691C27.8233 8.74691 25.0703 9.72924 22.86 11.3895C25.1027 13.4284 26.6882 16.1775 27.2632 19.2729C28.0647 18.1965 29.3491 17.4988 30.8027 17.4988C33.2346 17.4988 35.201 19.4585 35.201 21.871C35.201 24.2835 33.2321 26.2481 30.8027 26.2481C29.3491 26.2481 28.0647 25.5504 27.2632 24.474C26.7231 23.7466 26.4045 22.8484 26.4045 21.8734C26.4045 17.9887 24.7069 14.4973 22.0012 12.0972C21.7274 11.8498 21.4387 11.6147 21.145 11.3945C18.9347 9.73418 16.1842 8.75185 13.2022 8.75185C5.90914 8.75185 0 14.6285 0 21.8759C0 29.1234 5.90915 35 13.2022 35C16.1817 35 18.9347 34.0177 21.145 32.3623C18.9023 30.3185 17.3167 27.5719 16.7418 24.4765C15.9403 25.5528 14.6534 26.2531 13.2022 26.2531C10.7704 26.2531 8.79901 24.2934 8.79901 21.8759C8.79901 19.4585 10.7704 17.5037 13.2022 17.5037C14.6509 17.5037 15.9403 18.204 16.7418 19.2803C17.2819 20.0078 17.6005 20.9035 17.6005 21.8759C17.6005 25.7607 19.2981 29.2545 21.9988 31.6571C22.275 31.9046 22.5613 32.1396 22.8575 32.3598C25.0678 34.0177 27.8183 34.9975 30.8002 34.9975C32.3435 34.9975 33.8245 34.7352 35.1985 34.2503C40.3236 32.4514 44 27.5892 44 21.8734V0.00246942H35.1985L35.201 0Z" fill="#FF414D"/>' +
+    link.setAttribute('style', 'all: revert;text-decoration: none !important;background-color: #fff !important');
+    link.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="all: revert">' +
+        '<defs><style>.cls-1{fill:#fff;}.cls-2{fill:#ff414d;}</style></defs>' +
+        '<g id="Layer_1"><rect class="cls-1" x="-.78" y="-.84" width="17.54" height="17.61"/></g>' +
+        '<g id="Layer_2"><path class="cls-2" d="m11.82,2.45v2.88c-.41-.15-.86-.23-1.33-.23-.9,0-1.73.3-2.4.8.68.62,1.16,1.45,1.33,2.39.24-.33.63-.54,1.07-.54.73,0,1.33.6,1.33,1.33s-.59,1.33-1.33,1.33c-.44,0-.83-.21-1.07-.54-.16-.22-.26-.49-.26-.79,0-1.18-.51-2.24-1.33-2.97-.08-.07-.17-.15-.26-.21-.67-.5-1.5-.8-2.4-.8-2.2,0-3.98,1.78-3.98,3.98s1.78,3.98,3.98,3.98c.9,0,1.73-.3,2.4-.8-.68-.62-1.16-1.45-1.33-2.39-.24.33-.63.54-1.07.54-.73,0-1.33-.6-1.33-1.33s.6-1.33,1.33-1.33c.44,0,.83.21,1.07.54.16.22.26.49.26.79,0,1.18.51,2.24,1.33,2.97.08.07.17.15.26.21.67.5,1.5.8,2.4.8.47,0,.91-.08,1.33-.23,1.55-.55,2.66-2.02,2.66-3.76V2.45h-2.66Z"/></g>' +
         '</svg>';
 
     div.appendChild(link);
