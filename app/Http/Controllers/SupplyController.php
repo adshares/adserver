@@ -851,6 +851,7 @@ class SupplyController extends Controller
 
         $data = [
             'url' => $banner->serve_url,
+            'source' => strtolower(preg_replace('/\s/', '-', config('app.adserver_name'))),
             'supplyName' => config('app.adserver_name'),
             'supplyTermsUrl' => route('terms-url'),
             'supplyPrivacyUrl' => route('privacy-url'),

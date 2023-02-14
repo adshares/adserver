@@ -81,7 +81,7 @@
             <section id="adshares">
                 <h3>Ecosystem is powered by Adshares</h3>
                 <ul>
-                    <li>Website: <a href="https://adshares.net">https://adshares.net</a></li>
+                    <li>Website: <a href="https://adshares.net?utm_source={{ $source }}&utm_campaign=why">https://adshares.net</a></li>
                     <li>Contact: <a href="mailto:contact@adshares.net">contact@adshares.net</a></li>
                 </ul>
             </section>
