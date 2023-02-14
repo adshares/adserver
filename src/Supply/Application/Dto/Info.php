@@ -175,6 +175,11 @@ final class Info
         return $this->panelUrl->toString();
     }
 
+    public function getLandingUrl(): string
+    {
+        return $this->landingUrl->toString();
+    }
+
     public function getServerUrl(): string
     {
         return $this->serverUrl->toString();

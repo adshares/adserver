@@ -851,10 +851,11 @@ class SupplyController extends Controller
 
         $data = [
             'url' => $banner->serve_url,
+            'source' => strtolower(preg_replace('/\s/', '-', config('app.adserver_name'))),
             'supplyName' => config('app.adserver_name'),
             'supplyTermsUrl' => route('terms-url'),
             'supplyPrivacyUrl' => route('privacy-url'),
-            'supplyPanelUrl' => config('app.adpanel_url'),
+            'supplyLandingUrl' => config('app.landing_url'),
             'supplyBannerReportUrl' => new SecureUrl(
                 route(
                     'report-ad',
@@ -876,9 +877,9 @@ class SupplyController extends Controller
                 [
                     'demand' => true,
                     'demandName' => $info->getName(),
-                    'demandTermsUrl' => $info->getTermsUrl() ?? null,
-                    'demandPrivacyUrl' => $info->getPrivacyUrl() ?? null,
-                    'demandPanelUrl' => $info->getPanelUrl(),
+                    'demandTermsUrl' => $info->getTermsUrl(),
+                    'demandPrivacyUrl' => $info->getPrivacyUrl(),
+                    'demandLandingUrl' => $info->getLandingUrl(),
                 ]
             );
         }
