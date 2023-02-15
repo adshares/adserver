@@ -24,12 +24,14 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
@@ -611,6 +613,44 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
     }
 
+    public function testLogNetworkView(): void
+    {
+        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $query);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $query);
+        }
+        self::assertEquals('13245679801324567980132456798012', $query['cid']);
+        self::assertEquals('0001-00000005-CBCA', $query['pto']);
+    }
+
+    public function testLogNetworkViewFailWhileImpressionIdIsMissing(): void
+    {
+        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        unset($query['iid']);
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testLogNetworkViewFailWhileImpressionIdIsInvalid(): void
+    {
+        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        $query['iid'] = '0123456789ABCDEF0123456789ABCDEF';
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     private static function findJsonData(array $merge = []): array
     {
         return array_merge(
@@ -687,5 +727,56 @@ final class SupplyControllerTest extends TestCase
             'width' => '300',
             'height' => '250',
         ], $merge);
+    }
+
+    private static function buildLogViewUri(string $bannerId, ?array $query = null): string
+    {
+        $uri = sprintf('/l/n/view/%s', $bannerId);
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
+    }
+
+    private static function initNetworkForLoggingView(): array
+    {
+        /** @var NetworkImpression $impression */
+        $impression = NetworkImpression::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => User::factory()->create()]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaign,
+            'view_url' => 'https://example.com/view',
+        ]);
+        $iid = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($impression->impression_id));
+        $ctx = Utils::encodeZones(
+            [
+                'page' => [
+                    'iid' => $iid,
+                    'frame' => 0,
+                    'width' => 1024,
+                    'height' => 768,
+                    'url' => 'https://adshares.net',
+                    'keywords' => '',
+                    'metamask' => 0,
+                    'ref' => '',
+                    'pop' => 0,
+                    'zone' => $zone->uuid,
+                    'options' => '[]',
+                ],
+            ]
+        );
+        $redirectUrl = Utils::urlSafeBase64Encode($banner->view_url);
+        $query = [
+            'cid' => '13245679801324567980132456798012',
+            'ctx' => $ctx,
+            'iid' => $iid,
+            'r' => $redirectUrl,
+        ];
+        return [$query, $banner, $zone];
     }
 }

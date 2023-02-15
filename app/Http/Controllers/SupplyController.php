@@ -723,6 +723,9 @@ class SupplyController extends Controller
         $this->validateEventRequest($request);
 
         $impressionId = $request->query->get('iid');
+        if (null === $impressionId) {
+            throw new BadRequestHttpException('Invalid parameters.');
+        }
         $networkImpression = NetworkImpression::fetchByImpressionId(
             Utils::hexUuidFromBase64UrlWithChecksum($impressionId)
         );
