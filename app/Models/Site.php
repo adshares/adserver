@@ -397,7 +397,7 @@ class Site extends Model
         }
         if (self::isApprovalRequired($this->medium)) {
             $this->status = self::STATUS_PENDING_APPROVAL;
-            Mail::to(config('app.support_email'))
+            Mail::to(config('app.technical_email'))
                 ->queue(new SiteApprovalPending($this->user_id, $this->url));
             return;
         }

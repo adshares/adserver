@@ -125,13 +125,13 @@ var replaceTag = function (oldTag, newTag, banner) {
 };
 
 
-var prepareElement = function (context, banner, element, contextParam) {
+var prepareElement = function (context, banner, element) {
     var div = document.createElement('div');
     var clickOverlay;
     var infoBox;
 
     if (false !== banner.infoBox) {
-        infoBox = prepareInfoBox(context, banner, contextParam);
+        infoBox = prepareInfoBox(context, banner);
         div.appendChild(infoBox);
     }
 
@@ -196,13 +196,10 @@ var prepareElement = function (context, banner, element, contextParam) {
     return div;
 };
 
-var prepareInfoBox = function (context, banner, contextParam) {
+var prepareInfoBox = function (context, banner) {
     const url = addUrlParam(serverOrigin + '/supply/why', {
-        'bid': banner.placementId,
+        'bid': banner.creativeId,
         'cid': context.cid,
-        'ctx': contextParam,
-        'iid': getImpressionId(),
-        'url': banner.serveUrl,
     });
 
     const div = document.createElement('div');
@@ -889,8 +886,8 @@ var fetchBanner = function (banner, context, zone_options) {
         noCredentials: true
     }).then(function (data, xhr) {
         context.cid = getCid();
-        context.page.zone = banner.zoneId;
-        var contextParam = encodeZones([context.page]);
+        context.page.zone = banner.placementId;
+        const contextParam = encodeZones([context.page]);
         context.click_url = addUrlParam(
             banner.clickUrl,
             {
@@ -933,7 +930,7 @@ var fetchBanner = function (banner, context, zone_options) {
                         url = banner.serveUrl;
                     }
                     context.skip_overlay = (url.indexOf('#dwmth') !== -1);
-                    url = fillPlaceholders(url, context.cid, banner.placementId, banner.publisherId, banner.supplyServer, getDomain(context.page.url), banner.zoneId, context.page.keywords);
+                    url = fillPlaceholders(url, context.cid, banner.creativeId, banner.publisherId, banner.supplyServer, getDomain(context.page.url), banner.placementId, context.page.keywords);
 
                     if (banner.scope === 'pop-up' || banner.scope === 'pop-under') {
                         addPopCandidate(
