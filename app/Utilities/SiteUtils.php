@@ -57,6 +57,11 @@ class SiteUtils
         );
     }
 
+    public static function extractNameFromPolkaCityDomain(string $domain): string
+    {
+        return sprintf('PolkaCity (%s)', explode('.', $domain)[0]);
+    }
+
     public static function isValidCryptovoxelsUrl(string $url): bool
     {
         return 1 === preg_match(
@@ -68,5 +73,10 @@ class SiteUtils
     public static function isValidDecentralandUrl(string $url): bool
     {
         return 1 === preg_match('~^https://scene-n?\d+-n?\d+.decentraland.org$~i', $url);
+    }
+
+    public static function isValidPolkaCityUrl(string $url): bool
+    {
+        return 1 === preg_match('~^https://[a-z0-9-]+.polkacity.io$~i', $url);
     }
 }
