@@ -1108,7 +1108,9 @@ class SupplyController extends Controller
         return function ($item) {
             return [
                 'id' => $item['request_id'],
-                'placementId' => $item['id'],
+                'creativeId' => $item['id'],
+                'placementId' => $item['zone_id'],
+                // Field zoneId is deprecated, use placementId instead
                 'zoneId' => $item['zone_id'],
                 'publisherId' => $item['publisher_id'],
                 'demandServer' => $item['pay_from'],
@@ -1129,8 +1131,8 @@ class SupplyController extends Controller
     {
         return [
             'request_id' => $item['id'],
-            'id' => $item['placementId'],
-            'zone_id' => $item['zoneId'],
+            'id' => $item['creativeId'],
+            'zone_id' => $item['placementId'],
             'publisher_id' => $item['publisherId'],
             'pay_from' => $item['demandServer'],
             'pay_to' => $item['supplyServer'],

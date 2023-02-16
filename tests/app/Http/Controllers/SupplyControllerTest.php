@@ -77,8 +77,8 @@ final class SupplyControllerTest extends TestCase
         'data' => [
             '*' => [
                 'id',
+                'creativeId',
                 'placementId',
-                'zoneId',
                 'publisherId',
                 'demandServer',
                 'supplyServer',

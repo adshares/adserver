@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.3] - 2023-02-15
+### Fixed
+- Missing creativeId during find
+
 ## [2.4.2] - 2023-02-14
 ### Changed
 - Page "Why" links to landing page
@@ -854,7 +858,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.2...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.3...develop
+[2.4.3]: https://github.com/adshares/adserver/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/adshares/adserver/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/adshares/adserver/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/adshares/adserver/compare/v2.3.2...v2.4.0
