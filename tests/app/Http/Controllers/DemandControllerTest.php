@@ -325,9 +325,61 @@ final class DemandControllerTest extends TestCase
         );
     }
 
+    public function testView(): void
+    {
+        [$query, $banner] = $this->initView();
+
+        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertDatabaseHas(EventLog::class, [
+            'case_id' => hex2bin('13245679801324567980132456798012'),
+            'pay_to' => hex2bin('000100000005'),
+            'publisher_id' => hex2bin('11111111111111111111111111111111'),
+        ]);
+    }
+
+    public function testViewJson(): void
+    {
+        [$query, $banner] = $this->initView();
+        $query['json'] = 1;
+
+        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['aduser_url', 'log_url', 'view_script_url']);
+        self::assertDatabaseHas(EventLog::class, [
+            'case_id' => hex2bin('13245679801324567980132456798012'),
+            'pay_to' => hex2bin('000100000005'),
+            'publisher_id' => hex2bin('11111111111111111111111111111111'),
+        ]);
+    }
+
+    private function initView(): array
+    {
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create();
+        $query = [
+            'cid' => '13245679801324567980132456798012',
+            'ctx' => '',
+            'pid' => '11111111111111111111111111111111',
+            'pto' => '0001-00000005-CBCA',
+        ];
+        return [$query, $banner];
+    }
+
     private static function buildServeUri(string $uuid): string
     {
         return sprintf('/serve/%s', $uuid);
+    }
+
+    private static function buildViewUri(string $bannerId, ?array $query = null): string
+    {
+        $uri = sprintf('/view/%s', $bannerId);
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
     }
 
     private static function buildContextUri(string $uuid): string

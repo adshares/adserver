@@ -354,19 +354,7 @@ SQL;
         } elseif ($request->query->get('json')) {
             $response->setContent(
                 json_encode(
-                    [
-                        'log_url'         => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                route('banner-context', ['id' => $eventId])
-                            ))->toString()
-                        ),
-                        'view_script_url' => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                url('-/view.js')
-                            ))->toString()
-                        ),
-                        'aduser_url'      => $adUserUrl,
-                    ]
+                    self::getViewContentInput($eventId, $adUserUrl)
                 )
             );
             $response->headers->set(self::CONTENT_TYPE, 'application/json');
@@ -374,19 +362,7 @@ SQL;
             $response->setContent(
                 view(
                     'demand/view-event',
-                    [
-                        'log_url'         => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                route('banner-context', ['id' => $eventId])
-                            ))->toString()
-                        ),
-                        'view_script_url' => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                url('-/view.js')
-                            ))->toString()
-                        ),
-                        'aduser_url'      => $adUserUrl,
-                    ]
+                    self::getViewContentInput($eventId, $adUserUrl)
                 )
             );
         }
@@ -643,5 +619,22 @@ SQL;
             ],
             $landingUrl
         );
+    }
+
+    private static function getViewContentInput(string $eventId, ?string $adUserUrl): array
+    {
+        return [
+            'aduser_url' => $adUserUrl,
+            'log_url' => ServeDomain::changeUrlHost(
+                (new SecureUrl(
+                    route('banner-context', ['id' => $eventId])
+                ))->toString()
+            ),
+            'view_script_url' => ServeDomain::changeUrlHost(
+                (new SecureUrl(
+                    url('-/view.js')
+                ))->toString()
+            ),
+        ];
     }
 }

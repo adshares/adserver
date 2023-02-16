@@ -320,7 +320,7 @@ SQL;
 
     public static function getDomainFromContext(array $context): ?string
     {
-        $domain = $context['site']['domain'] ?: null;
+        $domain = $context['site']['domain'] ?? null;
 
         if (!$domain || DomainReader::domain(config('app.serve_base_url')) === $domain) {
             return null;
