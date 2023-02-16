@@ -33,6 +33,7 @@ use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -296,16 +297,21 @@ class Site extends Model
             $name = $domain;
             $url = rtrim($url, '/');
             if (MediumName::Metaverse->value === $medium) {
-                if ('decentraland' === $vendor) {
+                if (MetaverseVendor::Decentraland->value === $vendor) {
                     if (!SiteUtils::isValidDecentralandUrl($url)) {
                         throw new InvalidArgumentException('Invalid Decentraland URL');
                     }
                     $name = SiteUtils::extractNameFromDecentralandDomain($domain);
-                } elseif ('cryptovoxels' === $vendor) {
+                } elseif (MetaverseVendor::Cryptovoxels->value === $vendor) {
                     if (!SiteUtils::isValidCryptovoxelsUrl($url)) {
                         throw new InvalidArgumentException('Invalid Cryptovoxels URL');
                     }
                     $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
+                } elseif (MetaverseVendor::PolkaCity->value === $vendor) {
+                    if (!SiteUtils::isValidPolkaCityUrl($url)) {
+                        throw new InvalidArgumentException('Invalid PolkaCity URL');
+                    }
+                    $name = SiteUtils::extractNameFromPolkaCityDomain($domain);
                 }
             }
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,6 +31,7 @@ use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -55,10 +56,6 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
     private const DEFAULT_VENDOR = null;
-    private const METAVERSE_VENDORS = [
-        'cryptovoxels' => 'cryptovoxels.com',
-        'decentraland' => 'decentraland.org',
-    ];
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     . '?limit={limit}&offset={offset}';
 
@@ -307,7 +304,8 @@ final class GuzzleDemandClient implements DemandClient
         if ($data['targeting_requires']['site']['domain'] ?? false) {
             $domains = $data['targeting_requires']['site']['domain'];
 
-            foreach (self::METAVERSE_VENDORS as $vendor => $vendorDomain) {
+            foreach (MetaverseVendor::cases() as $metaverseVendor) {
+                $vendorDomain = $metaverseVendor->baseDomain();
                 $matchesCount = 0;
                 foreach ($domains as $domain) {
                     if (!str_ends_with($domain, $vendorDomain)) {
@@ -316,7 +314,7 @@ final class GuzzleDemandClient implements DemandClient
                     ++$matchesCount;
                 }
                 if (count($domains) === $matchesCount) {
-                    return [MediumName::Metaverse->value, $vendor];
+                    return [MediumName::Metaverse->value, $metaverseVendor->value];
                 }
             }
         }

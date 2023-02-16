@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Http\Requests\Campaign;
 use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\InvalidArgumentException;
 
@@ -84,19 +85,26 @@ class CampaignTargetingProcessor
                 throw new InvalidArgumentException(sprintf('Invalid domain %s', $domain));
             }
             if (MediumName::Metaverse->value === $this->mediumName) {
-                if ('decentraland' === $this->vendor) {
+                if (MetaverseVendor::Decentraland->value === $this->vendor) {
                     if ('decentraland.org' === $domain) {
                         continue;
                     }
                     if (!SiteUtils::isValidDecentralandUrl('https://' . $domain)) {
                         throw new InvalidArgumentException(sprintf('Invalid Decentraland domain %s', $domain));
                     }
-                } elseif ('cryptovoxels' === $this->vendor) {
+                } elseif (MetaverseVendor::Cryptovoxels->value === $this->vendor) {
                     if ('cryptovoxels.com' === $domain) {
                         continue;
                     }
                     if (!SiteUtils::isValidCryptovoxelsUrl('https://' . $domain)) {
                         throw new InvalidArgumentException(sprintf('Invalid Cryptovoxels domain %s', $domain));
+                    }
+                } elseif (MetaverseVendor::PolkaCity->value === $this->vendor) {
+                    if ('polkacity.io' === $domain) {
+                        continue;
+                    }
+                    if (!SiteUtils::isValidPolkaCityUrl('https://' . $domain)) {
+                        throw new InvalidArgumentException(sprintf('Invalid PolkaCity domain %s', $domain));
                     }
                 }
             }
