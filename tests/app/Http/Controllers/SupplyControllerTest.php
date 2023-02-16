@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Psr\Http\Message\ResponseInterface;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
 final class SupplyControllerTest extends TestCase
@@ -616,6 +617,25 @@ final class SupplyControllerTest extends TestCase
     public function testLogNetworkView(): void
     {
         [$query, $banner, $zone] = self::initNetworkForLoggingView();
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $query);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $query);
+        }
+        self::assertEquals('13245679801324567980132456798012', $query['cid']);
+        self::assertEquals('0001-00000005-CBCA', $query['pto']);
+    }
+
+    public function testLogNetworkViewWhileImpressionIdIsUuidV4(): void
+    {
+        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
 
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
 

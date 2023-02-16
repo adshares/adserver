@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,8 +31,7 @@ use function substr;
 
 final class Uuid implements Id
 {
-    /** @var string */
-    private $id;
+    private string $id;
 
     public function __construct(string $value)
     {
@@ -46,7 +45,7 @@ final class Uuid implements Id
     public static function isValid(string $uuid): bool
     {
         $pregMatch = preg_match(
-            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
+            '/^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i',
             $uuid
         );
 
@@ -106,31 +105,6 @@ final class Uuid implements Id
             0x0000,
             0x0000,
             0x0000
-        );
-
-        return new self($id);
-    }
-
-    public static function test(int $value): self
-    {
-        $id = sprintf(
-            '%04x%04x%04x%04x%04x%04x%04x%04x',
-            // 32 bits for "time_low"
-            0xffff,
-            0xffff,
-            // 16 bits for "time_mid"
-            0xffff,
-            // 16 bits for "time_hi_and_version",
-            // four most significant bits holds version number 4
-            0x0fff | 0x4000,
-            // 16 bits, 8 bits for "clk_seq_hi_res",
-            // 8 bits for "clk_seq_low",
-            // two most significant bits holds zero and one for variant DCE1.1
-            0x3fff | 0x8000,
-            // 48 bits for "node"
-            0xffff,
-            0xffff,
-            $value
         );
 
         return new self($id);
