@@ -513,15 +513,10 @@ class Campaign extends Model
             return false;
         }
 
-        $domains = $this->targeting_requires['site']['domain'];
-
         if (MediumName::Metaverse->value === $this->medium) {
-            if (MetaverseVendor::Decentraland->value === $this->vendor) {
-                return 1 !== count($domains) || 'decentraland.org' !== $domains[0];
-            } elseif (MetaverseVendor::Cryptovoxels->value === $this->vendor) {
-                return 1 !== count($domains) || 'cryptovoxels.com' !== $domains[0];
-            } elseif (MetaverseVendor::PolkaCity->value === $this->vendor) {
-                return 1 !== count($domains) || 'polkacity.io' !== $domains[0];
+            if (null !== ($vendor = MetaverseVendor::tryFrom($this->vendor))) {
+                $domains = $this->targeting_requires['site']['domain'];
+                return 1 !== count($domains) || $vendor->baseDomain() !== $domains[0];
             }
         }
 
