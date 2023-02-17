@@ -44,6 +44,7 @@ use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
@@ -477,7 +478,7 @@ class SupplyController extends Controller
 
         if ($foundBanners->exists(fn($key, $element) => $element != null)) {
             NetworkImpression::register(
-                Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
+                self::impressionIdToUuid($impressionId),
                 Utils::hexUuidFromBase64UrlWithChecksum($tid),
                 $impressionContext,
                 $userContext,
@@ -579,7 +580,7 @@ class SupplyController extends Controller
     {
         $impressionId = $request->query->get('iid');
         $networkImpression = NetworkImpression::fetchByImpressionId(
-            Utils::hexUuidFromBase64UrlWithChecksum($impressionId)
+            self::impressionIdToUuid($impressionId)
         );
         if (null === $networkImpression || !$networkImpression->context->banner_id) {
             throw new NotFoundHttpException();
@@ -619,7 +620,7 @@ class SupplyController extends Controller
 
         $url = $this->addQueryStringToUrl($request, $url);
 
-        $caseId = $request->query->get('cid');
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         if (null === ($networkCase = NetworkCase::fetchByCaseId($caseId))) {
             throw new NotFoundHttpException();
         }
@@ -693,7 +694,7 @@ class SupplyController extends Controller
     {
         $impressionId = $request->query->get('iid');
         $networkImpression = NetworkImpression::fetchByImpressionId(
-            Utils::hexUuidFromBase64UrlWithChecksum($impressionId)
+            self::impressionIdToUuid($impressionId)
         );
         if (null === $networkImpression || !$networkImpression->context->banner_id) {
             throw new NotFoundHttpException();
@@ -727,7 +728,7 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Invalid parameters.');
         }
         $networkImpression = NetworkImpression::fetchByImpressionId(
-            Utils::hexUuidFromBase64UrlWithChecksum($impressionId)
+            self::impressionIdToUuid($impressionId)
         );
         if (null === $networkImpression) {
             throw new NotFoundHttpException();
@@ -738,7 +739,6 @@ class SupplyController extends Controller
             $url = $this->addQueryStringToUrl($request, $url);
         }
 
-        $caseId = $request->query->get('cid');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         try {
@@ -762,6 +762,7 @@ class SupplyController extends Controller
 
         $response->send();
 
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         $networkCase = NetworkCase::create(
             $caseId,
             $publisherId,
@@ -782,7 +783,7 @@ class SupplyController extends Controller
         if (
             !$request->query->has('r')
             || !$request->query->has('ctx')
-            || !Utils::isUuidValid($request->query->get('cid'))
+            || !Uuid::isValid($request->query->get('cid', ''))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
@@ -1230,5 +1231,13 @@ class SupplyController extends Controller
                 sprintf('Field `placements[].%s` must be a string', $field)
             );
         }
+    }
+
+    private static function impressionIdToUuid(string $impressionId): string
+    {
+        if (Uuid::isValid($impressionId)) {
+            return str_replace('-', '', $impressionId);
+        }
+        return Utils::hexUuidFromBase64UrlWithChecksum($impressionId);
     }
 }
