@@ -650,7 +650,7 @@ final class SupplyControllerTest extends TestCase
 
         $response = $this->get(self::buildLogClickUri('invalid', $query));
 
-        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testLogNetworkView(): void
