@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Do not hash impression ID when passed as UUID
+- Allow zone ID instead on full context while logging event on supply side
 
 ## [2.4.3] - 2023-02-15
 ### Fixed
