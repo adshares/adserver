@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Polka City URL validation
+=======
+### Changed
+- Do not hash impression ID when passed as UUID
 
 ## [2.4.3] - 2023-02-15
 ### Fixed
