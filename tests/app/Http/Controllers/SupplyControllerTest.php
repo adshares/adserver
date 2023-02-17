@@ -634,6 +634,27 @@ final class SupplyControllerTest extends TestCase
         self::assertDatabaseCount(NetworkCaseClick::class, 1);
     }
 
+    public function testLogNetworkClickWithoutContext(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['ctx']);
+        $query['zid'] = $zone->uuid;
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+    }
+
     public function testLogNetworkClickFailWhileNoView(): void
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
@@ -671,11 +692,43 @@ final class SupplyControllerTest extends TestCase
         self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
     }
 
-    public function testLogNetworkViewWhileCaseIdAndImpressionIdAreUuidV4(): void
+    public function testLogNetworkViewWithoutContext(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['ctx']);
+        $query['zid'] = $zone->uuid;
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $query);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $query);
+        }
+        self::assertEquals('13245679801324567980132456798012', $query['cid']);
+        self::assertEquals('0001-00000005-CBCA', $query['pto']);
+    }
+
+    public function testLogNetworkViewWithoutContextFailWhileInvalidZoneId(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['ctx']);
+        $query['zid'] = 'invalid';
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testLogNetworkViewWhileCaseIdAndImpressionIdAndZoneIdAreUuidV4(): void
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
         $query['cid'] = Uuid::fromString($query['cid'])->toString();
         $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
+        $query['zid'] = Uuid::fromString($zone->uuid)->toString();
 
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
 
