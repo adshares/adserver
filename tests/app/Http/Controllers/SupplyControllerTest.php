@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
@@ -614,9 +615,37 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
     }
 
+    public function testLogNetworkClick(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+    }
+
+    public function testLogNetworkClickWhileNoView(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     public function testLogNetworkView(): void
     {
-        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
 
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
 
@@ -634,7 +663,7 @@ final class SupplyControllerTest extends TestCase
 
     public function testLogNetworkViewWhileCaseIdAndImpressionIdAreUuidV4(): void
     {
-        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
         $query['cid'] = Uuid::fromString($query['cid'])->toString();
         $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
 
@@ -654,7 +683,7 @@ final class SupplyControllerTest extends TestCase
 
     public function testLogNetworkViewFailWhileImpressionIdIsMissing(): void
     {
-        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
         unset($query['iid']);
 
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
@@ -664,7 +693,7 @@ final class SupplyControllerTest extends TestCase
 
     public function testLogNetworkViewFailWhileImpressionIdIsInvalid(): void
     {
-        [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
         $query['iid'] = '0123456789ABCDEF0123456789ABCDEF';
 
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
@@ -750,6 +779,15 @@ final class SupplyControllerTest extends TestCase
         ], $merge);
     }
 
+    private static function buildLogClickUri(string $bannerId, ?array $query = null): string
+    {
+        $uri = sprintf('/l/n/click/%s', $bannerId);
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
+    }
+
     private static function buildLogViewUri(string $bannerId, ?array $query = null): string
     {
         $uri = sprintf('/l/n/view/%s', $bannerId);
@@ -759,7 +797,24 @@ final class SupplyControllerTest extends TestCase
         return $uri;
     }
 
-    private static function initNetworkForLoggingView(): array
+    private static function initBeforeLoggingClick(): array
+    {
+        $arr = self::initBeforeLoggingView();
+        $query = $arr[0];
+        $banner = $arr[1];
+        $zone = $arr[2];
+        $networkCase = NetworkCase::factory()->create([
+            'banner_id' => $banner->uuid,
+            'case_id' => $query['cid'],
+            'network_impression_id' => NetworkImpression::firstOrFail()->id,
+            'publisher_id' => $zone->site->user->uuid,
+            'site_id' => $zone->site->uuid,
+            'zone_id' => $zone->uuid,
+        ]);
+        return $arr;
+    }
+
+    private static function initBeforeLoggingView(): array
     {
         /** @var NetworkImpression $impression */
         $impression = NetworkImpression::factory()->create();
