@@ -626,10 +626,14 @@ class SupplyController extends Controller
         }
 
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        try {
-            $zoneId = ($networkCase->zone_id ?? null) ?: Utils::getZoneIdFromContext($request->query->get('ctx'));
-        } catch (RuntimeException $exception) {
-            throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+        if (null === ($zoneId = ($networkCase->zone_id ?? null))) {
+            try {
+                $zoneId = null !== $request->query->get('zid')
+                    ? str_replace('-', '', $request->query->get('zid'))
+                    : Utils::getZoneIdFromContext($request->query->get('ctx'));
+            } catch (RuntimeException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+            }
         }
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $impressionId = $request->query->get('iid');
@@ -637,6 +641,10 @@ class SupplyController extends Controller
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
         $url = Utils::addUrlParameter($url, 'iid', $impressionId);
+        if (!$request->query->has('ctx')) {
+            $ctx = $this->buildCtx($networkCase->networkImpression, $impressionId, $zoneId);
+            $url = Utils::addUrlParameter($url, 'ctx', $ctx);
+        }
 
         $response = new RedirectResponse($url);
         $response->send();
@@ -741,19 +749,24 @@ class SupplyController extends Controller
 
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
-        try {
-            $zoneId = ($networkImpression->context->zone_id ?? null)
-                ?:
-                Utils::getZoneIdFromContext($request->query->get('ctx'));
-        } catch (RuntimeException $exception) {
-            throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+        if (null === ($zoneId = ($networkImpression->context->zone_id ?? null))) {
+            try {
+                $zoneId = null !== $request->query->get('zid')
+                    ? str_replace('-', '', $request->query->get('zid'))
+                    : Utils::getZoneIdFromContext($request->query->get('ctx'));
+            } catch (RuntimeException $exception) {
+                throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+            }
         }
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
-
+        if (!$request->query->has('ctx')) {
+            $ctx = $this->buildCtx($networkImpression, $impressionId, $zoneId);
+            $url = Utils::addUrlParameter($url, 'ctx', $ctx);
+        }
         $response = new RedirectResponse($url);
 
         if ($request->headers->has('Origin')) {
@@ -782,7 +795,7 @@ class SupplyController extends Controller
     {
         if (
             !$request->query->has('r')
-            || !$request->query->has('ctx')
+            || !($request->query->has('ctx') || (Uuid::isValid($request->query->get('zid', ''))))
             || !Uuid::isValid($request->query->get('cid', ''))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
@@ -1239,5 +1252,29 @@ class SupplyController extends Controller
             return str_replace('-', '', $impressionId);
         }
         return Utils::hexUuidFromBase64UrlWithChecksum($impressionId);
+    }
+
+    private function buildCtx(
+        NetworkImpression $networkImpression,
+        string $impressionId,
+        string $zoneId,
+    ): string {
+        $impressionContext = $networkImpression->context;
+        $ctx = [
+            'page' => [
+                'iid' => $impressionId,
+                'keywords' => join(',', $impressionContext->site->keywords ?? []),
+                'metamask' => $impressionContext->device->extensions->metamask ?? 0,
+                'options' => '',
+                'pop' => $impressionContext->site->popup ?? 0,
+                'ref' => $impressionContext->site->referrer ?? '',
+                'url' => $impressionContext->site->page ?? '',
+                'zone' => $zoneId,
+            ]
+        ];
+        if (null !== ($inframe = $impressionContext->site->inframe)) {
+            $ctx['page']['frame'] = 'yes' === $inframe ? 1 : 0;
+        }
+        return Utils::encodeZones($ctx);
     }
 }
