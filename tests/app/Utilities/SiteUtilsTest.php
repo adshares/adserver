@@ -68,6 +68,24 @@ final class SiteUtilsTest extends TestCase
     }
 
     /**
+     * @dataProvider polkaCityDomainProvider
+     */
+    public function testExtractNameFromPolkaCityDomain(string $domain, string $expectedName): void
+    {
+        $name = SiteUtils::extractNameFromPolkaCityDomain($domain);
+
+        $this->assertEquals($expectedName, $name);
+    }
+
+    public function polkaCityDomainProvider(): array
+    {
+        return [
+            ['plane.polkacity.io', 'PolkaCity (plane)'],
+            ['billboard01.polkacity.io', 'PolkaCity (billboard01)'],
+        ];
+    }
+
+    /**
      * @dataProvider isValidCryptovoxelsUrlProvider
      */
     public function testIsValidCryptovoxelsUrl(string $url, bool $isValid): void
@@ -108,6 +126,24 @@ final class SiteUtilsTest extends TestCase
             ['http://scene-0-0.decentraland.org', false],
             ['https://new.scene-0-0.decentraland.org', false],
             ['https://play.decentraland.org', false],
+            ['https://example.com', false],
+        ];
+    }
+
+    /**
+     * @dataProvider isValidPolkaCityUrlProvider
+     */
+    public function testIsValidPolkaCityUrl(string $url, bool $isValid): void
+    {
+        $this->assertEquals($isValid, SiteUtils::isValidPolkaCityUrl($url));
+    }
+
+    public function isValidPolkaCityUrlProvider(): array
+    {
+        return [
+            ['https://plane.polkacity.io', true],
+            ['https://billboard01.polkacity.io', true],
+            ['https://polkacity.io', false],
             ['https://example.com', false],
         ];
     }

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.4] - 2023-02-17
+### Added
+- Polka City URL validation
+### Changed
+- Do not hash impression ID when passed as UUID
+- Allow zone ID instead on full context while logging event on supply side
+
 ## [2.4.3] - 2023-02-15
 ### Fixed
 - Missing creativeId during find
@@ -858,7 +865,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.3...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.4...develop
+[2.4.4]: https://github.com/adshares/adserver/compare/v2.4.3...v2.4.4
 [2.4.3]: https://github.com/adshares/adserver/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/adshares/adserver/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/adshares/adserver/compare/v2.4.0...v2.4.1

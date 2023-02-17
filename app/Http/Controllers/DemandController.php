@@ -37,6 +37,7 @@ use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
@@ -196,6 +197,7 @@ SQL;
 
     public function click(Request $request, string $bannerId)
     {
+        $this->validateEventRequest($request);
         $banner = $this->getBanner($bannerId);
 
         $campaign = $banner->campaign;
@@ -203,7 +205,7 @@ SQL;
 
         $url = $campaign->landing_url;
 
-        $caseId = $request->query->get('cid');
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
         try {
@@ -248,7 +250,7 @@ SQL;
             ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
 
-        $keywords = $context['page']['keywords'];
+        $keywords = $context['page']['keywords'] ?? '';
 
         $hasCampaignClickConversion = $campaign->hasClickConversion();
         $eventType = $hasCampaignClickConversion ? EventLog::TYPE_SHADOW_CLICK : EventLog::TYPE_CLICK;
@@ -295,7 +297,7 @@ SQL;
     {
         $this->validateEventRequest($request);
 
-        $caseId = $request->query->get('cid');
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
         $response = new Response();
@@ -354,19 +356,7 @@ SQL;
         } elseif ($request->query->get('json')) {
             $response->setContent(
                 json_encode(
-                    [
-                        'log_url'         => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                route('banner-context', ['id' => $eventId])
-                            ))->toString()
-                        ),
-                        'view_script_url' => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                url('-/view.js')
-                            ))->toString()
-                        ),
-                        'aduser_url'      => $adUserUrl,
-                    ]
+                    self::getViewContentInput($eventId, $adUserUrl)
                 )
             );
             $response->headers->set(self::CONTENT_TYPE, 'application/json');
@@ -374,19 +364,7 @@ SQL;
             $response->setContent(
                 view(
                     'demand/view-event',
-                    [
-                        'log_url'         => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                route('banner-context', ['id' => $eventId])
-                            ))->toString()
-                        ),
-                        'view_script_url' => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                url('-/view.js')
-                            ))->toString()
-                        ),
-                        'aduser_url'      => $adUserUrl,
-                    ]
+                    self::getViewContentInput($eventId, $adUserUrl)
                 )
             );
         }
@@ -419,9 +397,9 @@ SQL;
     {
         if (
             !$request->query->has('ctx')
-            || !$request->query->has('cid')
             || !$request->query->has('pto')
             || !$request->query->has('pid')
+            || !Uuid::isValid($request->query->get('cid', ''))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
@@ -643,5 +621,22 @@ SQL;
             ],
             $landingUrl
         );
+    }
+
+    private static function getViewContentInput(string $eventId, ?string $adUserUrl): array
+    {
+        return [
+            'aduser_url' => $adUserUrl,
+            'log_url' => ServeDomain::changeUrlHost(
+                (new SecureUrl(
+                    route('banner-context', ['id' => $eventId])
+                ))->toString()
+            ),
+            'view_script_url' => ServeDomain::changeUrlHost(
+                (new SecureUrl(
+                    url('-/view.js')
+                ))->toString()
+            ),
+        ];
     }
 }

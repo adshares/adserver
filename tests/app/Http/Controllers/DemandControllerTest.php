@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
@@ -325,9 +326,189 @@ final class DemandControllerTest extends TestCase
         );
     }
 
+    public function testClick(): void
+    {
+        [$query, $banner] = $this->initBeforeClickEvent();
+
+        $response = $this->get(self::buildClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        self::assertDatabaseHas(EventLog::class, [
+            'case_id' => hex2bin('13245679801324567980132456798012'),
+            'event_id' => hex2bin('13245679801324567980132456798003'),
+            'event_type' => EventLog::TYPE_CLICK,
+            'pay_to' => hex2bin('000100000005'),
+            'publisher_id' => hex2bin('11111111111111111111111111111111'),
+        ]);
+    }
+
+    public function testClickWhenCaseIdAndImpressionIdAndPublisherIdAreUuid(): void
+    {
+        [$query, $banner] = $this->initBeforeClickEvent();
+        $query['cid'] = '13245679-8013-2456-7980-132456798012';
+        $query['iid'] = '52511506-5f3d-4338-8d57-57a2d5c4b0e8';
+        $query['pid'] = '9231200a-10f5-48dc-a74b-2ad767bb713d';
+
+        $response = $this->get(self::buildClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        self::assertDatabaseHas(EventLog::class, [
+            'case_id' => hex2bin('13245679801324567980132456798012'),
+            'event_id' => hex2bin('13245679801324567980132456798003'),
+            'event_type' => EventLog::TYPE_CLICK,
+            'pay_to' => hex2bin('000100000005'),
+            'publisher_id' => hex2bin('9231200a10f548dca74b2ad767bb713d'),
+        ]);
+    }
+
+    public function testClickWithoutViewEvent(): void
+    {
+        [$query, $banner] = $this->initBeforeViewEvent();
+
+        $response = $this->get(self::buildClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        self::assertDatabaseEmpty(EventLog::class);
+    }
+
+    public function testClickFailWhileMissingCaseId(): void
+    {
+        [$query, $banner] = $this->initBeforeClickEvent();
+        unset($query['cid']);
+
+        $response = $this->get(self::buildClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testClickFailWhileCaseIdIsInvalid(): void
+    {
+        [$query, $banner] = $this->initBeforeClickEvent();
+        $query['cid'] = true;
+
+        $response = $this->get(self::buildClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testView(): void
+    {
+        [$query, $banner] = $this->initBeforeViewEvent();
+
+        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertDatabaseHas(EventLog::class, [
+            'case_id' => hex2bin('13245679801324567980132456798012'),
+            'event_id' => hex2bin('13245679801324567980132456798002'),
+            'event_type' => EventLog::TYPE_VIEW,
+            'pay_to' => hex2bin('000100000005'),
+            'publisher_id' => hex2bin('11111111111111111111111111111111'),
+        ]);
+    }
+
+    public function testViewWhenCaseIdAndImpressionIdAndPublisherIdAreUuid(): void
+    {
+        [$query, $banner] = $this->initBeforeViewEvent();
+        $query['cid'] = '13245679-8013-2456-7980-132456798012';
+        $query['iid'] = '52511506-5f3d-4338-8d57-57a2d5c4b0e8';
+        $query['pid'] = '9231200a-10f5-48dc-a74b-2ad767bb713d';
+
+        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertDatabaseHas(EventLog::class, [
+            'case_id' => hex2bin('13245679801324567980132456798012'),
+            'event_id' => hex2bin('13245679801324567980132456798002'),
+            'event_type' => EventLog::TYPE_VIEW,
+            'pay_to' => hex2bin('000100000005'),
+            'publisher_id' => hex2bin('9231200a10f548dca74b2ad767bb713d'),
+        ]);
+    }
+
+    public function testViewJson(): void
+    {
+        [$query, $banner] = $this->initBeforeViewEvent();
+        $query['json'] = 1;
+
+        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['aduser_url', 'log_url', 'view_script_url']);
+        self::assertDatabaseHas(EventLog::class, [
+            'case_id' => hex2bin('13245679801324567980132456798012'),
+            'event_id' => hex2bin('13245679801324567980132456798002'),
+            'event_type' => EventLog::TYPE_VIEW,
+            'pay_to' => hex2bin('000100000005'),
+            'publisher_id' => hex2bin('11111111111111111111111111111111'),
+        ]);
+    }
+
+    public function testViewFailWhileMissingCaseId(): void
+    {
+        [$query, $banner] = $this->initBeforeViewEvent();
+        unset($query['cid']);
+
+        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testViewFailWhileCaseIdIsInvalid(): void
+    {
+        [$query, $banner] = $this->initBeforeViewEvent();
+        $query['cid'] = true;
+
+        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        self::assertDatabaseEmpty(EventLog::class);
+    }
+
+    private function initBeforeClickEvent(): array
+    {
+        $arr = $this->initBeforeViewEvent();
+        EventLog::factory()->create([
+            'event_id' => Utils::createCaseIdContainingEventType($arr[0]['cid'], EventLog::TYPE_VIEW),
+            'event_type' => EventLog::TYPE_VIEW,
+        ]);
+        return $arr;
+    }
+
+    private function initBeforeViewEvent(): array
+    {
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create();
+        $query = [
+            'cid' => '13245679801324567980132456798012',
+            'ctx' => '',
+            'pid' => '11111111111111111111111111111111',
+            'pto' => '0001-00000005-CBCA',
+        ];
+        return [$query, $banner];
+    }
+
     private static function buildServeUri(string $uuid): string
     {
         return sprintf('/serve/%s', $uuid);
+    }
+
+    private static function buildClickUri(string $bannerId, ?array $query = null): string
+    {
+        $uri = sprintf('/click/%s', $bannerId);
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
+    }
+
+    private static function buildViewUri(string $bannerId, ?array $query = null): string
+    {
+        $uri = sprintf('/view/%s', $bannerId);
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
     }
 
     private static function buildContextUri(string $uuid): string
