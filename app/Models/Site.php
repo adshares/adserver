@@ -26,6 +26,7 @@ use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
+use Adshares\Adserver\Services\Common\MetaverseAddressValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringMatcher;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
@@ -33,6 +34,7 @@ use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -295,24 +297,22 @@ class Site extends Model
         if (null === $site) {
             $name = $domain;
             $url = rtrim($url, '/');
-            if (MediumName::Metaverse->value === $medium) {
-                if ('decentraland' === $vendor) {
-                    if (!SiteUtils::isValidDecentralandUrl($url)) {
-                        throw new InvalidArgumentException('Invalid Decentraland URL');
-                    }
-                    $name = SiteUtils::extractNameFromDecentralandDomain($domain);
-                } elseif ('cryptovoxels' === $vendor) {
-                    if (!SiteUtils::isValidCryptovoxelsUrl($url)) {
-                        throw new InvalidArgumentException('Invalid Cryptovoxels URL');
-                    }
-                    $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
-                }
-            }
-
             if (!SiteValidator::isUrlValid($url)) {
                 throw new InvalidArgumentException('Invalid URL');
             }
             resolve(ConfigurationRepository::class)->fetchMedium($medium, $vendor);
+
+            if (MediumName::Metaverse->value === $medium) {
+                MetaverseAddressValidator::fromVendor($vendor)->validateUrl($url);
+
+                if (MetaverseVendor::Decentraland->value === $vendor) {
+                    $name = SiteUtils::extractNameFromDecentralandDomain($domain);
+                } elseif (MetaverseVendor::Cryptovoxels->value === $vendor) {
+                    $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
+                } elseif (MetaverseVendor::PolkaCity->value === $vendor) {
+                    $name = SiteUtils::extractNameFromPolkaCityDomain($domain);
+                }
+            }
 
             $onlyAcceptedBanners =
                 Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT

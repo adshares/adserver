@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -512,13 +513,10 @@ class Campaign extends Model
             return false;
         }
 
-        $domains = $this->targeting_requires['site']['domain'];
-
         if (MediumName::Metaverse->value === $this->medium) {
-            if ('decentraland' === $this->vendor) {
-                return 1 !== count($domains) || 'decentraland.org' !== $domains[0];
-            } elseif ('cryptovoxels' === $this->vendor) {
-                return 1 !== count($domains) || 'cryptovoxels.com' !== $domains[0];
+            if (null !== ($vendor = MetaverseVendor::tryFrom($this->vendor))) {
+                $domains = $this->targeting_requires['site']['domain'];
+                return 1 !== count($domains) || $vendor->baseDomain() !== $domains[0];
             }
         }
 
