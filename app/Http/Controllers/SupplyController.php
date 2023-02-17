@@ -620,7 +620,7 @@ class SupplyController extends Controller
 
         $url = $this->addQueryStringToUrl($request, $url);
 
-        $caseId = $request->query->get('cid');
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         if (null === ($networkCase = NetworkCase::fetchByCaseId($caseId))) {
             throw new NotFoundHttpException();
         }
@@ -739,7 +739,6 @@ class SupplyController extends Controller
             $url = $this->addQueryStringToUrl($request, $url);
         }
 
-        $caseId = $request->query->get('cid');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         try {
@@ -763,6 +762,7 @@ class SupplyController extends Controller
 
         $response->send();
 
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         $networkCase = NetworkCase::create(
             $caseId,
             $publisherId,
@@ -783,7 +783,7 @@ class SupplyController extends Controller
         if (
             !$request->query->has('r')
             || !$request->query->has('ctx')
-            || !Utils::isUuidValid($request->query->get('cid'))
+            || !Uuid::isValid($request->query->get('cid', ''))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }

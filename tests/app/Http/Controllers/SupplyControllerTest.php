@@ -624,17 +624,18 @@ final class SupplyControllerTest extends TestCase
         $response->assertHeader('Location');
         $location = $response->headers->get('Location');
         self::assertStringStartsWith('https://example.com/view', $location);
-        parse_str(parse_url($location, PHP_URL_QUERY), $query);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
         foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
-            self::assertArrayHasKey($key, $query);
+            self::assertArrayHasKey($key, $locationQuery);
         }
-        self::assertEquals('13245679801324567980132456798012', $query['cid']);
-        self::assertEquals('0001-00000005-CBCA', $query['pto']);
+        self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
     }
 
-    public function testLogNetworkViewWhileImpressionIdIsUuidV4(): void
+    public function testLogNetworkViewWhileCaseIdAndImpressionIdAreUuidV4(): void
     {
         [$query, $banner, $zone] = self::initNetworkForLoggingView();
+        $query['cid'] = Uuid::fromString($query['cid'])->toString();
         $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
 
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
@@ -643,12 +644,12 @@ final class SupplyControllerTest extends TestCase
         $response->assertHeader('Location');
         $location = $response->headers->get('Location');
         self::assertStringStartsWith('https://example.com/view', $location);
-        parse_str(parse_url($location, PHP_URL_QUERY), $query);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
         foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
-            self::assertArrayHasKey($key, $query);
+            self::assertArrayHasKey($key, $locationQuery);
         }
-        self::assertEquals('13245679801324567980132456798012', $query['cid']);
-        self::assertEquals('0001-00000005-CBCA', $query['pto']);
+        self::assertEquals('13245679-8013-2456-7980-132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
     }
 
     public function testLogNetworkViewFailWhileImpressionIdIsMissing(): void
