@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
-use Adshares\Adserver\Utilities\SiteUtils;
+use Adshares\Adserver\Services\Common\MetaverseAddressValidator;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
@@ -79,27 +79,14 @@ class CampaignTargetingProcessor
     private function validateDomainsIfPresent(array $processed): void
     {
         $domains = $processed['site']['domain'] ?? [];
+        $validator = MediumName::Metaverse->value === $this->mediumName
+            ? MetaverseAddressValidator::fromVendor($this->vendor)
+            : null;
         foreach ($domains as $domain) {
             if (!SiteValidator::isDomainValid($domain)) {
                 throw new InvalidArgumentException(sprintf('Invalid domain %s', $domain));
             }
-            if (MediumName::Metaverse->value === $this->mediumName) {
-                if ('decentraland' === $this->vendor) {
-                    if ('decentraland.org' === $domain) {
-                        continue;
-                    }
-                    if (!SiteUtils::isValidDecentralandUrl('https://' . $domain)) {
-                        throw new InvalidArgumentException(sprintf('Invalid Decentraland domain %s', $domain));
-                    }
-                } elseif ('cryptovoxels' === $this->vendor) {
-                    if ('cryptovoxels.com' === $domain) {
-                        continue;
-                    }
-                    if (!SiteUtils::isValidCryptovoxelsUrl('https://' . $domain)) {
-                        throw new InvalidArgumentException(sprintf('Invalid Cryptovoxels domain %s', $domain));
-                    }
-                }
-            }
+            $validator?->validateDomain($domain, true);
         }
     }
 }
