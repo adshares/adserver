@@ -31,14 +31,13 @@ use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Common\CrmNotifier;
+use Adshares\Adserver\Services\Common\MetaverseAddressValidator;
 use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
-use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Adserver\ViewModel\MediumName;
-use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -508,21 +507,8 @@ class SitesController extends Controller
         if (SitesRejectedDomain::isDomainRejected($domain)) {
             throw new UnprocessableEntityHttpException(sprintf('The domain %s is rejected.', $domain));
         }
-
         if (MediumName::Metaverse->value === $medium) {
-            if (MetaverseVendor::Decentraland->value === $vendor) {
-                if (!SiteUtils::isValidDecentralandUrl('https://' . $domain)) {
-                    throw new UnprocessableEntityHttpException(sprintf('Invalid Decentraland domain %s', $domain));
-                }
-            } elseif (MetaverseVendor::Cryptovoxels->value === $vendor) {
-                if (!SiteUtils::isValidCryptovoxelsUrl('https://' . $domain)) {
-                    throw new UnprocessableEntityHttpException(sprintf('Invalid Cryptovoxels domain %s', $domain));
-                }
-            } elseif (MetaverseVendor::PolkaCity->value === $vendor) {
-                if (!SiteUtils::isValidPolkaCityUrl('https://' . $domain)) {
-                    throw new UnprocessableEntityHttpException(sprintf('Invalid PolkaCity domain %s', $domain));
-                }
-            }
+            MetaverseAddressValidator::fromVendor($vendor)->validateDomain($domain);
         }
     }
 
