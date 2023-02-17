@@ -634,13 +634,23 @@ final class SupplyControllerTest extends TestCase
         self::assertDatabaseCount(NetworkCaseClick::class, 1);
     }
 
-    public function testLogNetworkClickWhileNoView(): void
+    public function testLogNetworkClickFailWhileNoView(): void
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
 
         $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testLogNetworkClickFailWhileInvalidRedirectUrlAndBannerId(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        $query['r'] = '';
+
+        $response = $this->get(self::buildLogClickUri('invalid', $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
     }
 
     public function testLogNetworkView(): void
@@ -803,7 +813,7 @@ final class SupplyControllerTest extends TestCase
         $query = $arr[0];
         $banner = $arr[1];
         $zone = $arr[2];
-        $networkCase = NetworkCase::factory()->create([
+        NetworkCase::factory()->create([
             'banner_id' => $banner->uuid,
             'case_id' => $query['cid'],
             'network_impression_id' => NetworkImpression::firstOrFail()->id,
