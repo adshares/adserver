@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -89,14 +89,13 @@ final class NowPayments
             Log::warning(
                 sprintf('[NowPayments] Requested amount (%f) must be greater than %d', $amount, $this->minAmount)
             );
-
             return '';
         }
 
         $orderId = sprintf(
             '%s/%s',
             substr($user->uuid, 0, 10),
-            substr(str_replace('.', '/', microtime(true)), 0, 13)
+            substr(str_replace('.', '/', sprintf('%.4f', microtime(true))), 0, 13)
         );
         $data = [
             'dataSource' => "woocommerce",
