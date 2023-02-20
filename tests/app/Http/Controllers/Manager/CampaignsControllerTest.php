@@ -127,6 +127,26 @@ final class CampaignsControllerTest extends TestCase
         ]);
     }
 
+    public function testAddMetaverseCampaign(): void
+    {
+        $this->createUser();
+        /** @var UploadedFileModel $file */
+        $file = UploadedFileModel::factory()->create([
+            'medium' => 'metaverse',
+            'scope' => '640x480',
+            'user_id' => User::first(),
+        ]);
+        $campaignData = $this->getCampaignData();
+        $campaignData['basicInformation']['medium'] = 'metaverse';
+        $campaignData['ads'][0]['creativeSize'] = '640x480';
+        $campaignData['ads'][0]['url'] = 'http://localhost:8010/upload-preview/image/' . $file->uuid;
+        $campaignData['targeting']['requires']['site']['domain'] = ['scene-0-0.decentraland.org'];
+
+        $response = $this->postJson(self::URI, ['campaign' => $campaignData]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+    }
+
     /**
      * @dataProvider addCampaignWithInvalidDataProvider
      */

@@ -33,9 +33,9 @@ class MetaverseAddressValidator
     {
     }
 
-    public static function fromVendor(string $vendor): self
+    public static function fromVendor(?string $vendor): self
     {
-        return new self(MetaverseVendor::tryFrom($vendor));
+        return new self(null === $vendor ? null : MetaverseVendor::tryFrom($vendor));
     }
 
     public function validateDomain(string $domain, bool $acceptBaseDomain = false): void
@@ -54,7 +54,7 @@ class MetaverseAddressValidator
     {
         $methodName = sprintf('isValid%sUrl', $this->vendor?->name);
         if (method_exists(SiteUtils::class, $methodName) && !SiteUtils::$methodName($url)) {
-            throw new InvalidArgumentException(sprintf('Invalid %s address %s', $this->vendor->name, $url));
+            throw new InvalidArgumentException(sprintf('Invalid %s address %s', $this->vendor?->name, $url));
         }
     }
 }
