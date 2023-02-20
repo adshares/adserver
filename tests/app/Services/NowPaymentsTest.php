@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Services;
 
 use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\NowPayments;
@@ -154,6 +155,26 @@ final class NowPaymentsTest extends TestCase
 
         self::assertFalse($result);
         Mail::assertNothingQueued();
+    }
+
+    public function testGetPaymentUrl(): void
+    {
+        $nowPayments = $this->setupNowPayments();
+        $user = User::factory()->create();
+
+        $url = $nowPayments->getPaymentUrl($user, 51.2);
+        self::assertStringContainsString('51.2', $url, 'Amount is not present in URL');
+        self::assertDatabaseHas(NowPaymentsLog::class, ['amount' => '51.2']);
+    }
+
+    public function testGetPaymentUrlWhileLessThanMinimum(): void
+    {
+        $nowPayments = $this->setupNowPayments();
+        $user = User::factory()->create();
+
+        $url = $nowPayments->getPaymentUrl($user, 16);
+
+        self::assertEquals('', $url);
     }
 
     private function setupNowPayments(): NowPayments
