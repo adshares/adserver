@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -690,12 +690,14 @@ class AuthControllerTest extends TestCase
     public function testLogInAndLogOut(): void
     {
         /** @var User $user */
-        $user = User::factory()->create(['password' => '87654321']);
+        $user = User::factory()->create(['invalid_login_attempts' => 2, 'password' => '87654321']);
 
         $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321'])
             ->assertStatus(Response::HTTP_OK);
-        $apiToken = User::fetchById($user->id)->api_token;
+        $user->refresh();
+        $apiToken = $user->api_token;
         self::assertNotNull($apiToken, 'Token is null');
+        self::assertEquals(0, $user->invalid_login_attempts);
 
         $this->get(self::LOG_OUT_URI, ['Authorization' => 'Bearer ' . $apiToken])
             ->assertStatus(Response::HTTP_NO_CONTENT);
@@ -711,8 +713,34 @@ class AuthControllerTest extends TestCase
         $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321']);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
-        $content = json_decode($response->getContent(), true);
-        self::assertArrayHasKey('reason', $content);
+        $response->assertJsonPath('reason', 'suspicious activity');
+    }
+
+    public function testLogInLockedUser(): void
+    {
+        /** @var User $user */
+        $user = User::factory()
+            ->create(['invalid_login_attempts' => 3, 'password' => '87654321']);
+
+        $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321']);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $response->assertJsonPath('reason', 'Account locked');
+    }
+
+    public function testLogInInvalidPassword(): void
+    {
+        /** @var User $user */
+        $user = User::factory()
+            ->create(['password' => '87654321']);
+
+        $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '876543210']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertDatabaseHas(User::class, [
+            'email' => $user->email,
+            'invalid_login_attempts' => 1,
+        ]);
     }
 
     public function testSetPassword(): void
