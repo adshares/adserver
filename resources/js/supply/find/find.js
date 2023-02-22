@@ -892,16 +892,16 @@ var fetchBanner = function (banner, context, zone_options) {
             banner.clickUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,
-                'iid': getImpressionId(),
+                'ctx': contextParam,// legacy, can be deleted when adservers will pass zid in URL
+                'iid': getImpressionId(),// legacy, can be deleted when adservers will pass iid in URL
             }
         );
         context.view_url = addUrlParam(
             banner.viewUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,
-                'iid': getImpressionId(),
+                'ctx': contextParam,// legacy, can be deleted when adservers will support zid in URL
+                'iid': getImpressionId(),// legacy, can be deleted when adservers will pass iid in URL
             }
         );
 

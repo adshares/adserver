@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Find response URLs extended with impression ID and placement ID
 ### Fixed
 - Presenting maintenance mode in info.json
 - Do not accept requests in maintenance mode
