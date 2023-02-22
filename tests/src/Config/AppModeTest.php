@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -53,5 +53,14 @@ class AppModeTest extends TestCase
     public function testGetAppMode(): void
     {
         self::assertEquals('operational', AppMode::getAppMode());
+    }
+
+    public function testGetAppModeWhileMaintenance(): void
+    {
+        config(['app.is_maintenance' => 1]);
+
+        self::assertEquals('maintenance', AppMode::getAppMode());
+
+        config(['app.is_maintenance' => 0]);
     }
 }
