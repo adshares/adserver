@@ -474,11 +474,12 @@ class SupplyController extends Controller
         }
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
-        $foundBanners = $bannerFinder->findBanners($zones, $context);
+        $impressionUuid = self::impressionIdToUuid($impressionId);
+        $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionUuid);
 
         if ($foundBanners->exists(fn($key, $element) => $element != null)) {
             NetworkImpression::register(
-                self::impressionIdToUuid($impressionId),
+                $impressionUuid,
                 Utils::hexUuidFromBase64UrlWithChecksum($tid),
                 $impressionContext,
                 $userContext,
@@ -574,7 +575,6 @@ class SupplyController extends Controller
 
         return $response;
     }
-
 
     public function logNetworkSimpleClick(Request $request): RedirectResponse
     {
