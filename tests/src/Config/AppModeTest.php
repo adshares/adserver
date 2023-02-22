@@ -57,10 +57,10 @@ class AppModeTest extends TestCase
 
     public function testGetAppModeWhileMaintenance(): void
     {
-        config(['app.maintenance' => 1]);
+        config(['app.is_maintenance' => 1]);
 
         self::assertEquals('maintenance', AppMode::getAppMode());
 
-        config(['app.maintenance' => 0]);
+        config(['app.is_maintenance' => 0]);
     }
 }

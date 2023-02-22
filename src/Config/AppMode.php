@@ -52,7 +52,7 @@ final class AppMode
 
     public static function getAppMode(): string
     {
-        if (1 === config('app.maintenance')) {
+        if (1 === config('app.is_maintenance')) {
             return self::MAINTENANCE;
         }
         return 1 === config('app.setup') ? self::INITIALIZATION : self::OPERATIONAL;
