@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Presenting maintenance mode in info.json
+- Do not accept requests in maintenance mode
 
 ## [2.4.6] - 2023-02-20
 ### Fixed

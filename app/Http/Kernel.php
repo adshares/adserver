@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
+use Adshares\Adserver\Http\Middleware\CheckForMaintenanceMode;
 use Adshares\Adserver\Http\Middleware\Impersonation;
 use Adshares\Adserver\Http\Middleware\RequireAdminAccess;
 use Adshares\Adserver\Http\Middleware\RequireAdvertiserAccess;
@@ -38,7 +39,6 @@ use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
