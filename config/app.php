@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
     'debug' => env('APP_DEBUG', false),
     'refresh_testing_database' => env('APP_REFRESH_TESTING_DATABASE', false),
+    'is_maintenance' => (int)env('APP_MAINTENANCE', 0),
     'setup' => (int)env('APP_SETUP', 0),
     'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
     'adshares_command' => env('ADSHARES_COMMAND'),

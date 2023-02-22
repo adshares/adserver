@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,7 +32,7 @@ interface AdSelect
 
     public function deleteFromInventory(CampaignCollection $campaigns): void;
 
-    public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
+    public function findBanners(array $zones, ImpressionContext $context, string $impressionId): FoundBanners;
 
     public function exportCases(Collection $cases): void;
 
