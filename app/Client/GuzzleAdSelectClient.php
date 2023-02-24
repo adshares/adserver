@@ -273,7 +273,7 @@ class GuzzleAdSelectClient implements AdSelect
             }
         }
 
-        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection));
+        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection, $impressionId));
 
         return new FoundBanners($banners);
     }
