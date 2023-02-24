@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Locking user's account after several failed login attempts
 - Find response URLs extended with impression ID and placement ID
 ### Fixed
 - Presenting maintenance mode in info.json

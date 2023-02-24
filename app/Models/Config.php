@@ -140,6 +140,7 @@ class Config extends Model
     public const MAIL_SMTP_USERNAME = 'mail-smtp-username';
     public const MAIN_JS_BASE_URL = 'main-js-base-url';
     public const MAIN_JS_TLD = 'main-js-tld';
+    public const MAX_INVALID_LOGIN_ATTEMPTS = 'max-invalid-login-attempts';
     public const MAX_PAGE_ZONES = 'max-page-zones';
     public const NETWORK_DATA_CACHE_TTL = 'network-data-cache-ttl';
     public const NOW_PAYMENTS_API_KEY = 'now-payments-api-key';
@@ -248,6 +249,7 @@ class Config extends Model
         self::INVOICE_COMPANY_BANK_ACCOUNTS => ConfigTypes::Json,
         self::INVOICE_CURRENCIES => ConfigTypes::Array,
         self::INVOICE_ENABLED => ConfigTypes::Bool,
+        self::MAX_INVALID_LOGIN_ATTEMPTS => ConfigTypes::Integer,
         self::MAX_PAGE_ZONES => ConfigTypes::Integer,
         self::MAIL_SMTP_PORT => ConfigTypes::Integer,
         self::NETWORK_DATA_CACHE_TTL => ConfigTypes::Integer,
@@ -517,6 +519,7 @@ class Config extends Model
             self::MAIL_SMTP_USERNAME => '',
             self::MAIN_JS_BASE_URL => $fetched[self::URL] ?? '',
             self::MAIN_JS_TLD => '',
+            self::MAX_INVALID_LOGIN_ATTEMPTS => 5,
             self::MAX_PAGE_ZONES => 4,
             self::NETWORK_DATA_CACHE_TTL => 60,
             self::NOW_PAYMENTS_API_KEY => '',

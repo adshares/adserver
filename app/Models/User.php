@@ -79,6 +79,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int is_banned
  * @property string ban_reason
  * @property Carbon|null last_active_at
+ * @property int invalid_login_attempts
  * @property array roles
  * @mixin Builder
  */
@@ -302,6 +303,7 @@ class User extends Authenticatable
         } while ($this->where('api_token', $this->api_token)->exists());
 
         $this->last_active_at = now();
+        $this->invalid_login_attempts = 0;
         $this->save();
     }
 
