@@ -369,6 +369,7 @@ class WalletController extends Controller
         $users_balances = UserLedgerEntry::allForeignWalletBalanceIfAny();
 
         $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balanceTotal);
+        Log::info("############################Amount is : $amount");
         $adsFee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
         $total = $amount + $adsFee;
 
