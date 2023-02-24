@@ -725,7 +725,7 @@ class AuthControllerTest extends TestCase
         $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321']);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
-        $response->assertJsonPath('reason', 'Account locked');
+        $response->assertJsonPath('reason', 'Account locked. Reset password');
     }
 
     public function testLogInInvalidPassword(): void
@@ -836,10 +836,10 @@ class AuthControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create([
             'api_token' => '1234',
+            'invalid_login_attempts' => 10,
             'password' => '87654321',
         ]);
-        $this->actingAs($user, 'api');
-        self::assertNotNull($user->api_token, 'Token is null');
+        $this->login($user);
 
         $response = $this->patch(
             self::SELF_URI,
@@ -850,8 +850,11 @@ class AuthControllerTest extends TestCase
                 ]
             ]
         );
+
         $response->assertStatus(Response::HTTP_OK);
+        $user->refresh();
         self::assertNull($user->api_token, 'Token is not null');
+        self::assertEquals(0, $user->invalid_login_attempts);
         Mail::assertQueued(UserPasswordChange::class);
     }
 

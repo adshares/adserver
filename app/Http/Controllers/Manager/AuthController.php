@@ -346,7 +346,7 @@ class AuthController extends Controller
         $userCandidate = User::fetchByEmail($email);
         if (null !== $userCandidate) {
             if ($userCandidate->invalid_login_attempts >= config('app.max_invalid_login_attempts')) {
-                return new JsonResponse(['reason' => 'Account locked'], Response::HTTP_FORBIDDEN);
+                return new JsonResponse(['reason' => 'Account locked. Reset password'], Response::HTTP_FORBIDDEN);
             }
             if ($userCandidate->isBanned()) {
                 return new JsonResponse(['reason' => $userCandidate->ban_reason], Response::HTTP_FORBIDDEN);
@@ -537,7 +537,8 @@ MSG;
 
         $user->password = $request->input('user.password_new');
         $user->api_token = null;
-        $user->save();
+        $user->invalid_login_attempts = 0;
+        $user->saveOrFail();
 
         if (null !== $user->email) {
             Mail::to($user)->queue(new UserPasswordChange());
