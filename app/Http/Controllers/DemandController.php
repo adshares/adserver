@@ -301,13 +301,11 @@ SQL;
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
         $response = new Response();
-
         if ($request->headers->has('Origin')) {
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
         }
 
         $impressionId = $request->query->get('iid');
-
         if ($impressionId) {
             $tid = Utils::attachOrProlongTrackingCookie(
                 $request,
@@ -320,56 +318,46 @@ SQL;
             $tid = $request->cookies->get('tid');
         }
 
-        $trackingId = $tid
-            ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
-            : $caseId;
-
-        $payTo = $request->query->get('pto');
-        $publisherId = $request->query->get('pid');
-
         try {
             $context = Utils::decodeZones($request->query->get('ctx'));
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
-        $keywords = $context['page']['keywords'] ?? '';
-
-        $adUserEndpoint = config('app.aduser_serve_subdomain') ?
-            ServeDomain::current(config('app.aduser_serve_subdomain')) :
-            config('app.aduser_base_url');
-
-        if ($adUserEndpoint) {
-            $adUserUrl = sprintf(
-                '%s/register/%s/%s/%s.html',
-                $adUserEndpoint,
-                urlencode(config('app.adserver_id')),
-                $tid ?: Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($caseId)),
-                $impressionId ?? Utils::urlSafeBase64Encode(random_bytes(8))
-            );
-        } else {
-            $adUserUrl = null;
-        }
 
         if ($request->query->get('simple')) {
             $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
             $response->headers->set(self::CONTENT_TYPE, 'image/gif');
-        } elseif ($request->query->get('json')) {
-            $response->setContent(
-                json_encode(
-                    self::getViewContentInput($eventId, $adUserUrl)
-                )
-            );
-            $response->headers->set(self::CONTENT_TYPE, 'application/json');
         } else {
-            $response->setContent(
-                view(
-                    'demand/view-event',
-                    self::getViewContentInput($eventId, $adUserUrl)
-                )
+            $contextUrl = ServeDomain::changeUrlHost(
+                (new SecureUrl(route('banner-init-context', ['event_id' => $eventId])))->toString()
             );
+            $urls = [$contextUrl];
+
+            $adUserEndpoint = config('app.aduser_serve_subdomain')
+                ? ServeDomain::current(config('app.aduser_serve_subdomain'))
+                : config('app.aduser_base_url');
+            if ($adUserEndpoint) {
+                $adUserUrl = sprintf(
+                    '%s/register/%s/%s/%s.html',
+                    $adUserEndpoint,
+                    urlencode(config('app.adserver_id')),
+                    $tid ?: Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($caseId)),
+                    $impressionId ?? Utils::urlSafeBase64Encode(random_bytes(8))
+                );
+                $urls[] = $adUserUrl;
+            }
+            $response->setContent(json_encode(['context' => $urls]));
+            $response->headers->set(self::CONTENT_TYPE, 'application/json');
         }
 
         $response->send();
+
+        $keywords = $context['page']['keywords'] ?? '';
+        $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
+        $trackingId = $tid
+            ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
+            : $caseId;
 
         $banner = $this->getBanner($bannerId);
         $campaign = $banner->campaign;
@@ -391,6 +379,27 @@ SQL;
         );
 
         return $response;
+    }
+
+    public function initContext(Request $request, string $eventId): Response
+    {
+        $response = new Response();
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+        return $response->setContent(
+            view(
+                'demand/view-event',
+                [
+                    'log_url' => ServeDomain::changeUrlHost(
+                        (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString()
+                    ),
+                    'view_script_url' => ServeDomain::changeUrlHost(
+                        (new SecureUrl(url('-/view.js')))->toString()
+                    ),
+                ],
+            )
+        );
     }
 
     private function validateEventRequest(Request $request): void
@@ -621,22 +630,5 @@ SQL;
             ],
             $landingUrl
         );
-    }
-
-    private static function getViewContentInput(string $eventId, ?string $adUserUrl): array
-    {
-        return [
-            'aduser_url' => $adUserUrl,
-            'log_url' => ServeDomain::changeUrlHost(
-                (new SecureUrl(
-                    route('banner-context', ['id' => $eventId])
-                ))->toString()
-            ),
-            'view_script_url' => ServeDomain::changeUrlHost(
-                (new SecureUrl(
-                    url('-/view.js')
-                ))->toString()
-            ),
-        ];
     }
 }

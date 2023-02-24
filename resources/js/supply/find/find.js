@@ -910,7 +910,13 @@ var fetchBanner = function (banner, context, zone_options) {
             var timer = setInterval(function () {
                 if (isVisible(element)) {
                     clearInterval(timer);
-                    dwmthACL.push(addAnalyticsIframe(context.view_url).contentWindow);
+                    fetchURL(context.view_url)
+                        .then(function (data) {
+                            const urls = JSON.parse(data.bytes).context || []
+                            for (const url of urls) {
+                                dwmthACL.push(addAnalyticsIframe(url).contentWindow);
+                            }
+                        });
                 }
             }, 1000);
         };

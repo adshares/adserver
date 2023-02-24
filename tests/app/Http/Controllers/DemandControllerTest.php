@@ -428,13 +428,14 @@ final class DemandControllerTest extends TestCase
 
     public function testViewJson(): void
     {
+        Config::updateAdminSettings([Config::ADUSER_BASE_URL => 'https://aduser.example.com']);
         [$query, $banner] = $this->initBeforeViewEvent();
-        $query['json'] = 1;
 
         $response = $this->get(self::buildViewUri($banner->uuid, $query));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(['aduser_url', 'log_url', 'view_script_url']);
+        $response->assertJsonStructure(['context' => []]);
+        $response->assertJsonCount(2, 'context');
         self::assertDatabaseHas(EventLog::class, [
             'case_id' => hex2bin('13245679801324567980132456798012'),
             'event_id' => hex2bin('13245679801324567980132456798002'),
@@ -463,6 +464,17 @@ final class DemandControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
         self::assertDatabaseEmpty(EventLog::class);
+    }
+
+    public function testInitContext(): void
+    {
+        /** @var EventLog $event */
+        $event = EventLog::factory()->create();
+
+        $response = $this->get(sprintf('/init-context/%s', $event->event_id));
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertStringStartsWith('text/html', $response->headers->get('Content-type'));
     }
 
     private function initBeforeClickEvent(): array
