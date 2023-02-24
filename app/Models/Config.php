@@ -519,7 +519,7 @@ class Config extends Model
             self::MAIL_SMTP_USERNAME => '',
             self::MAIN_JS_BASE_URL => $fetched[self::URL] ?? '',
             self::MAIN_JS_TLD => '',
-            self::MAX_INVALID_LOGIN_ATTEMPTS => 3,
+            self::MAX_INVALID_LOGIN_ATTEMPTS => 5,
             self::MAX_PAGE_ZONES => 4,
             self::NETWORK_DATA_CACHE_TTL => 60,
             self::NOW_PAYMENTS_API_KEY => '',
