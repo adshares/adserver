@@ -720,7 +720,7 @@ class AuthControllerTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()
-            ->create(['invalid_login_attempts' => 3, 'password' => '87654321']);
+            ->create(['invalid_login_attempts' => 5, 'password' => '87654321']);
 
         $response = $this->post(self::LOG_IN_URI, ['email' => $user->email, 'password' => '87654321']);
 

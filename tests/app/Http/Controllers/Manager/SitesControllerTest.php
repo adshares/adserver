@@ -986,12 +986,12 @@ class SitesControllerTest extends TestCase
             [
                 ['domain' => 'example.com', 'medium' => 'metaverse', 'vendor' => 'decentraland'],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
-                'Invalid Decentraland domain example.com',
+                'Invalid domain example.com.',
             ],
             [
                 ['domain' => 'example.com', 'medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
-                'Invalid Cryptovoxels domain example.com',
+                'Invalid domain example.com.',
             ],
             [
                 ['domain' => 'scene-2-n5.decentraland.org', 'medium' => 'metaverse', 'vendor' => 'decentraland'],
