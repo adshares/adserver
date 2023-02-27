@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locking user's account after several failed login attempts
 - Find response URLs extended with impression ID and placement ID
 ### Changed
-- Demand view endpoint returns JSON by default
+- Demand view endpoint returns JSON or HTML based on header
 ### Fixed
 - Presenting maintenance mode in info.json
 - Do not accept requests in maintenance mode
