@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Presenting maintenance mode in info.json
 - Do not accept requests in maintenance mode
+- UUIDs are allowed for Page "Why" and reporting ads
 
 ## [2.4.6] - 2023-02-20
 ### Fixed
