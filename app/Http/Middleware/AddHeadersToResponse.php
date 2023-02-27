@@ -31,7 +31,7 @@ class AddHeadersToResponse
     {
         /** @var Response $response */
         $response = $next($request);
-        $response->headers->set('X-Robots-Tag', 'noindex2');
+        $response->headers->set('X-Robots-Tag', 'noindex');
         return $response;
     }
 }
