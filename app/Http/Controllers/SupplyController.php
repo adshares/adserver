@@ -43,6 +43,7 @@ use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Adserver\ViewModel\ZoneSize;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
@@ -64,7 +65,6 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
@@ -847,16 +847,12 @@ class SupplyController extends Controller
 
     public function why(Request $request): View
     {
-        Validator::make(
-            $request->all(),
-            [
-                'bid' => 'required|regex:/^[0-9a-f]{32}$/i',
-                'cid' => 'required|regex:/^[0-9a-f]{32}$/i',
-            ]
-        )->validate();
-
-        $bannerId = $request->query->get('bid');
-        $caseId = $request->query->get('cid');
+        try {
+            $bannerId = (new Uuid($request->query->get('bid', '')))->hex();
+            $caseId = (new Uuid($request->query->get('cid', '')))->hex();
+        } catch (InvalidUuidException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
 
         if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
             throw new NotFoundHttpException('No matching banner');
@@ -909,8 +905,11 @@ class SupplyController extends Controller
 
     public function reportAd(string $caseId, string $bannerId): string
     {
-        if (!Utils::isUuidValid($caseId) || !Utils::isUuidValid($bannerId)) {
-            throw new UnprocessableEntityHttpException();
+        try {
+            $bannerId = (new Uuid($bannerId))->hex();
+            $caseId = (new Uuid($caseId))->hex();
+        } catch (InvalidUuidException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
         }
 
         if (null === ($case = NetworkCase::fetchByCaseId($caseId))) {
