@@ -508,7 +508,11 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException(sprintf('The domain %s is rejected.', $domain));
         }
         if (MediumName::Metaverse->value === $medium) {
-            MetaverseAddressValidator::fromVendor($vendor)->validateDomain($domain);
+            try {
+                MetaverseAddressValidator::fromVendor($vendor)->validateDomain($domain);
+            } catch (InvalidArgumentException) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid domain %s.', $domain));
+            }
         }
     }
 

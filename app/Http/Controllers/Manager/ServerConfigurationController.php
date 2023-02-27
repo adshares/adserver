@@ -137,6 +137,7 @@ class ServerConfigurationController extends Controller
         Config::MAIL_SMTP_USERNAME => 'nullable',
         Config::MAIN_JS_BASE_URL => 'nullable|url',
         Config::MAIN_JS_TLD => 'nullable|host',
+        Config::MAX_INVALID_LOGIN_ATTEMPTS => 'nullable|integer|min:1',
         Config::MAX_PAGE_ZONES => 'nullable|integer|min:0',
         Config::NETWORK_DATA_CACHE_TTL => 'nullable|integer|min:0',
         Config::NOW_PAYMENTS_API_KEY => 'nullable',

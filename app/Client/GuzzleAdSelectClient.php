@@ -138,7 +138,7 @@ class GuzzleAdSelectClient implements AdSelect
         }
     }
 
-    public function findBanners(array $zones, ImpressionContext $context): FoundBanners
+    public function findBanners(array $zones, ImpressionContext $context, string $impressionId): FoundBanners
     {
         $zoneInputByUuid = [];
         $zoneIds = [];
@@ -273,13 +273,16 @@ class GuzzleAdSelectClient implements AdSelect
             }
         }
 
-        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection));
+        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection, $impressionId));
 
         return new FoundBanners($banners);
     }
 
-    private function fetchInOrderOfAppearance(array $params, Collection $zoneCollection): Generator
-    {
+    private function fetchInOrderOfAppearance(
+        array $params,
+        Collection $zoneCollection,
+        string $impressionId,
+    ): Generator {
         /** @var LicenseReader $licenseReader */
         $licenseReader = resolve(LicenseReader::class);
         $infoBox = $licenseReader->getInfoBox();
@@ -313,7 +316,9 @@ class GuzzleAdSelectClient implements AdSelect
                                 'log-network-click',
                                 [
                                     'id' => $banner->uuid,
+                                    'iid' => $impressionId,
                                     'r'  => Utils::urlSafeBase64Encode($banner->click_url),
+                                    'zid' => $zone->uuid,
                                 ]
                             )
                         )),
@@ -322,7 +327,9 @@ class GuzzleAdSelectClient implements AdSelect
                                 'log-network-view',
                                 [
                                     'id' => $banner->uuid,
+                                    'iid' => $impressionId,
                                     'r'  => Utils::urlSafeBase64Encode($banner->view_url),
+                                    'zid' => $zone->uuid,
                                 ]
                             )
                         )),

@@ -892,16 +892,16 @@ var fetchBanner = function (banner, context, zone_options) {
             banner.clickUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,
-                'iid': getImpressionId(),
+                'ctx': contextParam,// legacy, can be deleted when adservers will pass zid in URL
+                'iid': getImpressionId(),// legacy, can be deleted when adservers will pass iid in URL
             }
         );
         context.view_url = addUrlParam(
             banner.viewUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,
-                'iid': getImpressionId(),
+                'ctx': contextParam,// legacy, can be deleted when adservers will support zid in URL
+                'iid': getImpressionId(),// legacy, can be deleted when adservers will pass iid in URL
             }
         );
 
@@ -910,7 +910,16 @@ var fetchBanner = function (banner, context, zone_options) {
             var timer = setInterval(function () {
                 if (isVisible(element)) {
                     clearInterval(timer);
-                    dwmthACL.push(addAnalyticsIframe(context.view_url).contentWindow);
+                    const options = {
+                        json: true,
+                    };
+                    fetchURL(context.view_url, options)
+                        .then(function (data) {
+                            const urls = data.context || [];
+                            for (const url of urls) {
+                                dwmthACL.push(addAnalyticsIframe(url).contentWindow);
+                            }
+                        });
                 }
             }, 1000);
         };

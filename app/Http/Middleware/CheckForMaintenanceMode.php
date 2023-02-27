@@ -19,19 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Providers;
+namespace Adshares\Adserver\Http\Middleware;
 
-use Adshares\Adserver\Repository\Common\EloquentServerEventLogRepository;
-use Adshares\Adserver\Repository\Common\EloquentUserRepository;
-use Adshares\Adserver\Repository\Common\ServerEventLogRepository;
-use Adshares\Adserver\Repository\Common\UserRepository;
-use Illuminate\Support\ServiceProvider;
+use Adshares\Config\AppMode;
+use Closure;
+use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
-class RepositoryServiceProvider extends ServiceProvider
+class CheckForMaintenanceMode extends PreventRequestsDuringMaintenance
 {
-    public function register(): void
+    protected $except = [
+        '/',
+        '/info',
+        '/info.json',
+    ];
+
+    public function handle($request, Closure $next)
     {
-        $this->app->bind(ServerEventLogRepository::class, EloquentServerEventLogRepository::class);
-        $this->app->bind(UserRepository::class, EloquentUserRepository::class);
+        if (AppMode::MAINTENANCE === AppMode::getAppMode() && !$this->inExceptArray($request)) {
+            throw new HttpException(Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+        return $next($request);
     }
 }

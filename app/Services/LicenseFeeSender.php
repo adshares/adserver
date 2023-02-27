@@ -27,13 +27,11 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
-use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 
 use function array_reduce;

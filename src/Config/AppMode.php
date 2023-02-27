@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -52,6 +52,9 @@ final class AppMode
 
     public static function getAppMode(): string
     {
+        if (1 === config('app.is_maintenance')) {
+            return self::MAINTENANCE;
+        }
         return 1 === config('app.setup') ? self::INITIALIZATION : self::OPERATIONAL;
     }
 }

@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.4.7] - 2023-02-27
+### Added
+- Locking user's account after several failed login attempts
+- Find response URLs extended with impression ID and placement ID
+### Changed
+- Demand view endpoint returns JSON or HTML based on header
+### Fixed
+- Presenting maintenance mode in info.json
+- Do not accept requests in maintenance mode
+- UUIDs are allowed for Page "Why" and reporting ads
+
 ## [2.4.6] - 2023-02-20
 ### Fixed
 - NowPayments order ID initialization
@@ -872,7 +884,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.6...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.7...develop
+[2.4.7]: https://github.com/adshares/adserver/compare/v2.4.6...v2.4.7
 [2.4.6]: https://github.com/adshares/adserver/compare/v2.4.5...v2.4.6
 [2.4.5]: https://github.com/adshares/adserver/compare/v2.4.4...v2.4.5
 [2.4.4]: https://github.com/adshares/adserver/compare/v2.4.3...v2.4.4

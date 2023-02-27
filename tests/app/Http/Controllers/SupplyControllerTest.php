@@ -142,8 +142,30 @@ final class SupplyControllerTest extends TestCase
         NetworkHost::factory()->create(['host' => $host]);
         NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
         $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        $query = [
+            'bid' => $banner->uuid,
+            'cid' => '0123456789abcdef0123456789abcdef',
+        ];
 
-        $response = $this->get(self::PAGE_WHY_URI . '?bid=' . $banner->uuid . '&cid=0123456789abcdef0123456789abcdef');
+        $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testPageWhyWhileCaseIdAndBannerIdAreUuid(): void
+    {
+        $host = 'https://example.com';
+        $campaignId = 1;
+        NetworkHost::factory()->create(['host' => $host]);
+        NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        $query = [
+            'bid' => Uuid::fromString($banner->uuid)->toString(),
+            'cid' => Uuid::uuid4()->toString(),
+        ];
+
+        $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
 
         $response->assertStatus(Response::HTTP_OK);
     }
