@@ -301,13 +301,11 @@ SQL;
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
         $response = new Response();
-
         if ($request->headers->has('Origin')) {
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
         }
 
         $impressionId = $request->query->get('iid');
-
         if ($impressionId) {
             $tid = Utils::attachOrProlongTrackingCookie(
                 $request,
@@ -332,7 +330,6 @@ SQL;
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
-        $keywords = $context['page']['keywords'] ?? '';
 
         $adUserEndpoint = config('app.aduser_serve_subdomain') ?
             ServeDomain::current(config('app.aduser_serve_subdomain')) :
@@ -353,23 +350,32 @@ SQL;
         if ($request->query->get('simple')) {
             $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
             $response->headers->set(self::CONTENT_TYPE, 'image/gif');
-        } elseif ($request->query->get('json')) {
-            $response->setContent(
-                json_encode(
-                    self::getViewContentInput($eventId, $adUserUrl)
-                )
-            );
-            $response->headers->set(self::CONTENT_TYPE, 'application/json');
         } else {
-            $response->setContent(
-                view(
-                    'demand/view-event',
-                    self::getViewContentInput($eventId, $adUserUrl)
-                )
-            );
+            $acceptJson = 'application/json' === $request->headers->get('Accept');
+            if ($acceptJson) {
+                $contextUrl = ServeDomain::changeUrlHost(
+                    (new SecureUrl(route('banner-init-context', ['event_id' => $eventId])))->toString()
+                );
+                $urls = [$contextUrl];
+                if (null !== $adUserUrl) {
+                    $urls[] = $adUserUrl;
+                }
+                $response->setContent(json_encode(['context' => $urls]));
+                $response->headers->set(self::CONTENT_TYPE, 'application/json');
+            } else {
+                // legacy code, will be removed when find will use JSON only
+                $response->setContent(
+                    view(
+                        'demand/view-event-legacy',
+                        self::getViewContentInput($eventId, $adUserUrl)
+                    )
+                );
+            }
         }
 
         $response->send();
+
+        $keywords = $context['page']['keywords'] ?? '';
 
         $banner = $this->getBanner($bannerId);
         $campaign = $banner->campaign;
@@ -391,6 +397,27 @@ SQL;
         );
 
         return $response;
+    }
+
+    public function initContext(Request $request, string $eventId): Response
+    {
+        $response = new Response();
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+        return $response->setContent(
+            view(
+                'demand/view-event',
+                [
+                    'log_url' => ServeDomain::changeUrlHost(
+                        (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString()
+                    ),
+                    'view_script_url' => ServeDomain::changeUrlHost(
+                        (new SecureUrl(url('-/view.js')))->toString()
+                    ),
+                ],
+            )
+        );
     }
 
     private function validateEventRequest(Request $request): void
