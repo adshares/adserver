@@ -459,7 +459,7 @@ class SupplyController extends Controller
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->isCrawler()) {
-            return new FoundBanners();
+            throw new AccessDeniedHttpException('Crawlers are not allowed');
         }
 
         $zones = $this->decodeZones($decodedQueryData);
@@ -469,7 +469,7 @@ class SupplyController extends Controller
                     $zone['options']['cpa_only'] = true;
                 }
             } else {
-                return new FoundBanners();
+                throw new AccessDeniedHttpException('This site is banned');
             }
         }
 
