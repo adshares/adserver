@@ -351,7 +351,7 @@ SQL;
             $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
             $response->headers->set(self::CONTENT_TYPE, 'image/gif');
         } else {
-            $acceptJson = 'application/json' === $request->query->get('Accept');
+            $acceptJson = 'application/json' === $request->headers->get('Accept');
             if ($acceptJson) {
                 $contextUrl = ServeDomain::changeUrlHost(
                     (new SecureUrl(route('banner-init-context', ['event_id' => $eventId])))->toString()

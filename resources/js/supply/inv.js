@@ -163,10 +163,11 @@ function createIframeFromData(data, domInsertCallback) {
                     fn(reader.result);
                 };
 
-                if (reader.readAsBinaryString)
+                if (reader.readAsBinaryString) {
                     reader.readAsBinaryString(data);
-                else
+                } else {
                     reader.readAsText(data);
+                }
             } else {
                 fn(data.bytes);
             }
@@ -214,10 +215,11 @@ function createLinkFromData(data, callback)
             callback(reader.result);
         };
 
-        if (reader.readAsBinaryString)
+        if (reader.readAsBinaryString) {
             reader.readAsBinaryString(data);
-        else
+        } else {
             reader.readAsText(data);
+        }
     } else {
         callback(data.bytes);
     }
@@ -316,6 +318,9 @@ function fetchURL(url, options) {
         xhr.overrideMimeType && xhr.overrideMimeType('text/plain; charset=x-user-defined');
     }
     xhr.open(options.method || 'GET', url);
+    if (options.json) {
+        xhr.setRequestHeader && xhr.setRequestHeader('Accept', 'application/json');
+    }
 
     fetchURL.timeout && (xhr.timeout = fetchURL.timeout);
 
@@ -346,7 +351,6 @@ function fetchURL(url, options) {
                     data.bytes = atob(data.bytes);
                 }
                 data.originalUrl = orgUrl;
-
             }
             if (options.json) {
                 data = JSON.parse(data.bytes);
@@ -418,7 +422,7 @@ function fetchURL(url, options) {
                     if (options.json) {
                         try {
                             data = JSON.parse(data.bytes);
-                        } catch(e) {
+                        } catch (e) {
                             fail && fail();
                             return;
                         }

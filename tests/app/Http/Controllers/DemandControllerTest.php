@@ -431,7 +431,10 @@ final class DemandControllerTest extends TestCase
         Config::updateAdminSettings([Config::ADUSER_BASE_URL => 'https://aduser.example.com']);
         [$query, $banner] = $this->initBeforeViewEvent();
 
-        $response = $this->get(self::buildViewUri($banner->uuid, $query));
+        $response = $this->get(
+            self::buildViewUri($banner->uuid, $query),
+            ['Accept' => 'application/json'],
+        );
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['context' => []]);

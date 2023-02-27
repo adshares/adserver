@@ -910,9 +910,12 @@ var fetchBanner = function (banner, context, zone_options) {
             var timer = setInterval(function () {
                 if (isVisible(element)) {
                     clearInterval(timer);
-                    fetchURL(context.view_url)
+                    const options = {
+                        json: true,
+                    };
+                    fetchURL(context.view_url, options)
                         .then(function (data) {
-                            const urls = JSON.parse(data.bytes).context || []
+                            const urls = data.context || [];
                             for (const url of urls) {
                                 dwmthACL.push(addAnalyticsIframe(url).contentWindow);
                             }
