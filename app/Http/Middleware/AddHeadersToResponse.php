@@ -23,13 +23,15 @@ namespace Adshares\Adserver\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class AddHeadersToResponse
 {
     public function handle(Request $request, Closure $next): mixed
     {
+        /** @var Response $response */
         $response = $next($request);
-        $response->header('X-Robots-Tag', 'noindex');
+        $response->headers->set('X-Robots-Tag', 'noindex');
         return $response;
     }
 }
