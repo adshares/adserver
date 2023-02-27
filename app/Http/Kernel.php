@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Adserver\Http\Middleware\AddHeadersToResponse;
 use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
 use Adshares\Adserver\Http\Middleware\CheckForMaintenanceMode;
 use Adshares\Adserver\Http\Middleware\Impersonation;
@@ -76,6 +77,7 @@ class Kernel extends HttpKernel
         CheckForMaintenanceMode::class,
         TrustProxies::class,
         HandleCors::class,
+        AddHeadersToResponse::class,
     ];
 
     protected $middlewareGroups = [

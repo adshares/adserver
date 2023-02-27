@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.8] - 2023-02-27
+### Changed
+- Add `noindex` header
+
 ## [2.4.7] - 2023-02-27
 ### Added
 - Locking user's account after several failed login attempts
@@ -884,7 +888,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.7...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.8...develop
+[2.4.8]: https://github.com/adshares/adserver/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/adshares/adserver/compare/v2.4.6...v2.4.7
 [2.4.6]: https://github.com/adshares/adserver/compare/v2.4.5...v2.4.6
 [2.4.5]: https://github.com/adshares/adserver/compare/v2.4.4...v2.4.5
