@@ -584,7 +584,7 @@ SQL;
                 'max_cpc' => $campaign->max_cpc,
                 'max_cpm' => $campaign->max_cpm,
                 'budget' => self::calculateBudgetAfterFees($campaign->budget, $totalFee),
-                'banners' => $banners,
+                'creatives' => $banners,
                 'targeting_requires' => (array)$campaign->targeting_requires,
                 'targeting_excludes' => (array)$campaign->targeting_excludes,
             ];

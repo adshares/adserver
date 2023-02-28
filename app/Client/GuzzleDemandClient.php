@@ -261,7 +261,8 @@ final class GuzzleDemandClient implements DemandClient
 
         $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
         $banners = [];
-        foreach ((array)$data['banners'] as $banner) {
+        $bannersInput = $data['creatives'] ?? $data['banners'];// legacy fallback, field 'banners' is deprecated
+        foreach ((array)$bannersInput as $banner) {
             $banner['demand_banner_id'] = Uuid::fromString($banner['id']);
 
             if (array_key_exists($banner['id'], $bannerDemandIdsToSupplyIds)) {
@@ -358,7 +359,8 @@ final class GuzzleDemandClient implements DemandClient
     {
         $bannerDemandIds = [];
         foreach ($campaigns as $campaign) {
-            foreach ((array)$campaign['banners'] as $banner) {
+            $banners = $campaign['creatives'] ?? $campaign['banners'];// legacy fallback, field 'banners' is deprecated
+            foreach ((array)$banners as $banner) {
                 $bannerDemandIds[] = $banner['id'];
             }
         }
