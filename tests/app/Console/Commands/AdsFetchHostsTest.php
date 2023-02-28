@@ -29,6 +29,7 @@ use Adshares\Ads\Response\GetBroadcastResponse;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Services\Supply\OpenRtbProviderRegistrar;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Config\AppMode;
@@ -49,7 +50,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $lockerMock->expects(self::once())->method('lock')->willReturn(false);
         $this->instance(Locker::class, $lockerMock);
 
-        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(1);
     }
 
     public function testFetchingHosts(): void
@@ -252,6 +253,18 @@ class AdsFetchHostsTest extends ConsoleTestCase
                 return $clientMock;
             }
         );
+        $this->app->bind(
+            OpenRtbProviderRegistrar::class,
+            function () {
+                $mock = self::createMock(OpenRtbProviderRegistrar::class);
+                $mock->method('registerAsNetworkHost')
+                    ->will($this->returnCallback(function () {
+                        NetworkHost::factory()->create();
+                        return true;
+                    }));
+                return $mock;
+            }
+        );
         Config::updateAdminSettings([
             Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
             Config::OPEN_RTB_PROVIDER_URL => 'https://example.com',
@@ -259,10 +272,15 @@ class AdsFetchHostsTest extends ConsoleTestCase
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
 
-        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
-        $this->assertNotNull($host);
-        $this->assertEquals('https://example.com', $host->host);
-        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
+        self::assertServerEventDispatched(
+            ServerEventType::HostBroadcastProcessed,
+            [
+                'added' => 1,
+                'found' => 1,
+                'marked' => 0,
+                'removed' => 0,
+            ]
+        );
     }
 
     private function setupAdsClient(): void

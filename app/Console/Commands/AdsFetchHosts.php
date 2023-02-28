@@ -31,12 +31,10 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Services\Supply\OpenRtbProviderRegistrar;
 use Adshares\Adserver\ViewModel\ServerEventType;
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\AppMode;
-use Adshares\Config\RegistrationMode;
 use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -58,16 +56,20 @@ class AdsFetchHosts extends BaseCommand
     protected $signature = 'ads:fetch-hosts';
     protected $description = 'Fetches Demand AdServers';
 
-    public function __construct(Locker $locker, private readonly DemandClient $client)
-    {
+    public function __construct(
+        Locker $locker,
+        private readonly AdsClient $adsClient,
+        private readonly DemandClient $client,
+        private readonly OpenRtbProviderRegistrar $openRtbProviderRegistrar,
+    ) {
         parent::__construct($locker);
     }
 
-    public function handle(AdsClient $adsClient): void
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-            return;
+            return self::FAILURE;
         }
 
         $this->info('Start command ' . $this->signature);
@@ -81,13 +83,13 @@ class AdsFetchHosts extends BaseCommand
         $progressBar->start();
         while ($timeBlock <= $timeNow - self::BLOCK_TIME) {
             $blockId = dechex($timeBlock);
-            $found += $this->handleBlock($adsClient, $blockId);
+            $found += $this->handleBlock($blockId);
             $timeBlock += self::BLOCK_TIME;
             $progressBar->advance();
         }
         $progressBar->finish();
         $this->newLine();
-        if ($this->registerOpenRtbProviderAsNetworkHost()) {
+        if ($this->openRtbProviderRegistrar->registerAsNetworkHost()) {
             $found++;
         }
 
@@ -108,6 +110,7 @@ class AdsFetchHosts extends BaseCommand
         $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to remove');
 
         $this->info('Finished command ' . $this->signature);
+        return self::SUCCESS;
     }
 
     private function getTimeOfFirstBlock(int $timeNow): int
@@ -124,11 +127,11 @@ class AdsFetchHosts extends BaseCommand
         return $timeBlock;
     }
 
-    private function handleBlock(AdsClient $adsClient, string $blockId): int
+    private function handleBlock(string $blockId): int
     {
         $foundHosts = 0;
         try {
-            $response = $adsClient->getBroadcast($blockId);
+            $response = $this->adsClient->getBroadcast($blockId);
             $broadcastArray = $response->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {
@@ -202,34 +205,5 @@ class AdsFetchHosts extends BaseCommand
     {
         $period = new DateTimeImmutable(sprintf('-%d hours', config('app.hours_until_inactive_host_removal')));
         return NetworkHost::deleteBroadcastedBefore($period);
-    }
-
-    private function registerOpenRtbProviderAsNetworkHost(): bool
-    {
-        if (
-            null !== ($accountAddress = config('app.open_rtb_provider_account_address'))
-            && null !== ($url = config('app.open_rtb_provider_url'))
-        ) {
-            $info = new Info(
-                'openrtb',
-                'OpenRTB Provider',
-                '0.1.0',
-                new Url($url),
-                new Url($url),
-                new Url($url),
-                new Url($url . '/policies/privacy.html'),
-                new Url($url . '/policies/terms.html'),
-                new Url($url . '/adshares/inventory/list'),
-                new AccountId($accountAddress),
-                null,
-                [Info::CAPABILITY_ADVERTISER],
-                RegistrationMode::PRIVATE,
-                AppMode::OPERATIONAL
-            );
-            $host = NetworkHost::registerHost($accountAddress, $url, $info, new DateTimeImmutable());
-            Log::debug(sprintf('Stored %s as #%d', $url, $host->id));
-            return true;
-        }
-        return false;
     }
 }
