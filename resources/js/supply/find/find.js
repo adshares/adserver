@@ -892,16 +892,12 @@ var fetchBanner = function (banner, context, zone_options) {
             banner.clickUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,// legacy, can be deleted when adservers will pass zid in URL
-                'iid': getImpressionId(),// legacy, can be deleted when adservers will pass iid in URL
             }
         );
         context.view_url = addUrlParam(
             banner.viewUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,// legacy, can be deleted when adservers will support zid in URL
-                'iid': getImpressionId(),// legacy, can be deleted when adservers will pass iid in URL
             }
         );
 
@@ -912,6 +908,7 @@ var fetchBanner = function (banner, context, zone_options) {
                     clearInterval(timer);
                     const options = {
                         json: true,
+                        noCredentials: true,
                     };
                     fetchURL(context.view_url, options)
                         .then(function (data) {
