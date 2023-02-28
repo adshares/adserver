@@ -41,6 +41,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -469,9 +470,9 @@ SQL;
     ): JsonResponse {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
-        $datetime = DateTime::createFromFormat(DateTimeInterface::ATOM, $date);
+        $datetime = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $date);
 
-        if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
+        if (null === $transactionIdDecoded || null === $accountAddressDecoded || false === $datetime) {
             throw new BadRequestHttpException('Input data are invalid.');
         }
 

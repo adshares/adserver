@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,7 +25,7 @@ namespace Adshares\Demand\Application\Service;
 
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\SignatureVerifier;
-use DateTime;
+use DateTimeInterface;
 
 class PaymentDetailsVerify
 {
@@ -39,8 +39,12 @@ class PaymentDetailsVerify
         $this->adsClient = $adsClient;
     }
 
-    public function verify(string $signature, string $transactionId, string $accountAddress, DateTime $date): bool
-    {
+    public function verify(
+        string $signature,
+        string $transactionId,
+        string $accountAddress,
+        DateTimeInterface $date,
+    ): bool {
         $publicKey = $this->adsClient->getPublicKeyByAccountAddress($accountAddress);
         return $this->signatureVerifier->verifyTransactionId(
             $publicKey,
