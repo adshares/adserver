@@ -259,6 +259,7 @@ final class GuzzleDemandClient implements DemandClient
             'updated_at' => DateTime::createFromFormat(DateTimeInterface::ATOM, $data['updated_at']),
         ];
 
+        $isOpenRtbProvider = $sourceAddress === config('app.open_rtb_provider_account_address');
         $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
         $banners = [];
         $bannersInput = $data['creatives'] ?? $data['banners'];// legacy fallback, field 'banners' is deprecated
@@ -271,7 +272,9 @@ final class GuzzleDemandClient implements DemandClient
                 unset($banner['id']);
             }
 
-            $banner['classification'] = $this->validateAndMapClassification($banner);
+            $banner['classification'] = $isOpenRtbProvider
+                ? self::flattenClassification($banner['classification'] ?? [])
+                : $this->validateAndMapClassification($banner);
             if ($this->missingRequiredClassifier($classifiersRequired, $banner['classification'])) {
                 continue;
             }
@@ -394,17 +397,17 @@ final class GuzzleDemandClient implements DemandClient
             unset($classification[$invalidClassifier]);
         }
 
+        return self::flattenClassification($classification);
+    }
+
+    private static function flattenClassification(mixed $classification): array
+    {
         $flatClassification = [];
         foreach ($classification as $classifier => $classificationItem) {
             $keywords = $classificationItem['keywords'] ?? [];
-            $keywords[SiteFilteringUpdater::KEYWORD_CLASSIFIED] =
-                SiteFilteringUpdater::KEYWORD_CLASSIFIED_VALUE;
-
-            $flatClassification[$classifier] = AbstractFilterMapper::generateNestedStructure(
-                $keywords
-            );
+            $keywords[SiteFilteringUpdater::KEYWORD_CLASSIFIED] = SiteFilteringUpdater::KEYWORD_CLASSIFIED_VALUE;
+            $flatClassification[$classifier] = AbstractFilterMapper::generateNestedStructure($keywords);
         }
-
         return $flatClassification;
     }
 

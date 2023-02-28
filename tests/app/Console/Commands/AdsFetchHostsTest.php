@@ -241,6 +241,30 @@ class AdsFetchHostsTest extends ConsoleTestCase
         self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
+    public function testRegisterOpenRtbProvider(): void
+    {
+        $this->app->bind(
+            AdsClient::class,
+            function () {
+                $clientMock = self::createMock(AdsClient::class);
+                $clientMock->method('getBroadcast')
+                    ->willReturn(new GetBroadcastResponse($this->getRawEmptyBroadcastData()));
+                return $clientMock;
+            }
+        );
+        Config::updateAdminSettings([
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com',
+        ]);
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+
+        $host = NetworkHost::fetchByAddress('0001-00000001-8B4E');
+        $this->assertNotNull($host);
+        $this->assertEquals('https://example.com', $host->host);
+        self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
+    }
+
     private function setupAdsClient(): void
     {
         $this->app->bind(

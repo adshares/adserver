@@ -32,8 +32,11 @@ use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\AppMode;
+use Adshares\Config\RegistrationMode;
 use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -84,6 +87,9 @@ class AdsFetchHosts extends BaseCommand
         }
         $progressBar->finish();
         $this->newLine();
+        if ($this->registerOpenRtbProviderAsNetworkHost()) {
+            $found++;
+        }
 
         $this->comment('Cleaning up old hosts...');
         $added = NetworkHost::all()->count() - $hostsCount;
@@ -196,5 +202,34 @@ class AdsFetchHosts extends BaseCommand
     {
         $period = new DateTimeImmutable(sprintf('-%d hours', config('app.hours_until_inactive_host_removal')));
         return NetworkHost::deleteBroadcastedBefore($period);
+    }
+
+    private function registerOpenRtbProviderAsNetworkHost(): bool
+    {
+        if (
+            null !== ($accountAddress = config('app.open_rtb_provider_account_address'))
+            && null !== ($url = config('app.open_rtb_provider_url'))
+        ) {
+            $info = new Info(
+                'openrtb',
+                'OpenRTB Provider',
+                '0.1.0',
+                new Url($url),
+                new Url($url),
+                new Url($url),
+                new Url($url . '/policies/privacy.html'),
+                new Url($url . '/policies/terms.html'),
+                new Url($url . '/adshares/inventory/list'),
+                new AccountId($accountAddress),
+                null,
+                [Info::CAPABILITY_ADVERTISER],
+                RegistrationMode::PRIVATE,
+                AppMode::OPERATIONAL
+            );
+            $host = NetworkHost::registerHost($accountAddress, $url, $info, new DateTimeImmutable());
+            Log::debug(sprintf('Stored %s as #%d', $url, $host->id));
+            return true;
+        }
+        return false;
     }
 }
