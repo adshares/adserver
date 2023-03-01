@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,6 +30,8 @@ use GuzzleHttp\Utils;
 class TaxonomyV2Factory
 {
     private const JSON_PATH_MATCH_REGEXP = '(\[\?\(@\.[^=]+=[^]]+\)]|\.[^.\[]+|\[]$)';
+    private const KEY_ADD_VALUE = 'add_value';
+    private const KEY_PATH_FRAGMENTS = 'path_fragments';
 
     public static function fromJson(string $json): TaxonomyV2
     {
@@ -206,8 +208,8 @@ class TaxonomyV2Factory
         );
 
         return [
-            'add_value' => $addValue,
-            'path_fragments' => $pathFragments,
+            self::KEY_ADD_VALUE => $addValue,
+            self::KEY_PATH_FRAGMENTS => $pathFragments,
         ];
     }
 
@@ -218,7 +220,7 @@ class TaxonomyV2Factory
         ?array $value
     ): array {
         $temp = &$baseData[$key];
-        foreach ($pathParsingResult['path_fragments'] as $pathFragment) {
+        foreach ($pathParsingResult[self::KEY_PATH_FRAGMENTS] as $pathFragment) {
             if (str_starts_with($pathFragment, '[?(@.') && str_ends_with($pathFragment, ')]')) {
                 [$k, $v] = explode('=', substr($pathFragment, strlen('[?(@.'), -strlen(')]')), 2);
                 for ($i = 0; $i < count($temp); $i++) {
@@ -233,7 +235,7 @@ class TaxonomyV2Factory
             }
             $temp = &$temp[$pathFragment];
         }
-        if ($pathParsingResult['add_value']) {
+        if ($pathParsingResult[self::KEY_ADD_VALUE]) {
             $temp[] = $value;
         } else {
             $temp = $value;
