@@ -194,7 +194,7 @@ return [
         ['name' => '234x60', 'width' => '234', 'height' => '60'],
         ['name' => '240x400', 'width' => '240', 'height' => '400'],
         ['name' => '250x250', 'width' => '250', 'height' => '250'],
-        ['name' => '300x250', 'width' => '512', 'height' => '512'],
+        ['name' => '300x250', 'width' => '300', 'height' => '250'],
         ['name' => '300x600', 'width' => '300', 'height' => '600'],
         ['name' => '320x100', 'width' => '320', 'height' => '100'],
         ['name' => '512x512', 'width' => '512', 'height' => '512'],
