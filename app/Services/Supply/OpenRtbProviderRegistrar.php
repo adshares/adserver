@@ -26,40 +26,58 @@ namespace Adshares\Adserver\Services\Supply;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Url;
-use Adshares\Config\AppMode;
-use Adshares\Config\RegistrationMode;
-use Adshares\Supply\Application\Dto\Info;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
 class OpenRtbProviderRegistrar
 {
+    private const OPEN_RTB_MODULE_NAME = 'openrtb';
+
+    public function __construct(private readonly DemandClient $demandClient)
+    {
+    }
+
     public function registerAsNetworkHost(): bool
     {
         if (
-            null !== ($accountAddress = config('app.open_rtb_provider_account_address'))
-            && null !== ($url = config('app.open_rtb_provider_url'))
+            null === ($accountAddress = config('app.open_rtb_provider_account_address'))
+            || null === ($url = config('app.open_rtb_provider_url'))
         ) {
-            $info = new Info(
-                'openrtb',
-                'OpenRTB Provider',
-                '0.1.0',
-                new Url($url),
-                new Url($url),
-                new Url($url),
-                new Url($url . '/policies/privacy.html'),
-                new Url($url . '/policies/terms.html'),
-                new Url($url . '/adshares/inventory/list'),
-                new AccountId($accountAddress),
-                null,
-                [Info::CAPABILITY_ADVERTISER],
-                RegistrationMode::PRIVATE,
-                AppMode::OPERATIONAL
-            );
-            $host = NetworkHost::registerHost($accountAddress, $url, $info, new DateTimeImmutable());
-            Log::debug(sprintf('Stored %s as #%d', $url, $host->id));
-            return true;
+            return false;
         }
-        return false;
+
+        if (!AccountId::isValid($accountAddress, true)) {
+            Log::error('OpenRTB provider registration failed: configured account address is not valid');
+            return false;
+        }
+        try {
+            $infoUrl = new Url($url);
+        } catch (RuntimeException $exception) {
+            Log::error(sprintf('OpenRTB provider registration failed: %s', $exception->getMessage()));
+            return false;
+        }
+
+        try {
+            $info = $this->demandClient->fetchInfo($infoUrl);
+        } catch (UnexpectedClientResponseException $exception) {
+            Log::error(sprintf('OpenRTB provider registration failed: %s', $exception->getMessage()));
+            return false;
+        }
+        if ($info->getModule() !== self::OPEN_RTB_MODULE_NAME) {
+            Log::error(
+                sprintf('OpenRTB provider registration failed: Info for invalid module: %s', $info->getModule())
+            );
+            return false;
+        }
+        if ($info->getAdsAddress() !== $accountAddress) {
+            Log::error('OpenRTB provider registration failed: Info address does not match');
+            return false;
+        }
+        $host = NetworkHost::registerHost($accountAddress, $url, $info, new DateTimeImmutable());
+        Log::debug(sprintf('Stored %s as #%d', $url, $host->id));
+        return true;
     }
 }

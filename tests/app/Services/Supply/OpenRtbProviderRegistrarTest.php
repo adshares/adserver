@@ -28,23 +28,163 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Services\Supply\OpenRtbProviderRegistrar;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Config\AppMode;
+use Adshares\Config\RegistrationMode;
+use Adshares\Mock\Client\DummyDemandClient;
+use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class OpenRtbProviderRegistrarTest extends TestCase
 {
     public function testRegisterAsNetworkHost(): void
     {
         Config::updateAdminSettings([
-            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
-            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com',
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
         ]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $registrar = new OpenRtbProviderRegistrar();
+        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
 
-        $registrar->registerAsNetworkHost();
+        $result = $registrar->registerAsNetworkHost();
 
+        self::assertTrue($result);
         self::assertDatabaseHas(NetworkHost::class, [
-            'address' => '0001-00000001-8B4E',
-            'host' => 'https://example.com',
+            'address' => '0001-00000004-DBEB',
+            'host' => 'https://app.example.com',
         ]);
+    }
+
+    public function testRegisterAsNetworkHostFailWhileInvalidResponse(): void
+    {
+        Config::updateAdminSettings([
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $clientMock = self::createMock(DemandClient::class);
+        $clientMock->method('fetchInfo')->willThrowException(new UnexpectedClientResponseException('test-exception'));
+        $registrar = new OpenRtbProviderRegistrar($clientMock);
+
+        $result = $registrar->registerAsNetworkHost();
+
+        self::assertFalse($result);
+    }
+
+    public function testRegisterAsNetworkHostFailWhileNoConfiguration(): void
+    {
+        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
+
+        $result = $registrar->registerAsNetworkHost();
+
+        self::assertFalse($result);
+    }
+
+    public function testRegisterAsNetworkHostFailWhileInvalidConfigurationAddress(): void
+    {
+        Config::updateAdminSettings([
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004',
+            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
+
+        $result = $registrar->registerAsNetworkHost();
+
+        self::assertFalse($result);
+    }
+
+    public function testRegisterAsNetworkHostFailWhileInvalidConfigurationUrl(): void
+    {
+        Config::updateAdminSettings([
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+            Config::OPEN_RTB_PROVIDER_URL => 'example.com',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
+
+        $result = $registrar->registerAsNetworkHost();
+
+        self::assertFalse($result);
+    }
+
+    public function testRegisterAsNetworkHostFailWhileInfoForAdserver(): void
+    {
+        Config::updateAdminSettings([
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $registrar = new OpenRtbProviderRegistrar(new DummyDemandClient());
+
+        $result = $registrar->registerAsNetworkHost();
+
+        self::assertFalse($result);
+        self::assertDatabaseMissing(NetworkHost::class, [
+            'address' => '0001-00000004-DBEB',
+            'host' => 'https://app.example.com',
+        ]);
+    }
+
+    public function testRegisterAsNetworkHostFailWhileInfoForDifferentAddress(): void
+    {
+        Config::updateAdminSettings([
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $info = new Info(
+            'openrtb',
+            'OpenRTB Provider ',
+            '0.1.0',
+            new Url('https://app.example.com'),
+            new Url('https://panel.example.com'),
+            new Url('https://example.com'),
+            new Url('https://example.com/privacy'),
+            new Url('https://example.com/terms'),
+            new Url('https://example.com/inventory'),
+            new AccountId('0001-00000005-CBCA'),
+            null,
+            [Info::CAPABILITY_ADVERTISER],
+            RegistrationMode::PRIVATE,
+            AppMode::OPERATIONAL
+        );
+        $clientMock = self::createMock(DemandClient::class);
+        $clientMock->method('fetchInfo')->willReturn($info);
+        $registrar = new OpenRtbProviderRegistrar($clientMock);
+
+        $result = $registrar->registerAsNetworkHost();
+
+        self::assertFalse($result);
+        self::assertDatabaseMissing(NetworkHost::class, [
+            'address' => '0001-00000004-DBEB',
+            'host' => 'https://app.example.com',
+        ]);
+    }
+
+    private function getDemandClient(): MockObject|DemandClient
+    {
+        $info = new Info(
+            'openrtb',
+            'OpenRTB Provider ',
+            '0.1.0',
+            new Url('https://app.example.com'),
+            new Url('https://panel.example.com'),
+            new Url('https://example.com'),
+            new Url('https://example.com/privacy'),
+            new Url('https://example.com/terms'),
+            new Url('https://example.com/inventory'),
+            new AccountId('0001-00000004-DBEB'),
+            null,
+            [Info::CAPABILITY_ADVERTISER],
+            RegistrationMode::PRIVATE,
+            AppMode::OPERATIONAL
+        );
+        $clientMock = self::createMock(DemandClient::class);
+        $clientMock->method('fetchInfo')->willReturn($info);
+        return $clientMock;
     }
 }
