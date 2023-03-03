@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -38,18 +38,10 @@ class ExchangeRateReader
 {
     private const MAXIMAL_ACCEPTABLE_INTERVAL = '-24 hours';
 
-    /** @var EloquentExchangeRateRepository */
-    private $repositoryStorable;
-
-    /** @var ExchangeRateRepository */
-    private $repositoryRemote;
-
     public function __construct(
-        EloquentExchangeRateRepository $repositoryStorable,
-        ExchangeRateRepository $repositoryRemote
+        private readonly EloquentExchangeRateRepository $repositoryStorable,
+        private readonly ExchangeRateRepository $repositoryRemote,
     ) {
-        $this->repositoryStorable = $repositoryStorable;
-        $this->repositoryRemote = $repositoryRemote;
     }
 
     public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
@@ -62,7 +54,7 @@ class ExchangeRateReader
             if (DateUtils::areTheSameHour($exchangeRateFromStorage->getDateTime(), $dateTimeForComputation)) {
                 return $exchangeRateFromStorage;
             }
-        } catch (ExchangeRateNotAvailableException $exception) {
+        } catch (ExchangeRateNotAvailableException) {
             $exchangeRateFromStorage = null;
         }
 

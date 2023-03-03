@@ -129,12 +129,12 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddMetaverseCampaign(): void
     {
-        $this->createUser();
+        $user = $this->createUser();
         /** @var UploadedFileModel $file */
         $file = UploadedFileModel::factory()->create([
             'medium' => 'metaverse',
             'scope' => '640x480',
-            'user_id' => User::first(),
+            'user_id' => $user,
         ]);
         $campaignData = $this->getCampaignData();
         $campaignData['basicInformation']['medium'] = 'metaverse';
