@@ -54,6 +54,7 @@ use Psr\Http\Message\ResponseInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
+// phpcs:ignoreFile PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
 final class SupplyControllerTest extends TestCase
 {
     private const BANNER_FIND_URI = '/supply/find';
@@ -748,6 +749,8 @@ final class SupplyControllerTest extends TestCase
         }
         self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
         self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+        $context = Utils::decodeZones($locationQuery['ctx']);
+        self::assertEquals('0x05cf6d580d124d6eda7fd065b2cd239b08e2fd68', $context['user']['account']);
     }
 
     public function testLogNetworkViewWhileCaseIdAndImpressionIdAreUuidV4(): void
@@ -833,9 +836,7 @@ final class SupplyControllerTest extends TestCase
                 'height' => 250,
                 'context' => [
                     'user' => [
-                        // phpcs:disable PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
                         'account' => '0x05cf6d580d124d6eda7fd065b2cd239b08e2fd68',
-                        // phpcs:enable PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
                         'language' => 'en',
                     ],
                     'device' => ['os' => 'Windows'],
