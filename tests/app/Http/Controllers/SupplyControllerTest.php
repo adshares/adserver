@@ -816,7 +816,12 @@ final class SupplyControllerTest extends TestCase
                 'width' => 300,
                 'height' => 250,
                 'context' => [
-                    'user' => ['language' => 'en'],
+                    'user' => [
+                        // phpcs:disable PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
+                        'account' => '0x05cf6d580d124d6eda7fd065b2cd239b08e2fd68',
+                        // phpcs:enable PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
+                        'language' => 'en',
+                    ],
                     'device' => ['os' => 'Windows'],
                     'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
                 ],
