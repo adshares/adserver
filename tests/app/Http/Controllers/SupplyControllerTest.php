@@ -350,6 +350,22 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
+    public function testFindDynamicWithPublisherIdAsUuidV4(): void
+    {
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $publisherId = Uuid::fromString($publisher->uuid)->toString();
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+        $this->mockAdSelect();
+        $data = self::getDynamicFindData(['context' => self::getContextData(['publisher' => $publisherId])]);
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+    }
+
     public function testFindDynamicWithoutExistingUser(): void
     {
         Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
