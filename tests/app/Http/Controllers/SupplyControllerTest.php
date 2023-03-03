@@ -939,7 +939,7 @@ final class SupplyControllerTest extends TestCase
             'view_url' => 'https://example.com/view',
         ]);
         $iid = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($impression->impression_id));
-        $ctx = Utils::encodeZones(
+        $ctx = Utils::UrlSafeBase64Encode(json_encode(
             [
                 'page' => [
                     'iid' => $iid,
@@ -955,7 +955,7 @@ final class SupplyControllerTest extends TestCase
                     'options' => '[]',
                 ],
             ]
-        );
+        ));
         $redirectUrl = Utils::urlSafeBase64Encode($banner->view_url);
         $query = [
             'cid' => '13245679801324567980132456798012',
