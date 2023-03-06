@@ -63,6 +63,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -433,7 +434,7 @@ class SupplyController extends Controller
         Request $request,
         Response $response,
         AdUser $contextProvider,
-        AdSelect $bannerFinder
+        AdSelect $bannerFinder,
     ): FoundBanners {
         $this->checkDecodedQueryData($decodedQueryData);
         $impressionId = $decodedQueryData['page']['iid'];
@@ -476,8 +477,14 @@ class SupplyController extends Controller
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $impressionUuid = self::impressionIdToUuid($impressionId);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionUuid);
+        if (
+            null !== config('app.open_rtb_provider_account_address')
+            && null !== config('app.open_rtb_provider_serve_url')
+        ) {
+            $foundBanners = $this->replaceOpenRtbBanners($foundBanners);
+        }
 
-        if ($foundBanners->exists(fn($key, $element) => $element != null)) {
+        if ($foundBanners->exists(fn($key, $element) => null !== $element)) {
             NetworkImpression::register(
                 $impressionUuid,
                 Utils::hexUuidFromBase64UrlWithChecksum($tid),
@@ -1275,5 +1282,79 @@ class SupplyController extends Controller
             $ctx['page']['frame'] = 'yes' === $inframe ? 1 : 0;
         }
         return Utils::encodeZones($ctx);
+    }
+
+    private function replaceOpenRtbBanners(FoundBanners $foundBanners): FoundBanners
+    {
+        $accountAddress = config('app.open_rtb_provider_account_address');
+        $openBtbBanners = [];
+        foreach ($foundBanners as $index => $foundBanner) {
+            if (null !== $foundBanner && $accountAddress === $foundBanner['pay_from']) {
+                $openBtbBanners[(string)$index] = [
+                    'request_id' => (string)$index,
+                    'serve_url' => $foundBanner['serve_url'],
+                ];
+            }
+        }
+        if (empty($openBtbBanners)) {
+            return $foundBanners;
+        }
+        $response = Http::post(config('app.open_rtb_provider_serve_url'), $openBtbBanners);
+        if (
+            BaseResponse::HTTP_OK !== $response->status()
+            || !$this->isOpenRtbAuctionResponseValid($content = $response->json(), $openBtbBanners)
+        ) {
+            foreach ($openBtbBanners as $index => $serveUrl) {
+                $foundBanners->set($index, null);
+            }
+            return $foundBanners;
+        }
+        foreach ($content as $entry) {
+            $foundBanner = array_merge(
+                $foundBanners->get((int)$entry['request_id']),
+                [
+                    'click_url' => $entry['click_url'],
+                    'serve_url' => $entry['serve_url'],
+                    'view_url' => $entry['view_url'],
+                ]
+            );
+            $foundBanners->set((int)$entry['request_id'], $foundBanner);
+        }
+        return $foundBanners;
+    }
+
+    private function isOpenRtbAuctionResponseValid(mixed $content, array $openBtbBanners): bool
+    {
+        if (!is_array($content)) {
+            Log::error('Invalid OpenRTB response: body is not an array');
+            return false;
+        }
+        foreach ($content as $entry) {
+            if (!is_array($entry)) {
+                Log::error('Invalid OpenRTB response: entry is not an array');
+                return false;
+            }
+            $fields = [
+                'request_id',
+                'click_url',
+                'serve_url',
+                'view_url',
+            ];
+            foreach ($fields as $field) {
+                if (!isset($entry[$field])) {
+                    Log::error(sprintf('Invalid OpenRTB response: missing key %s', $field));
+                    return false;
+                }
+                if (!is_string($entry[$field])) {
+                    Log::error(sprintf('Invalid OpenRTB response: %s is not a string', $field));
+                    return false;
+                }
+            }
+            if (!array_key_exists($entry['request_id'], $openBtbBanners)) {
+                Log::error(sprintf('Invalid OpenRTB response: request %s is not known', $entry['request_id']));
+                return false;
+            }
+        }
+        return true;
     }
 }

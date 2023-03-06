@@ -39,7 +39,9 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Supply\Application\Dto\FoundBanners;
@@ -49,6 +51,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Psr\Http\Message\ResponseInterface;
 use Ramsey\Uuid\Uuid;
@@ -237,17 +240,7 @@ final class SupplyControllerTest extends TestCase
     public function testFind(): void
     {
         $this->mockAdSelect();
-        $adUser = self::createMock(AdUser::class);
-        $adUser->expects(self::once())
-            ->method('getUserContext')
-            ->willReturnCallback(function ($context) {
-                self::assertInstanceOf(ImpressionContext::class, $context);
-                $contextArray = $context->toArray();
-                self::assertEquals(1, $contextArray['device']['extensions']['metamask']);
-                self::assertEquals('good-user', $contextArray['user']['account']);
-                return (new DummyAdUserClient())->getUserContext($context);
-            });
-        $this->instance(AdUser::class, $adUser);
+        $this->initAdUser();
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
         /** @var Site $site */
@@ -275,6 +268,101 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.id', '3');
+    }
+
+    public function testFindOpenRTB(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'example.com/serve' => Http::response([[
+                'request_id' => '0',
+                'click_url' => 'https://example.com/click/1',
+                'serve_url' => 'https://example.com/serve/1',
+                'view_url' => 'https://example.com/view/1',
+            ]]),
+        ]);
+        $data = $this->initOpenRtb();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', '3');
+        Http::assertSentCount(1);
+    }
+
+    public function testFindOpenRtbWhileInvalidStatus(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['example.com/serve' => Http::response(status: Response::HTTP_NOT_FOUND)]);
+        $data = $this->initOpenRtb();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(0, 'data');
+        Http::assertSentCount(1);
+    }
+
+    /**
+     * @dataProvider findOpenRtbWhileInvalidResponseProvider
+     */
+    public function testFindOpenRtbWhileInvalidResponse(mixed $response): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'example.com/serve' => Http::response($response),
+        ]);
+        $data = $this->initOpenRtb();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(0, 'data');
+        Http::assertSentCount(1);
+    }
+
+    public function findOpenRtbWhileInvalidResponseProvider(): array
+    {
+        return [
+            'not existing request id' => [[[
+                'request_id' => '1',
+                'click_url' => 'https://example.com/click/1',
+                'serve_url' => 'https://example.com/serve/1',
+                'view_url' => 'https://example.com/view/1',
+            ]]],
+            'no request id' => [[[
+                'click_url' => 'https://example.com/click/1',
+                'serve_url' => 'https://example.com/serve/1',
+                'view_url' => 'https://example.com/view/1',
+            ]]],
+            'no click url' => [[[
+                'request_id' => '0',
+                'serve_url' => 'https://example.com/serve/1',
+                'view_url' => 'https://example.com/view/1',
+            ]]],
+            'no serve url' => [[[
+                'request_id' => '0',
+                'click_url' => 'https://example.com/click/1',
+                'view_url' => 'https://example.com/view/1',
+            ]]],
+            'no view url' => [[[
+                'request_id' => '0',
+                'click_url' => 'https://example.com/click/1',
+                'serve_url' => 'https://example.com/serve/1',
+            ]]],
+            'invalid serve url type' => [[[
+                'request_id' => '0',
+                'click_url' => 'https://example.com/click/1',
+                'serve_url' => 1234,
+                'view_url' => 'https://example.com/view/1',
+            ]]],
+            'entry is not array' => [['0']],
+            'content is not array' => ['0'],
+        ];
     }
 
     public function testFindWhileNoBanners(): void
@@ -959,5 +1047,109 @@ final class SupplyControllerTest extends TestCase
             'r' => $redirectUrl,
         ];
         return [$query, $banner, $zone];
+    }
+
+    private function initAdUser(): void
+    {
+        $adUser = self::createMock(AdUser::class);
+        $adUser->expects(self::once())
+            ->method('getUserContext')
+            ->willReturnCallback(function ($context) {
+                self::assertInstanceOf(ImpressionContext::class, $context);
+                $contextArray = $context->toArray();
+                self::assertEquals(1, $contextArray['device']['extensions']['metamask']);
+                self::assertEquals('good-user', $contextArray['user']['account']);
+                return (new DummyAdUserClient())->getUserContext($context);
+            });
+        $this->instance(AdUser::class, $adUser);
+    }
+
+    private function initOpenRtb(): array
+    {
+        Config::updateAdminSettings([
+            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::OPEN_RTB_PROVIDER_SERVE_URL => 'https://example.com/serve',
+            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
+        ]);
+        NetworkHost::factory()->create([
+            'address' => '0001-00000001-8B4E',
+            'host' => 'https://example.com',
+        ]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create([
+            'site_id' => Site::factory()->create([
+                'user_id' => User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]),
+                'status' => Site::STATUS_ACTIVE,
+            ]),
+        ]);
+        /** @var NetworkBanner $networkBanner */
+        $networkBanner = NetworkBanner::factory()->create([
+            'network_campaign_id' => NetworkCampaign::factory()->create(),
+            'serve_url' => 'https://example.com/serve/' . Uuid::uuid4()->toString(),
+        ]);
+        $impressionId = Uuid::uuid4();
+        $adSelect = self::createMock(AdSelect::class);
+        $adSelect->method('findBanners')->willReturn(
+            new FoundBanners([
+                [
+                    'id' => $networkBanner->uuid,
+                    'publisher_id' => '0123456879ABCDEF0123456879ABCDEF',
+                    'zone_id' => $zone->uuid,
+                    'pay_from' => '0001-00000001-8B4E',
+                    'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+                    'type' => $networkBanner->type,
+                    'size' => $networkBanner->size,
+                    'serve_url' => $networkBanner->serve_url,
+                    'creative_sha1' => '',
+                    'click_url' => SecureUrl::change(
+                        route(
+                            'log-network-click',
+                            [
+                                'id' => $networkBanner->uuid,
+                                'iid' => $impressionId,
+                                'r' => Utils::urlSafeBase64Encode($networkBanner->click_url),
+                                'zid' => $zone->uuid,
+                            ]
+                        )
+                    ),
+                    'view_url' => SecureUrl::change(
+                        route(
+                            'log-network-view',
+                            [
+                                'id' => $networkBanner->uuid,
+                                'iid' => $impressionId,
+                                'r' => Utils::urlSafeBase64Encode($networkBanner->view_url),
+                                'zid' => $zone->uuid,
+                            ]
+                        )
+                    ),
+                    'info_box' => true,
+                    'rpm' => 0.5,
+                    'request_id' => '3',
+                ]
+            ])
+        );
+        $this->app->bind(
+            AdSelect::class,
+            static function () use ($adSelect) {
+                return $adSelect;
+            }
+        );
+        $this->initAdUser();
+        $data = [
+            'context' => [
+                'iid' => $impressionId,
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                ],
+            ],
+        ];
+        return $data;
     }
 }
