@@ -173,10 +173,6 @@ var prepareElement = function (context, banner, element, contextParam) {
                         console.log('invisible click');
                         return;
                     }
-                    if (context.zone.width === 1920 && context.zone.height === 1080 && data.eventId !== 'adContainer') {
-                        console.log('wrong full screen click');
-                        return;
-                    }
                     var url = context.click_url;
                     if (!winOpen(url, '_blank')) {
                         topwin.location.href = url;

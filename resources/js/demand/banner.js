@@ -23,8 +23,7 @@ domReady(function() {
 
     var handler = function(e) {
         var msg = {
-            dwmthClick : 1,
-            eventId: e.target.id
+            dwmthClick : 1
         };
         target.postMessage(onlyStrings ? JSON.stringify(msg) : msg, '*');
         e.preventDefault();
