@@ -44,6 +44,7 @@ class OpenRtbProviderRegistrar
     {
         if (
             null === ($accountAddress = config('app.open_rtb_provider_account_address'))
+            || null === config('app.open_rtb_provider_serve_url')
             || null === ($url = config('app.open_rtb_provider_url'))
         ) {
             return false;

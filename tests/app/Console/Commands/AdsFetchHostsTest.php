@@ -267,6 +267,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         );
         Config::updateAdminSettings([
             Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::OPEN_RTB_PROVIDER_SERVE_URL => 'https://example.com/serve',
             Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
         ]);
 

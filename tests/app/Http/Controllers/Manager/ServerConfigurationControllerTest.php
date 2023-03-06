@@ -235,6 +235,7 @@ final class ServerConfigurationControllerTest extends TestCase
             'LANDING_URL' => [Config::LANDING_URL, 'https://example.com'],
             'MAX_INVALID_LOGIN_ATTEMPTS' => [Config::MAX_INVALID_LOGIN_ATTEMPTS, '8'],
             'OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS' => [Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS, '0001-00000003-AB0C'],
+            'OPEN_RTB_PROVIDER_SERVE_URL' => [Config::OPEN_RTB_PROVIDER_SERVE_URL, 'http://localhost:8015/serve'],
             'OPEN_RTB_PROVIDER_URL' => [Config::OPEN_RTB_PROVIDER_URL, 'http://localhost:8015/info.json'],
             'REFERRAL_REFUND_COMMISSION' => [Config::REFERRAL_REFUND_COMMISSION, '0'],
             'REFERRAL_REFUND_ENABLED' => [Config::REFERRAL_REFUND_ENABLED, '1'],

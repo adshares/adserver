@@ -148,6 +148,7 @@ class ServerConfigurationController extends Controller
         Config::NOW_PAYMENTS_MAX_AMOUNT => 'nullable|integer|min:0',
         Config::NOW_PAYMENTS_MIN_AMOUNT => 'nullable|integer|min:0',
         Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => 'nullable|accountId',
+        Config::OPEN_RTB_PROVIDER_SERVE_URL => 'nullable|url',
         Config::OPEN_RTB_PROVIDER_URL => 'nullable|url',
         Config::OPERATOR_RX_FEE => 'nullable|commission',
         Config::OPERATOR_TX_FEE => 'nullable|commission',

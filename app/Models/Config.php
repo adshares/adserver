@@ -151,6 +151,7 @@ class Config extends Model
     public const NOW_PAYMENTS_MAX_AMOUNT = 'now-payments-max-amount';
     public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
     public const OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS = 'open-rtb-provider-account-address';
+    public const OPEN_RTB_PROVIDER_SERVE_URL = 'open-rtb-provider-serve-url';
     public const OPEN_RTB_PROVIDER_URL = 'open-rtb-provider-url';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
@@ -532,6 +533,7 @@ class Config extends Model
             self::NOW_PAYMENTS_MAX_AMOUNT => 1000,
             self::NOW_PAYMENTS_MIN_AMOUNT => 25,
             self::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => null,
+            self::OPEN_RTB_PROVIDER_SERVE_URL => null,
             self::OPEN_RTB_PROVIDER_URL => null,
             self::OPERATOR_RX_FEE => 0.01,
             self::OPERATOR_TX_FEE => 0.01,

@@ -42,11 +42,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 {
     public function testRegisterAsNetworkHost(): void
     {
-        Config::updateAdminSettings([
-            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->initOpenRtb();
         $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
@@ -60,11 +56,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidResponse(): void
     {
-        Config::updateAdminSettings([
-            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->initOpenRtb();
         $clientMock = self::createMock(DemandClient::class);
         $clientMock->method('fetchInfo')->willThrowException(new UnexpectedClientResponseException('test-exception'));
         $registrar = new OpenRtbProviderRegistrar($clientMock);
@@ -85,11 +77,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationAddress(): void
     {
-        Config::updateAdminSettings([
-            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004',
-            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->initOpenRtb([Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004']);
         $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
@@ -99,11 +87,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationUrl(): void
     {
-        Config::updateAdminSettings([
-            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-            Config::OPEN_RTB_PROVIDER_URL => 'example.com',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->initOpenRtb([Config::OPEN_RTB_PROVIDER_URL => 'example.com']);
         $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
@@ -113,11 +97,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInfoForAdserver(): void
     {
-        Config::updateAdminSettings([
-            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->initOpenRtb();
         $registrar = new OpenRtbProviderRegistrar(new DummyDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
@@ -131,11 +111,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInfoForDifferentAddress(): void
     {
-        Config::updateAdminSettings([
-            Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-            Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->initOpenRtb();
         $info = new Info(
             'openrtb',
             'OpenRTB Provider ',
@@ -186,5 +162,19 @@ class OpenRtbProviderRegistrarTest extends TestCase
         $clientMock = self::createMock(DemandClient::class);
         $clientMock->method('fetchInfo')->willReturn($info);
         return $clientMock;
+    }
+
+    private function initOpenRtb(array $settings = []): void
+    {
+        $mergedSettings = array_merge(
+            [
+                Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+                Config::OPEN_RTB_PROVIDER_SERVE_URL => 'https://example.com/serve',
+                Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
+            ],
+            $settings,
+        );
+        Config::updateAdminSettings($mergedSettings);
+        DatabaseConfigReader::overwriteAdministrationConfig();
     }
 }
