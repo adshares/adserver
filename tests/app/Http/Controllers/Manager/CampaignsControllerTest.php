@@ -40,6 +40,7 @@ use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Closure;
 use DateTime;
 use DateTimeImmutable;
@@ -129,6 +130,7 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddMetaverseCampaign(): void
     {
+        $this->initBidStrategy();
         $user = $this->createUser();
         /** @var UploadedFileModel $file */
         $file = UploadedFileModel::factory()->create([
@@ -1122,6 +1124,18 @@ final class CampaignsControllerTest extends TestCase
                 'campaignsMedia' => []
             ]
         );
+    }
+
+    private function initBidStrategy(): void
+    {
+        $taxonomy = (new DummyConfigurationRepository())->fetchTaxonomy();
+        foreach ($taxonomy->getMedia() as $mediumObject) {
+            BidStrategy::registerIfMissingDefault(
+                sprintf('Default %s', $mediumObject->getVendorLabel() ?: $mediumObject->getLabel()),
+                $mediumObject->getName(),
+                $mediumObject->getVendor(),
+            );
+        }
     }
 
     private static function buildCampaignStatusUri(int $campaignId): string
