@@ -513,11 +513,12 @@ class Campaign extends Model
             return false;
         }
 
-        if (MediumName::Metaverse->value === $this->medium) {
-            if (null !== ($vendor = MetaverseVendor::tryFrom($this->vendor))) {
-                $domains = $this->targeting_requires['site']['domain'];
-                return 1 !== count($domains) || $vendor->baseDomain() !== $domains[0];
-            }
+        if (
+            MediumName::Metaverse->value === $this->medium
+            && null !== ($vendor = MetaverseVendor::tryFrom($this->vendor))
+        ) {
+            $domains = $this->targeting_requires['site']['domain'];
+            return 1 !== count($domains) || $vendor->baseDomain() !== $domains[0];
         }
 
         return true;
