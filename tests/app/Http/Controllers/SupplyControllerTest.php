@@ -270,7 +270,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonPath('data.0.id', '3');
     }
 
-    public function testFindOpenRTB(): void
+    public function testFindOpenRtb(): void
     {
         Http::preventStrayRequests();
         Http::fake([
@@ -289,6 +289,20 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.id', '3');
+        Http::assertSentCount(1);
+    }
+
+    public function testFindOpenRtbWhileEmptyResponse(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['example.com/serve' => Http::response([])]);
+        $data = $this->initOpenRtb();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(0, 'data');
         Http::assertSentCount(1);
     }
 

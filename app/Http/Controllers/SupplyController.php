@@ -1319,6 +1319,10 @@ class SupplyController extends Controller
                 ]
             );
             $foundBanners->set((int)$entry['request_id'], $foundBanner);
+            unset($openBtbBanners[$entry['request_id']]);
+        }
+        foreach ($openBtbBanners as $index => $serveUrl) {
+            $foundBanners->set($index, null);
         }
         return $foundBanners;
     }
