@@ -259,7 +259,7 @@ final class GuzzleDemandClient implements DemandClient
             'updated_at' => DateTime::createFromFormat(DateTimeInterface::ATOM, $data['updated_at']),
         ];
 
-        $isOpenRtbProvider = $sourceAddress === config('app.open_rtb_provider_account_address');
+        $isOpenRtbProvider = $sourceAddress === config('app.open_rtb_bridge_account_address');
         $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
         $banners = [];
         $bannersInput = $data['creatives'] ?? $data['banners'];// legacy fallback, field 'banners' is deprecated

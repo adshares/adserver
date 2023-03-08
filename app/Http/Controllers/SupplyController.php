@@ -478,8 +478,8 @@ class SupplyController extends Controller
         $impressionUuid = self::impressionIdToUuid($impressionId);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionUuid);
         if (
-            null !== config('app.open_rtb_provider_account_address')
-            && null !== config('app.open_rtb_provider_serve_url')
+            null !== config('app.open_rtb_bridge_account_address')
+            && null !== config('app.open_rtb_bridge_serve_url')
         ) {
             $foundBanners = $this->replaceOpenRtbBanners($foundBanners);
         }
@@ -1286,7 +1286,7 @@ class SupplyController extends Controller
 
     private function replaceOpenRtbBanners(FoundBanners $foundBanners): FoundBanners
     {
-        $accountAddress = config('app.open_rtb_provider_account_address');
+        $accountAddress = config('app.open_rtb_bridge_account_address');
         $openRtbBanners = [];
         foreach ($foundBanners as $index => $foundBanner) {
             if (null !== $foundBanner && $accountAddress === $foundBanner['pay_from']) {
@@ -1299,7 +1299,7 @@ class SupplyController extends Controller
         if (empty($openRtbBanners)) {
             return $foundBanners;
         }
-        $response = Http::post(config('app.open_rtb_provider_serve_url'), $openRtbBanners);
+        $response = Http::post(config('app.open_rtb_bridge_serve_url'), $openRtbBanners);
         if (
             BaseResponse::HTTP_OK !== $response->status()
             || !$this->isOpenRtbAuctionResponseValid($content = $response->json(), $openRtbBanners)

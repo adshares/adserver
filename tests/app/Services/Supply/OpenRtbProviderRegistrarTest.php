@@ -77,7 +77,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationAddress(): void
     {
-        $this->initOpenRtb([Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004']);
+        $this->initOpenRtb([Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004']);
         $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
@@ -87,7 +87,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationUrl(): void
     {
-        $this->initOpenRtb([Config::OPEN_RTB_PROVIDER_URL => 'example.com']);
+        $this->initOpenRtb([Config::OPEN_RTB_BRIDGE_URL => 'example.com']);
         $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
@@ -168,9 +168,9 @@ class OpenRtbProviderRegistrarTest extends TestCase
     {
         $mergedSettings = array_merge(
             [
-                Config::OPEN_RTB_PROVIDER_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-                Config::OPEN_RTB_PROVIDER_SERVE_URL => 'https://example.com/serve',
-                Config::OPEN_RTB_PROVIDER_URL => 'https://example.com/info.json',
+                Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+                Config::OPEN_RTB_BRIDGE_SERVE_URL => 'https://example.com/serve',
+                Config::OPEN_RTB_BRIDGE_URL => 'https://example.com/info.json',
             ],
             $settings,
         );
