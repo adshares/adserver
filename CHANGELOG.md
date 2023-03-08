@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.4.10] - 2023-03-08
 ### Added
 - Impression's account passed to demand
+### Fixed
+- Unified impression ID format on supply side
 
 ## [2.4.9] - 2023-02-28
 ### Fixed
