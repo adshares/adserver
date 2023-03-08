@@ -1287,24 +1287,24 @@ class SupplyController extends Controller
     private function replaceOpenRtbBanners(FoundBanners $foundBanners): FoundBanners
     {
         $accountAddress = config('app.open_rtb_provider_account_address');
-        $openBtbBanners = [];
+        $openRtbBanners = [];
         foreach ($foundBanners as $index => $foundBanner) {
             if (null !== $foundBanner && $accountAddress === $foundBanner['pay_from']) {
-                $openBtbBanners[(string)$index] = [
+                $openRtbBanners[(string)$index] = [
                     'request_id' => (string)$index,
-                    'serve_url' => $foundBanner['serve_url'],
+                    'id' => $foundBanner['demandId'],
                 ];
             }
         }
-        if (empty($openBtbBanners)) {
+        if (empty($openRtbBanners)) {
             return $foundBanners;
         }
-        $response = Http::post(config('app.open_rtb_provider_serve_url'), $openBtbBanners);
+        $response = Http::post(config('app.open_rtb_provider_serve_url'), $openRtbBanners);
         if (
             BaseResponse::HTTP_OK !== $response->status()
-            || !$this->isOpenRtbAuctionResponseValid($content = $response->json(), $openBtbBanners)
+            || !$this->isOpenRtbAuctionResponseValid($content = $response->json(), $openRtbBanners)
         ) {
-            foreach ($openBtbBanners as $index => $serveUrl) {
+            foreach ($openRtbBanners as $index => $serveUrl) {
                 $foundBanners->set($index, null);
             }
             return $foundBanners;
@@ -1319,9 +1319,9 @@ class SupplyController extends Controller
                 ]
             );
             $foundBanners->set((int)$entry['request_id'], $foundBanner);
-            unset($openBtbBanners[$entry['request_id']]);
+            unset($openRtbBanners[$entry['request_id']]);
         }
-        foreach ($openBtbBanners as $index => $serveUrl) {
+        foreach ($openRtbBanners as $index => $serveUrl) {
             $foundBanners->set($index, null);
         }
         return $foundBanners;
