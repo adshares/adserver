@@ -54,6 +54,7 @@ use Psr\Http\Message\ResponseInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
+// phpcs:ignoreFile PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
 final class SupplyControllerTest extends TestCase
 {
     private const BANNER_FIND_URI = '/supply/find';
@@ -348,6 +349,22 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testFindDynamicWithPublisherIdAsUuidV4(): void
+    {
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $publisherId = Uuid::fromString($publisher->uuid)->toString();
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+        $this->mockAdSelect();
+        $data = self::getDynamicFindData(['context' => self::getContextData(['publisher' => $publisherId])]);
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
     }
 
     public function testFindDynamicWithoutExistingUser(): void
@@ -732,6 +749,8 @@ final class SupplyControllerTest extends TestCase
         }
         self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
         self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+        $context = Utils::decodeZones($locationQuery['ctx']);
+        self::assertEquals('0x05cf6d580d124d6eda7fd065b2cd239b08e2fd68', $context['user']['account']);
     }
 
     public function testLogNetworkViewWhileCaseIdAndImpressionIdAreUuidV4(): void
@@ -816,7 +835,10 @@ final class SupplyControllerTest extends TestCase
                 'width' => 300,
                 'height' => 250,
                 'context' => [
-                    'user' => ['language' => 'en'],
+                    'user' => [
+                        'account' => '0x05cf6d580d124d6eda7fd065b2cd239b08e2fd68',
+                        'language' => 'en',
+                    ],
                     'device' => ['os' => 'Windows'],
                     'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
                 ],
@@ -934,7 +956,7 @@ final class SupplyControllerTest extends TestCase
             'view_url' => 'https://example.com/view',
         ]);
         $iid = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($impression->impression_id));
-        $ctx = Utils::encodeZones(
+        $ctx = Utils::UrlSafeBase64Encode(json_encode(
             [
                 'page' => [
                     'iid' => $iid,
@@ -950,7 +972,7 @@ final class SupplyControllerTest extends TestCase
                     'options' => '[]',
                 ],
             ]
-        );
+        ));
         $redirectUrl = Utils::urlSafeBase64Encode($banner->view_url);
         $query = [
             'cid' => '13245679801324567980132456798012',
