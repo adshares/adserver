@@ -43,7 +43,7 @@ class OpenRtbBridge
             if (null !== $foundBanner && $accountAddress === $foundBanner['pay_from']) {
                 $openRtbBanners[(string)$index] = [
                     'request_id' => (string)$index,
-                    'id' => $foundBanner['demandId'],
+                    'creative_id' => $foundBanner['demandId'],
                 ];
             }
         }
