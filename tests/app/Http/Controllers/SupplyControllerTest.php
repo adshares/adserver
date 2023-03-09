@@ -825,6 +825,19 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
+    public function testRegister(): void
+    {
+        Config::updateAdminSettings([Config::ADUSER_SERVE_SUBDOMAIN => 'au']);
+        $expectedTrackingId = 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ';
+
+        $response = $this->get('/supply/register?iid=1a06e492-35df-4545-9e12-d5d929abf9e9');
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        self::assertStringContainsString('/' . $expectedTrackingId . '/', $response->headers->get('Location'));
+        $response->assertCookie('tid', $expectedTrackingId, false);
+    }
+
     private static function findJsonData(array $merge = []): array
     {
         return array_merge(
