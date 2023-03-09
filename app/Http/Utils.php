@@ -260,7 +260,7 @@ class Utils
         Response $response,
         $contentSha1,
         DateTime $contentModified,
-        ?string $impressionId = null
+        ?string $impressionId = null,
     ): string {
         $tid = self::getOrCreateTrackingId($request, $impressionId);
 
