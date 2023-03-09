@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -148,7 +148,7 @@ class Zone extends Model
                 if (empty($scopes)) {
                     throw new InvalidArgumentException(
                         sprintf(
-                            'Cannot find placement matching width %d, height %d)',
+                            'Cannot find placement matching width %d, height %d',
                             $zoneSize->getWidth(),
                             $zoneSize->getHeight(),
                         )

@@ -1010,8 +1010,8 @@ class SupplyController extends Controller
 
     private function getPublisherOrFail(string $publisher): User
     {
-        if (Utils::isUuidValid($publisher)) {
-            $user = User::fetchByUuid($publisher);
+        if (Uuid::isValid($publisher)) {
+            $user = User::fetchByUuid(str_replace('-', '', $publisher));
         } else {
             try {
                 $payoutAddress = WalletAddress::fromString($publisher);
@@ -1278,6 +1278,9 @@ class SupplyController extends Controller
         if (null !== ($inframe = $impressionContext->site->inframe)) {
             $ctx['page']['frame'] = 'yes' === $inframe ? 1 : 0;
         }
-        return Utils::encodeZones($ctx);
+        if (null !== ($account = $impressionContext->user->account ?? null)) {
+            $ctx['user']['account'] = $account;
+        }
+        return Utils::UrlSafeBase64Encode(json_encode($ctx));
     }
 }

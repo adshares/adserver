@@ -105,6 +105,9 @@ class Utils
         ];
     }
 
+    /**
+     * @deprecated
+     */
     public static function encodeZones(array $data): string
     {
         $VALUE_GLUE = "\t";
