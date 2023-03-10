@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Tests\Services\Supply;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Services\Supply\OpenRtbProviderRegistrar;
+use Adshares\Adserver\Services\Supply\OpenRtbBridgeRegistrar;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -38,12 +38,12 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class OpenRtbProviderRegistrarTest extends TestCase
+class OpenRtbBridgeRegistrarTest extends TestCase
 {
     public function testRegisterAsNetworkHost(): void
     {
         $this->initOpenRtb();
-        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
+        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -59,7 +59,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
         $this->initOpenRtb();
         $clientMock = self::createMock(DemandClient::class);
         $clientMock->method('fetchInfo')->willThrowException(new UnexpectedClientResponseException('test-exception'));
-        $registrar = new OpenRtbProviderRegistrar($clientMock);
+        $registrar = new OpenRtbBridgeRegistrar($clientMock);
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -68,7 +68,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileNoConfiguration(): void
     {
-        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
+        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -78,7 +78,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationAddress(): void
     {
         $this->initOpenRtb([Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004']);
-        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
+        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -88,7 +88,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationUrl(): void
     {
         $this->initOpenRtb([Config::OPEN_RTB_BRIDGE_URL => 'example.com']);
-        $registrar = new OpenRtbProviderRegistrar($this->getDemandClient());
+        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -98,7 +98,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
     public function testRegisterAsNetworkHostFailWhileInfoForAdserver(): void
     {
         $this->initOpenRtb();
-        $registrar = new OpenRtbProviderRegistrar(new DummyDemandClient());
+        $registrar = new OpenRtbBridgeRegistrar(new DummyDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -130,7 +130,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
         );
         $clientMock = self::createMock(DemandClient::class);
         $clientMock->method('fetchInfo')->willReturn($info);
-        $registrar = new OpenRtbProviderRegistrar($clientMock);
+        $registrar = new OpenRtbBridgeRegistrar($clientMock);
 
         $result = $registrar->registerAsNetworkHost();
 

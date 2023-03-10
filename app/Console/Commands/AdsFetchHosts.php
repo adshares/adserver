@@ -31,7 +31,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Services\Supply\OpenRtbProviderRegistrar;
+use Adshares\Adserver\Services\Supply\OpenRtbBridgeRegistrar;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\AppMode;
@@ -60,7 +60,7 @@ class AdsFetchHosts extends BaseCommand
         Locker $locker,
         private readonly AdsClient $adsClient,
         private readonly DemandClient $client,
-        private readonly OpenRtbProviderRegistrar $openRtbProviderRegistrar,
+        private readonly OpenRtbBridgeRegistrar $openRtbProviderRegistrar,
     ) {
         parent::__construct($locker);
     }

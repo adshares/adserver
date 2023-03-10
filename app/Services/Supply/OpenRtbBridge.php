@@ -19,7 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Services\Demand;
+namespace Adshares\Adserver\Services\Supply;
 
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
@@ -29,6 +29,8 @@ use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 class OpenRtbBridge
 {
+    private const SERVE_PATH = '/serve';
+
     public static function isActive(): bool
     {
         return null !== config('app.open_rtb_bridge_account_address')
@@ -51,7 +53,7 @@ class OpenRtbBridge
             return $foundBanners;
         }
         $response = Http::post(
-            config('app.open_rtb_bridge_url') . '/serve',
+            config('app.open_rtb_bridge_url') . self::SERVE_PATH,
             [
                 'context' => $context->toArray(),
                 'requests' => $openRtbBanners

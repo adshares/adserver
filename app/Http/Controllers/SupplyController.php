@@ -35,7 +35,7 @@ use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
-use Adshares\Adserver\Services\Demand\OpenRtbBridge;
+use Adshares\Adserver\Services\Supply\OpenRtbBridge;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;

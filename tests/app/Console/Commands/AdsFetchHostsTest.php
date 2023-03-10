@@ -29,7 +29,7 @@ use Adshares\Ads\Response\GetBroadcastResponse;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Services\Supply\OpenRtbProviderRegistrar;
+use Adshares\Adserver\Services\Supply\OpenRtbBridgeRegistrar;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Config\AppMode;
@@ -254,9 +254,9 @@ class AdsFetchHostsTest extends ConsoleTestCase
             }
         );
         $this->app->bind(
-            OpenRtbProviderRegistrar::class,
+            OpenRtbBridgeRegistrar::class,
             function () {
-                $mock = self::createMock(OpenRtbProviderRegistrar::class);
+                $mock = self::createMock(OpenRtbBridgeRegistrar::class);
                 $mock->method('registerAsNetworkHost')
                     ->will($this->returnCallback(function () {
                         NetworkHost::factory()->create();

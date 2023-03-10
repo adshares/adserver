@@ -32,8 +32,9 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
-class OpenRtbProviderRegistrar
+class OpenRtbBridgeRegistrar
 {
+    private const INFO_JSON_PATH = '/info.json';
     private const OPEN_RTB_MODULE_NAME = 'openrtb';
 
     public function __construct(private readonly DemandClient $demandClient)
@@ -48,7 +49,7 @@ class OpenRtbProviderRegistrar
         ) {
             return false;
         }
-        $url = $url . '/info.json';
+        $url = $url . self::INFO_JSON_PATH;
 
         if (!AccountId::isValid($accountAddress, true)) {
             Log::error('OpenRTB provider registration failed: configured account address is not valid');
