@@ -35,7 +35,9 @@ use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Mock\Client\DummyAdClassifyClient;
+use Adshares\Mock\Client\DummyAdPayClient;
 use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
@@ -108,6 +110,12 @@ abstract class TestCase extends BaseTestCase
             AdClassify::class,
             static function () {
                 return new DummyAdClassifyClient();
+            }
+        );
+        $this->app->bind(
+            AdPay::class,
+            static function () {
+                return new DummyAdPayClient();
             }
         );
         $this->app->bind(
