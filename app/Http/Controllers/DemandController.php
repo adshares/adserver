@@ -231,10 +231,8 @@ SQL;
             );
             $response = new RedirectResponse($url);
         }
-        $response->send();
 
         $impressionId = $request->query->get('iid');
-
         if ($impressionId) {
             $tid = Utils::attachOrProlongTrackingCookie(
                 $request,
@@ -246,6 +244,7 @@ SQL;
         } else {
             $tid = $request->cookies->get('tid');
         }
+        $response->send();
 
         $trackingId = $tid
             ? Utils::hexUuidFromBase64UrlWithChecksum($tid)

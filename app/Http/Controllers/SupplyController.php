@@ -437,7 +437,7 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
     ): FoundBanners {
         $this->checkDecodedQueryData($decodedQueryData);
-        $impressionId = $decodedQueryData['page']['iid'];
+        $impressionId = self::impressionIdToUuid($decodedQueryData['page']['iid']);
 
         $tid = Utils::attachOrProlongTrackingCookie(
             $request,
@@ -475,15 +475,14 @@ class SupplyController extends Controller
         }
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
-        $impressionUuid = self::impressionIdToUuid($impressionId);
-        $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionUuid);
+        $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionId);
         if (OpenRtbBridge::isActive()) {
             $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($foundBanners, $context);
         }
 
         if ($foundBanners->exists(fn($key, $element) => null !== $element)) {
             NetworkImpression::register(
-                $impressionUuid,
+                $impressionId,
                 Utils::hexUuidFromBase64UrlWithChecksum($tid),
                 $impressionContext,
                 $userContext,
@@ -582,10 +581,8 @@ class SupplyController extends Controller
 
     public function logNetworkSimpleClick(Request $request): RedirectResponse
     {
-        $impressionId = $request->query->get('iid');
-        $networkImpression = NetworkImpression::fetchByImpressionId(
-            self::impressionIdToUuid($impressionId)
-        );
+        $impressionId = self::impressionIdToUuid($request->query->get('iid'));
+        $networkImpression = NetworkImpression::fetchByImpressionId($impressionId);
         if (null === $networkImpression || !$networkImpression->context->banner_id) {
             throw new NotFoundHttpException();
         }
@@ -704,10 +701,8 @@ class SupplyController extends Controller
 
     public function logNetworkSimpleView(Request $request): RedirectResponse
     {
-        $impressionId = $request->query->get('iid');
-        $networkImpression = NetworkImpression::fetchByImpressionId(
-            self::impressionIdToUuid($impressionId)
-        );
+        $impressionId = self::impressionIdToUuid($request->query->get('iid'));
+        $networkImpression = NetworkImpression::fetchByImpressionId($impressionId);
         if (null === $networkImpression || !$networkImpression->context->banner_id) {
             throw new NotFoundHttpException();
         }
@@ -735,13 +730,11 @@ class SupplyController extends Controller
     {
         $this->validateEventRequest($request);
 
-        $impressionId = $request->query->get('iid');
-        if (null === $impressionId) {
+        if (null === ($iid = $request->query->get('iid'))) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
-        $networkImpression = NetworkImpression::fetchByImpressionId(
-            self::impressionIdToUuid($impressionId)
-        );
+        $impressionId = self::impressionIdToUuid($iid);
+        $networkImpression = NetworkImpression::fetchByImpressionId($impressionId);
         if (null === $networkImpression) {
             throw new NotFoundHttpException();
         }
@@ -817,7 +810,7 @@ class SupplyController extends Controller
     public function register(Request $request): Response
     {
         $response = new Response();
-        $impressionId = $request->query->get('iid');
+        $impressionId = self::impressionIdToUuid($request->query->get('iid', ''));
 
         $trackingId = Utils::attachOrProlongTrackingCookie(
             $request,
