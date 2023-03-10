@@ -267,8 +267,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         );
         Config::updateAdminSettings([
             Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
-            Config::OPEN_RTB_BRIDGE_SERVE_URL => 'https://example.com/serve',
-            Config::OPEN_RTB_BRIDGE_URL => 'https://example.com/info.json',
+            Config::OPEN_RTB_BRIDGE_URL => 'https://example.com',
         ]);
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);

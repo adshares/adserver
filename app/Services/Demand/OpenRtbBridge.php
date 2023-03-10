@@ -32,7 +32,7 @@ class OpenRtbBridge
     public static function isActive(): bool
     {
         return null !== config('app.open_rtb_bridge_account_address')
-            && null !== config('app.open_rtb_bridge_serve_url');
+            && null !== config('app.open_rtb_bridge_url');
     }
 
     public function replaceOpenRtbBanners(FoundBanners $foundBanners, ImpressionContext $context): FoundBanners
@@ -51,7 +51,7 @@ class OpenRtbBridge
             return $foundBanners;
         }
         $response = Http::post(
-            config('app.open_rtb_bridge_serve_url'),
+            config('app.open_rtb_bridge_url') . '/serve',
             [
                 'context' => $context->toArray(),
                 'requests' => $openRtbBanners

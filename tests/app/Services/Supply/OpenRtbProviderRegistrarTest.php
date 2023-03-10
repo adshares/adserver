@@ -169,8 +169,7 @@ class OpenRtbProviderRegistrarTest extends TestCase
         $mergedSettings = array_merge(
             [
                 Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-                Config::OPEN_RTB_BRIDGE_SERVE_URL => 'https://example.com/serve',
-                Config::OPEN_RTB_BRIDGE_URL => 'https://example.com/info.json',
+                Config::OPEN_RTB_BRIDGE_URL => 'https://example.com',
             ],
             $settings,
         );

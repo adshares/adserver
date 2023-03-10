@@ -44,11 +44,11 @@ class OpenRtbProviderRegistrar
     {
         if (
             null === ($accountAddress = config('app.open_rtb_bridge_account_address'))
-            || null === config('app.open_rtb_bridge_serve_url')
             || null === ($url = config('app.open_rtb_bridge_url'))
         ) {
             return false;
         }
+        $url = $url . '/info.json';
 
         if (!AccountId::isValid($accountAddress, true)) {
             Log::error('OpenRTB provider registration failed: configured account address is not valid');
