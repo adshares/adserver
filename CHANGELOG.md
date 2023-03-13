@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Increase user activity interval
+### Fixed
+- Return CORS headers during maintenance
 
 ## [2.4.10] - 2023-03-08
 ### Added
