@@ -74,10 +74,10 @@ class Kernel extends HttpKernel
     public const WEB = 'web';
 
     protected $middleware = [
-        CheckForMaintenanceMode::class,
         TrustProxies::class,
         HandleCors::class,
         AddHeadersToResponse::class,
+        CheckForMaintenanceMode::class,
     ];
 
     protected $middlewareGroups = [
