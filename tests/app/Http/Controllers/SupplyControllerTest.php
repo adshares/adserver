@@ -409,6 +409,17 @@ final class SupplyControllerTest extends TestCase
         self::assertNotNull(User::firstOrFail()->admin_confirmed_at);
     }
 
+    public function testFindDynamicWithoutExistingUserWhileInvalidPublisherId(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+        $this->mockAdSelect();
+        $data = self::getDynamicFindData(['context' => self::getContextData(['publisher' => '0001-00000001-8B4E'])]);
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testFindDynamicWhileSiteApprovalRequired(): void
     {
         Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
@@ -883,6 +894,16 @@ final class SupplyControllerTest extends TestCase
         }
         self::assertEquals('13245679-8013-2456-7980-132456798012', $locationQuery['cid']);
         self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+    }
+
+    public function testLogNetworkViewFailWhileInvalidRedirectUrlAndBannerId(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        $query['r'] = '';
+
+        $response = $this->get(self::buildLogViewUri('invalid', $query));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testLogNetworkViewFailWhileImpressionIdIsMissing(): void
