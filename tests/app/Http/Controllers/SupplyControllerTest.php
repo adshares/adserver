@@ -741,6 +741,57 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
+    public function testLogNetworkClickWhileBannerFromBridgeRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/click?*' => Http::response(['redirect_url' => 'https://adshares.net/click'])]);
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://adshares.net/click', $location);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+        Http::assertSentCount(1);
+    }
+
+    public function testLogNetworkClickWhileBannerFromBridgeNoRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/click?*' => Http::response(status: Response::HTTP_NO_CONTENT)]);
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringContainsString('/supply/why?', $location);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+        Http::assertSentCount(1);
+    }
+
+    public function testLogNetworkClickWhileBannerFromBridgeNoUrl(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['r']);
+        $query['extid'] = '12';
+        $banner->click_url = '';
+        $banner->saveOrFail();
+        Http::preventStrayRequests();
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        Http::assertNothingSent();
+    }
+
     public function testLogNetworkView(): void
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
@@ -868,6 +919,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertHeader('Location');
         $location = $response->headers->get('Location');
         self::assertStringStartsWith('https://adshares.net/view', $location);
+        Http::assertSentCount(1);
     }
 
     public function testLogNetworkViewWhileBannerFromBridgeNoRedirection(): void
@@ -881,6 +933,7 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Http::assertSentCount(1);
     }
 
     public function testLogNetworkViewWhileBannerFromBridgeNoUrl(): void
@@ -891,12 +944,12 @@ final class SupplyControllerTest extends TestCase
         unset($query['r']);
         $query['extid'] = '12';
         Http::preventStrayRequests();
-        Http::fake(['example.com/view?*' => Http::response(status: Response::HTTP_NO_CONTENT)]);
 
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query), ['Origin' => 'https://example.com']);
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
+        Http::assertNothingSent();
     }
 
     public function testRegister(): void
@@ -1039,6 +1092,7 @@ final class SupplyControllerTest extends TestCase
         $campaign = NetworkCampaign::factory()->create();
         /** @var NetworkBanner $banner */
         $banner = NetworkBanner::factory()->create([
+            'click_url' => 'https://example.com/click',
             'network_campaign_id' => $campaign,
             'view_url' => 'https://example.com/view',
         ]);
