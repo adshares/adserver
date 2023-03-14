@@ -44,7 +44,7 @@ Route::get('/l/ns/click', [SupplyController::class, 'logNetworkSimpleClick']);
 Route::get('/supply/targeting-reach', [SupplyController::class, 'targetingReachList']);
 
 # WHY PAGE
-Route::get('/supply/why', [SupplyController::class, 'why']);
+Route::get('/supply/why', [SupplyController::class, 'why'])->name('why');
 Route::get('/supply/ad/report/{case_id}/{banner_id}', [SupplyController::class, 'reportAd'])
     ->name('report-ad');
 

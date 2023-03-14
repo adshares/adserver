@@ -208,7 +208,7 @@ class SupplyController extends Controller
             } elseif ('POST' === $request->getRealMethod()) {
                 $data = (string)$request->getContent();
             } elseif ('OPTIONS' === $request->getRealMethod()) {
-                $response->setStatusCode(Response::HTTP_NO_CONTENT);
+                $response->setStatusCode(BaseResponse::HTTP_NO_CONTENT);
                 $response->headers->set('Access-Control-Max-Age', 1728000);
                 return $response;
             } else {
@@ -238,7 +238,7 @@ class SupplyController extends Controller
                         if (!$user) {
                             if (config('app.auto_registration_enabled')) {
                                 if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
-                                    throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                                    throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                                 }
                                 $user = User::registerWithWallet($payoutAddress, true);
                                 if (config('app.auto_confirmation_enabled')) {
@@ -250,7 +250,7 @@ class SupplyController extends Controller
                             }
                         }
                         if (!$user->isPublisher()) {
-                            throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
+                            throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
                         }
                         $site = Site::fetchOrCreate(
                             $user->id,
@@ -579,7 +579,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkSimpleClick(Request $request): RedirectResponse
+    public function logNetworkSimpleClick(Request $request): BaseResponse
     {
         $impressionId = self::impressionIdToUuid($request->query->get('iid'));
         $networkImpression = NetworkImpression::fetchByImpressionId($impressionId);
@@ -606,19 +606,21 @@ class SupplyController extends Controller
         return $this->logNetworkClick($request, $networkImpression->context->banner_id);
     }
 
-    public function logNetworkClick(Request $request, string $bannerId): RedirectResponse
+    public function logNetworkClick(Request $request, string $bannerId): BaseResponse
     {
         $this->validateEventRequest($request);
 
+        $isDspBridge = $request->query->has('extid');
         $url = $this->getRedirectionUrlFromQuery($request);
-
         if (!$url) {
             if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
                 throw new NotFoundHttpException();
             }
             $url = $banner->click_url;
         }
-
+        if (!$url) {
+            throw new UnprocessableEntityHttpException();
+        }
         $url = $this->addQueryStringToUrl($request, $url);
 
         $caseId = str_replace('-', '', $request->query->get('cid'));
@@ -647,7 +649,13 @@ class SupplyController extends Controller
             $url = Utils::addUrlParameter($url, 'ctx', $ctx);
         }
 
-        $response = new RedirectResponse($url);
+        if ($isDspBridge) {
+            $redirectUrl = (new OpenRtbBridge())->getEventRedirectUrl($url)
+                ?: route('why', ['bid' => $bannerId, 'cid' => $caseId]);
+            $response = new RedirectResponse($redirectUrl);
+        } else {
+            $response = new RedirectResponse($url);
+        }
         $response->send();
 
         try {
@@ -699,7 +707,7 @@ class SupplyController extends Controller
         return $url;
     }
 
-    public function logNetworkSimpleView(Request $request): RedirectResponse
+    public function logNetworkSimpleView(Request $request): BaseResponse
     {
         $impressionId = self::impressionIdToUuid($request->query->get('iid'));
         $networkImpression = NetworkImpression::fetchByImpressionId($impressionId);
@@ -726,7 +734,7 @@ class SupplyController extends Controller
         return $this->logNetworkView($request, $networkImpression->context->banner_id);
     }
 
-    public function logNetworkView(Request $request, string $bannerId): RedirectResponse
+    public function logNetworkView(Request $request, string $bannerId): BaseResponse
     {
         $this->validateEventRequest($request);
 
@@ -739,10 +747,18 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
+        $isDspBridge = $request->query->has('extid');
         $url = $this->getRedirectionUrlFromQuery($request);
-        if ($url) {
-            $url = $this->addQueryStringToUrl($request, $url);
+        if (!$url) {
+            if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
+                throw new NotFoundHttpException();
+            }
+            $url = $banner->view_url;
         }
+        if (!$url) {
+            throw new UnprocessableEntityHttpException();
+        }
+        $url = $this->addQueryStringToUrl($request, $url);
 
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
@@ -764,7 +780,15 @@ class SupplyController extends Controller
             $ctx = $this->buildCtx($networkImpression, $impressionId, $zoneId);
             $url = Utils::addUrlParameter($url, 'ctx', $ctx);
         }
-        $response = new RedirectResponse($url);
+
+        if ($isDspBridge) {
+            $redirectUrl = (new OpenRtbBridge())->getEventRedirectUrl($url);
+            $response = null !== $redirectUrl
+                ? new RedirectResponse($redirectUrl)
+                : new BaseResponse(status: BaseResponse::HTTP_NO_CONTENT);
+        } else {
+            $response = new RedirectResponse($url);
+        }
 
         if ($request->headers->has('Origin')) {
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
@@ -791,7 +815,7 @@ class SupplyController extends Controller
     private function validateEventRequest(Request $request): void
     {
         if (
-            !$request->query->has('r')
+            !($request->query->has('r') || $request->query->has('extid'))
             || !($request->query->has('ctx') || (Uuid::isValid($request->query->get('zid', ''))))
             || !Uuid::isValid($request->query->get('cid', ''))
         ) {

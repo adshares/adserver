@@ -21,8 +21,10 @@
 
 namespace Adshares\Adserver\Services\Supply;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Illuminate\Http\Client\HttpClientException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
@@ -52,33 +54,35 @@ class OpenRtbBridge
         if (empty($openRtbBanners)) {
             return $foundBanners;
         }
-        $response = Http::post(
-            config('app.open_rtb_bridge_url') . self::SERVE_PATH,
-            [
-                'context' => $context->toArray(),
-                'requests' => $openRtbBanners
-            ],
-        );
-        if (
-            BaseResponse::HTTP_OK !== $response->status()
-            || !$this->isOpenRtbAuctionResponseValid($content = $response->json(), $openRtbBanners)
-        ) {
-            foreach ($openRtbBanners as $index => $serveUrl) {
-                $foundBanners->set($index, null);
-            }
-            return $foundBanners;
-        }
-        foreach ($content as $entry) {
-            $foundBanner = array_merge(
-                $foundBanners->get((int)$entry['request_id']),
+        try {
+            $response = Http::post(
+                config('app.open_rtb_bridge_url') . self::SERVE_PATH,
                 [
-                    'click_url' => $entry['click_url'],
-                    'serve_url' => $entry['serve_url'],
-                    'view_url' => $entry['view_url'],
-                ]
+                    'context' => $context->toArray(),
+                    'requests' => $openRtbBanners,
+                ],
             );
-            $foundBanners->set((int)$entry['request_id'], $foundBanner);
-            unset($openRtbBanners[$entry['request_id']]);
+            if (
+                BaseResponse::HTTP_OK === $response->status()
+                && $this->isOpenRtbAuctionResponseValid($content = $response->json(), $openRtbBanners)
+            ) {
+                foreach ($content as $entry) {
+                    $externalId = $entry['ext_id'];
+                    $foundBanner = $foundBanners->get((int)$entry['request_id']);
+                    foreach (['click_url', 'view_url'] as $field) {
+                        $foundBanner[$field] = Utils::addUrlParameter(
+                            Utils::removeUrlParameter($foundBanner[$field], 'r'),
+                            'extid',
+                            $externalId,
+                        );
+                    }
+                    $foundBanner['serve_url'] = $entry['serve_url'];
+                    $foundBanners->set((int)$entry['request_id'], $foundBanner);
+                    unset($openRtbBanners[$entry['request_id']]);
+                }
+            }
+        } catch (HttpClientException $exception) {
+            Log::error(sprintf('Replacing OpenRtb banner failed: %s', $exception->getMessage()));
         }
         foreach ($openRtbBanners as $index => $serveUrl) {
             $foundBanners->set($index, null);
@@ -98,10 +102,9 @@ class OpenRtbBridge
                 return false;
             }
             $fields = [
+                'ext_id',
                 'request_id',
-                'click_url',
                 'serve_url',
-                'view_url',
             ];
             foreach ($fields as $field) {
                 if (!isset($entry[$field])) {
@@ -119,5 +122,24 @@ class OpenRtbBridge
             }
         }
         return true;
+    }
+
+    public function getEventRedirectUrl(string $url): ?string
+    {
+        $redirectUrl = null;
+        try {
+            $response = Http::get($url);
+            $statusCode = $response->status();
+            if (BaseResponse::HTTP_OK === $statusCode) {
+                $redirectUrl = $response->json('redirect_url');
+            } else {
+                if (BaseResponse::HTTP_NO_CONTENT !== $statusCode) {
+                    Log::error(sprintf('DSP bridge event notification failed: %d: %s', $statusCode, $response->body()));
+                }
+            }
+        } catch (HttpClientException $exception) {
+            Log::error(sprintf('DSP bridge event notification failed: client exception: %s', $exception->getMessage()));
+        }
+        return $redirectUrl;
     }
 }
