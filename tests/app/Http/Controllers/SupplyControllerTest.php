@@ -277,9 +277,8 @@ final class SupplyControllerTest extends TestCase
         Http::fake([
             'example.com/serve' => Http::response([[
                 'request_id' => '0',
-                'click_url' => 'https://example.com/click/1',
+                'ext_id' => '1',
                 'serve_url' => 'https://example.com/serve/1',
-                'view_url' => 'https://example.com/view/1',
             ]]),
         ]);
         $data = $this->initOpenRtb();

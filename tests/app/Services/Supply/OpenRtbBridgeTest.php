@@ -38,7 +38,9 @@ use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\AdSelect;
+use Closure;
+use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,10 +64,9 @@ class OpenRtbBridgeTest extends TestCase
         Http::preventStrayRequests();
         Http::fake([
             'example.com/serve' => Http::response([[
+                'ext_id' => '1',
                 'request_id' => '0',
-                'click_url' => 'https://example.com/click/1',
                 'serve_url' => 'https://example.com/serve/1',
-                'view_url' => 'https://example.com/view/1',
             ]]),
         ]);
         $initiallyFoundBanners = $this->getFoundBanners();
@@ -74,7 +75,10 @@ class OpenRtbBridgeTest extends TestCase
         $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
 
         self::assertCount(1, $foundBanners);
-        self::assertEquals('3', $foundBanners->first()['request_id']);
+        $foundBanner = $foundBanners->first();
+        self::assertEquals('3', $foundBanner['request_id']);
+        self::assertStringContainsString('extid=1', $foundBanner['click_url']);
+        self::assertStringContainsString('extid=1', $foundBanner['view_url']);
         Http::assertSentCount(1);
     }
 
@@ -123,6 +127,18 @@ class OpenRtbBridgeTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function testReplaceOpenRtbBannersWhileConnectionException(): void
+    {
+        Http::fake(fn() => throw new ConnectionException('test-exception'));
+        $initiallyFoundBanners = $this->getFoundBanners();
+        $context = new ImpressionContext([], [], []);
+
+        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+
+        self::assertCount(1, $foundBanners);
+        self::assertNull($foundBanners->first());
+    }
+
     /**
      * @dataProvider replaceOpenRtbBannersWhileInvalidResponseProvider
      */
@@ -147,39 +163,63 @@ class OpenRtbBridgeTest extends TestCase
         return [
             'not existing request id' => [[[
                 'request_id' => '1',
-                'click_url' => 'https://example.com/click/1',
+                'ext_id' => '1',
                 'serve_url' => 'https://example.com/serve/1',
-                'view_url' => 'https://example.com/view/1',
             ]]],
             'no request id' => [[[
-                'click_url' => 'https://example.com/click/1',
+                'ext_id' => '1',
                 'serve_url' => 'https://example.com/serve/1',
-                'view_url' => 'https://example.com/view/1',
             ]]],
-            'no click url' => [[[
+            'no ext id' => [[[
                 'request_id' => '0',
                 'serve_url' => 'https://example.com/serve/1',
-                'view_url' => 'https://example.com/view/1',
             ]]],
             'no serve url' => [[[
                 'request_id' => '0',
-                'click_url' => 'https://example.com/click/1',
-                'view_url' => 'https://example.com/view/1',
-            ]]],
-            'no view url' => [[[
-                'request_id' => '0',
-                'click_url' => 'https://example.com/click/1',
-                'serve_url' => 'https://example.com/serve/1',
+                'ext_id' => '1',
             ]]],
             'invalid serve url type' => [[[
                 'request_id' => '0',
-                'click_url' => 'https://example.com/click/1',
+                'ext_id' => '1',
                 'serve_url' => 1234,
-                'view_url' => 'https://example.com/view/1',
             ]]],
             'entry is not array' => [['0']],
             'content is not array' => ['0'],
         ];
+    }
+
+    /**
+     * @dataProvider getEventRedirectUrlProvider
+     */
+    public function testGetEventRedirectUrl(Closure $responseClosure, ?string $expectedUrl): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['example.com' => $responseClosure()]);
+
+        $url = (new OpenRtbBridge())->getEventRedirectUrl('https://example.com');
+
+        self::assertEquals($expectedUrl, $url);
+        Http::assertSentCount(1);
+    }
+
+    public function getEventRedirectUrlProvider(): array
+    {
+        return [
+            'redirection' => [
+                fn() => Http::response(['redirect_url' => 'https://adshares.net']),
+                'https://adshares.net',
+            ],
+            'no redirection' => [fn() => Http::response(status: Response::HTTP_NO_CONTENT), null],
+            'unsupported response format' => [fn() => Http::response(['url' => 'https://adshares.net']), null],
+        ];
+    }
+    public function testGetEventRedirectUrlWhileConnectionException(): void
+    {
+        Http::fake(fn() => throw new ConnectionException('test-exception'));
+
+        $url = (new OpenRtbBridge())->getEventRedirectUrl('https://example.com');
+
+        self::assertEquals(null, $url);
     }
 
     private function initOpenRtbConfiguration(array $settings = []): void
