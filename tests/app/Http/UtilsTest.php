@@ -139,4 +139,46 @@ class UtilsTest extends TestCase
         ];
         self::assertEquals('example.com', Utils::getSiteContext($request, $context)['domain']);
     }
+
+    /**
+     * @dataProvider removeUrlParameterProvider
+     */
+    public function testRemoveUrlParameter(string $url, string $expected): void
+    {
+        self::assertEquals($expected, Utils::removeUrlParameter($url, 'test'));
+    }
+
+    public function removeUrlParameterProvider(): array
+    {
+        return [
+            [
+                'https://example.com/1?test=',
+                'https://example.com/1',
+            ],
+            [
+                'https://example.com/1?test=asdf',
+                'https://example.com/1',
+            ],
+            [
+                'https://example.com/1?test[]=asdf&test[]=zxcv',
+                'https://example.com/1',
+            ],
+            [
+                'https://example.com/1?a=1&test=asdf&b=1',
+                'https://example.com/1?a=1&b=1',
+            ],
+            [
+                'https://example.com/1?a=1&b=1&test=asdf',
+                'https://example.com/1?a=1&b=1',
+            ],
+            [
+                'https://example.com/1?a=1&test[]=asdf&b=1&test[]=zxcv',
+                'https://example.com/1?a=1&b=1',
+            ],
+            [
+                'https://example.com?test=1#home',
+                'https://example.com#home',
+            ],
+        ];
+    }
 }
