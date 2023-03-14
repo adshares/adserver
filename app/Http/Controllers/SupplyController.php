@@ -756,7 +756,11 @@ class SupplyController extends Controller
             $url = $banner->view_url;
         }
         if (!$url) {
-            throw new UnprocessableEntityHttpException();
+            $response = new BaseResponse(status: BaseResponse::HTTP_NO_CONTENT);
+            if ($request->headers->has('Origin')) {
+                $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+            }
+            return $response;
         }
         $url = $this->addQueryStringToUrl($request, $url);
 

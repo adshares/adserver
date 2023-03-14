@@ -745,9 +745,10 @@ final class SupplyControllerTest extends TestCase
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
 
-        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query), ['Origin' => 'https://example.com']);
 
         $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
         $response->assertHeader('Location');
         $location = $response->headers->get('Location');
         self::assertStringStartsWith('https://example.com/view', $location);
@@ -851,6 +852,51 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testLogNetworkViewWhileBannerFromBridgeRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/view?*' => Http::response(['redirect_url' => 'https://adshares.net/view'])]);
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://adshares.net/view', $location);
+    }
+
+    public function testLogNetworkViewWhileBannerFromBridgeNoRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/view?*' => Http::response(status: Response::HTTP_NO_CONTENT)]);
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
+    public function testLogNetworkViewWhileBannerFromBridgeNoUrl(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        $banner->view_url = '';
+        $banner->saveOrFail();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/view?*' => Http::response(status: Response::HTTP_NO_CONTENT)]);
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query), ['Origin' => 'https://example.com']);
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
     }
 
     public function testRegister(): void
