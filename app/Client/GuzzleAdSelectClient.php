@@ -230,14 +230,15 @@ class GuzzleAdSelectClient implements AdSelect
                     ]
                 );
             } catch (Throwable $exception) {
-                return new FoundBanners([]);
                 throw new UnexpectedClientResponseException(
                     sprintf(
                         '[ADSELECT] Find banners (%s) from %s failed (%s).',
                         json_encode($existingZones),
                         $this->client->getConfig()['base_uri'],
                         $exception->getMessage()
-                    )
+                    ),
+                    $exception->getCode(),
+                    $exception
                 );
             }
 
