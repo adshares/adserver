@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -32,6 +33,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -953,7 +955,7 @@ class SitesControllerTest extends TestCase
      */
     public function testVerifyDomain(array $data, int $expectedStatus, string $expectedMessage): void
     {
-        $this->setupUser();
+        $this->login();
         SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
 
         $response = $this->postJson(self::URI_DOMAIN_VERIFY, $data);
@@ -1004,6 +1006,44 @@ class SitesControllerTest extends TestCase
                 'Valid domain.',
             ],
         ];
+    }
+
+    public function testVerifyDomainWhileDomainRejectedWithReason(): void
+    {
+        $this->login();
+        SitesRejectedDomain::factory()->create([
+            'domain' => 'rejected.com',
+            'reject_reason_id' => SiteRejectReason::factory()->create(),
+        ]);
+        $response = $this->postJson(self::URI_DOMAIN_VERIFY, ['domain' => 'example.rejected.com', 'medium' => 'web']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonStructure(self::DOMAIN_VERIFY_STRUCTURE);
+        self::assertEquals(
+            'The domain example.rejected.com is rejected. Reason: Test reject reason',
+            $response->json('message'),
+        );
+    }
+
+    public function testVerifyDomainWhileDomainRejectedWithInvalidReason(): void
+    {
+        Log::spy();
+        $this->login();
+        SitesRejectedDomain::factory()->create([
+            'domain' => 'rejected.com',
+            'reject_reason_id' => 1500,
+        ]);
+        $response = $this->postJson(self::URI_DOMAIN_VERIFY, ['domain' => 'example.rejected.com', 'medium' => 'web']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonStructure(self::DOMAIN_VERIFY_STRUCTURE);
+        self::assertEquals(
+            'The domain example.rejected.com is rejected.',
+            $response->json('message'),
+        );
+        Log::shouldHaveReceived('warning')
+            ->with('Cannot find reject reason (site_reject_reasons) with id (1500)')
+            ->once();
     }
 
     /**

@@ -321,17 +321,17 @@ final class ServerConfigurationControllerTest extends TestCase
         self::assertDatabaseHas(SitesRejectedDomain::class, ['domain' => 'example.com']);
         self::assertDatabaseHas(Site::class, [
             'id' => $siteMatching->id,
-            'reject_reason' => 'Domain rejected',
+            'reject_reason_id' => null,
             'status' => Site::STATUS_REJECTED,
         ]);
         self::assertDatabaseHas(Site::class, [
             'id' => $siteExactMatch->id,
-            'reject_reason' => 'Domain rejected',
+            'reject_reason_id' => null,
             'status' => Site::STATUS_REJECTED,
         ]);
         self::assertDatabaseHas(Site::class, [
             'id' => $siteNotMatching->id,
-            'reject_reason' => null,
+            'reject_reason_id' => null,
             'status' => Site::STATUS_ACTIVE,
         ]);
     }

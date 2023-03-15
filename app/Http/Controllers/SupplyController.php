@@ -391,7 +391,17 @@ class SupplyController extends Controller
             ->filter(fn($banner) => null !== $banner)
             ->map($this->mapFoundBannerToResult())
             ->getValues();
-        return self::json(['data' => $foundBanners]);
+
+        $data = ['data' => $foundBanners];
+        if (($custom = $this->getCustomData($context, $foundBanners))) {
+            $data['custom'] = $custom;
+        }
+        return self::json($data);
+    }
+
+    private function getCustomData(array $context, array $banners): array
+    {
+        return [];
     }
 
     private function checkDecodedQueryData(array $decodedQueryData): void
