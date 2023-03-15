@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Cache;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property string domain
+ * @property int|null reject_reason_id
  * @mixin Builder
  */
 class SitesRejectedDomain extends Model
