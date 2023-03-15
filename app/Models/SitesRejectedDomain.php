@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\Cache;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property string domain
+ * @property int|null reject_reason_id
  * @mixin Builder
  */
 class SitesRejectedDomain extends Model
@@ -106,20 +108,47 @@ class SitesRejectedDomain extends Model
             return true;
         }
 
-        $rejected = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return self::all()->pluck('domain', 'domain')->toArray();
-        });
+        $rejected = Cache::remember(
+            self::CACHE_KEY,
+            self::CACHE_TTL,
+            fn () => self::all()->pluck('reject_reason_id', 'domain')->toArray(),
+        );
 
         $domainParts = explode('.', $domain);
         $domainPartsCount = count($domainParts);
 
         for ($i = 0; $i < $domainPartsCount; $i++) {
-            if (isset($rejected[implode('.', $domainParts)])) {
+            if (array_key_exists(implode('.', $domainParts), $rejected)) {
                 return true;
             }
             array_shift($domainParts);
         }
 
         return false;
+    }
+
+    public static function domainRejectedReasonId(string $domain): ?int
+    {
+        if ('' === $domain || !str_contains($domain, '.') || false !== filter_var($domain, FILTER_VALIDATE_IP)) {
+            return null;
+        }
+
+        $rejected = Cache::remember(
+            self::CACHE_KEY,
+            self::CACHE_TTL,
+            fn () => self::all()->pluck('reject_reason_id', 'domain')->toArray(),
+        );
+
+        $domainParts = explode('.', $domain);
+        $domainPartsCount = count($domainParts);
+
+        for ($i = 0; $i < $domainPartsCount; $i++) {
+            if (array_key_exists(implode('.', $domainParts), $rejected)) {
+                return $rejected[implode('.', $domainParts)] ?? null;
+            }
+            array_shift($domainParts);
+        }
+
+        throw new InvalidArgumentException(sprintf('Domain %s is not rejected', $domain));
     }
 }

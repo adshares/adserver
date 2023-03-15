@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Exception\InvalidArgumentException;
 
 class SitesRejectedDomainTest extends TestCase
 {
@@ -74,5 +75,13 @@ class SitesRejectedDomainTest extends TestCase
         SitesRejectedDomain::storeDomains(['example.com']);
 
         self::assertCount(1, SitesRejectedDomain::all());
+    }
+
+    public function testDomainRejectedReasonIdWhileDomainIsNotRejected(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('Domain example.com is not rejected');
+
+        SitesRejectedDomain::domainRejectedReasonId('example.com');
     }
 }

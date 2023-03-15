@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -641,11 +641,10 @@ class WalletControllerTest extends TestCase
         $user = $this->login();
         $response = $this->get('/api/deposit-info');
 
-        $response->assertStatus(Response::HTTP_OK)->assertJson(['address' => config('app.adshares_address')]);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['address', 'message']);
+        $response->assertJson(['address' => config('app.adshares_address')]);
         $content = json_decode($response->getContent());
-
-        // check response field
-        $this->assertObjectHasAttribute('message', $content);
 
         $message = $content->message;
 

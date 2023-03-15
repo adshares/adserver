@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Increase user activity interval
+- Extract sites' reject reason to separate table (normalization)
 ### Fixed
 - Return CORS headers during maintenance
 
