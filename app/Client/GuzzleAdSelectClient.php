@@ -53,13 +53,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
-
-use function config;
-use function iterator_to_array;
-use function json_encode;
-use function route;
-use function sprintf;
-use function strtolower;
+use Throwable;
 
 class GuzzleAdSelectClient implements AdSelect
 {
@@ -235,16 +229,15 @@ class GuzzleAdSelectClient implements AdSelect
                         RequestOptions::JSON => $context->adSelectRequestParams($existingZones, $zoneInput, $sitesMap),
                     ]
                 );
-            } catch (RequestException $exception) {
+            } catch (Throwable $exception) {
+                return new FoundBanners([]);
                 throw new UnexpectedClientResponseException(
                     sprintf(
                         '[ADSELECT] Find banners (%s) from %s failed (%s).',
                         json_encode($existingZones),
                         $this->client->getConfig()['base_uri'],
                         $exception->getMessage()
-                    ),
-                    $exception->getCode(),
-                    $exception
+                    )
                 );
             }
 
