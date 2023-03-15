@@ -27,6 +27,7 @@ use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -48,6 +49,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -505,7 +507,19 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException('Invalid domain.');
         }
         if (SitesRejectedDomain::isDomainRejected($domain)) {
-            throw new UnprocessableEntityHttpException(sprintf('The domain %s is rejected.', $domain));
+            $rejectReasonId = SitesRejectedDomain::domainRejectedReasonId($domain);
+            $message = sprintf('The domain %s is rejected.', $domain);
+            if (null !== $rejectReasonId) {
+                $reason = (new SiteRejectReason())->find($rejectReasonId)?->reject_reason;
+                if (null === $reason) {
+                    Log::warning(
+                        sprintf('Cannot find reject reason (site_reject_reasons) with id (%d)', $rejectReasonId)
+                    );
+                } else {
+                    $message = sprintf('%s Reason: %s', $message, $reason);
+                }
+            }
+            throw new UnprocessableEntityHttpException($message);
         }
         if (MediumName::Metaverse->value === $medium) {
             try {

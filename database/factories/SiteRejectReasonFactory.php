@@ -19,24 +19,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+declare(strict_types=1);
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Carbon;
+namespace Database\Factories;
 
-/**
- * @property int id
- * @property string|null reject_reason
- * @property Carbon created_at
- * @property Carbon updated_at
- * @property Carbon|null deleted_at
- * @mixin Builder
- */
-class SiteRejectReason extends Model
+use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class SiteRejectReasonFactory extends Factory
 {
-    use HasFactory;
-    use SoftDeletes;
+    public function definition(): array
+    {
+        return [
+            'reject_reason' => 'Test reject reason',
+            'created_at' => new DateTimeImmutable(),
+            'updated_at' => new DateTimeImmutable(),
+        ];
+    }
 }

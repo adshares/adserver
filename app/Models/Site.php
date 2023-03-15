@@ -357,12 +357,13 @@ class Site extends Model
     public static function rejectByDomains(array $domains): void
     {
         foreach ($domains as $domain) {
+            $rejectReasonId = SitesRejectedDomain::domainRejectedReasonId($domain);
             self::whereNot('status', self::STATUS_REJECTED)
                 ->where(function (Builder $sub) use ($domain) {
                     $sub->where('domain', 'like', '%.' . $domain)->orWhere('domain', $domain);
                 })
                 ->update([
-                    'reject_reason_id' => null,//TODO
+                    'reject_reason_id' => $rejectReasonId,
                     'status' => self::STATUS_REJECTED,
                 ]);
         }
@@ -403,7 +404,7 @@ class Site extends Model
         }
         if (SitesRejectedDomain::isDomainRejected($this->domain)) {
             $this->status = self::STATUS_REJECTED;
-            $this->reject_reason_id = null;//TODO
+            $this->reject_reason_id = SitesRejectedDomain::domainRejectedReasonId($this->domain);
             return;
         }
         if (self::isApprovalRequired($this->medium)) {

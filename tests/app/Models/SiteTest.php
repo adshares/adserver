@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -137,9 +138,30 @@ class SiteTest extends TestCase
                 Site::STATUS_PENDING_APPROVAL,
             ],
             'auto acceptance' => [
-                fn () => Site::factory()->make(['accepted_at' => null]),
+                fn() => Site::factory()->make(['accepted_at' => null]),
                 Site::STATUS_ACTIVE,
             ],
         ];
+    }
+
+    public function testApprovalProcedureWhileRejectedDomainHasReason(): void
+    {
+        /** @var SiteRejectReason $siteRejectReason */
+        $siteRejectReason = SiteRejectReason::factory()->create();
+        SitesRejectedDomain::factory()->create([
+            'domain' => 'rejected.com',
+            'reject_reason_id' => $siteRejectReason,
+        ]);
+        /** @var Site $site */
+        $site = Site::factory()->make([
+            'accepted_at' => null,
+            'domain' => 'sub.rejected.com',
+            'url' => 'https://sub.rejected.com',
+        ]);
+
+        $site->approvalProcedure();
+
+        self::assertEquals(Site::STATUS_REJECTED, $site->status);
+        self::assertEquals($siteRejectReason->id, $site->reject_reason_id);
     }
 }
