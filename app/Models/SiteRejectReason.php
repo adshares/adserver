@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,12 +19,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Models;
 
-namespace Adshares\Supply\Application\Dto;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
-use Adshares\Common\Exception\RuntimeException;
-
-final class ImpressionContextException extends RuntimeException
+/**
+ * @property int id
+ * @property string|null reject_reason
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
+ * @mixin Builder
+ */
+class SiteRejectReason extends Model
 {
+    use HasFactory;
+    use SoftDeletes;
 }

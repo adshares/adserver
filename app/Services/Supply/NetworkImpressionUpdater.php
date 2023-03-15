@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,7 +29,6 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use Illuminate\Support\Facades\Log;
@@ -44,12 +43,8 @@ class NetworkImpressionUpdater
 
     public const TIME_NEEDED_FOR_ADUSER_USER_MERGE = '-10 minutes';
 
-    /** @var AdUser */
-    private $adUser;
-
-    public function __construct(AdUser $adUser)
+    public function __construct(private readonly AdUser $adUser)
     {
-        $this->adUser = $adUser;
     }
 
     private static function setLastUpdatedId(int $id): void
@@ -88,7 +83,7 @@ class NetworkImpressionUpdater
                     /** @var $impression NetworkImpression */
                     $impression->updateWithUserContext($this->userContext($this->adUser, $impression));
                     $updated++;
-                } catch (ImpressionContextException | RuntimeException $e) {
+                } catch (RuntimeException $e) {
                     Log::error(
                         sprintf(
                             '%s {"command":"%s","impression_id":"%d","error":"%s"}',

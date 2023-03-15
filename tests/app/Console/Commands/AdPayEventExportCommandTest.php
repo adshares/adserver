@@ -28,16 +28,17 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\Lock;
 use Symfony\Component\Lock\Store\FlockStore;
@@ -73,6 +74,102 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
         $event = $this->insertEventView();
         $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
+
+        $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
+    }
+
+    public function testExportViewWhileUserDataIsPresent(): void
+    {
+        $adUser = $this->createMock(AdUser::class);
+        $adUser->expects(self::never())->method('getUserContext');
+        $this->app->bind(
+            AdUser::class,
+            function () use ($adUser) {
+                return $adUser;
+            }
+        );
+
+        $event = EventLog::factory()->create(
+            [
+                'campaign_id' => Campaign::factory()->create()->uuid,
+                'event_type' => EventLog::TYPE_VIEW,
+                'human_score' => 0.51,
+                'our_userdata' => [],
+            ]
+        );
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
+
+        $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
+    }
+
+    public function testExportViewWhileUserDataIsUnavailable(): void
+    {
+        Log::spy();
+        $adUser = $this->createMock(AdUser::class);
+        $adUser->expects(self::once())
+            ->method('getUserContext')
+            ->willThrowException(new RuntimeException('test-exception'));
+        $this->app->bind(
+            AdUser::class,
+            function () use ($adUser) {
+                return $adUser;
+            }
+        );
+
+        $event = $this->insertEventView();
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
+
+        $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
+        Log::shouldHaveReceived('error')->once();
+    }
+
+    public function testExportViewAndConversionWhileTooManyEventsInSecond(): void
+    {
+        $this->bindAdUser();
+
+        $adPay = $this->createMock(AdPay::class);
+        $adPay->expects(self::never())->method('addViews');
+        $adPay->expects(self::never())->method('addClicks');
+        $adPay->expects(self::never())->method('addConversions');
+        $this->instance(AdPay::class, $adPay);
+
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create();
+        $createdAt = new DateTimeImmutable();
+        $events = EventLog::factory()->count(501)->create(
+            [
+                'campaign_id' => $campaign->uuid,
+                'event_type' => EventLog::TYPE_VIEW,
+                'created_at' => $createdAt,
+            ]
+        );
+        $conversionDefinition = new ConversionDefinition();
+        $conversionDefinition->fill(
+            [
+                'campaign_id' => $campaign->id,
+                'name' => 'basic-1',
+                'event_type' => 'Purchase',
+                'type' => ConversionDefinition::BASIC_TYPE,
+                'value' => 1000000000,
+                'limit' => 100000000000,
+                'limit_type' => 'in_budget',
+                'is_repeatable' => false,
+                'is_value_mutable' => false,
+            ]
+        );
+        $campaign->conversions()->save($conversionDefinition);
+
+        foreach ($events as $event) {
+            Conversion::factory()->create(
+                [
+                    'conversion_definition_id' => $conversionDefinition->id,
+                    'created_at' => $createdAt,
+                    'event_logs_id' => $event->id,
+                    'pay_to' => '0001-00000001-8B4E',
+                ]
+            );
+        }
+        $eventDate = $createdAt->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }
@@ -266,10 +363,8 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     private function insertEventConversion(): Conversion
     {
-        $user = User::factory()->create();
         $campaign = Campaign::factory()->create(
             [
-                'user_id' => $user->id,
                 'budget' => 100000000000,
             ]
         );
@@ -315,10 +410,8 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     private function insertEvent(string $eventType): EventLog
     {
-        $user = User::factory()->create();
         $campaign = Campaign::factory()->create(
             [
-                'user_id' => $user->id,
                 'budget' => 100000000000,
             ]
         );
@@ -333,10 +426,8 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     private static function insertTwoPackagesOfViewEvent(DateTimeInterface $from, DateTimeInterface $to): void
     {
-        $user = User::factory()->create();
         $campaign = Campaign::factory()->create(
             [
-                'user_id' => $user->id,
                 'budget' => 100000000000,
             ]
         );

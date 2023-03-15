@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.11] - 2023-03-15
+### Changed
+- Increase user activity interval
+- Extract sites' reject reason to separate table (normalization)
+### Fixed
+- Return CORS headers during maintenance
+
 ## [2.4.10] - 2023-03-08
 ### Added
 - Impression's account passed to demand
@@ -898,7 +905,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.10...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.11...develop
+[2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
 [2.4.9]: https://github.com/adshares/adserver/compare/v2.4.8...v2.4.9
 [2.4.8]: https://github.com/adshares/adserver/compare/v2.4.7...v2.4.8

@@ -72,6 +72,7 @@ use Illuminate\Support\Facades\Mail;
  * @property array|null categories
  * @property array|null categories_by_user
  * @property bool only_accepted_banners
+ * @property int|null reject_reason_id
  * @property string|null reject_reason
  * @property Zone[]|Collection zones
  * @property User user
@@ -147,12 +148,14 @@ class Site extends Model
         'reassess_available_at',
         'categories',
         'categories_by_user',
+        'reject_reason_id',
     ];
 
     protected $appends = [
         'ad_units',
         'filtering',
         'code',
+        'reject_reason',
     ];
 
     protected $traitAutomate = [
@@ -200,6 +203,14 @@ class Site extends Model
             'requires' => $this->site_requires,
             'excludes' => $this->site_excludes,
         ];
+    }
+
+    public function getRejectReasonAttribute(): ?string
+    {
+        if (null === $this->reject_reason_id) {
+            return null;
+        }
+        return (new SiteRejectReason())->find($this->reject_reason_id)?->reject_reason;
     }
 
     public function matchFiltering(array $classification): bool
@@ -346,12 +357,13 @@ class Site extends Model
     public static function rejectByDomains(array $domains): void
     {
         foreach ($domains as $domain) {
+            $rejectReasonId = SitesRejectedDomain::domainRejectedReasonId($domain);
             self::whereNot('status', self::STATUS_REJECTED)
                 ->where(function (Builder $sub) use ($domain) {
                     $sub->where('domain', 'like', '%.' . $domain)->orWhere('domain', $domain);
                 })
                 ->update([
-                    'reject_reason' => self::REJECT_REASON_ON_REJECTED_DOMAIN,
+                    'reject_reason_id' => $rejectReasonId,
                     'status' => self::STATUS_REJECTED,
                 ]);
         }
@@ -392,7 +404,7 @@ class Site extends Model
         }
         if (SitesRejectedDomain::isDomainRejected($this->domain)) {
             $this->status = self::STATUS_REJECTED;
-            $this->reject_reason = self::REJECT_REASON_ON_REJECTED_DOMAIN;
+            $this->reject_reason_id = SitesRejectedDomain::domainRejectedReasonId($this->domain);
             return;
         }
         if (self::isApprovalRequired($this->medium)) {

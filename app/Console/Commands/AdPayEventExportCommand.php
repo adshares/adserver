@@ -34,7 +34,6 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use DateTimeImmutable;
@@ -171,14 +170,14 @@ class AdPayEventExportCommand extends BaseCommand
             try {
                 $event->updateWithUserContext($this->userContext($adUser, $event));
                 $event->save();
-            } catch (ImpressionContextException | RuntimeException $e) {
+            } catch (RuntimeException $exception) {
                 Log::error(
                     sprintf(
                         '%s {"command":"%s","event":"%d","error":"%s"}',
-                        get_class($e),
+                        get_class($exception),
                         $this->signature,
                         $event->id,
-                        Exception::cleanMessage($e->getMessage())
+                        Exception::cleanMessage($exception->getMessage())
                     )
                 );
             }
