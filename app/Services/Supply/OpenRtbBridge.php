@@ -22,8 +22,11 @@
 namespace Adshares\Adserver\Services\Supply;
 
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Http\Client\HttpClientException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +34,7 @@ use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 class OpenRtbBridge
 {
+    private const PAYMENTS_PATH = '/payment-reports';
     private const SERVE_PATH = '/serve';
 
     public static function isActive(): bool
@@ -88,6 +92,83 @@ class OpenRtbBridge
             $foundBanners->set($index, null);
         }
         return $foundBanners;
+    }
+
+    public function fetchAndStorePayments(): void
+    {
+        try {
+            $response = Http::get(config('app.open_rtb_bridge_url') . self::PAYMENTS_PATH);
+            if (
+                BaseResponse::HTTP_OK === $response->status()
+                && $this->isPaymentResponseValid($content = $response->json())
+            ) {
+                if (empty($content)) {
+                    return;
+                }
+                $paymentIds = array_map(fn (array $entry) => $entry['id'], $content);
+                $accountAddress = config('app.open_rtb_bridge_account_address');
+                $bridgePayments = BridgePayment::fetchByAddressAndPaymentIds($accountAddress, $paymentIds)
+                    ->keyBy('payment_id');
+                foreach ($content as $entry) {
+                    $paymentId = $entry['id'];
+                    if (null === ($bridgePayment = $bridgePayments->get($paymentId))) {
+                        BridgePayment::register(
+                            $accountAddress,
+                            $paymentId,
+                            DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $entry['created_at']),
+                            $entry['value'],
+                            'done' === $entry['status'] ? BridgePayment::STATUS_NEW : BridgePayment::STATUS_RETRY,
+                        );
+                    } else {
+                        /** @var $bridgePayment BridgePayment */
+                        if (BridgePayment::STATUS_RETRY === $bridgePayment->status && 'done' === $entry['status']) {
+                            $bridgePayment->payment_time =
+                                DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $entry['created_at']);
+                            $bridgePayment->amount = $entry['value'];
+                            $bridgePayment->status = BridgePayment::STATUS_NEW;
+                            $bridgePayment->saveOrFail();
+                        }
+                    }
+                }
+            }
+        } catch (HttpClientException $exception) {
+            Log::error(sprintf('Fetching payments from bridge failed: %s', $exception->getMessage()));
+        }
+    }
+
+    private function isPaymentResponseValid(mixed $content): bool
+    {
+        if (!is_array($content)) {
+            Log::error('Invalid bridge payments response: body is not an array');
+            return false;
+        }
+        foreach ($content as $entry) {
+            if (!is_array($entry)) {
+                Log::error('Invalid bridge payments response: entry is not an array');
+                return false;
+            }
+            $fields = [
+                'id',
+                'created_at',
+                'status',
+                'value',
+            ];
+            foreach ($fields as $field) {
+                if (!array_key_exists($field, $entry)) {
+                    Log::error(sprintf('Invalid bridge payments response: missing key %s', $field));
+                    return false;
+                }
+            }
+            if (!is_string($entry['status'])) {
+                Log::error('Invalid bridge payments response: status is not a string');
+                return false;
+            }
+            if (false === DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $entry['created_at'])) {
+                Log::error('Invalid bridge payments response: created_at is not in ISO8601 format');
+                return false;
+            }
+        }
+        return true;
     }
 
     private function isOpenRtbAuctionResponseValid(mixed $content, array $openBtbBanners): bool

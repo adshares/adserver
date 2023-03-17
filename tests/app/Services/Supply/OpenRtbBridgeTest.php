@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Services\Supply;
 
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
@@ -39,9 +40,9 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Closure;
-use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -63,11 +64,13 @@ class OpenRtbBridgeTest extends TestCase
     {
         Http::preventStrayRequests();
         Http::fake([
-            'example.com/serve' => Http::response([[
-                'ext_id' => '1',
-                'request_id' => '0',
-                'serve_url' => 'https://example.com/serve/1',
-            ]]),
+            'example.com/serve' => Http::response([
+                [
+                    'ext_id' => '1',
+                    'request_id' => '0',
+                    'serve_url' => 'https://example.com/serve/1',
+                ]
+            ]),
         ]);
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
@@ -161,28 +164,48 @@ class OpenRtbBridgeTest extends TestCase
     public function replaceOpenRtbBannersWhileInvalidResponseProvider(): array
     {
         return [
-            'not existing request id' => [[[
-                'request_id' => '1',
-                'ext_id' => '1',
-                'serve_url' => 'https://example.com/serve/1',
-            ]]],
-            'no request id' => [[[
-                'ext_id' => '1',
-                'serve_url' => 'https://example.com/serve/1',
-            ]]],
-            'no ext id' => [[[
-                'request_id' => '0',
-                'serve_url' => 'https://example.com/serve/1',
-            ]]],
-            'no serve url' => [[[
-                'request_id' => '0',
-                'ext_id' => '1',
-            ]]],
-            'invalid serve url type' => [[[
-                'request_id' => '0',
-                'ext_id' => '1',
-                'serve_url' => 1234,
-            ]]],
+            'not existing request id' => [
+                [
+                    [
+                        'request_id' => '1',
+                        'ext_id' => '1',
+                        'serve_url' => 'https://example.com/serve/1',
+                    ]
+                ]
+            ],
+            'no request id' => [
+                [
+                    [
+                        'ext_id' => '1',
+                        'serve_url' => 'https://example.com/serve/1',
+                    ]
+                ]
+            ],
+            'no ext id' => [
+                [
+                    [
+                        'request_id' => '0',
+                        'serve_url' => 'https://example.com/serve/1',
+                    ]
+                ]
+            ],
+            'no serve url' => [
+                [
+                    [
+                        'request_id' => '0',
+                        'ext_id' => '1',
+                    ]
+                ]
+            ],
+            'invalid serve url type' => [
+                [
+                    [
+                        'request_id' => '0',
+                        'ext_id' => '1',
+                        'serve_url' => 1234,
+                    ]
+                ]
+            ],
             'entry is not array' => [['0']],
             'content is not array' => ['0'],
         ];
@@ -213,6 +236,7 @@ class OpenRtbBridgeTest extends TestCase
             'unsupported response format' => [fn() => Http::response(['url' => 'https://adshares.net']), null],
         ];
     }
+
     public function testGetEventRedirectUrlWhileConnectionException(): void
     {
         Http::fake(fn() => throw new ConnectionException('test-exception'));
@@ -220,6 +244,151 @@ class OpenRtbBridgeTest extends TestCase
         $url = (new OpenRtbBridge())->getEventRedirectUrl('https://example.com');
 
         self::assertEquals(null, $url);
+    }
+
+    public function testFetchAndStorePayments(): void
+    {
+        BridgePayment::factory()->create([
+            'payment_id' => '1678957200',
+            'payment_time' => '2023-03-17 14:00:00',
+            'status' => BridgePayment::STATUS_RETRY,
+            'amount' => null,
+        ]);
+        $responseData = [
+            [
+                'id' => 1678953600,
+                'created_at' => '2023-03-17T16:04:33+00:00',
+                'updated_at' => '2023-03-17T16:04:33+00:00',
+                'status' => 'done',
+                'value' => 100_000_000_000,
+            ],
+            [
+                'id' => 1678957200,
+                'created_at' => '2023-03-17T16:04:33+00:00',
+                'updated_at' => '2023-03-17T16:04:33+00:00',
+                'status' => 'done',
+                'value' => 123_400_000_000,
+            ],
+            [
+                'id' => 1678960800,
+                'created_at' => '2023-03-17T16:04:33+00:00',
+                'updated_at' => '2023-03-17T16:04:33+00:00',
+                'status' => 'error',
+                'value' => null,
+            ],
+            [
+                'id' => 1678964400,
+                'created_at' => '2023-03-17T16:04:33+00:00',
+                'updated_at' => '2023-03-17T16:04:33+00:00',
+                'status' => 'processing',
+                'value' => null,
+            ],
+        ];
+        $this->initOpenRtbConfiguration();
+        Http::preventStrayRequests();
+        Http::fake(['example.com/payment-reports' => Http::response($responseData)]);
+
+        (new OpenRtbBridge())->fetchAndStorePayments();
+
+        self::assertDatabaseHas(
+            BridgePayment::class,
+            [
+                'payment_id' => '1678957200',
+                'payment_time' => '2023-03-17 16:04:33',
+                'status' => BridgePayment::STATUS_NEW,
+                'amount' => 123_400_000_000,
+            ],
+        );
+        self::assertDatabaseHas(
+            BridgePayment::class,
+            [
+                'payment_id' => '1678964400',
+                'payment_time' => '2023-03-17 16:04:33',
+                'status' => BridgePayment::STATUS_RETRY,
+                'amount' => null,
+            ],
+        );
+        Http::assertSentCount(1);
+    }
+
+    public function testFetchAndStorePaymentsWhileResponseIsEmpty(): void
+    {
+        $responseData = [];
+        $this->initOpenRtbConfiguration();
+        Http::preventStrayRequests();
+        Http::fake(['example.com/payment-reports' => Http::response($responseData)]);
+
+        (new OpenRtbBridge())->fetchAndStorePayments();
+
+        self::assertDatabaseEmpty(BridgePayment::class);
+        Http::assertSentCount(1);
+    }
+
+    public function testFetchAndStorePaymentsWhileConnectionException(): void
+    {
+        Log::spy();
+        $this->initOpenRtbConfiguration();
+        Http::fake(fn() => throw new ConnectionException('test-exception'));
+
+        (new OpenRtbBridge())->fetchAndStorePayments();
+
+        self::assertDatabaseEmpty(BridgePayment::class);
+        Log::shouldHaveReceived('error')
+            ->with('Fetching payments from bridge failed: test-exception')
+            ->once();
+    }
+
+    /**
+     * @dataProvider fetchAndStorePaymentsWhileInvalidResponseProvider
+     */
+    public function testFetchAndStorePaymentsWhileInvalidResponse(mixed $response, string $errorMessage): void
+    {
+        Log::spy();
+        Http::preventStrayRequests();
+        Http::fake([
+            'example.com/payment-reports' => Http::response($response),
+        ]);
+        $this->initOpenRtbConfiguration();
+
+        (new OpenRtbBridge())->fetchAndStorePayments();
+
+        self::assertDatabaseEmpty(BridgePayment::class);
+        Http::assertSentCount(1);
+        Log::shouldHaveReceived('error')
+            ->with($errorMessage)
+            ->once();
+    }
+
+    public function fetchAndStorePaymentsWhileInvalidResponseProvider(): array
+    {
+        return [
+            'no id' => [
+                [self::validPaymentResponseEntry(remove: 'id')],
+                'Invalid bridge payments response: missing key id',
+            ],
+            'no created_at' => [
+                [self::validPaymentResponseEntry(remove: 'created_at')],
+                'Invalid bridge payments response: missing key created_at',
+            ],
+            'no status' => [
+                [self::validPaymentResponseEntry(remove: 'status')],
+                'Invalid bridge payments response: missing key status',
+            ],
+            'no value' => [
+                [self::validPaymentResponseEntry(remove: 'value')],
+                'Invalid bridge payments response: missing key value',
+            ],
+            'invalid created_at format' => [
+                [self::validPaymentResponseEntry(['created_at' => '2023-01-01'])],
+                'Invalid bridge payments response: created_at is not in ISO8601 format',
+            ],
+            'invalid status type' => [
+                [self::validPaymentResponseEntry(['status' => 0])],
+                'Invalid bridge payments response: status is not a string',
+            ],
+            'entry is not array' => [['0'], 'Invalid bridge payments response: entry is not an array'],
+            'content is not array' => ['0', 'Invalid bridge payments response: body is not an array'],
+        ];
     }
 
     private function initOpenRtbConfiguration(array $settings = []): void
@@ -295,5 +464,20 @@ class OpenRtbBridgeTest extends TestCase
                 'request_id' => '3',
             ]
         ]);
+    }
+
+    private static function validPaymentResponseEntry(array $merge = [], string $remove = null): array
+    {
+        $data = array_merge([
+            'id' => 1678953600,
+            'created_at' => '2023-03-17T16:04:33+00:00',
+            'updated_at' => '2023-03-17T16:04:33+00:00',
+            'status' => 'done',
+            'value' => 100_000_000_000,
+        ], $merge);
+        if (null !== $remove) {
+            unset($data[$remove]);
+        }
+        return $data;
     }
 }
