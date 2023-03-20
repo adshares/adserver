@@ -147,7 +147,7 @@ SQL;
                 DB::rollBack();
                 $this->error(
                     sprintf(
-                        'Error during handling paid events for id=%d (%s)',
+                        'Error during handling paid events for ads payment id=%d (%s)',
                         $adsPayment->id,
                         $throwable->getMessage()
                     )

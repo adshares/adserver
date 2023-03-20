@@ -58,6 +58,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Mockery;
+use PDOException;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -408,14 +410,8 @@ class OpenRtbBridgeTest extends TestCase
 
     public function testProcessPayments(): void
     {
-        $networkHost = self::registerHost(new DummyDemandClient());
-        /** @var BridgePayment $bridgePayment */
-        $bridgePayment = BridgePayment::factory()->create(['address' => $networkHost->address]);
-        $exchangeRateReader = self::createMock(ExchangeRateReader::class);
-        $exchangeRateReader->method('fetchExchangeRate')
-            ->willReturn(new ExchangeRate(new DateTime(), 1, 'USD'));
-        $licenseReader = self::createMock(LicenseReader::class);
-        $paymentDetailsProcessor = new PaymentDetailsProcessor($exchangeRateReader, $licenseReader);
+        $bridgePayment = $this->initBridgePaymentWithHost();
+        $paymentDetailsProcessor = $this->mockPaymentDetailsProcessor();
         $networkImpression = NetworkImpression::factory()->create();
         /** @var User $publisher */
         $publisher = User::factory()->create();
@@ -425,17 +421,17 @@ class OpenRtbBridgeTest extends TestCase
             'network_impression_id' => $networkImpression,
             'publisher_id' => $publisher->uuid,
         ]);
-        $expectedPaidAmount = 1e11;
-        $expectedLicenseFee = 0;
         $demandClient = self::createMock(DemandClient::class);
         $demandClient->expects(self::once())->method('fetchPaymentDetails')->willReturn(
             $networkCases->map(
                 fn($case) => [
                     'case_id' => $case->case_id,
-                    'event_value' => (int)($expectedPaidAmount / $caseCount),
+                    'event_value' => (int)(1e11 / $caseCount),
                 ],
             )->toArray()
         );
+        $expectedPaidAmount = 1e11;
+        $expectedLicenseFee = 0;
 
         (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor);
 
@@ -456,14 +452,8 @@ class OpenRtbBridgeTest extends TestCase
 
     public function testProcessPaymentsRetryWhileDemandClientFailed(): void
     {
-        $networkHost = self::registerHost(new DummyDemandClient());
-        /** @var BridgePayment $bridgePayment */
-        $bridgePayment = BridgePayment::factory()->create(['address' => $networkHost->address]);
-        $exchangeRateReader = self::createMock(ExchangeRateReader::class);
-        $exchangeRateReader->method('fetchExchangeRate')
-            ->willReturn(new ExchangeRate(new DateTime(), 1, 'USD'));
-        $licenseReader = self::createMock(LicenseReader::class);
-        $paymentDetailsProcessor = new PaymentDetailsProcessor($exchangeRateReader, $licenseReader);
+        $bridgePayment = $this->initBridgePaymentWithHost();
+        $paymentDetailsProcessor = $this->mockPaymentDetailsProcessor();
         $networkImpression = NetworkImpression::factory()->create();
         /** @var User $publisher */
         $publisher = User::factory()->create();
@@ -477,19 +467,26 @@ class OpenRtbBridgeTest extends TestCase
         $expectedLicenseFee = 0;
         $demandClient = self::createMock(DemandClient::class);
         $demandClient->expects(self::exactly(4))->method('fetchPaymentDetails')->willReturnOnConsecutiveCalls(
-            [[
-                'case_id' => $networkCases->first()->case_id,
-                'event_value' => (int)($expectedPaidAmount / $caseCount),
-            ]],
+            [
+                [
+                    'case_id' => $networkCases->first()->case_id,
+                    'event_value' => (int)($expectedPaidAmount / $caseCount),
+                ]
+            ],
             $this->throwException(new UnexpectedClientResponseException('test-exception')),
-            [[
-                'case_id' => $networkCases->last()->case_id,
-                'event_value' => (int)($expectedPaidAmount / $caseCount),
-            ]],
+            [
+                [
+                    'case_id' => $networkCases->last()->case_id,
+                    'event_value' => (int)($expectedPaidAmount / $caseCount),
+                ]
+            ],
             [],
         );
 
         (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
+
+        self::assertEquals(1, $bridgePayment->refresh()->last_offset);
+
         (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
 
         self::assertDatabaseCount(BridgePayment::class, 1);
@@ -507,11 +504,48 @@ class OpenRtbBridgeTest extends TestCase
         ]);
     }
 
+    public function testProcessPaymentsWhilePaymentCannotBeAddedToPublisherAccount(): void
+    {
+        $this->initBridgePaymentWithHost();
+        $exchangeRateReader = self::createMock(ExchangeRateReader::class);
+        $exchangeRateReader->method('fetchExchangeRate')
+            ->willReturn(new ExchangeRate(new DateTime(), 1, 'USD'));
+        $licenseReader = self::createMock(LicenseReader::class);
+        $paymentDetailsProcessor = Mockery::mock(new PaymentDetailsProcessor($exchangeRateReader, $licenseReader));
+        $paymentDetailsProcessor->shouldReceive('addBridgeAdIncomeToUserLedger')
+            ->andThrow(new PDOException('test-exception'));
+        $networkImpression = NetworkImpression::factory()->create();
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $caseCount = 2;
+        /** @var Collection<NetworkCase> $networkCases */
+        $networkCases = NetworkCase::factory()->times($caseCount)->create([
+            'network_impression_id' => $networkImpression,
+            'publisher_id' => $publisher->uuid,
+        ]);
+        $demandClient = self::createMock(DemandClient::class);
+        $demandClient->expects(self::once())->method('fetchPaymentDetails')->willReturn(
+            $networkCases->map(
+                fn($case) => [
+                    'case_id' => $case->case_id,
+                    'event_value' => (int)(1e11 / $caseCount),
+                ],
+            )->toArray()
+        );
+
+        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor);
+
+        self::assertDatabaseCount(BridgePayment::class, 1);
+        self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_NEW]);
+        self::assertDatabaseEmpty(UserLedgerEntry::class);
+        self::assertDatabaseEmpty(NetworkCasePayment::class);
+        self::assertDatabaseEmpty(NetworkPayment::class);
+    }
+
     public function testProcessPaymentsWhileHostDeleted(): void
     {
-        $networkHost = self::registerHost(new DummyDemandClient());
-        BridgePayment::factory()->create(['address' => $networkHost->address]);
-        $networkHost->delete();
+        $this->initBridgePaymentWithHost();
+        NetworkHost::first()->delete();
         $paymentDetailsProcessor = self::createMock(PaymentDetailsProcessor::class);
         $demandClient = self::createMock(DemandClient::class);
 
@@ -621,5 +655,26 @@ class OpenRtbBridgeTest extends TestCase
             'info' => $info,
             'info_url' => $info->getServerUrl() . 'info.json',
         ]);
+    }
+
+    private function initBridgePaymentWithHost(): BridgePayment
+    {
+        $info = (new DummyDemandClient())->fetchInfo(new NullUrl());
+        /** @var NetworkHost $networkHost */
+        $networkHost = NetworkHost::factory()->create([
+            'address' => '0001-00000000-9B6F',
+            'info' => $info,
+            'info_url' => $info->getServerUrl() . 'info.json',
+        ]);
+        return BridgePayment::factory()->create(['address' => $networkHost->address]);
+    }
+
+    private function mockPaymentDetailsProcessor(): PaymentDetailsProcessor
+    {
+        $exchangeRateReader = self::createMock(ExchangeRateReader::class);
+        $exchangeRateReader->method('fetchExchangeRate')
+            ->willReturn(new ExchangeRate(new DateTime(), 1, 'USD'));
+        $licenseReader = self::createMock(LicenseReader::class);
+        return new PaymentDetailsProcessor($exchangeRateReader, $licenseReader);
     }
 }

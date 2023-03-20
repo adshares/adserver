@@ -39,6 +39,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
+use Throwable;
 
 class OpenRtbBridge
 {
@@ -179,36 +180,49 @@ SQL;
             }
             $transactionTime = $bridgePayment->payment_time;
 
-            do {
-                try {
-                    $paymentDetails = $demandClient->fetchPaymentDetails(
-                        $networkHost->host,
-                        $bridgePayment->payment_id,
-                        $limit,
-                        $offset,
+            DB::beginTransaction();
+            try {
+                do {
+                    try {
+                        $paymentDetails = $demandClient->fetchPaymentDetails(
+                            $networkHost->host,
+                            $bridgePayment->payment_id,
+                            $limit,
+                            $offset,
+                        );
+                    } catch (EmptyInventoryException | UnexpectedClientResponseException) {
+                        $bridgePayment->save();
+                        DB::commit();
+                        continue 2;
+                    }
+
+                    $processPaymentDetails = $paymentDetailsProcessor->processEventsPaidByBridge(
+                        $bridgePayment,
+                        $transactionTime,
+                        $paymentDetails,
+                        $eventValueSum,
                     );
-                } catch (EmptyInventoryException | UnexpectedClientResponseException) {
-                    $bridgePayment->save();
-                    break 2;
-                }
+                    $eventValueSum += $processPaymentDetails->eventValuePartialSum();
 
-                $processPaymentDetails = $paymentDetailsProcessor->processEventsPaidByBridge(
-                    $bridgePayment,
-                    $transactionTime,
-                    $paymentDetails,
-                    $eventValueSum,
+                    $bridgePayment->last_offset = $offset += $limit;
+                } while (count($paymentDetails) === $limit);
+
+                $paymentDetailsProcessor->addBridgeAdIncomeToUserLedger($bridgePayment);
+                $bridgePayment->status = BridgePayment::STATUS_DONE;
+                $bridgePayment->save();
+                DB::commit();
+                $paymentIds[] = $bridgePayment->id;
+                ++$processedPaymentsCount;
+            } catch (Throwable $throwable) {
+                DB::rollBack();
+                Log::error(
+                    sprintf(
+                        'Error during handling paid events for bridge payment id=%d (%s)',
+                        $bridgePayment->id,
+                        $throwable->getMessage()
+                    )
                 );
-                $eventValueSum += $processPaymentDetails->eventValuePartialSum();
-
-                $bridgePayment->last_offset = $offset += $limit;
-            } while (count($paymentDetails) === $limit);
-
-            $paymentDetailsProcessor->addBridgeAdIncomeToUserLedger($bridgePayment);
-
-            $bridgePayment->status = BridgePayment::STATUS_DONE;
-            $bridgePayment->save();
-            $paymentIds[] = $bridgePayment->id;
-            ++$processedPaymentsCount;
+            }
         }
         return new ProcessedPaymentsMetaData($paymentIds, $processedPaymentsCount, $processedPaymentsCount);
     }
