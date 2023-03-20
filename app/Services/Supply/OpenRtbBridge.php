@@ -25,6 +25,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Services\Dto\ProcessedPaymentsMetaData;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
@@ -156,8 +157,9 @@ SQL;
     public function processPayments(
         DemandClient $demandClient,
         PaymentDetailsProcessor $paymentDetailsProcessor,
-        int $limit = 500,
-    ): int {
+        int $limit = 5000,
+    ): ProcessedPaymentsMetaData {
+        $paymentIds = [];
         $processedPaymentsCount = 0;
         /** @var Collection<BridgePayment> $bridgePayments */
         $bridgePayments = BridgePayment::fetchNew();
@@ -205,9 +207,10 @@ SQL;
 
             $bridgePayment->status = BridgePayment::STATUS_DONE;
             $bridgePayment->save();
+            $paymentIds[] = $bridgePayment->id;
             ++$processedPaymentsCount;
         }
-        return $processedPaymentsCount;
+        return new ProcessedPaymentsMetaData($paymentIds, $processedPaymentsCount, $processedPaymentsCount);
     }
 
     private function isPaymentResponseValid(mixed $content): bool

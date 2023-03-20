@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkCasePayment;
@@ -30,6 +31,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
@@ -42,6 +44,7 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 class SupplyProcessPaymentsTest extends ConsoleTestCase
 {
@@ -163,6 +166,52 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
         self::assertAdPaymentProcessedEventDispatched(1);
+    }
+
+    public function testHandleBridgePayment(): void
+    {
+        $networkHost = self::registerHost(new DummyDemandClient());
+        /** @var BridgePayment $bridgePayment */
+        $bridgePayment = BridgePayment::factory()->create(['address' => $networkHost->address]);
+        $networkImpression = NetworkImpression::factory()->create();
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $caseCount = 2;
+        /** @var Collection<NetworkCase> $networkCases */
+        $networkCases = NetworkCase::factory()->times($caseCount)->create([
+            'network_impression_id' => $networkImpression,
+            'publisher_id' => $publisher->uuid,
+        ]);
+        $expectedPaidAmount = 1e11;
+        $expectedLicenseFee = 0;
+        $demandClient = self::createMock(DemandClient::class);
+        $demandClient->expects(self::once())->method('fetchPaymentDetails')->willReturn(
+            $networkCases->map(
+                fn($case) => [
+                    'case_id' => $case->case_id,
+                    'event_value' => (int)($expectedPaidAmount / $caseCount),
+                ],
+            )->toArray()
+        );
+        $this->app->bind(DemandClient::class, fn() => $demandClient);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
+
+        self::assertDatabaseCount(BridgePayment::class, 1);
+        self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_DONE]);
+        self::assertEquals($expectedPaidAmount, (new NetworkCasePayment())->sum('total_amount'));
+        self::assertEquals($expectedLicenseFee, (new NetworkPayment())->sum('amount'));
+        self::assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched(1);
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => $expectedPaidAmount,
+            'user_id' => $publisher->id,
+        ]);
+        self::assertDatabaseCount(NetworkCasePayment::class, $caseCount);
+        self::assertDatabaseHas(NetworkCasePayment::class, [
+            'bridge_payment_id' => $bridgePayment->id,
+            'network_case_id' => $networkCases->first()->id,
+        ]);
     }
 
     public function testAdsProcessEventPaymentWithPaymentProcessorError(): void
