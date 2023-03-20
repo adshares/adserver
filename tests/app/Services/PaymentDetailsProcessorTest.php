@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Services;
 
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
@@ -40,24 +41,31 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
+use DateTimeImmutable;
+use Illuminate\Support\Collection;
 
 final class PaymentDetailsProcessorTest extends TestCase
 {
     private const LICENSE_FEE = 0.01;
     private const OPERATOR_FEE = 0.01;
 
-    public function testProcessingEmptyDetails(): void
+    public function testProcessPaidEventsWhileDetailsHaveNonExistingCaseId(): void
     {
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
-
         $adsPayment = $this->createAdsPayment(10000);
+        $paymentDetails = [
+            [
+                'case_id' => '0123456789ABCDEF0123456789ABCDEF',
+                'event_value' => 10000,
+            ],
+        ];
 
-        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
+        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTimeImmutable(), $paymentDetails, 0);
 
         $this->assertCount(0, NetworkPayment::all());
     }
 
-    public function testProcessingDetails(): void
+    public function testProcessPaidEvents(): void
     {
         $totalPayment = 10000;
         $paidEventsCount = 2;
@@ -70,6 +78,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         /** @var NetworkImpression $networkImpression */
         $networkImpression = NetworkImpression::factory()->create();
+        /** @var Collection<NetworkCase> $networkCases */
         $networkCases = NetworkCase::factory()->times($paidEventsCount)->create(
             ['network_impression_id' => $networkImpression->id, 'publisher_id' => $userUuid]
         );
@@ -80,16 +89,11 @@ final class PaymentDetailsProcessorTest extends TestCase
         foreach ($networkCases as $networkCase) {
             $paymentDetails[] = [
                 'case_id' => $networkCase->case_id,
-                'event_id' => $networkCase->event_id,
-                'event_type' => $networkCase->event_type,
-                'banner_id' => $networkCase->banner_id,
-                'zone_id' => $networkCase->zone_id,
-                'publisher_id' => $userUuid,
                 'event_value' => $totalPayment / $paidEventsCount,
             ];
         }
 
-        $result = $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), $paymentDetails, 0);
+        $result = $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTimeImmutable(), $paymentDetails, 0);
 
         $expectedLicenseAmount = 0;
         $expectedOperatorAmount = 0;
@@ -103,7 +107,57 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $this->assertEquals($totalPayment, $result->eventValuePartialSum());
         $this->assertEquals($expectedLicenseAmount, $result->licenseFeePartialSum());
-        $this->assertEquals($expectedAdIncome, NetworkCasePayment::sum('paid_amount'));
+        $this->assertEquals($expectedAdIncome, (new NetworkCasePayment())->sum('paid_amount'));
+    }
+
+    public function testProcessEventsPaidByBridge(): void
+    {
+        $totalPayment = 1e11;
+        $paidEventsCount = 2;
+        $expectedAdIncome = $totalPayment;
+        $expectedLicenseAmount = 0;
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $publisherUuid = $publisher->uuid;
+        $networkImpression = NetworkImpression::factory()->create();
+        /** @var Collection<NetworkCase> $networkCases */
+        $networkCases = NetworkCase::factory()->times($paidEventsCount)->create(
+            [
+                'network_impression_id' => $networkImpression,
+                'publisher_id' => $publisherUuid,
+            ]
+        );
+        $paymentDetails = [];
+        foreach ($networkCases as $networkCase) {
+            $paymentDetails[] = [
+                'case_id' => $networkCase->case_id,
+                'event_value' => (int)($totalPayment / $paidEventsCount),
+            ];
+        }
+        $entryWithNotExistingCaseId = [
+            'case_id' => '0123456789ABCDEF0123456789ABCDEF',
+            'event_value' => $totalPayment,
+        ];
+        $paymentDetails[] = $entryWithNotExistingCaseId;
+        /** @var BridgePayment $payment */
+        $payment = BridgePayment::factory()->create();
+        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
+
+        $result = $paymentDetailsProcessor->processEventsPaidByBridge(
+            $payment,
+            new DateTimeImmutable(),
+            $paymentDetails,
+            0,
+        );
+
+        self::assertEquals($totalPayment, $result->eventValuePartialSum());
+        self::assertEquals($expectedLicenseAmount, $result->licenseFeePartialSum());
+        self::assertEquals($expectedAdIncome, (new NetworkCasePayment())->sum('paid_amount'));
+        self::assertDatabaseCount(NetworkCasePayment::class, 2);
+        self::assertDatabaseHas(NetworkCasePayment::class, [
+            'bridge_payment_id' => $payment->id,
+            'network_case_id' => $networkCases->first()->id,
+        ]);
     }
 
     /**
@@ -151,6 +205,36 @@ final class PaymentDetailsProcessorTest extends TestCase
             'ADS' => [Currency::ADS],
             'USD' => [Currency::USD],
         ];
+    }
+
+    public function testBridgeAdIncomeToUserLedger(): void
+    {
+        $payment = BridgePayment::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var NetworkCase $networkCase */
+        $networkCase = NetworkCase::factory()->create(['publisher_id' => $user->uuid]);
+        $paidAmount = 100_000_000;
+        $rate = 5.0;
+        $paidAmountCurrency = (int)floor($paidAmount * $rate);
+        NetworkCasePayment::factory()->create([
+            'bridge_payment_id' => $payment->id,
+            'exchange_rate' => $rate,
+            'license_fee' => 0,
+            'network_case_id' => $networkCase->id,
+            'operator_fee' => 0,
+            'paid_amount' => $paidAmount,
+            'paid_amount_currency' => $paidAmountCurrency,
+            'total_amount' => $paidAmount,
+        ]);
+        $expectedPaidAmount = $paidAmount;
+        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
+
+        $paymentDetailsProcessor->addBridgeAdIncomeToUserLedger($payment);
+
+        $entries = UserLedgerEntry::all();
+        self::assertCount(1, $entries);
+        self::assertEquals($expectedPaidAmount, $entries->first()->amount);
     }
 
     public function testAddAdIncomeToUserLedgerWhenNoUser(): void

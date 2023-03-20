@@ -21,21 +21,34 @@
 
 namespace Adshares\Adserver\Services\Supply;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BridgePayment;
+use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Http\Client\HttpClientException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 class OpenRtbBridge
 {
+    private const PAYMENT_REPORT_READY_STATUS = 'done';
     private const PAYMENTS_PATH = '/payment-reports';
     private const SERVE_PATH = '/serve';
+    private const SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT = <<<SQL
+SELECT SUM(total_amount) AS total_amount
+FROM network_case_payments
+WHERE bridge_payment_id = ?
+SQL;
 
     public static function isActive(): bool
     {
@@ -105,7 +118,7 @@ class OpenRtbBridge
                 if (empty($content)) {
                     return;
                 }
-                $paymentIds = array_map(fn (array $entry) => $entry['id'], $content);
+                $paymentIds = array_map(fn(array $entry) => $entry['id'], $content);
                 $accountAddress = config('app.open_rtb_bridge_account_address');
                 $bridgePayments = BridgePayment::fetchByAddressAndPaymentIds($accountAddress, $paymentIds)
                     ->keyBy('payment_id');
@@ -117,11 +130,15 @@ class OpenRtbBridge
                             $paymentId,
                             DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $entry['created_at']),
                             $entry['value'],
-                            'done' === $entry['status'] ? BridgePayment::STATUS_NEW : BridgePayment::STATUS_RETRY,
+                            self::PAYMENT_REPORT_READY_STATUS === $entry['status'] ? BridgePayment::STATUS_NEW
+                                : BridgePayment::STATUS_RETRY,
                         );
                     } else {
                         /** @var $bridgePayment BridgePayment */
-                        if (BridgePayment::STATUS_RETRY === $bridgePayment->status && 'done' === $entry['status']) {
+                        if (
+                            BridgePayment::STATUS_RETRY === $bridgePayment->status
+                            && self::PAYMENT_REPORT_READY_STATUS === $entry['status']
+                        ) {
                             $bridgePayment->payment_time =
                                 DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $entry['created_at']);
                             $bridgePayment->amount = $entry['value'];
@@ -134,6 +151,63 @@ class OpenRtbBridge
         } catch (HttpClientException $exception) {
             Log::error(sprintf('Fetching payments from bridge failed: %s', $exception->getMessage()));
         }
+    }
+
+    public function processPayments(
+        DemandClient $demandClient,
+        PaymentDetailsProcessor $paymentDetailsProcessor,
+        int $limit = 500,
+    ): int {
+        $processedPaymentsCount = 0;
+        /** @var Collection<BridgePayment> $bridgePayments */
+        $bridgePayments = BridgePayment::fetchNew();
+        foreach ($bridgePayments as $bridgePayment) {
+            if (null === ($networkHost = NetworkHost::fetchByAddress($bridgePayment->address))) {
+                $bridgePayment->status = BridgePayment::STATUS_INVALID;
+                $bridgePayment->save();
+                ++$processedPaymentsCount;
+                continue;
+            }
+
+            $offset = $bridgePayment->last_offset ?? 0;
+            $eventValueSum = 0;
+            if ($offset > 0) {
+                $paymentSum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [0]);
+                $eventValueSum = $paymentSum->total_amount ?? 0;
+            }
+            $transactionTime = $bridgePayment->payment_time;
+
+            do {
+                try {
+                    $paymentDetails = $demandClient->fetchPaymentDetails(
+                        $networkHost->host,
+                        $bridgePayment->payment_id,
+                        $limit,
+                        $offset,
+                    );
+                } catch (EmptyInventoryException | UnexpectedClientResponseException) {
+                    $bridgePayment->save();
+                    break 2;
+                }
+
+                $processPaymentDetails = $paymentDetailsProcessor->processEventsPaidByBridge(
+                    $bridgePayment,
+                    $transactionTime,
+                    $paymentDetails,
+                    $eventValueSum,
+                );
+                $eventValueSum += $processPaymentDetails->eventValuePartialSum();
+
+                $bridgePayment->last_offset = $offset += $limit;
+            } while (count($paymentDetails) === $limit);
+
+            $paymentDetailsProcessor->addBridgeAdIncomeToUserLedger($bridgePayment);
+
+            $bridgePayment->status = BridgePayment::STATUS_DONE;
+            $bridgePayment->save();
+            ++$processedPaymentsCount;
+        }
+        return $processedPaymentsCount;
     }
 
     private function isPaymentResponseValid(mixed $content): bool

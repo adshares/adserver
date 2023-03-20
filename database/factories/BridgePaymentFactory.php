@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Adshares\Adserver\Models\BridgePayment;
 use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -37,7 +38,7 @@ class BridgePaymentFactory extends Factory
             'payment_id' => '0',
             'payment_time' => new DateTimeImmutable('-1 hour'),
             'amount' => 1e11,
-            'status' => 0,
+            'status' => BridgePayment::STATUS_NEW,
             'last_offset' => 0,
         ];
     }

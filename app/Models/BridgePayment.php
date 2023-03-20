@@ -49,9 +49,18 @@ class BridgePayment extends Model
     public const STATUS_RETRY = 1;
     public const STATUS_DONE = 2;
 
+    protected $dates = [
+        'payment_time',
+    ];
+
     public static function fetchByAddressAndPaymentIds(string $address, array $paymentIds): Collection
     {
         return (new self())->where('address', $address)->whereIn('payment_id', $paymentIds)->get();
+    }
+
+    public static function fetchNew(): Collection
+    {
+        return (new self())->where('status', self::STATUS_NEW)->get();
     }
 
     public static function register(

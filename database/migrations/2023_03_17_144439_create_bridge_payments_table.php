@@ -21,6 +21,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -40,10 +41,21 @@ return new class extends Migration
             $table->unique(['address', 'payment_id']);
             $table->index('status', 'bridge_payments_status_index');
         });
+
+        Schema::table('network_case_payments', function (Blueprint $table) {
+            $table->bigInteger('ads_payment_id')->nullable()->change();
+            $table->bigInteger('bridge_payment_id')->after('ads_payment_id')->nullable()->index();
+        });
     }
 
     public function down(): void
     {
+        DB::delete('DELETE FROM network_case_payments WHERE ads_payment_id IS NULL');
+        Schema::table('network_case_payments', function (Blueprint $table) {
+            $table->bigInteger('ads_payment_id')->nullable(false)->change();
+            $table->dropColumn('bridge_payment_id');
+        });
+
         Schema::dropIfExists('bridge_payments');
     }
 };

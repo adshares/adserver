@@ -28,19 +28,34 @@ use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\NetworkImpression;
+use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Services\Supply\OpenRtbBridge;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Closure;
+use DateTime;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
@@ -391,6 +406,123 @@ class OpenRtbBridgeTest extends TestCase
         ];
     }
 
+    public function testProcessPayments(): void
+    {
+        $networkHost = self::registerHost(new DummyDemandClient());
+        /** @var BridgePayment $bridgePayment */
+        $bridgePayment = BridgePayment::factory()->create(['address' => $networkHost->address]);
+        $exchangeRateReader = self::createMock(ExchangeRateReader::class);
+        $exchangeRateReader->method('fetchExchangeRate')
+            ->willReturn(new ExchangeRate(new DateTime(), 1, 'USD'));
+        $licenseReader = self::createMock(LicenseReader::class);
+        $paymentDetailsProcessor = new PaymentDetailsProcessor($exchangeRateReader, $licenseReader);
+        $networkImpression = NetworkImpression::factory()->create();
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $caseCount = 2;
+        /** @var Collection<NetworkCase> $networkCases */
+        $networkCases = NetworkCase::factory()->times($caseCount)->create([
+            'network_impression_id' => $networkImpression,
+            'publisher_id' => $publisher->uuid,
+        ]);
+        $expectedPaidAmount = 1e11;
+        $expectedLicenseFee = 0;
+        $demandClient = self::createMock(DemandClient::class);
+        $demandClient->expects(self::once())->method('fetchPaymentDetails')->willReturn(
+            $networkCases->map(
+                fn($case) => [
+                    'case_id' => $case->case_id,
+                    'event_value' => (int)($expectedPaidAmount / $caseCount),
+                ],
+            )->toArray()
+        );
+
+        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor);
+
+        self::assertDatabaseCount(BridgePayment::class, 1);
+        self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_DONE]);
+        self::assertEquals($expectedPaidAmount, (new NetworkCasePayment())->sum('total_amount'));
+        self::assertEquals($expectedLicenseFee, (new NetworkPayment())->sum('amount'));
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => $expectedPaidAmount,
+            'user_id' => $publisher->id,
+        ]);
+        self::assertDatabaseCount(NetworkCasePayment::class, $caseCount);
+        self::assertDatabaseHas(NetworkCasePayment::class, [
+            'bridge_payment_id' => $bridgePayment->id,
+            'network_case_id' => $networkCases->first()->id,
+        ]);
+    }
+
+    public function testProcessPaymentsRetryWhileDemandClientFailed(): void
+    {
+        $networkHost = self::registerHost(new DummyDemandClient());
+        /** @var BridgePayment $bridgePayment */
+        $bridgePayment = BridgePayment::factory()->create(['address' => $networkHost->address]);
+        $exchangeRateReader = self::createMock(ExchangeRateReader::class);
+        $exchangeRateReader->method('fetchExchangeRate')
+            ->willReturn(new ExchangeRate(new DateTime(), 1, 'USD'));
+        $licenseReader = self::createMock(LicenseReader::class);
+        $paymentDetailsProcessor = new PaymentDetailsProcessor($exchangeRateReader, $licenseReader);
+        $networkImpression = NetworkImpression::factory()->create();
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $caseCount = 2;
+        /** @var Collection<NetworkCase> $networkCases */
+        $networkCases = NetworkCase::factory()->times($caseCount)->create([
+            'network_impression_id' => $networkImpression,
+            'publisher_id' => $publisher->uuid,
+        ]);
+        $expectedPaidAmount = 1e11;
+        $expectedLicenseFee = 0;
+        $demandClient = self::createMock(DemandClient::class);
+        $demandClient->expects(self::exactly(4))->method('fetchPaymentDetails')->willReturnOnConsecutiveCalls(
+            [[
+                'case_id' => $networkCases->first()->case_id,
+                'event_value' => (int)($expectedPaidAmount / $caseCount),
+            ]],
+            $this->throwException(new UnexpectedClientResponseException('test-exception')),
+            [[
+                'case_id' => $networkCases->last()->case_id,
+                'event_value' => (int)($expectedPaidAmount / $caseCount),
+            ]],
+            [],
+        );
+
+        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
+        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
+
+        self::assertDatabaseCount(BridgePayment::class, 1);
+        self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_DONE]);
+        self::assertEquals($expectedPaidAmount, (new NetworkCasePayment())->sum('total_amount'));
+        self::assertEquals($expectedLicenseFee, (new NetworkPayment())->sum('amount'));
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => $expectedPaidAmount,
+            'user_id' => $publisher->id,
+        ]);
+        self::assertDatabaseCount(NetworkCasePayment::class, $caseCount);
+        self::assertDatabaseHas(NetworkCasePayment::class, [
+            'bridge_payment_id' => $bridgePayment->id,
+            'network_case_id' => $networkCases->first()->id,
+        ]);
+    }
+
+    public function testProcessPaymentsWhileHostDeleted(): void
+    {
+        $networkHost = self::registerHost(new DummyDemandClient());
+        BridgePayment::factory()->create(['address' => $networkHost->address]);
+        $networkHost->delete();
+        $paymentDetailsProcessor = self::createMock(PaymentDetailsProcessor::class);
+        $demandClient = self::createMock(DemandClient::class);
+
+        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor);
+
+        self::assertDatabaseCount(BridgePayment::class, 1);
+        self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_INVALID]);
+        self::assertDatabaseEmpty(UserLedgerEntry::class);
+        self::assertDatabaseEmpty(NetworkCasePayment::class);
+    }
+
     private function initOpenRtbConfiguration(array $settings = []): void
     {
         $mergedSettings = array_merge(
@@ -479,5 +611,15 @@ class OpenRtbBridgeTest extends TestCase
             unset($data[$remove]);
         }
         return $data;
+    }
+
+    private function registerHost(DummyDemandClient $demandClient): NetworkHost
+    {
+        $info = $demandClient->fetchInfo(new NullUrl());
+        return NetworkHost::factory()->create([
+            'address' => '0001-00000000-9B6F',
+            'info' => $info,
+            'info_url' => $info->getServerUrl() . 'info.json',
+        ]);
     }
 }

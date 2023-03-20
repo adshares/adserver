@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Adserver\Services\LicenseFeeSender;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
+use Adshares\Adserver\Services\Supply\OpenRtbBridge;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -125,6 +126,15 @@ SQL;
                 );
             }
         }
+
+        $bridge = new OpenRtbBridge();
+        $processed = $bridge->processPayments(
+            $this->demandClient,
+            $this->paymentDetailsProcessor,
+            (int)$this->option('chunkSize'),
+        );
+        $processedPaymentsForAds += $processed;
+        $processedPaymentsTotal += $processed;
 
         $timestamps = $this->fetchTimestampsToUpdate($processedAdsPaymentIds);
         foreach ($timestamps as $timestamp) {
