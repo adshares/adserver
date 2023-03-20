@@ -647,16 +647,6 @@ class OpenRtbBridgeTest extends TestCase
         return $data;
     }
 
-    private function registerHost(DummyDemandClient $demandClient): NetworkHost
-    {
-        $info = $demandClient->fetchInfo(new NullUrl());
-        return NetworkHost::factory()->create([
-            'address' => '0001-00000000-9B6F',
-            'info' => $info,
-            'info_url' => $info->getServerUrl() . 'info.json',
-        ]);
-    }
-
     private function initBridgePaymentWithHost(): BridgePayment
     {
         $info = (new DummyDemandClient())->fetchInfo(new NullUrl());

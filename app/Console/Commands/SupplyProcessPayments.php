@@ -94,17 +94,38 @@ SQL;
         $this->info('Start command ' . $this->getName());
 
         $processedAdsPaymentMetaData = $this->processAdsPayments();
-        $processedBridgePaymentMetaData = (new OpenRtbBridge())->processPayments(
-            $this->demandClient,
-            $this->paymentDetailsProcessor,
-            (int)$this->option('chunkSize'),
+        $processedPaymentsForAds = $processedAdsPaymentMetaData->getProcessedPaymentsForAds();
+        $processedPaymentsTotal = $processedAdsPaymentMetaData->getProcessedPaymentsTotal();
+        $timestamps = $this->fetchTimestampsToUpdate(
+            $processedAdsPaymentMetaData->getPaymentIds(),
+            self::COLUMN_ADS_PAYMENT_ID,
         );
-        $processedPaymentsForAds = $processedAdsPaymentMetaData->getProcessedPaymentsForAds()
-            + $processedBridgePaymentMetaData->getProcessedPaymentsForAds();
-        $processedPaymentsTotal = $processedAdsPaymentMetaData->getProcessedPaymentsTotal()
-            + $processedBridgePaymentMetaData->getProcessedPaymentsTotal();
 
-        $this->invalidateUpdatedCasesStatistics($processedAdsPaymentMetaData, $processedBridgePaymentMetaData);
+        if (OpenRtbBridge::isActive()) {
+            $openRtbBridge = new OpenRtbBridge();
+            $openRtbBridge->fetchAndStorePayments();
+
+            $processedBridgePaymentMetaData = $openRtbBridge->processPayments(
+                $this->demandClient,
+                $this->paymentDetailsProcessor,
+                (int)$this->option('chunkSize'),
+            );
+            $processedPaymentsForAds += $processedBridgePaymentMetaData->getProcessedPaymentsForAds();
+            $processedPaymentsTotal += $processedBridgePaymentMetaData->getProcessedPaymentsTotal();
+            $timestamps = array_unique(
+                array_merge(
+                    $timestamps,
+                    $this->fetchTimestampsToUpdate(
+                        $processedBridgePaymentMetaData->getPaymentIds(),
+                        self::COLUMN_BRIDGE_PAYMENT_ID,
+                    ),
+                )
+            );
+        }
+
+        foreach ($timestamps as $timestamp) {
+            NetworkCaseLogsHourlyMeta::invalidate($timestamp);
+        }
         ServerEvent::dispatch(ServerEventType::IncomingAdPaymentProcessed, [
             'adsPaymentCount' => $processedPaymentsForAds,
             'totalPaymentCount' => $processedPaymentsTotal,
@@ -221,27 +242,6 @@ SQL;
                     $licensePayment->receiver_address
                 )
             );
-        }
-    }
-
-    private function invalidateUpdatedCasesStatistics(
-        ProcessedPaymentsMetaData $processedAdsPaymentMetaData,
-        ProcessedPaymentsMetaData $processedBridgePaymentMetaData,
-    ): void {
-        $timestamps = array_unique(
-            array_merge(
-                $this->fetchTimestampsToUpdate(
-                    $processedAdsPaymentMetaData->getPaymentIds(),
-                    self::COLUMN_ADS_PAYMENT_ID,
-                ),
-                $this->fetchTimestampsToUpdate(
-                    $processedBridgePaymentMetaData->getPaymentIds(),
-                    self::COLUMN_BRIDGE_PAYMENT_ID,
-                ),
-            ),
-        );
-        foreach ($timestamps as $timestamp) {
-            NetworkCaseLogsHourlyMeta::invalidate($timestamp);
         }
     }
 
