@@ -197,7 +197,7 @@ class PaymentDetailsProcessor
                 UserLedgerEntry::TYPE_AD_INCOME,
                 $payment->address,
                 $adServerAddress,
-                '',
+                $payment->payment_id,
             )->save();
         }
     }

@@ -395,6 +395,14 @@ class OpenRtbBridgeTest extends TestCase
                 [self::validPaymentResponseEntry(remove: 'value')],
                 'Invalid bridge payments response: missing key value',
             ],
+            'invalid id type' => [
+                [self::validPaymentResponseEntry(['id' => 1])],
+                'Invalid bridge payments response: id is not a string',
+            ],
+            'invalid id too long' => [
+                [self::validPaymentResponseEntry(['id' => '12345678901234567890'])],
+                'Invalid bridge payments response: id must have at most 18 characters',
+            ],
             'invalid created_at format' => [
                 [self::validPaymentResponseEntry(['created_at' => '2023-01-01'])],
                 'Invalid bridge payments response: created_at is not in ISO8601 format',
@@ -635,7 +643,7 @@ class OpenRtbBridgeTest extends TestCase
     private static function validPaymentResponseEntry(array $merge = [], string $remove = null): array
     {
         $data = array_merge([
-            'id' => 1678953600,
+            'id' => '1678953600',
             'created_at' => '2023-03-17T16:04:33+00:00',
             'updated_at' => '2023-03-17T16:04:33+00:00',
             'status' => 'done',

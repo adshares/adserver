@@ -238,20 +238,20 @@ SQL;
                 Log::error('Invalid bridge payments response: entry is not an array');
                 return false;
             }
-            $fields = [
-                'id',
-                'created_at',
-                'status',
-                'value',
-            ];
-            foreach ($fields as $field) {
+            foreach (['id', 'created_at', 'status', 'value'] as $field) {
                 if (!array_key_exists($field, $entry)) {
                     Log::error(sprintf('Invalid bridge payments response: missing key %s', $field));
                     return false;
                 }
             }
-            if (!is_string($entry['status'])) {
-                Log::error('Invalid bridge payments response: status is not a string');
+            foreach (['id', 'created_at', 'status'] as $field) {
+                if (!is_string($entry[$field])) {
+                    Log::error(sprintf('Invalid bridge payments response: %s is not a string', $field));
+                    return false;
+                }
+            }
+            if (18 < strlen($entry['id'])) {
+                Log::error('Invalid bridge payments response: id must have at most 18 characters');
                 return false;
             }
             if (false === DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $entry['created_at'])) {

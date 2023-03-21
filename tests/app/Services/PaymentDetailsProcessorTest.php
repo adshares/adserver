@@ -196,9 +196,11 @@ final class PaymentDetailsProcessorTest extends TestCase
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
         $paymentDetailsProcessor->addAdIncomeToUserLedger($adsPayment);
 
-        $entries = UserLedgerEntry::all();
-        self::assertCount(1, $entries);
-        self::assertEquals($expectedPaidAmount, $entries->first()->amount);
+        self::assertDatabaseCount(UserLedgerEntry::class, 1);
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => $expectedPaidAmount,
+            'txid' => $adsPayment->txid,
+        ]);
     }
 
     public function currencyProvider(): array
@@ -230,6 +232,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
     public function testBridgeAdIncomeToUserLedger(): void
     {
+        /** @var BridgePayment $payment */
         $payment = BridgePayment::factory()->create();
         /** @var User $user */
         $user = User::factory()->create();
@@ -253,9 +256,11 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $paymentDetailsProcessor->addBridgeAdIncomeToUserLedger($payment);
 
-        $entries = UserLedgerEntry::all();
-        self::assertCount(1, $entries);
-        self::assertEquals($expectedPaidAmount, $entries->first()->amount);
+        self::assertDatabaseCount(UserLedgerEntry::class, 1);
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => $expectedPaidAmount,
+            'txid' => $payment->payment_id,
+        ]);
     }
 
     public function testBridgeAdIncomeToUserLedgerWhenNoUser(): void
@@ -331,12 +336,10 @@ final class PaymentDetailsProcessorTest extends TestCase
 
     private function createAdsPayment(int $amount): AdsPayment
     {
-        $adsPayment = new AdsPayment();
-        $adsPayment->txid = '0002:000017C3:0001';
-        $adsPayment->amount = $amount;
-        $adsPayment->address = '0002-00000007-055A';
-        $adsPayment->save();
-
-        return $adsPayment;
+        return AdsPayment::factory()->create([
+            'address' => '0002-00000007-055A',
+            'amount' => $amount,
+            'txid' => '0002:000017C3:0001',
+        ]);
     }
 }

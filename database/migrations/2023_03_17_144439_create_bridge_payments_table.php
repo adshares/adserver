@@ -32,7 +32,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->string('address', 18);
-            $table->string('payment_id');
+            $table->string('payment_id', 18);
             $table->timestamp('payment_time');
             $table->bigInteger('amount')->nullable();
             $table->tinyInteger('status')->default(0);
