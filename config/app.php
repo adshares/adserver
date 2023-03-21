@@ -188,6 +188,7 @@ return [
 
     'foreign_bsc_wallet' => env('FOREIGN_BSC_WALLET'),
     'min_ads_batch_withdrawal' => env('MIN_ADS_BATCH_WITHDRAWAL'),
+    'reviewer_user_id' => env('REVIEWER_USER_ID'),
     'use_random_wallet_for_foreign' => env('USE_RANDOM_WALLET_FOR_FOREIGN'),
     'foreign_default_site_js' => env('FOREIGN_DEFAULT_SITE_JS'),
     'foreign_preferred_zones' => [

@@ -63,6 +63,13 @@ class SiteFilteringUpdater
             $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $excludeKeyword->keyword();
         }
 
+        if(config('app.reviewer_user_id')){
+            $requireKeywords = $this->getClassificationForAcceptedBannersForAllSites(intval(config('app.reviewer_user_id')));
+            foreach ($requireKeywords as $requireKeyword) {
+                $siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $requireKeyword->keyword();
+            }
+        }
+
         $baseRequires = json_decode(config('app.site_filtering_require') ?? '', true);
         if (is_array($baseRequires)) {
             $siteRequires = array_merge_recursive($siteRequires, $baseRequires);
@@ -96,6 +103,16 @@ class SiteFilteringUpdater
     {
         return [
             new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, true, $siteId),
+        ];
+    }
+
+    /**
+     * @return Classification[]
+     */
+    private function getClassificationForAcceptedBannersForAllSites(int $publisherId): array
+    {
+        return [
+            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, true),
         ];
     }
 
