@@ -43,6 +43,8 @@ use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Mockery;
 
 final class PaymentDetailsProcessorTest extends TestCase
 {
@@ -207,6 +209,25 @@ final class PaymentDetailsProcessorTest extends TestCase
         ];
     }
 
+    public function testAddAdIncomeToUserLedgerWhenNoUser(): void
+    {
+        $adsPayment = $this->createAdsPayment(100_000_000_000);
+        /** @var NetworkCase $networkCase */
+        $networkCase = NetworkCase::factory()->create([
+            'publisher_id' => '10000000000000000000000000000000',
+        ]);
+        /** @var NetworkCasePayment $networkCasePayment */
+        NetworkCasePayment::factory()->create([
+            'network_case_id' => $networkCase->id,
+            'ads_payment_id' => $adsPayment->id,
+        ]);
+        $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
+
+        $paymentDetailsProcessor->addAdIncomeToUserLedger($adsPayment);
+
+        self::assertDatabaseEmpty(UserLedgerEntry::class);
+    }
+
     public function testBridgeAdIncomeToUserLedger(): void
     {
         $payment = BridgePayment::factory()->create();
@@ -218,7 +239,7 @@ final class PaymentDetailsProcessorTest extends TestCase
         $rate = 5.0;
         $paidAmountCurrency = (int)floor($paidAmount * $rate);
         NetworkCasePayment::factory()->create([
-            'bridge_payment_id' => $payment->id,
+            'bridge_payment_id' => $payment,
             'exchange_rate' => $rate,
             'license_fee' => 0,
             'network_case_id' => $networkCase->id,
@@ -237,24 +258,46 @@ final class PaymentDetailsProcessorTest extends TestCase
         self::assertEquals($expectedPaidAmount, $entries->first()->amount);
     }
 
-    public function testAddAdIncomeToUserLedgerWhenNoUser(): void
+    public function testBridgeAdIncomeToUserLedgerWhenNoUser(): void
     {
-        $adsPayment = $this->createAdsPayment(100_000_000_000);
+        Log::spy();
+        $payment = BridgePayment::factory()->create();
         /** @var NetworkCase $networkCase */
-        $networkCase = NetworkCase::factory()->create([
-            'publisher_id' => '10000000000000000000000000000000',
-        ]);
-        /** @var NetworkCasePayment $networkCasePayment */
+        $networkCase = NetworkCase::factory()->create(['publisher_id' => '10000000000000000000000000000000']);
+        $paidAmount = 100_000_000;
+        $rate = 5.0;
+        $paidAmountCurrency = (int)floor($paidAmount * $rate);
         NetworkCasePayment::factory()->create([
+            'bridge_payment_id' => $payment,
+            'exchange_rate' => $rate,
+            'license_fee' => 0,
             'network_case_id' => $networkCase->id,
-            'ads_payment_id' => $adsPayment->id,
+            'operator_fee' => 0,
+            'paid_amount' => $paidAmount,
+            'paid_amount_currency' => $paidAmountCurrency,
+            'total_amount' => $paidAmount,
         ]);
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
 
-        $paymentDetailsProcessor->addAdIncomeToUserLedger($adsPayment);
+        $paymentDetailsProcessor->addBridgeAdIncomeToUserLedger($payment);
 
-        $entries = UserLedgerEntry::all();
-        self::assertCount(0, $entries);
+        self::assertDatabaseEmpty(UserLedgerEntry::class);
+        Log::shouldHaveReceived('warning')
+            ->with(
+                Mockery::on(function ($argument) {
+                    if (
+                        preg_match(
+                            '/^\[PaymentDetailsProcessor] User id \(10000000000000000000000000000000\) does not exist. '
+                            . 'BridgePayment id \(\d+\). Amount \(\d+\)./',
+                            $argument
+                        )
+                    ) {
+                        return true;
+                    }
+                    return false;
+                })
+            )
+            ->once();
     }
 
     private function getExchangeRateReader(): ExchangeRateReader
