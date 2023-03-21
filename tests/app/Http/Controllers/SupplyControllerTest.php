@@ -271,6 +271,25 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonPath('data.0.id', '3');
     }
 
+    public function testFindFailWhileInvalidPlacement(): void
+    {
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                'id' => '3',
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testFindOpenRtb(): void
     {
         Http::preventStrayRequests();
