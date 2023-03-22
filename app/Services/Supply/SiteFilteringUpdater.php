@@ -63,13 +63,6 @@ class SiteFilteringUpdater
             $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $excludeKeyword->keyword();
         }
 
-        if(config('app.reviewer_user_id')){
-            $requireKeywords = $this->getClassificationForAcceptedBannersForAllSites(intval(config('app.reviewer_user_id')));
-            foreach ($requireKeywords as $requireKeyword) {
-                $siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $requireKeyword->keyword();
-            }
-        }
-
         $baseRequires = json_decode(config('app.site_filtering_require') ?? '', true);
         if (is_array($baseRequires)) {
             $siteRequires = array_merge_recursive($siteRequires, $baseRequires);
@@ -78,6 +71,13 @@ class SiteFilteringUpdater
         $baseExcludes = json_decode(config('app.site_filtering_exclude') ?? '', true);
         if (is_array($baseExcludes)) {
             $siteExcludes = array_merge_recursive($siteExcludes, $baseExcludes);
+        }
+
+        if(config('app.reviewer_user_id')){
+            $requireKeywords = $this->getClassificationForRejectedBannersForAllSites(intval(config('app.reviewer_user_id')));
+            foreach ($requireKeywords as $requireKeyword) {
+                $siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $requireKeyword->keyword();
+            }
         }
 
         $site->site_excludes = array_map([__CLASS__, 'normalize'], $siteExcludes);
@@ -109,10 +109,10 @@ class SiteFilteringUpdater
     /**
      * @return Classification[]
      */
-    private function getClassificationForAcceptedBannersForAllSites(int $publisherId): array
+    private function getClassificationForRejectedBannersForAllSites(int $publisherId): array
     {
         return [
-            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, true),
+            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false),
         ];
     }
 
