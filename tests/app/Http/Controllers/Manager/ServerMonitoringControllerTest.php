@@ -1643,7 +1643,7 @@ final class ServerMonitoringControllerTest extends TestCase
         ]);
         UserLedgerEntry::factory()->create([
             'user_id' => $user1->id,
-            'type' => UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT,
+            'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT,
             'amount' => 3e5,
         ]);
 

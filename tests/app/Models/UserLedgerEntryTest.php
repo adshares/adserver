@@ -387,8 +387,8 @@ final class UserLedgerEntryTest extends TestCase
             [UserLedgerEntry::TYPE_WITHDRAWAL, -50],
             [UserLedgerEntry::TYPE_BONUS_INCOME, 200],
             [UserLedgerEntry::TYPE_BONUS_EXPENSE, -10],
-            [UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT, 300],
-            [UserLedgerEntry::TYPE_NON_REFUNDABLE_EXPENSE, -30],
+            [UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT, 300],
+            [UserLedgerEntry::TYPE_NON_WITHDRAWABLE_EXPENSE, -30],
         ];
 
         foreach ($entries as $entry) {
@@ -414,8 +414,8 @@ final class UserLedgerEntryTest extends TestCase
             UserLedgerEntry::TYPE_BONUS_INCOME => 200,
             UserLedgerEntry::TYPE_BONUS_EXPENSE => -10,
             UserLedgerEntry::TYPE_REFUND => 10,
-            UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT => 300,
-            UserLedgerEntry::TYPE_NON_REFUNDABLE_EXPENSE => -30,
+            UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT => 300,
+            UserLedgerEntry::TYPE_NON_WITHDRAWABLE_EXPENSE => -30,
         ];
         foreach (UserLedgerEntry::ALLOWED_TYPE_LIST as $type) {
             foreach (UserLedgerEntry::ALLOWED_STATUS_LIST as $status) {

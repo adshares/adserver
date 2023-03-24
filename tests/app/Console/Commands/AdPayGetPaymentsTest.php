@@ -91,8 +91,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
                 'status' => 0,
             ];
         });
-        // total in currency = 221_445;
-        // total 221_445 / 0,3333 = 664_401
+        // event value sum = 221_445 / 0,3333 = 664_401
         UserLedgerEntry::factory()->create(
             [
                 'amount' => 200_000,
@@ -104,7 +103,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             [
                 'amount' => 465_000,
                 'user_id' => $userId,
-                'type' => UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT
+                'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT
             ]
         );
 
@@ -152,7 +151,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             $entries = [
                 [UserLedgerEntry::TYPE_DEPOSIT, 100, UserLedgerEntry::STATUS_ACCEPTED],
                 [UserLedgerEntry::TYPE_BONUS_INCOME, 50, UserLedgerEntry::STATUS_ACCEPTED],
-                [UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT, 50, UserLedgerEntry::STATUS_ACCEPTED],
+                [UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT, 50, UserLedgerEntry::STATUS_ACCEPTED],
             ];
 
             foreach ($entries as $entry) {

@@ -156,7 +156,7 @@ class DemandBlockRequiredAmountTest extends ConsoleTestCase
     {
         $entries = [
             [UserLedgerEntry::TYPE_DEPOSIT, 400 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
-            [UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT, 100 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
+            [UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT, 100 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
             [UserLedgerEntry::TYPE_BONUS_INCOME, 500 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
         ];
 

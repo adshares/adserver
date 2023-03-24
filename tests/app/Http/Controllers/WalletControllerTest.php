@@ -101,7 +101,7 @@ class WalletControllerTest extends TestCase
     {
         $user = $this->login();
         $this->generateUserIncome($user->id, 50_000_000_000);
-        $this->generateUserIncome($user->id, 100_000_000_000, UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT);
+        $this->generateUserIncome($user->id, 100_000_000_000, UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT);
 
         $response = $this->postJson(
             '/api/calculate-withdrawal',
@@ -124,7 +124,7 @@ class WalletControllerTest extends TestCase
     {
         $user = $this->login();
         $this->generateUserIncome($user->id, 50_000_000_000);
-        $this->generateUserIncome($user->id, 100_000_000_000, UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT);
+        $this->generateUserIncome($user->id, 100_000_000_000, UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT);
 
         $response = $this->postJson(
             '/api/calculate-withdrawal',
@@ -612,7 +612,7 @@ class WalletControllerTest extends TestCase
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $amount = 20 * (10 ** 11);
         $this->generateUserIncome($user->id, $amount);
-        $this->generateUserIncome($user->id, $amount, UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT);
+        $this->generateUserIncome($user->id, $amount, UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',

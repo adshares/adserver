@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Non-refundable user ledger entries
+- Non-withdrawable user ledger entries
 
 ## [2.4.11] - 2023-03-15
 ### Changed

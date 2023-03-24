@@ -73,7 +73,7 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
         ]);
         UserLedgerEntry::factory()->create([
             'user_id' => $user2->id,
-            'type' => UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT,
+            'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT,
             'amount' => 400
         ]);
         UserLedgerEntry::factory()->create([
@@ -88,7 +88,7 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
         ]);
         UserLedgerEntry::factory()->create([
             'user_id' => $user3->id,
-            'type' => UserLedgerEntry::TYPE_NON_REFUNDABLE_DEPOSIT,
+            'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT,
             'amount' => 100
         ]);
         UserLedgerEntry::factory()->create([
