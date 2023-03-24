@@ -352,8 +352,14 @@ class UserLedgerEntry extends Model
 
         $user = User::findOrFail($userId);
         $bonusableAmount = (int)max(min($total, $maxBonus, $user->getBonusBalance()), 0);
-        $nonRefundableAmount = (int)max(min($total - $bonusableAmount, $user->getWalletBalance() - $user->getWithdrawableBalance()), 0);
-        $refundableAmount = (int)max(min($total - $nonRefundableAmount - $bonusableAmount, $user->getWalletBalance()), 0);
+        $nonRefundableAmount = (int)max(
+            min($total - $bonusableAmount, $user->getWalletBalance() - $user->getWithdrawableBalance()),
+            0
+        );
+        $refundableAmount = (int)max(
+            min($total - $nonRefundableAmount - $bonusableAmount, $user->getWalletBalance()),
+            0
+        );
 
         if ($total > $bonusableAmount + $nonRefundableAmount + $refundableAmount) {
             throw new InvalidArgumentException(
