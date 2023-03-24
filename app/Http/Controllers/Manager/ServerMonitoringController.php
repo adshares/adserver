@@ -474,6 +474,7 @@ class ServerMonitoringController extends Controller
                         'lastActiveAt',
                         'siteCount',
                         'walletBalance',
+                        'withdrawableBalance',
                     ],
                     true,
                 )

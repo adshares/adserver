@@ -71,6 +71,7 @@ class AuthControllerTest extends TestCase
             'totalFundsInCurrency',
             'totalFundsChange',
             'bonusBalance',
+            'withdrawableBalance',
             'walletBalance',
             'walletAddress',
             'walletNetwork',
@@ -219,10 +220,11 @@ class AuthControllerTest extends TestCase
         $user = $this->registerUser($refLink->token);
 
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -230,10 +232,11 @@ class AuthControllerTest extends TestCase
         $this->activateUser($user);
 
         self::assertSame(
-            [$expectedBonusIncome, $expectedBonusIncome, 0],
+            [$expectedBonusIncome, $expectedBonusIncome, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -276,10 +279,11 @@ class AuthControllerTest extends TestCase
         $user = $this->registerUser($refLink->token);
 
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -287,10 +291,11 @@ class AuthControllerTest extends TestCase
         $this->activateUser($user);
 
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -304,20 +309,22 @@ class AuthControllerTest extends TestCase
         $refLink = RefLink::factory()->create(['bonus' => 0, 'refund' => 0.5]);
         $user = $this->registerUser($refLink->token);
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
 
         $this->activateUser($user);
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -332,10 +339,11 @@ class AuthControllerTest extends TestCase
         $user = $this->registerUser($refLink->token);
 
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -343,10 +351,11 @@ class AuthControllerTest extends TestCase
         $this->activateUser($user);
 
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -368,10 +377,11 @@ class AuthControllerTest extends TestCase
         Token::generate(Token::EMAIL_ACTIVATE, $user);
 
         self::assertSame(
-            [0, 0, 0],
+            [0, 0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -379,10 +389,11 @@ class AuthControllerTest extends TestCase
         $this->activateUser($user);
 
         self::assertSame(
-            [300, 300, 0],
+            [300, 300, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );

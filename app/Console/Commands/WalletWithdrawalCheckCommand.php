@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -72,7 +72,7 @@ class WalletWithdrawalCheckCommand extends BaseCommand
         $this->info(sprintf('[Wallet] %d users with auto withdrawal enabled', count($users)));
         foreach ($users as $user) {
             /** @var User $user */
-            $balance = $user->getWalletBalance();
+            $balance = $user->getWithdrawableBalance();
             if ($exchangeRate->fromClick($balance) >= $user->auto_withdrawal_limit) {
                 try {
                     $this->withdraw($user, $balance);
