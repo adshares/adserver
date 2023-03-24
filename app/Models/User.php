@@ -235,6 +235,7 @@ class User extends Authenticatable
             'total_funds' => $this->getBalance(),
             'wallet_balance' => $this->getWalletBalance(),
             'bonus_balance' => $this->getBonusBalance(),
+            'withdrawable_balance' => $this->getWithdrawableBalance(),
             'total_funds_in_currency' => 0,
             'total_funds_change' => 0,
             'last_payment_at' => 0,
@@ -424,6 +425,11 @@ class User extends Authenticatable
     public function getWalletBalance(): int
     {
         return UserLedgerEntry::getWalletBalanceByUserId($this->id);
+    }
+
+    public function getWithdrawableBalance(): int
+    {
+        return UserLedgerEntry::getWithdrawableBalanceByUserId($this->id);
     }
 
     public function getBonusBalance(): int

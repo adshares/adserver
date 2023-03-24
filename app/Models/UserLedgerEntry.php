@@ -84,6 +84,8 @@ class UserLedgerEntry extends Model
     public const TYPE_BONUS_INCOME = 5;
     public const TYPE_BONUS_EXPENSE = 6;
     public const TYPE_REFUND = 7;
+    public const TYPE_NON_WITHDRAWABLE_DEPOSIT = 8;
+    public const TYPE_NON_WITHDRAWABLE_EXPENSE = 9;
 
     public const ALLOWED_STATUS_LIST = [
         self::STATUS_ACCEPTED,
@@ -106,6 +108,8 @@ class UserLedgerEntry extends Model
         self::TYPE_BONUS_INCOME,
         self::TYPE_BONUS_EXPENSE,
         self::TYPE_REFUND,
+        self::TYPE_NON_WITHDRAWABLE_DEPOSIT,
+        self::TYPE_NON_WITHDRAWABLE_EXPENSE,
     ];
 
     public const CREDIT_TYPES = [
@@ -113,12 +117,14 @@ class UserLedgerEntry extends Model
         self::TYPE_REFUND,
         self::TYPE_AD_INCOME,
         self::TYPE_BONUS_INCOME,
+        self::TYPE_NON_WITHDRAWABLE_DEPOSIT,
     ];
 
     public const DEBIT_TYPES = [
         self::TYPE_WITHDRAWAL,
         self::TYPE_AD_EXPENSE,
         self::TYPE_BONUS_EXPENSE,
+        self::TYPE_NON_WITHDRAWABLE_EXPENSE,
     ];
 
     private const AWAITING_PAYMENTS = [
@@ -180,6 +186,17 @@ class UserLedgerEntry extends Model
             ->whereNotIn('type', [self::TYPE_BONUS_INCOME, self::TYPE_BONUS_EXPENSE]);
     }
 
+    public static function queryForEntriesRelevantForWithdrawableBalance(): Builder
+    {
+        return self::queryForEntriesRelevantForBalance()
+            ->whereNotIn('type', [
+                self::TYPE_BONUS_INCOME,
+                self::TYPE_BONUS_EXPENSE,
+                self::TYPE_NON_WITHDRAWABLE_DEPOSIT,
+                self::TYPE_NON_WITHDRAWABLE_EXPENSE
+            ]);
+    }
+
     public static function queryForEntriesRelevantForBonusBalance(): Builder
     {
         return self::queryForEntriesRelevantForBalance()
@@ -195,6 +212,12 @@ class UserLedgerEntry extends Model
     public static function getWalletBalanceForAllUsers(): int
     {
         return (int)self::queryForEntriesRelevantForWalletBalance()
+            ->sum('amount');
+    }
+
+    public static function getWithdrawableBalanceForAllUsers(): int
+    {
+        return (int)self::queryForEntriesRelevantForWithdrawableBalance()
             ->sum('amount');
     }
 
@@ -220,6 +243,16 @@ class UserLedgerEntry extends Model
     public static function getWalletBalanceByUserId(int $userId): int
     {
         return (int)self::queryForEntriesRelevantForWalletBalance()
+            ->where('user_id', $userId)
+            ->sum('amount');
+    }
+
+    /**
+     * @deprecated
+     */
+    public static function getWithdrawableBalanceByUserId(int $userId): int
+    {
+        return (int)self::queryForEntriesRelevantForWithdrawableBalance()
             ->where('user_id', $userId)
             ->sum('amount');
     }
@@ -280,7 +313,7 @@ class UserLedgerEntry extends Model
     public static function removeProcessingExpenses(): void
     {
         self::where('status', self::STATUS_PROCESSING)
-            ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE])
+            ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_NON_WITHDRAWABLE_EXPENSE, self::TYPE_BONUS_EXPENSE])
             ->delete();
     }
 
@@ -301,7 +334,7 @@ class UserLedgerEntry extends Model
     private static function blockedEntries(): Builder
     {
         return self::where('status', self::STATUS_BLOCKED)
-            ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE]);
+            ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_NON_WITHDRAWABLE_EXPENSE, self::TYPE_BONUS_EXPENSE]);
     }
 
     private static function blockedEntriesByUserId(int $userId): Builder
@@ -319,9 +352,16 @@ class UserLedgerEntry extends Model
 
         $user = User::findOrFail($userId);
         $bonusableAmount = (int)max(min($total, $maxBonus, $user->getBonusBalance()), 0);
-        $payableAmount = (int)max(min($total - $bonusableAmount, $user->getWalletBalance()), 0);
+        $nonWithdrawableAmount = (int)max(
+            min($total - $bonusableAmount, $user->getWalletBalance() - $user->getWithdrawableBalance()),
+            0
+        );
+        $withdrawableAmount = (int)max(
+            min($total - $nonWithdrawableAmount - $bonusableAmount, $user->getWalletBalance()),
+            0
+        );
 
-        if ($total > $bonusableAmount + $payableAmount) {
+        if ($total > $bonusableAmount + $nonWithdrawableAmount + $withdrawableAmount) {
             throw new InvalidArgumentException(
                 sprintf('Insufficient funds for User [%s] when adding ad expense.', $userId)
             );
@@ -329,7 +369,8 @@ class UserLedgerEntry extends Model
 
         $entries = [
             self::insertAdExpense($status, $userId, $bonusableAmount, self::TYPE_BONUS_EXPENSE),
-            self::insertAdExpense($status, $userId, $payableAmount, self::TYPE_AD_EXPENSE),
+            self::insertAdExpense($status, $userId, $nonWithdrawableAmount, self::TYPE_NON_WITHDRAWABLE_EXPENSE),
+            self::insertAdExpense($status, $userId, $withdrawableAmount, self::TYPE_AD_EXPENSE),
         ];
 
         if (
@@ -340,12 +381,12 @@ class UserLedgerEntry extends Model
         ) {
             $entries[] = self::insertUserRefund(
                 $refLink->user_id,
-                $refLink->calculateRefund($payableAmount),
+                $refLink->calculateRefund($nonWithdrawableAmount + $withdrawableAmount),
                 $refLink
             );
             $entries[] = self::insertUserBonus(
                 $userId,
-                $refLink->calculateBonus($payableAmount),
+                $refLink->calculateBonus($nonWithdrawableAmount + $withdrawableAmount),
                 $refLink
             );
         }

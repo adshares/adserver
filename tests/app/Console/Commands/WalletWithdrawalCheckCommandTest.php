@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -60,6 +60,7 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
             'wallet_address' => WalletAddress::fromString('bsc:0xcfcecfe2bd2fed07a9145222e8a7ad9cf1ccd22a'),
             'email' => null,
         ]);
+
         UserLedgerEntry::factory()->create([
             'user_id' => $user1->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
@@ -68,7 +69,12 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
         UserLedgerEntry::factory()->create([
             'user_id' => $user2->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
-            'amount' => 1000
+            'amount' => 600
+        ]);
+        UserLedgerEntry::factory()->create([
+            'user_id' => $user2->id,
+            'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT,
+            'amount' => 400
         ]);
         UserLedgerEntry::factory()->create([
             'user_id' => $user2->id,
@@ -78,6 +84,11 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
         UserLedgerEntry::factory()->create([
             'user_id' => $user3->id,
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
+            'amount' => 100
+        ]);
+        UserLedgerEntry::factory()->create([
+            'user_id' => $user3->id,
+            'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT,
             'amount' => 100
         ]);
         UserLedgerEntry::factory()->create([
@@ -90,23 +101,49 @@ class WalletWithdrawalCheckCommandTest extends ConsoleTestCase
             'type' => UserLedgerEntry::TYPE_AD_INCOME,
             'amount' => 500
         ]);
+
         $this->assertEquals(1000, $user1->getBalance());
         $this->assertEquals(1000, $user1->getWalletBalance());
+        $this->assertEquals(1000, $user1->getWithdrawableBalance());
+        $this->assertEquals(0, $user1->getBonusBalance());
+
         $this->assertEquals(1100, $user2->getBalance());
         $this->assertEquals(1000, $user2->getWalletBalance());
-        $this->assertEquals(200, $user3->getBalance());
-        $this->assertEquals(100, $user3->getWalletBalance());
+        $this->assertEquals(600, $user2->getWithdrawableBalance());
+        $this->assertEquals(100, $user2->getBonusBalance());
+
+        $this->assertEquals(300, $user3->getBalance());
+        $this->assertEquals(200, $user3->getWalletBalance());
+        $this->assertEquals(100, $user3->getWithdrawableBalance());
+        $this->assertEquals(100, $user3->getBonusBalance());
+
         $this->assertEquals(500, $user4->getBalance());
         $this->assertEquals(500, $user4->getWalletBalance());
+        $this->assertEquals(500, $user4->getWithdrawableBalance());
+        $this->assertEquals(0, $user4->getBonusBalance());
+
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
+
         $this->assertEquals(1000, $user1->getBalance());
         $this->assertEquals(1000, $user1->getWalletBalance());
-        $this->assertEquals(100, $user2->getBalance());
-        $this->assertEquals(0, $user2->getWalletBalance());
-        $this->assertEquals(200, $user3->getBalance());
-        $this->assertEquals(100, $user3->getWalletBalance());
+        $this->assertEquals(1000, $user1->getWithdrawableBalance());
+        $this->assertEquals(0, $user1->getBonusBalance());
+
+        $this->assertEquals(500, $user2->getBalance());
+        $this->assertEquals(400, $user2->getWalletBalance());
+        $this->assertEquals(0, $user2->getWithdrawableBalance());
+        $this->assertEquals(100, $user2->getBonusBalance());
+
+        $this->assertEquals(300, $user3->getBalance());
+        $this->assertEquals(200, $user3->getWalletBalance());
+        $this->assertEquals(100, $user3->getWithdrawableBalance());
+        $this->assertEquals(100, $user3->getBonusBalance());
+
         $this->assertEquals(0, $user4->getBalance());
         $this->assertEquals(0, $user4->getWalletBalance());
+        $this->assertEquals(0, $user4->getWithdrawableBalance());
+        $this->assertEquals(0, $user4->getBonusBalance());
+
         Queue::assertPushed(AdsSendOne::class, 2);
         Mail::assertQueued(WithdrawalSuccess::class, 1);
     }
