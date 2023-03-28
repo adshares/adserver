@@ -409,7 +409,7 @@ class SupplyController extends Controller
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
-        if (!config('app.allow_zone_in_iframe') && ($decodedQueryData['page']['frame'] ?? false)) {
+        if (!config('app.allow_zone_in_iframe') && $this->isAnyZoneInFrame($decodedQueryData)) {
             throw new BadRequestHttpException('Cannot run in iframe');
         }
         if (
@@ -419,6 +419,22 @@ class SupplyController extends Controller
         ) {
             throw new BadRequestHttpException('Bad request.');
         }
+    }
+
+    private function isAnyZoneInFrame(array $decodedQueryData): bool
+    {
+        if ($decodedQueryData['page']['frame'] ?? false) {
+            // legacy code, should be deleted when legacyFind will be removed
+            return true;
+        }
+        if (isset($decodedQueryData['placements'])) {
+            foreach ($decodedQueryData['placements'] as $placement) {
+                if (!($placement['options']['topframe'] ?? true)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private function extractZones(array $decodedQueryData): array
@@ -1123,7 +1139,6 @@ class SupplyController extends Controller
 
     private static function mapFindInput(array $input): array
     {
-        $isPageFrame = false;
         $context = $input['context'];
         $mapped = [
             'page' => [
@@ -1145,7 +1160,6 @@ class SupplyController extends Controller
             ];
             if (isset($placement['topframe'])) {
                 $options['topframe'] = $placement['topframe'];
-                $isPageFrame |= !$placement['topframe'];
             }
             $mapped['placements'][] = [
                 'id' => $placement['id'],
@@ -1154,9 +1168,6 @@ class SupplyController extends Controller
             ];
         }
 
-        if ($isPageFrame) {
-            $mapped['page']['frame'] = true;
-        }
         return $mapped;
     }
 
