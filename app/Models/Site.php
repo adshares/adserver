@@ -108,7 +108,6 @@ class Site extends Model
     ];
 
     private const ALL = '*';
-    private const REJECT_REASON_ON_REJECTED_DOMAIN = 'Domain rejected';
 
     public static $rules = [
         'name' => 'required|max:64',
@@ -241,7 +240,7 @@ class Site extends Model
 
     public static function fetchByPublicId(string $publicId): ?self
     {
-        return self::where('uuid', hex2bin($publicId))->first();
+        return (new self())->where('uuid', hex2bin($publicId))->first();
     }
 
     public static function fetchSite(int $userId, string $domain): ?Site

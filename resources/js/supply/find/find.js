@@ -74,8 +74,8 @@ var encodeZones = function (zone_data) {
 var insertedElements = [];
 var logInsertedElement = function(el) {
     if (insertedElements.length === 0) {
-        addListener(window, 'beforeunload', function (event) {
-            var x;
+        addListener(window, 'beforeunload', function (_event) {
+            let x;
             while (x = insertedElements.pop()) {
                 x.parentElement && x.parentElement.removeChild(x);
             }
@@ -664,12 +664,13 @@ var isBannerPop = function (banner) {
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
-            var context = params.shift()
-            var placements = params.map((p, index) => ({
+            const context = params.shift()
+            const placements = params.map((p, index) => ({
                 id: index.toString(),
                 placementId: p.zone,
+                topframe: !context.frame,
             }));
-            var data = {
+            const data = {
                 context: {
                     iid: context.iid,
                     metamask: !!(context.metamask || 0),
@@ -677,8 +678,8 @@ domReady(function () {
                 },
                 placements: placements,
             };
-            var url = serverOrigin + '/supply/find';
-            var options = {
+            const url = serverOrigin + '/supply/find';
+            const options = {
                 json: true,
                 method: 'post',
                 post: data,
@@ -884,10 +885,9 @@ var fetchBanner = function (banner, context, zone_options) {
     fetchURL(banner.serveUrl, {
         binary: true,
         noCredentials: true
-    }).then(function (data, xhr) {
+    }).then(function (data, _xhr) {
         context.cid = getCid();
         context.page.zone = banner.placementId;
-        const contextParam = encodeZones([context.page]);
         context.click_url = addUrlParam(
             banner.clickUrl,
             {
