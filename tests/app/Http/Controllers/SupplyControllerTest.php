@@ -1207,7 +1207,7 @@ final class SupplyControllerTest extends TestCase
             new FoundBanners([
                 [
                     'id' => $networkBanner->uuid,
-                    'demandId' => $networkBanner->demand_banner_id,
+                    'demand_id' => $networkBanner->demand_banner_id,
                     'publisher_id' => '0123456879ABCDEF0123456879ABCDEF',
                     'zone_id' => $zone->uuid,
                     'pay_from' => '0001-00000001-8B4E',

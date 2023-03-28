@@ -297,7 +297,7 @@ class GuzzleAdSelectClient implements AdSelect
                     $campaign = $banner->campaign;
                     $data = [
                         'id'            => $bannerId,
-                        'demandId'      => $banner->demand_banner_id,
+                        'demand_id'     => $banner->demand_banner_id,
                         'publisher_id'  => $zone->site->user->uuid,
                         'zone_id'       => $zone->uuid,
                         'pay_from'      => $campaign->source_address,

@@ -66,7 +66,7 @@ SQL;
             if (null !== $foundBanner && $accountAddress === $foundBanner['pay_from']) {
                 $openRtbBanners[(string)$index] = [
                     'request_id' => (string)$index,
-                    'creative_id' => $foundBanner['demandId'],
+                    'creative_id' => $foundBanner['demand_id'],
                 ];
             }
         }

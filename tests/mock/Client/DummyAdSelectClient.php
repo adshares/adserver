@@ -86,7 +86,7 @@ final class DummyAdSelectClient implements AdSelect
                 $zoneId = $zoneData[$bannerId]['zone_id'];
                 $banners[] = [
                     'id' => $bannerId,
-                    'demandId' => $banner->demand_banner_id,
+                    'demand_id' => $banner->demand_banner_id,
                     'publisher_id' => $zoneData[$bannerId]['publisher_id'],
                     'zone_id' => $zoneId,
                     'pay_from' => $campaign->source_address,
