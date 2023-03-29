@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,6 +33,7 @@ class NetworkBannerFactory extends Factory
     {
         return [
             'uuid' => $this->faker->uuid,
+            'demand_banner_id' => $this->faker->uuid,
             'network_campaign_id' => $this->faker->randomDigit(),
             'serve_url' => $this->faker->url,
             'view_url' => $this->faker->url,

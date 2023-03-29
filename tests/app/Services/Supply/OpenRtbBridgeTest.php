@@ -55,6 +55,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Closure;
 use DateTime;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -93,6 +94,49 @@ class OpenRtbBridgeTest extends TestCase
         $context = new ImpressionContext([], [], []);
 
         $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+
+        self::assertCount(1, $foundBanners);
+        $foundBanner = $foundBanners->first();
+        self::assertEquals('3', $foundBanner['request_id']);
+        self::assertStringContainsString('extid=1', $foundBanner['click_url']);
+        self::assertStringContainsString('extid=1', $foundBanner['view_url']);
+        Http::assertSentCount(1);
+    }
+
+    public function testReplaceOpenRtbBannersWithOptions(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(function (Request $request) {
+            $request = json_decode($request->body(), true)['requests'][0];
+            foreach (['mimes', 'topframe'] as $key) {
+                self::assertArrayHasKey($key, $request);
+            }
+            self::assertTrue($request['topframe']);
+            self::assertEquals(['image/jpeg', 'video/mp4'], $request['mimes']);
+            return Http::response([
+                [
+                    'ext_id' => '1',
+                    'request_id' => '0',
+                    'serve_url' => 'https://example.com/serve/1',
+                ]
+            ]);
+        });
+        $initiallyFoundBanners = $this->getFoundBanners();
+        $context = new ImpressionContext([], [], []);
+        $zones = [
+            [
+                'id' => '0',
+                'placementId' => $initiallyFoundBanners->first()['zone_id'],
+                'options' => [
+                    'banner_mime' => ['image/jpeg', 'video/mp4'],
+                    'banner_type' => ['image', 'video'],
+                    'cpa_only' => true,
+                    'topframe' => true,
+                ],
+            ]
+        ];
+
+        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context, $zones);
 
         self::assertCount(1, $foundBanners);
         $foundBanner = $foundBanners->first();

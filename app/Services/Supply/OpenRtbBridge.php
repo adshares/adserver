@@ -58,16 +58,22 @@ SQL;
             && null !== config('app.open_rtb_bridge_url');
     }
 
-    public function replaceOpenRtbBanners(FoundBanners $foundBanners, ImpressionContext $context): FoundBanners
-    {
+    public function replaceOpenRtbBanners(
+        FoundBanners $foundBanners,
+        ImpressionContext $context,
+        array $zones = [],
+    ): FoundBanners {
         $accountAddress = config('app.open_rtb_bridge_account_address');
         $openRtbBanners = [];
         foreach ($foundBanners as $index => $foundBanner) {
             if (null !== $foundBanner && $accountAddress === $foundBanner['pay_from']) {
-                $openRtbBanners[(string)$index] = [
-                    'request_id' => (string)$index,
-                    'creative_id' => $foundBanner['demand_id'],
-                ];
+                $openRtbBanners[(string)$index] = array_merge(
+                    $this->extractZoneOptions($zones, $foundBanner['zone_id']),
+                    [
+                        'request_id' => (string)$index,
+                        'creative_id' => $foundBanner['demand_id'],
+                    ]
+                );
             }
         }
         if (empty($openRtbBanners)) {
@@ -294,6 +300,25 @@ SQL;
             }
         }
         return true;
+    }
+
+    private function extractZoneOptions(array $zones, string $zoneId): array
+    {
+        foreach ($zones as $zone) {
+            $placementId = $zone['placementId'] ?? (string)$zone['zone'];// Key 'zone' is for legacy search
+            if ($placementId === $zoneId) {
+                $zoneOptions = $zone['options'] ?? [];
+                $options = [];
+                if (isset($zoneOptions['banner_mime'])) {
+                    $options['mimes'] = $zoneOptions['banner_mime'];
+                }
+                if (isset($zoneOptions['topframe'])) {
+                    $options['topframe'] = $zoneOptions['topframe'];
+                }
+                return $options;
+            }
+        }
+        return [];
     }
 
     public function getEventRedirectUrl(string $url): ?string

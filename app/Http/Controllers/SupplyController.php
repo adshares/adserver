@@ -503,7 +503,7 @@ class SupplyController extends Controller
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionId);
         if (OpenRtbBridge::isActive()) {
-            $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($foundBanners, $context);
+            $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($foundBanners, $context, $zones);
         }
 
         if ($foundBanners->exists(fn($key, $element) => null !== $element)) {
