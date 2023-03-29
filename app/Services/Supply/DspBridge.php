@@ -45,7 +45,7 @@ class DspBridge
 {
     private const PAYMENT_REPORT_READY_STATUS = 'done';
     private const PAYMENTS_PATH = '/payment-reports';
-    private const SERVE_PATH = '/serve';
+    private const BID_PATH = '/bid';
     private const SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT = <<<SQL
 SELECT SUM(total_amount) AS total_amount
 FROM network_case_payments
@@ -81,7 +81,7 @@ SQL;
         }
         try {
             $response = Http::post(
-                config('app.dsp_bridge_url') . self::SERVE_PATH,
+                config('app.dsp_bridge_url') . self::BID_PATH,
                 [
                     'context' => $context->toArray(),
                     'requests' => $bridgeBanners,

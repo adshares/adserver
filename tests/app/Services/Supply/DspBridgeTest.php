@@ -82,7 +82,7 @@ class DspBridgeTest extends TestCase
     {
         Http::preventStrayRequests();
         Http::fake([
-            'example.com/serve' => Http::response([
+            'example.com/bid' => Http::response([
                 [
                     'ext_id' => '1',
                     'request_id' => '0',
@@ -149,7 +149,7 @@ class DspBridgeTest extends TestCase
     public function testReplaceBridgeBannersWhileEmptyResponse(): void
     {
         Http::preventStrayRequests();
-        Http::fake(['example.com/serve' => Http::response([])]);
+        Http::fake(['example.com/bid' => Http::response([])]);
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 
@@ -180,7 +180,7 @@ class DspBridgeTest extends TestCase
     public function testReplaceBridgeBannersWhileInvalidStatus(): void
     {
         Http::preventStrayRequests();
-        Http::fake(['example.com/serve' => Http::response(status: Response::HTTP_NOT_FOUND)]);
+        Http::fake(['example.com/bid' => Http::response(status: Response::HTTP_NOT_FOUND)]);
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 
@@ -209,9 +209,7 @@ class DspBridgeTest extends TestCase
     public function testReplaceBridgeBannersWhileInvalidResponse(mixed $response): void
     {
         Http::preventStrayRequests();
-        Http::fake([
-            'example.com/serve' => Http::response($response),
-        ]);
+        Http::fake(['example.com/bid' => Http::response($response)]);
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 

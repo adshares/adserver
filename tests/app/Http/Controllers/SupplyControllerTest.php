@@ -293,7 +293,7 @@ final class SupplyControllerTest extends TestCase
     {
         Http::preventStrayRequests();
         Http::fake([
-            'example.com/serve' => Http::response([[
+            'example.com/bid' => Http::response([[
                 'request_id' => '0',
                 'ext_id' => '1',
                 'serve_url' => 'https://example.com/serve/1',
@@ -313,7 +313,7 @@ final class SupplyControllerTest extends TestCase
     public function testFindDspBridgeWhileEmptyResponse(): void
     {
         Http::preventStrayRequests();
-        Http::fake(['example.com/serve' => Http::response([])]);
+        Http::fake(['example.com/bid' => Http::response([])]);
         $data = $this->initDspBridge();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
