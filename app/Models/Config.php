@@ -104,6 +104,8 @@ class Config extends Model
     public const CURRENCY = 'currency';
     public const DEFAULT_USER_ROLES = 'default-user-roles';
     public const DISPLAY_CURRENCY = 'display-currency';
+    public const DSP_BRIDGE_ACCOUNT_ADDRESS = 'dsp-bridge-account-address';
+    public const DSP_BRIDGE_URL = 'dsp-bridge-url';
     public const EMAIL_VERIFICATION_REQUIRED = 'email-verification-required';
     public const EXCHANGE_API_KEY = 'exchange-api-key';
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
@@ -150,8 +152,6 @@ class Config extends Model
     public const NOW_PAYMENTS_IPN_SECRET = 'now-payments-ipn-secret';
     public const NOW_PAYMENTS_MAX_AMOUNT = 'now-payments-max-amount';
     public const NOW_PAYMENTS_MIN_AMOUNT = 'now-payments-min-amount';
-    public const OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS = 'open-rtb-bridge-account-address';
-    public const OPEN_RTB_BRIDGE_URL = 'open-rtb-bridge-url';
     public const OPERATOR_RX_FEE = 'payment-rx-fee';
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
@@ -531,8 +531,8 @@ class Config extends Model
             self::NOW_PAYMENTS_IPN_SECRET => '',
             self::NOW_PAYMENTS_MAX_AMOUNT => 1000,
             self::NOW_PAYMENTS_MIN_AMOUNT => 25,
-            self::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => null,
-            self::OPEN_RTB_BRIDGE_URL => null,
+            self::DSP_BRIDGE_ACCOUNT_ADDRESS => null,
+            self::DSP_BRIDGE_URL => null,
             self::OPERATOR_RX_FEE => 0.01,
             self::OPERATOR_TX_FEE => 0.01,
             self::PUBLISHER_APPLY_FORM_URL => null,

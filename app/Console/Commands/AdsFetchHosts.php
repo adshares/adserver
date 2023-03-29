@@ -31,7 +31,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Services\Supply\OpenRtbBridgeRegistrar;
+use Adshares\Adserver\Services\Supply\DspBridgeRegistrar;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\AppMode;
@@ -60,7 +60,7 @@ class AdsFetchHosts extends BaseCommand
         Locker $locker,
         private readonly AdsClient $adsClient,
         private readonly DemandClient $client,
-        private readonly OpenRtbBridgeRegistrar $openRtbProviderRegistrar,
+        private readonly DspBridgeRegistrar $dspBridgeRegistrar,
     ) {
         parent::__construct($locker);
     }
@@ -89,7 +89,7 @@ class AdsFetchHosts extends BaseCommand
         }
         $progressBar->finish();
         $this->newLine();
-        if ($this->openRtbProviderRegistrar->registerAsNetworkHost()) {
+        if ($this->dspBridgeRegistrar->registerAsNetworkHost()) {
             $found++;
         }
 

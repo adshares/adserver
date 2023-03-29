@@ -289,7 +289,7 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testFindOpenRtb(): void
+    public function testFindDspBridge(): void
     {
         Http::preventStrayRequests();
         Http::fake([
@@ -299,7 +299,7 @@ final class SupplyControllerTest extends TestCase
                 'serve_url' => 'https://example.com/serve/1',
             ]]),
         ]);
-        $data = $this->initOpenRtb();
+        $data = $this->initDspBridge();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -310,11 +310,11 @@ final class SupplyControllerTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function testFindOpenRtbWhileEmptyResponse(): void
+    public function testFindDspBridgeWhileEmptyResponse(): void
     {
         Http::preventStrayRequests();
         Http::fake(['example.com/serve' => Http::response([])]);
-        $data = $this->initOpenRtb();
+        $data = $this->initDspBridge();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -1322,11 +1322,11 @@ final class SupplyControllerTest extends TestCase
         $this->instance(AdUser::class, $adUser);
     }
 
-    private function initOpenRtb(): array
+    private function initDspBridge(): array
     {
         Config::updateAdminSettings([
-            Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
-            Config::OPEN_RTB_BRIDGE_URL => 'https://example.com',
+            Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::DSP_BRIDGE_URL => 'https://example.com',
         ]);
         NetworkHost::factory()->create([
             'address' => '0001-00000001-8B4E',

@@ -29,7 +29,7 @@ use Adshares\Ads\Response\GetBroadcastResponse;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Services\Supply\OpenRtbBridgeRegistrar;
+use Adshares\Adserver\Services\Supply\DspBridgeRegistrar;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Config\AppMode;
@@ -242,7 +242,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
     }
 
-    public function testRegisterOpenRtbProvider(): void
+    public function testRegisterDspBridge(): void
     {
         $this->app->bind(
             AdsClient::class,
@@ -254,9 +254,9 @@ class AdsFetchHostsTest extends ConsoleTestCase
             }
         );
         $this->app->bind(
-            OpenRtbBridgeRegistrar::class,
+            DspBridgeRegistrar::class,
             function () {
-                $mock = self::createMock(OpenRtbBridgeRegistrar::class);
+                $mock = self::createMock(DspBridgeRegistrar::class);
                 $mock->method('registerAsNetworkHost')
                     ->will($this->returnCallback(function () {
                         NetworkHost::factory()->create();
@@ -266,8 +266,8 @@ class AdsFetchHostsTest extends ConsoleTestCase
             }
         );
         Config::updateAdminSettings([
-            Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
-            Config::OPEN_RTB_BRIDGE_URL => 'https://example.com',
+            Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::DSP_BRIDGE_URL => 'https://example.com',
         ]);
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);

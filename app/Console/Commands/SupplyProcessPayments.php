@@ -32,7 +32,7 @@ use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Adserver\Services\Dto\ProcessedPaymentsMetaData;
 use Adshares\Adserver\Services\LicenseFeeSender;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
-use Adshares\Adserver\Services\Supply\OpenRtbBridge;
+use Adshares\Adserver\Services\Supply\DspBridge;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -101,11 +101,11 @@ SQL;
             self::COLUMN_ADS_PAYMENT_ID,
         );
 
-        if (OpenRtbBridge::isActive()) {
-            $openRtbBridge = new OpenRtbBridge();
-            $openRtbBridge->fetchAndStorePayments();
+        if (DspBridge::isActive()) {
+            $bridge = new DspBridge();
+            $bridge->fetchAndStorePayments();
 
-            $processedBridgePaymentMetaData = $openRtbBridge->processPayments(
+            $processedBridgePaymentMetaData = $bridge->processPayments(
                 $this->demandClient,
                 $this->paymentDetailsProcessor,
                 (int)$this->option('chunkSize'),

@@ -32,10 +32,10 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
-class OpenRtbBridgeRegistrar
+class DspBridgeRegistrar
 {
     private const INFO_JSON_PATH = '/info.json';
-    private const OPEN_RTB_MODULE_NAME = 'openrtb';
+    private const DSP_BRIDGE_MODULE_NAME = 'dsp-bridge';
 
     public function __construct(private readonly DemandClient $demandClient)
     {
@@ -44,38 +44,38 @@ class OpenRtbBridgeRegistrar
     public function registerAsNetworkHost(): bool
     {
         if (
-            null === ($accountAddress = config('app.open_rtb_bridge_account_address'))
-            || null === ($url = config('app.open_rtb_bridge_url'))
+            null === ($accountAddress = config('app.dsp_bridge_account_address'))
+            || null === ($url = config('app.dsp_bridge_url'))
         ) {
             return false;
         }
         $url = $url . self::INFO_JSON_PATH;
 
         if (!AccountId::isValid($accountAddress, true)) {
-            Log::error('OpenRTB provider registration failed: configured account address is not valid');
+            Log::error('DSP bridge provider registration failed: configured account address is not valid');
             return false;
         }
         try {
             $infoUrl = new Url($url);
         } catch (RuntimeException $exception) {
-            Log::error(sprintf('OpenRTB provider registration failed: %s', $exception->getMessage()));
+            Log::error(sprintf('DSP bridge provider registration failed: %s', $exception->getMessage()));
             return false;
         }
 
         try {
             $info = $this->demandClient->fetchInfo($infoUrl);
         } catch (UnexpectedClientResponseException $exception) {
-            Log::error(sprintf('OpenRTB provider registration failed: %s', $exception->getMessage()));
+            Log::error(sprintf('DSP bridge provider registration failed: %s', $exception->getMessage()));
             return false;
         }
-        if ($info->getModule() !== self::OPEN_RTB_MODULE_NAME) {
+        if ($info->getModule() !== self::DSP_BRIDGE_MODULE_NAME) {
             Log::error(
-                sprintf('OpenRTB provider registration failed: Info for invalid module: %s', $info->getModule())
+                sprintf('DSP bridge provider registration failed: Info for invalid module: %s', $info->getModule())
             );
             return false;
         }
         if ($info->getAdsAddress() !== $accountAddress) {
-            Log::error('OpenRTB provider registration failed: Info address does not match');
+            Log::error('DSP bridge provider registration failed: Info address does not match');
             return false;
         }
         $host = NetworkHost::registerHost($accountAddress, $url, $info, new DateTimeImmutable());

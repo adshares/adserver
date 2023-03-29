@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Tests\Services\Supply;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Services\Supply\OpenRtbBridgeRegistrar;
+use Adshares\Adserver\Services\Supply\DspBridgeRegistrar;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -38,12 +38,12 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class OpenRtbBridgeRegistrarTest extends TestCase
+class DspBridgeRegistrarTest extends TestCase
 {
     public function testRegisterAsNetworkHost(): void
     {
-        $this->initOpenRtb();
-        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
+        $this->initDspBridge();
+        $registrar = new DspBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -56,10 +56,10 @@ class OpenRtbBridgeRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidResponse(): void
     {
-        $this->initOpenRtb();
+        $this->initDspBridge();
         $clientMock = self::createMock(DemandClient::class);
         $clientMock->method('fetchInfo')->willThrowException(new UnexpectedClientResponseException('test-exception'));
-        $registrar = new OpenRtbBridgeRegistrar($clientMock);
+        $registrar = new DspBridgeRegistrar($clientMock);
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -68,7 +68,7 @@ class OpenRtbBridgeRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileNoConfiguration(): void
     {
-        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
+        $registrar = new DspBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -77,8 +77,8 @@ class OpenRtbBridgeRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationAddress(): void
     {
-        $this->initOpenRtb([Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004']);
-        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
+        $this->initDspBridge([Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004']);
+        $registrar = new DspBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -87,8 +87,8 @@ class OpenRtbBridgeRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInvalidConfigurationUrl(): void
     {
-        $this->initOpenRtb([Config::OPEN_RTB_BRIDGE_URL => 'example.com']);
-        $registrar = new OpenRtbBridgeRegistrar($this->getDemandClient());
+        $this->initDspBridge([Config::DSP_BRIDGE_URL => 'example.com']);
+        $registrar = new DspBridgeRegistrar($this->getDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -97,8 +97,8 @@ class OpenRtbBridgeRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInfoForAdserver(): void
     {
-        $this->initOpenRtb();
-        $registrar = new OpenRtbBridgeRegistrar(new DummyDemandClient());
+        $this->initDspBridge();
+        $registrar = new DspBridgeRegistrar(new DummyDemandClient());
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -111,26 +111,8 @@ class OpenRtbBridgeRegistrarTest extends TestCase
 
     public function testRegisterAsNetworkHostFailWhileInfoForDifferentAddress(): void
     {
-        $this->initOpenRtb();
-        $info = new Info(
-            'openrtb',
-            'OpenRTB Provider ',
-            '0.1.0',
-            new Url('https://app.example.com'),
-            new Url('https://panel.example.com'),
-            new Url('https://example.com'),
-            new Url('https://example.com/privacy'),
-            new Url('https://example.com/terms'),
-            new Url('https://example.com/inventory'),
-            new AccountId('0001-00000005-CBCA'),
-            null,
-            [Info::CAPABILITY_ADVERTISER],
-            RegistrationMode::PRIVATE,
-            AppMode::OPERATIONAL
-        );
-        $clientMock = self::createMock(DemandClient::class);
-        $clientMock->method('fetchInfo')->willReturn($info);
-        $registrar = new OpenRtbBridgeRegistrar($clientMock);
+        $this->initDspBridge();
+        $registrar = new DspBridgeRegistrar($this->getDemandClient('0001-00000005-CBCA'));
 
         $result = $registrar->registerAsNetworkHost();
 
@@ -141,11 +123,11 @@ class OpenRtbBridgeRegistrarTest extends TestCase
         ]);
     }
 
-    private function getDemandClient(): MockObject|DemandClient
+    private function getDemandClient(string $address = '0001-00000004-DBEB'): MockObject|DemandClient
     {
         $info = new Info(
-            'openrtb',
-            'OpenRTB Provider ',
+            'dsp-bridge',
+            'DSP bridge',
             '0.1.0',
             new Url('https://app.example.com'),
             new Url('https://panel.example.com'),
@@ -153,7 +135,7 @@ class OpenRtbBridgeRegistrarTest extends TestCase
             new Url('https://example.com/privacy'),
             new Url('https://example.com/terms'),
             new Url('https://example.com/inventory'),
-            new AccountId('0001-00000004-DBEB'),
+            new AccountId($address),
             null,
             [Info::CAPABILITY_ADVERTISER],
             RegistrationMode::PRIVATE,
@@ -164,12 +146,12 @@ class OpenRtbBridgeRegistrarTest extends TestCase
         return $clientMock;
     }
 
-    private function initOpenRtb(array $settings = []): void
+    private function initDspBridge(array $settings = []): void
     {
         $mergedSettings = array_merge(
             [
-                Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
-                Config::OPEN_RTB_BRIDGE_URL => 'https://example.com',
+                Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+                Config::DSP_BRIDGE_URL => 'https://example.com',
             ],
             $settings,
         );

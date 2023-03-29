@@ -41,7 +41,7 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Throwable;
 
-class OpenRtbBridge
+class DspBridge
 {
     private const PAYMENT_REPORT_READY_STATUS = 'done';
     private const PAYMENTS_PATH = '/payment-reports';
@@ -54,20 +54,20 @@ SQL;
 
     public static function isActive(): bool
     {
-        return null !== config('app.open_rtb_bridge_account_address')
-            && null !== config('app.open_rtb_bridge_url');
+        return null !== config('app.dsp_bridge_account_address')
+            && null !== config('app.dsp_bridge_url');
     }
 
-    public function replaceOpenRtbBanners(
+    public function replaceBridgeBanners(
         FoundBanners $foundBanners,
         ImpressionContext $context,
         array $zones = [],
     ): FoundBanners {
-        $accountAddress = config('app.open_rtb_bridge_account_address');
-        $openRtbBanners = [];
+        $accountAddress = config('app.dsp_bridge_account_address');
+        $bridgeBanners = [];
         foreach ($foundBanners as $index => $foundBanner) {
             if (null !== $foundBanner && $accountAddress === $foundBanner['pay_from']) {
-                $openRtbBanners[(string)$index] = array_merge(
+                $bridgeBanners[(string)$index] = array_merge(
                     $this->extractZoneOptions($zones, $foundBanner['zone_id']),
                     [
                         'request_id' => (string)$index,
@@ -76,20 +76,20 @@ SQL;
                 );
             }
         }
-        if (empty($openRtbBanners)) {
+        if (empty($bridgeBanners)) {
             return $foundBanners;
         }
         try {
             $response = Http::post(
-                config('app.open_rtb_bridge_url') . self::SERVE_PATH,
+                config('app.dsp_bridge_url') . self::SERVE_PATH,
                 [
                     'context' => $context->toArray(),
-                    'requests' => $openRtbBanners,
+                    'requests' => $bridgeBanners,
                 ],
             );
             if (
                 BaseResponse::HTTP_OK === $response->status()
-                && $this->isOpenRtbAuctionResponseValid($content = $response->json(), $openRtbBanners)
+                && $this->isAuctionResponseValid($content = $response->json(), $bridgeBanners)
             ) {
                 foreach ($content as $entry) {
                     $externalId = $entry['ext_id'];
@@ -103,13 +103,13 @@ SQL;
                     }
                     $foundBanner['serve_url'] = $entry['serve_url'];
                     $foundBanners->set((int)$entry['request_id'], $foundBanner);
-                    unset($openRtbBanners[$entry['request_id']]);
+                    unset($bridgeBanners[$entry['request_id']]);
                 }
             }
         } catch (HttpClientException $exception) {
-            Log::error(sprintf('Replacing OpenRtb banner failed: %s', $exception->getMessage()));
+            Log::error(sprintf('Replacing bridge banner failed: %s', $exception->getMessage()));
         }
-        foreach ($openRtbBanners as $index => $serveUrl) {
+        foreach ($bridgeBanners as $index => $serveUrl) {
             $foundBanners->set($index, null);
         }
         return $foundBanners;
@@ -118,7 +118,7 @@ SQL;
     public function fetchAndStorePayments(): void
     {
         try {
-            $response = Http::get(config('app.open_rtb_bridge_url') . self::PAYMENTS_PATH);
+            $response = Http::get(config('app.dsp_bridge_url') . self::PAYMENTS_PATH);
             if (
                 BaseResponse::HTTP_OK === $response->status()
                 && $this->isPaymentResponseValid($content = $response->json())
@@ -127,7 +127,7 @@ SQL;
                     return;
                 }
                 $paymentIds = array_map(fn(array $entry) => $entry['id'], $content);
-                $accountAddress = config('app.open_rtb_bridge_account_address');
+                $accountAddress = config('app.dsp_bridge_account_address');
                 $bridgePayments = BridgePayment::fetchByAddressAndPaymentIds($accountAddress, $paymentIds)
                     ->keyBy('payment_id');
                 foreach ($content as $entry) {
@@ -268,15 +268,15 @@ SQL;
         return true;
     }
 
-    private function isOpenRtbAuctionResponseValid(mixed $content, array $openBtbBanners): bool
+    private function isAuctionResponseValid(mixed $content, array $bridgeBanners): bool
     {
         if (!is_array($content)) {
-            Log::error('Invalid OpenRTB response: body is not an array');
+            Log::error('Invalid DSP bridge response: body is not an array');
             return false;
         }
         foreach ($content as $entry) {
             if (!is_array($entry)) {
-                Log::error('Invalid OpenRTB response: entry is not an array');
+                Log::error('Invalid DSP bridge response: entry is not an array');
                 return false;
             }
             $fields = [
@@ -286,16 +286,16 @@ SQL;
             ];
             foreach ($fields as $field) {
                 if (!isset($entry[$field])) {
-                    Log::error(sprintf('Invalid OpenRTB response: missing key %s', $field));
+                    Log::error(sprintf('Invalid DSP bridge response: missing key %s', $field));
                     return false;
                 }
                 if (!is_string($entry[$field])) {
-                    Log::error(sprintf('Invalid OpenRTB response: %s is not a string', $field));
+                    Log::error(sprintf('Invalid DSP bridge response: %s is not a string', $field));
                     return false;
                 }
             }
-            if (!array_key_exists($entry['request_id'], $openBtbBanners)) {
-                Log::error(sprintf('Invalid OpenRTB response: request %s is not known', $entry['request_id']));
+            if (!array_key_exists($entry['request_id'], $bridgeBanners)) {
+                Log::error(sprintf('Invalid DSP bridge response: request %s is not known', $entry['request_id']));
                 return false;
             }
         }

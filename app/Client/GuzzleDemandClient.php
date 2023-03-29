@@ -259,7 +259,7 @@ final class GuzzleDemandClient implements DemandClient
             'updated_at' => DateTime::createFromFormat(DateTimeInterface::ATOM, $data['updated_at']),
         ];
 
-        $isOpenRtbProvider = $sourceAddress === config('app.open_rtb_bridge_account_address');
+        $isDspBridgeProvider = $sourceAddress === config('app.dsp_bridge_account_address');
         $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
         $banners = [];
         $bannersInput = $data['creatives'] ?? $data['banners'];// legacy fallback, field 'banners' is deprecated
@@ -272,7 +272,7 @@ final class GuzzleDemandClient implements DemandClient
                 unset($banner['id']);
             }
 
-            $banner['classification'] = $isOpenRtbProvider
+            $banner['classification'] = $isDspBridgeProvider
                 ? self::flattenClassification($banner['classification'] ?? [])
                 : $this->validateAndMapClassification($banner);
             if ($this->missingRequiredClassifier($classifiersRequired, $banner['classification'])) {

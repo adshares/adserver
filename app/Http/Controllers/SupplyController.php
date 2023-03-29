@@ -35,7 +35,7 @@ use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
-use Adshares\Adserver\Services\Supply\OpenRtbBridge;
+use Adshares\Adserver\Services\Supply\DspBridge;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
@@ -502,8 +502,8 @@ class SupplyController extends Controller
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionId);
-        if (OpenRtbBridge::isActive()) {
-            $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($foundBanners, $context, $zones);
+        if (DspBridge::isActive()) {
+            $foundBanners = (new DspBridge())->replaceBridgeBanners($foundBanners, $context, $zones);
         }
 
         if ($foundBanners->exists(fn($key, $element) => null !== $element)) {
@@ -676,7 +676,7 @@ class SupplyController extends Controller
         }
 
         if ($isDspBridge) {
-            $redirectUrl = (new OpenRtbBridge())->getEventRedirectUrl($url)
+            $redirectUrl = (new DspBridge())->getEventRedirectUrl($url)
                 ?: route('why', ['bid' => $bannerId, 'cid' => $caseId]);
             $response = new RedirectResponse($redirectUrl);
         } else {
@@ -812,7 +812,7 @@ class SupplyController extends Controller
         }
 
         if ($isDspBridge) {
-            $redirectUrl = (new OpenRtbBridge())->getEventRedirectUrl($url);
+            $redirectUrl = (new DspBridge())->getEventRedirectUrl($url);
             $response = null !== $redirectUrl
                 ? new RedirectResponse($redirectUrl)
                 : new BaseResponse(status: BaseResponse::HTTP_NO_CONTENT);

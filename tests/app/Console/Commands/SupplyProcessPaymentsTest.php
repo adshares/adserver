@@ -170,7 +170,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testHandleBridgePayment(): void
     {
-        $this->initOpenRtbConfiguration();
+        $this->initDspBridgeConfiguration();
         $networkHost = self::registerHost();
         /** @var BridgePayment $bridgePayment */
         $bridgePayment = BridgePayment::factory()->create(['address' => $networkHost->address]);
@@ -404,11 +404,11 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         ]);
     }
 
-    private static function initOpenRtbConfiguration(): void
+    private static function initDspBridgeConfiguration(): void
     {
         Config::updateAdminSettings([
-                Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
-                Config::OPEN_RTB_BRIDGE_URL => 'https://example.com',
+                Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+                Config::DSP_BRIDGE_URL => 'https://example.com',
         ]);
         DatabaseConfigReader::overwriteAdministrationConfig();
     }

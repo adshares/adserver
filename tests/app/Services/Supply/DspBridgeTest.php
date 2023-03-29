@@ -38,7 +38,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
-use Adshares\Adserver\Services\Supply\OpenRtbBridge;
+use Adshares\Adserver\Services\Supply\DspBridge;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
@@ -64,21 +64,21 @@ use PDOException;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
-class OpenRtbBridgeTest extends TestCase
+class DspBridgeTest extends TestCase
 {
     public function testIsActiveWhileNotConfigured(): void
     {
-        self::assertFalse(OpenRtbBridge::isActive());
+        self::assertFalse(DspBridge::isActive());
     }
 
     public function testIsActiveWhileConfigured(): void
     {
-        $this->initOpenRtbConfiguration();
+        $this->initDspBridgeConfiguration();
 
-        self::assertTrue(OpenRtbBridge::isActive());
+        self::assertTrue(DspBridge::isActive());
     }
 
-    public function testReplaceOpenRtbBanners(): void
+    public function testReplaceBridgeBanners(): void
     {
         Http::preventStrayRequests();
         Http::fake([
@@ -93,7 +93,7 @@ class OpenRtbBridgeTest extends TestCase
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 
-        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+        $foundBanners = (new DspBridge())->replaceBridgeBanners($initiallyFoundBanners, $context);
 
         self::assertCount(1, $foundBanners);
         $foundBanner = $foundBanners->first();
@@ -103,7 +103,7 @@ class OpenRtbBridgeTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function testReplaceOpenRtbBannersWithOptions(): void
+    public function testReplaceBridgeBannersWithOptions(): void
     {
         Http::preventStrayRequests();
         Http::fake(function (Request $request) {
@@ -136,7 +136,7 @@ class OpenRtbBridgeTest extends TestCase
             ]
         ];
 
-        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context, $zones);
+        $foundBanners = (new DspBridge())->replaceBridgeBanners($initiallyFoundBanners, $context, $zones);
 
         self::assertCount(1, $foundBanners);
         $foundBanner = $foundBanners->first();
@@ -146,21 +146,21 @@ class OpenRtbBridgeTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function testReplaceOpenRtbBannersWhileEmptyResponse(): void
+    public function testReplaceBridgeBannersWhileEmptyResponse(): void
     {
         Http::preventStrayRequests();
         Http::fake(['example.com/serve' => Http::response([])]);
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 
-        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+        $foundBanners = (new DspBridge())->replaceBridgeBanners($initiallyFoundBanners, $context);
 
         self::assertCount(1, $foundBanners);
         self::assertNull($foundBanners->first());
         Http::assertSentCount(1);
     }
 
-    public function testReplaceOpenRtbBannersWhileNoBannersFromBridge(): void
+    public function testReplaceBridgeBannersWhileNoBannersFromBridge(): void
     {
         Http::preventStrayRequests();
         Http::fake();
@@ -170,43 +170,43 @@ class OpenRtbBridgeTest extends TestCase
         $initiallyFoundBanners->set(0, $banner);
         $context = new ImpressionContext([], [], []);
 
-        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+        $foundBanners = (new DspBridge())->replaceBridgeBanners($initiallyFoundBanners, $context);
 
         self::assertCount(1, $foundBanners);
         self::assertEquals('3', $foundBanners->first()['request_id']);
         Http::assertNothingSent();
     }
 
-    public function testReplaceOpenRtbBannersWhileInvalidStatus(): void
+    public function testReplaceBridgeBannersWhileInvalidStatus(): void
     {
         Http::preventStrayRequests();
         Http::fake(['example.com/serve' => Http::response(status: Response::HTTP_NOT_FOUND)]);
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 
-        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+        $foundBanners = (new DspBridge())->replaceBridgeBanners($initiallyFoundBanners, $context);
 
         self::assertCount(1, $foundBanners);
         self::assertNull($foundBanners->first());
         Http::assertSentCount(1);
     }
 
-    public function testReplaceOpenRtbBannersWhileConnectionException(): void
+    public function testReplaceBridgeBannersWhileConnectionException(): void
     {
         Http::fake(fn() => throw new ConnectionException('test-exception'));
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 
-        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+        $foundBanners = (new DspBridge())->replaceBridgeBanners($initiallyFoundBanners, $context);
 
         self::assertCount(1, $foundBanners);
         self::assertNull($foundBanners->first());
     }
 
     /**
-     * @dataProvider replaceOpenRtbBannersWhileInvalidResponseProvider
+     * @dataProvider replaceBridgeBannersWhileInvalidResponseProvider
      */
-    public function testReplaceOpenRtbBannersWhileInvalidResponse(mixed $response): void
+    public function testReplaceBridgeBannersWhileInvalidResponse(mixed $response): void
     {
         Http::preventStrayRequests();
         Http::fake([
@@ -215,14 +215,14 @@ class OpenRtbBridgeTest extends TestCase
         $initiallyFoundBanners = $this->getFoundBanners();
         $context = new ImpressionContext([], [], []);
 
-        $foundBanners = (new OpenRtbBridge())->replaceOpenRtbBanners($initiallyFoundBanners, $context);
+        $foundBanners = (new DspBridge())->replaceBridgeBanners($initiallyFoundBanners, $context);
 
         self::assertCount(1, $foundBanners);
         self::assertNull($foundBanners->first());
         Http::assertSentCount(1);
     }
 
-    public function replaceOpenRtbBannersWhileInvalidResponseProvider(): array
+    public function replaceBridgeBannersWhileInvalidResponseProvider(): array
     {
         return [
             'not existing request id' => [
@@ -280,7 +280,7 @@ class OpenRtbBridgeTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['example.com' => $responseClosure()]);
 
-        $url = (new OpenRtbBridge())->getEventRedirectUrl('https://example.com');
+        $url = (new DspBridge())->getEventRedirectUrl('https://example.com');
 
         self::assertEquals($expectedUrl, $url);
         Http::assertSentCount(1);
@@ -302,7 +302,7 @@ class OpenRtbBridgeTest extends TestCase
     {
         Http::fake(fn() => throw new ConnectionException('test-exception'));
 
-        $url = (new OpenRtbBridge())->getEventRedirectUrl('https://example.com');
+        $url = (new DspBridge())->getEventRedirectUrl('https://example.com');
 
         self::assertEquals(null, $url);
     }
@@ -345,11 +345,11 @@ class OpenRtbBridgeTest extends TestCase
                 'value' => null,
             ],
         ];
-        $this->initOpenRtbConfiguration();
+        $this->initDspBridgeConfiguration();
         Http::preventStrayRequests();
         Http::fake(['example.com/payment-reports' => Http::response($responseData)]);
 
-        (new OpenRtbBridge())->fetchAndStorePayments();
+        (new DspBridge())->fetchAndStorePayments();
 
         self::assertDatabaseHas(
             BridgePayment::class,
@@ -375,11 +375,11 @@ class OpenRtbBridgeTest extends TestCase
     public function testFetchAndStorePaymentsWhileResponseIsEmpty(): void
     {
         $responseData = [];
-        $this->initOpenRtbConfiguration();
+        $this->initDspBridgeConfiguration();
         Http::preventStrayRequests();
         Http::fake(['example.com/payment-reports' => Http::response($responseData)]);
 
-        (new OpenRtbBridge())->fetchAndStorePayments();
+        (new DspBridge())->fetchAndStorePayments();
 
         self::assertDatabaseEmpty(BridgePayment::class);
         Http::assertSentCount(1);
@@ -388,10 +388,10 @@ class OpenRtbBridgeTest extends TestCase
     public function testFetchAndStorePaymentsWhileConnectionException(): void
     {
         Log::spy();
-        $this->initOpenRtbConfiguration();
+        $this->initDspBridgeConfiguration();
         Http::fake(fn() => throw new ConnectionException('test-exception'));
 
-        (new OpenRtbBridge())->fetchAndStorePayments();
+        (new DspBridge())->fetchAndStorePayments();
 
         self::assertDatabaseEmpty(BridgePayment::class);
         Log::shouldHaveReceived('error')
@@ -409,9 +409,9 @@ class OpenRtbBridgeTest extends TestCase
         Http::fake([
             'example.com/payment-reports' => Http::response($response),
         ]);
-        $this->initOpenRtbConfiguration();
+        $this->initDspBridgeConfiguration();
 
-        (new OpenRtbBridge())->fetchAndStorePayments();
+        (new DspBridge())->fetchAndStorePayments();
 
         self::assertDatabaseEmpty(BridgePayment::class);
         Http::assertSentCount(1);
@@ -485,7 +485,7 @@ class OpenRtbBridgeTest extends TestCase
         $expectedPaidAmount = 1e11;
         $expectedLicenseFee = 0;
 
-        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor);
+        (new DspBridge())->processPayments($demandClient, $paymentDetailsProcessor);
 
         self::assertDatabaseCount(BridgePayment::class, 1);
         self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_DONE]);
@@ -535,11 +535,11 @@ class OpenRtbBridgeTest extends TestCase
             [],
         );
 
-        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
+        (new DspBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
 
         self::assertEquals(1, $bridgePayment->refresh()->last_offset);
 
-        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
+        (new DspBridge())->processPayments($demandClient, $paymentDetailsProcessor, 1);
 
         self::assertDatabaseCount(BridgePayment::class, 1);
         self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_DONE]);
@@ -585,7 +585,7 @@ class OpenRtbBridgeTest extends TestCase
             )->toArray()
         );
 
-        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor);
+        (new DspBridge())->processPayments($demandClient, $paymentDetailsProcessor);
 
         self::assertDatabaseCount(BridgePayment::class, 1);
         self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_NEW]);
@@ -601,7 +601,7 @@ class OpenRtbBridgeTest extends TestCase
         $paymentDetailsProcessor = self::createMock(PaymentDetailsProcessor::class);
         $demandClient = self::createMock(DemandClient::class);
 
-        (new OpenRtbBridge())->processPayments($demandClient, $paymentDetailsProcessor);
+        (new DspBridge())->processPayments($demandClient, $paymentDetailsProcessor);
 
         self::assertDatabaseCount(BridgePayment::class, 1);
         self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_INVALID]);
@@ -609,12 +609,12 @@ class OpenRtbBridgeTest extends TestCase
         self::assertDatabaseEmpty(NetworkCasePayment::class);
     }
 
-    private function initOpenRtbConfiguration(array $settings = []): void
+    private function initDspBridgeConfiguration(array $settings = []): void
     {
         $mergedSettings = array_merge(
             [
-                Config::OPEN_RTB_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
-                Config::OPEN_RTB_BRIDGE_URL => 'https://example.com',
+                Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+                Config::DSP_BRIDGE_URL => 'https://example.com',
             ],
             $settings,
         );
@@ -624,7 +624,7 @@ class OpenRtbBridgeTest extends TestCase
 
     private function getFoundBanners(): FoundBanners
     {
-        $this->initOpenRtbConfiguration();
+        $this->initDspBridgeConfiguration();
         NetworkHost::factory()->create([
             'address' => '0001-00000001-8B4E',
             'host' => 'https://example.com',
