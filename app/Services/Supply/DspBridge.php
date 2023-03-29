@@ -58,6 +58,11 @@ SQL;
             && null !== config('app.dsp_bridge_url');
     }
 
+    public static function isDspAddress(string $address): bool
+    {
+        return $address === config('app.dsp_bridge_account_address');
+    }
+
     public function replaceBridgeBanners(
         FoundBanners $foundBanners,
         ImpressionContext $context,

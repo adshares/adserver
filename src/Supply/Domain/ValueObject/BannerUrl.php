@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,14 +27,11 @@ use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
 
 final class BannerUrl
 {
-    /** @var string */
-    private $serveUrl;
+    private string $serveUrl;
 
-    /** @var string */
-    private $clickUrl;
+    private string $clickUrl;
 
-    /** @var string */
-    private $viewUrl;
+    private string $viewUrl;
 
     public function __construct(string $serveUrl, string $clickUrl, string $viewUrl)
     {

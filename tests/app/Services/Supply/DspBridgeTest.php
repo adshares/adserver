@@ -78,6 +78,25 @@ class DspBridgeTest extends TestCase
         self::assertTrue(DspBridge::isActive());
     }
 
+    public function testIsDspAddressWhileNotConfigured(): void
+    {
+        self::assertFalse(DspBridge::isDspAddress('0001-00000001-8B4E'));
+    }
+
+    public function testIsDspAddressWhileNotSame(): void
+    {
+        $this->initDspBridgeConfiguration();
+
+        self::assertFalse(DspBridge::isDspAddress('0001-00000004-DBEB'));
+    }
+
+    public function testIsDspAddressWhileConfigured(): void
+    {
+        $this->initDspBridgeConfiguration();
+
+        self::assertTrue(DspBridge::isDspAddress('0001-00000001-8B4E'));
+    }
+
     public function testReplaceBridgeBanners(): void
     {
         Http::preventStrayRequests();

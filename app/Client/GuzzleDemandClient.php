@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
+use Adshares\Adserver\Services\Supply\DspBridge;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\ViewModel\MediumName;
@@ -259,7 +260,7 @@ final class GuzzleDemandClient implements DemandClient
             'updated_at' => DateTime::createFromFormat(DateTimeInterface::ATOM, $data['updated_at']),
         ];
 
-        $isDspBridgeProvider = $sourceAddress === config('app.dsp_bridge_account_address');
+        $isFromDspBridge = DspBridge::isDspAddress($sourceAddress);
         $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
         $banners = [];
         $bannersInput = $data['creatives'] ?? $data['banners'];// legacy fallback, field 'banners' is deprecated
@@ -272,7 +273,7 @@ final class GuzzleDemandClient implements DemandClient
                 unset($banner['id']);
             }
 
-            $banner['classification'] = $isDspBridgeProvider
+            $banner['classification'] = $isFromDspBridge
                 ? self::flattenClassification($banner['classification'] ?? [])
                 : $this->validateAndMapClassification($banner);
             if ($this->missingRequiredClassifier($classifiersRequired, $banner['classification'])) {
