@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -46,22 +46,16 @@ class TargetingReachFetch extends BaseCommand
 
     protected $description = 'Fetches vectors of targeting reach and rates from remote ad servers';
 
-    /** @var SupplyClient */
-    private $client;
-
-    public function __construct(Locker $locker, SupplyClient $client)
+    public function __construct(Locker $locker, private readonly SupplyClient $client)
     {
-        $this->client = $client;
-
         parent::__construct($locker);
     }
 
-    public function handle(): void
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info(sprintf('Command %s already running', $this->name));
-
-            return;
+            return self::FAILURE;
         }
         $this->info(sprintf('Start command %s', $this->name));
 
@@ -76,17 +70,19 @@ class TargetingReachFetch extends BaseCommand
 
         /** @var NetworkHost $networkHost */
         foreach ($networkHosts as $networkHost) {
-            if ($adserverAddress !== $networkHost->address) {
-                /** @var NetworkVectorsMeta|null $meta */
-                $meta = $networkVectorsMetas->get($networkHost->id);
+            if ($adserverAddress === $networkHost->address || !$networkHost->info->hasSupplyCapabilities()) {
+                continue;
+            }
 
-                if (null === $meta || $meta->updated_at < $dateThreshold) {
-                    $this->fetchAndStoreRemote($networkHost);
-                }
+            /** @var NetworkVectorsMeta|null $meta */
+            $meta = $networkVectorsMetas->get($networkHost->id);
+            if (null === $meta || $meta->updated_at < $dateThreshold) {
+                $this->fetchAndStoreRemote($networkHost);
             }
         }
 
         $this->info('Finish fetching targeting reach');
+        return self::SUCCESS;
     }
 
     private function deleteNetworkVectorsFromUnreachableServers(array $networkHostIdsToDelete): void

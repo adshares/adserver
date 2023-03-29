@@ -44,9 +44,11 @@ use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Mock\Client\DummySupplyClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\SupplyClient;
 use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -157,6 +159,7 @@ abstract class TestCase extends BaseTestCase
                 return $licenseReader;
             }
         );
+        $this->app->bind(SupplyClient::class, fn() => new DummySupplyClient());
     }
 
     protected function login(User $user = null): User

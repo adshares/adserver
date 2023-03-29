@@ -198,7 +198,7 @@ final class Info
 
     public function setDemandFee(float $demandFee): void
     {
-        if (!in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true)) {
+        if (!$this->hasDemandCapabilities()) {
             throw new RuntimeException('Cannot set fee for unsupported capability: Advertiser');
         }
 
@@ -207,7 +207,7 @@ final class Info
 
     public function setSupplyFee(float $supplyFee): void
     {
-        if (!in_array(self::CAPABILITY_PUBLISHER, $this->capabilities, true)) {
+        if (!$this->hasSupplyCapabilities()) {
             throw new RuntimeException('Cannot set fee for unsupported capability: Publisher');
         }
 
@@ -227,5 +227,15 @@ final class Info
     public function getAppMode(): string
     {
         return $this->appMode;
+    }
+
+    public function hasDemandCapabilities(): bool
+    {
+        return in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true);
+    }
+
+    public function hasSupplyCapabilities(): bool
+    {
+        return in_array(self::CAPABILITY_PUBLISHER, $this->capabilities, true);
     }
 }
