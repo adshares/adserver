@@ -408,7 +408,7 @@ class SupplyController extends Controller
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
-        if (!config('app.allow_zone_in_iframe') && ($decodedQueryData['page']['frame'] ?? false)) {
+        if (!config('app.allow_zone_in_iframe') && $this->isAnyZoneInFrame($decodedQueryData)) {
             throw new BadRequestHttpException('Cannot run in iframe');
         }
         if (
@@ -420,7 +420,23 @@ class SupplyController extends Controller
         }
     }
 
-    private function decodeZones(array $decodedQueryData): array
+    private function isAnyZoneInFrame(array $decodedQueryData): bool
+    {
+        if ($decodedQueryData['page']['frame'] ?? false) {
+            // legacy code, should be deleted when legacyFind will be removed
+            return true;
+        }
+        if (isset($decodedQueryData['placements'])) {
+            foreach ($decodedQueryData['placements'] as $placement) {
+                if (!($placement['options']['topframe'] ?? true)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private function extractZones(array $decodedQueryData): array
     {
         $zones = $decodedQueryData['placements'] ?? $decodedQueryData['zones'] ?? [];// Key 'zones' is for legacy search
         if (!$zones) {
@@ -472,7 +488,7 @@ class SupplyController extends Controller
             throw new AccessDeniedHttpException('Crawlers are not allowed');
         }
 
-        $zones = $this->decodeZones($decodedQueryData);
+        $zones = $this->extractZones($decodedQueryData);
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
             if ($userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK) {
                 foreach ($zones as &$zone) {
@@ -1106,13 +1122,17 @@ class SupplyController extends Controller
         }
 
         foreach ($input['placements'] as $placement) {
+            $options = [
+                'banner_type' => $placement['types'] ?? null,
+                'banner_mime' => $placement['mimes'] ?? null,
+            ];
+            if (isset($placement['topframe'])) {
+                $options['topframe'] = $placement['topframe'];
+            }
             $mapped['placements'][] = [
                 'id' => $placement['id'],
                 'placementId' => $placement['placementId'],
-                'options' => [
-                    'banner_type' => $placement['types'] ?? null,
-                    'banner_mime' => $placement['mimes'] ?? null,
-                ],
+                'options' => $options,
             ];
         }
 
@@ -1195,6 +1215,10 @@ class SupplyController extends Controller
                     }
                 }
             }
+        }
+
+        if (array_key_exists('topframe', $placement) && !is_bool($placement['topframe'])) {
+            throw new UnprocessableEntityHttpException('Field `placements[].topframe` must be a boolean');
         }
     }
 

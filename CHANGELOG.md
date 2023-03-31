@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.12] - 2023-03-31
+### Added
+- Non-withdrawable user ledger entries
+- Optional parameter topframe in find request
+### Fixed
+- Do not compute targeting reach for adserver without supply capabilities
+- Backward compatibility for HTML code from demand on view event
+
 ## [2.4.11] - 2023-03-15
 ### Changed
 - Increase user activity interval
@@ -905,7 +913,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.11...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.12...develop
+[2.4.12]: https://github.com/adshares/adserver/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
 [2.4.9]: https://github.com/adshares/adserver/compare/v2.4.8...v2.4.9

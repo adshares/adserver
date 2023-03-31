@@ -99,6 +99,7 @@ final class ServerMonitoringControllerTest extends TestCase
         'adsharesWallet' => [
             'walletBalance',
             'bonusBalance',
+            'withdrawableBalance',
         ],
         'connectedWallet' => [
             'address',
@@ -545,6 +546,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertEquals('admin@example.com', $adminData['email']);
         self::assertEquals(0, $adminData['adsharesWallet']['walletBalance']);
         self::assertEquals(0, $adminData['adsharesWallet']['bonusBalance']);
+        self::assertEquals(0, $adminData['adsharesWallet']['withdrawableBalance']);
         self::assertNull($adminData['connectedWallet']['address']);
         self::assertNull($adminData['connectedWallet']['network']);
         self::assertEquals(0, $adminData['campaignCount']);
@@ -554,8 +556,9 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertNull($adminData['banReason']);
         $user1 = $data[1];
         self::assertEquals('user1@example.com', $user1['email']);
-        self::assertEquals(1e5, $user1['adsharesWallet']['walletBalance']);
+        self::assertEquals(4e5, $user1['adsharesWallet']['walletBalance']);
         self::assertEquals(2e9, $user1['adsharesWallet']['bonusBalance']);
+        self::assertEquals(1e5, $user1['adsharesWallet']['withdrawableBalance']);
         self::assertNull($user1['connectedWallet']['address']);
         self::assertNull($user1['connectedWallet']['network']);
         self::assertEquals(1, $user1['campaignCount']);
@@ -569,6 +572,7 @@ final class ServerMonitoringControllerTest extends TestCase
         self::assertEquals('user2@example.com', $user2['email']);
         self::assertEquals(3e11, $user2['adsharesWallet']['walletBalance']);
         self::assertEquals(0, $user2['adsharesWallet']['bonusBalance']);
+        self::assertEquals(3e11, $user2['adsharesWallet']['withdrawableBalance']);
         self::assertEquals('0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb', $user2['connectedWallet']['address']);
         self::assertEquals(WalletAddress::NETWORK_BSC, $user2['connectedWallet']['network']);
         self::assertEquals(0, $user2['campaignCount']);
@@ -701,6 +705,7 @@ final class ServerMonitoringControllerTest extends TestCase
             'lastActiveAt' => ['lastActiveAt', 'admin@example.com'],
             'siteCount' => ['siteCount', 'user2@example.com'],
             'walletBalance' => ['walletBalance', 'user2@example.com'],
+            'withdrawableBalance' => ['withdrawableBalance', 'user2@example.com'],
             'bonusBalance & campaignCount' => ['bonusBalance:desc,campaignCount', 'user1@example.com'],
         ];
     }
@@ -1066,10 +1071,11 @@ final class ServerMonitoringControllerTest extends TestCase
         Mail::assertQueued(UserConfirmed::class);
 
         self::assertSame(
-            [300, 300, 0],
+            [300, 300, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
+                $user->getWithdrawableBalance(),
                 $user->getWalletBalance(),
             ]
         );
@@ -1634,6 +1640,11 @@ final class ServerMonitoringControllerTest extends TestCase
             'user_id' => $user1->id,
             'type' => UserLedgerEntry::TYPE_BONUS_INCOME,
             'amount' => 2e9,
+        ]);
+        UserLedgerEntry::factory()->create([
+            'user_id' => $user1->id,
+            'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT,
+            'amount' => 3e5,
         ]);
 
         /** @var User $user2 */
