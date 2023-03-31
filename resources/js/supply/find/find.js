@@ -449,11 +449,11 @@ var aduserPixel = function (impressionId, onload) {
     return true;
 };
 
-var createIframeFromUrl = function createIframeFromUrl(url, doc) {
-    var iframe = (doc || document).createElement('iframe');
+var createIframeFromUrl = function (url, doc) {
+    const iframe = (doc || document).createElement('iframe');
     iframe.setAttribute('style', 'display:none');
-    iframe.setAttribute('width', 1);
-    iframe.setAttribute('height', 1);
+    iframe.setAttribute('width', '1');
+    iframe.setAttribute('height', '1');
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     iframe.src = url;
 
@@ -781,9 +781,19 @@ var addAnalyticsIframe = function (url) {
     if (!url) {
         return;
     }
-    var iframe = createIframeFromUrl(url, topdoc);
+    const iframe = createIframeFromUrl(url, topdoc);
     topdoc.body.appendChild(iframe);
-    setTimeout(function() {
+    setTimeout(function () {
+        iframe.parentElement.removeChild(iframe);
+    }, 10000);
+    return iframe;
+};
+
+var addAnalyticsIframeWithHtmlContent = function (html) {
+    const iframe = createIframeFromUrl('about:blank', topdoc);
+    iframe.srcdoc = html;
+    topdoc.body.appendChild(iframe);
+    setTimeout(function () {
         iframe.parentElement.removeChild(iframe);
     }, 10000);
     return iframe;
@@ -911,10 +921,14 @@ var fetchBanner = function (banner, context, zone_options) {
                         noCredentials: true,
                     };
                     fetchURL(context.view_url, options)
-                        .then(function (data) {
-                            const urls = data.context || [];
-                            for (const url of urls) {
-                                dwmthACL.push(addAnalyticsIframe(url).contentWindow);
+                        .then(function (data, _xhr) {
+                            if (data.type && data.type.startsWith('text/html')) {
+                                dwmthACL.push(addAnalyticsIframeWithHtmlContent(data.bytes).contentWindow);
+                            } else {
+                                const urls = data.context || [];
+                                for (const url of urls) {
+                                    dwmthACL.push(addAnalyticsIframe(url).contentWindow);
+                                }
                             }
                         });
                 }
