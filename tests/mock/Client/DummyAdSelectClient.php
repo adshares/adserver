@@ -56,7 +56,8 @@ final class DummyAdSelectClient implements AdSelect
         $bannerIds = [];
         $zoneData = [];
         foreach ($zones as $zoneInfo) {
-            $zone = Zone::where('uuid', hex2bin($zoneInfo['zone']))->first();
+            $zoneId = $zoneInfo['placementId'] ?? (string)$zoneInfo['zone'];// Key 'zone' is for legacy search
+            $zone = Zone::where('uuid', hex2bin($zoneId))->first();
             if (!$zone) {
                 $bannerIds[] = '';
                 continue;

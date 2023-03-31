@@ -371,6 +371,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawBscWallet(): void
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_confirmed_at' => now(),
             'admin_confirmed_at' => now(),
@@ -380,22 +381,21 @@ class WalletControllerTest extends TestCase
                 '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb'
             )
         ]);
-        $this->actingAs($user, 'api');
+        $this->login($user);
         $this->generateUserIncome($user->id, 200_000_000_000);
 
         $amount = 100_000_000_000;
         $response = $this->postJson('/api/wallet/withdraw', ['amount' => $amount]);
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
-        $tokens = Token::all();
-        self::assertCount(0, $tokens);
+        self::assertDatabaseEmpty(Token::class);
         Mail::assertNothingQueued();
-
-        $userLedgerEntry = UserLedgerEntry::where(['type' => UserLedgerEntry::TYPE_WITHDRAWAL])->first();
-        $this->assertNotNull($userLedgerEntry);
-        $this->assertEquals(UserLedgerEntry::STATUS_PENDING, $userLedgerEntry->status);
-        $this->assertEquals(-100_050_000_000, $userLedgerEntry->amount);
-        Queue::assertPushed(AdsSendOne::class, 1);
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => -100_050_000_000,
+            'status' => UserLedgerEntry::STATUS_PENDING,
+            'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+        ]);
+        Queue::assertPushed(AdsSendOne::class, fn(AdsSendOne $job) => $amount === $job->getAmount());
     }
 
     /**

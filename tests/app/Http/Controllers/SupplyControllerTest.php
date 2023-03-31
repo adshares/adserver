@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
@@ -251,10 +252,8 @@ final class SupplyControllerTest extends TestCase
         $this->instance(AdUser::class, $adUser);
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
         /** @var Zone $zone */
-        $zone = Zone::factory()->create(['site_id' => $site->id]);
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
@@ -293,10 +292,8 @@ final class SupplyControllerTest extends TestCase
 
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
         /** @var Zone $zone */
-        $zone = Zone::factory()->create(['site_id' => $site->id]);
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
@@ -317,18 +314,153 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonCount(0, 'data');
     }
 
-    public function testFindWithoutPlacements(): void
+    public function testFindFailWhileSiteRejected(): void
     {
+        SitesRejectedDomain::factory()->create(['domain' => 'example.com']);
+
+        /** @var User $user */
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
                 'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                ],
             ],
         ];
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testFindFailWhilePlacementInFrame(): void
+    {
+        Config::updateAdminSettings([Config::ALLOW_ZONE_IN_IFRAME => '0']);
+        /** @var User $user */
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                    'topframe' => false,
+                ],
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * @dataProvider findFailProvider
+     */
+    public function testFindFail(array $data): void
+    {
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function findFailProvider(): array
+    {
+        return [
+            'without placements' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                ]
+            ],
+            'invalid placements[] type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        'id' => '1',
+                        'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                    ],
+                ]
+            ],
+            'missing placement id' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement id type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => 1,
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement mimes type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                            'mimes' => 'image/png',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement mimes[] type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                            'mimes' => [true],
+                        ]
+                    ],
+                ]
+            ],
+        ];
     }
 
     public function testFindWithExistingUserWhoIsAdvertiserOnly(): void
@@ -408,9 +540,11 @@ final class SupplyControllerTest extends TestCase
     {
         return [
             'unsupported popup' => [
-                self::getDynamicFindData(['placements' => [
-                    self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
-                ]]),
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
+                    ]
+                ]),
             ],
             'missing context.medium' => [
                 self::getDynamicFindData(['context' => self::getContextData(remove: 'medium')])
@@ -456,6 +590,13 @@ final class SupplyControllerTest extends TestCase
                 self::getDynamicFindData([
                     'placements' => [
                         self::getPlacementData(['mimes' => []])
+                    ],
+                ])
+            ],
+            'invalid placement topframe' => [
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['topframe' => null])
                     ],
                 ])
             ],
@@ -969,23 +1110,25 @@ final class SupplyControllerTest extends TestCase
             'view_url' => 'https://example.com/view',
         ]);
         $iid = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($impression->impression_id));
-        $ctx = Utils::UrlSafeBase64Encode(json_encode(
-            [
-                'page' => [
-                    'iid' => $iid,
-                    'frame' => 0,
-                    'width' => 1024,
-                    'height' => 768,
-                    'url' => 'https://adshares.net',
-                    'keywords' => '',
-                    'metamask' => 0,
-                    'ref' => '',
-                    'pop' => 0,
-                    'zone' => $zone->uuid,
-                    'options' => '[]',
-                ],
-            ]
-        ));
+        $ctx = Utils::UrlSafeBase64Encode(
+            json_encode(
+                [
+                    'page' => [
+                        'iid' => $iid,
+                        'frame' => 0,
+                        'width' => 1024,
+                        'height' => 768,
+                        'url' => 'https://adshares.net',
+                        'keywords' => '',
+                        'metamask' => 0,
+                        'ref' => '',
+                        'pop' => 0,
+                        'zone' => $zone->uuid,
+                        'options' => '[]',
+                    ],
+                ]
+            )
+        );
         $redirectUrl = Utils::urlSafeBase64Encode($banner->view_url);
         $query = [
             'cid' => '13245679801324567980132456798012',
