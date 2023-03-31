@@ -84,4 +84,9 @@ class SitesRejectedDomainTest extends TestCase
 
         SitesRejectedDomain::domainRejectedReasonId('example.com');
     }
+
+    public function testDomainRejectedReasonIdWhileDomainIsEmpty(): void
+    {
+        self::assertNull(SitesRejectedDomain::domainRejectedReasonId(''));
+    }
 }

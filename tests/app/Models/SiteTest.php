@@ -164,4 +164,22 @@ class SiteTest extends TestCase
         self::assertEquals(Site::STATUS_REJECTED, $site->status);
         self::assertEquals($siteRejectReason->id, $site->reject_reason_id);
     }
+
+    public function testGetRejectReasonAttribute(): void
+    {
+        /** @var SiteRejectReason $siteRejectReason */
+        $siteRejectReason = SiteRejectReason::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['reject_reason_id' => $siteRejectReason]);
+
+        self::assertEquals($siteRejectReason->reject_reason, $site->reject_reason);
+    }
+
+    public function testFetchByPublicId(): void
+    {
+        /** @var Site $site */
+        $site = Site::factory()->create();
+
+        self::assertNotNull(Site::fetchByPublicId($site->uuid));
+    }
 }
