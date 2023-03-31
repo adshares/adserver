@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Non-withdrawable user ledger entries
+- Optional parameter topframe in find request
+### Fixed
+- Do not compute targeting reach for adserver without supply capabilities
 
 ## [2.4.11] - 2023-03-15
 ### Changed
