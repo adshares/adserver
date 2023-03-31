@@ -419,7 +419,7 @@ function fetchURL(url, options) {
                             type : xhr.getResponseHeader('Content-Type')
                         };
                     }
-                    if (options.json) {
+                    if (options.json && 'application/json' === xhr.getResponseHeader('Content-Type')) {
                         try {
                             data = JSON.parse(data.bytes);
                         } catch (e) {
