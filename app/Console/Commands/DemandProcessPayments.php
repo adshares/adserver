@@ -32,6 +32,7 @@ use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -59,7 +60,7 @@ class DemandProcessPayments extends BaseCommand
         $lastAvailableTimestamp = self::getLastAvailableTimestamp();
         $isRecalculationNeeded = null !== $this->option('ids');
         $reports = $this->fetchPaymentReports();
-        $isExchangeRateNotAvailable = false;
+        $technicalErrors = [];
 
         foreach ($reports as $report) {
             $timestamp = $report->id;
@@ -88,7 +89,11 @@ class DemandProcessPayments extends BaseCommand
                             $exchangeRateNotAvailableException->getMessage(),
                         )
                     );
-                    $isExchangeRateNotAvailable = true;
+                    $technicalErrors[] = sprintf(
+                        'Exchange rate not available. Fetching payments for %s failed: %s',
+                        (new DateTimeImmutable('@' . $timestamp))->format(DateTimeInterface::ATOM),
+                        $exchangeRateNotAvailableException->getMessage(),
+                    );
                     continue;
                 } catch (LogicException) {
                     $this->warn(sprintf('Command %s is locked', AdPayGetPayments::COMMAND_SIGNATURE));
@@ -129,12 +134,11 @@ class DemandProcessPayments extends BaseCommand
         $this->sendPayments($reports);
         $this->aggregateStatistics();
 
-        if ($isExchangeRateNotAvailable) {
+        if (!empty($technicalErrors)) {
+            $index = strpos($technicalErrors[0], '.');
+            $title = false === $index ? $technicalErrors[0] : substr($technicalErrors[0], 0, $index);
             Mail::to(config('app.technical_email'))->queue(
-                new TechnicalError(
-                    'Exchange rate not available',
-                    'During payment processing exchange rate was not available.'
-                )
+                new TechnicalError($title, join("\n\n", $technicalErrors))
             );
         }
         $this->info('End command ' . $this->getName());
