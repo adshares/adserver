@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,12 +30,12 @@ use DateTime;
 interface ExchangeRateRepository
 {
     /**
-     * @param DateTime $dateTime
+     * @param ?DateTime $dateTime
      * @param string $currency
      *
      * @return ExchangeRate
      *
      * @throws ExchangeRateNotAvailableException
      */
-    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate;
+    public function fetchExchangeRate(?DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate;
 }

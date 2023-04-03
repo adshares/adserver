@@ -31,7 +31,6 @@ use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Exception\InvalidArgumentException;
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
@@ -112,8 +111,8 @@ class DemandProcessPayments extends BaseCommand
 
             if ($report->isUpdated()) {
                 $preparePaymentsParameters = [
-                    '--from' => (new DateTime('@' . $timestamp))->format(DateTimeInterface::ATOM),
-                    '--to' => (new DateTime('@' . ($timestamp + 3599)))->format(DateTimeInterface::ATOM),
+                    '--from' => (new DateTimeImmutable('@' . $timestamp))->format(DateTimeInterface::ATOM),
+                    '--to' => (new DateTimeImmutable('@' . ($timestamp + 3599)))->format(DateTimeInterface::ATOM),
                 ];
 
                 try {
@@ -167,12 +166,12 @@ class DemandProcessPayments extends BaseCommand
         return PaymentReport::fetchUndone($this->getReportDateFrom());
     }
 
-    private function getReportDateFrom(): DateTime
+    private function getReportDateFrom(): DateTimeImmutable
     {
         $optionFrom = $this->option('from');
 
         if (null === $optionFrom) {
-            return new DateTime('-2 days');
+            return new DateTimeImmutable('-2 days');
         }
 
         if (false === ($timestampFrom = strtotime($optionFrom))) {
@@ -181,7 +180,7 @@ class DemandProcessPayments extends BaseCommand
             );
         }
 
-        return new DateTime('@' . $timestampFrom);
+        return new DateTimeImmutable('@' . $timestampFrom);
     }
 
     private static function getLastAvailableTimestamp(): int

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,7 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\InvalidArgumentException;
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -124,7 +124,7 @@ class PaymentReport extends Model
         return self::whereIn('id', $ids)->get();
     }
 
-    public static function fetchUndone(DateTime $from): Collection
+    public static function fetchUndone(DateTimeInterface $from): Collection
     {
         return self::where('id', '>=', $from)->where('status', '>=', self::STATUS_NEW)->get();
     }
