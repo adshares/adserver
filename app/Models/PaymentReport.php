@@ -26,10 +26,13 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @mixin Builder
  * @property int id
+ * @property Carbon created_at
+ * @property Carbon updated_at
  * @property int status
  */
 class PaymentReport extends Model

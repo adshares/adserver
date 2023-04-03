@@ -36,12 +36,8 @@ final class GuzzleAdsOperatorClient implements ExchangeRateRepository
 {
     private const GET_ENDPOINT = '/api/v1/exchange-rate/{date}/{currency}';
 
-    /** @var Client */
-    private $client;
-
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
     }
 
     public function fetchExchangeRate(?DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
