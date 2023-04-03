@@ -180,6 +180,9 @@ class NetworkHost extends Model
             [HostStatus::Initialization, HostStatus::Operational],
         );
         if (!empty($whitelist)) {
+            if (null !== ($accountAddress = config('app.dsp_bridge_account_address'))) {
+                $whitelist[] = $accountAddress;
+            }
             $query->whereIn('address', $whitelist);
         }
         return $query->get();

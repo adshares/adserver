@@ -135,6 +135,21 @@ class NetworkHostTest extends TestCase
         self::assertEquals(HostStatus::Failure, $host5->refresh()->status);
     }
 
+    public function testFetchHostsWhileDspBridgeNotOnWhitelist(): void
+    {
+        $whitelist = ['0001-00000002-BB2D', '0001-00000003-AB0C'];
+        Config::updateAdminSettings([
+            Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::DSP_BRIDGE_URL => 'https://example.com',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        NetworkHost::factory()->create(['address' => '0001-00000001-8B4E']);
+
+        $hosts = NetworkHost::fetchHosts($whitelist);
+
+        self::assertCount(1, $hosts);
+    }
+
     public function testFetchUnreachableHostsForImportingInventory(): void
     {
         NetworkHost::factory()->count(3)
