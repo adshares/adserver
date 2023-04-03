@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,14 +27,17 @@ use Adshares\Adserver\Console\Commands\AdPayGetPayments;
 use Adshares\Adserver\Console\Commands\DemandSendPayments;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\Mail\TechnicalError;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Mock\Console\Kernel as KernelMock;
 use DateTime;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Console\Exception\LogicException;
 
 class DemandProcessPaymentsTest extends ConsoleTestCase
@@ -55,6 +58,20 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
         Event::assertNotDispatched(ServerEvent::class);
+    }
+
+    public function testReportStatusWhileExchangeRateNotAvailable(): void
+    {
+        self::setupExportTime();
+        $this->setupConsoleKernel(
+            self::commandValues(['ops:adpay:payments:get' => new ExchangeRateNotAvailableException('text-exception')])
+        );
+
+        $this->artisan(self::SIGNATURE)->assertExitCode(0);
+
+        self::assertEquals(PaymentReport::STATUS_NEW, PaymentReport::first()->status);
+        Event::assertNotDispatched(ServerEvent::class);
+        Mail::assertQueued(TechnicalError::class);
     }
 
     /**

@@ -25,15 +25,18 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
+use Adshares\Adserver\Mail\TechnicalError;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Console\Exception\LogicException;
 
 class DemandProcessPayments extends BaseCommand
@@ -56,6 +59,7 @@ class DemandProcessPayments extends BaseCommand
         $lastAvailableTimestamp = self::getLastAvailableTimestamp();
         $isRecalculationNeeded = null !== $this->option('ids');
         $reports = $this->fetchPaymentReports();
+        $isExchangeRateNotAvailable = false;
 
         foreach ($reports as $report) {
             $timestamp = $report->id;
@@ -76,9 +80,18 @@ class DemandProcessPayments extends BaseCommand
                             $getPaymentsParameters,
                             $this->getOutput()
                         );
+                } catch (ExchangeRateNotAvailableException $exchangeRateNotAvailableException) {
+                    $this->error(
+                        sprintf(
+                            'Command %s failed %s',
+                            AdPayGetPayments::COMMAND_SIGNATURE,
+                            $exchangeRateNotAvailableException->getMessage(),
+                        )
+                    );
+                    $isExchangeRateNotAvailable = true;
+                    continue;
                 } catch (LogicException) {
                     $this->warn(sprintf('Command %s is locked', AdPayGetPayments::COMMAND_SIGNATURE));
-
                     continue;
                 }
 
@@ -116,6 +129,14 @@ class DemandProcessPayments extends BaseCommand
         $this->sendPayments($reports);
         $this->aggregateStatistics();
 
+        if ($isExchangeRateNotAvailable) {
+            Mail::to(config('app.technical_email'))->queue(
+                new TechnicalError(
+                    'Exchange rate not available',
+                    'During payment processing exchange rate was not available.'
+                )
+            );
+        }
         $this->info('End command ' . $this->getName());
     }
 
