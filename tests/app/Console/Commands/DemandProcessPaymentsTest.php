@@ -32,6 +32,7 @@ use Adshares\Adserver\Mail\TechnicalError;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -94,12 +95,43 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
     {
         self::setupExportTime();
         $this->setupConsoleKernel(self::commandValues());
-        $paymentRecord = PaymentReport::first();
-        $updatedAt = $paymentRecord->updated_at;
+        $paymentReport = PaymentReport::first();
+        $updatedAt = $paymentReport->updated_at;
 
-        $this->artisan(self::SIGNATURE, ['--ids' => (string)$paymentRecord->id])
+        $this->artisan(self::SIGNATURE, ['--ids' => (string)$paymentReport->id])
             ->assertExitCode(0);
-        self::assertGreaterThan($updatedAt, $paymentRecord->refresh()->updated_at);
+        self::assertGreaterThan($updatedAt, $paymentReport->refresh()->updated_at);
+    }
+
+    public function testHandleProcessOldPaymentReport(): void
+    {
+        self::setupExportTime();
+        $this->setupConsoleKernel(self::commandValues());
+        $id = DateUtils::roundTimestampToHour((new DateTimeImmutable('-5 days'))->getTimestamp());
+        PaymentReport::register($id);
+        $paymentReport = PaymentReport::fetchById($id);
+        $paymentReport->status = PaymentReport::STATUS_NEW;
+        $paymentReport->save();
+        $from = (new DateTimeImmutable('-6 days'))->format('d.m.Y');
+
+        $this->artisan(self::SIGNATURE, ['--from' => $from])
+            ->assertExitCode(0);
+        self::assertEquals(PaymentReport::STATUS_DONE, $paymentReport->refresh()->status);
+    }
+
+    public function testHandleSkipOldPaymentReport(): void
+    {
+        self::setupExportTime();
+        $this->setupConsoleKernel(self::commandValues());
+        $id = DateUtils::roundTimestampToHour((new DateTimeImmutable('-5 days'))->getTimestamp());
+        PaymentReport::register($id);
+        $paymentReport = PaymentReport::fetchById($id);
+        $paymentReport->status = PaymentReport::STATUS_NEW;
+        $paymentReport->save();
+
+        $this->artisan(self::SIGNATURE)
+            ->assertExitCode(0);
+        self::assertEquals(PaymentReport::STATUS_NEW, $paymentReport->refresh()->status);
     }
 
     /**

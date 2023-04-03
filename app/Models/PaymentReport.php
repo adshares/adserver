@@ -129,7 +129,9 @@ class PaymentReport extends Model
 
     public static function fetchUndone(DateTimeInterface $from): Collection
     {
-        return self::where('id', '>=', $from)->where('status', '>=', self::STATUS_NEW)->get();
+        return self::where('id', '>=', $from->getTimestamp())
+            ->where('status', '>=', self::STATUS_NEW)
+            ->get();
     }
 
     private static function getLast(): self
