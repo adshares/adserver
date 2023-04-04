@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,15 +24,22 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\NetworkImpression;
+use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
@@ -41,15 +48,22 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Psr\Http\Message\ResponseInterface;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
+// phpcs:ignoreFile PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
 final class SupplyControllerTest extends TestCase
 {
     private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
+    private const REPORT_AD_URI = '/supply/ad/report';
     private const SUPPLY_ANON_URI = '/supply/anon';
     private const MAIN_JS_URI = '/main.js';
+    private const TARGETING_REACH_URI = '/supply/targeting-reach';
     private const LEGACY_FOUND_BANNERS_STRUCTURE = [
         'id',
         'publisher_id',
@@ -68,8 +82,8 @@ final class SupplyControllerTest extends TestCase
         'data' => [
             '*' => [
                 'id',
+                'creativeId',
                 'placementId',
-                'zoneId',
                 'publisherId',
                 'demandServer',
                 'supplyServer',
@@ -87,9 +101,16 @@ final class SupplyControllerTest extends TestCase
         'banners' => [
             '*' => self::LEGACY_FOUND_BANNERS_STRUCTURE,
         ],
-        'zones',
-        'zoneSizes',
         'success',
+    ];
+    private const TARGETING_REACH_STRUCTURE = [
+        'meta' => [
+            'total_events_count',
+            'updated_at',
+        ],
+        'categories' => [
+            '*' => [],
+        ],
     ];
 
     public function testPageWhyNoParameters(): void
@@ -107,7 +128,7 @@ final class SupplyControllerTest extends TestCase
         $js_content = $response->streamedContent();
         // I test here manually by removing the key from .env file
         if (strlen(config('app.foreign_default_site_js')) === 0){
-            $this->assertStringContainsString('defaultLocation=""', $js_content);    
+            $this->assertStringContainsString('defaultLocation=""', $js_content);
         }else{
             $this->assertStringContainsString('defaultLocation="'. config('app.foreign_default_site_js'). '"', $js_content);
         }
@@ -138,10 +159,96 @@ final class SupplyControllerTest extends TestCase
         NetworkHost::factory()->create(['host' => $host]);
         NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
         $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        $query = [
+            'bid' => $banner->uuid,
+            'cid' => '0123456789abcdef0123456789abcdef',
+        ];
 
-        $response = $this->get(self::PAGE_WHY_URI . '?bid=' . $banner->uuid . '&cid=0123456789abcdef0123456789abcdef');
+        $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
 
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testPageWhyWhileCaseIdAndBannerIdAreUuid(): void
+    {
+        $host = 'https://example.com';
+        $campaignId = 1;
+        NetworkHost::factory()->create(['host' => $host]);
+        NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        $query = [
+            'bid' => Uuid::fromString($banner->uuid)->toString(),
+            'cid' => Uuid::uuid4()->toString(),
+        ];
+
+        $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testReportAd(): void
+    {
+        Storage::fake('local');
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var NetworkCampaign $campaign */
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        /** @var NetworkCase $case */
+        $case = NetworkCase::factory()->create([
+            'banner_id' => $banner->uuid,
+            'campaign_id' => $campaign->uuid,
+            'publisher_id' => $user->uuid,
+        ]);
+
+        $response = $this->get(self::buildUriReportAd($case->case_id, $banner->uuid));
+
+        $response->assertStatus(Response::HTTP_OK);
+        Storage::disk('local')->assertExists('reported-ads.txt');
+    }
+
+    public function testReportAdWhileInvalidCaseFormat(): void
+    {
+        $response = $this->get(self::buildUriReportAd('00', 'asdf'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testReportAdWhileNotExistingCase(): void
+    {
+        $response = $this->get(self::buildUriReportAd(
+            '00000000000000000000000000000000',
+            '00000000000000000000000000000000',
+        ));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testReportAdWhileBannerIdDoesNotMatchCase(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var NetworkCampaign $campaign */
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        /** @var NetworkCase $case */
+        $case = NetworkCase::factory()->create([
+            'banner_id' => $banner->uuid,
+            'campaign_id' => $campaign->uuid,
+            'publisher_id' => $user->uuid,
+        ]);
+
+        $response = $this->get(self::buildUriReportAd($case->case_id, '00000000000000000000000000000000'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    private static function buildUriReportAd(string $caseId, string $bannerId): string
+    {
+        return sprintf('%s/%s/%s', self::REPORT_AD_URI, $caseId, $bannerId);
     }
 
     public function testFind(): void
@@ -160,10 +267,8 @@ final class SupplyControllerTest extends TestCase
         $this->instance(AdUser::class, $adUser);
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
         /** @var Zone $zone */
-        $zone = Zone::factory()->create(['site_id' => $site->id]);
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
@@ -202,10 +307,8 @@ final class SupplyControllerTest extends TestCase
 
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
         /** @var Zone $zone */
-        $zone = Zone::factory()->create(['site_id' => $site->id]);
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
@@ -226,18 +329,153 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonCount(0, 'data');
     }
 
-    public function testFindWithoutPlacements(): void
+    public function testFindFailWhileSiteRejected(): void
     {
+        SitesRejectedDomain::factory()->create(['domain' => 'example.com']);
+
+        /** @var User $user */
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
                 'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                ],
             ],
         ];
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testFindFailWhilePlacementInFrame(): void
+    {
+        Config::updateAdminSettings([Config::ALLOW_ZONE_IN_IFRAME => '0']);
+        /** @var User $user */
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                    'topframe' => false,
+                ],
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * @dataProvider findFailProvider
+     */
+    public function testFindFail(array $data): void
+    {
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function findFailProvider(): array
+    {
+        return [
+            'without placements' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                ]
+            ],
+            'invalid placements[] type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        'id' => '1',
+                        'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                    ],
+                ]
+            ],
+            'missing placement id' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement id type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => 1,
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement mimes type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                            'mimes' => 'image/png',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement mimes[] type' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                            'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                            'mimes' => [true],
+                        ]
+                    ],
+                ]
+            ],
+        ];
     }
 
     public function testFindWithExistingUserWhoIsAdvertiserOnly(): void
@@ -260,10 +498,14 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testFindDynamicWithExistingUser(): void
+    public function testFindDynamicWithPublisherIdAsUuidV4(): void
     {
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $publisherId = Uuid::fromString($publisher->uuid)->toString();
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
         $this->mockAdSelect();
-        $data = self::getDynamicFindData();
+        $data = self::getDynamicFindData(['context' => self::getContextData(['publisher' => $publisherId])]);
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -272,14 +514,25 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonCount(1, 'data');
     }
 
-    public function testFindDynamicUnsupportedPopup(): void
+    public function testFindDynamicWithoutExistingUser(): void
     {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
         $this->mockAdSelect();
-        $data = self::getDynamicFindData([
-            'placements' => [
-                self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
-            ]
-        ]);
+        $data = self::getDynamicFindData();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+        self::assertNotNull(User::firstOrFail()->admin_confirmed_at);
+    }
+
+    public function testFindDynamicWhileSiteApprovalRequired(): void
+    {
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+        $this->mockAdSelect();
+        $data = self::getDynamicFindData();
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
@@ -301,6 +554,13 @@ final class SupplyControllerTest extends TestCase
     public function findDynamicFailProvider(): array
     {
         return [
+            'unsupported popup' => [
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['types' => [Banner::TEXT_TYPE_DIRECT_LINK]])
+                    ]
+                ]),
+            ],
             'missing context.medium' => [
                 self::getDynamicFindData(['context' => self::getContextData(remove: 'medium')])
             ],
@@ -331,6 +591,27 @@ final class SupplyControllerTest extends TestCase
                 self::getDynamicFindData([
                     'placements' => [
                         self::getPlacementData(['types' => [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_DIRECT_LINK]])
+                    ],
+                ])
+            ],
+            'empty placement types' => [
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['types' => []])
+                    ],
+                ])
+            ],
+            'empty placement mimes' => [
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['mimes' => []])
+                    ],
+                ])
+            ],
+            'invalid placement topframe' => [
+                self::getDynamicFindData([
+                    'placements' => [
+                        self::getPlacementData(['topframe' => null])
                     ],
                 ])
             ],
@@ -443,6 +724,276 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testTargetingReachList(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => config('app.adshares_address')]);
+        /** @var NetworkHost $networkHost */
+        $networkHost = NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+        NetworkVectorsMeta::factory()->create(['network_host_id' => $networkHost->id]);
+        DB::insert(
+            "INSERT INTO network_vectors (
+                network_host_id,
+                `key`,
+                occurrences,
+                cpm_25,
+                cpm_50,
+                cpm_75,
+                negation_cpm_25,
+                negation_cpm_50,
+                negation_cpm_75,
+                data
+            )
+            VALUES (
+                :hostId,
+                'site:domain:adshares.net',
+                1,
+                2814662,
+                2814662,
+                2814662,
+                1107544,
+                3339398,
+                3339398,
+                0
+            );",
+            [':hostId' => $networkHost->id],
+        );
+        /** @var AdsAuthenticator $authenticator */
+        $authenticator = $this->app->make(AdsAuthenticator::class);
+
+        $response = self::getJson(
+            self::TARGETING_REACH_URI,
+            [
+                'Authorization' => $authenticator->getHeader(
+                    config('app.adshares_address'),
+                    Crypt::decryptString(config('app.adshares_secret')),
+                ),
+            ],
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
+    }
+
+    public function testTargetingReachWhileNotAuthorized(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testTargetingReachWhileInvalidCredentials(): void
+    {
+        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI, ['Authorization' => '']);
+
+        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testTargetingReachListWhileHostIsMissing(): void
+    {
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
+    }
+
+    public function testTargetingReachListWhileMetaDataIsMissing(): void
+    {
+        NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
+
+        $response = self::getJson(self::TARGETING_REACH_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::TARGETING_REACH_STRUCTURE);
+    }
+
+    public function testLogNetworkClick(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+    }
+
+    public function testLogNetworkClickWithoutContext(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['ctx']);
+        $query['zid'] = $zone->uuid;
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+    }
+
+    public function testLogNetworkClickFailWhileNoView(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testLogNetworkClickFailWhileInvalidRedirectUrlAndBannerId(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        $query['r'] = '';
+
+        $response = $this->get(self::buildLogClickUri('invalid', $query));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testLogNetworkView(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+    }
+
+    public function testLogNetworkViewWithoutContext(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['ctx']);
+        $query['zid'] = $zone->uuid;
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679801324567980132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+        $context = Utils::decodeZones($locationQuery['ctx']);
+        self::assertEquals('0x05cf6d580d124d6eda7fd065b2cd239b08e2fd68', $context['user']['account']);
+    }
+
+    public function testLogNetworkViewWhileCaseIdAndImpressionIdAreUuidV4(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        $query['cid'] = Uuid::fromString($query['cid'])->toString();
+        $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679-8013-2456-7980-132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+    }
+
+    public function testLogNetworkViewWithoutContextFailWhileInvalidZoneId(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['ctx']);
+        $query['zid'] = 'invalid';
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testLogNetworkViewWhileCaseIdAndImpressionIdAndZoneIdAreUuidV4(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        $query['cid'] = Uuid::fromString($query['cid'])->toString();
+        $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
+        $query['zid'] = Uuid::fromString($zone->uuid)->toString();
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://example.com/view', $location);
+        parse_str(parse_url($location, PHP_URL_QUERY), $locationQuery);
+        foreach (['cid', 'ctx', 'iid', 'pto', 'pid'] as $key) {
+            self::assertArrayHasKey($key, $locationQuery);
+        }
+        self::assertEquals('13245679-8013-2456-7980-132456798012', $locationQuery['cid']);
+        self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
+    }
+
+    public function testLogNetworkViewFailWhileImpressionIdIsMissing(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['iid']);
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testLogNetworkViewFailWhileImpressionIdIsInvalid(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        $query['iid'] = '0123456789ABCDEF0123456789ABCDEF';
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testRegister(): void
+    {
+        Config::updateAdminSettings([Config::ADUSER_SERVE_SUBDOMAIN => 'au']);
+        $expectedTrackingId = 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ';
+
+        $response = $this->get('/supply/register?iid=1a06e492-35df-4545-9e12-d5d929abf9e9');
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        self::assertStringContainsString('/' . $expectedTrackingId . '/', $response->headers->get('Location'));
+        $response->assertCookie('tid', $expectedTrackingId, false);
+    }
+
     private static function findJsonData(array $merge = []): array
     {
         return array_merge(
@@ -453,7 +1004,10 @@ final class SupplyControllerTest extends TestCase
                 'width' => 300,
                 'height' => 250,
                 'context' => [
-                    'user' => ['language' => 'en'],
+                    'user' => [
+                        'account' => '0x05cf6d580d124d6eda7fd065b2cd239b08e2fd68',
+                        'language' => 'en',
+                    ],
                     'device' => ['os' => 'Windows'],
                     'site' => ['url' => 'https://scene-0-n10.decentraland.org/'],
                 ],
@@ -519,5 +1073,84 @@ final class SupplyControllerTest extends TestCase
             'width' => '300',
             'height' => '250',
         ], $merge);
+    }
+
+    private static function buildLogClickUri(string $bannerId, ?array $query = null): string
+    {
+        $uri = sprintf('/l/n/click/%s', $bannerId);
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
+    }
+
+    private static function buildLogViewUri(string $bannerId, ?array $query = null): string
+    {
+        $uri = sprintf('/l/n/view/%s', $bannerId);
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
+    }
+
+    private static function initBeforeLoggingClick(): array
+    {
+        $arr = self::initBeforeLoggingView();
+        $query = $arr[0];
+        $banner = $arr[1];
+        $zone = $arr[2];
+        NetworkCase::factory()->create([
+            'banner_id' => $banner->uuid,
+            'case_id' => $query['cid'],
+            'network_impression_id' => NetworkImpression::firstOrFail()->id,
+            'publisher_id' => $zone->site->user->uuid,
+            'site_id' => $zone->site->uuid,
+            'zone_id' => $zone->uuid,
+        ]);
+        return $arr;
+    }
+
+    private static function initBeforeLoggingView(): array
+    {
+        /** @var NetworkImpression $impression */
+        $impression = NetworkImpression::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => User::factory()->create()]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaign,
+            'view_url' => 'https://example.com/view',
+        ]);
+        $iid = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($impression->impression_id));
+        $ctx = Utils::UrlSafeBase64Encode(
+            json_encode(
+                [
+                    'page' => [
+                        'iid' => $iid,
+                        'frame' => 0,
+                        'width' => 1024,
+                        'height' => 768,
+                        'url' => 'https://adshares.net',
+                        'keywords' => '',
+                        'metamask' => 0,
+                        'ref' => '',
+                        'pop' => 0,
+                        'zone' => $zone->uuid,
+                        'options' => '[]',
+                    ],
+                ]
+            )
+        );
+        $redirectUrl = Utils::urlSafeBase64Encode($banner->view_url);
+        $query = [
+            'cid' => '13245679801324567980132456798012',
+            'ctx' => $ctx,
+            'iid' => $iid,
+            'r' => $redirectUrl,
+        ];
+        return [$query, $banner, $zone];
     }
 }

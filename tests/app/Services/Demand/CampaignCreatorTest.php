@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Services\Demand;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Services\Demand\CampaignCreator;

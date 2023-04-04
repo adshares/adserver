@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,12 +32,13 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use DateTimeInterface;
@@ -80,21 +81,11 @@ SQL;
     private const PLACEHOLDER_SITE_ID = '{sid}';
     private const PLACEHOLDER_ZONE_ID = '{zid}';
 
-    private PaymentDetailsVerify $paymentDetailsVerify;
-    private CampaignRepository $campaignRepository;
-    private LicenseReader $licenseReader;
-    private AdsAuthenticator $authenticator;
-
     public function __construct(
-        PaymentDetailsVerify $paymentDetailsVerify,
-        CampaignRepository $campaignRepository,
-        LicenseReader $licenseReader,
-        AdsAuthenticator $authenticator
+        private readonly AdsAuthenticator $authenticator,
+        private readonly CampaignRepository $campaignRepository,
+        private readonly PaymentDetailsVerify $paymentDetailsVerify,
     ) {
-        $this->paymentDetailsVerify = $paymentDetailsVerify;
-        $this->campaignRepository = $campaignRepository;
-        $this->licenseReader = $licenseReader;
-        $this->authenticator = $authenticator;
     }
 
     public function serve(Request $request, $id): Response
@@ -206,6 +197,7 @@ SQL;
 
     public function click(Request $request, string $bannerId)
     {
+        $this->validateEventRequest($request);
         $banner = $this->getBanner($bannerId);
 
         $campaign = $banner->campaign;
@@ -213,7 +205,7 @@ SQL;
 
         $url = $campaign->landing_url;
 
-        $caseId = $request->query->get('cid');
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
         try {
@@ -238,10 +230,8 @@ SQL;
             );
             $response = new RedirectResponse($url);
         }
-        $response->send();
 
         $impressionId = $request->query->get('iid');
-
         if ($impressionId) {
             $tid = Utils::attachOrProlongTrackingCookie(
                 $request,
@@ -253,12 +243,13 @@ SQL;
         } else {
             $tid = $request->cookies->get('tid');
         }
+        $response->send();
 
         $trackingId = $tid
             ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
 
-        $keywords = $context['page']['keywords'];
+        $keywords = $context['page']['keywords'] ?? '';
 
         $hasCampaignClickConversion = $campaign->hasClickConversion();
         $eventType = $hasCampaignClickConversion ? EventLog::TYPE_SHADOW_CLICK : EventLog::TYPE_CLICK;
@@ -305,17 +296,15 @@ SQL;
     {
         $this->validateEventRequest($request);
 
-        $caseId = $request->query->get('cid');
+        $caseId = str_replace('-', '', $request->query->get('cid'));
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
         $response = new Response();
-
         if ($request->headers->has('Origin')) {
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
         }
 
         $impressionId = $request->query->get('iid');
-
         if ($impressionId) {
             $tid = Utils::attachOrProlongTrackingCookie(
                 $request,
@@ -340,7 +329,6 @@ SQL;
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
-        $keywords = $context['page']['keywords'] ?? '';
 
         $adUserEndpoint = config('app.aduser_serve_subdomain') ?
             ServeDomain::current(config('app.aduser_serve_subdomain')) :
@@ -361,47 +349,32 @@ SQL;
         if ($request->query->get('simple')) {
             $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
             $response->headers->set(self::CONTENT_TYPE, 'image/gif');
-        } elseif ($request->query->get('json')) {
-            $response->setContent(
-                json_encode(
-                    [
-                        'log_url'         => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                route('banner-context', ['id' => $eventId])
-                            ))->toString()
-                        ),
-                        'view_script_url' => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                url('-/view.js')
-                            ))->toString()
-                        ),
-                        'aduser_url'      => $adUserUrl,
-                    ]
-                )
-            );
-            $response->headers->set(self::CONTENT_TYPE, 'application/json');
         } else {
-            $response->setContent(
-                view(
-                    'demand/view-event',
-                    [
-                        'log_url'         => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                route('banner-context', ['id' => $eventId])
-                            ))->toString()
-                        ),
-                        'view_script_url' => ServeDomain::changeUrlHost(
-                            (new SecureUrl(
-                                url('-/view.js')
-                            ))->toString()
-                        ),
-                        'aduser_url'      => $adUserUrl,
-                    ]
-                )
-            );
+            $acceptJson = 'application/json' === $request->headers->get('Accept');
+            if ($acceptJson) {
+                $contextUrl = ServeDomain::changeUrlHost(
+                    (new SecureUrl(route('banner-init-context', ['event_id' => $eventId])))->toString()
+                );
+                $urls = [$contextUrl];
+                if (null !== $adUserUrl) {
+                    $urls[] = $adUserUrl;
+                }
+                $response->setContent(json_encode(['context' => $urls]));
+                $response->headers->set(self::CONTENT_TYPE, 'application/json');
+            } else {
+                // legacy code, will be removed when find will use JSON only
+                $response->setContent(
+                    view(
+                        'demand/view-event-legacy',
+                        self::getViewContentInput($eventId, $adUserUrl)
+                    )
+                );
+            }
         }
 
         $response->send();
+
+        $keywords = $context['page']['keywords'] ?? '';
 
         $banner = $this->getBanner($bannerId);
         $campaign = $banner->campaign;
@@ -425,13 +398,34 @@ SQL;
         return $response;
     }
 
+    public function initContext(Request $request, string $eventId): Response
+    {
+        $response = new Response();
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+        return $response->setContent(
+            view(
+                'demand/view-event',
+                [
+                    'log_url' => ServeDomain::changeUrlHost(
+                        (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString()
+                    ),
+                    'view_script_url' => ServeDomain::changeUrlHost(
+                        (new SecureUrl(url('-/view.js')))->toString()
+                    ),
+                ],
+            )
+        );
+    }
+
     private function validateEventRequest(Request $request): void
     {
         if (
             !$request->query->has('ctx')
-            || !$request->query->has('cid')
             || !$request->query->has('pto')
             || !$request->query->has('pid')
+            || !Uuid::isValid($request->query->get('cid', ''))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
@@ -452,7 +446,7 @@ SQL;
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $decodedContext;
             if (!$event->domain && isset($event->their_context)) {
-                $event->domain = EventLog::getDomainFromContext($event->their_context);
+                $event->domain = EventLog::getDomainFromContext(json_decode(json_encode($event->their_context), true));
             }
             if (!$event->domain && isset($decodedContext->url)) {
                 $event->domain = DomainReader::domain($decodedContext->url);
@@ -523,10 +517,9 @@ SQL;
         return DB::select($query, array_merge($paymentIds, $paymentIds, [$limit, $offset]));
     }
 
-    public function inventoryList(Request $request): JsonResponse
+    public function inventoryList(Request $request, TotalFeeReader $totalFeeReader): JsonResponse
     {
-        $licenceTxFee = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
-        $operatorTxFee = config('app.payment_tx_fee');
+        $totalFee = $totalFeeReader->getTotalFeeDemand();
 
         $campaigns = [];
 
@@ -589,7 +582,7 @@ SQL;
                 'vendor' => $campaign->vendor,
                 'max_cpc' => $campaign->max_cpc,
                 'max_cpm' => $campaign->max_cpm,
-                'budget' => $this->calculateBudgetAfterFees($campaign->budget, $licenceTxFee, $operatorTxFee),
+                'budget' => self::calculateBudgetAfterFees($campaign->budget, $totalFee),
                 'banners' => $banners,
                 'targeting_requires' => (array)$campaign->targeting_requires,
                 'targeting_excludes' => (array)$campaign->targeting_excludes,
@@ -617,13 +610,9 @@ SQL;
         return BannerClassification::fetchClassifiedByBannerIds($bannerIds);
     }
 
-    private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
+    private static function calculateBudgetAfterFees(int $budget, float $totalFee): int
     {
-        $licenceFee = (int)floor($budget * $licenceTxFee);
-        $budgetAfterFee = $budget - $licenceFee;
-        $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
-
-        return $budgetAfterFee - $operatorFee;
+        return $budget - (int)floor($budget * $totalFee);
     }
 
     private function replaceLandingUrlPlaceholders(
@@ -635,10 +624,10 @@ SQL;
         string $siteId,
         string $zoneId
     ): string {
-        if (false === strpos($landingUrl, self::PLACEHOLDER_CASE_ID)) {
-            $landingUrl = Utils::addUrlParameter($landingUrl, 'cid', $caseId);
-        } else {
+        if (str_contains($landingUrl, self::PLACEHOLDER_CASE_ID)) {
             $landingUrl = str_replace(self::PLACEHOLDER_CASE_ID, $caseId, $landingUrl);
+        } else {
+            $landingUrl = Utils::addUrlParameter($landingUrl, 'cid', $caseId);
         }
 
         return str_replace(
@@ -658,5 +647,22 @@ SQL;
             ],
             $landingUrl
         );
+    }
+
+    private static function getViewContentInput(string $eventId, ?string $adUserUrl): array
+    {
+        return [
+            'aduser_url' => $adUserUrl,
+            'log_url' => ServeDomain::changeUrlHost(
+                (new SecureUrl(
+                    route('banner-context', ['id' => $eventId])
+                ))->toString()
+            ),
+            'view_script_url' => ServeDomain::changeUrlHost(
+                (new SecureUrl(
+                    url('-/view.js')
+                ))->toString()
+            ),
+        ];
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,16 +33,22 @@ use Adshares\Common\Application\Service\AdsRpcClient;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Mock\Client\DummyAdClassifyClient;
+use Adshares\Mock\Client\DummyAdPayClient;
 use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Mock\Client\DummySupplyClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\SupplyClient;
 use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -65,6 +71,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         Event::fake()->except([
             'eloquent.creating: Laravel\Passport\Client',
+            'eloquent.creating: Adshares\Adserver\Models\UploadedFile',
         ]);
         Mail::fake();
         Queue::fake();
@@ -108,6 +115,12 @@ abstract class TestCase extends BaseTestCase
             }
         );
         $this->app->bind(
+            AdPay::class,
+            static function () {
+                return new DummyAdPayClient();
+            }
+        );
+        $this->app->bind(
             AdsRpcClient::class,
             static function () {
                 return new DummyAdsRpcClient();
@@ -137,6 +150,16 @@ abstract class TestCase extends BaseTestCase
                 return new DummyDemandClient();
             }
         );
+        $this->app->bind(
+            LicenseReader::class,
+            function () {
+                $licenseReader = self::createMock(LicenseReader::class);
+                $licenseReader->method('getAddress')->willReturn(new AccountId('FFFF-00000000-3F2E'));
+                $licenseReader->method('getFee')->willReturn(0.01);
+                return $licenseReader;
+            }
+        );
+        $this->app->bind(SupplyClient::class, fn() => new DummySupplyClient());
     }
 
     protected function login(User $user = null): User

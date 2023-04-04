@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ namespace Database\Factories;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Service\AdUser;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class SiteFactory extends Factory
@@ -44,6 +45,7 @@ class SiteFactory extends Factory
             'info' => AdUser::PAGE_INFO_OK,
             'categories' => ['unknown'],
             'only_accepted_banners' => 0,
+            'accepted_at' => new DateTimeImmutable(),
         ];
     }
 }

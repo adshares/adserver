@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -63,7 +63,7 @@ class NetworkCaseLogsHourlyMeta extends Model
 
     public static function invalidate(int $id): self
     {
-        $meta = self::updateOrCreate(['id' => $id], ['status' => NetworkCaseLogsHourlyMeta::STATUS_INVALID]);
+        $meta = self::updateOrCreate(['id' => $id], ['status' => self::STATUS_INVALID]);
         $meta->touch();
 
         return $meta;

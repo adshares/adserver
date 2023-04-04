@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
@@ -34,8 +35,10 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\Log;
+use Ramsey\Uuid\UuidInterface;
 use Throwable;
 
 class CampaignRepository
@@ -46,9 +49,15 @@ class CampaignRepository
     ) {
     }
 
-    public function find()
+    public function find(?FilterCollection $filters = null): Collection
     {
-        return (new Campaign())->with('conversions')->get();
+        $builder = (new Campaign())->with('conversions');
+        if (null !== $filters) {
+            foreach ($filters->getFilters() as $filter) {
+                $builder->whereIn($filter->getName(), $filter->getValues());
+            }
+        }
+        return $builder->get();
     }
 
     /**
@@ -106,6 +115,9 @@ class CampaignRepository
      */
     public function save(Campaign $campaign, array $banners = [], array $conversions = []): Campaign
     {
+        if (Campaign::STATUS_ACTIVE === $campaign->status && empty($banners)) {
+            throw new InvalidArgumentException('Cannot save active campaign without creatives');
+        }
         DB::beginTransaction();
         $status = $campaign->status;
         $campaign->status = Campaign::STATUS_DRAFT;
@@ -236,6 +248,13 @@ class CampaignRepository
 
             $this->bannerClassificationCreator->createForCampaign($campaign);
             $campaign->refresh();
+
+            if (
+                Campaign::STATUS_ACTIVE === $campaign->status
+                && !$campaign->banners()->where('status', Banner::STATUS_ACTIVE)->exists()
+            ) {
+                throw new InvalidArgumentException('Cannot update active campaign without creatives');
+            }
             DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
@@ -248,28 +267,38 @@ class CampaignRepository
         return $campaign;
     }
 
-    public function fetchCampaignByIdSimple(int $id): Campaign
+    public function fetchCampaignByUuid(UuidInterface $id): Campaign
     {
-        return Campaign::findOrFail($id);
+        if (null === ($campaign = Campaign::fetchByUuid(str_replace('-', '', $id->toString())))) {
+            throw new ModelNotFoundException(sprintf('No query results for campaign %s', $id->toString()));
+        }
+        return $campaign;
     }
 
-    public function fetchBanner(Campaign $campaign, int $bannerId): Banner
+    public function fetchBannerByUuid(Campaign $campaign, UuidInterface $bannerId): Banner
     {
-        return $campaign->banners()->findOrFail($bannerId);
+        if (null === ($banner = $campaign->banners()->where('uuid', $bannerId->getBytes())->first())) {
+            throw new ModelNotFoundException(sprintf('No query results for banner %s', $bannerId->toString()));
+        }
+        return $banner;
     }
 
     public function fetchBanners(Campaign $campaign, ?int $perPage = null): CursorPaginator
     {
         return $campaign->banners()->orderBy('id')
-            ->tokenPaginate($perPage)
-            ->withQueryString();
+            ->tokenPaginate($perPage);
     }
 
-    public function fetchCampaigns(?int $perPage = null): CursorPaginator
+    public function fetchCampaigns(?FilterCollection $filters = null, ?int $perPage = null): CursorPaginator
     {
-        return Campaign::query()->orderBy('id')
-            ->tokenPaginate($perPage)
-            ->withQueryString();
+        $builder = Campaign::query();
+        if (null !== $filters) {
+            foreach ($filters->getFilters() as $filter) {
+                $builder->whereIn($filter->getName(), $filter->getValues());
+            }
+        }
+        return $builder->orderBy('id')
+            ->tokenPaginate($perPage);
     }
 
     private static function checkIfBidStrategyCanChanged(Campaign $campaign): void
@@ -297,5 +326,15 @@ class CampaignRepository
             throw new RuntimeException('Exchange rate is not available');
         }
         return $exchangeRate;
+    }
+
+    public function fetchCampaignsMedia(): Collection
+    {
+        return Campaign::query()
+            ->select(['medium', 'vendor'])
+            ->groupBy(['medium', 'vendor'])
+            ->orderBy('medium')
+            ->orderBy('vendor')
+            ->get();
     }
 }

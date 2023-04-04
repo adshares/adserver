@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -37,6 +37,7 @@ class UserFactory extends Factory
             'is_advertiser' => 1,
             'is_publisher' => 1,
             'is_admin' => false,
+            'invalid_login_attempts' => 0,
         ];
     }
 

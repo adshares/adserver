@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,18 +25,10 @@ namespace Adshares\Adserver\Services;
 
 class PaymentDetailsFeeCalculator
 {
-    /** @var float $licenseFeeCoefficient */
-    private $licenseFeeCoefficient;
-
-    /** @var float $operatorFeeCoefficient */
-    private $operatorFeeCoefficient;
-
     public function __construct(
-        float $licenseFeeCoefficient,
-        float $operatorFeeCoefficient
+        private readonly float $licenseFeeCoefficient,
+        private readonly float $operatorFeeCoefficient,
     ) {
-        $this->licenseFeeCoefficient = $licenseFeeCoefficient;
-        $this->operatorFeeCoefficient = $operatorFeeCoefficient;
     }
 
     public function calculateFee(int $amountBeforeFees): array

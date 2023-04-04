@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Common\Application\Dto;
 
+use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Exception\InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
 
 class TaxonomyV2Test extends TestCase
 {

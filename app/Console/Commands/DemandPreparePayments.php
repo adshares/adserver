@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Infrastructure\Service\CommunityFeeReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
 use DateTimeInterface;
@@ -47,21 +48,19 @@ class DemandPreparePayments extends BaseCommand
 
     protected $description = 'Prepares payments for events and license';
 
-    private LicenseReader $licenseReader;
-
-    public function __construct(Locker $locker, LicenseReader $licenseReader)
-    {
-        $this->licenseReader = $licenseReader;
-
+    public function __construct(
+        Locker $locker,
+        private readonly CommunityFeeReader $communityFeeReader,
+        private readonly LicenseReader $licenseReader,
+    ) {
         parent::__construct($locker);
     }
 
-    public function handle(): void
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
-
-            return;
+            return self::FAILURE;
         }
 
         $this->info('Start command ' . self::COMMAND_SIGNATURE);
@@ -69,7 +68,6 @@ class DemandPreparePayments extends BaseCommand
         $to = $this->getDateTimeFromOption('to');
         if ($from !== null && $to !== null && $to < $from) {
             $this->release();
-
             throw new InvalidArgumentException(
                 sprintf(
                     '[DemandPreparePayments] Invalid period from (%s) to (%s)',
@@ -79,25 +77,30 @@ class DemandPreparePayments extends BaseCommand
             );
         }
 
-        $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
+        $licenseAccountAddress = $this->licenseReader->getAddress()?->toString();
         $demandLicenseFeeCoefficient = $this->licenseReader->getFee(LicenseReader::LICENSE_TX_FEE);
         $demandOperatorFeeCoefficient = config('app.payment_tx_fee');
+        $communityAccountAddress = $this->communityFeeReader->getAddress()->toString();
+        $communityFeeCoefficient = $this->communityFeeReader->getFee();
 
         $conversions = Conversion::fetchUnpaidConversions($from, $to);
         $conversionCount = count($conversions);
         $this->info("Found $conversionCount payable conversions.");
         if ($conversionCount > 0) {
             $totalLicenseFee = 0;
+            $totalCommunityFee = 0;
             $eventLogIds = [];
             $groupedConversions = $this->processAndGroupEventsByRecipient(
                 $conversions,
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
+                $communityFeeCoefficient,
                 $totalLicenseFee,
+                $totalCommunityFee,
                 $eventLogIds
             );
 
-            $this->info(sprintf('In that, there are %d recipients,', count($groupedConversions)));
+            $this->info(sprintf('In that, there are %d recipients', count($groupedConversions)));
 
             DB::beginTransaction();
 
@@ -122,19 +125,26 @@ class DemandPreparePayments extends BaseCommand
                 }
             );
 
-            $licensePayment = new Payment([
-                'account_address' => $licenseAccountAddress,
-                'state' => Payment::STATE_NEW,
-                'completed' => 0,
-                'fee' => $totalLicenseFee,
-            ]);
-
-            $licensePayment->save();
+            if (null !== $licenseAccountAddress) {
+                $licensePayment = $this->savePayment($licenseAccountAddress, $totalLicenseFee);
+                $this->info(
+                    sprintf(
+                        'and a license fee of %d clicks payable to %s',
+                        $licensePayment->fee,
+                        $licensePayment->account_address,
+                    )
+                );
+            }
+            $communityPayment = $this->savePayment($communityAccountAddress, $totalCommunityFee);
+            $this->info(
+                sprintf(
+                    'and a community fee of %d clicks payable to %s',
+                    $communityPayment->fee,
+                    $communityPayment->account_address,
+                )
+            );
 
             DB::commit();
-
-            $this->info("and a license fee of {$licensePayment->fee} clicks"
-                . " payable to {$licensePayment->account_address}.");
         }
         while (true) {
             $events = EventLog::fetchUnpaidEvents($from, $to, (int)$this->option('chunkSize'));
@@ -147,16 +157,19 @@ class DemandPreparePayments extends BaseCommand
             }
 
             $totalLicenseFee = 0;
+            $totalCommunityFee = 0;
             $eventLogIds = [];
             $groupedEvents = $this->processAndGroupEventsByRecipient(
                 $events,
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
+                $communityFeeCoefficient,
                 $totalLicenseFee,
+                $totalCommunityFee,
                 $eventLogIds
             );
 
-            $this->info(sprintf('In that, there are %d recipients,', count($groupedEvents)));
+            $this->info(sprintf('In that, there are %d recipients', count($groupedEvents)));
 
             DB::beginTransaction();
 
@@ -177,37 +190,49 @@ class DemandPreparePayments extends BaseCommand
                 }
             );
 
-            $licensePayment = new Payment([
-                'account_address' => $licenseAccountAddress,
-                'state' => Payment::STATE_NEW,
-                'completed' => 0,
-                'fee' => $totalLicenseFee,
-            ]);
-
-            $licensePayment->save();
+            if (null !== $licenseAccountAddress) {
+                $licensePayment = $this->savePayment($licenseAccountAddress, $totalLicenseFee);
+                $this->info(
+                    sprintf(
+                        'and a license fee of %d clicks payable to %s',
+                        $licensePayment->fee,
+                        $licensePayment->account_address,
+                    )
+                );
+            }
+            $communityPayment = $this->savePayment($communityAccountAddress, $totalCommunityFee);
+            $this->info(
+                sprintf(
+                    'and a community fee of %d clicks payable to %s',
+                    $communityPayment->fee,
+                    $communityPayment->account_address,
+                )
+            );
 
             DB::commit();
-
-            $this->info("and a license fee of {$licensePayment->fee} clicks"
-                . " payable to {$licensePayment->account_address}.");
         }
 
         $this->invalidateStatisticsForPreparedEvents($from, $to);
         $this->release();
+        return self::SUCCESS;
     }
 
     private function processAndGroupEventsByRecipient(
-        \Illuminate\Database\Eloquent\Collection $events,
+        Collection $events,
         float $demandLicenseFeeCoefficient,
         float $demandOperatorFeeCoefficient,
+        float $communityFeeCoefficient,
         int &$totalLicenseFee,
+        int &$totalCommunityFee,
         array &$eventLogIds
     ): Collection {
         return $events->each(
             static function ($entry) use (
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
+                $communityFeeCoefficient,
                 &$totalLicenseFee,
+                &$totalCommunityFee,
                 &$eventLogIds
             ) {
                 $eventLogIds[] = $entry->event_logs_id;
@@ -220,7 +245,12 @@ class DemandPreparePayments extends BaseCommand
                 $operatorFee = (int)floor($amountAfterFee * $demandOperatorFeeCoefficient);
                 $entry->operator_fee = $operatorFee;
 
-                $entry->paid_amount = $amountAfterFee - $operatorFee;
+                $amountAfterFee -= $operatorFee;
+                $communityFee = (int)floor($amountAfterFee * $communityFeeCoefficient);
+                $entry->community_fee = $communityFee;
+                $totalCommunityFee += $communityFee;
+
+                $entry->paid_amount = $amountAfterFee - $communityFee;
             }
         )->groupBy('pay_to');
     }
@@ -251,5 +281,17 @@ class DemandPreparePayments extends BaseCommand
             EventLogsHourlyMeta::invalidate($timestamp);
             $timestamp += DateUtils::HOUR;
         }
+    }
+
+    private function savePayment(string $accountAddress, int $fee): Payment
+    {
+        $payment = new Payment([
+            'account_address' => $accountAddress,
+            'state' => Payment::STATE_NEW,
+            'completed' => 0,
+            'fee' => $fee,
+        ]);
+        $payment->save();
+        return $payment;
     }
 }

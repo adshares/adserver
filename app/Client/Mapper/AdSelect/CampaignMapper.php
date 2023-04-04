@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,12 +29,11 @@ use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Size;
-use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
 
 class CampaignMapper
 {
-    public const DEFAULT_VENDOR = 'unknown';
-
     public static function map(Medium $medium, Campaign $campaign): array
     {
         $banners = [];
@@ -74,13 +73,10 @@ class CampaignMapper
         }
 
         $targeting = TargetingMapper::map(
-            array_merge(
+            array_merge_recursive(
                 $campaignArray['targeting_requires'],
                 [
-                    'site' => [
-                        'medium' => $campaign->getMedium(),
-                        'vendor' => $campaign->getVendor() ?? self::DEFAULT_VENDOR,
-                    ],
+                    'site' => self::getSiteTargeting($campaign),
                 ],
             ),
             $campaignArray['targeting_excludes']
@@ -89,7 +85,7 @@ class CampaignMapper
         $dateStart = (int)$campaignArray['date_start']->format('U');
         $dateEnd = self::processDateEnd($campaignArray['date_end']);
 
-        $mapped = [
+        return [
             'campaign_id' => $campaignArray['id'],
             'time_start' => $dateStart,
             'time_end' => $dateEnd,
@@ -101,17 +97,14 @@ class CampaignMapper
             'budget' => $campaign->getBudget(),
             'max_cpc' => $campaign->getMaxCpc(),
             'max_cpm' => $campaign->getMaxCpm(),
+            'filters' => $targeting,
         ];
-
-        $mapped['filters'] = $targeting;
-
-        return $mapped;
     }
 
-    private static function processDateEnd(?DateTime $dateEnd): int
+    private static function processDateEnd(?DateTimeInterface $dateEnd): int
     {
-        if ($dateEnd === null) {
-            return (new DateTime('+1 year'))->getTimestamp();
+        if (null === $dateEnd) {
+            return (new DateTimeImmutable('+1 year'))->getTimestamp();
         }
 
         return $dateEnd->getTimestamp();
@@ -125,5 +118,16 @@ class CampaignMapper
             }
         }
         return [];
+    }
+
+    private static function getSiteTargeting(Campaign $campaign): array
+    {
+        $siteTargeting = [
+            'medium' => $campaign->getMedium(),
+        ];
+        if (null !== ($vendor = $campaign->getVendor())) {
+            $siteTargeting['vendor'] = $vendor;
+        }
+        return $siteTargeting;
     }
 }

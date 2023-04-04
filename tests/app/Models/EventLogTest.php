@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -155,6 +155,24 @@ class EventLogTest extends TestCase
             ],
             'their_userdata' => '',
             'event_type' => 'view',
+        ];
+    }
+
+    /**
+     * @dataProvider getDomainFromContextProvider
+     */
+    public function testGetDomainFromContext(?string $expectedDomain, array $context): void
+    {
+        self::assertEquals($expectedDomain, EventLog::getDomainFromContext($context));
+    }
+
+    public function getDomainFromContextProvider(): array
+    {
+        return [
+            ['adshares.net', ['site' => ['domain' => 'adshares.net']]],
+            [null, ['site' => ['domain' => 'example.com']]],
+            [null, ['site' => []]],
+            [null, []],
         ];
     }
 }

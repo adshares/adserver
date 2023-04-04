@@ -6,6 +6,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\ViewModel\BannerStatus;
 use DateTimeInterface;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Ramsey\Uuid\Uuid;
 
 class BannerResource extends JsonResource
 {
@@ -13,8 +14,7 @@ class BannerResource extends JsonResource
     {
         /** @var Banner $this */
         return [
-            'id' => $this->id,
-            'uuid' => $this->uuid,
+            'id' => Uuid::fromString($this->uuid)->toString(),
             'createdAt' => $this->created_at->format(DateTimeInterface::ATOM),
             'updatedAt' => $this->updated_at->format(DateTimeInterface::ATOM),
             'type' => $this->creative_type,

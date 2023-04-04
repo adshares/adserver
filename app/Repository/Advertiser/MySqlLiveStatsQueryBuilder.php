@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,7 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
+use Adshares\Adserver\Http\Requests\Filter\StringFilter;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTimeInterface;
 
@@ -228,6 +230,20 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->column("IFNULL(e.domain, '') AS domain");
         $this->groupBy("IFNULL(e.domain, '')");
+
+        return $this;
+    }
+
+    public function appendMediumWhereClause(
+        ?StringFilter $mediumFilter,
+        ?StringFilter $vendorFilter,
+    ): self {
+        if (null !== ($media = $mediumFilter?->getValues())) {
+            $this->where(sprintf('c.medium IN (%s)', SqlUtils::quotAndJoin($media)));
+        }
+        if (null !== ($vendors = $vendorFilter?->getValues())) {
+            $this->where(sprintf('c.vendor IN (%s)', SqlUtils::quotAndJoin($vendors)));
+        }
 
         return $this;
     }

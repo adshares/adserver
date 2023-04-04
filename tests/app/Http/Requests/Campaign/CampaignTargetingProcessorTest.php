@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,8 +25,8 @@ use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
-use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
-use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 
 final class CampaignTargetingProcessorTest extends TestCase
 {
@@ -38,7 +38,7 @@ final class CampaignTargetingProcessorTest extends TestCase
             ]
         );
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $processor = new CampaignTargetingProcessor($this->getTargetingSchema());
+        $processor = new CampaignTargetingProcessor((new DummyConfigurationRepository())->fetchMedium());
 
         $targeting = [
             'site' => [
@@ -54,8 +54,66 @@ final class CampaignTargetingProcessorTest extends TestCase
         $this->assertEquals($targeting, $result);
     }
 
-    private function getTargetingSchema(): Medium
+    /**
+     * @dataProvider processTargetingInvalidSiteDomain
+     */
+    public function testProcessTargetingRequireInvalidSiteDomain(string $medium, ?string $vendor, string $domain): void
     {
-        return $this->app->make(ConfigurationRepository::class)->fetchMedium();
+        $processor = new CampaignTargetingProcessor(
+            (new DummyConfigurationRepository())->fetchMedium($medium, $vendor)
+        );
+        $targeting = [
+            'site' => [
+                'domain' => [
+                    $domain,
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $processor->processTargetingRequire($targeting);
+    }
+
+    public function processTargetingInvalidSiteDomain(): array
+    {
+        return [
+            ['web', null, '1'],
+            ['metaverse', 'decentraland', 'example.com'],
+            ['metaverse', 'decentraland', 'scene-3.decentraland.org'],
+            ['metaverse', 'cryptovoxels', 'example.com'],
+        ];
+    }
+
+    /**
+     * @dataProvider processTargetingValidSiteDomain
+     */
+    public function testProcessTargetingRequireValidSiteDomain(string $medium, ?string $vendor, string $domain): void
+    {
+        $processor = new CampaignTargetingProcessor(
+            (new DummyConfigurationRepository())->fetchMedium($medium, $vendor)
+        );
+        $targeting = [
+            'site' => [
+                'domain' => [
+                    $domain,
+                ],
+            ],
+        ];
+
+        $result = $processor->processTargetingRequire($targeting);
+
+        $this->assertEquals([$domain], $result['site']['domain']);
+    }
+
+    public function processTargetingValidSiteDomain(): array
+    {
+        return [
+            ['web', null, 'example.com'],
+            ['metaverse', 'decentraland', 'decentraland.org'],
+            ['metaverse', 'decentraland', 'scene-3-n7.decentraland.org'],
+            ['metaverse', 'cryptovoxels', 'cryptovoxels.com'],
+            ['metaverse', 'cryptovoxels', 'scene-3.cryptovoxels.com'],
+        ];
     }
 }

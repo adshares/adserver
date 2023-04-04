@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -76,7 +76,7 @@ class DemandProcessPayments extends BaseCommand
                             $getPaymentsParameters,
                             $this->getOutput()
                         );
-                } catch (LogicException $logicException) {
+                } catch (LogicException) {
                     $this->warn(sprintf('Command %s is locked', AdPayGetPayments::COMMAND_SIGNATURE));
 
                     continue;
@@ -104,7 +104,7 @@ class DemandProcessPayments extends BaseCommand
                         $preparePaymentsParameters,
                         $this->getOutput()
                     );
-                } catch (LogicException $logicException) {
+                } catch (LogicException) {
                     $this->warn(sprintf('Command %s is locked', DemandPreparePayments::COMMAND_SIGNATURE));
 
                     continue;
@@ -201,7 +201,7 @@ class DemandProcessPayments extends BaseCommand
             } else {
                 DB::rollBack();
             }
-        } catch (LogicException $logicException) {
+        } catch (LogicException) {
             DB::rollBack();
             $this->warn(sprintf('Command %s is locked', DemandSendPayments::COMMAND_SIGNATURE));
         }
@@ -215,7 +215,7 @@ class DemandProcessPayments extends BaseCommand
                 [],
                 $this->getOutput()
             );
-        } catch (LogicException $logicException) {
+        } catch (LogicException) {
             $this->warn(
                 sprintf('Command %s is locked', AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE)
             );

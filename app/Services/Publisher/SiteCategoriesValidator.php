@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -37,16 +37,6 @@ class SiteCategoriesValidator
 
     public function processCategories($categories, $medium, $vendor): array
     {
-        if (!$medium) {
-            throw new InvalidArgumentException('Field `medium` is required.');
-        }
-        if (!is_string($medium)) {
-            throw new InvalidArgumentException('Field `medium` must be a string.');
-        }
-        if ($vendor !== null && !is_string($vendor)) {
-            throw new InvalidArgumentException('Field `vendor` must be a string or null.');
-        }
-
         if (!isset($this->targetingProcessor)) {
             $this->targetingProcessor = new TargetingProcessor(
                 $this->configurationRepository->fetchMedium($medium, $vendor)

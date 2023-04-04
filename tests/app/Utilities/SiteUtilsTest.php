@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -44,11 +44,9 @@ final class SiteUtilsTest extends TestCase
             ['scene-0.cryptovoxels.com', 'Cryptovoxels 0'],
             ['scene-1.cryptovoxels.com', 'Cryptovoxels 1'],
             ['scene-127.cryptovoxels.com', 'Cryptovoxels 127'],
-            ['new.scene-127.cryptovoxels.com', 'new.scene-127.cryptovoxels.com'],
-            ['play.cryptovoxels.com', 'play.cryptovoxels.com'],
-            ['example.com', 'example.com'],
         ];
     }
+
     /**
      * @dataProvider decentralandDomainProvider
      */
@@ -66,9 +64,87 @@ final class SiteUtilsTest extends TestCase
             ['scene-n1-1.decentraland.org', 'Decentraland (-1, 1)'],
             ['scene-N55-N127.decentraland.org', 'Decentraland (-55, -127)'],
             ['scene-0-0.decentraland.org', 'DCL Builder'],
-            ['new.scene-0-0.decentraland.org', 'new.scene-0-0.decentraland.org'],
-            ['play.decentraland.org', 'play.decentraland.org'],
-            ['example.com', 'example.com'],
+        ];
+    }
+
+    /**
+     * @dataProvider polkaCityDomainProvider
+     */
+    public function testExtractNameFromPolkaCityDomain(string $domain, string $expectedName): void
+    {
+        $name = SiteUtils::extractNameFromPolkaCityDomain($domain);
+
+        $this->assertEquals($expectedName, $name);
+    }
+
+    public function polkaCityDomainProvider(): array
+    {
+        return [
+            ['plane.polkacity.io', 'PolkaCity (plane)'],
+            ['billboard01.polkacity.io', 'PolkaCity (billboard01)'],
+        ];
+    }
+
+    /**
+     * @dataProvider isValidCryptovoxelsUrlProvider
+     */
+    public function testIsValidCryptovoxelsUrl(string $url, bool $isValid): void
+    {
+        $this->assertEquals($isValid, SiteUtils::isValidCryptovoxelsUrl($url));
+    }
+
+    public function isValidCryptovoxelsUrlProvider(): array
+    {
+        return [
+            ['https://scene-0.cryptovoxels.com', true],
+            ['https://scene-1.cryptovoxels.com', true],
+            ['https://scene-127.cryptovoxels.com', true],
+            ['https://scene-c858cff6-be79-41bb-8e13-3ce55cdbf5b0.cryptovoxels.com', false],
+            ['http://scene-1.cryptovoxels.com', false],
+            ['https://new.scene-127.cryptovoxels.com', false],
+            ['https://play.cryptovoxels.com', false],
+            ['https://example.com', false],
+            ['https://scene-c858cff6-be79-41bb.cryptovoxels.com', false],
+        ];
+    }
+
+    /**
+     * @dataProvider isValidDecentralandUrlProvider
+     */
+    public function testIsValidDecentralandUrl(string $url, bool $isValid): void
+    {
+        $this->assertEquals($isValid, SiteUtils::isValidDecentralandUrl($url));
+    }
+
+    public function isValidDecentralandUrlProvider(): array
+    {
+        return [
+            ['https://scene-0-n1.decentraland.org', true],
+            ['https://scene-n1-1.decentraland.org', true],
+            ['https://scene-N55-N127.decentraland.org', true],
+            ['https://scene-0-0.decentraland.org', true],
+            ['http://scene-0-0.decentraland.org', false],
+            ['https://new.scene-0-0.decentraland.org', false],
+            ['https://play.decentraland.org', false],
+            ['https://example.com', false],
+        ];
+    }
+
+    /**
+     * @dataProvider isValidPolkaCityUrlProvider
+     */
+    public function testIsValidPolkaCityUrl(string $url, bool $isValid): void
+    {
+        $this->assertEquals($isValid, SiteUtils::isValidPolkaCityUrl($url));
+    }
+
+    public function isValidPolkaCityUrlProvider(): array
+    {
+        return [
+            ['https://plane.polkacity.io', true],
+            ['https://billboard01.polkacity.io', true],
+            ['https://polkacity.io', false],
+            ['https://example.com', false],
         ];
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,13 +22,18 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Adserver\Console\Commands\InventoryImporterCommand;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Jobs\ExecuteCommand;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -121,6 +126,7 @@ class ServerConfigurationController extends Controller
         Config::INVOICE_CURRENCIES => 'nullable|notEmpty|list:currency',
         Config::INVOICE_ENABLED => 'nullable|boolean',
         Config::INVOICE_NUMBER_FORMAT => 'nullable|notEmpty',
+        Config::LANDING_URL => 'nullable|url',
         Config::MAIL_SMTP_ENCRYPTION => 'nullable|notEmpty',
         Config::MAIL_FROM_ADDRESS => 'email',
         Config::MAIL_FROM_NAME => 'nullable|notEmpty',
@@ -131,6 +137,7 @@ class ServerConfigurationController extends Controller
         Config::MAIL_SMTP_USERNAME => 'nullable',
         Config::MAIN_JS_BASE_URL => 'nullable|url',
         Config::MAIN_JS_TLD => 'nullable|host',
+        Config::MAX_INVALID_LOGIN_ATTEMPTS => 'nullable|integer|min:1',
         Config::MAX_PAGE_ZONES => 'nullable|integer|min:0',
         Config::NETWORK_DATA_CACHE_TTL => 'nullable|integer|min:0',
         Config::NOW_PAYMENTS_API_KEY => 'nullable',
@@ -150,7 +157,9 @@ class ServerConfigurationController extends Controller
         Config::SITE_ACCEPT_BANNERS_MANUALLY => 'boolean',
         Config::SITE_CLASSIFIER_LOCAL_BANNERS => 'siteClassifierLocalBanners',
         Config::SITE_FILTERING_EXCLUDE => 'nullable|json',
+        Config::SITE_FILTERING_EXCLUDE_ON_AUTO_CREATE => 'nullable|json',
         Config::SITE_FILTERING_REQUIRE => 'nullable|json',
+        Config::SITE_FILTERING_REQUIRE_ON_AUTO_CREATE => 'nullable|json',
         Config::SKYNET_API_KEY => 'nullable|notEmpty',
         Config::SKYNET_API_URL => 'nullable|url',
         Config::SKYNET_CDN_URL => 'nullable|url',
@@ -163,7 +172,6 @@ class ServerConfigurationController extends Controller
         Config::UPLOAD_LIMIT_VIDEO => 'nullable|integer|min:0',
         Config::UPLOAD_LIMIT_ZIP => 'nullable|integer|min:0',
         Config::URL => 'url',
-        'rejected-domains' => 'nullable|list:domain',
     ];
     private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
     private const MAX_VALUE_LENGTH = 65535;
@@ -181,10 +189,6 @@ class ServerConfigurationController extends Controller
             $data = Config::fetchAdminSettings();
         }
 
-        if (null === $key || self::REJECTED_DOMAINS === $key) {
-            $data[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
-        }
-
         return self::json($data);
     }
 
@@ -199,6 +203,11 @@ class ServerConfigurationController extends Controller
         $data = $this->getPanelPlaceholdersWithNulls(PanelPlaceholder::TYPES_ALLOWED);
 
         return self::json($data);
+    }
+
+    public function fetchRejectedDomains(): JsonResponse
+    {
+        return self::json([self::REJECTED_DOMAINS => SitesRejectedDomain::fetchAll()]);
     }
 
     private function getPanelPlaceholdersWithNulls(array $types): array
@@ -303,28 +312,60 @@ class ServerConfigurationController extends Controller
         return $this->getPanelPlaceholdersWithNulls($types);
     }
 
+    public function storeRejectedDomains(Request $request): JsonResponse
+    {
+        $data = $request->all();
+        self::validateRejectedDomains($data);
+
+        $domains = array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? ''));
+        SitesRejectedDomain::storeDomains($domains);
+        Site::rejectByDomains($domains);
+
+        return $this->fetchRejectedDomains();
+    }
+
+    private static function validateRejectedDomains(array $data): void
+    {
+        if (!array_key_exists(self::REJECTED_DOMAINS, $data)) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` is required', self::REJECTED_DOMAINS));
+        }
+
+        if (null === $data[self::REJECTED_DOMAINS]) {
+            return;
+        }
+
+        if (!is_string($data[self::REJECTED_DOMAINS])) {
+            throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a string', self::REJECTED_DOMAINS));
+        }
+
+        self::validateList(self::REJECTED_DOMAINS, $data[self::REJECTED_DOMAINS], 'domain');
+    }
+
     private function storeData(array $data): array
     {
         $mappedData = [];
-        $appendRejectedDomains = false;
+        DB::beginTransaction();
         try {
-            if (array_key_exists(self::REJECTED_DOMAINS, $data)) {
-                SitesRejectedDomain::storeDomains(array_filter(explode(',', $data[self::REJECTED_DOMAINS] ?? '')));
-                unset($data[self::REJECTED_DOMAINS]);
-                $appendRejectedDomains = true;
-            }
             foreach ($data as $key => $value) {
                 $mappedData[Str::kebab($key)] = $value;
             }
             Config::updateAdminSettings($mappedData);
+            DB::commit();
         } catch (Throwable $exception) {
+            DB::rollBack();
             Log::error(sprintf('Cannot store configuration: (%s)', $exception->getMessage()));
             throw new RuntimeException('Cannot store configuration');
         }
 
+        DatabaseConfigReader::overwriteAdministrationConfig();
         $settings = array_intersect_key(Config::fetchAdminSettings(), $mappedData);
-        if ($appendRejectedDomains) {
-            $settings[self::REJECTED_DOMAINS] = SitesRejectedDomain::fetchAll();
+
+        if (
+            array_key_exists(Config::INVENTORY_WHITELIST, $settings)
+            || array_key_exists(Config::INVENTORY_IMPORT_WHITELIST, $settings)
+        ) {
+            NetworkHost::handleWhitelist();
+            ExecuteCommand::dispatch(InventoryImporterCommand::SIGNATURE);
         }
 
         return $settings;

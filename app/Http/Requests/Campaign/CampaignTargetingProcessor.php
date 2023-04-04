@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,25 +23,37 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
+use Adshares\Adserver\Services\Common\MetaverseAddressValidator;
+use Adshares\Adserver\Utilities\SiteValidator;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Common\Exception\InvalidArgumentException;
 
 class CampaignTargetingProcessor
 {
+    private string $mediumName;
+    private ?string $vendor;
     private TargetingProcessor $targetingProcessor;
 
     public function __construct(Medium $medium)
     {
+        $this->mediumName = $medium->getName();
+        $this->vendor = $medium->getVendor();
         $this->targetingProcessor = new TargetingProcessor($medium);
     }
 
     public function processTargetingRequire(array $targeting): array
     {
-        return $this->processTargeting($targeting, 'app.campaign_targeting_require');
+        $processed = $this->processTargeting($targeting, 'app.campaign_targeting_require');
+        $this->validateDomainsIfPresent($processed);
+        return $processed;
     }
 
     public function processTargetingExclude(array $targeting): array
     {
-        return $this->processTargeting($targeting, 'app.campaign_targeting_exclude');
+        $processed = $this->processTargeting($targeting, 'app.campaign_targeting_exclude');
+        $this->validateDomainsIfPresent($processed);
+        return $processed;
     }
 
     private function processTargeting(array $targeting, string $configKey): array
@@ -62,5 +74,19 @@ class CampaignTargetingProcessor
             return $arr;
         }
         return array_unique($arr);
+    }
+
+    private function validateDomainsIfPresent(array $processed): void
+    {
+        $domains = $processed['site']['domain'] ?? [];
+        $validator = MediumName::Metaverse->value === $this->mediumName
+            ? MetaverseAddressValidator::fromVendor($this->vendor)
+            : null;
+        foreach ($domains as $domain) {
+            if (!SiteValidator::isDomainValid($domain)) {
+                throw new InvalidArgumentException(sprintf('Invalid domain %s', $domain));
+            }
+            $validator?->validateDomain($domain, true);
+        }
     }
 }

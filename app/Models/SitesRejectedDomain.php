@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @property int id
@@ -36,12 +38,16 @@ use Illuminate\Support\Carbon;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property string domain
+ * @property int|null reject_reason_id
  * @mixin Builder
  */
 class SitesRejectedDomain extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    private const CACHE_KEY = 'sites_rejected_domain';
+    private const CACHE_TTL = 10 * 60;
 
     protected $fillable = [
         'domain',
@@ -93,28 +99,56 @@ class SitesRejectedDomain extends Model
             DB::rollBack();
             throw $exception;
         }
+        Cache::forget(self::CACHE_KEY);
     }
 
     public static function isDomainRejected(string $domain): bool
     {
-        $domainParts = explode('.', $domain);
-        if (!$domainParts) {
+        if ('' === $domain || !str_contains($domain, '.') || false !== filter_var($domain, FILTER_VALIDATE_IP)) {
             return true;
         }
+
+        $rejected = Cache::remember(
+            self::CACHE_KEY,
+            self::CACHE_TTL,
+            fn () => self::all()->pluck('reject_reason_id', 'domain')->toArray(),
+        );
+
+        $domainParts = explode('.', $domain);
         $domainPartsCount = count($domainParts);
-        if ($domainPartsCount < 2) {
-            return false;
-        }
 
-        array_shift($domainParts);
-        --$domainPartsCount;
-
-        $domains = [];
         for ($i = 0; $i < $domainPartsCount; $i++) {
-            $domains[] = implode('.', $domainParts);
+            if (array_key_exists(implode('.', $domainParts), $rejected)) {
+                return true;
+            }
             array_shift($domainParts);
         }
 
-        return self::whereIn('domain', $domains)->get()->count() > 0;
+        return false;
+    }
+
+    public static function domainRejectedReasonId(string $domain): ?int
+    {
+        if ('' === $domain || !str_contains($domain, '.') || false !== filter_var($domain, FILTER_VALIDATE_IP)) {
+            return null;
+        }
+
+        $rejected = Cache::remember(
+            self::CACHE_KEY,
+            self::CACHE_TTL,
+            fn () => self::all()->pluck('reject_reason_id', 'domain')->toArray(),
+        );
+
+        $domainParts = explode('.', $domain);
+        $domainPartsCount = count($domainParts);
+
+        for ($i = 0; $i < $domainPartsCount; $i++) {
+            if (array_key_exists(implode('.', $domainParts), $rejected)) {
+                return $rejected[implode('.', $domainParts)] ?? null;
+            }
+            array_shift($domainParts);
+        }
+
+        throw new InvalidArgumentException(sprintf('Domain %s is not rejected', $domain));
     }
 }

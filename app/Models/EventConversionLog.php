@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -53,14 +53,15 @@ use function hex2bin;
  * @property float human_score
  * @property string our_userdata
  * @property string their_userdata
- * @property int $event_value_currency
- * @property int $exchange_rate
- * @property int $event_value
- * @property int $license_fee
- * @property int $operator_fee
- * @property int $paid_amount
+ * @property int event_value_currency
+ * @property int exchange_rate
+ * @property int event_value
+ * @property int license_fee
+ * @property int operator_fee
+ * @property int community_fee
+ * @property int paid_amount
  * @property int payment_id
- * @property int $payment_status
+ * @property int payment_status
  * @property int is_view_clicked
  * @property string domain
  * @property int id

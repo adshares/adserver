@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -31,6 +32,7 @@ class ConversionDefinitionFactory extends Factory
     public function definition(): array
     {
         return [
+            'campaign_id' => Campaign::factory()->create(),
             'name' => $this->faker->word,
             'limit_type' => 'in_budget',
             'event_type' => 'Add to cart',

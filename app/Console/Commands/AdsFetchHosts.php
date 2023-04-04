@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -89,6 +89,7 @@ class AdsFetchHosts extends BaseCommand
         $added = NetworkHost::all()->count() - $hostsCount;
         $removed = $this->removeOldHosts();
         $marked = $this->markHostsWhichDoesNotBroadcast();
+        NetworkHost::handleWhitelist();
         ServerEvent::dispatch(ServerEventType::HostBroadcastProcessed, [
             'added' => $added,
             'found' => $found,

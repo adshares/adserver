@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -344,6 +344,19 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
+        if (null === ($email = $request->get('email'))) {
+            throw new UnprocessableEntityHttpException();
+        }
+        $userCandidate = User::fetchByEmail($email);
+        if (null !== $userCandidate) {
+            if ($userCandidate->invalid_login_attempts >= config('app.max_invalid_login_attempts')) {
+                return new JsonResponse(['reason' => 'Account locked. Reset password'], Response::HTTP_FORBIDDEN);
+            }
+            if ($userCandidate->isBanned()) {
+                return new JsonResponse(['reason' => $userCandidate->ban_reason], Response::HTTP_FORBIDDEN);
+            }
+        }
+
         if (
             Auth::guard()->attempt(
                 $request->only('email', 'password'),
@@ -352,14 +365,16 @@ class AuthController extends Controller
         ) {
             /** @var User $user */
             $user = Auth::user();
-            if ($user->isBanned()) {
-                return new JsonResponse(['reason' => $user->ban_reason], Response::HTTP_FORBIDDEN);
-            }
             $user->generateApiKey();
             return $this->check();
         }
 
-        return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        if (null !== $userCandidate) {
+            $userCandidate->invalid_login_attempts = $userCandidate->invalid_login_attempts + 1;
+            $userCandidate->saveOrFail();
+        }
+
+        throw new UnprocessableEntityHttpException();
     }
 
     public function walletLoginInit(Request $request, AdsRpcClient $rpcClient): JsonResponse
@@ -576,7 +591,8 @@ MSG;
 
         $user->password = $request->input('user.password_new');
         $user->api_token = null;
-        $user->save();
+        $user->invalid_login_attempts = 0;
+        $user->saveOrFail();
 
         if (null !== $user->email) {
             Mail::to($user)->queue(new UserPasswordChange());

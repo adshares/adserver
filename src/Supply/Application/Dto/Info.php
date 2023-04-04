@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -52,6 +52,7 @@ final class Info
         private readonly string $version,
         private readonly UrlInterface $serverUrl,
         private readonly UrlInterface $panelUrl,
+        private readonly UrlInterface $landingUrl,
         private readonly UrlInterface $privacyUrl,
         private readonly UrlInterface $termsUrl,
         private readonly UrlInterface $inventoryUrl,
@@ -78,13 +79,16 @@ final class Info
     {
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
         $adsAddress = isset($data['adsAddress']) ? new AccountId($data['adsAddress']) : new EmptyAccountId();
+        $panelUrl = new Url($data['panelUrl']);
+        $landingUrl = isset($data['landingUrl']) ? new Url($data['landingUrl']) : $panelUrl;
 
         $info = new self(
             $data['module'],
             $data['name'],
             $data['version'],
             new Url($data['serverUrl']),
-            new Url($data['panelUrl']),
+            $panelUrl,
+            $landingUrl,
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl']),
@@ -119,6 +123,7 @@ final class Info
             'capabilities' => $this->capabilities,
             'serverUrl' => $this->serverUrl->toString(),
             'panelUrl' => $this->panelUrl->toString(),
+            'landingUrl' => $this->landingUrl->toString(),
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
@@ -171,6 +176,11 @@ final class Info
         return $this->panelUrl->toString();
     }
 
+    public function getLandingUrl(): string
+    {
+        return $this->landingUrl->toString();
+    }
+
     public function getServerUrl(): string
     {
         return $this->serverUrl->toString();
@@ -188,7 +198,7 @@ final class Info
 
     public function setDemandFee(float $demandFee): void
     {
-        if (!in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true)) {
+        if (!$this->hasDemandCapabilities()) {
             throw new RuntimeException('Cannot set fee for unsupported capability: Advertiser');
         }
 
@@ -197,7 +207,7 @@ final class Info
 
     public function setSupplyFee(float $supplyFee): void
     {
-        if (!in_array(self::CAPABILITY_PUBLISHER, $this->capabilities, true)) {
+        if (!$this->hasSupplyCapabilities()) {
             throw new RuntimeException('Cannot set fee for unsupported capability: Publisher');
         }
 
@@ -217,5 +227,15 @@ final class Info
     public function getAppMode(): string
     {
         return $this->appMode;
+    }
+
+    public function hasDemandCapabilities(): bool
+    {
+        return in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true);
+    }
+
+    public function hasSupplyCapabilities(): bool
+    {
+        return in_array(self::CAPABILITY_PUBLISHER, $this->capabilities, true);
     }
 }

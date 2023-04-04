@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -39,8 +39,9 @@ final class UserLedgerEntryTest extends TestCase
         $user = User::factory()->create();
         $this->createAllEntries($user);
 
-        self::assertEquals(-185, $user->getBalance());
-        self::assertEquals(-315, $user->getWalletBalance());
+        self::assertEquals(-95, $user->getBalance());
+        self::assertEquals(-225, $user->getWalletBalance());
+        self::assertEquals(-315, $user->getWithdrawableBalance());
         self::assertEquals(130, $user->getBonusBalance());
     }
 
@@ -52,8 +53,9 @@ final class UserLedgerEntryTest extends TestCase
         $user2 = User::factory()->create();
         $this->createAllEntries($user2);
 
-        self::assertEquals(-370, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(-630, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(-190, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(-450, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(-630, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(260, UserLedgerEntry::getBonusBalanceForAllUsers());
     }
 
@@ -65,8 +67,9 @@ final class UserLedgerEntryTest extends TestCase
         $user2 = User::factory()->create();
         $this->createAllEntries($user2);
 
-        self::assertEquals(-185, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(-315, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(-95, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(-225, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(-315, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(130, UserLedgerEntry::getBonusBalanceForAllUsers());
     }
 
@@ -76,26 +79,37 @@ final class UserLedgerEntryTest extends TestCase
         $user = User::factory()->create();
         $this->createSomeEntries($user);
 
-        self::assertEquals(240, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(50, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(510, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(320, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(50, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(190, UserLedgerEntry::getBonusBalanceForAllUsers());
 
         UserLedgerEntry::blockAdExpense($user->id, 10);
 
-        self::assertEquals(230, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(50, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(500, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(320, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(50, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(180, UserLedgerEntry::getBonusBalanceForAllUsers());
 
         UserLedgerEntry::blockAdExpense($user->id, 190);
 
-        self::assertEquals(40, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(40, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(310, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(310, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(50, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(0, UserLedgerEntry::getBonusBalanceForAllUsers());
 
-        UserLedgerEntry::blockAdExpense($user->id, 20);
+        UserLedgerEntry::blockAdExpense($user->id, 270);
 
-        self::assertEquals(20, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(20, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(40, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(40, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(40, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
+        self::assertEquals(0, UserLedgerEntry::getBonusBalanceForAllUsers());
+
+        UserLedgerEntry::blockAdExpense($user->id, 40);
+
+        self::assertEquals(0, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(0, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(0, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(0, UserLedgerEntry::getBonusBalanceForAllUsers());
     }
 
@@ -106,7 +120,7 @@ final class UserLedgerEntryTest extends TestCase
         $this->createAllEntries($user);
 
         $this->expectExceptionMessageMatches('/Insufficient funds for User.*/');
-        UserLedgerEntry::blockAdExpense($user->id, 150);
+        UserLedgerEntry::blockAdExpense($user->id, 550);
     }
 
     public function testNegativeAmountBlockAdExpense(): void
@@ -125,26 +139,37 @@ final class UserLedgerEntryTest extends TestCase
         $user = User::factory()->create();
         $this->createSomeEntries($user);
 
-        self::assertEquals(240, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(50, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(510, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(320, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(50, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(190, UserLedgerEntry::getBonusBalanceForAllUsers());
 
         UserLedgerEntry::processAdExpense($user->id, 10);
 
-        self::assertEquals(230, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(50, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(500, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(320, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(50, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(180, UserLedgerEntry::getBonusBalanceForAllUsers());
 
         UserLedgerEntry::processAdExpense($user->id, 190);
 
-        self::assertEquals(40, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(40, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(310, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(310, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(50, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(0, UserLedgerEntry::getBonusBalanceForAllUsers());
 
-        UserLedgerEntry::processAdExpense($user->id, 20);
+        UserLedgerEntry::processAdExpense($user->id, 270);
 
-        self::assertEquals(20, UserLedgerEntry::getBalanceForAllUsers());
-        self::assertEquals(20, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(40, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(40, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(40, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
+        self::assertEquals(0, UserLedgerEntry::getBonusBalanceForAllUsers());
+
+        UserLedgerEntry::processAdExpense($user->id, 40);
+
+        self::assertEquals(0, UserLedgerEntry::getBalanceForAllUsers());
+        self::assertEquals(0, UserLedgerEntry::getWalletBalanceForAllUsers());
+        self::assertEquals(0, UserLedgerEntry::getWithdrawableBalanceForAllUsers());
         self::assertEquals(0, UserLedgerEntry::getBonusBalanceForAllUsers());
     }
 
@@ -164,16 +189,23 @@ final class UserLedgerEntryTest extends TestCase
         $user = User::factory()->create();
         $this->createAllEntries($user);
 
+        self::assertEquals(-95, $user->getBalance());
+        self::assertEquals(-225, $user->getWalletBalance());
+        self::assertEquals(-315, $user->getWithdrawableBalance());
+        self::assertEquals(130, $user->getBonusBalance());
+
         UserLedgerEntry::pushBlockedToProcessing();
 
-        self::assertEquals(-185, $user->getBalance());
-        self::assertEquals(-315, $user->getWalletBalance());
+        self::assertEquals(-95, $user->getBalance());
+        self::assertEquals(-225, $user->getWalletBalance());
+        self::assertEquals(-315, $user->getWithdrawableBalance());
         self::assertEquals(130, $user->getBonusBalance());
 
         UserLedgerEntry::removeProcessingExpenses();
 
-        self::assertEquals(-135, $user->getBalance());
-        self::assertEquals(-285, $user->getWalletBalance());
+        self::assertEquals(15, $user->getBalance());
+        self::assertEquals(-135, $user->getWalletBalance());
+        self::assertEquals(-285, $user->getWithdrawableBalance());
         self::assertEquals(150, $user->getBonusBalance());
     }
 
@@ -183,10 +215,16 @@ final class UserLedgerEntryTest extends TestCase
         $user = User::factory()->create();
         $this->createAllEntries($user);
 
+        self::assertEquals(-95, $user->getBalance());
+        self::assertEquals(-225, $user->getWalletBalance());
+        self::assertEquals(-315, $user->getWithdrawableBalance());
+        self::assertEquals(130, $user->getBonusBalance());
+
         UserLedgerEntry::removeProcessingExpenses();
 
-        self::assertEquals(-160, $user->getBalance());
-        self::assertEquals(-300, $user->getWalletBalance());
+        self::assertEquals(-40, $user->getBalance());
+        self::assertEquals(-180, $user->getWalletBalance());
+        self::assertEquals(-300, $user->getWithdrawableBalance());
         self::assertEquals(140, $user->getBonusBalance());
     }
 
@@ -212,58 +250,87 @@ final class UserLedgerEntryTest extends TestCase
 
         self::assertEquals(0, $user1->getBalance());
         self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getWithdrawableBalance());
         self::assertEquals(0, $user1->getBonusBalance());
 
         self::assertEquals(0, $user2->getBalance());
         self::assertEquals(0, $user2->getWalletBalance());
+        self::assertEquals(0, $user2->getWithdrawableBalance());
         self::assertEquals(0, $user2->getBonusBalance());
 
-        self::assertEquals(240, $user3->getBalance());
-        self::assertEquals(50, $user3->getWalletBalance());
+        self::assertEquals(510, $user3->getBalance());
+        self::assertEquals(320, $user3->getWalletBalance());
+        self::assertEquals(50, $user3->getWithdrawableBalance());
         self::assertEquals(190, $user3->getBonusBalance());
 
         UserLedgerEntry::processAdExpense($user3->id, 240);
 
         self::assertEquals(0, $user1->getBalance());
         self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getWithdrawableBalance());
         self::assertEquals(0, $user1->getBonusBalance());
 
         self::assertEquals(7, $user2->getBalance());
         self::assertEquals(7, $user2->getWalletBalance());
+        self::assertEquals(7, $user2->getWithdrawableBalance());
         self::assertEquals(0, $user2->getBonusBalance());
 
-        self::assertEquals(3, $user3->getBalance());
-        self::assertEquals(0, $user3->getWalletBalance());
+        self::assertEquals(273, $user3->getBalance());
+        self::assertEquals(270, $user3->getWalletBalance());
+        self::assertEquals(50, $user3->getWithdrawableBalance());
         self::assertEquals(3, $user3->getBonusBalance());
 
-        UserLedgerEntry::processAdExpense($user2->id, 7);
-        UserLedgerEntry::processAdExpense($user3->id, 3);
-
-        self::assertEquals(1, $user1->getBalance());
-        self::assertEquals(1, $user1->getWalletBalance());
-        self::assertEquals(0, $user1->getBonusBalance());
-
-        self::assertEquals(2, $user2->getBalance());
-        self::assertEquals(0, $user2->getWalletBalance());
-        self::assertEquals(2, $user2->getBonusBalance());
-
-        self::assertEquals(0, $user3->getBalance());
-        self::assertEquals(0, $user3->getWalletBalance());
-        self::assertEquals(0, $user3->getBonusBalance());
-
-        UserLedgerEntry::processAdExpense($user1->id, 1);
-        UserLedgerEntry::processAdExpense($user2->id, 2);
+        UserLedgerEntry::processAdExpense($user3->id, 273);
 
         self::assertEquals(0, $user1->getBalance());
         self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getWithdrawableBalance());
+        self::assertEquals(0, $user1->getBonusBalance());
+
+        self::assertEquals(45, $user2->getBalance());
+        self::assertEquals(45, $user2->getWalletBalance());
+        self::assertEquals(45, $user2->getWithdrawableBalance());
+        self::assertEquals(0, $user2->getBonusBalance());
+
+        self::assertEquals(16, $user3->getBalance());
+        self::assertEquals(0, $user3->getWalletBalance());
+        self::assertEquals(0, $user3->getWithdrawableBalance());
+        self::assertEquals(16, $user3->getBonusBalance());
+
+        UserLedgerEntry::processAdExpense($user2->id, 45);
+        UserLedgerEntry::processAdExpense($user3->id, 16);
+
+        self::assertEquals(11, $user1->getBalance());
+        self::assertEquals(11, $user1->getWalletBalance());
+        self::assertEquals(11, $user1->getWithdrawableBalance());
+        self::assertEquals(0, $user1->getBonusBalance());
+
+        self::assertEquals(11, $user2->getBalance());
+        self::assertEquals(0, $user2->getWalletBalance());
+        self::assertEquals(0, $user2->getWithdrawableBalance());
+        self::assertEquals(11, $user2->getBonusBalance());
+
+        self::assertEquals(0, $user3->getBalance());
+        self::assertEquals(0, $user3->getWalletBalance());
+        self::assertEquals(0, $user3->getWithdrawableBalance());
+        self::assertEquals(0, $user3->getBonusBalance());
+
+        UserLedgerEntry::processAdExpense($user1->id, 11);
+        UserLedgerEntry::processAdExpense($user2->id, 11);
+
+        self::assertEquals(0, $user1->getBalance());
+        self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getWithdrawableBalance());
         self::assertEquals(0, $user1->getBonusBalance());
 
         self::assertEquals(0, $user2->getBalance());
         self::assertEquals(0, $user2->getWalletBalance());
+        self::assertEquals(0, $user2->getWithdrawableBalance());
         self::assertEquals(0, $user2->getBonusBalance());
 
         self::assertEquals(0, $user3->getBalance());
         self::assertEquals(0, $user3->getWalletBalance());
+        self::assertEquals(0, $user3->getWithdrawableBalance());
         self::assertEquals(0, $user3->getBonusBalance());
     }
 
@@ -292,20 +359,24 @@ final class UserLedgerEntryTest extends TestCase
 
         self::assertEquals(0, $user1->getBalance());
         self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getWithdrawableBalance());
         self::assertEquals(0, $user1->getBonusBalance());
 
-        self::assertEquals(240, $user2->getBalance());
-        self::assertEquals(50, $user2->getWalletBalance());
+        self::assertEquals(510, $user2->getBalance());
+        self::assertEquals(320, $user2->getWalletBalance());
+        self::assertEquals(50, $user2->getWithdrawableBalance());
         self::assertEquals(190, $user2->getBonusBalance());
 
-        UserLedgerEntry::processAdExpense($user2->id, 240);
+        UserLedgerEntry::processAdExpense($user2->id, 510);
 
         self::assertEquals(0, $user1->getBalance());
         self::assertEquals(0, $user1->getWalletBalance());
+        self::assertEquals(0, $user1->getWithdrawableBalance());
         self::assertEquals(0, $user1->getBonusBalance());
 
         self::assertEquals(0, $user2->getBalance());
         self::assertEquals(0, $user2->getWalletBalance());
+        self::assertEquals(0, $user2->getWithdrawableBalance());
         self::assertEquals(0, $user2->getBonusBalance());
     }
 
@@ -556,6 +627,8 @@ final class UserLedgerEntryTest extends TestCase
             [UserLedgerEntry::TYPE_WITHDRAWAL, -50],
             [UserLedgerEntry::TYPE_BONUS_INCOME, 200],
             [UserLedgerEntry::TYPE_BONUS_EXPENSE, -10],
+            [UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT, 300],
+            [UserLedgerEntry::TYPE_NON_WITHDRAWABLE_EXPENSE, -30],
         ];
 
         foreach ($entries as $entry) {
@@ -581,6 +654,8 @@ final class UserLedgerEntryTest extends TestCase
             UserLedgerEntry::TYPE_BONUS_INCOME => 200,
             UserLedgerEntry::TYPE_BONUS_EXPENSE => -10,
             UserLedgerEntry::TYPE_REFUND => 10,
+            UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT => 300,
+            UserLedgerEntry::TYPE_NON_WITHDRAWABLE_EXPENSE => -30,
         ];
         foreach (UserLedgerEntry::ALLOWED_TYPE_LIST as $type) {
             foreach (UserLedgerEntry::ALLOWED_STATUS_LIST as $status) {

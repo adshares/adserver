@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,23 +23,21 @@ declare(strict_types=1);
 
 namespace Adshares\Advertiser\Dto\Input;
 
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use DateTime;
 use DateTimeInterface;
 
 class StatsInput
 {
     private ?array $advertiserIds;
-    private bool $showAdvertisers;
-    private DateTime $dateStart;
-    private DateTime $dateEnd;
-    private ?string $campaignId;
 
     public function __construct(
         ?array $advertiserIds,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?string $campaignId = null,
-        bool $showAdvertisers = false
+        private readonly DateTime $dateStart,
+        private readonly DateTime $dateEnd,
+        private readonly ?string $campaignId = null,
+        private readonly bool $showAdvertisers = false,
+        private readonly ?FilterCollection $filters = null,
     ) {
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
@@ -50,10 +48,6 @@ class StatsInput
         }
 
         $this->advertiserIds = $advertiserIds;
-        $this->showAdvertisers = $showAdvertisers;
-        $this->campaignId = $campaignId;
-        $this->dateStart = $dateStart;
-        $this->dateEnd = $dateEnd;
     }
 
     public function getAdvertiserIds(): ?array
@@ -84,5 +78,10 @@ class StatsInput
     public function getCampaignId(): ?string
     {
         return $this->campaignId;
+    }
+
+    public function getFilters(): ?FilterCollection
+    {
+        return $this->filters;
     }
 }

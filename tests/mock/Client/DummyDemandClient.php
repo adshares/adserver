@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -174,6 +174,7 @@ final class DummyDemandClient implements DemandClient
             '0.1',
             new Url('https://server.example.com/'),
             new Url('https://panel.example.com/'),
+            new Url('https://example.com/'),
             new Url('https://example.com/privacy'),
             new Url('https://example.com/terms'),
             new Url('https://inventory.example.com/import'),

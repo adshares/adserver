@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,8 +23,11 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\CampaignTargetingProcessor;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
@@ -49,14 +52,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Throwable;
 
 class CampaignsController extends Controller
 {
@@ -72,27 +78,32 @@ class CampaignsController extends Controller
     {
         $mediumName = $request->get('medium');
         $vendor = $request->get('vendor');
+        $type = $request->get('type');
         if (!is_string($mediumName)) {
             throw new UnprocessableEntityHttpException('Field `medium` must be a string');
         }
         if (null !== $vendor && !is_string($vendor)) {
             throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null');
         }
+        if (!is_string($type)) {
+            throw new UnprocessableEntityHttpException('Field `type` must be a string');
+        }
         try {
             $medium = $this->configurationRepository->fetchMedium($mediumName, $vendor);
-            return Factory::create($request)->upload($medium);
+            return Factory::createFromType($type, $request)->upload($medium);
         } catch (InvalidArgumentException | RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
     }
 
-    public function uploadPreview(Request $request, string $type, string $name): Response
+    public function uploadPreview(Request $request, string $type, string $uuid): Response
     {
         try {
-            return Factory::createFromType($type, $request)->preview($name);
-        } catch (RuntimeException $exception) {
-            throw new BadRequestHttpException($exception->getMessage());
+            $uuidObject = Uuid::fromString($uuid);
+        } catch (InvalidUuidStringException) {
+            throw new UnprocessableEntityHttpException(sprintf('Invalid ID %s', $uuid));
         }
+        return Factory::createFromType($type, $request)->preview($uuidObject);
     }
 
     public function preview($bannerPublicId): Response
@@ -175,7 +186,7 @@ class CampaignsController extends Controller
         foreach ($files as $file) {
             if (!isset($file['uuid']) && isset($file['creative_type']) && isset($file['url'])) {
                 Factory::createFromType($file['creative_type'], $request)
-                    ->removeTemporaryFile(Utils::extractFilename($file['url']));
+                    ->removeTemporaryFile(Uuid::fromString(Utils::extractFilename($file['url'])));
             }
         }
     }
@@ -187,9 +198,13 @@ class CampaignsController extends Controller
         return $input;
     }
 
-    public function browse(): JsonResponse
+    public function browse(Request $request): JsonResponse
     {
-        $campaigns = $this->campaignRepository->find();
+        $filters = FilterCollection::fromRequest($request, [
+            'medium' => FilterType::String,
+            'vendor' => FilterType::String,
+        ]);
+        $campaigns = $this->campaignRepository->find($filters);
 
         foreach ($campaigns as $campaign) {
             $campaign->classifications = BannerClassification::fetchCampaignClassifications($campaign->id);
@@ -421,23 +436,32 @@ class CampaignsController extends Controller
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
-        $clonedCampaign = $campaign->replicate();
-        $clonedCampaign->status = Campaign::STATUS_DRAFT;
-        $clonedCampaign->name = sprintf('%s (Cloned)', $campaign->name);
-        $clonedCampaign->saveOrFail();
+        DB::beginTransaction();
+        try {
+            $clonedCampaign = $campaign->replicate();
+            $clonedCampaign->status = Campaign::STATUS_DRAFT;
+            $clonedCampaign->name = sprintf('%s (Cloned)', $campaign->name);
+            $clonedCampaign->saveOrFail();
 
-        foreach ($campaign->conversions as $conversion) {
-            $clonedConversion = $conversion->replicate();
-            $clonedConversion->campaign_id = $clonedCampaign->id;
-            $clonedConversion->cost = 0;
-            $clonedConversion->occurrences = 0;
-            $clonedConversion->saveOrFail();
-        }
+            foreach ($campaign->conversions as $conversion) {
+                $clonedConversion = $conversion->replicate();
+                $clonedConversion->campaign_id = $clonedCampaign->id;
+                $clonedConversion->cost = 0;
+                $clonedConversion->occurrences = 0;
+                $clonedConversion->saveOrFail();
+            }
 
-        foreach ($campaign->banners as $banner) {
-            $clonedBanner = $banner->replicate();
-            $clonedBanner->campaign_id = $clonedCampaign->id;
-            $clonedBanner->saveOrFail();
+            $campaign->bannersWithContent()->chunk(1, function ($chunk) use ($clonedCampaign) {
+                $banner = $chunk->first();
+                $clonedBanner = $banner->replicate();
+                $clonedBanner->campaign_id = $clonedCampaign->id;
+                $clonedBanner->saveOrFail();
+            });
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Exception during cloning campaign (%s)', $throwable->getMessage()));
+            throw $throwable;
         }
 
         return self::json($clonedCampaign->toArray(), Response::HTTP_CREATED)->header(
@@ -486,5 +510,53 @@ class CampaignsController extends Controller
         if (!is_array($input)) {
             throw new UnprocessableEntityHttpException('Field `campaign` must be an array');
         }
+    }
+
+    public function fetchCampaignsMedia(): JsonResponse
+    {
+        try {
+            $taxonomy = $this->configurationRepository->fetchTaxonomy();
+        } catch (MissingInitialConfigurationException $exception) {
+            Log::error(sprintf('Error during fetching campaigns\' media: %s', $exception->getMessage()));
+            return self::json(['campaignsMedia' => []]);
+        }
+
+        $mediaFromTaxonomy = [];
+        foreach ($taxonomy->getMedia() as $mediumObject) {
+            $mediaFromTaxonomy[$mediumObject->getName()][$mediumObject->getVendor()] =
+                null === $mediumObject->getVendor()
+                    ? $mediumObject->getLabel()
+                    : sprintf('%s - %s', $mediumObject->getLabel(), $mediumObject->getVendorLabel());
+        }
+
+        $campaignsMedia = [];
+        $previousMedium = null;
+        $previousVendor = 'null';
+        foreach ($this->campaignRepository->fetchCampaignsMedia() as $item) {
+            if (!isset($mediaFromTaxonomy[$item->medium][$item->vendor])) {
+                continue;
+            }
+            if (
+                null !== $item->vendor
+                && null !== $previousVendor
+                && $item->medium !== $previousMedium
+                && isset($mediaFromTaxonomy[$item->medium][$item->vendor])
+            ) {
+                $campaignsMedia[] = [
+                    'medium' => $item->medium,
+                    'vendor' => null,
+                    'label' => $mediaFromTaxonomy[$item->medium][null]
+                ];
+            }
+            $campaignsMedia[] = [
+                'medium' => $item->medium,
+                'vendor' => $item->vendor,
+                'label' => $mediaFromTaxonomy[$item->medium][$item->vendor]
+            ];
+            $previousMedium = $item->medium;
+            $previousVendor = $item->vendor;
+        }
+
+        return new JsonResponse(['campaignsMedia' => $campaignsMedia]);
     }
 }

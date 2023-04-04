@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
 use Adshares\Supply\Domain\ValueObject\Status;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -44,6 +45,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null deleted_at
  * @property Carbon last_broadcast
  * @property Carbon|null last_synchronization
+ * @property Carbon|null last_synchronization_attempt
  * @property int failed_connection
  * @property Info info
  * @property string info_url
@@ -58,6 +60,8 @@ class NetworkHost extends Model
     use SoftDeletes;
 
     private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    private const MAXIMAL_PERIOD_FOR_SYNCHRONIZATION_RETRY_HOURS = 256;
+    private const MESSAGE_WHILE_EXCLUDED = 'Server is not on a whitelist';
 
     protected $fillable = [
         'address',
@@ -75,21 +79,22 @@ class NetworkHost extends Model
     protected $dates = [
         'last_broadcast',
         'last_synchronization',
+        'last_synchronization_attempt',
     ];
 
     public static function fetchByAddress(string $address): ?self
     {
-        return self::where('address', $address)->first();
+        return (new self())->where('address', $address)->first();
     }
 
     public static function fetchByHost(string $host): ?self
     {
-        return self::where('host', $host)->first();
+        return (new self())->where('host', $host)->first();
     }
 
     public static function failHostsBroadcastedBefore(DateTimeInterface $date): int
     {
-        $hosts = self::where('last_broadcast', '<', $date)->get();
+        $hosts = (new self())->where('last_broadcast', '<', $date)->get();
         $counter = $hosts->count();
         /** @var NetworkHost $host */
         foreach ($hosts as $host) {
@@ -102,7 +107,7 @@ class NetworkHost extends Model
 
     public static function deleteBroadcastedBefore(DateTimeInterface $date): int
     {
-        $hosts = self::where('last_broadcast', '<', $date);
+        $hosts = (new self())->where('last_broadcast', '<', $date);
         $counter = $hosts->count();
         $hosts->delete();
         return $counter;
@@ -141,9 +146,36 @@ class NetworkHost extends Model
         return $networkHost;
     }
 
+    public static function handleWhitelist(): void
+    {
+        /** @var NetworkHost $networkHost */
+        foreach (self::all() as $networkHost) {
+            $isWhitelisted = self::isWhitelisted($networkHost->address);
+            if ($isWhitelisted && HostStatus::Excluded === $networkHost->status) {
+                $networkHost->status = HostStatus::Initialization;
+                $networkHost->error = null;
+                $networkHost->update();
+            } elseif (
+                !$isWhitelisted
+                && in_array($networkHost->status, [HostStatus::Initialization, HostStatus::Operational], true)
+            ) {
+                $networkHost->status = HostStatus::Excluded;
+                $networkHost->error = self::MESSAGE_WHILE_EXCLUDED;
+                $networkHost->update();
+            }
+        }
+    }
+
+    private static function isWhitelisted(string $address): bool
+    {
+        $whitelist = config('app.inventory_import_whitelist');
+
+        return empty($whitelist) || in_array($address, $whitelist);
+    }
+
     public static function fetchHosts(array $whitelist = []): Collection
     {
-        $query = self::whereIn(
+        $query = (new self())->whereIn(
             'status',
             [HostStatus::Initialization, HostStatus::Operational],
         );
@@ -153,9 +185,29 @@ class NetworkHost extends Model
         return $query->get();
     }
 
+    public static function fetchUnreachableHostsForImportingInventory(array $whitelist = []): Collection
+    {
+        $query = (new self())->where('status', HostStatus::Unreachable);
+        if (!empty($whitelist)) {
+            $query->whereIn('address', $whitelist);
+        }
+
+        return $query->get()->filter(function ($networkHost) {
+            /** @var self $networkHost */
+            $hours = 2 ** max(0, $networkHost->failed_connection - config('app.inventory_failed_connection_limit'));
+            return $hours <= self::MAXIMAL_PERIOD_FOR_SYNCHRONIZATION_RETRY_HOURS &&
+                (
+                    null === $networkHost->last_synchronization_attempt ||
+                    (new DateTimeImmutable(sprintf('-%d hours', $hours)) > $networkHost->last_synchronization_attempt)
+                );
+        });
+    }
+
     public function connectionSuccessful(): void
     {
-        $this->last_synchronization = new Carbon();
+        $now = new Carbon();
+        $this->last_synchronization = $now;
+        $this->last_synchronization_attempt = $now;
         $this->failed_connection = 0;
         $this->status = HostStatus::Operational;
         $this->update();
@@ -163,6 +215,7 @@ class NetworkHost extends Model
 
     public function connectionFailed(): void
     {
+        $this->last_synchronization_attempt = new Carbon();
         ++$this->failed_connection;
         if ($this->failed_connection >= config('app.inventory_failed_connection_limit')) {
             $this->status = HostStatus::Unreachable;

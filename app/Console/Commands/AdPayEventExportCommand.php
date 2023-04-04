@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,7 +34,6 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use DateTimeImmutable;
@@ -45,6 +44,7 @@ use Spatie\Fork\Fork;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\Lock;
 use Symfony\Component\Lock\Store\FlockStore;
+use Throwable;
 
 class AdPayEventExportCommand extends BaseCommand
 {
@@ -56,11 +56,13 @@ class AdPayEventExportCommand extends BaseCommand
 
     private const DEFAULT_EXPORT_TIME_TO = '-10 minutes';
 
+    private const MAXIMAL_THREAD_RETRIES = 3;
+
     protected $signature = 'ops:adpay:event:export {--from=} {--to=} {--t|threads=4}';
 
     protected $description = 'Exports event data to AdPay';
 
-    public function handle(AdPay $adPay, AdUser $adUser): void
+    public function handle(AdPay $adPay, AdUser $adUser): int
     {
         $commandStartTime = microtime(true);
 
@@ -71,14 +73,13 @@ class AdPayEventExportCommand extends BaseCommand
         $lock = new Lock(new Key($this->getName()), new FlockStore(), null, false);
         if (null === $optionTo && !$lock->acquire()) {
             $this->info('[AdPayEventExport] Command ' . $this->signature . ' already running.');
-
-            return;
+            return self::FAILURE;
         }
 
         if (null === $optionFrom && null !== $optionTo) {
             $this->error('[AdPayEventExport] Option --from must be defined when option --to is defined');
-
-            return;
+            $lock->release();
+            return self::FAILURE;
         }
 
         $this->info('[AdPayEventExport] Start command ' . $this->signature);
@@ -86,8 +87,8 @@ class AdPayEventExportCommand extends BaseCommand
         if (null !== $optionFrom) {
             if (false === ($timestampFrom = strtotime($optionFrom))) {
                 $this->error(sprintf('[AdPayEventExport] Invalid option --from format "%s"', $optionFrom));
-
-                return;
+                $lock->release();
+                return self::FAILURE;
             }
 
             $dateFromEvents = new DateTimeImmutable('@' . $this->correctUserTimestamp($timestampFrom));
@@ -110,8 +111,8 @@ class AdPayEventExportCommand extends BaseCommand
         if (null !== $optionTo) {
             if (false === ($timestampTo = strtotime($optionTo))) {
                 $this->error(sprintf('[AdPayEventExport] Invalid option --to format "%s"', $optionTo));
-
-                return;
+                $lock->release();
+                return self::FAILURE;
             }
 
             $dateTo = new DateTimeImmutable('@' . $timestampTo);
@@ -119,12 +120,43 @@ class AdPayEventExportCommand extends BaseCommand
             $dateTo = new DateTimeImmutable(self::DEFAULT_EXPORT_TIME_TO);
         }
 
-        $this->exportEvents($adPay, $adUser, $dateFromEvents, $dateTo, $isCommandExecutedAutomatically);
-        $this->exportConversions($adPay, $dateFromConversions, $dateTo, $isCommandExecutedAutomatically);
+        if ($dateFromEvents >= $dateTo) {
+            $this->error(
+                sprintf(
+                    '[AdPayEventExport] Invalid events range from %s (exclusive) to %s (inclusive)',
+                    $dateFromEvents->format(DateTimeInterface::ATOM),
+                    $dateTo->format(DateTimeInterface::ATOM)
+                )
+            );
+            $lock->release();
+            return self::FAILURE;
+        }
+
+        if ($dateFromConversions >= $dateTo) {
+            $this->error(
+                sprintf(
+                    '[AdPayEventExport] Invalid conversions range from %s (exclusive) to %s (inclusive)',
+                    $dateFromConversions->format(DateTimeInterface::ATOM),
+                    $dateTo->format(DateTimeInterface::ATOM)
+                )
+            );
+            $lock->release();
+            return self::FAILURE;
+        }
+
+        try {
+            $this->exportEvents($adPay, $adUser, $dateFromEvents, $dateTo, $isCommandExecutedAutomatically);
+            $this->exportConversions($adPay, $dateFromConversions, $dateTo, $isCommandExecutedAutomatically);
+        } catch (RuntimeException $exception) {
+            $this->error(sprintf('[AdPayEventExport] Export failed: %s', $exception->getMessage()));
+            $lock->release();
+            return self::FAILURE;
+        }
 
         $commandExecutionTime = microtime(true) - $commandStartTime;
         $this->info(sprintf('[AdPayEventExport] Finished after %d seconds', (int)$commandExecutionTime));
         $lock->release();
+        return self::SUCCESS;
     }
 
     private function updateEventLogWithAdUserData(AdUser $adUser, Collection $events): void
@@ -138,14 +170,14 @@ class AdPayEventExportCommand extends BaseCommand
             try {
                 $event->updateWithUserContext($this->userContext($adUser, $event));
                 $event->save();
-            } catch (ImpressionContextException | RuntimeException $e) {
+            } catch (RuntimeException $exception) {
                 Log::error(
                     sprintf(
                         '%s {"command":"%s","event":"%d","error":"%s"}',
-                        get_class($e),
+                        get_class($exception),
                         $this->signature,
                         $event->id,
-                        Exception::cleanMessage($e->getMessage())
+                        Exception::cleanMessage($exception->getMessage())
                     )
                 );
             }
@@ -168,18 +200,6 @@ class AdPayEventExportCommand extends BaseCommand
         DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
     ): void {
-        if ($dateFrom >= $dateTo) {
-            $this->error(
-                sprintf(
-                    '[AdPayEventExport] Invalid events range from %s (exclusive) to %s (inclusive)',
-                    $dateFrom->format(DateTimeInterface::ATOM),
-                    $dateTo->format(DateTimeInterface::ATOM)
-                )
-            );
-
-            return;
-        }
-
         $periodTotal = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
         $periodCount = (int)ceil($periodTotal / self::EVENTS_PERIOD);
 
@@ -201,18 +221,6 @@ class AdPayEventExportCommand extends BaseCommand
         DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
     ): void {
-        if ($dateFrom >= $dateTo) {
-            $this->error(
-                sprintf(
-                    '[AdPayEventExport] Invalid conversions range from %s (exclusive) to %s (inclusive)',
-                    $dateFrom->format(DateTimeInterface::ATOM),
-                    $dateTo->format(DateTimeInterface::ATOM)
-                )
-            );
-
-            return;
-        }
-
         $periodTotal = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
         $periodCount = (int)ceil($periodTotal / self::EVENTS_PERIOD);
 
@@ -250,7 +258,6 @@ class AdPayEventExportCommand extends BaseCommand
             $this->error(
                 sprintf('[AdPayEventExport] Too many events to export (%s) in time (%s)', $eventsCount, $seconds)
             );
-
             return;
         }
         $packInterval = (int)ceil($seconds / $packCount);
@@ -271,21 +278,37 @@ class AdPayEventExportCommand extends BaseCommand
             }
 
             $threads[] = function () use ($adPay, $adUser, $dateFromTemporary, $dateToTemporary, $pack) {
-                $this->exportEventsPack($adPay, $adUser, $pack, $dateFromTemporary, $dateToTemporary);
+                for ($attempt = 0; $attempt < self::MAXIMAL_THREAD_RETRIES; $attempt++) {
+                    try {
+                        $this->exportEventsPack($adPay, $adUser, $pack, $dateFromTemporary, $dateToTemporary);
+                        return self::SUCCESS;
+                    } catch (Throwable $throwable) {
+                        Log::error(sprintf(
+                            '[AdPayEventExport] Error during exporting pack %d (attempt: %d, %s -> %s, %s s) %s',
+                            $pack + 1,
+                            $attempt + 1,
+                            $dateFromTemporary->format(DateTimeInterface::ATOM),
+                            $dateToTemporary->format(DateTimeInterface::ATOM),
+                            $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp(),
+                            $throwable->getMessage(),
+                        ));
+                    }
+                }
+                return self::FAILURE;
             };
         }
 
         if (count($threads) === 1) {
             call_user_func(reset($threads));
         } else {
-            Fork::new()
+            $results = Fork::new()
                 ->concurrent((int)$this->option('threads'))
-                ->before(
-                    function () {
-                        DB::connection()->reconnect();
-                    }
-                )
+                ->before(fn () => DB::connection()->reconnect())
+                ->after(parent: DB::connection()->reconnect())
                 ->run(...$threads);
+            if (in_array(self::FAILURE, $results, true)) {
+                throw new RuntimeException('Cannot export events');
+            }
         }
 
         if ($isCommandExecutedAutomatically && $packCount > 0) {
@@ -366,7 +389,6 @@ class AdPayEventExportCommand extends BaseCommand
             $this->error(
                 sprintf('[AdPayEventExport] Too many conversions to export (%s) in time (%s)', $eventsCount, $seconds)
             );
-
             return;
         }
         $packInterval = (int)ceil($seconds / $packCount);
