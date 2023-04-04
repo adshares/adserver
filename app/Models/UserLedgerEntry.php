@@ -205,14 +205,14 @@ class UserLedgerEntry extends Model
 
     public static function getWalletBalanceForForeignUsers(): int
     {
-        return (int)self::queryForEntriesRelevantForBonusBalance()
+        return (int)self::queryForEntriesRelevantForBalance()
             ->whereNotNull('users.foreign_wallet_address')
             ->sum('amount');
     }
 
     public static function allForeignWalletBalanceIfAny(): array
     {
-        return self::queryForEntriesRelevantForWalletBalance()
+        return self::queryForEntriesRelevantForBalance()
             ->whereNotNull('users.foreign_wallet_address')
             ->selectRaw('users.id as uid, users.foreign_wallet_address as wallet, sum(amount) as share')
             ->groupBy('uid')
