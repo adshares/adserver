@@ -56,6 +56,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Psr\Http\Message\ResponseInterface;
 use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 // phpcs:ignoreFile PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
@@ -315,12 +316,28 @@ final class SupplyControllerTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['example.com/bid' => Http::response([])]);
         $data = $this->initDspBridge();
+        $dspNetworkBanner = (new NetworkBanner())->first();
+        /** @var NetworkBanner $adserverNetworkBanner */
+        $adserverNetworkBanner = NetworkBanner::factory()->create([
+            'network_campaign_id' => NetworkCampaign::factory()->create(),
+            'serve_url' => 'https://adshares.net/serve/' . Uuid::uuid4()->toString(),
+        ]);
+        $zone = Zone::fetchByPublicId($data['placements'][0]['placementId']);
+        $impressionId = $data['context']['iid'];
+        $adSelect = self::createMock(AdSelect::class);
+        $adSelect->expects(self::exactly(2))->method('findBanners')->willReturnOnConsecutiveCalls(
+            new FoundBanners([$this->createFoundBanner($dspNetworkBanner, $zone, $impressionId)]),
+            new FoundBanners([$this->createFoundBanner($adserverNetworkBanner, $zone, $impressionId)]),
+        );
+        $this->app->bind(AdSelect::class, fn () => $adSelect);
 
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
-        $response->assertJsonCount(0, 'data');
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', '3');
+        $response->assertJsonPath('data.0.serveUrl', $adserverNetworkBanner->serve_url);
         Http::assertSentCount(1);
     }
 
@@ -1183,14 +1200,7 @@ final class SupplyControllerTest extends TestCase
             $response->method('getBody')->willReturn($content);
             return $response;
         });
-
-
-        $this->app->bind(
-            AdSelect::class,
-            static function () use ($client) {
-                return new GuzzleAdSelectClient($client);
-            }
-        );
+        $this->app->bind(AdSelect::class, fn () => new GuzzleAdSelectClient($client));
     }
 
     private static function getDynamicFindData(array $merge = []): array
@@ -1347,54 +1357,11 @@ final class SupplyControllerTest extends TestCase
         $impressionId = Uuid::uuid4();
         $adSelect = self::createMock(AdSelect::class);
         $adSelect->method('findBanners')->willReturn(
-            new FoundBanners([
-                [
-                    'id' => $networkBanner->uuid,
-                    'demand_id' => $networkBanner->demand_banner_id,
-                    'publisher_id' => '0123456879ABCDEF0123456879ABCDEF',
-                    'zone_id' => $zone->uuid,
-                    'pay_from' => '0001-00000001-8B4E',
-                    'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
-                    'type' => $networkBanner->type,
-                    'size' => $networkBanner->size,
-                    'serve_url' => $networkBanner->serve_url,
-                    'creative_sha1' => '',
-                    'click_url' => SecureUrl::change(
-                        route(
-                            'log-network-click',
-                            [
-                                'id' => $networkBanner->uuid,
-                                'iid' => $impressionId,
-                                'r' => Utils::urlSafeBase64Encode($networkBanner->click_url),
-                                'zid' => $zone->uuid,
-                            ]
-                        )
-                    ),
-                    'view_url' => SecureUrl::change(
-                        route(
-                            'log-network-view',
-                            [
-                                'id' => $networkBanner->uuid,
-                                'iid' => $impressionId,
-                                'r' => Utils::urlSafeBase64Encode($networkBanner->view_url),
-                                'zid' => $zone->uuid,
-                            ]
-                        )
-                    ),
-                    'info_box' => true,
-                    'rpm' => 0.5,
-                    'request_id' => '3',
-                ]
-            ])
+            new FoundBanners([$this->createFoundBanner($networkBanner, $zone, $impressionId)])
         );
-        $this->app->bind(
-            AdSelect::class,
-            static function () use ($adSelect) {
-                return $adSelect;
-            }
-        );
+        $this->app->bind(AdSelect::class, fn () => $adSelect);
         $this->initAdUser();
-        $data = [
+        return [
             'context' => [
                 'iid' => $impressionId,
                 'url' => 'https://example.com',
@@ -1408,6 +1375,49 @@ final class SupplyControllerTest extends TestCase
                 ],
             ],
         ];
-        return $data;
+    }
+
+    private function createFoundBanner(
+        NetworkBanner $networkBanner,
+        Zone $zone,
+        UuidInterface $impressionId
+    ): array {
+        return [
+            'id' => $networkBanner->uuid,
+            'demand_id' => $networkBanner->demand_banner_id,
+            'publisher_id' => '0123456879ABCDEF0123456879ABCDEF',
+            'zone_id' => $zone->uuid,
+            'pay_from' => '0001-00000001-8B4E',
+            'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+            'type' => $networkBanner->type,
+            'size' => $networkBanner->size,
+            'serve_url' => $networkBanner->serve_url,
+            'creative_sha1' => '',
+            'click_url' => SecureUrl::change(
+                route(
+                    'log-network-click',
+                    [
+                        'id' => $networkBanner->uuid,
+                        'iid' => $impressionId,
+                        'r' => Utils::urlSafeBase64Encode($networkBanner->click_url),
+                        'zid' => $zone->uuid,
+                    ]
+                )
+            ),
+            'view_url' => SecureUrl::change(
+                route(
+                    'log-network-view',
+                    [
+                        'id' => $networkBanner->uuid,
+                        'iid' => $impressionId,
+                        'r' => Utils::urlSafeBase64Encode($networkBanner->view_url),
+                        'zid' => $zone->uuid,
+                    ]
+                )
+            ),
+            'info_box' => true,
+            'rpm' => 0.5,
+            'request_id' => '3',
+        ];
     }
 }

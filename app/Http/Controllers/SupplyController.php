@@ -503,7 +503,32 @@ class SupplyController extends Controller
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionId);
         if (DspBridge::isActive()) {
+            $indices = [];
+            foreach ($foundBanners as $index => $banner) {
+                if (null !== $banner) {
+                    $indices[] = $index;
+                }
+            }
             $foundBanners = (new DspBridge())->replaceBridgeBanners($foundBanners, $context, $zones);
+            $indicesToReplace = [];
+            foreach ($indices as $index) {
+                if (null === $foundBanners[$index]) {
+                    $indicesToReplace[$index] = $index;
+                }
+            }
+            if (!empty($indicesToReplace)) {
+                $exclude = ['source_host' => config('app.dsp_bridge_url')];
+                $zonesToReplace = array_map(
+                    function ($zone) use ($exclude) {
+                        $zone['options']['exclude'] = $exclude;
+                        return $zone;
+                    },
+                    array_intersect_key($zones, $indicesToReplace),
+                );
+                foreach ($bannerFinder->findBanners($zonesToReplace, $context, $impressionId) as $banner) {
+                    $foundBanners[array_shift($indicesToReplace)] = $banner;
+                }
+            }
         }
 
         if ($foundBanners->exists(fn($key, $element) => null !== $element)) {
