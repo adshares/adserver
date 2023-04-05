@@ -141,7 +141,7 @@ class GuzzleAdSelectClientTest extends TestCase
             ],
         ];
         $context = new ImpressionContext(
-            [],
+            ['page' => 'https://example.com'],
             [],
             [
                 'keywords' => [],
