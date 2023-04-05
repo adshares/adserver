@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Http\Controllers;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
@@ -933,13 +934,12 @@ class SupplyController extends Controller
         if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
             throw new NotFoundHttpException('No matching banner');
         }
+        /** @var NetworkCampaign $campaign */
         $campaign = $banner->campaign()->first();
-        $networkHost = NetworkHost::fetchByHost($campaign->source_host);
+        $isDsp = DspBridge::isDspAddress($campaign->source_address);
 
-        $info = $networkHost->info ?? null;
-
-        $data = [
-            'url' => $banner->serve_url,
+        $supplyData = [
+            'url' => $isDsp ? '' : $banner->serve_url,
             'source' => strtolower(preg_replace('/\s/', '-', config('app.adserver_name'))),
             'supplyName' => config('app.adserver_name'),
             'supplyTermsUrl' => route('terms-url'),
@@ -955,27 +955,38 @@ class SupplyController extends Controller
                 )
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
-            'demand' => false,
             'bannerSize' => $banner->size,
             'bannerType' => $banner->type,
         ];
 
-        if ($info) {
-            $data = array_merge(
-                $data,
-                [
+        $demandData = [
+            'demand' => false,
+        ];
+        if ($isDsp) {
+            $demandData = [
+                'demand' => true,
+                'demandName' => $supplyData['supplyName'],
+                'demandTermsUrl' => $supplyData['supplyTermsUrl'],
+                'demandPrivacyUrl' => $supplyData['supplyPrivacyUrl'],
+                'demandLandingUrl' => $supplyData['supplyLandingUrl'],
+            ];
+        } else {
+            $networkHost = NetworkHost::fetchByAddress($campaign->source_address);
+            $info = $networkHost->info ?? null;
+            if ($info) {
+                $demandData = [
                     'demand' => true,
                     'demandName' => $info->getName(),
                     'demandTermsUrl' => $info->getTermsUrl(),
                     'demandPrivacyUrl' => $info->getPrivacyUrl(),
                     'demandLandingUrl' => $info->getLandingUrl(),
-                ]
-            );
+                ];
+            }
         }
 
         return view(
             'supply/why',
-            $data
+            array_merge($supplyData, $demandData),
         );
     }
 

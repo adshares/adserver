@@ -11,7 +11,7 @@
 
     <body>
         <div id="container">
-            @if(in_array($bannerType, ['image', 'html', 'video']))
+            @if($url && in_array($bannerType, ['image', 'html', 'video']))
             <section id="banner-preview">
                 <div id="preview-wrapper"></div>
             </section>

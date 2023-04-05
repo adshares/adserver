@@ -143,11 +143,11 @@ final class SupplyControllerTest extends TestCase
 
     public function testPageWhy(): void
     {
-        $host = 'https://example.com';
-        $campaignId = 1;
-        NetworkHost::factory()->create(['host' => $host]);
-        NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
-        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        $address = '0001-00000003-AB0C';
+        NetworkHost::factory()->create(['address' => $address]);
+        $campaign = NetworkCampaign::factory()->create(['source_address' => $address]);
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
         $query = [
             'bid' => $banner->uuid,
             'cid' => '0123456789abcdef0123456789abcdef',
@@ -156,16 +156,16 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewHas('demand', true);
     }
 
     public function testPageWhyWhileCaseIdAndBannerIdAreUuid(): void
     {
-        $host = 'https://example.com';
-        $campaignId = 1;
-        NetworkHost::factory()->create(['host' => $host]);
-        NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
+        $address = '0001-00000003-AB0C';
+        NetworkHost::factory()->create(['address' => $address]);
+        $campaign = NetworkCampaign::factory()->create(['source_address' => $address]);
         /** @var NetworkBanner $banner */
-        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
         $query = [
             'bid' => Uuid::fromString($banner->uuid)->toString(),
             'cid' => Uuid::uuid4()->toString(),
@@ -174,6 +174,34 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewHas('demand', true);
+    }
+
+    public function testPageWhileBannerFromDsp(): void
+    {
+        $address = '0001-00000001-8B4E';
+        $host = 'https://example.com';
+        Config::updateAdminSettings([
+            Config::DSP_BRIDGE_ACCOUNT_ADDRESS => $address,
+            Config::DSP_BRIDGE_URL => $host,
+        ]);
+        NetworkHost::factory()->create(['address' => $address]);
+        $campaign = NetworkCampaign::factory()->create([
+            'source_address' => $address,
+            'source_host' => $host,
+        ]);
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
+        $query = [
+            'bid' => $banner->uuid,
+            'cid' => '0123456789abcdef0123456789abcdef',
+        ];
+
+        $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewHas('demand', true);
+        $response->assertViewHas('demandName', 'AdServer');
     }
 
     public function testReportAd(): void
