@@ -517,7 +517,7 @@ class SupplyController extends Controller
                 }
             }
             if (!empty($indicesToReplace)) {
-                $exclude = ['source_host' => config('app.dsp_bridge_url')];
+                $exclude = ['source_host' => [config('app.dsp_bridge_url')]];
                 $zonesToReplace = array_map(
                     function ($zone) use ($exclude) {
                         $zone['options']['exclude'] = $exclude;

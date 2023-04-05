@@ -480,6 +480,19 @@ final class SupplyControllerTest extends TestCase
                     ],
                 ]
             ],
+            'missing placement placementId' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                        ]
+                    ],
+                ]
+            ],
             'invalid placement id type' => [
                 [
                     'context' => [
@@ -490,6 +503,20 @@ final class SupplyControllerTest extends TestCase
                         [
                             'id' => 1,
                             'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement placementId format' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                            'placementId' => '0123456789ABCDEF',
                         ]
                     ],
                 ]

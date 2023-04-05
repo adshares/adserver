@@ -119,7 +119,7 @@ class GuzzleAdSelectClientTest extends TestCase
                     $filters = $options['json'][0]['banner_filters'];
                     self::assertEquals(['image'], $filters['require']['type']);
                     self::assertEquals(['image/png'], $filters['require']['mime']);
-                    self::assertEquals(['source_host' => 'http://localhost:8000'], $filters['exclude']);
+                    self::assertEquals(['source_host' => ['http://localhost:8000']], $filters['exclude']);
                     return true;
                 })
             )
@@ -136,7 +136,7 @@ class GuzzleAdSelectClientTest extends TestCase
                 'options' => [
                     'banner_mime' => ['image/png'],
                     'banner_type' => ['image'],
-                    'exclude' => ['source_host' => 'http://localhost:8000'],
+                    'exclude' => ['source_host' => ['http://localhost:8000']],
                 ]
             ],
         ];
