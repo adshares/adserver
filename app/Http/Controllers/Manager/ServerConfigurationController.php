@@ -57,6 +57,7 @@ class ServerConfigurationController extends Controller
         Config::ADPAY_URL => 'nullable|url',
         Config::ADS_OPERATOR_SERVER_URL => 'nullable|url',
         Config::ADS_RPC_URL => 'nullable|url',
+        Config::ADS_TXT_CRAWLER_ENABLED => 'nullable|boolean',
         Config::ADSELECT_URL => 'nullable|url',
         Config::ADSERVER_NAME => 'notEmpty',
         Config::ADSHARES_ADDRESS => 'accountId',
