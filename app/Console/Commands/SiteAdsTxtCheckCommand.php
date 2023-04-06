@@ -26,17 +26,26 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use DateTimeImmutable;
+use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\Lock;
 use Symfony\Component\Lock\Store\FlockStore;
 
-class SiteAdsTxtCheckCommand extends BaseCommand
+class SiteAdsTxtCheckCommand extends Command
 {
+    private const SITE_PACK_SIZE = 20;
+
     protected $signature = 'ops:supply:site-ads-txt:check';
 
     protected $description = 'Checks if sites have valid ads.txt files';
 
-    public function handle(AdsTxtCrawler $adsTxtCrawler): int
+    public function __construct(private readonly AdsTxtCrawler $adsTxtCrawler)
+    {
+        parent::__construct();
+    }
+
+    public function handle(): int
     {
         if (!config('app.ads_txt_crawler_enabled')) {
             $this->info('ads.txt crawler is disabled');
@@ -51,33 +60,47 @@ class SiteAdsTxtCheckCommand extends BaseCommand
         $this->info(sprintf('Start command %s', $this->name));
 
         $lastId = 0;
-        $limit = 20;
         while (true) {
-            $sites = Site::fetchSitesWhichNeedAdsTxtConfirmation($lastId, $limit);
+            $sites = Site::fetchSitesWhichNeedAdsTxtConfirmation($lastId, self::SITE_PACK_SIZE);
             if ($sites->isEmpty()) {
                 break;
             }
             $lastId = $sites->last()->id;
-            $results = $adsTxtCrawler->checkSites($sites);
-            $sitesByIds = $sites->keyBy('id');
-            foreach ($results as $siteId => $result) {
-                /** @var Site $site */
-                $site = $sitesByIds->get($siteId);
-                if ($result) {
-                    $site->ads_txt_confirmed_at = new DateTimeImmutable();
-                    $site->approvalProcedure(false);
-                } else {
-                    $site->ads_txt_confirmed_at = null;
-                    if (Site::STATUS_ACTIVE === $site->status) {
-                        $site->status = Site::STATUS_PENDING_APPROVAL;
-                    }
-                }
-                $site->saveOrFail();
+            $this->checkAdsTxtForSites($sites);
+        }
+
+        $lastId = 0;
+        while (true) {
+            $sites = Site::fetchSitesWhichNeedAdsTxtRefresh($lastId, self::SITE_PACK_SIZE);
+            if ($sites->isEmpty()) {
+                break;
             }
+            $lastId = $sites->last()->id;
+            $this->checkAdsTxtForSites($sites);
         }
 
         $this->info(sprintf('Finish command %s', $this->name));
         $lock->release();
         return self::SUCCESS;
+    }
+
+    private function checkAdsTxtForSites(Collection $sites): void
+    {
+        $results = $this->adsTxtCrawler->checkSites($sites);
+        $sitesByIds = $sites->keyBy('id');
+        foreach ($results as $siteId => $result) {
+            /** @var Site $site */
+            $site = $sitesByIds->get($siteId);
+            if ($result) {
+                $site->ads_txt_confirmed_at = new DateTimeImmutable();
+                $site->ads_txt_fails = 0;
+                $site->approvalProcedure(false);
+            } else {
+                $site->ads_txt_confirmed_at = null;
+                $site->ads_txt_fails = $site->ads_txt_fails + 1;
+                $site->status = Site::STATUS_PENDING_APPROVAL;
+            }
+            $site->saveOrFail();
+        }
     }
 }

@@ -56,6 +56,7 @@ use Illuminate\Support\Facades\Mail;
  * @property Carbon|null deleted_at
  * @property Carbon|null accepted_at
  * @property Carbon|null ads_txt_confirmed_at
+ * @property int ads_txt_fails
  * @property int user_id
  * @property string name
  * @property string domain
@@ -358,11 +359,19 @@ class Site extends Model
     {
         return (new self())->where('id', '>', $lastId)
             ->where('medium', MediumName::Web->value)
-            ->whereNot('status', self::STATUS_REJECTED)
-            ->where(function (Builder $sub) {
-                $sub->whereNull('ads_txt_confirmed_at')
-                    ->orWhere('ads_txt_confirmed_at', '<', Carbon::now()->subDay());
-            })
+            ->where('status', self::STATUS_PENDING_APPROVAL)
+            ->whereNull('ads_txt_confirmed_at')
+            ->orderBy('id')
+            ->limit($limit)
+            ->get();
+    }
+
+    public static function fetchSitesWhichNeedAdsTxtRefresh(int $lastId = 0, int $limit = PHP_INT_MAX): Collection
+    {
+        return (new self())->where('id', '>', $lastId)
+            ->where('medium', MediumName::Web->value)
+            ->where('status', self::STATUS_ACTIVE)
+            ->where('ads_txt_confirmed_at', '<', Carbon::now()->subDay())
             ->orderBy('id')
             ->limit($limit)
             ->get();

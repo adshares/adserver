@@ -46,50 +46,79 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::FAILURE);
     }
 
-    public function testHandle(): void
+    public function testHandleNewSite(): void
     {
         Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
         /** @var Site $siteNotConfirmed */
         $siteNotConfirmed = Site::factory()->create([
             'ads_txt_confirmed_at' => null,
+            'status' => Site::STATUS_PENDING_APPROVAL,
             'user_id' => User::factory()->create(),
         ]);
+        $expectedSiteIds = [$siteNotConfirmed->id];
+        $mock = $this->createMock(AdsTxtCrawler::class);
+        $mock->expects(self::once())
+            ->method('checkSites')
+            ->with(
+                self::callback(
+                    fn(Collection $collection) => $collection->map(fn(Site $site) => $site->id)
+                        ->diff($expectedSiteIds)
+                        ->isEmpty()
+                )
+            )
+            ->willReturn([$siteNotConfirmed->id => true]);
+        $this->instance(AdsTxtCrawler::class, $mock);
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
+
+        self::assertNotNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
+        self::assertEquals(0, $siteNotConfirmed->ads_txt_fails);
+    }
+
+    public function testHandleOldSite(): void
+    {
+        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
         /** @var Site $siteConfirmedYesterday */
         $siteConfirmedYesterday = Site::factory()->create([
             'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
             'user_id' => User::factory()->create(),
         ]);
+        $expectedSiteIds = [$siteConfirmedYesterday->id];
+        $mock = $this->createMock(AdsTxtCrawler::class);
+        $mock->expects(self::once())
+            ->method('checkSites')
+            ->with(
+                self::callback(
+                    fn(Collection $collection) => $collection->map(fn(Site $site) => $site->id)
+                        ->diff($expectedSiteIds)
+                        ->isEmpty()
+                )
+            )
+            ->willReturn([$siteConfirmedYesterday->id => false]);
+        $this->instance(AdsTxtCrawler::class, $mock);
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
+
+        self::assertNull($siteConfirmedYesterday->refresh()->ads_txt_confirmed_at);
+        self::assertEquals(1, $siteConfirmedYesterday->ads_txt_fails);
+        self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
+    }
+
+    public function testHandleSiteRecentlyConfirmed(): void
+    {
+        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
         Site::factory()->create([
             'ads_txt_confirmed_at' => new DateTimeImmutable(),
             'user_id' => User::factory()->create(),
         ]);
 
-        $this->app->bind(AdsTxtCrawler::class, function () use ($siteNotConfirmed, $siteConfirmedYesterday) {
-            $expectedSiteIds = [$siteNotConfirmed->id, $siteConfirmedYesterday->id];
+        $this->app->bind(AdsTxtCrawler::class, function () {
             $mock = $this->createMock(AdsTxtCrawler::class);
-            $mock->method('checkSites')
-                ->with(
-                    self::callback(
-                        fn(Collection $collection) => $collection->map(fn(Site $site) => $site->id)
-                            ->diff($expectedSiteIds)
-                            ->isEmpty()
-                    )
-                )
-                ->willReturn(
-                    [
-                        $siteNotConfirmed->id => true,
-                        $siteConfirmedYesterday->id => false,
-                    ]
-                );
-
+            $mock->expects(self::never())->method('checkSites');
             return $mock;
         });
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
-
-        self::assertNotNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
-        self::assertNull($siteConfirmedYesterday->refresh()->ads_txt_confirmed_at);
-        self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
     }
 
     public function testHandleWhileAdsTxtDisabled(): void
