@@ -55,6 +55,7 @@ use Illuminate\Support\Facades\Mail;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property Carbon|null accepted_at
+ * @property Carbon|null ads_txt_confirmed_at
  * @property int user_id
  * @property string name
  * @property string domain
@@ -350,6 +351,18 @@ class Site extends Model
     {
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)
             ->where('info', AdUser::PAGE_INFO_UNKNOWN)
+            ->get();
+    }
+
+    public static function fetchSitesWhichNeedAdsTxtConfirmation(int $limit = PHP_INT_MAX, int $offset = 0): Collection
+    {
+        return (new self())->where(function (Builder $sub) {
+            $sub->whereNull('ads_txt_confirmed_at')
+                ->orWhere('ads_txt_confirmed_at', '<', Carbon::now()->subDay());
+        })
+            ->orderBy('id')
+            ->limit($limit)
+            ->offset($offset)
             ->get();
     }
 
