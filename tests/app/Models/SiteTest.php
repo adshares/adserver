@@ -116,6 +116,13 @@ class SiteTest extends TestCase
                 fn() => Site::factory()->make(['accepted_at' => new DateTimeImmutable()]),
                 Site::STATUS_ACTIVE,
             ],
+            'accepted but no ads.txt' => [
+                fn() => Site::factory()->make([
+                    'accepted_at' => new DateTimeImmutable(),
+                    'ads_txt_confirmed_at' => null,
+                ]),
+                Site::STATUS_PENDING_APPROVAL,
+            ],
             'site rejected' => [
                 function () {
                     $domain = 'rejected.com';

@@ -356,10 +356,12 @@ class Site extends Model
 
     public static function fetchSitesWhichNeedAdsTxtConfirmation(int $limit = PHP_INT_MAX, int $offset = 0): Collection
     {
-        return (new self())->where(function (Builder $sub) {
-            $sub->whereNull('ads_txt_confirmed_at')
-                ->orWhere('ads_txt_confirmed_at', '<', Carbon::now()->subDay());
-        })
+        return (new self())->where('medium', MediumName::Web->value)
+            ->whereNot('status', self::STATUS_REJECTED)
+            ->where(function (Builder $sub) {
+                $sub->whereNull('ads_txt_confirmed_at')
+                    ->orWhere('ads_txt_confirmed_at', '<', Carbon::now()->subDay());
+            })
             ->orderBy('id')
             ->limit($limit)
             ->offset($offset)
@@ -410,7 +412,7 @@ class Site extends Model
 
     public function approvalProcedure(): void
     {
-        if (null !== $this->accepted_at) {
+        if (null !== $this->accepted_at && !$this->isAdsTxtRequired($this->medium)) {
             $this->status = self::STATUS_ACTIVE;
             return;
         }
@@ -425,8 +427,17 @@ class Site extends Model
                 ->queue(new SiteApprovalPending($this->user_id, $this->url));
             return;
         }
+        if ($this->isAdsTxtRequired($this->medium)) {
+            $this->status = self::STATUS_PENDING_APPROVAL;
+            return;
+        }
         $this->status = self::STATUS_ACTIVE;
         $this->accepted_at = new DateTimeImmutable();
+    }
+
+    private function isAdsTxtRequired(string $medium): bool
+    {
+        return MediumName::Web->value === $medium && null === $this->ads_txt_confirmed_at;
     }
 
     private static function isApprovalRequired(string $medium): bool

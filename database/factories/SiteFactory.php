@@ -46,6 +46,7 @@ class SiteFactory extends Factory
             'categories' => ['unknown'],
             'only_accepted_banners' => 0,
             'accepted_at' => new DateTimeImmutable(),
+            'ads_txt_confirmed_at' => new DateTimeImmutable(),
         ];
     }
 }

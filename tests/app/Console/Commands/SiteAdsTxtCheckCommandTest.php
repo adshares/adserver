@@ -21,9 +21,16 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use DateTimeImmutable;
+use Illuminate\Support\Collection;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\Lock;
+use Symfony\Component\Lock\Store\FlockStore;
 
 class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 {
@@ -31,15 +38,54 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testLock(): void
     {
-        $lockerMock = $this->createMock(Locker::class);
-        $lockerMock->expects(self::once())->method('lock')->willReturn(false);
-        $this->instance(Locker::class, $lockerMock);
+        $lock = new Lock(new Key(self::COMMAND_SIGNATURE), new FlockStore(), null, false);
+        $lock->acquire();
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::FAILURE);
     }
 
     public function testHandle(): void
     {
+        /** @var Site $siteNotConfirmed */
+        $siteNotConfirmed = Site::factory()->create([
+            'ads_txt_confirmed_at' => null,
+            'user_id' => User::factory()->create(),
+        ]);
+        /** @var Site $siteConfirmedYesterday */
+        $siteConfirmedYesterday = Site::factory()->create([
+            'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
+            'user_id' => User::factory()->create(),
+        ]);
+        Site::factory()->create([
+            'ads_txt_confirmed_at' => new DateTimeImmutable(),
+            'user_id' => User::factory()->create(),
+        ]);
+
+        $this->app->bind(AdsTxtCrawler::class, function () use ($siteNotConfirmed, $siteConfirmedYesterday) {
+            $expectedSiteIds = [$siteNotConfirmed->id, $siteConfirmedYesterday->id];
+            $mock = $this->createMock(AdsTxtCrawler::class);
+            $mock->method('checkSites')
+                ->with(
+                    self::callback(
+                        fn(Collection $collection) => $collection->map(fn(Site $site) => $site->id)
+                            ->diff($expectedSiteIds)
+                            ->isEmpty()
+                    )
+                )
+                ->willReturn(
+                    [
+                        $siteNotConfirmed->id => true,
+                        $siteConfirmedYesterday->id => false,
+                    ]
+                );
+
+            return $mock;
+        });
+
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
+
+        self::assertNotNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
+        self::assertNull($siteConfirmedYesterday->refresh()->ads_txt_confirmed_at);
+        self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
     }
 }

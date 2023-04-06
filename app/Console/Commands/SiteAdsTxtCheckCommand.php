@@ -25,6 +25,10 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Services\Common\AdsTxtCrawler;
+use DateTimeImmutable;
+use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\Lock;
+use Symfony\Component\Lock\Store\FlockStore;
 
 class SiteAdsTxtCheckCommand extends BaseCommand
 {
@@ -32,9 +36,10 @@ class SiteAdsTxtCheckCommand extends BaseCommand
 
     protected $description = 'Checks if sites have valid ads.txt files';
 
-    public function handle(): int
+    public function handle(AdsTxtCrawler $adsTxtCrawler): int
     {
-        if (!$this->lock()) {
+        $lock = new Lock(new Key($this->name), new FlockStore(), null, false);
+        if (!$lock->acquire()) {
             $this->info(sprintf('Command %s already running', $this->name));
             return self::FAILURE;
         }
@@ -48,11 +53,26 @@ class SiteAdsTxtCheckCommand extends BaseCommand
                 break;
             }
             $offset += $limit;
-            $crawler = new AdsTxtCrawler();
-            $results = $crawler->checkSites($sites);
+            $results = $adsTxtCrawler->checkSites($sites);
+            $sitesByIds = $sites->keyBy('id');
+            foreach ($results as $siteId => $result) {
+                /** @var Site $site */
+                $site = $sitesByIds->get($siteId);
+                if ($result) {
+                    $site->ads_txt_confirmed_at = new DateTimeImmutable();
+                    $site->approvalProcedure();
+                } else {
+                    $site->ads_txt_confirmed_at = null;
+                    if (Site::STATUS_ACTIVE === $site->status) {
+                        $site->status = Site::STATUS_PENDING_APPROVAL;
+                    }
+                }
+                $site->saveOrFail();
+            }
         }
 
         $this->info(sprintf('Finish command %s', $this->name));
+        $lock->release();
         return self::SUCCESS;
     }
 }
