@@ -194,4 +194,30 @@ class SiteTest extends TestCase
 
         self::assertNotNull(Site::fetchByPublicId($site->uuid));
     }
+
+    public function testFetchSitesWhichNeedAdsTxtConfirmation(): void
+    {
+        Site::factory()->create([
+            'ads_txt_check_at' => new DateTimeImmutable('-6 days'),
+            'ads_txt_confirmed_at' => null,
+            'ads_txt_fails' => 13,
+            'status' => Site::STATUS_PENDING_APPROVAL,
+        ]);
+
+        $sites = Site::fetchSitesWhichNeedAdsTxtConfirmation();
+
+        self::assertCount(1, $sites);
+    }
+
+    public function testFetchSitesWhichNeedAdsTxtRefresh(): void
+    {
+        Site::factory()->create([
+            'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
+            'user_id' => User::factory()->create(),
+        ]);
+
+        $sites = Site::fetchSitesWhichNeedAdsTxtRefresh();
+
+        self::assertCount(1, $sites);
+    }
 }

@@ -39,4 +39,6 @@ class SiteRejectReason extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    public const REJECT_REASON_ID_MISSING_ADS_TXT = 65000;
 }

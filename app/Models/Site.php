@@ -46,6 +46,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -356,26 +357,34 @@ class Site extends Model
             ->get();
     }
 
-    public static function fetchSitesWhichNeedAdsTxtConfirmation(int $lastId = 0, int $limit = PHP_INT_MAX): Collection
+    public static function fetchSitesWhichNeedAdsTxtConfirmation(int $lastId = 0, ?int $limit = null): Collection
     {
-        return (new self())->where('id', '>', $lastId)
+        $query = (new self())->where('id', '>', $lastId)
             ->where('medium', MediumName::Web->value)
             ->where('status', self::STATUS_PENDING_APPROVAL)
             ->whereNull('ads_txt_confirmed_at')
-            ->orderBy('id')
-            ->limit($limit)
-            ->get();
+            ->where(function (Builder $sub) {
+                $sub->whereNull('ads_txt_check_at')
+                    ->orWhereRaw(DB::raw('ads_txt_check_at < NOW() - INTERVAL POW(2, ads_txt_fails) MINUTE'));
+            })
+            ->orderBy('id');
+        if (null !== $limit) {
+            $query->limit($limit);
+        }
+        return $query->get();
     }
 
-    public static function fetchSitesWhichNeedAdsTxtRefresh(int $lastId = 0, int $limit = PHP_INT_MAX): Collection
+    public static function fetchSitesWhichNeedAdsTxtRefresh(int $lastId = 0, ?int $limit = null): Collection
     {
-        return (new self())->where('id', '>', $lastId)
+        $query = (new self())->where('id', '>', $lastId)
             ->where('medium', MediumName::Web->value)
             ->where('status', self::STATUS_ACTIVE)
             ->where('ads_txt_confirmed_at', '<', Carbon::now()->subDay())
-            ->orderBy('id')
-            ->limit($limit)
-            ->get();
+            ->orderBy('id');
+        if (null !== $limit) {
+            $query->limit($limit);
+        }
+        return $query->get();
     }
 
     public static function rejectByDomains(array $domains): void

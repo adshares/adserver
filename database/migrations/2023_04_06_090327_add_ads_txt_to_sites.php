@@ -21,12 +21,22 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        DB::insert(
+            <<<SQL
+INSERT INTO site_reject_reasons
+    (id, reject_reason, created_at, updated_at)
+VALUES
+    (65000, 'File ads.txt is missing', NOW(), NOW());
+SQL
+        );
+
         Schema::table('sites', function (Blueprint $table) {
             $table->timestamp('ads_txt_check_at')->nullable();
             $table->timestamp('ads_txt_confirmed_at')->index()->nullable();
@@ -39,5 +49,7 @@ return new class extends Migration
         Schema::table('sites', function (Blueprint $table) {
             $table->dropColumn(['ads_txt_check_at', 'ads_txt_confirmed_at', 'ads_txt_fails']);
         });
+
+        DB::delete('DELETE FROM site_reject_reasons WHERE id = 65000');
     }
 };

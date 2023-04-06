@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use DateTimeImmutable;
 use Illuminate\Console\Command;
@@ -34,6 +35,8 @@ use Symfony\Component\Lock\Store\FlockStore;
 
 class SiteAdsTxtCheckCommand extends Command
 {
+    private const ADS_TXT_CRAWLER_MAX_ATTEMPTS_PER_SITE = 14;
+
     private const SITE_PACK_SIZE = 20;
 
     protected $signature = 'ops:supply:site-ads-txt:check';
@@ -100,7 +103,12 @@ class SiteAdsTxtCheckCommand extends Command
             } else {
                 $site->ads_txt_confirmed_at = null;
                 $site->ads_txt_fails = $site->ads_txt_fails + 1;
-                $site->status = Site::STATUS_PENDING_APPROVAL;
+                if ($site->ads_txt_fails >= self::ADS_TXT_CRAWLER_MAX_ATTEMPTS_PER_SITE) {
+                    $site->status = Site::STATUS_REJECTED;
+                    $site->reject_reason_id = SiteRejectReason::REJECT_REASON_ID_MISSING_ADS_TXT;
+                } else {
+                    $site->status = Site::STATUS_PENDING_APPROVAL;
+                }
             }
             $site->saveOrFail();
         }
