@@ -51,6 +51,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
         /** @var Site $siteNotConfirmed */
         $siteNotConfirmed = Site::factory()->create([
+            'ads_txt_check_at' => null,
             'ads_txt_confirmed_at' => null,
             'status' => Site::STATUS_PENDING_APPROVAL,
             'user_id' => User::factory()->create(),
@@ -72,6 +73,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
 
         self::assertNotNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
+        self::assertNotNull($siteNotConfirmed->ads_txt_check_at);
         self::assertEquals(0, $siteNotConfirmed->ads_txt_fails);
     }
 
@@ -100,6 +102,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
 
         self::assertNull($siteConfirmedYesterday->refresh()->ads_txt_confirmed_at);
+        self::assertNotNull($siteConfirmedYesterday->ads_txt_check_at);
         self::assertEquals(1, $siteConfirmedYesterday->ads_txt_fails);
         self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
     }
@@ -111,7 +114,6 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
             'ads_txt_confirmed_at' => new DateTimeImmutable(),
             'user_id' => User::factory()->create(),
         ]);
-
         $this->app->bind(AdsTxtCrawler::class, function () {
             $mock = $this->createMock(AdsTxtCrawler::class);
             $mock->expects(self::never())->method('checkSites');
@@ -126,9 +128,9 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         /** @var Site $siteNotConfirmed */
         $siteNotConfirmed = Site::factory()->create([
             'ads_txt_confirmed_at' => null,
+            'ads_txt_check_at' => null,
             'user_id' => User::factory()->create(),
         ]);
-
         $this->app->bind(AdsTxtCrawler::class, function () {
             $mock = $this->createMock(AdsTxtCrawler::class);
             $mock->expects(self::never())->method('checkSites');

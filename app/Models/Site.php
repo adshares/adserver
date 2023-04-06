@@ -55,6 +55,7 @@ use Illuminate\Support\Facades\Mail;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property Carbon|null accepted_at
+ * @property Carbon|null ads_txt_check_at
  * @property Carbon|null ads_txt_confirmed_at
  * @property int ads_txt_fails
  * @property int user_id

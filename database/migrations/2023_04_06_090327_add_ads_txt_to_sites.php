@@ -28,6 +28,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sites', function (Blueprint $table) {
+            $table->timestamp('ads_txt_check_at')->nullable();
             $table->timestamp('ads_txt_confirmed_at')->index()->nullable();
             $table->unsignedTinyInteger('ads_txt_fails')->nullable(false)->default(0);
         });
@@ -36,7 +37,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sites', function (Blueprint $table) {
-            $table->dropColumn(['ads_txt_confirmed_at', 'ads_txt_fails']);
+            $table->dropColumn(['ads_txt_check_at', 'ads_txt_confirmed_at', 'ads_txt_fails']);
         });
     }
 };

@@ -86,13 +86,15 @@ class SiteAdsTxtCheckCommand extends Command
 
     private function checkAdsTxtForSites(Collection $sites): void
     {
+        $now = new DateTimeImmutable();
         $results = $this->adsTxtCrawler->checkSites($sites);
         $sitesByIds = $sites->keyBy('id');
         foreach ($results as $siteId => $result) {
             /** @var Site $site */
             $site = $sitesByIds->get($siteId);
+            $site->ads_txt_check_at = $now;
             if ($result) {
-                $site->ads_txt_confirmed_at = new DateTimeImmutable();
+                $site->ads_txt_confirmed_at = $now;
                 $site->ads_txt_fails = 0;
                 $site->approvalProcedure(false);
             } else {
