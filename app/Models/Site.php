@@ -354,9 +354,10 @@ class Site extends Model
             ->get();
     }
 
-    public static function fetchSitesWhichNeedAdsTxtConfirmation(int $limit = PHP_INT_MAX, int $offset = 0): Collection
+    public static function fetchSitesWhichNeedAdsTxtConfirmation(int $lastId = 0, int $limit = PHP_INT_MAX): Collection
     {
-        return (new self())->where('medium', MediumName::Web->value)
+        return (new self())->where('id', '>', $lastId)
+            ->where('medium', MediumName::Web->value)
             ->whereNot('status', self::STATUS_REJECTED)
             ->where(function (Builder $sub) {
                 $sub->whereNull('ads_txt_confirmed_at')
@@ -364,7 +365,6 @@ class Site extends Model
             })
             ->orderBy('id')
             ->limit($limit)
-            ->offset($offset)
             ->get();
     }
 

@@ -38,6 +38,11 @@ class SiteAdsTxtCheckCommand extends BaseCommand
 
     public function handle(AdsTxtCrawler $adsTxtCrawler): int
     {
+        if (!config('app.ads_txt_crawler_enabled')) {
+            $this->info('ads.txt crawler is disabled');
+            return self::SUCCESS;
+        }
+
         $lock = new Lock(new Key($this->name), new FlockStore(), null, false);
         if (!$lock->acquire()) {
             $this->info(sprintf('Command %s already running', $this->name));
@@ -45,14 +50,14 @@ class SiteAdsTxtCheckCommand extends BaseCommand
         }
         $this->info(sprintf('Start command %s', $this->name));
 
+        $lastId = 0;
         $limit = 20;
-        $offset = 0;
         while (true) {
-            $sites = Site::fetchSitesWhichNeedAdsTxtConfirmation($limit, $offset);
+            $sites = Site::fetchSitesWhichNeedAdsTxtConfirmation($lastId, $limit);
             if ($sites->isEmpty()) {
                 break;
             }
-            $offset += $limit;
+            $lastId = $sites->last()->id;
             $results = $adsTxtCrawler->checkSites($sites);
             $sitesByIds = $sites->keyBy('id');
             foreach ($results as $siteId => $result) {

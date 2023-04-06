@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Common\AdsTxtCrawler;
@@ -38,6 +39,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testLock(): void
     {
+        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
         $lock = new Lock(new Key(self::COMMAND_SIGNATURE), new FlockStore(), null, false);
         $lock->acquire();
 
@@ -46,6 +48,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testHandle(): void
     {
+        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
         /** @var Site $siteNotConfirmed */
         $siteNotConfirmed = Site::factory()->create([
             'ads_txt_confirmed_at' => null,
@@ -87,5 +90,24 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertNotNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
         self::assertNull($siteConfirmedYesterday->refresh()->ads_txt_confirmed_at);
         self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
+    }
+
+    public function testHandleWhileAdsTxtDisabled(): void
+    {
+        /** @var Site $siteNotConfirmed */
+        $siteNotConfirmed = Site::factory()->create([
+            'ads_txt_confirmed_at' => null,
+            'user_id' => User::factory()->create(),
+        ]);
+
+        $this->app->bind(AdsTxtCrawler::class, function () {
+            $mock = $this->createMock(AdsTxtCrawler::class);
+            $mock->expects(self::never())->method('checkSites');
+            return $mock;
+        });
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
+
+        self::assertNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
     }
 }
