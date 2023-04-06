@@ -117,10 +117,15 @@ class SiteTest extends TestCase
                 Site::STATUS_ACTIVE,
             ],
             'accepted but no ads.txt' => [
-                fn() => Site::factory()->make([
-                    'accepted_at' => new DateTimeImmutable(),
-                    'ads_txt_confirmed_at' => null,
-                ]),
+                function () {
+                    Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+                    DatabaseConfigReader::overwriteAdministrationConfig();
+                    return Site::factory()->make([
+                        'accepted_at' => new DateTimeImmutable(),
+                        'ads_txt_confirmed_at' => null,
+                        'user_id' => User::factory()->create(),
+                    ]);
+                },
                 Site::STATUS_PENDING_APPROVAL,
             ],
             'site rejected' => [

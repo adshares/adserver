@@ -60,7 +60,7 @@ class SiteAdsTxtCheckCommand extends BaseCommand
                 $site = $sitesByIds->get($siteId);
                 if ($result) {
                     $site->ads_txt_confirmed_at = new DateTimeImmutable();
-                    $site->approvalProcedure();
+                    $site->approvalProcedure(false);
                 } else {
                     $site->ads_txt_confirmed_at = null;
                     if (Site::STATUS_ACTIVE === $site->status) {

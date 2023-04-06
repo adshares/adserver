@@ -410,7 +410,7 @@ class Site extends Model
         $this->save();
     }
 
-    public function approvalProcedure(): void
+    public function approvalProcedure(bool $allowEmails = true): void
     {
         if (null !== $this->accepted_at && !$this->isAdsTxtRequired($this->medium)) {
             $this->status = self::STATUS_ACTIVE;
@@ -421,10 +421,12 @@ class Site extends Model
             $this->reject_reason_id = SitesRejectedDomain::domainRejectedReasonId($this->domain);
             return;
         }
-        if (self::isApprovalRequired($this->medium)) {
+        if ($this->isApprovalRequired($this->medium)) {
             $this->status = self::STATUS_PENDING_APPROVAL;
-            Mail::to(config('app.technical_email'))
-                ->queue(new SiteApprovalPending($this->user_id, $this->url));
+            if ($allowEmails) {
+                Mail::to(config('app.technical_email'))
+                    ->queue(new SiteApprovalPending($this->user_id, $this->url));
+            }
             return;
         }
         if ($this->isAdsTxtRequired($this->medium)) {
@@ -440,8 +442,11 @@ class Site extends Model
         return MediumName::Web->value === $medium && null === $this->ads_txt_confirmed_at;
     }
 
-    private static function isApprovalRequired(string $medium): bool
+    private function isApprovalRequired(string $medium): bool
     {
+        if (null !== $this->accepted_at) {
+            return false;
+        }
         $mediumList = config('app.site_approval_required');
         return in_array($medium, $mediumList) || in_array(self::ALL, $mediumList);
     }
