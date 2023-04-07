@@ -212,14 +212,14 @@ class SiteTest extends TestCase
         self::assertCount(1, $sites);
     }
 
-    public function testFetchSitesWhichNeedAdsTxtRefresh(): void
+    public function testFetchSitesWhichNeedAdsTxtReEvaluation(): void
     {
         Site::factory()->create([
             'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
             'user_id' => User::factory()->create(),
         ]);
 
-        $sites = Site::fetchSitesWhichNeedAdsTxtRefresh();
+        $sites = Site::fetchSitesWhichNeedAdsTxtReEvaluation();
 
         self::assertCount(1, $sites);
     }

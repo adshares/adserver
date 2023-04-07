@@ -77,7 +77,28 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertEquals(0, $siteNotConfirmed->ads_txt_fails);
     }
 
-    public function testHandleOldSite(): void
+    public function testHandleNewSiteWhileSkipOptionIsSet(): void
+    {
+        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        /** @var Site $siteNotConfirmed */
+        $siteNotConfirmed = Site::factory()->create([
+            'ads_txt_check_at' => null,
+            'ads_txt_confirmed_at' => null,
+            'status' => Site::STATUS_PENDING_APPROVAL,
+            'user_id' => User::factory()->create(),
+        ]);
+        $mock = $this->createMock(AdsTxtCrawler::class);
+        $mock->expects(self::never())->method('checkSites');
+        $this->instance(AdsTxtCrawler::class, $mock);
+
+        self::artisan(self::COMMAND_SIGNATURE, ['--skip-unconfirmed' => true])->assertExitCode(Command::SUCCESS);
+
+        self::assertNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
+        self::assertNull($siteNotConfirmed->ads_txt_check_at);
+        self::assertEquals(0, $siteNotConfirmed->ads_txt_fails);
+    }
+
+    public function testHandleConfirmedSite(): void
     {
         Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
         /** @var Site $siteConfirmedYesterday */
@@ -105,6 +126,25 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertNotNull($siteConfirmedYesterday->ads_txt_check_at);
         self::assertEquals(1, $siteConfirmedYesterday->ads_txt_fails);
         self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
+    }
+
+    public function testHandleConfirmedSiteWhileSkipOptionIsSet(): void
+    {
+        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        /** @var Site $siteConfirmedYesterday */
+        $siteConfirmedYesterday = Site::factory()->create([
+            'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
+            'user_id' => User::factory()->create(),
+        ]);
+        $mock = $this->createMock(AdsTxtCrawler::class);
+        $mock->expects(self::never())->method('checkSites');
+        $this->instance(AdsTxtCrawler::class, $mock);
+
+        self::artisan(self::COMMAND_SIGNATURE, ['--skip-confirmed' => true])->assertExitCode(Command::SUCCESS);
+
+        self::assertNotNull($siteConfirmedYesterday->refresh()->ads_txt_confirmed_at);
+        self::assertEquals(0, $siteConfirmedYesterday->ads_txt_fails);
+        self::assertEquals(Site::STATUS_ACTIVE, $siteConfirmedYesterday->status);
     }
 
     public function testHandleOldSiteRejection(): void

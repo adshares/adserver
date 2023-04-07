@@ -348,12 +348,12 @@ class Site extends Model
         return $site;
     }
 
-    public static function fetchAll(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
+    public static function fetchAll(int $previousChunkLastId = 0, ?int $limit = null): Collection
     {
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)->get();
     }
 
-    public static function fetchInVerification(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
+    public static function fetchInVerification(int $previousChunkLastId = 0, ?int $limit = null): Collection
     {
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)
             ->where('info', AdUser::PAGE_INFO_UNKNOWN)
@@ -362,7 +362,7 @@ class Site extends Model
 
     public static function fetchSitesWhichNeedAdsTxtConfirmation(int $lastId = 0, ?int $limit = null): Collection
     {
-        $query = (new self())->where('id', '>', $lastId)
+        return self::getSitesChunkBuilder($lastId, $limit)
             ->where('medium', MediumName::Web->value)
             ->where('status', self::STATUS_PENDING_APPROVAL)
             ->whereNull('ads_txt_confirmed_at')
@@ -370,24 +370,18 @@ class Site extends Model
                 $sub->whereNull('ads_txt_check_at')
                     ->orWhereRaw(DB::raw('ads_txt_check_at < NOW() - INTERVAL POW(2, ads_txt_fails) MINUTE'));
             })
-            ->orderBy('id');
-        if (null !== $limit) {
-            $query->limit($limit);
-        }
-        return $query->get();
+            ->orderBy('id')
+            ->get();
     }
 
-    public static function fetchSitesWhichNeedAdsTxtRefresh(int $lastId = 0, ?int $limit = null): Collection
+    public static function fetchSitesWhichNeedAdsTxtReEvaluation(int $lastId = 0, ?int $limit = null): Collection
     {
-        $query = (new self())->where('id', '>', $lastId)
+        return self::getSitesChunkBuilder($lastId, $limit)
             ->where('medium', MediumName::Web->value)
             ->where('status', self::STATUS_ACTIVE)
             ->where('ads_txt_confirmed_at', '<', Carbon::now()->subDay())
-            ->orderBy('id');
-        if (null !== $limit) {
-            $query->limit($limit);
-        }
-        return $query->get();
+            ->orderBy('id')
+            ->get();
     }
 
     public static function rejectByDomains(array $domains): void
@@ -405,9 +399,13 @@ class Site extends Model
         }
     }
 
-    private static function getSitesChunkBuilder(int $previousChunkLastId, int $limit): Builder
+    private static function getSitesChunkBuilder(int $previousChunkLastId, ?int $limit = null): Builder
     {
-        return self::where('id', '>', $previousChunkLastId)->limit($limit);
+        $query = (new self())->where('id', '>', $previousChunkLastId);
+        if (null !== $limit) {
+            $query->limit($limit);
+        }
+        return $query;
     }
 
     public function changeStatus(int $status): void

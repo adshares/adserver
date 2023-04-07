@@ -39,7 +39,9 @@ class SiteAdsTxtCheckCommand extends Command
 
     private const SITE_PACK_SIZE = 20;
 
-    protected $signature = 'ops:supply:site-ads-txt:check';
+    protected $signature = 'ops:supply:site-ads-txt:check'
+    . ' {--skip-confirmed : Skips re-evaluation of sites which are already confirmed}'
+    . ' {--skip-unconfirmed : Skips sites which are not confirmed}';
 
     protected $description = 'Checks if sites have valid ads.txt files';
 
@@ -62,6 +64,20 @@ class SiteAdsTxtCheckCommand extends Command
         }
         $this->info(sprintf('Start command %s', $this->name));
 
+        if (!$this->option('skip-unconfirmed')) {
+            $this->confirmSites();
+        }
+        if (!$this->option('skip-confirmed')) {
+            $this->reEvaluateSites();
+        }
+
+        $this->info(sprintf('Finish command %s', $this->name));
+        $lock->release();
+        return self::SUCCESS;
+    }
+
+    private function confirmSites(): void
+    {
         $lastId = 0;
         while (true) {
             $sites = Site::fetchSitesWhichNeedAdsTxtConfirmation($lastId, self::SITE_PACK_SIZE);
@@ -71,20 +87,19 @@ class SiteAdsTxtCheckCommand extends Command
             $lastId = $sites->last()->id;
             $this->checkAdsTxtForSites($sites);
         }
+    }
 
+    private function reEvaluateSites(): void
+    {
         $lastId = 0;
         while (true) {
-            $sites = Site::fetchSitesWhichNeedAdsTxtRefresh($lastId, self::SITE_PACK_SIZE);
+            $sites = Site::fetchSitesWhichNeedAdsTxtReEvaluation($lastId, self::SITE_PACK_SIZE);
             if ($sites->isEmpty()) {
                 break;
             }
             $lastId = $sites->last()->id;
             $this->checkAdsTxtForSites($sites);
         }
-
-        $this->info(sprintf('Finish command %s', $this->name));
-        $lock->release();
-        return self::SUCCESS;
     }
 
     private function checkAdsTxtForSites(Collection $sites): void
