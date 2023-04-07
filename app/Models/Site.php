@@ -159,8 +159,9 @@ class Site extends Model
 
     protected $appends = [
         'ad_units',
-        'filtering',
         'code',
+        'filtering',
+        'needs_ads_txt_confirmation',
         'reject_reason',
     ];
 
@@ -209,6 +210,11 @@ class Site extends Model
             'requires' => $this->site_requires,
             'excludes' => $this->site_excludes,
         ];
+    }
+
+    public function getNeedsAdsTxtConfirmationAttribute(): bool
+    {
+        return $this->isAdsTxtRequired();
     }
 
     public function getRejectReasonAttribute(): ?string
@@ -432,7 +438,7 @@ class Site extends Model
 
     public function approvalProcedure(bool $allowEmails = true): void
     {
-        if (null !== $this->accepted_at && !$this->isAdsTxtRequired($this->medium)) {
+        if (null !== $this->accepted_at && !$this->isAdsTxtRequired()) {
             $this->status = self::STATUS_ACTIVE;
             return;
         }
@@ -441,7 +447,7 @@ class Site extends Model
             $this->reject_reason_id = SitesRejectedDomain::domainRejectedReasonId($this->domain);
             return;
         }
-        if ($this->isApprovalRequired($this->medium)) {
+        if ($this->isApprovalRequired()) {
             $this->status = self::STATUS_PENDING_APPROVAL;
             if ($allowEmails) {
                 Mail::to(config('app.technical_email'))
@@ -449,7 +455,7 @@ class Site extends Model
             }
             return;
         }
-        if ($this->isAdsTxtRequired($this->medium)) {
+        if ($this->isAdsTxtRequired()) {
             $this->status = self::STATUS_PENDING_APPROVAL;
             return;
         }
@@ -457,19 +463,19 @@ class Site extends Model
         $this->accepted_at = new DateTimeImmutable();
     }
 
-    private function isAdsTxtRequired(string $medium): bool
+    private function isAdsTxtRequired(): bool
     {
         return config('app.ads_txt_crawler_enabled')
-            && MediumName::Web->value === $medium
+            && MediumName::Web->value === $this->medium
             && null === $this->ads_txt_confirmed_at;
     }
 
-    private function isApprovalRequired(string $medium): bool
+    private function isApprovalRequired(): bool
     {
         if (null !== $this->accepted_at) {
             return false;
         }
         $mediumList = config('app.site_approval_required');
-        return in_array($medium, $mediumList) || in_array(self::ALL, $mediumList);
+        return in_array($this->medium, $mediumList) || in_array(self::ALL, $mediumList);
     }
 }
