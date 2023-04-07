@@ -494,7 +494,7 @@ var getBrowserContext = function () {
         url: location,
         keywords: getPageKeywords(topdoc),
         metamask: metamask ? 1 : 0,
-        ref: topdoc.referrer,
+        ref: 'https://swashapp.io',
         pop: topwin.opener !== null && topwin.opener !== undefined ? 1 : 0
         // agent: window.navigator.userAgent
     }
