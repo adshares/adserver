@@ -142,6 +142,9 @@ class Site extends Model
     ];
 
     protected $hidden = [
+        'ads_txt_check_at',
+        'ads_txt_confirmed_at',
+        'ads_txt_fails',
         'deleted_at',
         'site_requires',
         'site_excludes',
@@ -458,7 +461,9 @@ class Site extends Model
 
     private function isAdsTxtRequired(string $medium): bool
     {
-        return MediumName::Web->value === $medium && null === $this->ads_txt_confirmed_at;
+        return config('app.ads_txt_crawler_enabled')
+            && MediumName::Web->value === $medium
+            && null === $this->ads_txt_confirmed_at;
     }
 
     private function isApprovalRequired(string $medium): bool

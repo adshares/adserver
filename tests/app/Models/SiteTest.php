@@ -118,7 +118,10 @@ class SiteTest extends TestCase
             ],
             'accepted but no ads.txt' => [
                 function () {
-                    Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+                    Config::updateAdminSettings([
+                        Config::ADS_TXT_CRAWLER_ENABLED => '1',
+                        Config::SITE_APPROVAL_REQUIRED => '*',
+                    ]);
                     DatabaseConfigReader::overwriteAdministrationConfig();
                     return Site::factory()->make([
                         'accepted_at' => new DateTimeImmutable(),

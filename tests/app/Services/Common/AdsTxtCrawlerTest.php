@@ -57,14 +57,30 @@ ADS_TXT
                 )
             ),
         ]);
-        Config::updateAdminSettings([
-            Config::ADS_TXT_CRAWLER_ENABLED => '1',
-            Config::URL => 'https://app.adshares.net',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
         self::assertTrue($adsTxtCrawler->checkSite($site));
+    }
+
+    public function testCheckSiteWhileAdserverNotSupported(): void
+    {
+        $site = Site::factory()->create(['user_id' => User::factory()->create()]);
+        Http::preventStrayRequests();
+        Http::fake([
+            'example.com/ads.txt' => Http::response(
+                <<<ADS_TXT
+# ads.txt file for example.com
+
+ads.com, pub-284735058564, RESELLER
+example.com, pub-124735058564, DIRECT, nrseyvor5e65
+ADS_TXT
+            ),
+        ]);
+        $this->enableCrawler();
+        $adsTxtCrawler = new AdsTxtCrawler();
+
+        self::assertFalse($adsTxtCrawler->checkSite($site));
     }
 
     public function testCheckSiteWhileNotFound(): void
@@ -75,8 +91,7 @@ ADS_TXT
         Http::fake([
             'example.com/ads.txt' => Http::response('Not found', Response::HTTP_NOT_FOUND),
         ]);
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
         self::assertFalse($adsTxtCrawler->checkSite($site));
@@ -88,8 +103,7 @@ ADS_TXT
         $site = Site::factory()->create(['user_id' => $user]);
         Http::preventStrayRequests();
         Http::fake(fn() => throw new ConnectionException('test-exception'));
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
         self::assertFalse($adsTxtCrawler->checkSite($site));
@@ -127,11 +141,7 @@ example.com, pub-124735058564, DIRECT, nrseyvor5e65
 ADS_TXT
             ),
         ]);
-        Config::updateAdminSettings([
-            Config::ADS_TXT_CRAWLER_ENABLED => '1',
-            Config::URL => 'https://app.adshares.net',
-        ]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->enableCrawler();
         $sites = Site::all();
         $adsTxtCrawler = new AdsTxtCrawler();
 
@@ -139,5 +149,14 @@ ADS_TXT
 
         self::assertTrue($result[$siteExample->id]);
         self::assertFalse($result[$siteExample2->id]);
+    }
+
+    private function enableCrawler(): void
+    {
+        Config::updateAdminSettings([
+            Config::ADS_TXT_CRAWLER_ENABLED => '1',
+            Config::URL => 'https://app.adshares.net',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
     }
 }

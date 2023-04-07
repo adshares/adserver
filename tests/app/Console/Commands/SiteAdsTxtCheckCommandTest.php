@@ -107,6 +107,40 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
     }
 
+    public function testHandleOldSiteRejection(): void
+    {
+        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'ads_txt_check_at' => new DateTimeImmutable('-6 days'),
+            'ads_txt_confirmed_at' => null,
+            'ads_txt_fails' => 13,
+            'status' => Site::STATUS_PENDING_APPROVAL,
+            'user_id' => User::factory()->create(),
+        ]);
+        $expectedSiteIds = [$site->id];
+        $mock = $this->createMock(AdsTxtCrawler::class);
+        $mock->expects(self::once())
+            ->method('checkSites')
+            ->with(
+                self::callback(
+                    fn(Collection $collection) => $collection->map(fn(Site $site) => $site->id)
+                        ->diff($expectedSiteIds)
+                        ->isEmpty()
+                )
+            )
+            ->willReturn([$site->id => false]);
+        $this->instance(AdsTxtCrawler::class, $mock);
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
+
+        self::assertNull($site->refresh()->ads_txt_confirmed_at);
+        self::assertNotNull($site->ads_txt_check_at);
+        self::assertEquals(14, $site->ads_txt_fails);
+        self::assertEquals(Site::STATUS_REJECTED, $site->status);
+        self::assertEquals('File ads.txt is missing', $site->reject_reason);
+    }
+
     public function testHandleSiteRecentlyConfirmed(): void
     {
         Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
