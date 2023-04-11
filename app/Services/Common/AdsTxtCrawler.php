@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Services\Common;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Utilities\DomainReader;
 use Illuminate\Http\Client\HttpClientException;
 use Illuminate\Support\Collection;
@@ -38,12 +37,13 @@ class AdsTxtCrawler
     {
     }
 
-    public function checkSite(Site $site): bool
+    public function checkSite(string $siteUrl, string $publisherId): bool
     {
-        $siteUrl = $site->url;
-        $adServerDomain = $this->getAdServerDomain();
-        $publisherId = Uuid::fromString($site->user->uuid)->toString();
-        return $this->checkIfSiteAdsTxtSupportsAdserver($siteUrl, $adServerDomain, $publisherId);
+        return $this->checkIfSiteAdsTxtSupportsAdserver(
+            $siteUrl,
+            $this->getAdServerDomain(),
+            Uuid::fromString($publisherId)->toString(),
+        );
     }
 
     public function checkSites(Collection $sites): array
@@ -86,14 +86,26 @@ class AdsTxtCrawler
         string $adServerDomain,
         string $publisherId,
     ): bool {
-        $url = sprintf('%s/ads.txt', $siteUrl);
-        try {
-            $response = Http::get($url);
-            if (Response::HTTP_OK === $response->status()) {
-                return $this->isSiteInAdsTxt($response->body(), $adServerDomain, $publisherId);
+        $parsedUrl = parse_url($siteUrl);
+        $scheme = $parsedUrl['scheme'];
+        $host = $parsedUrl['host'];
+
+        $hostParts = explode('.', $host);
+        $maxChecks = count($hostParts) - 1;
+        for ($i = 0; $i < $maxChecks; $i++) {
+            $host = implode('.', array_slice($hostParts, $i));
+            $url = sprintf('%s://%s/ads.txt', $scheme, $host);
+            try {
+                $response = Http::timeout(1)->get($url);
+                if (
+                    Response::HTTP_OK === $response->status()
+                    && $this->isSiteInAdsTxt($response->body(), $adServerDomain, $publisherId)
+                ) {
+                    return true;
+                }
+            } catch (HttpClientException $exception) {
+                Log::info(sprintf('Checking ads.txt of %s failed: %s', $siteUrl, $exception->getMessage()));
             }
-        } catch (HttpClientException $exception) {
-            Log::info(sprintf('Checking ads.txt of %s failed: %s', $siteUrl, $exception->getMessage()));
         }
         return false;
     }

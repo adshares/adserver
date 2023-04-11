@@ -36,13 +36,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class AdsTxtCrawlerTest extends TestCase
 {
-    public function testCheckSite(): void
+    public function testCheckSiteWhileOnlyHigherLevelDomainHasAdsTxt(): void
     {
         /** @var User $user */
         $user = User::factory()->create(['uuid' => 'c44a2e70bcdc46658fd94337da124032']);
-        $site = Site::factory()->create(['user_id' => $user]);
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'domain' => 'sport.example.com',
+            'url' => 'https://sport.example.com',
+            'user_id' => $user,
+        ]);
         Http::preventStrayRequests();
         Http::fake([
+            'sport.example.com/ads.txt' => Http::response('Not found', Response::HTTP_NOT_FOUND),
             'example.com/ads.txt' => Http::response(
                 sprintf(
                     <<<ADS_TXT
@@ -60,11 +66,45 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertTrue($adsTxtCrawler->checkSite($site));
+        self::assertTrue($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
+    }
+
+    public function testCheckSiteWhileHigherLevelSupportsAdserver(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['uuid' => 'c44a2e70bcdc46658fd94337da124032']);
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'domain' => 'sport.example.com',
+            'url' => 'https://sport.example.com',
+            'user_id' => $user,
+        ]);
+        Http::preventStrayRequests();
+        Http::fake([
+            'sport.example.com/ads.txt' => Http::response(''),
+            'example.com/ads.txt' => Http::response(
+                sprintf(
+                    <<<ADS_TXT
+# ads.txt file for example.com
+
+ads.com, pub-284735058564, RESELLER
+adshares.net, %s, DIRECT
+example.com, pub-124735058564, DIRECT, nrseyvor5e65
+ADS_TXT
+                    ,
+                    Uuid::fromString($user->uuid)->toString()
+                )
+            ),
+        ]);
+        $this->enableCrawler();
+        $adsTxtCrawler = new AdsTxtCrawler();
+
+        self::assertTrue($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
     }
 
     public function testCheckSiteWhileAdserverNotSupported(): void
     {
+        /** @var Site $site */
         $site = Site::factory()->create(['user_id' => User::factory()->create()]);
         Http::preventStrayRequests();
         Http::fake([
@@ -80,12 +120,13 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertFalse($adsTxtCrawler->checkSite($site));
+        self::assertFalse($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
     }
 
     public function testCheckSiteWhileNotFound(): void
     {
         $user = User::factory()->create(['uuid' => 'c44a2e70bcdc46658fd94337da124032']);
+        /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user]);
         Http::preventStrayRequests();
         Http::fake([
@@ -94,19 +135,20 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertFalse($adsTxtCrawler->checkSite($site));
+        self::assertFalse($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
     }
 
     public function testCheckSiteWhileConnectionException(): void
     {
         $user = User::factory()->create(['uuid' => 'c44a2e70bcdc46658fd94337da124032']);
+        /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user]);
         Http::preventStrayRequests();
         Http::fake(fn() => throw new ConnectionException('test-exception'));
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertFalse($adsTxtCrawler->checkSite($site));
+        self::assertFalse($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
     }
 
     public function testCheckSites(): void
