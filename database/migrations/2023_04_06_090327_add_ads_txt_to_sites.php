@@ -42,10 +42,18 @@ SQL
             $table->timestamp('ads_txt_confirmed_at')->index()->nullable();
             $table->unsignedTinyInteger('ads_txt_fails')->nullable(false)->default(0);
         });
+        Schema::table('event_logs', function (Blueprint $table) {
+            $table->string('medium', 16)->default('web');
+            $table->string('vendor', 32)->nullable();
+            $table->boolean('ads_txt')->nullable();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('event_logs', function (Blueprint $table) {
+            $table->dropColumn(['medium', 'vendor', 'ads_txt']);
+        });
         Schema::table('sites', function (Blueprint $table) {
             $table->dropColumn(['ads_txt_check_at', 'ads_txt_confirmed_at', 'ads_txt_fails']);
         });

@@ -29,6 +29,8 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Services\Common\AdsTxtCrawler;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
@@ -65,6 +67,7 @@ class AdPayEventExportCommand extends BaseCommand
 
     public function __construct(
         private readonly AdPay $adPay,
+        private readonly AdsTxtCrawler $adsTxtCrawler,
         private readonly AdUser $adUser,
         private readonly Locker $locker,
     ) {
@@ -168,17 +171,28 @@ class AdPayEventExportCommand extends BaseCommand
         return self::SUCCESS;
     }
 
-    private function updateEventLogWithAdUserData(Collection $events): void
+    /**
+     * @param Collection<EventLog> $events
+     * @return void
+     */
+    private function updateEventLogWithExternalData(Collection $events): void
     {
+        $checkAdsTxt = config('app.ads_txt_check_demand_enabled');
         foreach ($events as $event) {
-            /** @var $event EventLog */
-            if ($event->human_score !== null && $event->our_userdata !== null) {
-                continue;
-            }
-
             try {
-                $event->updateWithUserContext($this->userContext($event));
-                $event->save();
+                if (null === $event->human_score || null === $event->our_userdata) {
+                    $event->updateWithUserContext($this->userContext($event));
+                }
+                if ($checkAdsTxt && MediumName::Web->value === $event->medium && null === $event->ads_txt) {
+                    $result = $this->adsTxtCrawler->checkSite(
+                        $event->our_userdata->site_url,
+                        $event->publisher_id,
+                    );
+                    $event->ads_txt = (int)$result;
+                }
+                if ($event->isDirty()) {
+                    $event->save();
+                }
             } catch (RuntimeException $exception) {
                 Log::error(
                     sprintf(
@@ -343,7 +357,7 @@ class AdPayEventExportCommand extends BaseCommand
             )
         );
 
-        $this->updateEventLogWithAdUserData($eventsToExport);
+        $this->updateEventLogWithExternalData($eventsToExport);
 
         $timeStart = $dateFrom->modify('+1 second');
         $timeEnd = $dateTo;

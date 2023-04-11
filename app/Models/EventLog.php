@@ -76,6 +76,9 @@ use function hex2bin;
  * @property int is_view_clicked
  * @property string domain
  * @property int id
+ * @property string medium
+ * @property string|null $vendor
+ * @property int ads_txt
  * @mixin Builder
  */
 class EventLog extends Model
@@ -221,7 +224,9 @@ SQL;
         string $payTo,
         array $context,
         string $userData,
-        string $type
+        string $type,
+        string $medium,
+        ?string $vendor,
     ): void {
         DB::beginTransaction();
 
@@ -239,6 +244,8 @@ SQL;
         $log->their_userdata = $userData;
         $log->event_type = $type;
         $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
+        $log->medium = $medium;
+        $log->vendor = $vendor;
         $log->created_at = new DateTime();
         $log->updated_at = new DateTime();
 
@@ -269,7 +276,9 @@ SQL;
         string $type,
         ?float $humanScore,
         ?float $pageRank,
-        ?stdClass $ourUserData
+        ?stdClass $ourUserData,
+        string $medium,
+        ?string $vendor,
     ): void {
         DB::beginTransaction();
 
@@ -287,6 +296,8 @@ SQL;
         $log->their_userdata = $theirUserData;
         $log->event_type = $type;
         $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
+        $log->medium = $medium;
+        $log->vendor = $vendor;
 
         $log->human_score = $humanScore;
         $log->page_rank = $pageRank;

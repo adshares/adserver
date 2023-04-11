@@ -45,7 +45,9 @@ class EventLogTest extends TestCase
             $data['pay_to'],
             $data['impression_context'],
             $data['their_userdata'],
-            $data['event_type']
+            $data['event_type'],
+            $data['medium'],
+            $data['vendor'],
         );
 
         $theirContext = json_encode($data['impression_context']);
@@ -79,7 +81,9 @@ class EventLogTest extends TestCase
                 $data['pay_to'],
                 $data['impression_context'],
                 $data['their_userdata'],
-                $data['event_type']
+                $data['event_type'],
+                $data['medium'],
+                $data['vendor'],
             );
         }
 
@@ -105,7 +109,9 @@ class EventLogTest extends TestCase
             $data['pay_to'],
             $data['impression_context'],
             $data['their_userdata'],
-            $data['event_type']
+            $data['event_type'],
+            $data['medium'],
+            $data['vendor'],
         );
     }
 
@@ -153,6 +159,8 @@ class EventLogTest extends TestCase
             ],
             'their_userdata' => '',
             'event_type' => 'view',
+            'medium' => 'web',
+            'vendor' => null,
         ];
     }
 
