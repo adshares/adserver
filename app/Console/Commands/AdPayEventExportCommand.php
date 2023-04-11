@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
@@ -62,7 +63,15 @@ class AdPayEventExportCommand extends BaseCommand
 
     protected $description = 'Exports event data to AdPay';
 
-    public function handle(AdPay $adPay, AdUser $adUser): int
+    public function __construct(
+        private readonly AdPay $adPay,
+        private readonly AdUser $adUser,
+        private readonly Locker $locker,
+    ) {
+        parent::__construct($this->locker);
+    }
+
+    public function handle(): int
     {
         $commandStartTime = microtime(true);
 
@@ -145,8 +154,8 @@ class AdPayEventExportCommand extends BaseCommand
         }
 
         try {
-            $this->exportEvents($adPay, $adUser, $dateFromEvents, $dateTo, $isCommandExecutedAutomatically);
-            $this->exportConversions($adPay, $dateFromConversions, $dateTo, $isCommandExecutedAutomatically);
+            $this->exportEvents($dateFromEvents, $dateTo, $isCommandExecutedAutomatically);
+            $this->exportConversions($dateFromConversions, $dateTo, $isCommandExecutedAutomatically);
         } catch (RuntimeException $exception) {
             $this->error(sprintf('[AdPayEventExport] Export failed: %s', $exception->getMessage()));
             $lock->release();
@@ -159,7 +168,7 @@ class AdPayEventExportCommand extends BaseCommand
         return self::SUCCESS;
     }
 
-    private function updateEventLogWithAdUserData(AdUser $adUser, Collection $events): void
+    private function updateEventLogWithAdUserData(Collection $events): void
     {
         foreach ($events as $event) {
             /** @var $event EventLog */
@@ -168,7 +177,7 @@ class AdPayEventExportCommand extends BaseCommand
             }
 
             try {
-                $event->updateWithUserContext($this->userContext($adUser, $event));
+                $event->updateWithUserContext($this->userContext($event));
                 $event->save();
             } catch (RuntimeException $exception) {
                 Log::error(
@@ -184,18 +193,16 @@ class AdPayEventExportCommand extends BaseCommand
         }
     }
 
-    private function userContext(AdUser $adUser, EventLog $event): UserContext
+    private function userContext(EventLog $event): UserContext
     {
         $impressionContext = ImpressionContext::fromEventData(
             $event->their_context,
             $event->tracking_id
         );
-        return $adUser->getUserContext($impressionContext);
+        return $this->adUser->getUserContext($impressionContext);
     }
 
     private function exportEvents(
-        AdPay $adPay,
-        AdUser $adUser,
         DateTimeImmutable $dateFrom,
         DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
@@ -211,12 +218,11 @@ class AdPayEventExportCommand extends BaseCommand
                 $dateToChunk = $dateTo;
             }
 
-            $this->exportEventsInPacks($adPay, $adUser, $dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
+            $this->exportEventsInPacks($dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
         }
     }
 
     private function exportConversions(
-        AdPay $adPay,
         DateTimeImmutable $dateFrom,
         DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
@@ -232,13 +238,11 @@ class AdPayEventExportCommand extends BaseCommand
                 $dateToChunk = $dateTo;
             }
 
-            $this->exportConversionsInPacks($adPay, $dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
+            $this->exportConversionsInPacks($dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
         }
     }
 
     private function exportEventsInPacks(
-        AdPay $adPay,
-        AdUser $adUser,
         DateTimeImmutable $dateFrom,
         DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
@@ -277,10 +281,10 @@ class AdPayEventExportCommand extends BaseCommand
                 break;
             }
 
-            $threads[] = function () use ($adPay, $adUser, $dateFromTemporary, $dateToTemporary, $pack) {
+            $threads[] = function () use ($dateFromTemporary, $dateToTemporary, $pack) {
                 for ($attempt = 0; $attempt < self::MAXIMAL_THREAD_RETRIES; $attempt++) {
                     try {
-                        $this->exportEventsPack($adPay, $adUser, $pack, $dateFromTemporary, $dateToTemporary);
+                        $this->exportEventsPack($pack, $dateFromTemporary, $dateToTemporary);
                         return self::SUCCESS;
                     } catch (Throwable $throwable) {
                         Log::error(sprintf(
@@ -319,8 +323,6 @@ class AdPayEventExportCommand extends BaseCommand
     }
 
     private function exportEventsPack(
-        AdPay $adPay,
-        AdUser $adUser,
         int $pack,
         DateTimeImmutable $dateFrom,
         DateTimeImmutable $dateTo
@@ -341,7 +343,7 @@ class AdPayEventExportCommand extends BaseCommand
             )
         );
 
-        $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
+        $this->updateEventLogWithAdUserData($eventsToExport);
 
         $timeStart = $dateFrom->modify('+1 second');
         $timeEnd = $dateTo;
@@ -356,7 +358,7 @@ class AdPayEventExportCommand extends BaseCommand
                 }
             )
         );
-        $adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
+        $this->adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
 
         $clicks = DemandEventMapper::mapEventCollectionToArray(
             $eventsToExport->filter(
@@ -365,11 +367,10 @@ class AdPayEventExportCommand extends BaseCommand
                 }
             )
         );
-        $adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
+        $this->adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
     }
 
     private function exportConversionsInPacks(
-        AdPay $adPay,
         DateTimeImmutable $dateFrom,
         DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
@@ -428,7 +429,7 @@ class AdPayEventExportCommand extends BaseCommand
             $timeEnd = $dateToTemporary;
             $conversions = DemandEventMapper::mapConversionCollectionToArray($conversionsToExport);
 
-            $adPay->addConversions(new AdPayEvents($timeStart, $timeEnd, $conversions));
+            $this->adPay->addConversions(new AdPayEvents($timeStart, $timeEnd, $conversions));
 
             if ($isCommandExecutedAutomatically) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME, $dateToTemporary);
@@ -438,7 +439,7 @@ class AdPayEventExportCommand extends BaseCommand
         $this->info(sprintf('[AdPayEventExport] Finished exporting %d conversions', $eventsCount));
     }
 
-    private function correctUserTimestamp($timestampFrom): int
+    private function correctUserTimestamp(int $timestampFrom): int
     {
         return $timestampFrom - 1;
     }
