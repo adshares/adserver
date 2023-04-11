@@ -196,7 +196,7 @@ ADS_TXT
     private function enableCrawler(): void
     {
         Config::updateAdminSettings([
-            Config::ADS_TXT_CRAWLER_ENABLED => '1',
+            Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1',
             Config::URL => 'https://app.adshares.net',
         ]);
         DatabaseConfigReader::overwriteAdministrationConfig();

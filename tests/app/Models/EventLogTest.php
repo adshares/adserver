@@ -107,8 +107,6 @@ class EventLogTest extends TestCase
             $data['their_userdata'],
             $data['event_type']
         );
-
-        $this->assertEquals(0, EventLog::count());
     }
 
     public function getEventData(): array

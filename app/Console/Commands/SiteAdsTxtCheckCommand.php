@@ -52,7 +52,7 @@ class SiteAdsTxtCheckCommand extends Command
 
     public function handle(): int
     {
-        if (!config('app.ads_txt_crawler_enabled')) {
+        if (!config('app.ads_txt_check_supply_enabled')) {
             $this->info('ads.txt crawler is disabled');
             return self::SUCCESS;
         }

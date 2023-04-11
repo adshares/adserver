@@ -465,7 +465,7 @@ class Site extends Model
 
     private function isAdsTxtRequired(): bool
     {
-        return config('app.ads_txt_crawler_enabled')
+        return config('app.ads_txt_check_supply_enabled')
             && MediumName::Web->value === $this->medium
             && null === $this->ads_txt_confirmed_at;
     }

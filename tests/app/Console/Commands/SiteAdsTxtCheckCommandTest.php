@@ -39,7 +39,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testLock(): void
     {
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         $lock = new Lock(new Key(self::COMMAND_SIGNATURE), new FlockStore(), null, false);
         $lock->acquire();
 
@@ -48,7 +48,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testHandleNewSite(): void
     {
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         /** @var Site $siteNotConfirmed */
         $siteNotConfirmed = Site::factory()->create([
             'ads_txt_check_at' => null,
@@ -79,7 +79,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testHandleNewSiteWhileSkipOptionIsSet(): void
     {
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         /** @var Site $siteNotConfirmed */
         $siteNotConfirmed = Site::factory()->create([
             'ads_txt_check_at' => null,
@@ -100,7 +100,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testHandleConfirmedSite(): void
     {
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         /** @var Site $siteConfirmedYesterday */
         $siteConfirmedYesterday = Site::factory()->create([
             'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
@@ -130,7 +130,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testHandleConfirmedSiteWhileSkipOptionIsSet(): void
     {
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         /** @var Site $siteConfirmedYesterday */
         $siteConfirmedYesterday = Site::factory()->create([
             'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
@@ -149,7 +149,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testHandleOldSiteRejection(): void
     {
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         /** @var Site $site */
         $site = Site::factory()->create([
             'ads_txt_check_at' => new DateTimeImmutable('-6 days'),
@@ -183,7 +183,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
 
     public function testHandleSiteRecentlyConfirmed(): void
     {
-        Config::updateAdminSettings([Config::ADS_TXT_CRAWLER_ENABLED => '1']);
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         Site::factory()->create([
             'ads_txt_confirmed_at' => new DateTimeImmutable(),
             'user_id' => User::factory()->create(),

@@ -119,7 +119,7 @@ class SiteTest extends TestCase
             'accepted but no ads.txt' => [
                 function () {
                     Config::updateAdminSettings([
-                        Config::ADS_TXT_CRAWLER_ENABLED => '1',
+                        Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1',
                         Config::SITE_APPROVAL_REQUIRED => '*',
                     ]);
                     DatabaseConfigReader::overwriteAdministrationConfig();
