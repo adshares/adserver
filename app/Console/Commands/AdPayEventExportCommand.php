@@ -175,7 +175,7 @@ class AdPayEventExportCommand extends BaseCommand
      * @param Collection<EventLog> $events
      * @return void
      */
-    private function updateEventLogWithExternalData(Collection $events): void
+    private function updateEventsWithExternalData(Collection $events): void
     {
         $checkAdsTxt = config('app.ads_txt_check_demand_enabled');
         foreach ($events as $event) {
@@ -357,7 +357,7 @@ class AdPayEventExportCommand extends BaseCommand
             )
         );
 
-        $this->updateEventLogWithExternalData($eventsToExport);
+        $this->updateEventsWithExternalData($eventsToExport);
 
         $timeStart = $dateFrom->modify('+1 second');
         $timeEnd = $dateTo;

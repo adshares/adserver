@@ -338,11 +338,11 @@ class ConversionController extends Controller
                     $impressionContext,
                     '',
                     EventLog::TYPE_CLICK,
+                    $campaign->medium,
+                    $campaign->vendor,
                     $viewEventData['humanScore'],
                     $viewEventData['pageRank'],
                     $viewEventData['ourUserdata'],
-                    $campaign->medium,
-                    $campaign->vendor,
                 );
             }
         }

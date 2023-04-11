@@ -274,11 +274,11 @@ SQL;
         array $context,
         string $theirUserData,
         string $type,
+        string $medium,
+        ?string $vendor,
         ?float $humanScore,
         ?float $pageRank,
         ?stdClass $ourUserData,
-        string $medium,
-        ?string $vendor,
     ): void {
         DB::beginTransaction();
 
