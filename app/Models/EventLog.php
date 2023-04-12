@@ -78,7 +78,7 @@ use function hex2bin;
  * @property int id
  * @property string medium
  * @property string|null $vendor
- * @property int ads_txt
+ * @property int|null ads_txt
  * @mixin Builder
  */
 class EventLog extends Model

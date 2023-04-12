@@ -183,9 +183,14 @@ class AdPayEventExportCommand extends BaseCommand
                 if (null === $event->human_score || null === $event->our_userdata) {
                     $event->updateWithUserContext($this->userContext($event));
                 }
-                if ($checkAdsTxt && MediumName::Web->value === $event->medium && null === $event->ads_txt) {
+                if (
+                    $checkAdsTxt
+                    && MediumName::Web->value === $event->medium
+                    && null === $event->ads_txt
+                    && null !== $event->domain
+                ) {
                     $result = $this->adsTxtCrawler->checkSite(
-                        $event->our_userdata->site_url,
+                        'https://' . $event->domain,
                         $event->publisher_id,
                     );
                     $event->ads_txt = (int)$result;

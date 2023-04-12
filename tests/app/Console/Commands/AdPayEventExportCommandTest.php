@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -58,12 +59,31 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     public function testExportView(): void
     {
+        $event = $this->insertEventView();
+        $event->domain = 'my.example.com';
+        $event->saveOrFail();
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
         $this->bindAdUser();
+        Config::updateAdminSettings([Config::ADS_TXT_CHECK_DEMAND_ENABLED => '1']);
+        $adsTxtCrawler = $this->createMock(AdsTxtCrawler::class);
+        $adsTxtCrawler->expects(self::atLeastOnce())
+            ->method('checkSite')
+            ->with('https://my.example.com', $event->publisher_id)
+            ->willReturn(true);
+        $this->instance(AdsTxtCrawler::class, $adsTxtCrawler);
 
         $adPay = $this->createMock(AdPay::class);
-        $adPay->expects(self::atLeastOnce())->method('addViews')->will(
-            self::checkEventCount(1)
-        );
+        $adPay->expects(self::atLeastOnce())
+            ->method('addViews')
+            ->will(
+                self::returnCallback(
+                    function (AdPayEvents $adPayEvents) {
+                        $events = $adPayEvents->toArray()['events'];
+                        self::assertCount(1, $events);
+                        self::assertEquals(1, $events[0]['ads_txt']);
+                    }
+                )
+            );
         $adPay->expects(self::atLeastOnce())->method('addClicks')->will(
             self::checkEventCount(0)
         );
@@ -71,9 +91,6 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
             self::checkEventCount(0)
         );
         $this->instance(AdPay::class, $adPay);
-
-        $event = $this->insertEventView();
-        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }
@@ -410,6 +427,7 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     private function insertEvent(string $eventType): EventLog
     {
+        /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
             [
                 'budget' => 100000000000,
@@ -426,6 +444,7 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
     private static function insertTwoPackagesOfViewEvent(DateTimeInterface $from, DateTimeInterface $to): void
     {
+        /** @var Campaign $campaign */
         $campaign = Campaign::factory()->create(
             [
                 'budget' => 100000000000,
