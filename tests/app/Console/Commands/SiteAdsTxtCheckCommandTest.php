@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Mail\SiteAdsTxtInvalid;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
@@ -28,6 +29,7 @@ use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\Lock;
@@ -75,6 +77,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertNotNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
         self::assertNotNull($siteNotConfirmed->ads_txt_check_at);
         self::assertEquals(0, $siteNotConfirmed->ads_txt_fails);
+        Mail::assertNothingQueued();
     }
 
     public function testHandleNewSiteWhileSkipOptionIsSet(): void
@@ -96,9 +99,10 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
         self::assertNull($siteNotConfirmed->ads_txt_check_at);
         self::assertEquals(0, $siteNotConfirmed->ads_txt_fails);
+        Mail::assertNothingQueued();
     }
 
-    public function testHandleConfirmedSite(): void
+    public function testHandleWhileConfirmedSiteDoesNotHaveValidAdsTxt(): void
     {
         Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1']);
         /** @var Site $siteConfirmedYesterday */
@@ -126,6 +130,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertNotNull($siteConfirmedYesterday->ads_txt_check_at);
         self::assertEquals(1, $siteConfirmedYesterday->ads_txt_fails);
         self::assertEquals(Site::STATUS_PENDING_APPROVAL, $siteConfirmedYesterday->status);
+        Mail::assertQueued(SiteAdsTxtInvalid::class);
     }
 
     public function testHandleConfirmedSiteWhileSkipOptionIsSet(): void
@@ -145,6 +150,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertNotNull($siteConfirmedYesterday->refresh()->ads_txt_confirmed_at);
         self::assertEquals(0, $siteConfirmedYesterday->ads_txt_fails);
         self::assertEquals(Site::STATUS_ACTIVE, $siteConfirmedYesterday->status);
+        Mail::assertNothingQueued();
     }
 
     public function testHandleOldSiteRejection(): void
@@ -179,6 +185,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertEquals(14, $site->ads_txt_fails);
         self::assertEquals(Site::STATUS_REJECTED, $site->status);
         self::assertEquals('File ads.txt is missing', $site->reject_reason);
+        Mail::assertNothingQueued();
     }
 
     public function testHandleSiteRecentlyConfirmed(): void
@@ -195,6 +202,8 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         });
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
+
+        Mail::assertNothingQueued();
     }
 
     public function testHandleWhileAdsTxtDisabled(): void
@@ -214,5 +223,6 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(Command::SUCCESS);
 
         self::assertNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
+        Mail::assertNothingQueued();
     }
 }

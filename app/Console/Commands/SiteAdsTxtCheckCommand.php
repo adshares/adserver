@@ -23,12 +23,14 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Mail\SiteAdsTxtInvalid;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use DateTimeImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\Lock;
 use Symfony\Component\Lock\Store\FlockStore;
@@ -116,6 +118,12 @@ class SiteAdsTxtCheckCommand extends Command
                 $site->ads_txt_fails = 0;
                 $site->approvalProcedure(false);
             } else {
+                if (null !== $site->ads_txt_confirmed_at) {
+                    $user = $site->user;
+                    if (null !== $user->email) {
+                        Mail::to($user)->queue(new SiteAdsTxtInvalid($user->uuid, $site->name, $site->url));
+                    }
+                }
                 $site->ads_txt_confirmed_at = null;
                 $site->ads_txt_fails = $site->ads_txt_fails + 1;
                 if ($site->ads_txt_fails >= self::ADS_TXT_CRAWLER_MAX_ATTEMPTS_PER_SITE) {
