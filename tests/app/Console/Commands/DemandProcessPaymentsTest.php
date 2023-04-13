@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,14 +27,20 @@ use Adshares\Adserver\Console\Commands\AdPayGetPayments;
 use Adshares\Adserver\Console\Commands\DemandSendPayments;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
+use Adshares\Adserver\Exceptions\ConsoleCommandException;
+use Adshares\Adserver\Mail\TechnicalError;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Mock\Console\Kernel as KernelMock;
-use DateTime;
+use DateTimeImmutable;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Console\Exception\LogicException;
 
 class DemandProcessPaymentsTest extends ConsoleTestCase
@@ -55,6 +61,77 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
         Event::assertNotDispatched(ServerEvent::class);
+    }
+
+    public function testHandleFailWhileExchangeRateNotAvailable(): void
+    {
+        self::setupExportTime();
+        $this->setupConsoleKernel(
+            self::commandValues(['ops:adpay:payments:get' => new ExchangeRateNotAvailableException('text-exception')])
+        );
+
+        $this->artisan(self::SIGNATURE)->assertExitCode(0);
+
+        self::assertEquals(PaymentReport::STATUS_NEW, PaymentReport::first()->status);
+        Event::assertNotDispatched(ServerEvent::class);
+        Mail::assertQueued(TechnicalError::class);
+    }
+
+    public function testHandleFailWhileInvalidOptionFrom(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+
+        $this->artisan(self::SIGNATURE, ['--from' => 'invalid']);
+    }
+
+    public function testHandleFailWhileIdsNotExist(): void
+    {
+        self::expectException(ConsoleCommandException::class);
+
+        $this->artisan(self::SIGNATURE, ['--ids' => 'invalid']);
+    }
+
+    public function testHandleRecalculate(): void
+    {
+        self::setupExportTime();
+        $this->setupConsoleKernel(self::commandValues());
+        $paymentReport = PaymentReport::first();
+        $updatedAt = $paymentReport->updated_at;
+
+        $this->artisan(self::SIGNATURE, ['--ids' => (string)$paymentReport->id])
+            ->assertExitCode(0);
+        self::assertGreaterThan($updatedAt, $paymentReport->refresh()->updated_at);
+    }
+
+    public function testHandleProcessOldPaymentReport(): void
+    {
+        self::setupExportTime();
+        $this->setupConsoleKernel(self::commandValues());
+        $id = DateUtils::roundTimestampToHour((new DateTimeImmutable('-5 days'))->getTimestamp());
+        PaymentReport::register($id);
+        $paymentReport = PaymentReport::fetchById($id);
+        $paymentReport->status = PaymentReport::STATUS_NEW;
+        $paymentReport->save();
+        $from = (new DateTimeImmutable('-6 days'))->format('d.m.Y');
+
+        $this->artisan(self::SIGNATURE, ['--from' => $from])
+            ->assertExitCode(0);
+        self::assertEquals(PaymentReport::STATUS_DONE, $paymentReport->refresh()->status);
+    }
+
+    public function testHandleSkipOldPaymentReport(): void
+    {
+        self::setupExportTime();
+        $this->setupConsoleKernel(self::commandValues());
+        $id = DateUtils::roundTimestampToHour((new DateTimeImmutable('-5 days'))->getTimestamp());
+        PaymentReport::register($id);
+        $paymentReport = PaymentReport::fetchById($id);
+        $paymentReport->status = PaymentReport::STATUS_NEW;
+        $paymentReport->save();
+
+        $this->artisan(self::SIGNATURE)
+            ->assertExitCode(0);
+        self::assertEquals(PaymentReport::STATUS_NEW, $paymentReport->refresh()->status);
     }
 
     /**
@@ -131,8 +208,8 @@ class DemandProcessPaymentsTest extends ConsoleTestCase
 
     private static function setupExportTime(): void
     {
-        Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, new DateTime());
-        Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME, new DateTime());
+        Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, new DateTimeImmutable());
+        Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME, new DateTimeImmutable());
     }
 
     private function setupConsoleKernel(array $commandReturnValues): void

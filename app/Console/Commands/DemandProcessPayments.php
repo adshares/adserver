@@ -25,15 +25,18 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
+use Adshares\Adserver\Mail\TechnicalError;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Exception\InvalidArgumentException;
-use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Console\Exception\LogicException;
 
 class DemandProcessPayments extends BaseCommand
@@ -56,6 +59,7 @@ class DemandProcessPayments extends BaseCommand
         $lastAvailableTimestamp = self::getLastAvailableTimestamp();
         $isRecalculationNeeded = null !== $this->option('ids');
         $reports = $this->fetchPaymentReports();
+        $technicalErrors = [];
 
         foreach ($reports as $report) {
             $timestamp = $report->id;
@@ -76,9 +80,22 @@ class DemandProcessPayments extends BaseCommand
                             $getPaymentsParameters,
                             $this->getOutput()
                         );
+                } catch (ExchangeRateNotAvailableException $exchangeRateNotAvailableException) {
+                    $this->error(
+                        sprintf(
+                            'Command %s failed %s',
+                            AdPayGetPayments::COMMAND_SIGNATURE,
+                            $exchangeRateNotAvailableException->getMessage(),
+                        )
+                    );
+                    $technicalErrors[] = sprintf(
+                        'Exchange rate not available. Fetching payments for %s failed: %s',
+                        (new DateTimeImmutable('@' . $timestamp))->format(DateTimeInterface::ATOM),
+                        $exchangeRateNotAvailableException->getMessage(),
+                    );
+                    continue;
                 } catch (LogicException) {
                     $this->warn(sprintf('Command %s is locked', AdPayGetPayments::COMMAND_SIGNATURE));
-
                     continue;
                 }
 
@@ -94,8 +111,8 @@ class DemandProcessPayments extends BaseCommand
 
             if ($report->isUpdated()) {
                 $preparePaymentsParameters = [
-                    '--from' => (new DateTime('@' . $timestamp))->format(DateTimeInterface::ATOM),
-                    '--to' => (new DateTime('@' . ($timestamp + 3599)))->format(DateTimeInterface::ATOM),
+                    '--from' => (new DateTimeImmutable('@' . $timestamp))->format(DateTimeInterface::ATOM),
+                    '--to' => (new DateTimeImmutable('@' . ($timestamp + 3599)))->format(DateTimeInterface::ATOM),
                 ];
 
                 try {
@@ -116,6 +133,13 @@ class DemandProcessPayments extends BaseCommand
         $this->sendPayments($reports);
         $this->aggregateStatistics();
 
+        if (!empty($technicalErrors)) {
+            $index = strpos($technicalErrors[0], '.');
+            $title = false === $index ? $technicalErrors[0] : substr($technicalErrors[0], 0, $index);
+            Mail::to(config('app.technical_email'))->queue(
+                new TechnicalError($title, join("\n\n", $technicalErrors))
+            );
+        }
         $this->info('End command ' . $this->getName());
     }
 
@@ -142,12 +166,12 @@ class DemandProcessPayments extends BaseCommand
         return PaymentReport::fetchUndone($this->getReportDateFrom());
     }
 
-    private function getReportDateFrom(): DateTime
+    private function getReportDateFrom(): DateTimeImmutable
     {
         $optionFrom = $this->option('from');
 
         if (null === $optionFrom) {
-            return new DateTime('-2 days');
+            return new DateTimeImmutable('-2 days');
         }
 
         if (false === ($timestampFrom = strtotime($optionFrom))) {
@@ -156,7 +180,7 @@ class DemandProcessPayments extends BaseCommand
             );
         }
 
-        return new DateTime('@' . $timestampFrom);
+        return new DateTimeImmutable('@' . $timestampFrom);
     }
 
     private static function getLastAvailableTimestamp(): int

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,6 +33,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -65,7 +66,12 @@ class AdPayGetPayments extends BaseCommand
         $this->info('Start command ' . self::COMMAND_SIGNATURE);
 
         $timestamp = $this->getReportTimestamp();
-        $exchangeRate = $this->getExchangeRate($exchangeRateReader, new DateTime('@' . $timestamp));
+        try {
+            $exchangeRate = $this->getExchangeRate($exchangeRateReader, new DateTime('@' . $timestamp));
+        } catch (ExchangeRateNotAvailableException $exception) {
+            $this->release();
+            throw $exception;
+        }
         $limit = (int)$this->option('chunkSize');
         $offset = 0;
 
