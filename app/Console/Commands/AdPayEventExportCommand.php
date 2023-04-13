@@ -42,6 +42,7 @@ use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Spatie\Fork\Fork;
 use Symfony\Component\Lock\Key;
@@ -58,6 +59,10 @@ class AdPayEventExportCommand extends BaseCommand
     private const DEFAULT_EXPORT_TIME_FROM = '-2 hours';
 
     private const DEFAULT_EXPORT_TIME_TO = '-10 minutes';
+
+    private const ADS_TXT_TTL_VALID = 3600;
+
+    private const ADS_TXT_TTL_INVALID = 86400;
 
     private const MAXIMAL_THREAD_RETRIES = 3;
 
@@ -189,10 +194,14 @@ class AdPayEventExportCommand extends BaseCommand
                     && null === $event->ads_txt
                     && null !== $event->domain
                 ) {
-                    $result = $this->adsTxtCrawler->checkSite(
-                        'https://' . $event->domain,
-                        $event->publisher_id,
-                    );
+                    $cacheKey = sprintf('ads_txt.%s.%s', $event->publisher_id, $event->domain);
+                    if (null === ($result = Cache::get($cacheKey))) {
+                        $result = $this->adsTxtCrawler->checkSite(
+                            'https://' . $event->domain,
+                            $event->publisher_id,
+                        );
+                        Cache::put($cacheKey, $result, $result ? self::ADS_TXT_TTL_VALID : self::ADS_TXT_TTL_INVALID);
+                    }
                     $event->ads_txt = (int)$result;
                 }
                 if ($event->isDirty()) {
