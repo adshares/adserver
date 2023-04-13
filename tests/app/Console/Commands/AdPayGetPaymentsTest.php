@@ -36,6 +36,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
@@ -352,5 +353,27 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
 
         $this->artisan(self::COMMAND_SIGNATURE)
             ->assertExitCode(AdPayGetPayments::STATUS_REQUEST_FAILED);
+    }
+
+    public function testHandleWhileExchangeRateNotAvailable(): void
+    {
+        $locker = $this->createMock(Locker::class);
+        $locker->expects(self::once())->method('lock')->willReturn(true);
+        $locker->expects(self::once())->method('release');
+        $this->instance(Locker::class, $locker);
+        $this->app->bind(
+            ExchangeRateReader::class,
+            function () {
+                $mock = $this->createMock(ExchangeRateReader::class);
+                $mock->method('fetchExchangeRate')->willThrowException(
+                    new ExchangeRateNotAvailableException('text-exception')
+                );
+                return $mock;
+            }
+        );
+
+        self::expectException(ExchangeRateNotAvailableException::class);
+
+        $this->artisan(self::COMMAND_SIGNATURE);
     }
 }

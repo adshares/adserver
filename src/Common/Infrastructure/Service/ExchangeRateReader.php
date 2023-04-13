@@ -44,7 +44,7 @@ class ExchangeRateReader
     ) {
     }
 
-    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
+    public function fetchExchangeRate(?DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
     {
         $dateTimeForComputation = (null === $dateTime) ? new DateTime() : clone $dateTime;
 
