@@ -21,7 +21,7 @@
 
 namespace Adshares\Adserver\Mail;
 
-use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -45,20 +45,11 @@ class SiteAdsTxtInvalid extends Mailable
         return $this->markdown('emails.site-ads-txt-invalid')->with([
             'adsTxtEntry' => sprintf(
                 '%s, %s, DIRECT',
-                $this->getAdServerDomain(),
+                (new AdsTxtCrawler())->getAdServerDomain(),
                 Uuid::fromString($this->publisherId)->toString(),
             ),
             'adsTxtUrl' => sprintf('%s/ads.txt', $this->siteUrl),
             'siteName' => $this->siteName,
         ]);
-    }
-
-    private function getAdServerDomain(): string
-    {
-        $domain = DomainReader::domain(config('app.url'));
-        if (str_starts_with($domain, 'app.')) {
-            $domain = substr($domain, 4);
-        }
-        return $domain;
     }
 }

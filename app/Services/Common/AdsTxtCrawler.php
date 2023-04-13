@@ -72,7 +72,7 @@ class AdsTxtCrawler
         return $result;
     }
 
-    private function getAdServerDomain(): string
+    public function getAdServerDomain(): string
     {
         $domain = DomainReader::domain(config('app.url'));
         if (str_starts_with($domain, 'app.')) {
