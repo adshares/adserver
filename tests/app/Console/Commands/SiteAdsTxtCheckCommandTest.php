@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Mail\SiteAdsTxtInvalid;
+use Adshares\Adserver\Mail\SiteAdsTxtValid;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
@@ -77,7 +78,7 @@ class SiteAdsTxtCheckCommandTest extends ConsoleTestCase
         self::assertNotNull($siteNotConfirmed->refresh()->ads_txt_confirmed_at);
         self::assertNotNull($siteNotConfirmed->ads_txt_check_at);
         self::assertEquals(0, $siteNotConfirmed->ads_txt_fails);
-        Mail::assertNothingQueued();
+        Mail::assertQueued(SiteAdsTxtValid::class);
     }
 
     public function testHandleNewSiteWhileSkipOptionIsSet(): void
