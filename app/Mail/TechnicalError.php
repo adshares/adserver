@@ -19,23 +19,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Mail;
 
-namespace Adshares\Mock\Client;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-use Adshares\Adserver\Utilities\DateUtils;
-use Adshares\Common\Application\Dto\ExchangeRate;
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use DateTime;
-
-class DummyExchangeRateRepository implements ExchangeRateRepository
+class TechnicalError extends Mailable
 {
-    private const STABLE_RATE = 0.3333;
+    use Queueable;
+    use SerializesModels;
 
-    public function fetchExchangeRate(?DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
+    public function __construct(private readonly string $title, private readonly string $message = '')
     {
-        $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
+    }
 
-        return new ExchangeRate($date, self::STABLE_RATE, $currency);
+    public function build(): Mailable
+    {
+        $this->subject = sprintf('Technical Error: %s', $this->title);
+        return $this->markdown('emails.technical-error')->with(
+            [
+                'title' => $this->title,
+                'message' => $this->message,
+            ]
+        );
     }
 }

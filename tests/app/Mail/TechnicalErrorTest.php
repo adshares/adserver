@@ -19,23 +19,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests\Mail;
 
-namespace Adshares\Mock\Client;
+use Adshares\Adserver\Mail\TechnicalError;
 
-use Adshares\Adserver\Utilities\DateUtils;
-use Adshares\Common\Application\Dto\ExchangeRate;
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use DateTime;
-
-class DummyExchangeRateRepository implements ExchangeRateRepository
+class TechnicalErrorTest extends MailTestCase
 {
-    private const STABLE_RATE = 0.3333;
-
-    public function fetchExchangeRate(?DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
+    public function testBuild(): void
     {
-        $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
+        $mailable = new TechnicalError('title', 'message');
 
-        return new ExchangeRate($date, self::STABLE_RATE, $currency);
+        $mailable->assertSeeInOrderInText(['Technical Error', 'title', 'message']);
     }
 }
