@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Mail\SiteAdsTxtInvalid;
+use Adshares\Adserver\Mail\SiteAdsTxtValid;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Services\Common\AdsTxtCrawler;
@@ -117,6 +118,10 @@ class SiteAdsTxtCheckCommand extends Command
                 $site->ads_txt_confirmed_at = $now;
                 $site->ads_txt_fails = 0;
                 $site->approvalProcedure(false);
+                $user = $site->user;
+                if (null !== $user->email) {
+                    Mail::to($user)->queue(new SiteAdsTxtValid($site->name));
+                }
             } else {
                 if (null !== $site->ads_txt_confirmed_at) {
                     $user = $site->user;

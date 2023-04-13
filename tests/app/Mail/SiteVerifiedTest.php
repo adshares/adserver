@@ -21,24 +21,28 @@
 
 namespace Adshares\Adserver\Tests\Mail;
 
-use Adshares\Adserver\Mail\SiteAdsTxtInvalid;
-use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Mail\SiteVerified;
 
-class SiteAdsTxtInvalidTest extends MailTestCase
+class SiteVerifiedTest extends MailTestCase
 {
     public function testBuild(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        /** @var Site $site */
-        $site = Site::factory()->create([
-            'name' => 'test-name',
-            'user_id' => $user,
-        ]);
-        $mailable = new SiteAdsTxtInvalid($user->uuid, $site->name, $site->url);
+        $mailable = new SiteVerified(
+            [
+                [
+                    'name' => 'test-site-example',
+                    'url' => 'https://example.com',
+                ],
+                [
+                    'name' => 'test-site-adshares',
+                    'url' => 'https://adshares.net',
+                ],
+            ]
+        );
 
-        $mailable->assertSeeInText('test-name');
-        $mailable->assertSeeInText('https://example.com');
+        $mailable->assertSeeInText('test-site-example');
+        $mailable->assertSeeInHtml('https://example.com');
+        $mailable->assertSeeInText('test-site-adshares');
+        $mailable->assertSeeInHtml('https://adshares.net');
     }
 }

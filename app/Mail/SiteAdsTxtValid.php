@@ -19,26 +19,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Mail;
+namespace Adshares\Adserver\Mail;
 
-use Adshares\Adserver\Mail\SiteAdsTxtInvalid;
-use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\User;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-class SiteAdsTxtInvalidTest extends MailTestCase
+class SiteAdsTxtValid extends Mailable
 {
-    public function testBuild(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-        /** @var Site $site */
-        $site = Site::factory()->create([
-            'name' => 'test-name',
-            'user_id' => $user,
-        ]);
-        $mailable = new SiteAdsTxtInvalid($user->uuid, $site->name, $site->url);
+    use Queueable;
+    use SerializesModels;
 
-        $mailable->assertSeeInText('test-name');
-        $mailable->assertSeeInText('https://example.com');
+    public function __construct(private readonly string $siteName)
+    {
+    }
+
+    public function build(): self
+    {
+        $this->subject(sprintf("Site %s has correct ads.txt", $this->siteName));
+        return $this->markdown('emails.site-ads-txt-valid')->with([
+            'siteName' => $this->siteName,
+        ]);
     }
 }
