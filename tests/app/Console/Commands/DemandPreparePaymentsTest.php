@@ -29,12 +29,15 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\CommunityFeeReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use Illuminate\Database\Eloquent\Collection;
 
 class DemandPreparePaymentsTest extends ConsoleTestCase
@@ -137,6 +140,38 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
                 self::assertEquals($entry->pay_to, $payment->account_address);
             });
         });
+
+        self::assertDatabaseCount(TurnoverEntry::class, 5);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => null,
+                'amount' => 1000,
+                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+            ],
+            [
+                'ads_address' => hex2bin('000100000002'),
+                'amount' => 500,
+                'type' => TurnoverEntryType::DspLicenseFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 250,
+                'type' => TurnoverEntryType::DspOperatorFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 125,
+                'type' => TurnoverEntryType::DspCommunityFee->name,
+            ],
+            [
+                'ads_address' => hex2bin('000100000001'),
+                'amount' => 125,
+                'type' => TurnoverEntryType::DspExpense->name,
+            ],
+        ];
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
     }
 
     public function testHandleConversionFees(): void
@@ -179,6 +214,38 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
                 self::assertEquals($entry->pay_to, $payment->account_address);
             });
         });
+
+        self::assertDatabaseCount(TurnoverEntry::class, 5);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => null,
+                'amount' => 1000,
+                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+            ],
+            [
+                'ads_address' => hex2bin('000100000002'),
+                'amount' => 100,
+                'type' => TurnoverEntryType::DspLicenseFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 450,
+                'type' => TurnoverEntryType::DspOperatorFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 150,
+                'type' => TurnoverEntryType::DspCommunityFee->name,
+            ],
+            [
+                'ads_address' => hex2bin('000100000001'),
+                'amount' => 300,
+                'type' => TurnoverEntryType::DspExpense->name,
+            ],
+        ];
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
     }
 
     public function testHandleNoLicenseAddress(): void
@@ -229,6 +296,87 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
         self::assertEquals(500, $conversion->operator_fee);
         self::assertEquals(250, $conversion->community_fee);
         self::assertEquals(250, $conversion->paid_amount);
+
+        self::assertDatabaseCount(TurnoverEntry::class, 4);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => null,
+                'amount' => 2000,
+                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 1000,
+                'type' => TurnoverEntryType::DspOperatorFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 500,
+                'type' => TurnoverEntryType::DspCommunityFee->name,
+            ],
+            [
+                'ads_address' => hex2bin('000100000001'),
+                'amount' => 500,
+                'type' => TurnoverEntryType::DspExpense->name,
+            ],
+        ];
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+    }
+
+    public function testHandleEventOfZeroValue(): void
+    {
+        Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->mockCommunityFeeReader(0.5);
+        $this->mockLicenseReader(0);
+        /** @var EventLog $event */
+        $event = EventLog::factory()->create([
+            'event_value_currency' => 0,
+            'exchange_rate' => 1,
+            'event_value' => 0,
+            'payment_status' => AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED,
+            'pay_to' => new AccountId('0001-00000001-8B4E'),
+        ]);
+        /** @var Conversion $conversion */
+        $conversion = Conversion::factory()->create([
+            'event_value_currency' => 0,
+            'exchange_rate' => 1,
+            'event_value' => 0,
+            'payment_status' => AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED,
+            'pay_to' => new AccountId('0001-00000001-8B4E'),
+        ]);
+
+        $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE)
+            ->expectsOutput('Found 1 payable conversions.')
+            ->expectsOutput('In that, there are 1 recipients')
+            ->expectsOutput('Found 1 payable events.')
+            ->expectsOutput('In that, there are 1 recipients')
+            ->assertExitCode(0);
+
+        $event->refresh();
+        $conversion->refresh();
+
+        self::assertNotEmpty($event->payment_id);
+        self::assertEquals(0, $event->license_fee);
+        self::assertEquals(0, $event->operator_fee);
+        self::assertEquals(0, $event->community_fee);
+        self::assertEquals(0, $event->paid_amount);
+        self::assertNotEmpty($conversion->payment_id);
+        self::assertEquals(0, $conversion->license_fee);
+        self::assertEquals(0, $conversion->operator_fee);
+        self::assertEquals(0, $conversion->community_fee);
+        self::assertEquals(0, $conversion->paid_amount);
+
+        self::assertDatabaseEmpty(TurnoverEntry::class);
+    }
+
+    public function testHandleInvalidTimeRange(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+
+        $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE, ['--to' => '2019-01-01']);
     }
 
     private function mockCommunityFeeReader(float $fee): void
