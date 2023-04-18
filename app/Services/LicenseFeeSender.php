@@ -57,7 +57,7 @@ final class LicenseFeeSender
 
     public function eventValueSum(): int
     {
-        return (int)array_reduce(
+        return array_reduce(
             $this->results,
             static function (int $carry, PaymentProcessingResult $result) {
                 return $carry + $result->eventValuePartialSum();
@@ -68,10 +68,21 @@ final class LicenseFeeSender
 
     public function licenseFeeSum(): int
     {
-        return (int)array_reduce(
+        return array_reduce(
             $this->results,
             static function (int $carry, PaymentProcessingResult $result) {
                 return $carry + $result->licenseFeePartialSum();
+            },
+            0
+        );
+    }
+
+    public function operatorFeeSum(): int
+    {
+        return array_reduce(
+            $this->results,
+            static function (int $carry, PaymentProcessingResult $result) {
+                return $carry + $result->operatorFeePartialSum();
             },
             0
         );
