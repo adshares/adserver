@@ -194,55 +194,105 @@ class TurnoverEntryTest extends TestCase
         self::assertNull($result[0]->ads_address);
     }
 
-    public function testFetchByHourTimestampMultipleAddresses(): void
+    public function testFetchByHourTimestampMultipleType(): void
+    {
+        $expected = [
+            TurnoverEntryType::DspExpense->name => 1_100,
+            TurnoverEntryType::SspIncome->name => 10_000,
+        ];
+        TurnoverEntry::factory()
+            ->count(3)
+            ->sequence(
+                [
+                    'ads_address' => '0001-00000000-9B6F',
+                    'amount' => 100,
+                    'hour_timestamp' => '2023-04-17 11:00:00',
+                    'type' => TurnoverEntryType::DspExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000000-9B6F',
+                    'amount' => 1_000,
+                    'hour_timestamp' => '2023-04-17 12:00:00',
+                    'type' => TurnoverEntryType::DspExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000002-BB2D',
+                    'amount' => 10_000,
+                    'hour_timestamp' => '2023-04-17 12:00:00',
+                    'type' => TurnoverEntryType::SspIncome,
+                ],
+            )
+            ->create();
+
+        $result = TurnoverEntry::fetchByHourTimestamp(
+            new DateTimeImmutable('2023-04-17 11:00:00'),
+            new DateTimeImmutable('2023-04-17 12:00:00'),
+        );
+
+        self::assertCount(2, $result);
+        foreach ($result as $entry) {
+            $type = $entry->type->name;
+            self::assertArrayHasKey($type, $expected);
+            self::assertEquals($expected[$type], $entry->amount);
+        }
+    }
+
+    public function testFetchByHourTimestampAndType(): void
     {
         $expected = [
             '0001-00000000-9B6F' => 101_000,
             '0001-00000002-BB2D' => 1_010_000,
         ];
         TurnoverEntry::factory()
-            ->count(5)
+            ->count(6)
             ->sequence(
                 [
+                    'ads_address' => '0001-00000000-9B6F',
                     'amount' => 100,
                     'hour_timestamp' => '2023-04-17 11:00:00',
-                    'ads_address' => '0001-00000000-9B6F',
+                    'type' => TurnoverEntryType::DspExpense,
                 ],
                 [
+                    'ads_address' => '0001-00000000-9B6F',
                     'amount' => 1_000,
                     'hour_timestamp' => '2023-04-17 12:00:00',
-                    'ads_address' => '0001-00000000-9B6F',
+                    'type' => TurnoverEntryType::DspExpense,
                 ],
                 [
+                    'ads_address' => '0001-00000002-BB2D',
                     'amount' => 10_000,
                     'hour_timestamp' => '2023-04-17 12:00:00',
-                    'ads_address' => '0001-00000002-BB2D',
+                    'type' => TurnoverEntryType::DspExpense,
                 ],
                 [
+                    'ads_address' => '0001-00000000-9B6F',
                     'amount' => 100_000,
                     'hour_timestamp' => '2023-04-17 13:00:00',
-                    'ads_address' => '0001-00000000-9B6F',
+                    'type' => TurnoverEntryType::DspExpense,
                 ],
                 [
+                    'ads_address' => '0001-00000002-BB2D',
                     'amount' => 1_000_000,
                     'hour_timestamp' => '2023-04-17 13:00:00',
+                    'type' => TurnoverEntryType::DspExpense,
+                ],
+                [
                     'ads_address' => '0001-00000002-BB2D',
+                    'amount' => 1_000_000,
+                    'hour_timestamp' => '2023-04-17 13:00:00',
+                    'type' => TurnoverEntryType::SspIncome,
                 ],
             )
-            ->create(
-                [
-                    'type' => TurnoverEntryType::DspExpense->name,
-                ]
-            );
+            ->create();
 
-        $result = TurnoverEntry::fetchByHourTimestamp(
+        $result = TurnoverEntry::fetchByHourTimestampAndType(
             new DateTimeImmutable('2023-04-17 12:00:00'),
             new DateTimeImmutable('2023-04-17 14:00:00'),
+            TurnoverEntryType::DspExpense,
         );
 
         self::assertCount(2, $result);
         foreach ($result as $entry) {
-            self::assertEquals(TurnoverEntryType::DspExpense, $entry->type);
             $address = $entry->ads_address;
             self::assertArrayHasKey($address, $expected);
             self::assertEquals($expected[$address], $entry->amount);

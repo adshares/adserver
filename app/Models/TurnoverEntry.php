@@ -93,8 +93,22 @@ class TurnoverEntry extends Model
         return self::query()
             ->where('hour_timestamp', '>=', $from)
             ->where('hour_timestamp', '<=', $to)
-            ->selectRaw('SUM(amount) as amount, type, ads_address')
-            ->groupBy('type', 'ads_address')
+            ->selectRaw('SUM(amount) as amount, type')
+            ->groupBy('type')
+            ->get();
+    }
+
+    public static function fetchByHourTimestampAndType(
+        DateTimeInterface $from,
+        DateTimeInterface $to,
+        TurnoverEntryType $type,
+    ): Collection {
+        return self::query()
+            ->where('hour_timestamp', '>=', $from)
+            ->where('hour_timestamp', '<=', $to)
+            ->where('type', $type->name)
+            ->selectRaw('SUM(amount) as amount, ads_address')
+            ->groupBy('ads_address')
             ->get();
     }
 }

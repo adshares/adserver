@@ -40,6 +40,7 @@ use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\ServerEventLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\UserSettings;
@@ -50,6 +51,7 @@ use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\HostStatus;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
@@ -225,6 +227,85 @@ final class ServerMonitoringControllerTest extends TestCase
                     'balance' => 2468,
                     'unusedBonuses' => 470,
                 ]
+            ]
+        );
+    }
+
+    public function testFetchTurnover(): void
+    {
+        $this->setUpAdmin();
+        TurnoverEntry::factory()
+            ->count(9)
+            ->sequence(
+                [
+                    'amount' => 200_000_000_000,
+                    'type' => TurnoverEntryType::DspAdvertisersExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000024-FF89',
+                    'amount' => 2_000_000_000,
+                    'type' => TurnoverEntryType::DspLicenseFee,
+                ],
+                [
+                    'amount' => 19_800_000_000,
+                    'type' => TurnoverEntryType::DspOperatorFee,
+                ],
+                [
+                    'ads_address' => '0001-00000001-8B4E',
+                    'amount' => 1_782_000_000,
+                    'type' => TurnoverEntryType::DspCommunityFee,
+                ],
+                [
+                    'ads_address' => '0001-00000002-BB2D',
+                    'amount' => 76_018_000_000,
+                    'type' => TurnoverEntryType::DspExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000003-AB0C',
+                    'amount' => 100_400_000_000,
+                    'type' => TurnoverEntryType::DspExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000003-AB0C',
+                    'amount' => 2_000,
+                    'type' => TurnoverEntryType::SspIncome,
+                ],
+                [
+                    'amount' => 500,
+                    'type' => TurnoverEntryType::SspOperatorFee,
+                ],
+                [
+                    'amount' => 1_500,
+                    'type' => TurnoverEntryType::SspPublishersIncome,
+                ]
+            )->create();
+
+        $response = $this->getJson(
+            self::buildUriForKey(
+                'turnover',
+                [
+                    'filter' => [
+                        'date' => [
+                            'from' => (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM),
+                            'to' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+                        ]
+                    ]
+                ]
+            )
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(
+            [
+                'dspAdvertisersExpense' => 200_000_000_000,
+                'dspLicenseFee' => 2_000_000_000,
+                'dspOperatorFee' => 19_800_000_000,
+                'dspCommunityFee' => 1_782_000_000,
+                'dspExpense' => 176_418_000_000,
+                'sspIncome' => 2_000,
+                'sspLicenseFee' => 0,
+                'sspOperatorFee' => 500,
+                'sspPublishersIncome' => 1_500,
             ]
         );
     }

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -32,6 +33,7 @@ class TurnoverEntryFactory extends Factory
     {
         return [
             'amount' => 100_000_000_000,
+            'hour_timestamp' => DateUtils::getDateTimeRoundedToCurrentHour(),
             'type' => TurnoverEntryType::DspAdvertisersExpense,
         ];
     }
