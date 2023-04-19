@@ -47,6 +47,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -394,7 +395,11 @@ class Site extends Model
     {
         foreach ($domains as $domain) {
             $rejectReasonId = SitesRejectedDomain::domainRejectedReasonId($domain);
-            self::whereNot('status', self::STATUS_REJECTED)
+            if (null === $rejectReasonId) {
+                Log::info(sprintf('Rejecting sites by domain "%s" without reason', $domain));
+            }
+            self::query()
+                ->whereNot('status', self::STATUS_REJECTED)
                 ->where(function (Builder $sub) use ($domain) {
                     $sub->where('domain', 'like', '%.' . $domain)->orWhere('domain', $domain);
                 })

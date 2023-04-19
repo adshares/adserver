@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validate ads.txt
 ### Changed
 - Payment processing loop is continued if exchange rate for particular period is not available
+- Reject site during find if it has rejected domain
 ### Fixed
 - Do not process payments older than 2 days (by default)
 

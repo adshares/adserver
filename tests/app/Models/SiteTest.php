@@ -32,6 +32,7 @@ use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Closure;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Log;
 
 class SiteTest extends TestCase
 {
@@ -198,6 +199,7 @@ class SiteTest extends TestCase
         self::assertNotNull(Site::fetchByPublicId($site->uuid));
     }
 
+
     public function testFetchSitesWhichNeedAdsTxtConfirmation(): void
     {
         Site::factory()->create([
@@ -222,5 +224,14 @@ class SiteTest extends TestCase
         $sites = Site::fetchSitesWhichNeedAdsTxtReEvaluation();
 
         self::assertCount(1, $sites);
+    }
+
+    public function testRejectByDomainsWhileIp(): void
+    {
+        Log::shouldReceive('info')
+            ->once()
+            ->with('Rejecting sites by domain "127.0.0.1" without reason');
+
+        Site::rejectByDomains(['127.0.0.1']);
     }
 }
