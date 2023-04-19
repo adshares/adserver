@@ -99,7 +99,7 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
             $value = $license->getInfoBox();
-        } catch (RuntimeException $exception) {
+        } catch (RuntimeException) {
             $value = true;
         }
         return $value;

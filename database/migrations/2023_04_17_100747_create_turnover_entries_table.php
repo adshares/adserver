@@ -28,6 +28,59 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
+    private const SQL_DSP_ADVERTISERS_EXPENSE = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, amount, created_at, updated_at, type)
+SELECT
+    CONCAT(DATE(created_at), ' ', LPAD(HOUR(created_at), 2, '0'), ':00:00') AS hour_timestamp,
+    -SUM(amount) AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    'DspAdvertisersExpense' AS type
+FROM user_ledger_entries
+WHERE created_at >= '2023-04-01' AND created_at < '2023-04-01' + interval 1 hour
+  AND status = 0
+  AND type IN (4, 6, 9)
+GROUP BY 1;
+SQL;
+
+    private const SQL_DSP_TURNOVER = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, amount, created_at, updated_at, type)
+SELECT
+    CONCAT(DATE(created_at), ' ', LPAD(HOUR(created_at), 2, '0'), ':00:00') AS hour_timestamp,
+    -SUM(amount) * ? AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    ? AS type
+FROM user_ledger_entries
+WHERE created_at >= '2023-04-01' AND created_at < '2023-04-01' + interval 1 hour
+  AND status = 0
+  AND type IN (4, 6, 9)
+GROUP BY 1;
+SQL;
+
+    private const SQL_DSP_OPERATOR_FEE = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, amount, created_at, updated_at, type)
+SELECT
+    i.hour_timestamp as hour_timestamp,
+    i.amount - IFNULL(o.amount, 0) AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    'DspOperatorFee' AS type
+FROM (
+    SELECT hour_timestamp, SUM(amount) AS amount
+    FROM turnover_entries
+    WHERE type = 'DspAdvertisersExpense'
+    GROUP BY 1
+) i
+LEFT JOIN (
+    SELECT hour_timestamp, SUM(amount) AS amount
+    FROM turnover_entries
+    WHERE type IN ('DspLicenseFee', 'DspCommunityFee', 'DspExpense')
+    GROUP BY 1
+) o
+    ON i.hour_timestamp = o.hour_timestamp;
+SQL;
+
     private const SQL_SSP_INCOME = <<<SQL
 INSERT INTO turnover_entries (hour_timestamp, ads_address, amount, created_at, updated_at, type)
 SELECT
@@ -97,7 +150,7 @@ FROM (
 LEFT JOIN (
     SELECT hour_timestamp, SUM(amount) AS amount
     FROM turnover_entries
-    WHERE type != 'SspIncome'
+    WHERE type IN ('SspLicenseFee', 'SspPublishersIncome')
     GROUP BY 1
 ) o
     ON i.hour_timestamp = o.hour_timestamp;
@@ -125,6 +178,16 @@ SQL;
             $table->binary('ads_address')->nullable();
         });
         DB::statement('ALTER TABLE turnover_entries MODIFY ads_address varbinary(6)');
+
+        $licenseFeeCoefficient = 0.01;
+        $operatorFeeCoefficient = (1 - $licenseFeeCoefficient) * config('app.payment_tx_fee');
+        $communityFeeCoefficient = (1 - $licenseFeeCoefficient - $operatorFeeCoefficient) * 0.01;
+        $expenseCoefficient = 1 - $licenseFeeCoefficient - $operatorFeeCoefficient - $communityFeeCoefficient;
+        DB::statement(self::SQL_DSP_ADVERTISERS_EXPENSE);
+        DB::statement(self::SQL_DSP_TURNOVER, [$licenseFeeCoefficient, 'DspLicenseFee']);
+        DB::statement(self::SQL_DSP_TURNOVER, [$communityFeeCoefficient, 'DspCommunityFee']);
+        DB::statement(self::SQL_DSP_TURNOVER, [$expenseCoefficient, 'DspExpense']);
+        DB::statement(self::SQL_DSP_OPERATOR_FEE);
 
         DB::statement(self::SQL_SSP_INCOME);
         DB::statement(self::SQL_SSP_LICENSE_FEE);
