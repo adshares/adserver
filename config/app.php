@@ -192,6 +192,7 @@ return [
     'reviewer_user_id' => env('REVIEWER_USER_ID'),
     'use_random_wallet_for_foreign' => env('USE_RANDOM_WALLET_FOR_FOREIGN'),
     'foreign_default_site_js' => env('FOREIGN_DEFAULT_SITE_JS'),
+    'allow_zone_in_iframe' => env('ALLOW_ZONE_IN_IFRAME'),
     'foreign_preferred_zones' => [
         ['name' => '234x60', 'width' => '234', 'height' => '60'],
         ['name' => '240x400', 'width' => '240', 'height' => '400'],
