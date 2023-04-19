@@ -8,6 +8,10 @@ class GenericCollection extends ResourceCollection
 {
     public function toArray($request): array
     {
-        return $this->resource->toArray();
+        return array_filter(
+            $this->resource->toArray(),
+            fn($key) => in_array($key, ['data', 'links', 'meta'], true),
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 }

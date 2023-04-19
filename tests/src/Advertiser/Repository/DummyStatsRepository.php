@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Advertiser\Repository;
 
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\Result\ChartResult;
@@ -33,6 +34,7 @@ use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
+use DateTimeInterface;
 
 class DummyStatsRepository implements StatsRepository
 {
@@ -43,7 +45,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 1],
@@ -60,7 +63,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         return $this->fetchView($advertiserId, $resolution, $dateStart, $dateEnd, $campaignId);
     }
@@ -70,7 +74,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 0.01],
@@ -87,7 +92,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         return $this->fetchView($advertiserId, $resolution, $dateStart, $dateEnd, $campaignId);
     }
@@ -97,7 +103,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 11],
@@ -114,7 +121,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         return $this->fetchClick($advertiserId, $resolution, $dateStart, $dateEnd, $campaignId);
     }
@@ -124,7 +132,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 0.02],
@@ -141,7 +150,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 12],
@@ -158,7 +168,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 13],
@@ -175,7 +186,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 14],
@@ -192,7 +204,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 141],
@@ -209,7 +222,8 @@ class DummyStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): ChartResult {
         $data = [
             ['2019-01-01T15:00:00+00:00', 0.03],
@@ -225,7 +239,8 @@ class DummyStatsRepository implements StatsRepository
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): DataCollection {
         $user = User::fetchByEmail(self::USER_EMAIL);
 
@@ -289,7 +304,8 @@ class DummyStatsRepository implements StatsRepository
         ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $campaignId = null,
+        ?FilterCollection $filters = null,
     ): Total {
         $calculation = new Calculation(1, 1, 1, 1, 1, 1);
 
@@ -315,8 +331,7 @@ class DummyStatsRepository implements StatsRepository
         // TODO: Implement fetchStatsConversion() method.
     }
 
-    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    public function aggregateStatistics(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): void
     {
-        // TODO: Implement cacheStatistics() method.
     }
 }

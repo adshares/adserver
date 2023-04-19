@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,13 +22,13 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\CampaignCreating;
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -42,6 +42,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property int id
@@ -65,6 +66,7 @@ use Illuminate\Support\Collection;
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection ads
  * @property Banner[]|Collection banners
+ * @property Banner[]|Collection bannersWithContent
  * @property Collection conversions
  * @property User user
  * @property string secret
@@ -267,6 +269,11 @@ class Campaign extends Model
 
     public function banners(): HasMany
     {
+        return $this->hasMany(Banner::class)->select(Banner::ALL_COLUMNS_EXCEPT_CONTENT);
+    }
+
+    public function bannersWithContent(): HasMany
+    {
         return $this->hasMany(Banner::class);
     }
 
@@ -280,7 +287,7 @@ class Campaign extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getAdsAttribute()
+    public function getAdsAttribute(): Collection
     {
         return $this->banners;
     }
@@ -506,13 +513,10 @@ class Campaign extends Model
             return false;
         }
 
-        $domains = $this->targeting_requires['site']['domain'];
-
         if (MediumName::Metaverse->value === $this->medium) {
-            if ('decentraland' === $this->vendor) {
-                return 1 !== count($domains) || 'decentraland.org' !== $domains[0];
-            } elseif ('cryptovoxels' === $this->vendor) {
-                return 1 !== count($domains) || 'cryptovoxels.com' !== $domains[0];
+            if (null !== ($vendor = MetaverseVendor::tryFrom($this->vendor))) {
+                $domains = $this->targeting_requires['site']['domain'];
+                return 1 !== count($domains) || $vendor->baseDomain() !== $domains[0];
             }
         }
 

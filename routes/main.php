@@ -34,7 +34,7 @@ Route::get('/', [InfoController::class, 'info'])
 Route::get('/info', [InfoController::class, 'info']);
 Route::get('/info.json', [InfoController::class, 'info'])
     ->name('app.infoEndpoint');
-Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'uploadPreview'])
+Route::get('/upload-preview/{type}/{uuid}', [CampaignsController::class, 'uploadPreview'])
     ->name('app.campaigns.upload_preview');
 
 Route::get('/stats/demand/statistics', [StatisticsGlobalController::class, 'fetchDemandStatistics']);

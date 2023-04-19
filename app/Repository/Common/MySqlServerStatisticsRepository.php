@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -36,7 +36,7 @@ class MySqlServerStatisticsRepository
        (SELECT COUNT(*) AS count
         FROM users
         WHERE deleted_at IS NULL
-          AND updated_at > NOW() - INTERVAL 3 MONTH
+          AND updated_at > NOW() - INTERVAL 12 MONTH
        ) AS users,
        (SELECT COUNT(*) AS count
         FROM campaigns

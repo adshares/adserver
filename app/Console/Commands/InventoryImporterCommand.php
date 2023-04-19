@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,7 +34,9 @@ use Adshares\Supply\Application\Service\InventoryImporter;
 
 class InventoryImporterCommand extends BaseCommand
 {
-    protected $signature = 'ops:demand:inventory:import';
+    public const SIGNATURE = 'ops:demand:inventory:import';
+
+    protected $signature = self::SIGNATURE;
     protected $description = 'Import data from all defined inventories';
 
     public function __construct(Locker $locker, private readonly InventoryImporter $inventoryImporterService)
@@ -56,9 +58,10 @@ class InventoryImporterCommand extends BaseCommand
         $this->info('Start command ' . $this->signature);
 
         $whitelist = config('app.inventory_import_whitelist');
-        $this->removeNonExistentHosts($whitelist);
+        $this->removeInventoryFromNonExistentHosts($whitelist);
 
-        $networkHosts = NetworkHost::fetchHosts($whitelist);
+        $networkHosts = NetworkHost::fetchHosts($whitelist)
+            ->concat(NetworkHost::fetchUnreachableHostsForImportingInventory($whitelist));
 
         $networkHostCount = $networkHosts->count();
         if ($networkHostCount === 0) {
@@ -128,7 +131,7 @@ class InventoryImporterCommand extends BaseCommand
         );
     }
 
-    private function removeNonExistentHosts(array $whitelist = []): void
+    private function removeInventoryFromNonExistentHosts(array $whitelist = []): void
     {
         $addresses = NetworkHost::findNonExistentHostsAddresses($whitelist);
 

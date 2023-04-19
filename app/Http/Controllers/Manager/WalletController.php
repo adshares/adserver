@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -156,7 +156,7 @@ class WalletController extends Controller
 
         $addressTo = $this->getWalletAdsAddress($rpcClient, $address);
         $amount = $request->input(self::FIELD_AMOUNT);
-        $balance = $user->getWalletBalance();
+        $balance = $user->getWithdrawableBalance();
         $maxAmount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         if (null === $amount) {
             $amount = $maxAmount;
@@ -485,7 +485,7 @@ class WalletController extends Controller
         $adsFee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
         $total = $amount + $adsFee;
 
-        if ($user->getWalletBalance() < $total) {
+        if ($user->getWithdrawableBalance() < $total) {
             throw new UnprocessableEntityHttpException();
         }
 
@@ -559,7 +559,7 @@ class WalletController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if ($user->getWalletBalance() < $amount) {
+        if ($user->getWithdrawableBalance() < $amount) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 

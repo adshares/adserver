@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -42,6 +42,7 @@ Route::get('/serve/{id}', [DemandController::class, 'serve']);
 
 Route::get('/view/{id}', [DemandController::class, 'view']);
 Route::get('/click/{id}', [DemandController::class, 'click']);
+Route::get('/init-context/{id}', [DemandController::class, 'initContext']);
 Route::get('/context/{id}', [DemandController::class, 'context']);
 Route::get(
     '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}',
@@ -58,6 +59,8 @@ Route::group(
             ->name('banner-view');
         Route::get('/click/{id}', [DemandController::class, 'click'])
             ->name('banner-click');
+        Route::get('/init-context/{event_id}', [DemandController::class, 'initContext'])
+            ->name('banner-init-context');
         Route::get('/context/{id}', [DemandController::class, 'context'])
             ->name('banner-context');
     }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -70,6 +70,7 @@ final class InfoResponse implements Arrayable
                 config('app.version'),
                 new SecureUrl(config('app.url')),
                 new Url(config('app.adpanel_url')),
+                new Url(config('app.landing_url')),
                 new SecureUrl(config('app.url') . route('privacy-url', [], false)),
                 new SecureUrl(config('app.url') . route('terms-url', [], false)),
                 new SecureUrl(config('app.url') . route('demand-inventory', [], false)),

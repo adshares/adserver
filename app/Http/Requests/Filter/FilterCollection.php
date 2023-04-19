@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -112,11 +112,6 @@ class FilterCollection
 
     private static function createStringFilter(string $name, mixed $queryValues): Filter
     {
-        if (!$queryValues) {
-            throw new UnprocessableEntityHttpException(
-                sprintf('Filtering by `%s` requires at least one string value', $name)
-            );
-        }
         if (!is_array($queryValues)) {
             $queryValues = [$queryValues];
         }
@@ -124,6 +119,11 @@ class FilterCollection
             if (!is_string($value)) {
                 throw new UnprocessableEntityHttpException(
                     sprintf('Filtering by `%s` requires array of strings', $name)
+                );
+            }
+            if (strlen($value) < 1) {
+                throw new UnprocessableEntityHttpException(
+                    sprintf('Filtering by `%s` does not support empty string', $name)
                 );
             }
         }

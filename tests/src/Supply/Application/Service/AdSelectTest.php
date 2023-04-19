@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -61,7 +61,7 @@ class AdSelectTest extends TestCase
         $bannerChecksum = $banner->checksum;
 
         $finder = $this->app->make(AdSelect::class);
-        $banners = $finder->findBanners($zones, new ImpressionContext([], [], []));
+        $banners = $finder->findBanners($zones, new ImpressionContext([], [], []), '0123456789abcdef0123456789abcdef');
 
         self::assertGreaterThan(0, count($banners));
         $this->assertEquals($bannerChecksum, $banners[0]['creative_sha1']);

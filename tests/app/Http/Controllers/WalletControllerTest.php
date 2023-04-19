@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -55,22 +55,22 @@ class WalletControllerTest extends TestCase
     public function testCalculateWithdrawSameNode(): void
     {
         $user = $this->login();
-        $this->generateUserIncome($user->id, 500000000000);
+        $this->generateUserIncome($user->id, 500_000_000_000);
 
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'to' => '0001-00000000-XXXX',
             ]
         );
 
         $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                'amount' => 100000000000,
-                'fee' => 50000000,
-                'total' => 100050000000,
-                'receive' => 100000000000,
+                'amount' => 100_000_000_000,
+                'fee' => 50_000_000,
+                'total' => 100_050_000_000,
+                'receive' => 100_000_000_000,
             ]
         );
     }
@@ -78,22 +78,22 @@ class WalletControllerTest extends TestCase
     public function testCalculateWithdrawDiffNode(): void
     {
         $user = $this->login();
-        $this->generateUserIncome($user->id, 500000000000);
+        $this->generateUserIncome($user->id, 500_000_000_000);
 
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'to' => '0002-00000000-XXXX',
             ]
         );
 
         $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                'amount' => 100000000000,
-                'fee' => 100000000,
-                'total' => 100100000000,
-                'receive' => 100000000000,
+                'amount' => 100_000_000_000,
+                'fee' => 100_000_000,
+                'total' => 100_100_000_000,
+                'receive' => 100_000_000_000,
             ]
         );
     }
@@ -101,7 +101,8 @@ class WalletControllerTest extends TestCase
     public function testCalculateWithdrawMaxAmount(): void
     {
         $user = $this->login();
-        $this->generateUserIncome($user->id, 50000000000);
+        $this->generateUserIncome($user->id, 50_000_000_000);
+        $this->generateUserIncome($user->id, 100_000_000_000, UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT);
 
         $response = $this->postJson(
             '/api/calculate-withdrawal',
@@ -112,10 +113,10 @@ class WalletControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                'amount' => 49975012494,
-                'fee' => 24987506,
-                'total' => 50000000000,
-                'receive' => 49975012494,
+                'amount' => 49_975_012_494,
+                'fee' => 24_987_506,
+                'total' => 50_000_000_000,
+                'receive' => 49_975_012_494,
             ]
         );
     }
@@ -123,22 +124,23 @@ class WalletControllerTest extends TestCase
     public function testCalculateWithdrawOverBalance(): void
     {
         $user = $this->login();
-        $this->generateUserIncome($user->id, 50000000000);
+        $this->generateUserIncome($user->id, 50_000_000_000);
+        $this->generateUserIncome($user->id, 100_000_000_000, UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT);
 
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'to' => '0001-00000000-XXXX',
             ]
         );
 
         $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                'amount' => 49975012494,
-                'fee' => 24987506,
-                'total' => 50000000000,
-                'receive' => 49975012494,
+                'amount' => 49_975_012_494,
+                'fee' => 24_987_506,
+                'total' => 50_000_000_000,
+                'receive' => 49_975_012_494,
             ]
         );
     }
@@ -149,7 +151,7 @@ class WalletControllerTest extends TestCase
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'to' => '0002-00000000-ABCD',// invalid address
             ]
         );
@@ -164,7 +166,7 @@ class WalletControllerTest extends TestCase
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'to' => '0002-00000000-XXXX',
             ]
         );
@@ -179,19 +181,19 @@ class WalletControllerTest extends TestCase
             'wallet_address' => new WalletAddress(WalletAddress::NETWORK_ADS, '0001-00000001-8B4E')
         ]);
         $this->actingAs($user, 'api');
-        $this->generateUserIncome($user->id, 500000000000);
+        $this->generateUserIncome($user->id, 500_000_000_000);
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
             ]
         );
         $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                'amount' => 100000000000,
-                'fee' => 50000000,
-                'total' => 100050000000,
-                'receive' => 100000000000,
+                'amount' => 100_000_000_000,
+                'fee' => 50_000_000,
+                'total' => 100_050_000_000,
+                'receive' => 100_000_000_000,
             ]
         );
     }
@@ -206,19 +208,19 @@ class WalletControllerTest extends TestCase
             )
         ]);
         $this->actingAs($user, 'api');
-        $this->generateUserIncome($user->id, 500000000000);
+        $this->generateUserIncome($user->id, 500_000_000_000);
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
             ]
         );
         $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                'amount' => 100000000000,
-                'fee' => 50000000,
-                'total' => 100050000000,
-                'receive' => 99999900000,
+                'amount' => 100_000_000_000,
+                'fee' => 50_000_000,
+                'total' => 100_050_000_000,
+                'receive' => 99_999_900_000,
             ]
         );
     }
@@ -233,11 +235,11 @@ class WalletControllerTest extends TestCase
             )
         ]);
         $this->actingAs($user, 'api');
-        $this->generateUserIncome($user->id, 500000000000);
+        $this->generateUserIncome($user->id, 500_000_000_000);
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
             ]
         );
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -308,10 +310,11 @@ class WalletControllerTest extends TestCase
         $ledgerEntry = UserLedgerEntry::factory()->create(
             [
                 'user_id' => $user->id,
-                'amount' => -1000,
+                'amount' => -1_000,
                 'status' => UserLedgerEntry::STATUS_ACCEPTED,
                 'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-            ]);
+            ]
+        );
         $token = Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, ['ledgerEntry' => $ledgerEntry->id,]);
 
         $response = $this->postJson('/api/wallet/confirm-withdrawal', ['token' => $token->uuid]);
@@ -369,6 +372,7 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawBscWallet(): void
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_confirmed_at' => now(),
             'admin_confirmed_at' => now(),
@@ -378,22 +382,21 @@ class WalletControllerTest extends TestCase
                 '0xace8d624e8c12c0a16df4a61dee85b0fd3f94ceb'
             )
         ]);
-        $this->actingAs($user, 'api');
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->login($user);
+        $this->generateUserIncome($user->id, 200_000_000_000);
 
-        $amount = 100000000000;
+        $amount = 100_000_000_000;
         $response = $this->postJson('/api/wallet/withdraw', ['amount' => $amount]);
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
-        $tokens = Token::all();
-        self::assertCount(0, $tokens);
+        self::assertDatabaseEmpty(Token::class);
         Mail::assertNothingQueued();
-
-        $userLedgerEntry = UserLedgerEntry::where(['type' => UserLedgerEntry::TYPE_WITHDRAWAL])->first();
-        $this->assertNotNull($userLedgerEntry);
-        $this->assertEquals(UserLedgerEntry::STATUS_PENDING, $userLedgerEntry->status);
-        $this->assertEquals(-100050000000, $userLedgerEntry->amount);
-        Queue::assertPushed(AdsSendOne::class, 1);
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => -100_050_000_000,
+            'status' => UserLedgerEntry::STATUS_PENDING,
+            'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+        ]);
+        Queue::assertPushed(AdsSendOne::class, fn(AdsSendOne $job) => $amount === $job->getAmount());
     }
 
     /**
@@ -487,9 +490,9 @@ class WalletControllerTest extends TestCase
             )
         ]);
         $this->actingAs($user, 'api');
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->generateUserIncome($user->id, 200_000_000_000);
 
-        $amount = 100000000000;
+        $amount = 100_000_000_000;
         $response = $this->postJson('/api/wallet/withdraw', ['amount' => $amount]);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -498,11 +501,11 @@ class WalletControllerTest extends TestCase
     public function testWithdrawReject(): void
     {
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->generateUserIncome($user->id, 200_000_000_000);
 
         $this->actingAs($user, 'api');
 
-        $amount = 100000000000;
+        $amount = 100_000_000_000;
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
@@ -531,7 +534,7 @@ class WalletControllerTest extends TestCase
     public function testWithdrawCancelInvalidLedgerEntry(): void
     {
         $user = $this->login();
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->generateUserIncome($user->id, 200_000_000_000);
 
         $this->delete(
             sprintf('/api/wallet/cancel-withdrawal/%d', 1)
@@ -541,12 +544,12 @@ class WalletControllerTest extends TestCase
     public function testWithdrawWithMemo(): void
     {
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->generateUserIncome($user->id, 200_000_000_000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'memo' => '00000000111111110000000011111111abcdef00111111110000000123456789',
                 'to' => '0001-00000000-XXXX',
             ]
@@ -560,11 +563,11 @@ class WalletControllerTest extends TestCase
     public function testWithdrawNoConfirmed(): void
     {
         $user = $this->login();
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->generateUserIncome($user->id, 200_000_000_000);
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'to' => '0001-00000000-ABC',// invalid address
             ]
         );
@@ -575,12 +578,12 @@ class WalletControllerTest extends TestCase
     public function testWithdrawInvalidAddress(): void
     {
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->generateUserIncome($user->id, 200_000_000_000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'to' => '0001-00000000-ABC',// invalid address
             ]
         );
@@ -591,12 +594,12 @@ class WalletControllerTest extends TestCase
     public function testWithdrawInvalidMemo(): void
     {
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
-        $this->generateUserIncome($user->id, 200000000000);
+        $this->generateUserIncome($user->id, 200_000_000_000);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 100000000000,
+                'amount' => 100_000_000_000,
                 'memo' => 'hello',// invalid memo
                 'to' => '0001-00000000-XXXX',
             ]
@@ -610,6 +613,7 @@ class WalletControllerTest extends TestCase
         $user = User::factory()->create(['email_confirmed_at' => now(), 'admin_confirmed_at' => now()]);
         $amount = 20 * (10 ** 11);
         $this->generateUserIncome($user->id, $amount);
+        $this->generateUserIncome($user->id, $amount, UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
@@ -642,10 +646,9 @@ class WalletControllerTest extends TestCase
         $user = $this->login();
         $response = $this->get('/api/deposit-info');
         $response->assertStatus(Response::HTTP_OK)->assertJson(['address' => config('app.adshares_address')]);
+        $response->assertJsonStructure(['address', 'message']);
+        $response->assertJson(['address' => config('app.adshares_address')]);
         $content = json_decode($response->getContent());
-
-        // check response field
-        $this->assertObjectHasAttribute('message', $content);
 
         $message = $content->message;
 
@@ -663,17 +666,19 @@ class WalletControllerTest extends TestCase
         $response = $this->get('/api/deposit-info');
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonFragment(['fiat' => [
-            'minAmount' => 2000,
-            'maxAmount' => 100000,
-            'currencies' => ['EUR', 'USD'],
-        ]]);
+        $response->assertJsonFragment([
+            'fiat' => [
+                'minAmount' => 2_000,
+                'maxAmount' => 100_000,
+                'currencies' => ['EUR', 'USD'],
+            ]
+        ]);
     }
 
     public function testHistory(): void
     {
         $user = $this->login();
-        $amountInClicks = 200000000000;
+        $amountInClicks = 200_000_000_000;
         $this->initUserLedger($user->id, $amountInClicks);
 
         $response = $this->getJson('/api/wallet/history');
@@ -730,7 +735,7 @@ class WalletControllerTest extends TestCase
     public function testHistoryLimit(): void
     {
         $user = $this->login();
-        $amountInClicks = 200000000000;
+        $amountInClicks = 200_000_000_000;
         $this->initUserLedger($user->id, $amountInClicks);
 
         $response = $this->getJson('/api/wallet/history?limit=1');
@@ -767,7 +772,7 @@ class WalletControllerTest extends TestCase
     public function testHistoryOffset(): void
     {
         $user = $this->login();
-        $amountInClicks = 200000000000;
+        $amountInClicks = 200_000_000_000;
         $this->initUserLedger($user->id, $amountInClicks);
 
         $response = $this->getJson('/api/wallet/history?limit=1&offset=1');
@@ -804,7 +809,7 @@ class WalletControllerTest extends TestCase
     public function testHistoryTypes(): void
     {
         $user = $this->login();
-        $amountInClicks = 200000000000;
+        $amountInClicks = 200_000_000_000;
         $this->initUserLedger($user->id, $amountInClicks);
 
         $response = $this->getJson('/api/wallet/history?types[]=' . UserLedgerEntry::TYPE_DEPOSIT);
@@ -834,7 +839,7 @@ class WalletControllerTest extends TestCase
     public function testHistoryTypesInvalid(): void
     {
         $user = $this->login();
-        $amountInClicks = 200000000000;
+        $amountInClicks = 200_000_000_000;
         $this->initUserLedger($user->id, $amountInClicks);
 
         $response = $this->getJson('/api/wallet/history?types[]=100');
@@ -845,7 +850,7 @@ class WalletControllerTest extends TestCase
     public function testHistoryDates(): void
     {
         $user = $this->login();
-        $amountInClicks = 200000000000;
+        $amountInClicks = 200_000_000_000;
         $this->initUserLedger($user->id, $amountInClicks);
 
         $response = $this->getJson(
@@ -877,7 +882,7 @@ class WalletControllerTest extends TestCase
     public function testHistoryDatesInvalid(): void
     {
         $user = $this->login();
-        $amountInClicks = 200000000000;
+        $amountInClicks = 200_000_000_000;
         $this->initUserLedger($user->id, $amountInClicks);
 
         $response = $this->getJson('/api/wallet/history?date_from=2018-10-24&date_to=2019-10-24');
@@ -1251,18 +1256,18 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    private function generateUserIncome(int $userId, int $amount): void
+    private function generateUserIncome(int $userId, int $amount, int $type = UserLedgerEntry::TYPE_DEPOSIT): void
     {
         $dateString = '2018-10-24 15:00:49';
 
         $ul = new UserLedgerEntry();
-        $ul->id = 1;
+        $ul->id = $type;
         $ul->user_id = $userId;
         $ul->amount = $amount;
         $ul->address_from = '0001-00000000-XXXX';
         $ul->address_to = '0001-00000000-XXXX';
         $ul->txid = '0001:0000000A:0001';
-        $ul->type = UserLedgerEntry::TYPE_DEPOSIT;
+        $ul->type = $type;
         $ul->setCreatedAt($dateString);
         $ul->setUpdatedAt($dateString);
         $ul->save();
@@ -1431,7 +1436,7 @@ class WalletControllerTest extends TestCase
             ['0x9552D752001721d43d8F04AC4FDfb7aE27800003', 1000000 * $magnify],
             ['0x9552D752001721d43d8F04AC4FDfb7aE27800004', 0 * $magnify],
             ['0x9552D752001721d43d8F04AC4FDfb7aE27800005', 11000000 * $magnify]
-        ];    
+        ];
         foreach ($entries as $entry) {
             $user = User::factory()->create();
             $user->foreign_wallet_address = $entry[0];

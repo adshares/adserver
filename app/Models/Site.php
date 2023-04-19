@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,9 +22,11 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
+use Adshares\Adserver\Services\Common\MetaverseAddressValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringMatcher;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
@@ -32,16 +34,19 @@ use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteUtils;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * @property int id
@@ -49,6 +54,7 @@ use Illuminate\Support\Collection;
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
+ * @property Carbon|null accepted_at
  * @property int user_id
  * @property string name
  * @property string domain
@@ -65,7 +71,9 @@ use Illuminate\Support\Collection;
  * @property array|null|string site_excludes
  * @property array|null categories
  * @property array|null categories_by_user
- * @property bool $only_accepted_banners
+ * @property bool only_accepted_banners
+ * @property int|null reject_reason_id
+ * @property string|null reject_reason
  * @property Zone[]|Collection zones
  * @property User user
  * @method static get()
@@ -82,6 +90,8 @@ class Site extends Model
     public const STATUS_DRAFT = 0;
     public const STATUS_INACTIVE = 1;
     public const STATUS_ACTIVE = 2;
+    public const STATUS_PENDING_APPROVAL = 3;
+    public const STATUS_REJECTED = 4;
 
     public const ALLOWED_STATUSES = [
         self::STATUS_DRAFT,
@@ -93,7 +103,11 @@ class Site extends Model
         Site::STATUS_DRAFT => Zone::STATUS_DRAFT,
         Site::STATUS_INACTIVE => Zone::STATUS_ARCHIVED,
         Site::STATUS_ACTIVE => Zone::STATUS_ACTIVE,
+        Site::STATUS_PENDING_APPROVAL => Zone::STATUS_DRAFT,
+        Site::STATUS_REJECTED => Zone::STATUS_ARCHIVED,
     ];
+
+    private const ALL = '*';
 
     public static $rules = [
         'name' => 'required|max:64',
@@ -133,12 +147,14 @@ class Site extends Model
         'reassess_available_at',
         'categories',
         'categories_by_user',
+        'reject_reason_id',
     ];
 
     protected $appends = [
         'ad_units',
         'filtering',
         'code',
+        'reject_reason',
     ];
 
     protected $traitAutomate = [
@@ -188,6 +204,14 @@ class Site extends Model
         ];
     }
 
+    public function getRejectReasonAttribute(): ?string
+    {
+        if (null === $this->reject_reason_id) {
+            return null;
+        }
+        return (new SiteRejectReason())->find($this->reject_reason_id)?->reject_reason;
+    }
+
     public function matchFiltering(array $classification): bool
     {
         return SiteFilteringMatcher::checkClassification($this, $classification);
@@ -201,9 +225,10 @@ class Site extends Model
     public function setStatusAttribute($value): void
     {
         $this->attributes['status'] = $value;
+        $zoneStatus = Site::ZONE_STATUS[$value];
         $this->zones->map(
-            function (Zone $zone) use ($value) {
-                $zone->status = Site::ZONE_STATUS[$value];
+            function (Zone $zone) use ($zoneStatus) {
+                $zone->status = $zoneStatus;
             }
         );
     }
@@ -215,7 +240,14 @@ class Site extends Model
 
     public static function fetchByPublicId(string $publicId): ?self
     {
-        return self::where('uuid', hex2bin($publicId))->first();
+        return (new self())->where('uuid', hex2bin($publicId))->first();
+    }
+
+    public static function fetchSite(int $userId, string $domain): ?Site
+    {
+        return Site::where('user_id', $userId)
+            ->where('domain', $domain)
+            ->first();
     }
 
     public static function create(
@@ -249,9 +281,13 @@ class Site extends Model
         $site->name = $name;
         $site->only_accepted_banners = $onlyAcceptedBanners;
         $site->primary_language = $primaryLanguage;
-        $site->status = $status;
         $site->url = $url;
         $site->user_id = $userId;
+        if (Site::STATUS_ACTIVE === $status) {
+            $site->approvalProcedure();
+        } else {
+            $site->status = $status;
+        }
         $site->save();
 
         resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
@@ -266,33 +302,40 @@ class Site extends Model
         ?string $vendor,
     ): self {
         $domain = DomainReader::domain($url);
-
-        $site = self::where('user_id', $userId)
-            ->where('domain', $domain)
-            ->where('medium', $medium)
-            ->where('vendor', $vendor)
-            ->first();
+        $site = self::fetchSite($userId, $domain);
 
         if (null === $site) {
             $name = $domain;
-            if (MediumName::Metaverse->value === $medium) {
-                if ('decentraland' === $vendor) {
-                    $name = SiteUtils::extractNameFromDecentralandDomain($domain);
-                } elseif ('cryptovoxels' === $vendor) {
-                    $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
-                }
-            }
-
             $url = rtrim($url, '/');
             if (!SiteValidator::isUrlValid($url)) {
                 throw new InvalidArgumentException('Invalid URL');
             }
             resolve(ConfigurationRepository::class)->fetchMedium($medium, $vendor);
 
+            if (MediumName::Metaverse->value === $medium) {
+                MetaverseAddressValidator::fromVendor($vendor)->validateUrl($url);
+
+                if (MetaverseVendor::Decentraland->value === $vendor) {
+                    $name = SiteUtils::extractNameFromDecentralandDomain($domain);
+                } elseif (MetaverseVendor::Cryptovoxels->value === $vendor) {
+                    $name = SiteUtils::extractNameFromCryptovoxelsDomain($domain);
+                } elseif (MetaverseVendor::PolkaCity->value === $vendor) {
+                    $name = SiteUtils::extractNameFromPolkaCityDomain($domain);
+                }
+            }
+
             $onlyAcceptedBanners =
                 Config::CLASSIFIER_LOCAL_BANNERS_ALL_BY_DEFAULT
                 !== config('app.site_classifier_local_banners');
-            $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners);
+            $filtering = [
+                'requires' => config('app.site_filtering_require_on_auto_create'),
+                'excludes' => config('app.site_filtering_exclude_on_auto_create'),
+            ];
+            $site = Site::create($userId, $url, $name, $medium, $vendor, $onlyAcceptedBanners, filtering: $filtering);
+        } else {
+            if ($site->medium !== $medium || $site->vendor !== $vendor) {
+                throw new InvalidArgumentException('Site exists for another vendor');
+            }
         }
 
         return $site;
@@ -308,6 +351,21 @@ class Site extends Model
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)
             ->where('info', AdUser::PAGE_INFO_UNKNOWN)
             ->get();
+    }
+
+    public static function rejectByDomains(array $domains): void
+    {
+        foreach ($domains as $domain) {
+            $rejectReasonId = SitesRejectedDomain::domainRejectedReasonId($domain);
+            self::whereNot('status', self::STATUS_REJECTED)
+                ->where(function (Builder $sub) use ($domain) {
+                    $sub->where('domain', 'like', '%.' . $domain)->orWhere('domain', $domain);
+                })
+                ->update([
+                    'reject_reason_id' => $rejectReasonId,
+                    'status' => self::STATUS_REJECTED,
+                ]);
+        }
     }
 
     private static function getSitesChunkBuilder(int $previousChunkLastId, int $limit): Builder
@@ -335,5 +393,32 @@ class Site extends Model
     {
         $this->categories = $categories;
         $this->save();
+    }
+
+    public function approvalProcedure(): void
+    {
+        if (null !== $this->accepted_at) {
+            $this->status = self::STATUS_ACTIVE;
+            return;
+        }
+        if (SitesRejectedDomain::isDomainRejected($this->domain)) {
+            $this->status = self::STATUS_REJECTED;
+            $this->reject_reason_id = SitesRejectedDomain::domainRejectedReasonId($this->domain);
+            return;
+        }
+        if (self::isApprovalRequired($this->medium)) {
+            $this->status = self::STATUS_PENDING_APPROVAL;
+            Mail::to(config('app.technical_email'))
+                ->queue(new SiteApprovalPending($this->user_id, $this->url));
+            return;
+        }
+        $this->status = self::STATUS_ACTIVE;
+        $this->accepted_at = new DateTimeImmutable();
+    }
+
+    private static function isApprovalRequired(string $medium): bool
+    {
+        $mediumList = config('app.site_approval_required');
+        return in_array($medium, $mediumList) || in_array(self::ALL, $mediumList);
     }
 }

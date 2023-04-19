@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Adserver\ViewModel\Role;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Spatie\Activitylog\LogOptions;
 
@@ -168,5 +169,36 @@ class UserTest extends TestCase
         User::fetchOrRegisterSystemUser();
 
         self::assertDatabaseCount(User::class, 1);
+    }
+
+    public function testUpdateEmailWalletAndRolesSetModerator(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'is_admin' => false,
+            'is_advertiser' => false,
+            'is_agency' => false,
+            'is_moderator' => false,
+            'is_publisher' => false,
+        ]);
+
+        $user->updateEmailWalletAndRoles(roles: [Role::Moderator->value]);
+
+        self::assertTrue($user->isAdvertiser());
+        self::assertTrue($user->isModerator());
+        self::assertTrue($user->isPublisher());
+        self::assertFalse($user->isAdmin());
+        self::assertFalse($user->isAgency());
+    }
+
+    public function testIsRegular(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->admin()->create();
+        /** @var User $regular */
+        $regular = User::factory()->create();
+
+        self::assertFalse($admin->isRegular());
+        self::assertTrue($regular->isRegular());
     }
 }

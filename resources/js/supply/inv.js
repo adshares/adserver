@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -163,10 +163,11 @@ function createIframeFromData(data, domInsertCallback) {
                     fn(reader.result);
                 };
 
-                if (reader.readAsBinaryString)
+                if (reader.readAsBinaryString) {
                     reader.readAsBinaryString(data);
-                else
+                } else {
                     reader.readAsText(data);
+                }
             } else {
                 fn(data.bytes);
             }
@@ -196,7 +197,7 @@ function createIframeFromData(data, domInsertCallback) {
             });
         };
 
-        if(isFirefox) {
+        if (isFirefox) {
             fn('about:blank');
         } else {
             getDataURI(data, fn);
@@ -214,10 +215,11 @@ function createLinkFromData(data, callback)
             callback(reader.result);
         };
 
-        if (reader.readAsBinaryString)
+        if (reader.readAsBinaryString) {
             reader.readAsBinaryString(data);
-        else
+        } else {
             reader.readAsText(data);
+        }
     } else {
         callback(data.bytes);
     }
@@ -276,12 +278,12 @@ function fetchURL(url, options) {
             xdr = true;
             var orgUrl = url;
             var qPos = url.indexOf('?');
-            url += qPos == -1 ? '?xdr' : (qPos == url.length - 1 ? 'xdr' : '&xdr');
+            url += qPos === -1 ? '?xdr' : (qPos === url.length - 1 ? 'xdr' : '&xdr');
 
             xhr.__parseHeaders = function(headers) {
                 this.__responseHeaders = {};
                 var headers = headers.split('\n');
-                for(var i=0;i<headers.length;i++) {
+                for (let i = 0; i < headers.length; i++) {
                     var pos = headers[i].indexOf(':');
                     this.__responseHeaders[headers[i].substring(0, pos)] = headers[i].substr(pos+1);
                 }
@@ -295,7 +297,7 @@ function fetchURL(url, options) {
 
     if (!xdr) {
         try {
-            if(!options.noCredentials) {
+            if (!options.noCredentials) {
                 xhr.withCredentials = true;
             }
         } catch (e) {
@@ -316,6 +318,9 @@ function fetchURL(url, options) {
         xhr.overrideMimeType && xhr.overrideMimeType('text/plain; charset=x-user-defined');
     }
     xhr.open(options.method || 'GET', url);
+    if (options.json) {
+        xhr.setRequestHeader && xhr.setRequestHeader('Accept', 'application/json');
+    }
 
     fetchURL.timeout && (xhr.timeout = fetchURL.timeout);
 
@@ -336,17 +341,16 @@ function fetchURL(url, options) {
                 bytes : xhr.responseText,
                 type : xhr.contentType
             };
-            if (data.type.indexOf('text/base64') != -1) {
+            if (data.type.indexOf('text/base64') !== -1) {
                 data.type = data.type.split(',')[1];
                 var headerEnd = data.bytes.indexOf('\n\n');
-                if(headerEnd != -1) {
+                if (headerEnd !== -1) {
                     xhr.__parseHeaders(data.bytes.substring(0, headerEnd));
                     data.bytes = atob(data.bytes.substr(headerEnd+2));
                 } else {
                     data.bytes = atob(data.bytes);
                 }
                 data.originalUrl = orgUrl;
-
             }
             if (options.json) {
                 data = JSON.parse(data.bytes);
@@ -367,17 +371,18 @@ function fetchURL(url, options) {
 
                                 reader.onload = function (e) {
                                     data = {
-                                       bytes: reader.result,
-                                       type: xhr.response.type,
-                                       blob: xhr.response
+                                        bytes: reader.result,
+                                        type: xhr.response.type,
+                                        blob: xhr.response
                                     };
                                     callback && callback(data, xhr);
                                 };
 
-                                if (reader.readAsBinaryString)
+                                if (reader.readAsBinaryString) {
                                     reader.readAsBinaryString(xhr.response);
-                                else
+                                } else {
                                     reader.readAsText(xhr.response);
+                                }
                                 return;
                             } else {
                                 var arr;
@@ -414,10 +419,10 @@ function fetchURL(url, options) {
                             type : xhr.getResponseHeader('Content-Type')
                         };
                     }
-                    if (options.json) {
+                    if (options.json && 'application/json' === xhr.getResponseHeader('Content-Type')) {
                         try {
                             data = JSON.parse(data.bytes);
-                        } catch(e) {
+                        } catch (e) {
                             fail && fail();
                             return;
                         }

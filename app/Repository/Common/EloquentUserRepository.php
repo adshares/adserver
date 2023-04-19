@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -62,8 +62,7 @@ class EloquentUserRepository implements UserRepository
         }
 
         return $builder->orderBy('id')
-            ->tokenPaginate($perPage)
-            ->withQueryString();
+            ->tokenPaginate($perPage);
     }
 
     private function appendFilter(Builder $builder, Filter $filter): Builder
@@ -162,6 +161,16 @@ class EloquentUserRepository implements UserRepository
                     $join->on('users.id', '=', $alias . '.user_id');
                 })->orderBy('wallet_balance', $orderBy->getDirection())
                     ->select(['*', DB::raw('IFNULL(wallet_balance, 0) AS wallet_balance')]);
+                break;
+            case 'withdrawableBalance':
+                $set = UserLedgerEntry::queryForEntriesRelevantForWithdrawableBalance()
+                    ->select(DB::raw('user_id, SUM(amount) as withdrawable_balance'))
+                    ->groupBy('user_id');
+                $alias = $this->getUniqueAlias();
+                $builder->leftJoinSub($set, $alias, function ($join) use ($alias) {
+                    $join->on('users.id', '=', $alias . '.user_id');
+                })->orderBy('withdrawable_balance', $orderBy->getDirection())
+                    ->select(['*', DB::raw('IFNULL(withdrawable_balance, 0) AS withdrawable_balance')]);
                 break;
             default:
                 $builder->orderBy($orderBy->getColumn(), $orderBy->getDirection());

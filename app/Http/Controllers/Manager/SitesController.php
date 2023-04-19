@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,15 +27,18 @@ use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Common\CrmNotifier;
+use Adshares\Adserver\Services\Common\MetaverseAddressValidator;
 use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
+use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -44,12 +47,14 @@ use Adshares\Common\Exception\InvalidArgumentException;
 use Closure;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
@@ -74,10 +79,13 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
         $url = (string)$input['url'];
-        self::validateDomain(DomainReader::domain($url));
-
+        $domain = DomainReader::domain($url);
         $medium = $input['medium'] ?? null;
         $vendor = $input['vendor'] ?? null;
+        self::validateMedium($medium);
+        self::validateVendor($vendor);
+        self::validateDomain($domain, $medium, $vendor);
+
         try {
             $categoriesByUser = $this->siteCategoriesValidator->processCategories(
                 $input['categories'] ?? null,
@@ -106,6 +114,9 @@ class SitesController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        if (null !== Site::fetchSite($user->id, $domain)) {
+            throw new UnprocessableEntityHttpException(sprintf('Site with domain `%s` exists', $domain));
+        }
 
         DB::beginTransaction();
 
@@ -135,7 +146,7 @@ class SitesController extends Controller
 
         CrmNotifier::sendCrmMailOnSiteAdded($user, $site);
 
-        return self::json([], Response::HTTP_CREATED)
+        return self::json(['data' => $site->refresh()->toArray()], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site->id]));
     }
 
@@ -187,19 +198,28 @@ class SitesController extends Controller
 
     public function update(Request $request, Site $site): JsonResponse
     {
+        if (Site::STATUS_PENDING_APPROVAL === $site->status) {
+            throw new UnprocessableEntityHttpException('Site is pending approval');
+        }
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
         $updateDomainAndUrl = false;
+        if (isset($input['status']) && !in_array($input['status'], Site::ALLOWED_STATUSES, true)) {
+            throw new UnprocessableEntityHttpException('Invalid status');
+        }
         if (isset($input['url'])) {
             if (!SiteValidator::isUrlValid($input['url'])) {
                 throw new UnprocessableEntityHttpException('Invalid URL');
             }
             $url = (string)$input['url'];
             $domain = DomainReader::domain($url);
-            self::validateDomain($domain);
+            self::validateDomain($domain, $site->medium, $site->vendor);
 
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
+            if ($updateDomainAndUrl && null !== Site::fetchSite($site->user_id, $domain)) {
+                throw new UnprocessableEntityHttpException(sprintf('Site with domain `%s` exists', $domain));
+            }
         }
         if (isset($input['only_accepted_banners'])) {
             if (!is_bool($input['only_accepted_banners'])) {
@@ -223,6 +243,12 @@ class SitesController extends Controller
 
         try {
             $site->fill($input);
+            if ($updateDomainAndUrl) {
+                $site->accepted_at = null;
+            }
+            if (Site::STATUS_ACTIVE === $site->status) {
+                $site->approvalProcedure();
+            }
             $site->push();
             resolve(SiteFilteringUpdater::class)->addClassificationToFiltering($site);
 
@@ -240,7 +266,7 @@ class SitesController extends Controller
 
         DB::commit();
 
-        return self::json(['message' => 'Successfully edited']);
+        return self::json(['data' => $site->refresh()->toArray()]);
     }
 
     private function processInputZones(Site $site, array $inputZones): array
@@ -345,24 +371,6 @@ class SitesController extends Controller
         return self::json($sites);
     }
 
-    public function changeStatus(Site $site, Request $request): JsonResponse
-    {
-        if (!$request->has('site.status')) {
-            throw new InvalidArgumentException('No status provided');
-        }
-
-        $status = (int)$request->input('site.status');
-
-        $site->changeStatus($status);
-        $site->save();
-
-        return self::json([
-            'site' => [
-                'status' => $site->status,
-            ],
-        ]);
-    }
-
     public function readSitesSizes(?int $siteId = null): JsonResponse
     {
         $response = new SizesResponse($siteId);
@@ -379,11 +387,12 @@ class SitesController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-
         if (!$user->is_confirmed) {
-            return self::json(['message' => 'Confirm account to get code'], JsonResponse::HTTP_FORBIDDEN);
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'Confirm account to get code');
         }
-
+        if (in_array($site->status, [Site::STATUS_PENDING_APPROVAL, Site::STATUS_REJECTED], true)) {
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'Site must be verified');
+        }
         return self::json(['codes' => SiteCodeGenerator::generate($site, $request->toConfig())]);
     }
 
@@ -477,10 +486,14 @@ class SitesController extends Controller
     public function verifyDomain(Request $request): JsonResponse
     {
         $domain = $request->get('domain');
+        $medium = $request->get('medium');
+        $vendor = $request->get('vendor');
         if (null === $domain) {
             throw new BadRequestHttpException('Field `domain` is required.');
         }
-        self::validateDomain($domain);
+        self::validateMedium($medium);
+        self::validateVendor($vendor);
+        self::validateDomain($domain, $medium, $vendor);
 
         return self::json(
             ['code' => Response::HTTP_OK, 'message' => 'Valid domain.'],
@@ -488,15 +501,49 @@ class SitesController extends Controller
         );
     }
 
-    private static function validateDomain(string $domain): void
+    private static function validateDomain(string $domain, string $medium, ?string $vendor): void
     {
         if (!SiteValidator::isDomainValid($domain)) {
             throw new UnprocessableEntityHttpException('Invalid domain.');
         }
         if (SitesRejectedDomain::isDomainRejected($domain)) {
-            throw new UnprocessableEntityHttpException(
-                'The subdomain ' . $domain . ' is not supported. Please use your own domain.'
-            );
+            $rejectReasonId = SitesRejectedDomain::domainRejectedReasonId($domain);
+            $message = sprintf('The domain %s is rejected.', $domain);
+            if (null !== $rejectReasonId) {
+                $reason = (new SiteRejectReason())->find($rejectReasonId)?->reject_reason;
+                if (null === $reason) {
+                    Log::warning(
+                        sprintf('Cannot find reject reason (site_reject_reasons) with id (%d)', $rejectReasonId)
+                    );
+                } else {
+                    $message = sprintf('%s Reason: %s', $message, $reason);
+                }
+            }
+            throw new UnprocessableEntityHttpException($message);
+        }
+        if (MediumName::Metaverse->value === $medium) {
+            try {
+                MetaverseAddressValidator::fromVendor($vendor)->validateDomain($domain);
+            } catch (InvalidArgumentException) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid domain %s.', $domain));
+            }
+        }
+    }
+
+    private static function validateMedium(mixed $medium): void
+    {
+        if (null === $medium) {
+            throw new UnprocessableEntityHttpException('Field `medium` is required.');
+        }
+        if (!is_string($medium)) {
+            throw new UnprocessableEntityHttpException('Field `medium` must be a string.');
+        }
+    }
+
+    private static function validateVendor(mixed $vendor): void
+    {
+        if ($vendor !== null && !is_string($vendor)) {
+            throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null.');
         }
     }
 

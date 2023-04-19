@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,8 +21,10 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -31,6 +33,8 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -120,6 +124,23 @@ class SitesControllerTest extends TestCase
             ->assertJsonCount(2, 'filtering')
             ->assertJsonCount(1, 'filtering.requires')
             ->assertJsonCount(0, 'filtering.excludes');
+    }
+
+    public function testCreateSiteWhileAcceptanceRequired(): void
+    {
+        $this->login();
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        self::assertDatabaseHas(Site::class, [
+            'id' => $id,
+            'status' => Site::STATUS_PENDING_APPROVAL,
+        ]);
+        Mail::assertQueued(SiteApprovalPending::class);
     }
 
     private function getIdFromLocation($location): string
@@ -217,6 +238,16 @@ class SitesControllerTest extends TestCase
         self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Zone::TYPE_POP]);
     }
 
+    public function testCreateSiteWhileExist(): void
+    {
+        $user = $this->login();
+        Site::factory()->create(['user_id' => $user]);
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     /**
      * @dataProvider createSiteUnprocessableProvider
      *
@@ -279,6 +310,12 @@ class SitesControllerTest extends TestCase
             ],
             'invalid filtering.excludes 3' => [
                 self::simpleSiteData(['filtering' => self::filtering(['excludes' => ['category' => [1]]])]),
+            ],
+            'invalid medium' => [
+                self::simpleSiteData(['medium' => 'invalid']),
+            ],
+            'invalid vendor' => [
+                self::simpleSiteData(['vendor' => 'invalid']),
             ],
         ];
     }
@@ -414,7 +451,8 @@ class SitesControllerTest extends TestCase
 
     public function testUpdateSiteUrl(): void
     {
-        $user = $this->setupUser();
+        Config::updateAdminSettings([Config::SITE_APPROVAL_REQUIRED => '*']);
+        $user = $this->login();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         $url = 'https://example2.com';
@@ -429,6 +467,25 @@ class SitesControllerTest extends TestCase
         $site->refresh();
         self::assertEquals(0, $site->rank);
         self::assertEquals('unknown', $site->info);
+        self::assertNull($site->accepted_at);
+        self::assertEquals(Site::STATUS_PENDING_APPROVAL, $site->status);
+    }
+
+    public function testUpdateSiteUrlFailWhenExists(): void
+    {
+        $user = $this->setupUser();
+        Site::factory()->create([
+            'domain' => 'example2.com',
+            'url' => 'https://example2.com',
+            'user_id' => $user->id,
+        ]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+        $url = 'https://example2.com';
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => $url]]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUpdateSiteOnlyAcceptedBanners(): void
@@ -478,6 +535,26 @@ class SitesControllerTest extends TestCase
         $site = Site::factory()->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => 'ftp://example']]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUpdateSiteFailWhileInvalidStatus(): void
+    {
+        $user = $this->setupUser();
+        /** @var  Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['status' => 100]]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUpdateSiteFailWhilePendingApproval(): void
+    {
+        $user = $this->setupUser();
+        /** @var  Site $site */
+        $site = Site::factory()->create(['status' => Site::STATUS_PENDING_APPROVAL, 'user_id' => $user]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['status' => Site::STATUS_ACTIVE]]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -685,24 +762,24 @@ class SitesControllerTest extends TestCase
     public function updateDataProvider(): array
     {
         return [
-            [
+            'status, name, language' => [
                 [
                     "status" => 1,
                     "name" => "name1",
                     "primaryLanguage" => "xx",
                 ],
             ],
-            [
+            'status' => [
                 [
                     'status' => 1,
                 ],
             ],
-            [
+            'name' => [
                 [
                     "name" => "name2",
                 ],
             ],
-            [
+            'language' => [
                 [
                     "primaryLanguage" => "xx",
                 ],
@@ -878,7 +955,7 @@ class SitesControllerTest extends TestCase
      */
     public function testVerifyDomain(array $data, int $expectedStatus, string $expectedMessage): void
     {
-        $this->setupUser();
+        $this->login();
         SitesRejectedDomain::factory()->create(['domain' => 'rejected.com']);
 
         $response = $this->postJson(self::URI_DOMAIN_VERIFY, $data);
@@ -890,15 +967,83 @@ class SitesControllerTest extends TestCase
     {
         return [
             [['invalid' => 1], Response::HTTP_BAD_REQUEST, 'Field `domain` is required.'],
-            [['domain' => 1], Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid domain.'],
+            [['domain' => 1, 'medium' => 'web'], Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid domain.'],
             [
-                ['domain' => 'example.rejected.com'],
+                ['domain' => 'example.rejected.com', 'medium' => 'web'],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
-                'The subdomain example.rejected.com is not supported. Please use your own domain.',
+                'The domain example.rejected.com is rejected.',
             ],
-            [['domain' => 'rejected.com'], Response::HTTP_OK, 'Valid domain.'],
-            [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
+            [['domain' => 'example.com', 'medium' => 'web'], Response::HTTP_OK, 'Valid domain.'],
+            [['domain' => 'example.com'], Response::HTTP_UNPROCESSABLE_ENTITY, 'Field `medium` is required.'],
+            [
+                ['domain' => 'example.com', 'medium' => 0],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Field `medium` must be a string.',
+            ],
+            [
+                ['domain' => 'example.com', 'medium' => 'web', 'vendor' => 0],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Field `vendor` must be a string or null.',
+            ],
+            [
+                ['domain' => 'example.com', 'medium' => 'metaverse', 'vendor' => 'decentraland'],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Invalid domain example.com.',
+            ],
+            [
+                ['domain' => 'example.com', 'medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Invalid domain example.com.',
+            ],
+            [
+                ['domain' => 'scene-2-n5.decentraland.org', 'medium' => 'metaverse', 'vendor' => 'decentraland'],
+                Response::HTTP_OK,
+                'Valid domain.',
+            ],
+            [
+                ['domain' => 'scene-4745.cryptovoxels.com', 'medium' => 'metaverse', 'vendor' => 'cryptovoxels'],
+                Response::HTTP_OK,
+                'Valid domain.',
+            ],
         ];
+    }
+
+    public function testVerifyDomainWhileDomainRejectedWithReason(): void
+    {
+        $this->login();
+        SitesRejectedDomain::factory()->create([
+            'domain' => 'rejected.com',
+            'reject_reason_id' => SiteRejectReason::factory()->create(),
+        ]);
+        $response = $this->postJson(self::URI_DOMAIN_VERIFY, ['domain' => 'example.rejected.com', 'medium' => 'web']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonStructure(self::DOMAIN_VERIFY_STRUCTURE);
+        self::assertEquals(
+            'The domain example.rejected.com is rejected. Reason: Test reject reason',
+            $response->json('message'),
+        );
+    }
+
+    public function testVerifyDomainWhileDomainRejectedWithInvalidReason(): void
+    {
+        Log::spy();
+        $this->login();
+        SitesRejectedDomain::factory()->create([
+            'domain' => 'rejected.com',
+            'reject_reason_id' => 1500,
+        ]);
+        $response = $this->postJson(self::URI_DOMAIN_VERIFY, ['domain' => 'example.rejected.com', 'medium' => 'web']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonStructure(self::DOMAIN_VERIFY_STRUCTURE);
+        self::assertEquals(
+            'The domain example.rejected.com is rejected.',
+            $response->json('message'),
+        );
+        Log::shouldHaveReceived('warning')
+            ->with('Cannot find reject reason (site_reject_reasons) with id (1500)')
+            ->once();
     }
 
     /**
@@ -938,21 +1083,45 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
-    public function testSiteSizes(): void
+    public function testSiteCodesFailWhileSiteIsPending(): void
     {
-        $user = $this->setupUser();
+        $user = $this->login(User::factory()->create([
+            'admin_confirmed_at' => new DateTimeImmutable('-10 days'),
+            'email_confirmed_at' => new DateTimeImmutable('-10 days'),
+        ]));
         /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
+        $site = Site::factory()->create([
+            'status' => Site::STATUS_PENDING_APPROVAL,
+            'user_id' => $user,
+        ]);
 
-        $sizes = ['300x250', '336x280', '728x90'];
-        foreach ($sizes as $size) {
-            Zone::factory()->create(['site_id' => $site->id, 'size' => $size]);
+        $response = $this->getJson('/api/sites/' . $site->id . '/codes');
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testReadSitesSizes(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user]);
+        $expectedSizes = ['300x250', '336x280', '728x90', '4096x4096', '2048x2048', '1024x1024', '512x512', '480x640',
+            '640x480', '3072x4096', '4096x3072', '1536x2048', '2048x1536', '768x1024', '1024x768'];
+        foreach (['300x250', '336x280', '728x90'] as $size) {
+            Zone::factory()->create(['scopes' => [$size], 'site_id' => $site, 'size' => $size]);
         }
+        Zone::factory([
+            'scopes' => ['4096x4096', '2048x2048', '1024x1024', '512x512', '480x640', '640x480', '3072x4096',
+                '4096x3072', '1536x2048', '2048x1536', '768x1024', '1024x768'],
+            'site_id' => $site,
+            'size' => '10x10',
+        ])->create();
 
         $response = $this->getJson('/api/sites/sizes/' . $site->id);
 
-        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SIZES_STRUCTURE);
-        self::assertEquals($sizes, $response->json('sizes'));
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::SIZES_STRUCTURE);
+        self::assertEqualsCanonicalizing($expectedSizes, $response->json('sizes'));
     }
 
     public function testSiteRank(): void
@@ -972,38 +1141,6 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::RANK_STRUCTURE);
         self::assertEquals(0.2, $response->json('rank'));
         self::assertEquals(AdUser::PAGE_INFO_LOW_CTR, $response->json('info'));
-    }
-
-    public function testChangeStatus(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id, 'status' => Site::STATUS_ACTIVE]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => Site::STATUS_INACTIVE]])
-            ->assertStatus(Response::HTTP_OK);
-        $site->refresh();
-        self::assertEquals(Site::STATUS_INACTIVE, $site->status);
-    }
-
-    public function testChangeStatusInvalid(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['status' => -1]])
-            ->assertStatus(Response::HTTP_BAD_REQUEST);
-    }
-
-    public function testChangeStatusMissing(): void
-    {
-        $user = $this->setupUser();
-        /** @var Site $site */
-        $site = Site::factory()->create(['user_id' => $user->id]);
-
-        $this->putJson('/api/sites/' . $site->id . '/status', ['site' => ['stat' => -1]])
-            ->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
     public function testGetCryptovoxelsCode(): void

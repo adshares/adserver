@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,10 +25,6 @@ class SiteUtils
 {
     public static function extractNameFromCryptovoxelsDomain(string $domain): string
     {
-        if (1 !== preg_match('/^scene-\d+.cryptovoxels.com$/i', $domain)) {
-            return $domain;
-        }
-
         $prefixLength = strlen('scene-');
         $suffixLength = strlen('.cryptovoxels.com');
         return sprintf(
@@ -39,10 +35,6 @@ class SiteUtils
 
     public static function extractNameFromDecentralandDomain(string $domain): string
     {
-        if (1 !== preg_match('/^scene-[n]?\d+-[n]?\d+.decentraland.org$/i', $domain)) {
-            return $domain;
-        }
-
         if ('scene-0-0.decentraland.org' === $domain) {
             return 'DCL Builder';
         }
@@ -63,5 +55,28 @@ class SiteUtils
                 )
             )
         );
+    }
+
+    public static function extractNameFromPolkaCityDomain(string $domain): string
+    {
+        return sprintf('PolkaCity (%s)', explode('.', $domain)[0]);
+    }
+
+    public static function isValidCryptovoxelsUrl(string $url): bool
+    {
+        return 1 === preg_match(
+            '~^https://scene-\d+.cryptovoxels.com$~i',
+            $url,
+        );
+    }
+
+    public static function isValidDecentralandUrl(string $url): bool
+    {
+        return 1 === preg_match('~^https://scene-n?\d+-n?\d+.decentraland.org$~i', $url);
+    }
+
+    public static function isValidPolkaCityUrl(string $url): bool
+    {
+        return 1 === preg_match('~^https://[a-z0-9-]+.polkacity.io$~i', $url);
     }
 }

@@ -23,26 +23,20 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Image;
 
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
-use function mime_content_type;
-
-class ImageUploader implements Uploader
+class ImageUploader extends Uploader
 {
-    public const IMAGE_FILE = 'image';
-    private const IMAGE_DISK = 'banners';
-    private const FORMAT_TYPE_IMAGE = 'image';
-
     public function __construct(private readonly Request $request)
     {
     }
@@ -50,6 +44,9 @@ class ImageUploader implements Uploader
     public function upload(Medium $medium): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_image')) {
             throw new RuntimeException('Invalid image size');
@@ -57,64 +54,28 @@ class ImageUploader implements Uploader
         $imageSize = getimagesize($file->getRealPath());
         $width = $imageSize[0];
         $height = $imageSize[1];
-        $this->validateDimensions($medium, $width, $height);
 
-        $name = $file->store('', self::IMAGE_DISK);
+        $scope = Size::fromDimensions($width, $height);
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_IMAGE, $scope);
+        $mimeType = $file->getMimeType();
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_IMAGE, $mimeType);
+
+        $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_IMAGE,
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => $mimeType,
+            'scope' => $scope,
+            'content' => $file->getContent(),
+        ]);
+        Auth::user()->uploadedFiles()->save($model);
+
+        $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_IMAGE, 'uuid' => $name])
         );
 
         return new UploadedImage($name, $previewUrl->toString(), $width, $height);
-    }
-
-    public function removeTemporaryFile(string $fileName): void
-    {
-        try {
-            Storage::disk(self::IMAGE_DISK)->delete($fileName);
-        } catch (FileNotFoundException $exception) {
-            Log::warning(sprintf('Removing IMAGE file (%s) does not exist.', $fileName));
-        }
-    }
-
-    public function preview(string $fileName): Response
-    {
-        $path = Storage::disk(self::IMAGE_DISK)->path($fileName);
-        $mime = mime_content_type($path);
-
-        $response = new Response(file_get_contents($path));
-        $response->header('Content-Type', $mime);
-
-        return $response;
-    }
-
-    public static function content(string $fileName): string
-    {
-        $content = Storage::disk(self::IMAGE_DISK)->get($fileName);
-        if (null === $content) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
-        return $content;
-    }
-
-    public static function contentMimeType(string $fileName): string
-    {
-        if (!Storage::disk(self::IMAGE_DISK)->exists($fileName)) {
-            throw new FileNotFoundException(sprintf('File `%s` does not exist', $fileName));
-        }
-        $path = Storage::disk(self::IMAGE_DISK)->path($fileName);
-
-        return mime_content_type($path);
-    }
-
-    private function validateDimensions(Medium $medium, int $width, int $height): void
-    {
-        $size = Size::fromDimensions($width, $height);
-        foreach ($medium->getFormats() as $format) {
-            if (self::FORMAT_TYPE_IMAGE === $format->getType() && in_array($size, array_keys($format->getScopes()))) {
-                return;
-            }
-        }
-
-        throw new RuntimeException('Unsupported image size');
     }
 }

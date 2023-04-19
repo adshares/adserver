@@ -7,6 +7,145 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.4.12] - 2023-03-31
+### Added
+- Non-withdrawable user ledger entries
+- Optional parameter topframe in find request
+### Fixed
+- Do not compute targeting reach for adserver without supply capabilities
+- Backward compatibility for HTML code from demand on view event
+
+## [2.4.11] - 2023-03-15
+### Changed
+- Increase user activity interval
+- Extract sites' reject reason to separate table (normalization)
+### Fixed
+- Return CORS headers during maintenance
+
+## [2.4.10] - 2023-03-08
+### Added
+- Impression's account passed to demand
+### Fixed
+- Unified impression ID format on supply side
+
+## [2.4.9] - 2023-02-28
+### Fixed
+- No credentials while logging view
+
+## [2.4.8] - 2023-02-27
+### Changed
+- Add `noindex` header
+
+## [2.4.7] - 2023-02-27
+### Added
+- Locking user's account after several failed login attempts
+- Find response URLs extended with impression ID and placement ID
+### Changed
+- Demand view endpoint returns JSON or HTML based on header
+### Fixed
+- Presenting maintenance mode in info.json
+- Do not accept requests in maintenance mode
+- UUIDs are allowed for Page "Why" and reporting ads
+
+## [2.4.6] - 2023-02-20
+### Fixed
+- NowPayments order ID initialization
+
+## [2.4.5] - 2023-02-20
+### Fixed
+- Creating generic Metaverse campaign
+
+## [2.4.4] - 2023-02-17
+### Added
+- Polka City URL validation
+### Changed
+- Do not hash impression ID when passed as UUID
+- Allow zone ID instead on full context while logging event on supply side
+
+## [2.4.3] - 2023-02-15
+### Fixed
+- Missing creativeId during find
+
+## [2.4.2] - 2023-02-14
+### Changed
+- Page "Why" links to landing page
+- Default landing page URL
+
+## [2.4.1] - 2023-02-13
+### Fixed
+- Do not accept invalid metaverse URLs and domains
+### Added
+- Landing URL to info.json
+- Users' campaign media endpoint
+### Changed
+- Favicons and watermark compliant with brand book
+
+## [2.4.0] - 2023-02-09
+### Added
+- Filtering campaigns by medium and vendor
+- Fetching community fee from external service
+### Changed
+- Campaign can target any vendor of medium
+- Extract rejected domains from configuration API
+- Page "Why" appearance 
+### Fixed
+- Dynamic find with empty types or mimes
+- Banner classification list (correct medium)
+
+## [2.3.2] - 2023-01-31
+### Fixed
+- Calculating waiting payments
+
+## [2.3.1] - 2023-01-31
+### Fixed
+- Acceptance for active sites
+- Account confirmation in case of registration during find
+- Filtering by non-empty string which casts to false, e.g. '0'
+
+## [2.3.0] - 2023-01-26
+### Added
+- Server event type list to monitoring API
+- Command to upsert configuration
+- Option to require site approval for specific medium
+- Option to set site's filtering during automatic creation
+- Reject matching sites on rejecting domains
+- Possibility to grant user administrator privileges
+- Extend user data with roles
+### Changed
+- Authorize targeting reach fetches
+- Do not allow to update active campaign without creatives
+- Use UUID as ID in campaign APIv2
+- Store uploaded files (creatives) in database
+- Extend validation during file upload
+- Do not duplicate code for Decentraland find
+- Synchronize unreachable hosts
+- Support new adpay response
+### Removed
+- Redundant pagination data
+### Fixed
+- Allow creating campaign draft without creatives
+- Reading video dimensions with ffmpeg
+- Banner's content lazy loading
+- Forbid site duplicates
+- Clear not whitelisted hosts
+- Statistics computation in case of same user visiting different domains
+- User which receives administrator or moderator privileges can impersonate
+- Do not return code for sites that have not been positively verified
+
+## [2.2.7] - 2023-01-19
+### Fixed
+- Exporting events to AdPay (overwrite invalid page url)
+
+## [2.2.6] - 2023-01-10
+### Fixed
+- Exporting events to AdPay (check response)
+- Saving event's domain while fetching context
+
+## [2.2.5] - 2023-01-05
+### Fixed
+- Exporting campaign's targeting to AdSelect
+
 ## [2.2.4] - 2022-12-29
 ### Fixed
 - Importing inventory while AdServer does not return JSON
@@ -774,7 +913,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.2.4...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.12...develop
+[2.4.12]: https://github.com/adshares/adserver/compare/v2.4.11...v2.4.12
+[2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
+[2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
+[2.4.9]: https://github.com/adshares/adserver/compare/v2.4.8...v2.4.9
+[2.4.8]: https://github.com/adshares/adserver/compare/v2.4.7...v2.4.8
+[2.4.7]: https://github.com/adshares/adserver/compare/v2.4.6...v2.4.7
+[2.4.6]: https://github.com/adshares/adserver/compare/v2.4.5...v2.4.6
+[2.4.5]: https://github.com/adshares/adserver/compare/v2.4.4...v2.4.5
+[2.4.4]: https://github.com/adshares/adserver/compare/v2.4.3...v2.4.4
+[2.4.3]: https://github.com/adshares/adserver/compare/v2.4.2...v2.4.3
+[2.4.2]: https://github.com/adshares/adserver/compare/v2.4.1...v2.4.2
+[2.4.1]: https://github.com/adshares/adserver/compare/v2.4.0...v2.4.1
+[2.4.0]: https://github.com/adshares/adserver/compare/v2.3.2...v2.4.0
+[2.3.2]: https://github.com/adshares/adserver/compare/v2.3.1...v2.3.2
+[2.3.1]: https://github.com/adshares/adserver/compare/v2.3.0...v2.3.1
+[2.3.0]: https://github.com/adshares/adserver/compare/v2.2.7...v2.3.0
+[2.2.7]: https://github.com/adshares/adserver/compare/v2.2.6...v2.2.7
+[2.2.6]: https://github.com/adshares/adserver/compare/v2.2.5...v2.2.6
+[2.2.5]: https://github.com/adshares/adserver/compare/v2.2.4...v2.2.5
 [2.2.4]: https://github.com/adshares/adserver/compare/v2.2.3...v2.2.4
 [2.2.3]: https://github.com/adshares/adserver/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/adshares/adserver/compare/v2.2.1...v2.2.2

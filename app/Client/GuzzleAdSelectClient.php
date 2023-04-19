@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -53,13 +53,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
-
-use function config;
-use function iterator_to_array;
-use function json_encode;
-use function route;
-use function sprintf;
-use function strtolower;
+use Throwable;
 
 class GuzzleAdSelectClient implements AdSelect
 {
@@ -138,7 +132,7 @@ class GuzzleAdSelectClient implements AdSelect
         }
     }
 
-    public function findBanners(array $zones, ImpressionContext $context): FoundBanners
+    public function findBanners(array $zones, ImpressionContext $context, string $impressionId): FoundBanners
     {
         $zoneInputByUuid = [];
         $zoneIds = [];
@@ -173,8 +167,10 @@ class GuzzleAdSelectClient implements AdSelect
                         'publisher_id' => $user->uuid,
                         'uuid'         => $site->uuid,
                         'medium'       => $site->medium,
-                        'vendor'       => $site->vendor ?? CampaignMapper::DEFAULT_VENDOR,
                     ];
+                    if (null !== $site->vendor) {
+                        $sitesMap[$siteId]['vendor'] = $site->vendor;
+                    }
                     if (isset($zones[$i]['options']['banner_type'])) {
                         $sitesMap[$siteId]['filters']['require']['type'] = (array)$zones[$i]['options']['banner_type'];
                     }
@@ -233,7 +229,7 @@ class GuzzleAdSelectClient implements AdSelect
                         RequestOptions::JSON => $context->adSelectRequestParams($existingZones, $zoneInput, $sitesMap),
                     ]
                 );
-            } catch (RequestException $exception) {
+            } catch (Throwable $exception) {
                 throw new UnexpectedClientResponseException(
                     sprintf(
                         '[ADSELECT] Find banners (%s) from %s failed (%s).',
@@ -271,13 +267,16 @@ class GuzzleAdSelectClient implements AdSelect
             }
         }
 
-        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection));
+        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection, $impressionId));
 
         return new FoundBanners($banners);
     }
 
-    private function fetchInOrderOfAppearance(array $params, Collection $zoneCollection): Generator
-    {
+    private function fetchInOrderOfAppearance(
+        array $params,
+        Collection $zoneCollection,
+        string $impressionId,
+    ): Generator {
         /** @var LicenseReader $licenseReader */
         $licenseReader = resolve(LicenseReader::class);
         $infoBox = $licenseReader->getInfoBox();
@@ -311,7 +310,9 @@ class GuzzleAdSelectClient implements AdSelect
                                 'log-network-click',
                                 [
                                     'id' => $banner->uuid,
+                                    'iid' => $impressionId,
                                     'r'  => Utils::urlSafeBase64Encode($banner->click_url),
+                                    'zid' => $zone->uuid,
                                 ]
                             )
                         )),
@@ -320,7 +321,9 @@ class GuzzleAdSelectClient implements AdSelect
                                 'log-network-view',
                                 [
                                     'id' => $banner->uuid,
+                                    'iid' => $impressionId,
                                     'r'  => Utils::urlSafeBase64Encode($banner->view_url),
+                                    'zid' => $zone->uuid,
                                 ]
                             )
                         )),

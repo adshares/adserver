@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,7 +28,7 @@ use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Repository\StatsRepository;
-use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -41,13 +41,8 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
 
     protected $description = 'Aggregates events data for statistics';
 
-    /** @var StatsRepository */
-    private $statsRepository;
-
-    public function __construct(Locker $locker, StatsRepository $statsRepository)
+    public function __construct(Locker $locker, private readonly StatsRepository $statsRepository)
     {
-        $this->statsRepository = $statsRepository;
-
         parent::__construct($locker);
     }
 
@@ -56,7 +51,6 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
         $hour = $this->option('hour');
         if (null === $hour && !$this->lock()) {
             $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
-
             return;
         }
 
@@ -66,7 +60,6 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
             if (false === ($timestamp = strtotime($hour))) {
                 $this->error(sprintf('[Aggregate statistics] Invalid hour option format "%s"', $hour));
                 $this->release();
-
                 return;
             }
 
@@ -104,7 +97,7 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
             DB::beginTransaction();
 
             try {
-                $this->aggregateForHour(new DateTime('@' . $logsHourlyMeta->id));
+                $this->aggregateForHour(new DateTimeImmutable('@' . $logsHourlyMeta->id));
 
                 if ($logsHourlyMeta->isActual()) {
                     $logsHourlyMeta->updateAfterProcessing(
@@ -138,9 +131,9 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
         }
     }
 
-    private function aggregateForHour(DateTime $from): void
+    private function aggregateForHour(DateTimeImmutable $from): void
     {
-        $to = (clone $from)->setTime((int)$from->format('H'), 59, 59, 999999);
+        $to = $from->setTime((int)$from->format('H'), 59, 59, 999999);
 
         $this->info(
             sprintf(

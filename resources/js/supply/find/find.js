@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -74,8 +74,8 @@ var encodeZones = function (zone_data) {
 var insertedElements = [];
 var logInsertedElement = function(el) {
     if (insertedElements.length === 0) {
-        addListener(window, 'beforeunload', function (event) {
-            var x;
+        addListener(window, 'beforeunload', function (_event) {
+            let x;
             while (x = insertedElements.pop()) {
                 x.parentElement && x.parentElement.removeChild(x);
             }
@@ -125,13 +125,13 @@ var replaceTag = function (oldTag, newTag, banner) {
 };
 
 
-var prepareElement = function (context, banner, element, contextParam) {
+var prepareElement = function (context, banner, element) {
     var div = document.createElement('div');
     var clickOverlay;
     var infoBox;
 
     if (false !== banner.infoBox) {
-        infoBox = prepareInfoBox(context, banner, contextParam);
+        infoBox = prepareInfoBox(context, banner);
         div.appendChild(infoBox);
     }
 
@@ -196,26 +196,23 @@ var prepareElement = function (context, banner, element, contextParam) {
     return div;
 };
 
-var prepareInfoBox = function (context, banner, contextParam) {
-    var url = addUrlParam(serverOrigin + '/supply/why', {
-        'bid': banner.placementId,
+var prepareInfoBox = function (context, banner) {
+    const url = addUrlParam(serverOrigin + '/supply/why', {
+        'bid': banner.creativeId,
         'cid': context.cid,
-        'ctx': contextParam,
-        'iid': getImpressionId(),
-        'url': banner.serveUrl,
     });
 
-    var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important;z-index:1');
+    const div = document.createElement('div');
+    div.setAttribute('style', 'all: revert; position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important; height: 16px; width: 16px; overflow: hidden; padding: 0;z-index:1');
 
-    var link = document.createElement('a');
+    const link = document.createElement('a');
     link.target = '_blank';
     link.href = url;
-
-    link.setAttribute('style', 'text-decoration: none !important;background-color: #fff !important');
-
-    link.innerHTML = '<svg style="width: 16px; height: 16px; display: block;" version="1.1" viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg">' +
-        '<path d="m11.405 1.9861v6.798c0 0.0309-0.0019 0.0617-0.0037 0.0902a1.1895 1.1895 0 0 1 -0.3426 0.77162 1.1192 1.1192 0 0 1 -0.8315 0.35834h-0.0037q-0.48088 0-0.82718-0.35865a1.1988 1.1988 0 0 1 -0.3463 -0.86205v-2e-3c0-0.0253 0-0.0503 0.00187-0.0753-0.0028-0.67655-0.15649-1.2988-0.45989-1.8602a4.3519 4.3519 0 0 0 -0.77725 -1.0493q-0.15247-0.15432-0.31235-0.28796-1.1016-0.92595-2.5596-0.9528c-0.030893 0-0.059919-2e-3 -0.090438-2e-3q-1.8417 0-3.097 1.2186-1.2553 1.2185-1.255 3.0031v8e-3q0.0028 1.747 1.2546 2.9868 1.2519 1.2398 3.0248 1.2429 1.3062 0 2.3303-0.67687-0.14908-0.12593-0.29167-0.26667c-0.6852-0.67903-1.1074-1.4744-1.2608-2.3741a1.1111 1.1111 0 0 1 -0.78613 0.31018q-0.48119 0-0.82717-0.35864a1.1982 1.1982 0 0 1 -0.3463 -0.86369q0-0.51297 0.34229-0.8676a1.1111 1.1111 0 0 1 0.61112 -0.3352 1.2185 1.2185 0 0 1 0.22007 -0.0198 1.117 1.117 0 0 1 0.72038 0.24692c0.024733 0.0225 0.049092 0.0456 0.072798 0.0701a1.4213 1.4213 0 0 1 0.36853 0.66792 1.3917 1.3917 0 0 1 0.020066 0.23827 4.4245 4.4245 0 0 0 0.087078 0.87626c0.14044 0.78365 0.50895 1.4652 1.1173 2.0679 0.098147 0.0972 0.33334 0.30063 0.34846 0.31328q1.0781 0.90033 2.5 0.96638c0.07252 4e-3 0.14599 5e-3 0.21976 6e-3h0.0047c0.96607 0 2.0105-0.21236 3.0195-1.2389 1.009-1.0266 1.2503-2.1661 1.2503-2.9886v-6.7992zm-1.9874 5.9023a1.1093 1.1093 0 0 1 0.80588 -0.32964h0.0037a1.1161 1.1161 0 0 1 0.7386 0.26389v-3.2195a4.2837 4.2837 0 0 0 -0.66113 -0.0515c-0.02623 0-0.05124 3e-3 -0.07746 4e-3q-1.3581 0.0194-2.3923 0.70773 0.18519 0.15185 0.35772 0.32654c0.65742 0.66175 1.0676 1.4324 1.2247 2.2991z" fill="#5fb2f9" stroke-width=".030865"/>' +
+    link.setAttribute('style', 'all: revert;text-decoration: none !important;background-color: #fff !important');
+    link.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="all: revert">' +
+        '<defs><style>.cls-1{fill:#fff;}.cls-2{fill:#ff414d;}</style></defs>' +
+        '<g id="Layer_1"><rect class="cls-1" x="-.78" y="-.84" width="17.54" height="17.61"/></g>' +
+        '<g id="Layer_2"><path class="cls-2" d="m11.82,2.45v2.88c-.41-.15-.86-.23-1.33-.23-.9,0-1.73.3-2.4.8.68.62,1.16,1.45,1.33,2.39.24-.33.63-.54,1.07-.54.73,0,1.33.6,1.33,1.33s-.59,1.33-1.33,1.33c-.44,0-.83-.21-1.07-.54-.16-.22-.26-.49-.26-.79,0-1.18-.51-2.24-1.33-2.97-.08-.07-.17-.15-.26-.21-.67-.5-1.5-.8-2.4-.8-2.2,0-3.98,1.78-3.98,3.98s1.78,3.98,3.98,3.98c.9,0,1.73-.3,2.4-.8-.68-.62-1.16-1.45-1.33-2.39-.24.33-.63.54-1.07.54-.73,0-1.33-.6-1.33-1.33s.6-1.33,1.33-1.33c.44,0,.83.21,1.07.54.16.22.26.49.26.79,0,1.18.51,2.24,1.33,2.97.08.07.17.15.26.21.67.5,1.5.8,2.4.8.47,0,.91-.08,1.33-.23,1.55-.55,2.66-2.02,2.66-3.76V2.45h-2.66Z"/></g>' +
         '</svg>';
 
     div.appendChild(link);
@@ -452,11 +449,11 @@ var aduserPixel = function (impressionId, onload) {
     return true;
 };
 
-var createIframeFromUrl = function createIframeFromUrl(url, doc) {
-    var iframe = (doc || document).createElement('iframe');
+var createIframeFromUrl = function (url, doc) {
+    const iframe = (doc || document).createElement('iframe');
     iframe.setAttribute('style', 'display:none');
-    iframe.setAttribute('width', 1);
-    iframe.setAttribute('height', 1);
+    iframe.setAttribute('width', '1');
+    iframe.setAttribute('height', '1');
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     iframe.src = url;
 
@@ -671,12 +668,13 @@ var isBannerPop = function (banner) {
 domReady(function () {
     aduserPixel(getImpressionId(), function () {
         getActiveZones(function (zones, params) {
-            var context = params.shift()
-            var placements = params.map((p, index) => ({
+            const context = params.shift()
+            const placements = params.map((p, index) => ({
                 id: index.toString(),
                 placementId: p.zone,
+                topframe: !context.frame,
             }));
-            var data = {
+            const data = {
                 context: {
                     iid: context.iid,
                     metamask: !!(context.metamask || 0),
@@ -684,8 +682,8 @@ domReady(function () {
                 },
                 placements: placements,
             };
-            var url = serverOrigin + '/supply/find';
-            var options = {
+            const url = serverOrigin + '/supply/find';
+            const options = {
                 json: true,
                 method: 'post',
                 post: data,
@@ -787,9 +785,19 @@ var addAnalyticsIframe = function (url) {
     if (!url) {
         return;
     }
-    var iframe = createIframeFromUrl(url, topdoc);
+    const iframe = createIframeFromUrl(url, topdoc);
     topdoc.body.appendChild(iframe);
-    setTimeout(function() {
+    setTimeout(function () {
+        iframe.parentElement.removeChild(iframe);
+    }, 10000);
+    return iframe;
+};
+
+var addAnalyticsIframeWithHtmlContent = function (html) {
+    const iframe = createIframeFromUrl('about:blank', topdoc);
+    iframe.srcdoc = html;
+    topdoc.body.appendChild(iframe);
+    setTimeout(function () {
         iframe.parentElement.removeChild(iframe);
     }, 10000);
     return iframe;
@@ -891,24 +899,19 @@ var fetchBanner = function (banner, context, zone_options) {
     fetchURL(banner.serveUrl, {
         binary: true,
         noCredentials: true
-    }).then(function (data, xhr) {
+    }).then(function (data, _xhr) {
         context.cid = getCid();
-        context.page.zone = banner.zoneId;
-        var contextParam = encodeZones([context.page]);
+        context.page.zone = banner.placementId;
         context.click_url = addUrlParam(
             banner.clickUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,
-                'iid': getImpressionId(),
             }
         );
         context.view_url = addUrlParam(
             banner.viewUrl,
             {
                 'cid': context.cid,
-                'ctx': contextParam,
-                'iid': getImpressionId(),
             }
         );
 
@@ -917,7 +920,21 @@ var fetchBanner = function (banner, context, zone_options) {
             var timer = setInterval(function () {
                 if (isVisible(element)) {
                     clearInterval(timer);
-                    dwmthACL.push(addAnalyticsIframe(context.view_url).contentWindow);
+                    const options = {
+                        json: true,
+                        noCredentials: true,
+                    };
+                    fetchURL(context.view_url, options)
+                        .then(function (data, _xhr) {
+                            if (data.type && data.type.startsWith('text/html')) {
+                                dwmthACL.push(addAnalyticsIframeWithHtmlContent(data.bytes).contentWindow);
+                            } else {
+                                const urls = data.context || [];
+                                for (const url of urls) {
+                                    dwmthACL.push(addAnalyticsIframe(url).contentWindow);
+                                }
+                            }
+                        });
                 }
             }, 1000);
         };
@@ -937,7 +954,7 @@ var fetchBanner = function (banner, context, zone_options) {
                         url = banner.serveUrl;
                     }
                     context.skip_overlay = (url.indexOf('#dwmth') !== -1);
-                    url = fillPlaceholders(url, context.cid, banner.placementId, banner.publisherId, banner.supplyServer, getDomain(context.page.url), banner.zoneId, context.page.keywords);
+                    url = fillPlaceholders(url, context.cid, banner.creativeId, banner.publisherId, banner.supplyServer, getDomain(context.page.url), banner.placementId, context.page.keywords);
 
                     if (banner.scope === 'pop-up' || banner.scope === 'pop-under') {
                         addPopCandidate(

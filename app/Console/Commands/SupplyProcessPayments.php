@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -187,14 +187,18 @@ SQL;
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
 
         $licensePayment = $resultsCollection->sendAllLicensePayments();
-        $this->info(
-            sprintf(
-                'LicensePayment TX_ID: %s. Sent %d to %s.',
-                $licensePayment->tx_id,
-                $licensePayment->amount,
-                $licensePayment->receiver_address
-            )
-        );
+        if (null === $licensePayment) {
+            $this->info('No license payment');
+        } else {
+            $this->info(
+                sprintf(
+                    'License payment TX_ID: %s. Sent %d to %s.',
+                    $licensePayment->tx_id,
+                    $licensePayment->amount,
+                    $licensePayment->receiver_address
+                )
+            );
+        }
     }
 
     private function fetchTimestampsToUpdate(array $adsPaymentIds): array

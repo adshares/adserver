@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -105,6 +105,9 @@ class Utils
         ];
     }
 
+    /**
+     * @deprecated
+     */
     public static function encodeZones(array $data): string
     {
         $VALUE_GLUE = "\t";
@@ -220,7 +223,7 @@ class Utils
 
         $page = $context['page'];
 
-        if (!isset($page['url'])) {
+        if (!isset($page['url']) || !is_string($page['url'])) {
             $page['url'] = $request->headers->get('Referer');
         }
         $url = parse_url($page['url']);
@@ -257,7 +260,7 @@ class Utils
         Response $response,
         $contentSha1,
         DateTime $contentModified,
-        ?string $impressionId = null
+        ?string $impressionId = null,
     ): string {
         $tid = self::getOrCreateTrackingId($request, $impressionId);
 

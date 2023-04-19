@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -129,7 +129,9 @@ final class ImpressionContext
             $userId = $this->userId();
             $siteKeywords = $this->site;
             $siteKeywords['medium'] = $siteMap['medium'];
-            $siteKeywords['vendor'] = $siteMap['vendor'];
+            if (isset($siteMap['vendor'])) {
+                $siteKeywords['vendor'] = $siteMap['vendor'];
+            }
             $params[] = [
                 'keywords' => array_merge(
                     AbstractFilterMapper::generateNestedStructure(['site' => $siteKeywords]),
@@ -166,7 +168,7 @@ final class ImpressionContext
 
     public function url(): string
     {
-        return $this->site['page'] ?? '';
+        return (string)($this->site['page'] ?? '');
     }
 
     public function userId(): string

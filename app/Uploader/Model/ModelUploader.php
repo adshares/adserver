@@ -23,22 +23,19 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Uploader\Model;
 
+use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
-class ModelUploader implements Uploader
+class ModelUploader extends Uploader
 {
-    public const MODEL_FILE = 'model';
-    private const DISK = 'banners';
-
     public function __construct(private readonly Request $request)
     {
     }
@@ -46,56 +43,46 @@ class ModelUploader implements Uploader
     public function upload(Medium $medium): UploadedFile
     {
         $file = $this->request->file('file');
+        if (null === $file) {
+            throw new RuntimeException('Field `file` is required');
+        }
         $size = $file->getSize();
         if (!$size || $size > config('app.upload_limit_model')) {
             throw new RuntimeException('Invalid model size');
         }
-        $name = $file->storeAs('', Str::random(40) . '.' . $file->getClientOriginalExtension(), self::DISK);
+
+        $content = $file->getContent();
+        $scope = 'cube';
+        $bannerValidator = new BannerValidator($medium);
+        $bannerValidator->validateScope(Banner::TEXT_TYPE_MODEL, $scope);
+        $mimeType = self::contentMimeType($content);
+        $bannerValidator->validateMimeType(Banner::TEXT_TYPE_MODEL, $mimeType);
+
+        $model = new UploadedFileModel([
+            'type' => Banner::TEXT_TYPE_MODEL,
+            'medium' => $medium->getName(),
+            'vendor' => $medium->getVendor(),
+            'mime' => $mimeType,
+            'scope' => $scope,
+            'content' => $content,
+        ]);
+        Auth::user()->uploadedFiles()->save($model);
+
+        $name = $model->uuid;
         $previewUrl = new SecureUrl(
-            route('app.campaigns.upload_preview', ['type' => self::MODEL_FILE, 'name' => $name])
+            route('app.campaigns.upload_preview', ['type' => Banner::TEXT_TYPE_MODEL, 'uuid' => $name])
         );
 
         return new UploadedModel($name, $previewUrl->toString());
     }
 
-    public function removeTemporaryFile(string $fileName): void
-    {
-        Storage::disk(self::DISK)->delete($fileName);
-    }
-
-    public function preview(string $fileName): Response
-    {
-        $content = self::content($fileName);
-        $mime = self::contentMimeType($content);
-
-        $response = new Response($content);
-        $response->header('Content-Type', $mime);
-
-        return $response;
-    }
-
-    public static function content(string $fileName): string
-    {
-        $content = Storage::disk(self::DISK)->get($fileName);
-        if (null === $content) {
-            throw new FileNotFoundException(sprintf('File %s cannot be found', $fileName));
-        }
-        return $content;
-    }
-
-    public static function contentMimeType(string $content): string
+    private static function contentMimeType(string $content): string
     {
         $fileHeader = substr($content, 0, 4);
-        switch ($fileHeader) {
-            case 'glTF':
-                $mime = 'model/gltf-binary';
-                break;
-            case 'VOX ':
-                $mime = 'model/voxel';
-                break;
-            default:
-                throw new RuntimeException('Unsupported model file.');
-        }
-        return $mime;
+        return match ($fileHeader) {
+            'glTF' => 'model/gltf-binary',
+            'VOX ' => 'model/voxel',
+            default => throw new RuntimeException('Unsupported model file'),
+        };
     }
 }

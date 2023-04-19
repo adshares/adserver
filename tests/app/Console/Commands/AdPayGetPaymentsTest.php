@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -44,7 +44,6 @@ use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 
 use function json_decode;
-use function random_int;
 
 class AdPayGetPaymentsTest extends ConsoleTestCase
 {
@@ -83,30 +82,45 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             'banner_id' => $bannerUuid,
         ]);
 
-        $calculatedEvents = $events->map(static function (EventLog $entry) {
+        $i = 0;
+        $calculatedEvents = $events->map(static function (EventLog $entry) use (&$i) {
             return [
                 'event_id' => $entry->event_id,
                 'event_type' => $entry->event_type,
-                'value' => random_int(0, 100 * 10 ** 11),
+                'value' => $i++,
                 'status' => 0,
             ];
         });
-
-        $totalInCurrency = $calculatedEvents->sum('value') + 1;// add 1 to fix conversion rate difference
-        $userBalance = (int)ceil(
-            $totalInCurrency / $dummyExchangeRateRepository->fetchExchangeRate(new DateTime())->getValue()
+        // event value sum = 221_445 / 0,3333 = 664_401
+        UserLedgerEntry::factory()->create(
+            [
+                'amount' => 200_000,
+                'user_id' => $userId,
+                'type' => UserLedgerEntry::TYPE_DEPOSIT
+            ]
         );
-        UserLedgerEntry::factory()->create(['amount' => $userBalance, 'user_id' => $userId]);
+        UserLedgerEntry::factory()->create(
+            [
+                'amount' => 465_000,
+                'user_id' => $userId,
+                'type' => UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT
+            ]
+        );
+
+        $this->assertEquals(665_000, $user->getWalletBalance());
+        $this->assertEquals(200_000, $user->getWithdrawableBalance());
 
         $this->app->bind(
             AdPay::class,
             function () use ($calculatedEvents) {
                 $adPay = $this->createMock(AdPay::class);
-                $adPay->method('getPayments')->will($this->returnCallback(
-                    function ($timestamp, $recalculate, $force, $limit, $offset) use ($calculatedEvents) {
-                        return $calculatedEvents->slice($offset, $limit)->toArray();
-                    }
-                ));
+                $adPay->method('getPayments')->will(
+                    $this->returnCallback(
+                        function ($timestamp, $recalculate, $force, $limit, $offset) use ($calculatedEvents) {
+                            return $calculatedEvents->slice($offset, $limit)->toArray();
+                        }
+                    )
+                );
 
                 return $adPay;
             }
@@ -125,6 +139,9 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
 
             $this->assertDatabaseHas('event_logs', $eventValue);
         });
+
+        $this->assertEquals(599, $user->getWalletBalance());
+        $this->assertEquals(599, $user->getWithdrawableBalance());
     }
 
     public function testNormalization(): void
@@ -133,7 +150,8 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         $user = User::factory()->times(1)->create()->each(static function (User $user) {
             $entries = [
                 [UserLedgerEntry::TYPE_DEPOSIT, 100, UserLedgerEntry::STATUS_ACCEPTED],
-                [UserLedgerEntry::TYPE_BONUS_INCOME, 100, UserLedgerEntry::STATUS_ACCEPTED],
+                [UserLedgerEntry::TYPE_BONUS_INCOME, 50, UserLedgerEntry::STATUS_ACCEPTED],
+                [UserLedgerEntry::TYPE_NON_WITHDRAWABLE_DEPOSIT, 50, UserLedgerEntry::STATUS_ACCEPTED],
             ];
 
             foreach ($entries as $entry) {

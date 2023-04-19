@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -61,7 +61,6 @@ abstract class Controller extends BaseController
             throw new UnprocessableEntityHttpException("Missing request object '$name'");
         }
 
-        /* @var $validator \Illuminate\Validation\Validator */
         $validator = Validator::make($request->input($name), $rules);
 
         return $validator->validate();

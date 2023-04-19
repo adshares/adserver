@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -44,19 +44,20 @@ use function hex2bin;
 
 final class DummyAdSelectClient implements AdSelect
 {
-    public function findBanners(array $zones, ImpressionContext $context): FoundBanners
+    public function findBanners(array $zones, ImpressionContext $context, string $impressionId): FoundBanners
     {
-        $banners = $this->getBestBanners($zones);
+        $banners = $this->getBestBanners($zones, $impressionId);
 
         return new FoundBanners($banners);
     }
 
-    private function getBestBanners(array $zones): array
+    private function getBestBanners(array $zones, string $impressionId): array
     {
         $bannerIds = [];
         $zoneData = [];
         foreach ($zones as $zoneInfo) {
-            $zone = Zone::where('uuid', hex2bin($zoneInfo['zone']))->first();
+            $zoneId = $zoneInfo['placementId'] ?? (string)$zoneInfo['zone'];// Key 'zone' is for legacy search
+            $zone = Zone::where('uuid', hex2bin($zoneId))->first();
             if (!$zone) {
                 $bannerIds[] = '';
                 continue;
@@ -70,7 +71,7 @@ final class DummyAdSelectClient implements AdSelect
                     'publisher_id'  => $zone->site->user->uuid,
                     'zone_id'       => $zone->uuid,
                 ];
-            } catch (InvalidArgumentException $e) {
+            } catch (InvalidArgumentException) {
                 $bannerIds[] = '';
             }
         }
@@ -83,10 +84,11 @@ final class DummyAdSelectClient implements AdSelect
                 $banners[] = null;
             } else {
                 $campaign = NetworkCampaign::find($banner->network_campaign_id);
+                $zoneId = $zoneData[$bannerId]['zone_id'];
                 $banners[] = [
                     'id' => $bannerId,
                     'publisher_id' => $zoneData[$bannerId]['publisher_id'],
-                    'zone_id' => $zoneData[$bannerId]['zone_id'],
+                    'zone_id' => $zoneId,
                     'pay_from' => $campaign->source_address,
                     'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
                     'type' => $banner->type,
@@ -98,7 +100,9 @@ final class DummyAdSelectClient implements AdSelect
                             'log-network-click',
                             [
                                 'id' => $banner->uuid,
+                                'iid' => $impressionId,
                                 'r'  => Utils::urlSafeBase64Encode($banner->click_url),
+                                'zid' => $zoneId,
                             ]
                         )
                     ),
@@ -107,7 +111,9 @@ final class DummyAdSelectClient implements AdSelect
                             'log-network-view',
                             [
                                 'id' => $banner->uuid,
+                                'iid' => $impressionId,
                                 'r'  => Utils::urlSafeBase64Encode($banner->view_url),
+                                'zid' => $zoneId,
                             ]
                         )
                     ),
