@@ -28,18 +28,108 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
+    private const SQL_SSP_INCOME = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, ads_address, amount, created_at, updated_at, type)
+SELECT
+    CONCAT(DATE(created_at), ' ', LPAD(HOUR(created_at), 2, '0'), ':00:00') AS hour_timestamp,
+    UNHEX(REPLACE(LEFT(address, 13), '-', '')) AS ads_address,
+    SUM(amount) AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    'SspIncome' AS type
+FROM ads_payments
+WHERE status = 2
+  AND created_at >= '2023-01-01'
+  AND amount > 0
+GROUP BY 1, 2;
+SQL;
+
+    private const SQL_SSP_LICENSE_FEE = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, ads_address, amount, created_at, updated_at, type)
+SELECT
+    CONCAT(DATE(a.created_at), ' ', LPAD(HOUR(a.created_at), 2, '0'), ':00:00') AS hour_timestamp,
+    receiver_address AS ads_address,
+    SUM(n.amount) AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    'SspLicenseFee' AS type
+FROM network_payments n
+    JOIN ads_payments a on a.id = n.ads_payment_id
+WHERE a.status = 2
+  AND a.created_at >= '2023-01-01'
+  AND n.processed = 1
+  AND n.amount > 0
+GROUP BY 1, 2;
+SQL;
+
+    private const SQL_SSP_PUBLISHERS_INCOME = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, amount, created_at, updated_at, type)
+SELECT
+    CONCAT(DATE(a.created_at), ' ', LPAD(HOUR(a.created_at), 2, '0'), ':00:00') AS hour_timestamp,
+    SUM(u.amount) AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    'SspPublishersIncome' AS type
+FROM user_ledger_entries u
+    JOIN ads_payments a ON a.txid = u.txid 
+WHERE a.status = 2
+  AND a.created_at >= '2023-01-01'
+  AND u.status = 0
+  AND u.type = 3
+  AND u.amount > 0
+GROUP BY 1;
+SQL;
+
+    private const SQL_SSP_OPERATOR_FEE = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, amount, created_at, updated_at, type)
+SELECT
+    i.hour_timestamp as hour_timestamp,
+    i.amount - IFNULL(o.amount, 0) AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    'SspOperatorFee' AS type
+FROM (
+    SELECT hour_timestamp, SUM(amount) AS amount
+    FROM turnover_entries
+    WHERE type = 'SspIncome'
+    GROUP BY 1
+) i
+LEFT JOIN (
+    SELECT hour_timestamp, SUM(amount) AS amount
+    FROM turnover_entries
+    WHERE type != 'SspIncome'
+    GROUP BY 1
+) o
+    ON i.hour_timestamp = o.hour_timestamp;
+SQL;
+
     public function up(): void
     {
         Schema::create('turnover_entries', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
             $table->timestamp('hour_timestamp')->index();
-            $allowedTypes = array_map(fn($type) => $type->name, TurnoverEntryType::cases());
+            $allowedTypes = [
+                TurnoverEntryType::DspAdvertisersExpense->name,
+                TurnoverEntryType::DspLicenseFee->name,
+                TurnoverEntryType::DspOperatorFee->name,
+                TurnoverEntryType::DspCommunityFee->name,
+                TurnoverEntryType::DspExpense->name,
+                TurnoverEntryType::SspIncome->name,
+                TurnoverEntryType::SspLicenseFee->name,
+                TurnoverEntryType::SspOperatorFee->name,
+                TurnoverEntryType::SspPublishersIncome->name,
+            ];
             $table->enum('type', $allowedTypes)->index();
             $table->bigInteger('amount');
             $table->binary('ads_address')->nullable();
         });
         DB::statement('ALTER TABLE turnover_entries MODIFY ads_address varbinary(6)');
+
+        DB::statement(self::SQL_SSP_INCOME);
+        DB::statement(self::SQL_SSP_LICENSE_FEE);
+        DB::statement(self::SQL_SSP_PUBLISHERS_INCOME);
+        DB::statement(self::SQL_SSP_OPERATOR_FEE);
     }
 
     public function down(): void
