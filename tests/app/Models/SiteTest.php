@@ -188,7 +188,7 @@ class SiteTest extends TestCase
     {
         Log::shouldReceive('info')
             ->once()
-            ->with('Trying to rejected invalid domain 127.0.0.1');
+            ->with('Rejecting sites by domain "127.0.0.1" without reason');
 
         Site::rejectByDomains(['127.0.0.1']);
     }

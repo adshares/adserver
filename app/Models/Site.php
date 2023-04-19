@@ -359,8 +359,7 @@ class Site extends Model
         foreach ($domains as $domain) {
             $rejectReasonId = SitesRejectedDomain::domainRejectedReasonId($domain);
             if (null === $rejectReasonId) {
-                Log::info(sprintf('Trying to rejected invalid domain %s', $domain));
-                continue;
+                Log::info(sprintf('Rejecting sites by domain "%s" without reason', $domain));
             }
             self::query()
                 ->whereNot('status', self::STATUS_REJECTED)
