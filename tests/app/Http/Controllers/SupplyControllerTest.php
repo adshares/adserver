@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -203,10 +204,12 @@ final class SupplyControllerTest extends TestCase
 
     public function testReportAdWhileNotExistingCase(): void
     {
-        $response = $this->get(self::buildUriReportAd(
-            '00000000000000000000000000000000',
-            '00000000000000000000000000000000',
-        ));
+        $response = $this->get(
+            self::buildUriReportAd(
+                '00000000000000000000000000000000',
+                '00000000000000000000000000000000',
+            )
+        );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
@@ -316,16 +319,22 @@ final class SupplyControllerTest extends TestCase
 
     public function testFindFailWhileSiteRejected(): void
     {
-        SitesRejectedDomain::factory()->create(['domain' => 'example.com']);
-
+        SitesRejectedDomain::factory()->create(
+            [
+                'domain' => 'example.com',
+                'reject_reason_id' => SiteRejectReason::factory()->create(),
+            ]
+        );
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user]);
         /** @var Zone $zone */
-        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
+        $zone = Zone::factory()->create(['site_id' => $site]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
-                'url' => 'https://example.com',
+                'url' => 'https://this.is.example.com',
                 'metamask' => true,
                 'uid' => 'good-user',
             ],
@@ -340,6 +349,9 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'Site rejected');
+        self::assertEquals(Site::STATUS_REJECTED, $site->refresh()->status);
+        self::assertEquals('Test reject reason', $site->reject_reason);
     }
 
     public function testFindFailWhilePlacementInFrame(): void
@@ -368,6 +380,26 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'Cannot run in iframe');
+    }
+
+    public function testFindFailWhileEmptyPlacements(): void
+    {
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'No placements');
     }
 
     /**
