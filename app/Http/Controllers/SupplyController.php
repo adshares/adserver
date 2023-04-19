@@ -405,7 +405,7 @@ class SupplyController extends Controller
 
     private function checkDecodedQueryData(array $decodedQueryData): void
     {
-        if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
+        if ($this->isSiteRejected($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site rejected');
         }
         if (!config('app.allow_zone_in_iframe') && $this->isAnyZoneInFrame($decodedQueryData)) {
@@ -949,10 +949,14 @@ class SupplyController extends Controller
         return 'Thank you for reporting ad.';
     }
 
-    private function isPageBlacklisted(string $url): bool
+    private function isSiteRejected(string $url): bool
     {
-        $domain = DomainReader::domain($url);
-        return SitesRejectedDomain::isDomainRejected($domain);
+        $rejectedDomain = SitesRejectedDomain::getMatchingRejectedDomain(DomainReader::domain($url));
+        $isDomainRejected = null !== $rejectedDomain;
+        if ($isDomainRejected) {
+            Site::rejectByDomains([$rejectedDomain]);
+        }
+        return $isDomainRejected;
     }
 
     public function targetingReachList(AdsAuthenticator $authenticator, Request $request): JsonResponse
