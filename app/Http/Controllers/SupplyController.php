@@ -406,7 +406,7 @@ class SupplyController extends Controller
     private function checkDecodedQueryData(array $decodedQueryData): void
     {
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
-            throw new BadRequestHttpException('Site not accepted');
+            throw new BadRequestHttpException('Site rejected');
         }
         if (!config('app.allow_zone_in_iframe') && $this->isAnyZoneInFrame($decodedQueryData)) {
             throw new BadRequestHttpException('Cannot run in iframe');
@@ -440,7 +440,7 @@ class SupplyController extends Controller
     {
         $zones = $decodedQueryData['placements'] ?? $decodedQueryData['zones'] ?? [];// Key 'zones' is for legacy search
         if (!$zones) {
-            throw new BadRequestHttpException('Site not accepted');
+            throw new BadRequestHttpException('No placements');
         }
         return array_slice($zones, 0, config('app.max_page_zones'));
     }

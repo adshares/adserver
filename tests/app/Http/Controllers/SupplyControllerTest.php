@@ -340,6 +340,7 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'Site rejected');
     }
 
     public function testFindFailWhilePlacementInFrame(): void
@@ -368,6 +369,26 @@ final class SupplyControllerTest extends TestCase
         $response = $this->postJson(self::BANNER_FIND_URI, $data);
 
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'Cannot run in iframe');
+    }
+
+    public function testFindFailWhileEmptyPlacements(): void
+    {
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'No placements');
     }
 
     /**
