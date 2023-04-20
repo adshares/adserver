@@ -412,7 +412,7 @@ class Site extends Model
 
     private static function getSitesChunkBuilder(int $previousChunkLastId, ?int $limit = null): Builder
     {
-        $query = (new self())->where('id', '>', $previousChunkLastId);
+        $query = self::query()->where('id', '>', $previousChunkLastId);
         if (null !== $limit) {
             $query->limit($limit);
         }

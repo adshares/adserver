@@ -29,6 +29,7 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Services\Common\AdsTxtCrawler;
 use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Common\Application\Service\AdUser;
@@ -194,16 +195,7 @@ class AdPayEventExportCommand extends BaseCommand
                     && null === $event->ads_txt
                     && null !== $event->domain
                 ) {
-                    $cacheKey = sprintf('ads_txt.%s.%s', $event->publisher_id, $event->domain);
-                    if (null === ($result = Cache::get($cacheKey))) {
-                        $result = $this->adsTxtCrawler->checkSite(
-                            'https://' . $event->domain,
-                            config('app.ads_txt_domain'),
-                            $event->publisher_id,
-                        );
-                        Cache::put($cacheKey, $result, $result ? self::ADS_TXT_TTL_VALID : self::ADS_TXT_TTL_INVALID);
-                    }
-                    $event->ads_txt = (int)$result;
+                    $event->ads_txt = (int)$this->checkAdsTxtOfEvent($event);
                 }
                 if ($event->isDirty()) {
                     $event->save();
@@ -471,5 +463,33 @@ class AdPayEventExportCommand extends BaseCommand
     private function correctUserTimestamp(int $timestampFrom): int
     {
         return $timestampFrom - 1;
+    }
+
+    private function checkAdsTxtOfEvent(EventLog $event): bool
+    {
+        $cacheKey = sprintf('ads_txt.%s.%s', $event->publisher_id, $event->domain);
+        if (null === ($result = Cache::get($cacheKey))) {
+            $payTo = $event->pay_to;
+            $adServerDomain = Cache::remember(
+                sprintf('network_host.ads_txt_domain.%s', $payTo),
+                self::ADS_TXT_TTL_VALID,
+                function () use ($payTo) {
+                    $networkHost = NetworkHost::fetchByAddress($payTo);
+                    return null === $networkHost ? '' : $networkHost->info->getAdsTxtDomain();
+                },
+            );
+
+            if ('' === $adServerDomain) {
+                $result = false;
+            } else {
+                $result = $this->adsTxtCrawler->checkSite(
+                    'https://' . $event->domain,
+                    $adServerDomain,
+                    $event->publisher_id,
+                );
+            }
+            Cache::put($cacheKey, $result, $result ? self::ADS_TXT_TTL_VALID : self::ADS_TXT_TTL_INVALID);
+        }
+        return $result;
     }
 }

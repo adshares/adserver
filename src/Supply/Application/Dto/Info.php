@@ -236,6 +236,11 @@ final class Info
         return $this->appMode;
     }
 
+    public function getAdsTxtDomain(): string
+    {
+        return $this->adsTxtDomain;
+    }
+
     public function hasDemandCapabilities(): bool
     {
         return in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true);

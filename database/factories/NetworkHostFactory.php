@@ -49,7 +49,8 @@ class NetworkHostFactory extends Factory
             AccountId::fromIncompleteString('0001-00000008'),
         ];
 
-        $host = 'https://' . parse_url($this->faker->url, PHP_URL_HOST);
+        $domain = parse_url($this->faker->url, PHP_URL_HOST);
+        $host = 'https://' . $domain;
         $info = new Info(
             'adserver',
             $this->faker->domainWord,
@@ -65,7 +66,7 @@ class NetworkHostFactory extends Factory
             [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
             RegistrationMode::PUBLIC,
             AppMode::OPERATIONAL,
-            $host,
+            $domain,
             false,
         );
 
