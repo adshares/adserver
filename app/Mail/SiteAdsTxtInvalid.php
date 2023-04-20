@@ -45,7 +45,7 @@ class SiteAdsTxtInvalid extends Mailable
         return $this->markdown('emails.site-ads-txt-invalid')->with([
             'adsTxtEntry' => sprintf(
                 '%s, %s, DIRECT',
-                (new AdsTxtCrawler())->getAdServerDomain(),
+                config('app.ads_txt_domain'),
                 Uuid::fromString($this->publisherId)->toString(),
             ),
             'adsTxtUrl' => sprintf('%s/ads.txt', $this->siteUrl),

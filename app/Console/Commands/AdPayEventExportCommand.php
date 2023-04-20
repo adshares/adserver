@@ -198,6 +198,7 @@ class AdPayEventExportCommand extends BaseCommand
                     if (null === ($result = Cache::get($cacheKey))) {
                         $result = $this->adsTxtCrawler->checkSite(
                             'https://' . $event->domain,
+                            config('app.ads_txt_domain'),
                             $event->publisher_id,
                         );
                         Cache::put($cacheKey, $result, $result ? self::ADS_TXT_TTL_VALID : self::ADS_TXT_TTL_INVALID);

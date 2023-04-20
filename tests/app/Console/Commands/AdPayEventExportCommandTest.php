@@ -68,7 +68,7 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         $adsTxtCrawler = $this->createMock(AdsTxtCrawler::class);
         $adsTxtCrawler->expects(self::atLeastOnce())
             ->method('checkSite')
-            ->with('https://my.example.com', $event->publisher_id)
+            ->with('https://my.example.com', 'example.com', $event->publisher_id)
             ->willReturn(true);
         $this->instance(AdsTxtCrawler::class, $adsTxtCrawler);
 

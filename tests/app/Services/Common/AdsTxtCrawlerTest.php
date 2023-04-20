@@ -66,7 +66,7 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertTrue($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
+        self::assertTrue($adsTxtCrawler->checkSite($site->url, 'adshares.net', $site->user->uuid));
     }
 
     public function testCheckSiteWhileHigherLevelSupportsAdserver(): void
@@ -99,7 +99,7 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertTrue($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
+        self::assertTrue($adsTxtCrawler->checkSite($site->url, 'adshares.net', $site->user->uuid));
     }
 
     public function testCheckSiteWhileAdserverNotSupported(): void
@@ -120,7 +120,7 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertFalse($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
+        self::assertFalse($adsTxtCrawler->checkSite($site->url, 'adshares.net', $site->user->uuid));
     }
 
     public function testCheckSiteWhileNotFound(): void
@@ -135,7 +135,7 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertFalse($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
+        self::assertFalse($adsTxtCrawler->checkSite($site->url, 'adshares.net', $site->user->uuid));
     }
 
     public function testCheckSiteWhileConnectionException(): void
@@ -148,7 +148,7 @@ ADS_TXT
         $this->enableCrawler();
         $adsTxtCrawler = new AdsTxtCrawler();
 
-        self::assertFalse($adsTxtCrawler->checkSite($site->url, $site->user->uuid));
+        self::assertFalse($adsTxtCrawler->checkSite($site->url, 'adshares.net', $site->user->uuid));
     }
 
     public function testCheckSites(): void
@@ -197,7 +197,7 @@ ADS_TXT
     {
         Config::updateAdminSettings([
             Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1',
-            Config::URL => 'https://app.adshares.net',
+            Config::ADS_TXT_DOMAIN => 'adshares.net',
         ]);
         DatabaseConfigReader::overwriteAdministrationConfig();
     }

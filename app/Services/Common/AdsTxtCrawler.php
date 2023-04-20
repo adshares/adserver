@@ -22,7 +22,6 @@
 namespace Adshares\Adserver\Services\Common;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Utilities\DomainReader;
 use Illuminate\Http\Client\HttpClientException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -37,18 +36,18 @@ class AdsTxtCrawler
     {
     }
 
-    public function checkSite(string $siteUrl, string $publisherId): bool
+    public function checkSite(string $siteUrl, string $adServerDomain, string $publisherId): bool
     {
         return $this->checkIfSiteAdsTxtSupportsAdserver(
             $siteUrl,
-            $this->getAdServerDomain(),
+            $adServerDomain,
             Uuid::fromString($publisherId)->toString(),
         );
     }
 
     public function checkSites(Collection $sites): array
     {
-        $adServerDomain = $this->getAdServerDomain();
+        $adServerDomain = config('app.ads_txt_domain');
         $tasks = [];
         foreach ($sites as $site) {
             $siteId = $site->id;
@@ -70,15 +69,6 @@ class AdsTxtCrawler
             $result[$taskResult['id']] = $taskResult['result'];
         }
         return $result;
-    }
-
-    public function getAdServerDomain(): string
-    {
-        $domain = DomainReader::domain(config('app.url'));
-        if (str_starts_with($domain, 'app.')) {
-            $domain = substr($domain, 4);
-        }
-        return $domain;
     }
 
     private function checkIfSiteAdsTxtSupportsAdserver(
@@ -110,9 +100,9 @@ class AdsTxtCrawler
         return false;
     }
 
-    private function isSiteInAdsTxt(string $adsTxt, string $expectedDomain, string $expectedPublisherId): bool
+    private function isSiteInAdsTxt(string $adsTxtContent, string $expectedDomain, string $expectedPublisherId): bool
     {
-        $lines = explode(PHP_EOL, $adsTxt);
+        $lines = explode(PHP_EOL, $adsTxtContent);
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) {
