@@ -59,6 +59,7 @@ class ServerConfigurationController extends Controller
         Config::ADS_RPC_URL => 'nullable|url',
         Config::ADS_TXT_CHECK_DEMAND_ENABLED => 'nullable|boolean',
         Config::ADS_TXT_CHECK_SUPPLY_ENABLED => 'nullable|boolean',
+        Config::ADS_TXT_DOMAIN => 'nullable|host',
         Config::ADSELECT_URL => 'nullable|url',
         Config::ADSERVER_NAME => 'notEmpty',
         Config::ADSHARES_ADDRESS => 'accountId',

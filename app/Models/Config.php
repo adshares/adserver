@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Utilities\ConfigTypes;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
@@ -59,6 +60,7 @@ class Config extends Model
     public const ADS_RPC_URL = 'ads-rpc-url';
     public const ADS_TXT_CHECK_DEMAND_ENABLED = 'ads-txt-check-demand-enabled';
     public const ADS_TXT_CHECK_SUPPLY_ENABLED = 'ads-txt-check-supply-enabled';
+    public const ADS_TXT_DOMAIN = 'ads-txt-domain';
     public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
     public const ADSELECT_URL = 'adselect-url';
     public const ADSERVER_NAME = 'adserver-name';
@@ -298,7 +300,7 @@ class Config extends Model
 
     private static function whereKey(string $key): Builder
     {
-        return self::where('key', $key);
+        return self::query()->where('key', $key);
     }
 
     private static function fetchByKey(string $key): ?self
@@ -442,6 +444,7 @@ class Config extends Model
             self::ADS_RPC_URL => 'https://rpc.adshares.net',
             self::ADS_TXT_CHECK_DEMAND_ENABLED => false,
             self::ADS_TXT_CHECK_SUPPLY_ENABLED => false,
+            self::ADS_TXT_DOMAIN => empty($fetched[self::URL]) ? '' : DomainReader::domain($fetched[self::URL]),
             self::ADSELECT_URL => 'http://localhost:8011',
             self::ADSERVER_NAME => 'AdServer',
             self::ADSHARES_ADDRESS => null,

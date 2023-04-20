@@ -182,7 +182,9 @@ final class DummyDemandClient implements DemandClient
             new Email('mail@example.com'),
             [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
             RegistrationMode::PUBLIC,
-            AppMode::OPERATIONAL
+            AppMode::OPERATIONAL,
+            'example.com',
+            false,
         );
 
         $info->setDemandFee(0.01);

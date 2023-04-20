@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
@@ -61,6 +62,8 @@ final class Info
         private readonly array $capabilities,
         private readonly string $registrationMode,
         private readonly string $appMode,
+        private readonly string $adsTxtDomain,
+        private readonly bool $adsTxtRequired,
     ) {
         $this->validateCapabilities($capabilities);
     }
@@ -96,7 +99,9 @@ final class Info
             $email,
             $data['capabilities'],
             $data['registrationMode'] ?? RegistrationMode::PUBLIC,
-            $data['mode'] ?? AppMode::OPERATIONAL
+            $data['mode'] ?? AppMode::OPERATIONAL,
+            $data['adsTxtDomain'] ?? DomainReader::domain($data['serverUrl']),
+            $data['adsTxtRequired'] ?? false,
         );
 
         if (isset($data['demandFee'])) {
@@ -130,6 +135,8 @@ final class Info
             'adsAddress' => $this->adsAddress->toString(),
             'registrationMode' => $this->registrationMode,
             'mode' => $this->appMode,
+            'adsTxtDomain' => $this->adsTxtDomain,
+            'adsTxtRequired' => $this->adsTxtRequired,
         ];
 
         if (null !== $this->supportEmail) {

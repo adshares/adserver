@@ -64,7 +64,9 @@ class NetworkHostFactory extends Factory
             new Email($this->faker->companyEmail),
             [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
             RegistrationMode::PUBLIC,
-            AppMode::OPERATIONAL
+            AppMode::OPERATIONAL,
+            $host,
+            false,
         );
 
         $info->setDemandFee(0.01);
