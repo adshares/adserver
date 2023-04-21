@@ -37,25 +37,45 @@ SELECT
     NOW() AS updated_at,
     'DspAdvertisersExpense' AS type
 FROM user_ledger_entries
-WHERE created_at >= '2023-04-01' AND created_at < '2023-04-01' + interval 1 hour
+WHERE created_at >= '2023-01-01'
   AND status = 0
   AND type IN (4, 6, 9)
 GROUP BY 1;
 SQL;
 
-    private const SQL_DSP_TURNOVER = <<<SQL
-INSERT INTO turnover_entries (hour_timestamp, amount, created_at, updated_at, type)
+    private const SQL_DSP_EXPENSE = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, ads_address, amount, created_at, updated_at, type)
 SELECT
     CONCAT(DATE(created_at), ' ', LPAD(HOUR(created_at), 2, '0'), ':00:00') AS hour_timestamp,
-    -SUM(amount) * ? AS amount,
+    account_address AS ads_address,
+    SUM(fee) AS amount,
+    NOW() AS created_at,
+    NOW() AS updated_at,
+    'DspExpense' AS type
+FROM payments
+WHERE created_at >= '2023-01-01'
+  AND state='sent'
+  AND fee > 0
+  AND account_address IS NOT NULL
+  AND account_address != 0x000100000024
+GROUP BY 1, 2;
+SQL;
+
+    private const SQL_DSP_BURNT = <<<SQL
+INSERT INTO turnover_entries (hour_timestamp, ads_address, amount, created_at, updated_at, type)
+SELECT
+    CONCAT(DATE(created_at), ' ', LPAD(HOUR(created_at), 2, '0'), ':00:00') AS hour_timestamp,
+    account_address AS ads_address,
+    SUM(fee) * ? AS amount,
     NOW() AS created_at,
     NOW() AS updated_at,
     ? AS type
-FROM user_ledger_entries
-WHERE created_at >= '2023-04-01' AND created_at < '2023-04-01' + interval 1 hour
-  AND status = 0
-  AND type IN (4, 6, 9)
-GROUP BY 1;
+FROM payments
+WHERE created_at >= '2023-01-01'
+  AND state='sent'
+  AND fee > 0
+  AND account_address = 0x000100000024
+GROUP BY 1, 2;
 SQL;
 
     private const SQL_DSP_OPERATOR_FEE = <<<SQL
@@ -182,11 +202,12 @@ SQL;
         $licenseFeeCoefficient = 0.01;
         $operatorFeeCoefficient = (1 - $licenseFeeCoefficient) * config('app.payment_tx_fee');
         $communityFeeCoefficient = (1 - $licenseFeeCoefficient - $operatorFeeCoefficient) * 0.01;
-        $expenseCoefficient = 1 - $licenseFeeCoefficient - $operatorFeeCoefficient - $communityFeeCoefficient;
+
+        $licenseBurntCoefficient = $licenseFeeCoefficient / ($licenseFeeCoefficient + $communityFeeCoefficient);
         DB::statement(self::SQL_DSP_ADVERTISERS_EXPENSE);
-        DB::statement(self::SQL_DSP_TURNOVER, [$licenseFeeCoefficient, 'DspLicenseFee']);
-        DB::statement(self::SQL_DSP_TURNOVER, [$communityFeeCoefficient, 'DspCommunityFee']);
-        DB::statement(self::SQL_DSP_TURNOVER, [$expenseCoefficient, 'DspExpense']);
+        DB::statement(self::SQL_DSP_EXPENSE);
+        DB::statement(self::SQL_DSP_BURNT, [$licenseBurntCoefficient, 'DspLicenseFee']);
+        DB::statement(self::SQL_DSP_BURNT, [1 - $licenseBurntCoefficient, 'DspCommunityFee']);
         DB::statement(self::SQL_DSP_OPERATOR_FEE);
 
         DB::statement(self::SQL_SSP_INCOME);
