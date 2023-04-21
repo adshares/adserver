@@ -102,10 +102,10 @@ class SitesRejectedDomain extends Model
         Cache::forget(self::CACHE_KEY);
     }
 
-    public static function isDomainRejected(string $domain): bool
+    public static function getMatchingRejectedDomain(string $domain): ?string
     {
         if ('' === $domain || !str_contains($domain, '.') || false !== filter_var($domain, FILTER_VALIDATE_IP)) {
-            return true;
+            return $domain;
         }
 
         $rejected = Cache::remember(
@@ -119,12 +119,17 @@ class SitesRejectedDomain extends Model
 
         for ($i = 0; $i < $domainPartsCount; $i++) {
             if (array_key_exists(implode('.', $domainParts), $rejected)) {
-                return true;
+                return implode('.', $domainParts);
             }
             array_shift($domainParts);
         }
 
-        return false;
+        return null;
+    }
+
+    public static function isDomainRejected(string $domain): bool
+    {
+        return null !== self::getMatchingRejectedDomain($domain);
     }
 
     public static function domainRejectedReasonId(string $domain): ?int
