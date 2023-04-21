@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Payment processing loop is continued if exchange rate for particular period is not available
+- Disallow robots to index pages
 ### Fixed
 - Do not process payments older than 2 days (by default)
 
