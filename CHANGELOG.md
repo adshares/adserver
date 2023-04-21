@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.4.13] - 2023-04-21
 ### Changed
 - Payment processing loop is continued if exchange rate for particular period is not available
 - Disallow robots to index pages
@@ -918,7 +920,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.12...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.13...develop
+[2.4.13]: https://github.com/adshares/adserver/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/adshares/adserver/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
