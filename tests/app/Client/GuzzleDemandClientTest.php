@@ -33,6 +33,7 @@ use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
@@ -198,7 +199,9 @@ class GuzzleDemandClientTest extends TestCase
         $client = self::createMock(Client::class);
         $client->expects(self::once())
             ->method('get')
-            ->willReturn(new GuzzleResponse(body: <<<JSON
+            ->willReturn(
+                new GuzzleResponse(
+                    body: <<<JSON
 [
     {
         "id": "12345678901234567890123456789012",
@@ -216,7 +219,8 @@ class GuzzleDemandClientTest extends TestCase
     }
 ]
 JSON
-            ));
+                )
+            );
         /** @var Client $client */
         $demandClient = $this->createGuzzleDemandClient($client);
 
@@ -249,6 +253,92 @@ JSON
             'https://app.example.com/inventory',
             false,
         );
+    }
+
+    public function testFetchAllInventoryWhileEmptyBody(): void
+    {
+        $client = self::createMock(Client::class);
+        $client->expects(self::once())
+            ->method('get')
+            ->willReturn(new GuzzleResponse(body: ''));
+        /** @var Client $client */
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        self::expectException(EmptyInventoryException::class);
+
+        $demandClient->fetchAllInventory(
+            new AccountId('0001-00000004-DBEB'),
+            'https://example.com',
+            'https://app.example.com/inventory',
+            false,
+        );
+    }
+
+    public function testFetchPaymentDetails(): void
+    {
+        $client = self::createMock(Client::class);
+        $client->expects(self::once())
+            ->method('get')
+            ->with(
+                self::callback(
+                    fn(string $path) => 1 === preg_match(
+                        '~/payment-details'
+                            . '/0001:00000001:0001'
+                            . '/0001-00000005-CBCA'
+                            . '/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00'
+                            . '/\?limit=1&offset=0~',
+                        $path,
+                    ),
+                ),
+                self::callback(fn() => true)
+            )
+            ->willReturn(new GuzzleResponse(body: <<<JSON
+[
+    {
+        "case_id": "10000000000000000000000000000000",
+        "event_value": 123000000000
+    }
+]
+JSON
+            ));
+        /** @var Client $client */
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        $paymentDetails = $demandClient->fetchPaymentDetails('https://example.com', '0001:00000001:0001', 1, 0);
+
+        self::assertCount(1, $paymentDetails);
+        self::assertEquals('10000000000000000000000000000000', $paymentDetails[0]['case_id']);
+        self::assertEquals(123_000_000_000, $paymentDetails[0]['event_value']);
+    }
+
+    public function testFetchPaymentDetailsWhileInvalidResponseHttpStatusCode(): void
+    {
+        $client = self::createMock(Client::class);
+        $client->expects(self::once())
+            ->method('get')
+            ->willReturn(new GuzzleResponse(500));
+        /** @var Client $client */
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        self::expectException(UnexpectedClientResponseException::class);
+
+        $demandClient->fetchPaymentDetails('https://example.com', '0001:00000001:0001', 1, 0);
+    }
+
+    public function testFetchPaymentDetailsWhileClientException(): void
+    {
+        $client = self::createMock(Client::class);
+        $client->expects(self::once())
+            ->method('get')
+            ->willThrowException(
+                new RequestException('test exception', new Request('GET', 'https://app.example.com/payment-details'))
+            );
+        /** @var Client $client */
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        self::expectException(UnexpectedClientResponseException::class);
+
+        $demandClient->fetchPaymentDetails('https://example.com', '0001:00000001:0001', 1, 0);
     }
 
     private function createGuzzleDemandClient(Client $client): GuzzleDemandClient
