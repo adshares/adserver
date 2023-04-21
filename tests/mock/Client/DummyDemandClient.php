@@ -128,7 +128,8 @@ final class DummyDemandClient implements DemandClient
     public function fetchAllInventory(
         AccountId $sourceAddress,
         string $sourceHost,
-        string $inventoryUrl
+        string $inventoryUrl,
+        bool $isAdsTxtRequiredBySourceHost,
     ): CampaignCollection {
         return new CampaignCollection(...$this->campaigns);
     }

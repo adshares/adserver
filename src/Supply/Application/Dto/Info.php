@@ -241,6 +241,11 @@ final class Info
         return $this->adsTxtDomain;
     }
 
+    public function isAdsTxtRequired(): bool
+    {
+        return $this->adsTxtRequired;
+    }
+
     public function hasDemandCapabilities(): bool
     {
         return in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true);

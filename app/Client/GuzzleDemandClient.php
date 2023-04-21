@@ -65,19 +65,17 @@ final class GuzzleDemandClient implements DemandClient
         private readonly Client $client,
         private readonly SignatureVerifier $signatureVerifier,
         private readonly AdsAuthenticator $adsAuthenticator,
-        private readonly int $timeout
     ) {
     }
 
     public function fetchAllInventory(
         AccountId $sourceAddress,
         string $sourceHost,
-        string $inventoryUrl
+        string $inventoryUrl,
+        bool $isAdsTxtRequiredBySourceHost,
     ): CampaignCollection {
-        $client = new Client($this->requestParameters());
-
         try {
-            $response = $client->get($inventoryUrl);
+            $response = $this->client->get($inventoryUrl, $this->requestParameters());
         } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Could not connect to %s host (%s).', $sourceHost, $exception->getMessage()),
@@ -96,6 +94,7 @@ final class GuzzleDemandClient implements DemandClient
         $campaignDemandIdsToSupplyIds = $this->getCampaignDemandIdsToSupplyIds($campaigns, $address);
         $bannerDemandIdsToSupplyIds = $this->getBannerDemandIdsToSupplyIds($campaigns, $address);
 
+        $rejectCampaignsRequiringAdsTxt = $isAdsTxtRequiredBySourceHost && !config('app.ads_txt_check_supply_enabled');
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
             try {
@@ -109,6 +108,10 @@ final class GuzzleDemandClient implements DemandClient
                             $bannerDemandIdsToSupplyIds
                         )
                     );
+                if ($rejectCampaignsRequiringAdsTxt && MediumName::Web->value === $campaign->getMedium()) {
+                    Log::info(sprintf('[Inventory Importer] Reject campaign %s', $campaign->getDemandCampaignId()));
+                    continue;
+                }
                 $campaignsCollection->add($campaign);
             } catch (RuntimeException $exception) {
                 Log::info(sprintf('[Inventory Importer] %s', $exception->getMessage()));
@@ -120,8 +123,6 @@ final class GuzzleDemandClient implements DemandClient
 
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        $client = new Client($this->requestParameters($host));
-
         $privateKey = Crypt::decryptString(config('app.adshares_secret'));
         $accountAddress = config('app.adshares_address');
         $date = new DateTime();
@@ -155,7 +156,7 @@ final class GuzzleDemandClient implements DemandClient
         );
 
         try {
-            $response = $client->get($endpoint);
+            $response = $this->client->get($endpoint, $this->requestParameters($host));
         } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Transaction not found: %s.', $exception->getMessage()),
@@ -208,7 +209,6 @@ final class GuzzleDemandClient implements DemandClient
                     Crypt::decryptString(config('app.adshares_secret'))
                 ),
             ],
-            RequestOptions::TIMEOUT => $this->timeout,
         ];
 
         if ($baseUrl) {
