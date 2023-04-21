@@ -190,7 +190,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
     /**
      * @dataProvider invalidInfoProvider
      */
-    public function testFetchingHostsDemandClientInvalidInfo(array $infoData): void
+    public function testFetchingHostsDemandClientInvalidInfo(array $infoData, string $expectedError): void
     {
         $this->setupAdsClient();
         $this->setupDemandClientInfo($infoData);
@@ -200,6 +200,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
             NetworkHost::class,
             [
                 'address' => '0001-00000001-8B4E',
+                'error' => $expectedError,
                 'status' => HostStatus::Failure,
             ],
         );
@@ -209,9 +210,26 @@ class AdsFetchHostsTest extends ConsoleTestCase
     public function invalidInfoProvider(): array
     {
         return [
-            'no address' => [self::getInfoData([], 'adsAddress')],
-            'invalid address' => [self::getInfoData(['adsAddress' => '0001-00000002-BB2D'])],
-            'invalid ad server mode' => [self::getInfoData(['mode' => AppMode::INITIALIZATION])],
+            'no address' => [
+                self::getInfoData([], 'adsAddress'),
+                'Info has empty address',
+            ],
+            'invalid address' => [
+                self::getInfoData(['adsAddress' => '0001-00000002-BB2D']),
+                'Info address does not match broadcast',
+            ],
+            'invalid ad server mode' => [
+                self::getInfoData(['mode' => AppMode::INITIALIZATION]),
+                'Ad server is in initialization mode',
+            ],
+            'invalid ads.txt domain' => [
+                self::getInfoData(['adsTxtDomain' => 'com']),
+                'Invalid ads.txt domain'
+            ],
+            'ads.txt domain does not match inventory url' => [
+                self::getInfoData(['adsTxtDomain' => 'dummy.com']),
+                'Ads.txt domain does not match inventory URL'
+            ],
         ];
     }
 

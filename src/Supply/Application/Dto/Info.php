@@ -77,7 +77,6 @@ final class Info
         }
     }
 
-    /** @deprecated Use object casting in NetworkHosts model */
     public static function fromArray(array $data): self
     {
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
