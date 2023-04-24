@@ -26,6 +26,7 @@ before_install:
   - sudo apt-get update -q
   - sudo apt-get install libsodium-dev ads -y
   - wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.$(lsb_release -cs)_amd64.deb && sudo apt install -y ./wkhtmltox_0.12.6-1.$(lsb_release -cs)_amd64.deb
+  - yes | pecl install apcu
   - yes | pecl install imagick
   - mkdir -p /tmp/ads/cache
   - chmod 777 -R /tmp/ads
