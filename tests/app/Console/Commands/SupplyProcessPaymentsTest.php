@@ -174,7 +174,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 'type' => TurnoverEntryType::SspIncome->name,
             ],
             [
-                'ads_address' => null,
+                'ads_address' => hex2bin('FFFF00000000'),
                 'amount' => $licenseFee,
                 'type' => TurnoverEntryType::SspLicenseFee->name,
             ],

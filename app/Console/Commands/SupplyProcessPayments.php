@@ -242,8 +242,13 @@ SQL;
         );
 
         $totalLicenseFee = $resultsCollection->licenseFeeSum();
-        if ($totalLicenseFee > 0) {
-            TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::SspLicenseFee, $totalLicenseFee);
+        if ($totalLicenseFee > 0 && null !== ($licenseAddress = $resultsCollection->licenseAddress())) {
+            TurnoverEntry::increaseOrInsert(
+                $hourTimestamp,
+                TurnoverEntryType::SspLicenseFee,
+                $totalLicenseFee,
+                $licenseAddress,
+            );
         }
 
         $totalOperatorFeeSum = $resultsCollection->operatorFeeSum();

@@ -90,7 +90,7 @@ final class LicenseFeeSender
 
     public function sendAllLicensePayments(): ?NetworkPayment
     {
-        $receiverAddress = $this->licenseReader->getAddress()?->toString();
+        $receiverAddress = $this->licenseAddress();
         if (null === $receiverAddress) {
             return null;
         }
@@ -138,5 +138,10 @@ final class LicenseFeeSender
                 $payment->amount
             ));
         }
+    }
+
+    public function licenseAddress(): ?string
+    {
+        return $this->licenseReader->getAddress()?->toString();
     }
 }

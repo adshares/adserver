@@ -372,6 +372,13 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
         self::assertDatabaseEmpty(TurnoverEntry::class);
     }
 
+    public function testHandleInvalidFromOption(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+
+        $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE, ['--from' => '12345']);
+    }
+
     public function testHandleInvalidTimeRange(): void
     {
         self::expectException(InvalidArgumentException::class);
