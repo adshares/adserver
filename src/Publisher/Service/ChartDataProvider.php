@@ -54,7 +54,7 @@ final class ChartDataProvider
 
         return $this->repository->$method(
             $input->getPublisherId(),
-            $input->getResolution()->value,
+            $input->getResolution(),
             $input->getDateStart(),
             $input->getDateEnd(),
             $input->getSiteId()

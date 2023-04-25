@@ -38,6 +38,7 @@ use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\ReportCalculation;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
@@ -247,7 +248,7 @@ SQL;
 
     public function fetchView(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -268,7 +269,7 @@ SQL;
 
     public function fetchViewAll(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -289,7 +290,7 @@ SQL;
 
     public function fetchViewInvalidRate(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -331,7 +332,7 @@ SQL;
 
     public function fetchViewUnique(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -352,7 +353,7 @@ SQL;
 
     public function fetchClick(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -373,7 +374,7 @@ SQL;
 
     public function fetchClickAll(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -394,7 +395,7 @@ SQL;
 
     public function fetchClickInvalidRate(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -436,7 +437,7 @@ SQL;
 
     public function fetchCpc(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -478,7 +479,7 @@ SQL;
 
     public function fetchCpm(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -520,7 +521,7 @@ SQL;
 
     public function fetchSum(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -541,7 +542,7 @@ SQL;
 
     public function fetchSumPayment(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -562,7 +563,7 @@ SQL;
 
     public function fetchCtr(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -944,7 +945,7 @@ SQL;
     private function fetch(
         string $type,
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId,
@@ -993,7 +994,7 @@ SQL;
     private function fetchAggregates(
         string $type,
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId,
@@ -1023,7 +1024,7 @@ SQL;
     private function fetchLive(
         string $type,
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId,
@@ -1082,8 +1083,11 @@ SQL;
         DB::statement(sprintf("SET time_zone = '%s'", $tz));
     }
 
-    private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
-    {
+    private static function concatenateDateColumns(
+        DateTimeZone $dateTimeZone,
+        array $result,
+        ChartResolution $resolution,
+    ): array {
         if (count($result) === 0) {
             return [];
         }
@@ -1091,34 +1095,34 @@ SQL;
         $formattedResult = [];
 
         $date = (new DateTime())->setTimezone($dateTimeZone);
-        if ($resolution !== StatsRepository::RESOLUTION_HOUR) {
-            $date->setTime(0, 0, 0, 0);
+        if ($resolution !== ChartResolution::HOUR) {
+            $date->setTime(0, 0);
         }
 
         foreach ($result as $row) {
-            if ($resolution === StatsRepository::RESOLUTION_HOUR) {
+            if ($resolution === ChartResolution::HOUR) {
                 $date->setTime($row->h, 0, 0, 0);
             }
 
             switch ($resolution) {
-                case StatsRepository::RESOLUTION_HOUR:
-                case StatsRepository::RESOLUTION_DAY:
+                case ChartResolution::HOUR:
+                case ChartResolution::DAY:
                     $date->setDate($row->y, $row->m, $row->d);
                     break;
-                case StatsRepository::RESOLUTION_WEEK:
+                case ChartResolution::WEEK:
                     $yearweek = (string)$row->yw;
                     $year = (int)substr($yearweek, 0, 4);
                     $week = (int)substr($yearweek, 4);
                     $date->setISODate($year, $week, 1);
                     break;
-                case StatsRepository::RESOLUTION_MONTH:
+                case ChartResolution::MONTH:
                     $date->setDate($row->y, $row->m, 1);
                     break;
-                case StatsRepository::RESOLUTION_QUARTER:
+                case ChartResolution::QUARTER:
                     $month = $row->q * 3 - 2;
                     $date->setDate($row->y, $month, 1);
                     break;
-                case StatsRepository::RESOLUTION_YEAR:
+//                case ChartResolution::YEAR:
                 default:
                     $date->setDate($row->y, 1, 1);
                     break;
@@ -1133,7 +1137,7 @@ SQL;
 
     private static function createEmptyResult(
         DateTimeZone $dateTimeZone,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd
     ): array {
@@ -1159,33 +1163,33 @@ SQL;
 
     private static function createSanitizedStartDate(
         DateTimeZone $dateTimeZone,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart
     ): DateTime {
         $date = (clone $dateStart)->setTimezone($dateTimeZone);
 
-        if ($resolution === StatsRepository::RESOLUTION_HOUR) {
+        if ($resolution === ChartResolution::HOUR) {
             $date->setTime((int)$date->format('H'), 0, 0, 0);
         } else {
-            $date->setTime(0, 0, 0, 0);
+            $date->setTime(0, 0);
         }
 
         switch ($resolution) {
-            case StatsRepository::RESOLUTION_HOUR:
-            case StatsRepository::RESOLUTION_DAY:
+            case ChartResolution::HOUR:
+            case ChartResolution::DAY:
                 break;
-            case StatsRepository::RESOLUTION_WEEK:
+            case ChartResolution::WEEK:
                 $date->setISODate((int)$date->format('Y'), (int)$date->format('W'), 1);
                 break;
-            case StatsRepository::RESOLUTION_MONTH:
+            case ChartResolution::MONTH:
                 $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
                 break;
-            case StatsRepository::RESOLUTION_QUARTER:
+            case ChartResolution::QUARTER:
                 $quarter = (int)floor((int)$date->format('m') - 1 / 3);
                 $month = $quarter * 3 + 1;
                 $date->setDate((int)$date->format('Y'), $month, 1);
                 break;
-            case StatsRepository::RESOLUTION_YEAR:
+//            case ChartResolution::YEAR:
             default:
                 $date->setDate((int)$date->format('Y'), 1, 1);
                 break;
@@ -1194,27 +1198,27 @@ SQL;
         return $date;
     }
 
-    private static function advanceDateTime(string $resolution, DateTime $date): void
+    private static function advanceDateTime(ChartResolution $resolution, DateTime $date): void
     {
         switch ($resolution) {
-            case StatsRepository::RESOLUTION_HOUR:
+            case ChartResolution::HOUR:
                 $date->modify('+1 hour');
                 break;
-            case StatsRepository::RESOLUTION_DAY:
+            case ChartResolution::DAY:
                 $date->modify('tomorrow');
                 break;
-            case StatsRepository::RESOLUTION_WEEK:
+            case ChartResolution::WEEK:
                 $date->modify('+7 days');
                 break;
-            case StatsRepository::RESOLUTION_MONTH:
+            case ChartResolution::MONTH:
                 $date->modify('first day of next month');
                 break;
-            case StatsRepository::RESOLUTION_QUARTER:
+            case ChartResolution::QUARTER:
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 break;
-            case StatsRepository::RESOLUTION_YEAR:
+//            case ChartResolution::YEAR:
             default:
                 $date->modify('first day of next year');
                 break;

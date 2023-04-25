@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Publisher\Repository;
 
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
@@ -33,11 +34,9 @@ use DateTime;
 
 class DummyStatsRepository implements StatsRepository
 {
-    public const USER_EMAIL = 'postman@dev.dev';
-
     public function fetchView(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -54,17 +53,17 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchViewAll(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $this->fetchView($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
+        return $this->fetchView($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
     }
 
     public function fetchViewInvalidRate(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -81,17 +80,17 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchViewUnique(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $this->fetchView($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
+        return $this->fetchView($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
     }
 
     public function fetchClick(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -108,17 +107,17 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchClickAll(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $this->fetchClick($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
+        return $this->fetchClick($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
     }
 
     public function fetchClickInvalidRate(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -135,7 +134,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchRpc(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -152,7 +151,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchRpm(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -169,7 +168,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchSum(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -186,7 +185,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchSumHour(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -203,7 +202,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchCtr(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -259,10 +258,10 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStatsTotal(
-        ?string $advertiserId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null,
     ): Total {
         $calculation = new Calculation(1, 1, 1, 1, 1, 1);
 
@@ -277,5 +276,6 @@ class DummyStatsRepository implements StatsRepository
         bool $showPublishers = false
     ): DataCollection {
         // TODO: Implement fetchStatsToReport() method.
+        return new DataCollection([]);
     }
 }
