@@ -818,11 +818,11 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd
     ): array {
         $dates = [];
-        $date = self::createSanitizedStartDate($dateTimeZone, $resolution, $dateStart);
+        $date = DateUtils::createSanitizedStartDate($dateTimeZone, $resolution, $dateStart);
 
         while ($date < $dateEnd) {
             $dates[] = $date->format(DateTimeInterface::ATOM);
-            self::advanceDateTime($resolution, $date);
+            DateUtils::advanceDateTime($resolution, $date);
         }
 
         if (empty($dates)) {
@@ -835,70 +835,6 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return $result;
-    }
-
-    private static function createSanitizedStartDate(
-        DateTimeZone $dateTimeZone,
-        ChartResolution $resolution,
-        DateTime $dateStart
-    ): DateTime {
-        $date = (clone $dateStart)->setTimezone($dateTimeZone);
-
-        if ($resolution === ChartResolution::HOUR) {
-            $date->setTime((int)$date->format('H'), 0);
-        } else {
-            $date->setTime(0, 0);
-        }
-
-        switch ($resolution) {
-            case ChartResolution::HOUR:
-            case ChartResolution::DAY:
-                break;
-            case ChartResolution::WEEK:
-                $date->setISODate((int)$date->format('Y'), (int)$date->format('W'), 1);
-                break;
-            case ChartResolution::MONTH:
-                $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
-                break;
-            case ChartResolution::QUARTER:
-                $quarter = (int)floor((int)$date->format('m') - 1 / 3);
-                $month = $quarter * 3 + 1;
-                $date->setDate((int)$date->format('Y'), $month, 1);
-                break;
-//            case ChartResolution::YEAR:
-            default:
-                $date->setDate((int)$date->format('Y'), 1, 1);
-                break;
-        }
-
-        return $date;
-    }
-
-    private static function advanceDateTime(ChartResolution $resolution, DateTime $date): void
-    {
-        switch ($resolution) {
-            case ChartResolution::HOUR:
-                $date->modify('+1 hour');
-                break;
-            case ChartResolution::DAY:
-                $date->modify('tomorrow');
-                break;
-            case ChartResolution::WEEK:
-                $date->modify('+7 days');
-                break;
-            case ChartResolution::MONTH:
-                $date->modify('first day of next month');
-                break;
-            case ChartResolution::QUARTER:
-                $date->modify('first day of next month');
-                $date->modify('first day of next month');
-                $date->modify('first day of next month');
-                break;
-//            case ChartResolution::YEAR:
-            default:
-                $date->modify('first day of next year');
-                break;
-        }
     }
 
     private static function joinResultWithEmpty(array $formattedResult, array $emptyResult): array

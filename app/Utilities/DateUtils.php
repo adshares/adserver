@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,7 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Utilities;
 
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
+use DateTimeZone;
 
 final class DateUtils
 {
@@ -59,5 +61,71 @@ final class DateUtils
     public static function roundTimestampToHour(int $timestamp): int
     {
         return ((int)floor($timestamp / self::HOUR)) * self::HOUR;
+    }
+
+    public static function advanceDateTime(ChartResolution $resolution, DateTime $date): void
+    {
+        switch ($resolution) {
+            case ChartResolution::HOUR:
+                $date->modify('+1 hour');
+                break;
+            case ChartResolution::DAY:
+                $date->modify('tomorrow');
+                break;
+            case ChartResolution::WEEK:
+                $date->modify('+7 days')
+                    ->setTime(0, 0);
+                break;
+            case ChartResolution::MONTH:
+                $date->modify('first day of next month')
+                    ->setTime(0, 0);
+                break;
+            case ChartResolution::QUARTER:
+                $date->modify('first day of next month')
+                    ->modify('first day of next month')
+                    ->modify('first day of next month')
+                    ->setTime(0, 0);
+                break;
+//            case ChartResolution::YEAR:
+            default:
+                $date->modify('first day of next year')
+                    ->setTime(0, 0);
+                break;
+        }
+    }
+
+    public static function createSanitizedStartDate(
+        DateTimeZone $dateTimeZone,
+        ChartResolution $resolution,
+        DateTime $dateStart,
+    ): DateTime {
+        $date = (clone $dateStart)->setTimezone($dateTimeZone);
+
+        if ($resolution === ChartResolution::HOUR) {
+            $date->setTime((int)$date->format('H'), 0);
+        } else {
+            $date->setTime(0, 0);
+        }
+
+        switch ($resolution) {
+            case ChartResolution::WEEK:
+                $date->setISODate((int)$date->format('Y'), (int)$date->format('W'));
+                break;
+            case ChartResolution::MONTH:
+                $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
+                break;
+            case ChartResolution::QUARTER:
+                $quarter = (int)floor(((int)$date->format('m') - 1) / 3);
+                $month = $quarter * 3 + 1;
+                $date->setDate((int)$date->format('Y'), $month, 1);
+                break;
+            case ChartResolution::YEAR:
+                $date->setDate((int)$date->format('Y'), 1, 1);
+                break;
+            default:
+                break;
+        }
+
+        return $date;
     }
 }

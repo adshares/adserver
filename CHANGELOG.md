@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reject site during find if it has rejected domain
 ### Fixed
 - Do not process payments older than 2 days (by default)
+- Start date for quarterly statistics
 
 ## [2.4.12] - 2023-03-31
 ### Added
