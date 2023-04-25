@@ -32,6 +32,7 @@ class NetworkImpressionFactory extends Factory
         return [
             'impression_id' => $this->faker->uuid,
             'tracking_id' => $this->faker->uuid,
+            'human_score' => 0.5,
             'context' => json_decode(<<<JSON
 {
     "site": {

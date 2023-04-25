@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Repository\Publisher;
 
+use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -30,6 +32,7 @@ use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 
 final class MySqlStatsRepositoryTest extends TestCase
@@ -57,7 +60,9 @@ SQL;
     {
         /** @var User $publisher */
         $publisher = User::factory()->create();
-        self::initRepository($publisher);
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $publisher]);
+        self::initRepository($publisher, $site);
         $repository = new MySqlStatsRepository();
 
         $result = $repository->fetchView(
@@ -65,6 +70,7 @@ SQL;
             ChartResolution::HOUR,
             new DateTime('2018-01-01 23:00:00'),
             new DateTime('2018-01-02 00:59:59'),
+            $site->uuid,
         );
 
         $resultArray = $result->toArray();
@@ -97,19 +103,48 @@ SQL;
         self::assertEquals(3, $resultArray[1][1]);
     }
 
-    private static function initRepository(User $publisher): void
+    public function testFetchViewLive(): void
     {
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $publisher]);
         /** @var Zone $zone */
         $zone = Zone::factory()->create(['site_id' => $site]);
-        self::insertViews($publisher, $site, $zone, '2018-01-01 22:00:00', 1);
-        self::insertViews($publisher, $site, $zone, '2018-01-01 23:00:00', 2);
-        self::insertViews($publisher, $site, $zone, '2018-01-02 00:00:00', 3);
-        self::insertViews($publisher, $site, $zone, '2018-01-02 01:00:00', 4);
+        $this->insertViewsLive($publisher, $site, $zone);
+        $repository = new MySqlStatsRepository();
+        $dateStart = new DateTime('-10 minutes');
+        $dateStart->setTime((int)$dateStart->format('H'), 0);
+
+        $result = $repository->fetchView(
+            $publisher->uuid,
+            ChartResolution::HOUR,
+            $dateStart,
+            new DateTime(),
+            $site->uuid,
+        );
+
+        $resultArray = $result->toArray();
+        self::assertCount(1, $resultArray);
+        self::assertEquals($dateStart->format(DateTimeInterface::ATOM), $resultArray[0][0]);
+        self::assertEquals(1, $resultArray[0][1]);
     }
 
-    private static function insertViews(
+    private static function initRepository(User $publisher, ?Site $site = null): void
+    {
+        if (null === $site) {
+            /** @var Site $site */
+            $site = Site::factory()->create(['user_id' => $publisher]);
+        }
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
+        self::insertViewsAggregates($publisher, $site, $zone, '2018-01-01 22:00:00', 1);
+        self::insertViewsAggregates($publisher, $site, $zone, '2018-01-01 23:00:00', 2);
+        self::insertViewsAggregates($publisher, $site, $zone, '2018-01-02 00:00:00', 3);
+        self::insertViewsAggregates($publisher, $site, $zone, '2018-01-02 01:00:00', 4);
+    }
+
+    private static function insertViewsAggregates(
         User $publisher,
         Site $site,
         Zone $zone,
@@ -146,6 +181,21 @@ SQL;
                 $views,
                 0,
                 0,
+            ]
+        );
+    }
+
+    private function insertViewsLive(
+        User $publisher,
+        Site $site,
+        Zone $zone,
+    ): void {
+        NetworkCase::factory()->create(
+            [
+                'network_impression_id' => NetworkImpression::factory()->create(),
+                'publisher_id' => $publisher->uuid,
+                'site_id' => $site->uuid,
+                'zone_id' => $zone->uuid,
             ]
         );
     }
