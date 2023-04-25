@@ -23,12 +23,14 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
@@ -40,6 +42,7 @@ use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use Illuminate\Http\Response;
 
@@ -123,11 +126,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
         $totalAmount = 0;
         $licenseFee = 0;
-        $userAmount = 0;
+        $operatorFee = 0;
 
         /** @var LicenseReader $licenseReader */
         $licenseReader = app()->make(LicenseReader::class);
         $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
+        $operatorFeeCoefficient = 0.01;
 
         foreach ($paymentDetails as $paymentDetail) {
             $publisherId = $paymentDetail['publisher_id'];
@@ -135,7 +139,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             NetworkCase::factory()->create(
                 [
                     'case_id' => $paymentDetail['case_id'],
-                    'network_impression_id' => $networkImpression->id,
+                    'network_impression_id' => $networkImpression,
                     'publisher_id' => $publisherId,
                 ]
             );
@@ -144,10 +148,9 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             $totalAmount += $eventValue;
             $eventFee = (int)floor($eventValue * $licenseFeeCoefficient);
             $licenseFee += $eventFee;
-            if ('fa9611d2d2f74e3f89c0e18b7c401891' === $publisherId) {
-                $userAmount += $eventValue - $eventFee;
-            }
+            $operatorFee += (int)floor(($eventValue - $eventFee) * $operatorFeeCoefficient);
         }
+        $publishersIncome = $totalAmount - $licenseFee - $operatorFee;
 
         AdsPayment::factory()->create([
             'txid' => self::TX_ID_SEND_MANY,
@@ -163,6 +166,69 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
         self::assertAdPaymentProcessedEventDispatched(1);
+        self::assertDatabaseCount(TurnoverEntry::class, 4);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => $totalAmount,
+                'type' => TurnoverEntryType::SspIncome->name,
+            ],
+            [
+                'ads_address' => hex2bin('FFFF00000000'),
+                'amount' => $licenseFee,
+                'type' => TurnoverEntryType::SspLicenseFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $operatorFee,
+                'type' => TurnoverEntryType::SspOperatorFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $publishersIncome,
+                'type' => TurnoverEntryType::SspPublishersIncome->name,
+            ],
+        ];
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+    }
+
+    public function testAdsProcessEventZeroPayment(): void
+    {
+        $demandClient = new DummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+
+        $networkImpression = NetworkImpression::factory()->create();
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
+
+        foreach ($paymentDetails as $paymentDetail) {
+            $publisherId = $paymentDetail['publisher_id'];
+
+            NetworkCase::factory()->create(
+                [
+                    'case_id' => $paymentDetail['case_id'],
+                    'network_impression_id' => $networkImpression,
+                    'publisher_id' => $publisherId,
+                ]
+            );
+        }
+
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => 0,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
+
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        $this->assertEquals(0, NetworkCasePayment::sum('total_amount'));
+        $this->assertEquals(0, NetworkPayment::sum('amount'));
+        $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched(1);
+        self::assertDatabaseEmpty(TurnoverEntry::class);
     }
 
     public function testAdsProcessEventPaymentWithPaymentProcessorError(): void
@@ -300,6 +366,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $licenseVault->method('read')->willThrowException(new RuntimeException('test-exception'));
         $licenseReader = new LicenseReader($licenseVault);
         $this->instance(LicenseReader::class, $licenseReader);
+        Config::updateAdminSettings([Config::OPERATOR_RX_FEE => '0']);
 
         NetworkCase::factory()->create(
             [
@@ -326,6 +393,22 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertDatabaseCount(NetworkPayment::class, 0);
         self::assertAdPaymentProcessedEventDispatched(1);
+        self::assertDatabaseCount(TurnoverEntry::class, 2);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => $totalAmount,
+                'type' => TurnoverEntryType::SspIncome->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $totalAmount,
+                'type' => TurnoverEntryType::SspPublishersIncome->name,
+            ],
+        ];
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
     }
 
     public function testLock(): void
@@ -341,7 +424,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     {
         $info = $demandClient->fetchInfo(new NullUrl());
         return NetworkHost::factory()->create([
-            'address' => '0001-00000000-9B6F',
+            'address' => $info->getAdsAddress(),
             'info' => $info,
             'info_url' => $info->getServerUrl() . 'info.json',
         ]);

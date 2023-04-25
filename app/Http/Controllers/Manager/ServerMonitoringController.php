@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Common\LimitValidator;
+use Adshares\Adserver\Http\Requests\Filter\DateFilter;
 use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Requests\Order\OrderByCollection;
@@ -39,6 +40,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\UserSettings;
@@ -48,6 +50,8 @@ use Adshares\Adserver\Repository\Common\UserRepository;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
+use DateTimeImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -110,6 +114,28 @@ class ServerMonitoringController extends Controller
 
         return (new GenericCollection($repository->fetchLatestServerEvents($filters, $limit)))
             ->preserveQuery();
+    }
+
+    public function fetchTurnover(Request $request): JsonResponse
+    {
+        $filters = FilterCollection::fromRequest($request, [
+            'date' => FilterType::Date,
+        ]);
+        /** @var DateFilter $dateFilter */
+        $dateFilter = $filters?->getFilterByName('date');
+
+        $data = [];
+        foreach (TurnoverEntryType::cases() as $type) {
+            $data[Str::camel($type->name)] = 0;
+        }
+        $entries = TurnoverEntry::fetchByHourTimestamp(
+            $dateFilter?->getFrom() ?: new DateTimeImmutable('-1 day'),
+            $dateFilter?->getTo() ?: new DateTimeImmutable(),
+        );
+        foreach ($entries as $entry) {
+            $data[Str::camel($entry->type->name)] = (int)$entry->amount;
+        }
+        return self::json($data);
     }
 
     public function fetchUsers(Request $request, UserRepository $userRepository): JsonResource

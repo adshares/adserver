@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Persist turnover data
 - Validate ads.txt
 ### Changed
 - Payment processing loop is continued if exchange rate for particular period is not available

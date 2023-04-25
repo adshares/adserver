@@ -21,29 +21,20 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Services\Dto;
+namespace Database\Factories;
 
-final class PaymentProcessingResult
+use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class TurnoverEntryFactory extends Factory
 {
-    public function __construct(
-        private readonly int $currentEventValueSum,
-        private readonly int $currentLicenseFeeSum,
-        private readonly int $currentOperatorFeeSum,
-    ) {
-    }
-
-    public function eventValuePartialSum(): int
+    public function definition(): array
     {
-        return $this->currentEventValueSum;
-    }
-
-    public function licenseFeePartialSum(): int
-    {
-        return $this->currentLicenseFeeSum;
-    }
-
-    public function operatorFeePartialSum(): int
-    {
-        return $this->currentOperatorFeeSum;
+        return [
+            'amount' => 100_000_000_000,
+            'hour_timestamp' => DateUtils::getDateTimeRoundedToCurrentHour(),
+            'type' => TurnoverEntryType::DspAdvertisersExpense,
+        ];
     }
 }

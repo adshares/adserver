@@ -21,29 +21,17 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Services\Dto;
+namespace Adshares\Supply\Domain\ValueObject;
 
-final class PaymentProcessingResult
+enum TurnoverEntryType
 {
-    public function __construct(
-        private readonly int $currentEventValueSum,
-        private readonly int $currentLicenseFeeSum,
-        private readonly int $currentOperatorFeeSum,
-    ) {
-    }
-
-    public function eventValuePartialSum(): int
-    {
-        return $this->currentEventValueSum;
-    }
-
-    public function licenseFeePartialSum(): int
-    {
-        return $this->currentLicenseFeeSum;
-    }
-
-    public function operatorFeePartialSum(): int
-    {
-        return $this->currentOperatorFeeSum;
-    }
+    case DspAdvertisersExpense;
+    case DspLicenseFee;
+    case DspOperatorFee;
+    case DspCommunityFee;
+    case DspExpense;
+    case SspIncome;
+    case SspLicenseFee;
+    case SspOperatorFee;
+    case SspPublishersIncome;
 }
