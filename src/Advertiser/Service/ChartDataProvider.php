@@ -54,7 +54,7 @@ final class ChartDataProvider
 
         return $this->repository->$method(
             $input->getAdvertiserId(),
-            $input->getResolution(),
+            $input->getResolution()->value,
             $input->getDateStart(),
             $input->getDateEnd(),
             $input->getCampaignId(),
