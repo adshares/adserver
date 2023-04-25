@@ -284,7 +284,9 @@ SQL;
                     $payTo,
                     Utils::getImpressionContextArray($request),
                     $keywords,
-                    $eventType
+                    $eventType,
+                    $campaign->medium,
+                    $campaign->vendor,
                 );
             }
         }
@@ -392,7 +394,9 @@ SQL;
             $payTo,
             Utils::getImpressionContextArray($request),
             $keywords,
-            EventLog::TYPE_VIEW
+            EventLog::TYPE_VIEW,
+            $campaign->medium,
+            $campaign->vendor,
         );
 
         return $response;

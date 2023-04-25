@@ -19,25 +19,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Mail;
 
-namespace Adshares\Supply\Application\Service;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\UrlInterface;
-use Adshares\Supply\Application\Dto\Info;
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
+class SiteAdsTxtValid extends Mailable
 {
-    public function fetchAllInventory(
-        AccountId $sourceAddress,
-        string $sourceHost,
-        string $inventoryUrl,
-        bool $isAdsTxtRequiredBySourceHost,
-    ): CampaignCollection;
+    use Queueable;
+    use SerializesModels;
 
-    public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array;
+    public function __construct(private readonly string $siteName)
+    {
+    }
 
-    public function fetchInfo(UrlInterface $infoUrl): Info;
+    public function build(): self
+    {
+        $this->subject(sprintf("Site %s has correct ads.txt", $this->siteName));
+        return $this->markdown('emails.site-ads-txt-valid')->with([
+            'siteName' => $this->siteName,
+        ]);
+    }
 }

@@ -46,6 +46,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -56,6 +57,9 @@ use Illuminate\Support\Facades\Mail;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property Carbon|null accepted_at
+ * @property Carbon|null ads_txt_check_at
+ * @property Carbon|null ads_txt_confirmed_at
+ * @property int ads_txt_fails
  * @property int user_id
  * @property string name
  * @property string domain
@@ -139,6 +143,9 @@ class Site extends Model
     ];
 
     protected $hidden = [
+        'ads_txt_check_at',
+        'ads_txt_confirmed_at',
+        'ads_txt_fails',
         'deleted_at',
         'site_requires',
         'site_excludes',
@@ -153,8 +160,9 @@ class Site extends Model
 
     protected $appends = [
         'ad_units',
-        'filtering',
         'code',
+        'filtering',
+        'needs_ads_txt_confirmation',
         'reject_reason',
     ];
 
@@ -203,6 +211,11 @@ class Site extends Model
             'requires' => $this->site_requires,
             'excludes' => $this->site_excludes,
         ];
+    }
+
+    public function getNeedsAdsTxtConfirmationAttribute(): bool
+    {
+        return $this->isAdsTxtRequired();
     }
 
     public function getRejectReasonAttribute(): ?string
@@ -342,15 +355,39 @@ class Site extends Model
         return $site;
     }
 
-    public static function fetchAll(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
+    public static function fetchAll(int $previousChunkLastId = 0, ?int $limit = null): Collection
     {
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)->get();
     }
 
-    public static function fetchInVerification(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
+    public static function fetchInVerification(int $previousChunkLastId = 0, ?int $limit = null): Collection
     {
         return self::getSitesChunkBuilder($previousChunkLastId, $limit)
             ->where('info', AdUser::PAGE_INFO_UNKNOWN)
+            ->get();
+    }
+
+    public static function fetchSitesWhichNeedAdsTxtConfirmation(int $lastId = 0, ?int $limit = null): Collection
+    {
+        return self::getSitesChunkBuilder($lastId, $limit)
+            ->where('medium', MediumName::Web->value)
+            ->where('status', self::STATUS_PENDING_APPROVAL)
+            ->whereNull('ads_txt_confirmed_at')
+            ->where(function (Builder $sub) {
+                $sub->whereNull('ads_txt_check_at')
+                    ->orWhereRaw(DB::raw('ads_txt_check_at < NOW() - INTERVAL POW(2, ads_txt_fails) MINUTE'));
+            })
+            ->orderBy('id')
+            ->get();
+    }
+
+    public static function fetchSitesWhichNeedAdsTxtReEvaluation(int $lastId = 0, ?int $limit = null): Collection
+    {
+        return self::getSitesChunkBuilder($lastId, $limit)
+            ->where('medium', MediumName::Web->value)
+            ->where('status', self::STATUS_ACTIVE)
+            ->where('ads_txt_confirmed_at', '<', Carbon::now()->subDay())
+            ->orderBy('id')
             ->get();
     }
 
@@ -373,9 +410,13 @@ class Site extends Model
         }
     }
 
-    private static function getSitesChunkBuilder(int $previousChunkLastId, int $limit): Builder
+    private static function getSitesChunkBuilder(int $previousChunkLastId, ?int $limit = null): Builder
     {
-        return self::where('id', '>', $previousChunkLastId)->limit($limit);
+        $query = self::query()->where('id', '>', $previousChunkLastId);
+        if (null !== $limit) {
+            $query->limit($limit);
+        }
+        return $query;
     }
 
     public function changeStatus(int $status): void
@@ -400,9 +441,9 @@ class Site extends Model
         $this->save();
     }
 
-    public function approvalProcedure(): void
+    public function approvalProcedure(bool $allowEmails = true): void
     {
-        if (null !== $this->accepted_at) {
+        if (null !== $this->accepted_at && !$this->isAdsTxtRequired()) {
             $this->status = self::STATUS_ACTIVE;
             return;
         }
@@ -411,19 +452,35 @@ class Site extends Model
             $this->reject_reason_id = SitesRejectedDomain::domainRejectedReasonId($this->domain);
             return;
         }
-        if (self::isApprovalRequired($this->medium)) {
+        if ($this->isApprovalRequired()) {
             $this->status = self::STATUS_PENDING_APPROVAL;
-            Mail::to(config('app.technical_email'))
-                ->queue(new SiteApprovalPending($this->user_id, $this->url));
+            if ($allowEmails) {
+                Mail::to(config('app.technical_email'))
+                    ->queue(new SiteApprovalPending($this->user_id, $this->url));
+            }
+            return;
+        }
+        if ($this->isAdsTxtRequired()) {
+            $this->status = self::STATUS_PENDING_APPROVAL;
             return;
         }
         $this->status = self::STATUS_ACTIVE;
         $this->accepted_at = new DateTimeImmutable();
     }
 
-    private static function isApprovalRequired(string $medium): bool
+    private function isAdsTxtRequired(): bool
     {
+        return config('app.ads_txt_check_supply_enabled')
+            && MediumName::Web->value === $this->medium
+            && null === $this->ads_txt_confirmed_at;
+    }
+
+    private function isApprovalRequired(): bool
+    {
+        if (null !== $this->accepted_at) {
+            return false;
+        }
         $mediumList = config('app.site_approval_required');
-        return in_array($medium, $mediumList) || in_array(self::ALL, $mediumList);
+        return in_array($this->medium, $mediumList) || in_array(self::ALL, $mediumList);
     }
 }

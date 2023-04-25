@@ -45,7 +45,9 @@ class EventLogTest extends TestCase
             $data['pay_to'],
             $data['impression_context'],
             $data['their_userdata'],
-            $data['event_type']
+            $data['event_type'],
+            $data['medium'],
+            $data['vendor'],
         );
 
         $theirContext = json_encode($data['impression_context']);
@@ -79,7 +81,9 @@ class EventLogTest extends TestCase
                 $data['pay_to'],
                 $data['impression_context'],
                 $data['their_userdata'],
-                $data['event_type']
+                $data['event_type'],
+                $data['medium'],
+                $data['vendor'],
             );
         }
 
@@ -105,10 +109,55 @@ class EventLogTest extends TestCase
             $data['pay_to'],
             $data['impression_context'],
             $data['their_userdata'],
-            $data['event_type']
+            $data['event_type'],
+            $data['medium'],
+            $data['vendor'],
+        );
+    }
+
+    public function testCreateWithUserData(): void
+    {
+        $data = array_merge(
+            $this->getEventData(),
+            [
+                'human_score' => 0.5,
+                'page_rank' => 0.7,
+                'our_userdata' => null,
+            ]
         );
 
-        $this->assertEquals(0, EventLog::count());
+        EventLog::createWithUserData(
+            $data['case_id'],
+            $data['event_id'],
+            $data['banner_id'],
+            $data['zone_id'],
+            $data['tracking_id'],
+            $data['publisher_id'],
+            $data['campaign_id'],
+            $data['advertiser_id'],
+            $data['pay_to'],
+            $data['impression_context'],
+            $data['their_userdata'],
+            $data['event_type'],
+            $data['medium'],
+            $data['vendor'],
+            $data['human_score'],
+            $data['page_rank'],
+            $data['our_userdata'],
+        );
+
+        $theirContext = json_encode($data['impression_context']);
+        unset($data['impression_context']);
+
+        $this->assertEquals(1, EventLog::count());
+        $event = EventLog::first()->toArray();
+
+        foreach ($data as $key => $value) {
+            $this->assertArrayHasKey($key, $event);
+            $this->assertEquals($value, $event[$key]);
+        }
+        $this->assertArrayHasKey('their_context', $event);
+        $this->assertEquals($theirContext, json_encode($event['their_context']));
     }
 
     public function getEventData(): array
@@ -155,6 +204,8 @@ class EventLogTest extends TestCase
             ],
             'their_userdata' => '',
             'event_type' => 'view',
+            'medium' => 'web',
+            'vendor' => null,
         ];
     }
 

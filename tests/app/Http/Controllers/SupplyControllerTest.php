@@ -831,7 +831,9 @@ final class SupplyControllerTest extends TestCase
     {
         [$query, $banner, $zone] = self::initBeforeLoggingClick();
 
+        ob_start();
         $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
@@ -852,7 +854,9 @@ final class SupplyControllerTest extends TestCase
         unset($query['ctx']);
         $query['zid'] = $zone->uuid;
 
+        ob_start();
         $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
@@ -890,7 +894,9 @@ final class SupplyControllerTest extends TestCase
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
 
+        ob_start();
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
@@ -910,7 +916,9 @@ final class SupplyControllerTest extends TestCase
         unset($query['ctx']);
         $query['zid'] = $zone->uuid;
 
+        ob_start();
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
@@ -932,7 +940,9 @@ final class SupplyControllerTest extends TestCase
         $query['cid'] = Uuid::fromString($query['cid'])->toString();
         $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
 
+        ob_start();
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
@@ -964,7 +974,9 @@ final class SupplyControllerTest extends TestCase
         $query['iid'] = Uuid::fromString(NetworkImpression::first()->impression_id)->toString();
         $query['zid'] = Uuid::fromString($zone->uuid)->toString();
 
+        ob_start();
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
