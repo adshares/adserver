@@ -1,5 +1,5 @@
 @component('mail::message')
-#Site acceptance is pending
+# Site acceptance is pending
 
 Hello,
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,7 +29,6 @@ use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\ServeDomain;
-use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\ConversionValidator;
 use Adshares\Adserver\Services\EventCaseFinder;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -50,23 +49,10 @@ class ConversionController extends Controller
 {
     private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
-    /** @var CampaignRepository */
-    private $campaignRepository;
-
-    /** @var ConversionValidator */
-    private $conversionValidator;
-
-    /** @var EventCaseFinder */
-    private $eventCaseFinder;
-
     public function __construct(
-        CampaignRepository $campaignRepository,
-        ConversionValidator $conversionValidator,
-        EventCaseFinder $eventCaseFinder
+        private readonly ConversionValidator $conversionValidator,
+        private readonly EventCaseFinder $eventCaseFinder,
     ) {
-        $this->campaignRepository = $campaignRepository;
-        $this->conversionValidator = $conversionValidator;
-        $this->eventCaseFinder = $eventCaseFinder;
     }
 
     public function conversion(string $uuid, Request $request): Response
@@ -352,9 +338,11 @@ class ConversionController extends Controller
                     $impressionContext,
                     '',
                     EventLog::TYPE_CLICK,
+                    $campaign->medium,
+                    $campaign->vendor,
                     $viewEventData['humanScore'],
                     $viewEventData['pageRank'],
-                    $viewEventData['ourUserdata']
+                    $viewEventData['ourUserdata'],
                 );
             }
         }

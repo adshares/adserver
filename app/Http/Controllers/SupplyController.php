@@ -392,7 +392,7 @@ class SupplyController extends Controller
             ->getValues();
 
         $data = ['data' => $foundBanners];
-        if (($custom = $this->getCustomData($context, $foundBanners))) {
+        if ($custom = $this->getCustomData($context, $foundBanners)) {
             $data['custom'] = $custom;
         }
         return self::json($data);

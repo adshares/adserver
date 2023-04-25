@@ -33,6 +33,7 @@ class SiteFactory extends Factory
 {
     public function definition(): array
     {
+        $now = new DateTimeImmutable();
         return [
             'name' => $this->faker->words(2, true),
             'domain' => 'example.com',
@@ -45,7 +46,9 @@ class SiteFactory extends Factory
             'info' => AdUser::PAGE_INFO_OK,
             'categories' => ['unknown'],
             'only_accepted_banners' => 0,
-            'accepted_at' => new DateTimeImmutable(),
+            'accepted_at' => $now,
+            'ads_txt_check_at' => $now,
+            'ads_txt_confirmed_at' => $now,
         ];
     }
 }

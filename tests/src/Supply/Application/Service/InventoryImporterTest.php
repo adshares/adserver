@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -64,7 +64,8 @@ final class InventoryImporterTest extends TestCase
         $inventoryImporter->import(
             new AccountId('0001-00000001-8B4E'),
             'localhost:8101',
-            'http://localhost:8101/inventory/list'
+            'http://localhost:8101/inventory/list',
+            false,
         );
     }
 
@@ -137,7 +138,8 @@ final class InventoryImporterTest extends TestCase
         $inventoryImporter->import(
             new AccountId('0001-00000001-8B4E'),
             'localhost:8101',
-            'http://localhost:8101/inventory/list'
+            'http://localhost:8101/inventory/list',
+            false,
         );
 
         $statuses = array_map(function ($item) {
@@ -178,7 +180,8 @@ final class InventoryImporterTest extends TestCase
         $inventoryImporter->import(
             new AccountId('0001-00000001-8B4E'),
             'localhost:8101',
-            'http://localhost:8101/inventory/list'
+            'http://localhost:8101/inventory/list',
+            false,
         );
 
         $statuses = array_map(function ($item) {
@@ -211,7 +214,8 @@ final class InventoryImporterTest extends TestCase
         $inventoryImporter->import(
             new AccountId('0001-00000001-8B4E'),
             'localhost:8101',
-            'http://localhost:8101/inventory/list'
+            'http://localhost:8101/inventory/list',
+            false,
         );
 
         $classification1 = $inMemoryDemandClient->campaigns[0]->getBanners()[0]->getClassification();

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -55,6 +55,7 @@ use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\SupplyClient;
 use GuzzleHttp\Client;
+use GuzzleHttp\RequestOptions;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\ServiceProvider;
@@ -126,10 +127,9 @@ final class ClientProvider extends ServiceProvider
                 return new GuzzleDemandClient(
                     $app->make(ClassifierExternalRepository::class),
                     $app->make(ClassifierExternalSignatureVerifier::class),
-                    new Client(),
+                    new Client([RequestOptions::TIMEOUT => $timeoutForDemandService]),
                     $app->make(SignatureVerifier::class),
                     $app->make(AdsAuthenticator::class),
-                    $timeoutForDemandService
                 );
             }
         );

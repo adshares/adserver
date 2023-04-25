@@ -19,25 +19,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests\Mail;
 
-namespace Adshares\Supply\Application\Service;
+use Adshares\Adserver\Mail\SiteAdsTxtInvalid;
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
 
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\UrlInterface;
-use Adshares\Supply\Application\Dto\Info;
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
+class SiteAdsTxtInvalidTest extends MailTestCase
 {
-    public function fetchAllInventory(
-        AccountId $sourceAddress,
-        string $sourceHost,
-        string $inventoryUrl,
-        bool $isAdsTxtRequiredBySourceHost,
-    ): CampaignCollection;
+    public function testBuild(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'name' => 'test-name',
+            'user_id' => $user,
+        ]);
+        $mailable = new SiteAdsTxtInvalid($user->uuid, $site->name, $site->url);
 
-    public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array;
-
-    public function fetchInfo(UrlInterface $infoUrl): Info;
+        $mailable->assertSeeInText('test-name');
+        $mailable->assertSeeInText('https://example.com');
+    }
 }

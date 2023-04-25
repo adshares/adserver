@@ -117,6 +117,21 @@ class SiteTest extends TestCase
                 fn() => Site::factory()->make(['accepted_at' => new DateTimeImmutable()]),
                 Site::STATUS_ACTIVE,
             ],
+            'accepted but no ads.txt' => [
+                function () {
+                    Config::updateAdminSettings([
+                        Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1',
+                        Config::SITE_APPROVAL_REQUIRED => '*',
+                    ]);
+                    DatabaseConfigReader::overwriteAdministrationConfig();
+                    return Site::factory()->make([
+                        'accepted_at' => new DateTimeImmutable(),
+                        'ads_txt_confirmed_at' => null,
+                        'user_id' => User::factory()->create(),
+                    ]);
+                },
+                Site::STATUS_PENDING_APPROVAL,
+            ],
             'site rejected' => [
                 function () {
                     $domain = 'rejected.com';
@@ -182,6 +197,33 @@ class SiteTest extends TestCase
         $site = Site::factory()->create();
 
         self::assertNotNull(Site::fetchByPublicId($site->uuid));
+    }
+
+
+    public function testFetchSitesWhichNeedAdsTxtConfirmation(): void
+    {
+        Site::factory()->create([
+            'ads_txt_check_at' => new DateTimeImmutable('-6 days'),
+            'ads_txt_confirmed_at' => null,
+            'ads_txt_fails' => 13,
+            'status' => Site::STATUS_PENDING_APPROVAL,
+        ]);
+
+        $sites = Site::fetchSitesWhichNeedAdsTxtConfirmation();
+
+        self::assertCount(1, $sites);
+    }
+
+    public function testFetchSitesWhichNeedAdsTxtReEvaluation(): void
+    {
+        Site::factory()->create([
+            'ads_txt_confirmed_at' => new DateTimeImmutable('-25 hours'),
+            'user_id' => User::factory()->create(),
+        ]);
+
+        $sites = Site::fetchSitesWhichNeedAdsTxtReEvaluation();
+
+        self::assertCount(1, $sites);
     }
 
     public function testRejectByDomainsWhileIp(): void

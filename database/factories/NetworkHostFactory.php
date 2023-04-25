@@ -49,7 +49,8 @@ class NetworkHostFactory extends Factory
             AccountId::fromIncompleteString('0001-00000008'),
         ];
 
-        $host = 'https://' . parse_url($this->faker->url, PHP_URL_HOST);
+        $domain = parse_url($this->faker->url, PHP_URL_HOST);
+        $host = 'https://' . $domain;
         $info = new Info(
             'adserver',
             $this->faker->domainWord,
@@ -64,7 +65,9 @@ class NetworkHostFactory extends Factory
             new Email($this->faker->companyEmail),
             [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
             RegistrationMode::PUBLIC,
-            AppMode::OPERATIONAL
+            AppMode::OPERATIONAL,
+            $domain,
+            false,
         );
 
         $info->setDemandFee(0.01);

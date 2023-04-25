@@ -314,7 +314,9 @@ final class DemandControllerTest extends TestCase
         /** @var EventLog $event */
         $event = EventLog::factory()->create();
 
+        ob_start();
         $response = self::getJson(self::buildContextUri($event->event_id));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_OK);
         self::assertDatabaseHas(
@@ -330,7 +332,9 @@ final class DemandControllerTest extends TestCase
     {
         [$query, $banner] = $this->initBeforeClickEvent();
 
+        ob_start();
         $response = $this->get(self::buildClickUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         self::assertDatabaseHas(EventLog::class, [
@@ -349,7 +353,9 @@ final class DemandControllerTest extends TestCase
         $query['iid'] = '52511506-5f3d-4338-8d57-57a2d5c4b0e8';
         $query['pid'] = '9231200a-10f5-48dc-a74b-2ad767bb713d';
 
+        ob_start();
         $response = $this->get(self::buildClickUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         self::assertDatabaseHas(EventLog::class, [
@@ -365,7 +371,9 @@ final class DemandControllerTest extends TestCase
     {
         [$query, $banner] = $this->initBeforeViewEvent();
 
+        ob_start();
         $response = $this->get(self::buildClickUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         self::assertDatabaseEmpty(EventLog::class);
@@ -395,7 +403,9 @@ final class DemandControllerTest extends TestCase
     {
         [$query, $banner] = $this->initBeforeViewEvent();
 
+        ob_start();
         $response = $this->get(self::buildViewUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_OK);
         self::assertDatabaseHas(EventLog::class, [
@@ -414,7 +424,9 @@ final class DemandControllerTest extends TestCase
         $query['iid'] = '52511506-5f3d-4338-8d57-57a2d5c4b0e8';
         $query['pid'] = '9231200a-10f5-48dc-a74b-2ad767bb713d';
 
+        ob_start();
         $response = $this->get(self::buildViewUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_OK);
         self::assertDatabaseHas(EventLog::class, [
@@ -431,10 +443,12 @@ final class DemandControllerTest extends TestCase
         Config::updateAdminSettings([Config::ADUSER_BASE_URL => 'https://aduser.example.com']);
         [$query, $banner] = $this->initBeforeViewEvent();
 
+        ob_start();
         $response = $this->get(
             self::buildViewUri($banner->uuid, $query),
             ['Accept' => 'application/json'],
         );
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(['context' => []]);
