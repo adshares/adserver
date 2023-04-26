@@ -130,7 +130,7 @@ class PaymentDetailsProcessor
             $totalEventValue += $eventValue;
         }
 
-        return new PaymentProcessingResult($totalEventValue, 0);
+        return new PaymentProcessingResult($totalEventValue, 0, 0);
     }
 
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
