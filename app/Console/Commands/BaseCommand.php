@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,16 +31,12 @@ class BaseCommand extends Command
 {
     use LineFormatterTrait;
 
-    private Locker $locker;
-
     protected $signature = 'base:command';
 
     protected $description = 'This method should be used for inheritance only';
 
-    public function __construct(Locker $locker)
+    public function __construct(private readonly Locker $locker)
     {
-        $this->locker = $locker;
-
         parent::__construct();
     }
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,21 +25,11 @@ namespace Adshares\Adserver\Services\Dto;
 
 final class PaymentProcessingResult
 {
-    /** @var int */
-    private $currentEventValueSum;
-
-    /** @var int */
-    private $currentLicenseFeeSum;
-
-    public function __construct(int $currentEventValueSum, int $currentLicenseFeeSum)
-    {
-        $this->currentEventValueSum = $currentEventValueSum;
-        $this->currentLicenseFeeSum = $currentLicenseFeeSum;
-    }
-
-    public static function zero(): self
-    {
-        return new self(0, 0);
+    public function __construct(
+        private readonly int $currentEventValueSum,
+        private readonly int $currentLicenseFeeSum,
+        private readonly int $currentOperatorFeeSum,
+    ) {
     }
 
     public function eventValuePartialSum(): int
@@ -50,5 +40,10 @@ final class PaymentProcessingResult
     public function licenseFeePartialSum(): int
     {
         return $this->currentLicenseFeeSum;
+    }
+
+    public function operatorFeePartialSum(): int
+    {
+        return $this->currentOperatorFeeSum;
     }
 }

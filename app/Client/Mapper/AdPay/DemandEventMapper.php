@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -38,7 +38,6 @@ class DemandEventMapper
                 $mapped = self::mapEventLog($eventLog);
                 $mapped['id'] = $eventLog->event_id;
                 $mapped['time'] = $eventLog->created_at->getTimestamp();
-
                 return $mapped;
             }
         )->toArray();
@@ -82,6 +81,7 @@ class DemandEventMapper
             'user_id' => $event->user_id ?? $event->tracking_id,
             'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
             'page_rank' => (float)($event->page_rank ?? AdUser::PAGE_RANK_ON_MISSING_KEYWORD),
+            'ads_txt' => $event->ads_txt,
             'context' => JsonValueMapper::map($event->our_context),
             'keywords' => JsonValueMapper::map($event->our_userdata),
         ];

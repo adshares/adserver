@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Persist turnover data
+- Validate ads.txt
 - DSP Bridge integration
+### Changed
+- Payment processing loop is continued if exchange rate for particular period is not available
+- Reject site during find if it has rejected domain
+### Fixed
+- Do not process payments older than 2 days (by default)
 
 ## [2.4.12] - 2023-03-31
 ### Added

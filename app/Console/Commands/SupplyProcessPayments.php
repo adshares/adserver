@@ -28,16 +28,19 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Adserver\Services\Dto\ProcessedPaymentsMetaData;
 use Adshares\Adserver\Services\LicenseFeeSender;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Services\Supply\DspBridge;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use stdClass;
 use Throwable;
@@ -49,8 +52,9 @@ class SupplyProcessPayments extends BaseCommand
     private const TRY_OUT_PERIOD_FOR_EVENT_PAYMENT = '-24 hours';
 
     private const SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT = <<<SQL
-SELECT SUM(total_amount) AS total_amount,
-       SUM(license_fee)  AS license_fee
+SELECT IFNULL(SUM(total_amount), 0) AS total_amount,
+       IFNULL(SUM(license_fee), 0)  AS license_fee,
+       IFNULL(SUM(operator_fee), 0) AS operator_fee
 FROM network_case_payments
 WHERE ads_payment_id = ?
 SQL;
@@ -193,11 +197,10 @@ SQL;
         $limit = (int)$this->option('chunkSize');
         $offset = $incomingPayment->last_offset ?? 0;
         if ($offset > 0) {
-            $paymentSum = DB::select(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
-            if (!empty($paymentSum)) {
-                $sum = $paymentSum[0];
-                $resultsCollection->add(new PaymentProcessingResult($sum->total_amount, $sum->license_fee));
-            }
+            $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
+            $resultsCollection->add(
+                new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
+            );
         }
         $transactionTime = $incomingPayment->tx_time;
 
@@ -226,6 +229,7 @@ SQL;
             $incomingPayment->last_offset = $offset += $limit;
         }
 
+        $this->storeTurnoverEntries($resultsCollection, $incomingPayment);
         $this->paymentDetailsProcessor->addAdIncomeToUserLedger($incomingPayment);
 
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
@@ -262,5 +266,45 @@ SQL;
             fn(stdClass $item) => (int)$item->pay_time,
             DB::select($query, array_merge($paymentIds, $paymentIds))
         );
+    }
+
+    private function storeTurnoverEntries(LicenseFeeSender $resultsCollection, AdsPayment $incomingPayment): void
+    {
+        $hourTimestamp = DateUtils::getDateTimeRoundedToCurrentHour();
+
+        $totalEventValue = $resultsCollection->eventValueSum();
+        if ($totalEventValue <= 0) {
+            return;
+        }
+        TurnoverEntry::increaseOrInsert(
+            $hourTimestamp,
+            TurnoverEntryType::SspIncome,
+            $totalEventValue,
+            $incomingPayment->address,
+        );
+
+        $totalLicenseFee = $resultsCollection->licenseFeeSum();
+        if ($totalLicenseFee > 0 && null !== ($licenseAddress = $resultsCollection->licenseAddress())) {
+            TurnoverEntry::increaseOrInsert(
+                $hourTimestamp,
+                TurnoverEntryType::SspLicenseFee,
+                $totalLicenseFee,
+                $licenseAddress,
+            );
+        }
+
+        $totalOperatorFeeSum = $resultsCollection->operatorFeeSum();
+        if ($totalOperatorFeeSum > 0) {
+            TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::SspOperatorFee, $totalOperatorFeeSum);
+        }
+
+        $totalPublisherIncome = $totalEventValue - $totalLicenseFee - $totalOperatorFeeSum;
+        if ($totalPublisherIncome > 0) {
+            TurnoverEntry::increaseOrInsert(
+                $hourTimestamp,
+                TurnoverEntryType::SspPublishersIncome,
+                $totalPublisherIncome,
+            );
+        }
     }
 }

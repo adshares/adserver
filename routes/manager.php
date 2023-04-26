@@ -129,8 +129,7 @@ Route::middleware([Kernel::ADVERTISER_ACCESS, Kernel::JSON_API])->group(
             ->name('app.campaigns.add');
         Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])
             ->name('app.campaigns.edit');
-        Route::put('campaigns/{campaign}/status', [CampaignsController::class, 'changeStatus'])
-            ->name('app.campaigns.change_status');
+        Route::put('campaigns/{campaign}/status', [CampaignsController::class, 'changeStatus']);
         Route::patch('campaigns/{campaign}/activate-outdated', [CampaignsController::class, 'activateOutdatedCampaign'])
             ->name('app.campaigns.activate_outdated');
         Route::put(

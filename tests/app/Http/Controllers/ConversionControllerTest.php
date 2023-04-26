@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,7 +27,6 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,17 +34,8 @@ final class ConversionControllerTest extends TestCase
 {
     public function testConversion(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user, 'api');
-
         /** @var Campaign $campaign */
-        $campaign = Campaign::factory()->create(
-            [
-                'user_id' => $user->id,
-                'budget' => 100000000000,
-            ]
-        );
+        $campaign = Campaign::factory()->create(['budget' => 100_000_000_000]);
 
         /** @var EventLog $event */
         $event = EventLog::factory()->create(
@@ -65,7 +55,6 @@ final class ConversionControllerTest extends TestCase
         $conversionDefinition->event_type = 'Purchase';
         $conversionDefinition->type = ConversionDefinition::BASIC_TYPE;
         $conversionDefinition->value = $conversionValue;
-
         $conversionDefinition->save();
 
         $url = $this->buildConversionUrl($conversionDefinition->uuid);
@@ -88,8 +77,80 @@ final class ConversionControllerTest extends TestCase
         $this->assertDatabaseHas('conversions', $conversionData);
     }
 
+    public function testConversionClick(): void
+    {
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'budget' => 100_000_000_000,
+            'conversion_click' => 1,
+        ]);
+        /** @var EventLog $event */
+        $event = EventLog::factory()->create(
+            [
+                'campaign_id' => $campaign->uuid,
+                'case_id' => '0123456789abcdef0123456789abcdef',
+                'event_type' => EventLog::TYPE_VIEW,
+            ]
+        );
+        $event->event_id = Utils::createCaseIdContainingEventType($event->case_id, EventLog::TYPE_VIEW);
+        $event->save();
+
+        ob_start();
+        $response = $this->getJson(self::buildConversionClickUri(
+            $campaign,
+            ['cid' => '0123456789abcdef0123456789abcdef'],
+        ));
+        ob_get_clean();
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertEquals(1, $event->refresh()->is_view_clicked);
+        self::assertDatabaseHas(EventLog::class, [
+            'campaign_id' => hex2bin($campaign->uuid),
+            'case_id' => hex2bin('0123456789abcdef0123456789abcdef'),
+            'event_type' => EventLog::TYPE_CLICK,
+        ]);
+    }
+
+    public function testConversionClickWhileNoViewEvent(): void
+    {
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'budget' => 100_000_000_000,
+            'conversion_click' => 1,
+        ]);
+
+        $response = $this->getJson(self::buildConversionClickUri(
+            $campaign,
+            ['cid' => '0123456789abcdef0123456789abcdef'],
+        ));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testConversionClickWhileMissingCid(): void
+    {
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create([
+            'budget' => 100_000_000_000,
+            'conversion_click' => 1,
+        ]);
+
+        $response = $this->getJson(self::buildConversionClickUri($campaign));
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
     private function buildConversionUrl(string $uuid): string
     {
         return route('conversion.gif', ['uuid' => $uuid]);
+    }
+
+    private static function buildConversionClickUri(Campaign $campaign, ?array $query = null): string
+    {
+        $uri = '/kw/kl/' . $campaign->uuid;
+        if (null !== $query) {
+            $uri .= '?' . http_build_query($query);
+        }
+        return $uri;
     }
 }

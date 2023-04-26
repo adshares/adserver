@@ -128,7 +128,8 @@ final class DummyDemandClient implements DemandClient
     public function fetchAllInventory(
         AccountId $sourceAddress,
         string $sourceHost,
-        string $inventoryUrl
+        string $inventoryUrl,
+        bool $isAdsTxtRequiredBySourceHost,
     ): CampaignCollection {
         return new CampaignCollection(...$this->campaigns);
     }
@@ -147,7 +148,7 @@ final class DummyDemandClient implements DemandClient
                     'banner_id' => 'b22e19a3874847f4a6287d26deacd208',
                     'zone_id' => 'a22e19a3874847f4a6287d26deacd208',
                     'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
-                    'event_value' => 10,
+                    'event_value' => 1000,
                 ];
                 $arr[] = [
                     'case_id' => Uuid::v4()->hex(),
@@ -156,7 +157,7 @@ final class DummyDemandClient implements DemandClient
                     'banner_id' => '9c6edfaef7454af4a96cb434c85323ee',
                     'zone_id' => '2c6edfaef7454af4a96cb434c85323ee',
                     'publisher_id' => 'd5f5deefd010449ab0ee0e5e6b884090',
-                    'event_value' => 100,
+                    'event_value' => 10000,
                 ];
             }
         } else {
@@ -182,7 +183,9 @@ final class DummyDemandClient implements DemandClient
             new Email('mail@example.com'),
             [Info::CAPABILITY_PUBLISHER, Info::CAPABILITY_ADVERTISER],
             RegistrationMode::PUBLIC,
-            AppMode::OPERATIONAL
+            AppMode::OPERATIONAL,
+            'example.com',
+            false,
         );
 
         $info->setDemandFee(0.01);

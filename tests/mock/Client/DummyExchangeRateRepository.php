@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,7 +32,7 @@ class DummyExchangeRateRepository implements ExchangeRateRepository
 {
     private const STABLE_RATE = 0.3333;
 
-    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
+    public function fetchExchangeRate(?DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
     {
         $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
 

@@ -81,7 +81,12 @@ class InventoryImporterCommand extends BaseCommand
                         $address->toString()
                     )
                 );
-                $this->inventoryImporterService->import($address, $info->getServerUrl(), $info->getInventoryUrl());
+                $this->inventoryImporterService->import(
+                    $address,
+                    $info->getServerUrl(),
+                    $info->getInventoryUrl(),
+                    $info->isAdsTxtRequired(),
+                );
 
                 $networkHost->connectionSuccessful();
                 ++$networkHostSuccessfulConnectionCount;

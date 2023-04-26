@@ -30,6 +30,7 @@ before_install:
   - mkdir -p /tmp/ads/cache
   - chmod 777 -R /tmp/ads
   - phpenv config-add .travis/php.ini
+  - echo "apc.enable_cli='1'" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - composer self-update
   - cp .env.testing.dist .env.testing
   - mkdir -p storage/app/{invoices,public}

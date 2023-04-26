@@ -57,6 +57,7 @@ class PaymentDetailsProcessor
         $exchangeRate = $this->fetchExchangeRate();
         $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), config('app.payment_rx_fee'));
         $totalLicenseFee = 0;
+        $totalOperatorFee = 0;
         $totalEventValue = 0;
 
         $exchangeRateValue = $exchangeRate->getValue();
@@ -87,10 +88,11 @@ class PaymentDetailsProcessor
             $case->networkCasePayments()->save($networkCasePayment);
 
             $totalLicenseFee += $calculatedFees['license_fee'];
+            $totalOperatorFee += $calculatedFees['operator_fee'];
             $totalEventValue += $eventValue;
         }
 
-        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee);
+        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
     }
 
     public function processEventsPaidByBridge(

@@ -229,6 +229,9 @@ final class ServerConfigurationControllerTest extends TestCase
     public function storeDataProvider(): array
     {
         return [
+            'ADS_TXT_CHECK_DEMAND_ENABLED' => [Config::ADS_TXT_CHECK_DEMAND_ENABLED, '1'],
+            'ADS_TXT_CHECK_SUPPLY_ENABLED' => [Config::ADS_TXT_CHECK_SUPPLY_ENABLED, '1'],
+            'ADS_TXT_DOMAIN' => [Config::ADS_TXT_DOMAIN, 'example.com'],
             'ADSHARES_ADDRESS' => [Config::ADSHARES_ADDRESS, '0001-00000003-AB0C'],
             'HOURS_UNTIL_INACTIVE_HOST_REMOVAL' => [Config::HOURS_UNTIL_INACTIVE_HOST_REMOVAL, '168'],
             'INVENTORY_FAILED_CONNECTION_LIMIT' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '8'],
