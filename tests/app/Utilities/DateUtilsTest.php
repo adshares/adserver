@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,8 +24,10 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Utilities;
 
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
 use DateTimeInterface;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 
 final class DateUtilsTest extends TestCase
@@ -137,5 +139,54 @@ final class DateUtilsTest extends TestCase
         }
 
         return $convertedTable;
+    }
+
+    /**
+     * @dataProvider advanceDateTimeProvider
+     */
+    public function testAdvanceDateTime(string $expected, ChartResolution $resolution): void
+    {
+        $date = new DateTime('2019-01-26T09:00:00+0100');
+
+        DateUtils::advanceStartDate($resolution, $date);
+
+        self::assertEquals($expected, $date->format(DateTimeInterface::ATOM));
+    }
+
+    public function advanceDateTimeProvider(): array
+    {
+        return [
+            'hour' => ['2019-01-26T10:00:00+01:00', ChartResolution::HOUR],
+            'day' => ['2019-01-27T00:00:00+01:00', ChartResolution::DAY],
+            'week' => ['2019-02-02T00:00:00+01:00', ChartResolution::WEEK],
+            'month' => ['2019-02-01T00:00:00+01:00', ChartResolution::MONTH],
+            'quarter' => ['2019-04-01T00:00:00+01:00', ChartResolution::QUARTER],
+            'year' => ['2020-01-01T00:00:00+01:00', ChartResolution::YEAR],
+        ];
+    }
+
+    /**
+     * @dataProvider createSanitizedStartDateProvider
+     */
+    public function testCreateSanitizedStartDate(string $expected, ChartResolution $resolution): void
+    {
+        $date = new DateTime('2019-05-26T09:26:50+0100');
+        $dateTimeZone = new DateTimeZone($date->format('O'));
+
+        $startDate = DateUtils::createSanitizedStartDate($dateTimeZone, $resolution, $date);
+
+        self::assertEquals($expected, $startDate->format(DateTimeInterface::ATOM));
+    }
+
+    public function createSanitizedStartDateProvider(): array
+    {
+        return [
+            'hour' => ['2019-05-26T09:00:00+01:00', ChartResolution::HOUR],
+            'day' => ['2019-05-26T00:00:00+01:00', ChartResolution::DAY],
+            'week' => ['2019-05-20T00:00:00+01:00', ChartResolution::WEEK],
+            'month' => ['2019-05-01T00:00:00+01:00', ChartResolution::MONTH],
+            'quarter' => ['2019-04-01T00:00:00+01:00', ChartResolution::QUARTER],
+            'year' => ['2019-01-01T00:00:00+01:00', ChartResolution::YEAR],
+        ];
     }
 }
