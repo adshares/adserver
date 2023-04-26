@@ -148,7 +148,7 @@ final class DateUtilsTest extends TestCase
     {
         $date = new DateTime('2019-01-26T09:00:00+0100');
 
-        DateUtils::advanceDateTime($resolution, $date);
+        DateUtils::advanceStartDate($resolution, $date);
 
         self::assertEquals($expected, $date->format(DateTimeInterface::ATOM));
     }

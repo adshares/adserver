@@ -822,7 +822,7 @@ class MySqlStatsRepository implements StatsRepository
 
         while ($date < $dateEnd) {
             $dates[] = $date->format(DateTimeInterface::ATOM);
-            DateUtils::advanceDateTime($resolution, $date);
+            DateUtils::advanceStartDate($resolution, $date);
         }
 
         if (empty($dates)) {

@@ -63,7 +63,7 @@ final class DateUtils
         return ((int)floor($timestamp / self::HOUR)) * self::HOUR;
     }
 
-    public static function advanceDateTime(ChartResolution $resolution, DateTime $date): void
+    public static function advanceStartDate(ChartResolution $resolution, DateTime $date): void
     {
         switch ($resolution) {
             case ChartResolution::HOUR:

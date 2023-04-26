@@ -130,6 +130,44 @@ SQL;
         self::assertEquals(1, $resultArray[0][1]);
     }
 
+    /**
+     * @dataProvider fetchEmptyRepositoryProvider
+     */
+    public function testFetchEmptyRepository(string $method): void
+    {
+        $repository = new MySqlStatsRepository();
+
+        $result = $repository->$method(
+            '10000000000000000000000000000000',
+            ChartResolution::HOUR,
+            new DateTime('2023-04-26 09:00:00'),
+            new DateTime('2023-04-26 09:59:59'),
+        );
+
+        $resultArray = $result->toArray();
+        self::assertCount(1, $resultArray);
+        self::assertEquals('2023-04-26T09:00:00+00:00', $resultArray[0][0]);
+        self::assertEquals(0, $resultArray[0][1]);
+    }
+
+    public function fetchEmptyRepositoryProvider(): array
+    {
+        return [
+            'fetchClick' => ['fetchClick'],
+            'fetchClickAll' => ['fetchClickAll'],
+            'fetchClickInvalidRate' => ['fetchClickInvalidRate'],
+            'fetchView' => ['fetchView'],
+            'fetchViewUnique' => ['fetchViewUnique'],
+            'fetchViewAll' => ['fetchViewAll'],
+            'fetchViewInvalidRate' => ['fetchViewInvalidRate'],
+            'fetchRpc' => ['fetchRpc'],
+            'fetchRpm' => ['fetchRpm'],
+            'fetchSum' => ['fetchSum'],
+            'fetchSumPayment' => ['fetchSumHour'],
+            'fetchCtr' => ['fetchCtr'],
+        ];
+    }
+
     private static function initRepository(User $publisher, ?Site $site = null): void
     {
         if (null === $site) {
