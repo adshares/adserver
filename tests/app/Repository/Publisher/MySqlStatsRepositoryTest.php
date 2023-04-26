@@ -125,9 +125,13 @@ SQL;
         );
 
         $resultArray = $result->toArray();
-        self::assertCount(1, $resultArray);
-        self::assertEquals($dateStart->format(DateTimeInterface::ATOM), $resultArray[0][0]);
-        self::assertEquals(1, $resultArray[0][1]);
+        self::assertNotEmpty($resultArray);
+        $size = count($resultArray);
+        // if test is executed 0-10 minutes after full hour, two records should be returned
+        self::assertLessThanOrEqual(2, $size);
+        $lastIndex = $size - 1;
+        self::assertEquals($dateStart->format(DateTimeInterface::ATOM), $resultArray[$lastIndex][0]);
+        self::assertEquals(1, $resultArray[$lastIndex][1]);
     }
 
     /**
