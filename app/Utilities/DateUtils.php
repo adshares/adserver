@@ -67,29 +67,22 @@ final class DateUtils
     {
         switch ($resolution) {
             case ChartResolution::HOUR:
-                $date->modify('+1 hour');
+                $date->modify('next hour');
                 break;
             case ChartResolution::DAY:
                 $date->modify('tomorrow');
                 break;
             case ChartResolution::WEEK:
-                $date->modify('+7 days')
-                    ->setTime(0, 0);
+                $date->modify('+7 days midnight');
                 break;
             case ChartResolution::MONTH:
-                $date->modify('first day of next month')
-                    ->setTime(0, 0);
+                $date->modify('first day of next month midnight');
                 break;
             case ChartResolution::QUARTER:
-                $date->modify('first day of next month')
-                    ->modify('first day of next month')
-                    ->modify('first day of next month')
-                    ->setTime(0, 0);
+                $date->modify('first day of third month midnight');
                 break;
-//            case ChartResolution::YEAR:
             default:
-                $date->modify('first day of next year')
-                    ->setTime(0, 0);
+                $date->modify('first day of January next year midnight');
                 break;
         }
     }
@@ -101,28 +94,27 @@ final class DateUtils
     ): DateTime {
         $date = (clone $dateStart)->setTimezone($dateTimeZone);
 
-        if ($resolution === ChartResolution::HOUR) {
-            $date->setTime((int)$date->format('H'), 0);
-        } else {
-            $date->setTime(0, 0);
-        }
-
         switch ($resolution) {
+            case ChartResolution::HOUR:
+                $date->setTime((int)$date->format('H'), 0);
+                break;
+            case ChartResolution::DAY:
+                $date->modify('midnight');
+                break;
             case ChartResolution::WEEK:
-                $date->setISODate((int)$date->format('Y'), (int)$date->format('W'));
+                $date->modify('Monday this week midnight');
                 break;
             case ChartResolution::MONTH:
-                $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
+                $date->modify('first day of this month midnight');
                 break;
             case ChartResolution::QUARTER:
                 $quarter = (int)floor(((int)$date->format('m') - 1) / 3);
                 $month = $quarter * 3 + 1;
-                $date->setDate((int)$date->format('Y'), $month, 1);
+                $date->setDate((int)$date->format('Y'), $month, 1)
+                    ->modify('midnight');
                 break;
             case ChartResolution::YEAR:
-                $date->setDate((int)$date->format('Y'), 1, 1);
-                break;
-            default:
+                $date->modify('first day of January this year midnight');
                 break;
         }
 
