@@ -28,9 +28,6 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Services\Supply\DspBridgeRegistrar;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\Domain\ValueObject\Url;
-use Adshares\Config\AppMode;
 use Adshares\Config\RegistrationMode;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Dto\Info;
@@ -125,21 +122,20 @@ class DspBridgeRegistrarTest extends TestCase
 
     private function getDemandClient(string $address = '0001-00000004-DBEB'): MockObject|DemandClient
     {
-        $info = new Info(
-            'dsp-bridge',
-            'DSP bridge',
-            '0.1.0',
-            new Url('https://app.example.com'),
-            new Url('https://panel.example.com'),
-            new Url('https://example.com'),
-            new Url('https://example.com/privacy'),
-            new Url('https://example.com/terms'),
-            new Url('https://example.com/inventory'),
-            new AccountId($address),
-            null,
-            [Info::CAPABILITY_ADVERTISER],
-            RegistrationMode::PRIVATE,
-            AppMode::OPERATIONAL
+        $info = Info::fromArray(
+            [
+                'module' => 'dsp-bridge',
+                'name' => 'DSP bridge',
+                'version' => '0.1.0',
+                'serverUrl' => 'https://app.example.com',
+                'panelUrl' => 'https://panel.example.com',
+                'privacyUrl' => 'https://example.com/privacy',
+                'termsUrl' => 'https://example.com/terms',
+                'inventoryUrl' => 'https://example.com/inventory',
+                'adsAddress' => $address,
+                'capabilities' => [Info::CAPABILITY_ADVERTISER],
+                'registrationMode' => RegistrationMode::PRIVATE,
+            ],
         );
         $clientMock = self::createMock(DemandClient::class);
         $clientMock->method('fetchInfo')->willReturn($info);
