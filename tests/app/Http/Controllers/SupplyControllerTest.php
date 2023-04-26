@@ -1028,7 +1028,9 @@ final class SupplyControllerTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['example.com/click?*' => Http::response(['redirect_url' => 'https://adshares.net/click'])]);
 
+        ob_start();
         $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
@@ -1046,7 +1048,9 @@ final class SupplyControllerTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['example.com/click?*' => Http::response(status: Response::HTTP_NO_CONTENT)]);
 
+        ob_start();
         $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
@@ -1210,7 +1214,9 @@ final class SupplyControllerTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['example.com/view?*' => Http::response(['redirect_url' => 'https://adshares.net/view'])]);
 
+        ob_start();
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
         $response->assertHeader('Location');
