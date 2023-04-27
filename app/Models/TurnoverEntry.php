@@ -138,14 +138,17 @@ class TurnoverEntry extends Model
 
         $dateColumn = match ($resolution) {
             ChartResolution::HOUR => 'hour_timestamp AS date',
-            ChartResolution::DAY => 'CONCAT('
+            ChartResolution::DAY =>
+                'CONCAT('
                 . 'YEAR(hour_timestamp),'
                 . '"-",'
                 . 'LPAD(MONTH(hour_timestamp),2,"0"),'
                 . '"-",'
                 . 'LPAD(DAY(hour_timestamp),2,"0"),'
                 . '" 00:00:00"'
-                . ') as date',
+                . ') AS date',
+            ChartResolution::WEEK =>
+                'CONCAT(STR_TO_DATE(CONCAT(YEARWEEK(hour_timestamp, 3), " Monday"), "%x%v %W"), " 00:00:00") AS date',
             default => 'CONCAT('
                 . 'YEAR(hour_timestamp),'
                 . '"-",'

@@ -151,7 +151,7 @@ class ServerMonitoringController extends Controller
         if (
             null === $chartResolution || !in_array(
                 $chartResolution,
-                [ChartResolution::HOUR, ChartResolution::DAY, ChartResolution::MONTH]
+                [ChartResolution::HOUR, ChartResolution::DAY, ChartResolution::WEEK, ChartResolution::MONTH]
             )
         ) {
             throw new UnprocessableEntityHttpException('Invalid resolution');
