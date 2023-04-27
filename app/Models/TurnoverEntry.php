@@ -26,7 +26,10 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
+use DateTime;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -49,6 +52,18 @@ class TurnoverEntry extends Model
     use AccountAddress;
     use AutomateMutators;
     use HasFactory;
+
+    private const AMOUNT_BY_TYPE_COLUMNS = [
+        'SUM(IF(type = "DspAdvertisersExpense", amount, 0)) AS DspAdvertisersExpense',
+        'SUM(IF(type = "DspLicenseFee", amount, 0)) AS DspLicenseFee',
+        'SUM(IF(type = "DspOperatorFee", amount, 0)) AS DspOperatorFee',
+        'SUM(IF(type = "DspCommunityFee", amount, 0)) AS DspCommunityFee',
+        'SUM(IF(type = "DspExpense", amount, 0)) AS DspExpense',
+        'SUM(IF(type = "SspIncome", amount, 0)) AS SspIncome',
+        'SUM(IF(type = "SspLicenseFee", amount, 0)) AS SspLicenseFee',
+        'SUM(IF(type = "SspOperatorFee", amount, 0)) AS SspOperatorFee',
+        'SUM(IF(type = "SspPublishersIncome", amount, 0)) AS SspPublishersIncome',
+    ];
 
     protected $casts = [
         'type' => TurnoverEntryType::class,
@@ -110,5 +125,83 @@ class TurnoverEntry extends Model
             ->selectRaw('SUM(amount) as amount, ads_address')
             ->groupBy('ads_address')
             ->get();
+    }
+
+    public static function fetchByHourTimestampForChart(
+        DateTimeInterface $from,
+        DateTimeInterface $to,
+        ChartResolution $resolution,
+    ): array {
+        $builder = self::query()
+            ->where('hour_timestamp', '>=', $from)
+            ->where('hour_timestamp', '<=', $to);
+
+        $dateColumn = match ($resolution) {
+            ChartResolution::HOUR => 'hour_timestamp AS date',
+            ChartResolution::DAY => 'CONCAT('
+                . 'YEAR(hour_timestamp),'
+                . '"-",'
+                . 'LPAD(MONTH(hour_timestamp),2,"0"),'
+                . '"-",'
+                . 'LPAD(DAY(hour_timestamp),2,"0"),'
+                . '" 00:00:00"'
+                . ') as date',
+            default => 'CONCAT('
+                . 'YEAR(hour_timestamp),'
+                . '"-",'
+                . 'LPAD(MONTH(hour_timestamp),2,"0"),'
+                . '"-01 00:00:00"'
+                . ') as date',
+        };
+
+        $columns = [...self::AMOUNT_BY_TYPE_COLUMNS, $dateColumn];
+        $rows = $builder->selectRaw(join(',', $columns))
+            ->groupBy('date')
+            ->get();
+
+        $date = DateUtils::createSanitizedStartDate(
+            $from->getTimezone(),
+            $resolution,
+            DateTime::createFromInterface($from),
+        );
+
+        $result = [];
+        $zeroRow = [
+            'DspAdvertisersExpense' => 0,
+            'DspLicenseFee' => 0,
+            'DspOperatorFee' => 0,
+            'DspCommunityFee' => 0,
+            'DspExpense' => 0,
+            'SspIncome' => 0,
+            'SspLicenseFee' => 0,
+            'SspOperatorFee' => 0,
+            'SspPublishersIncome' => 0,
+        ];
+
+        foreach ($rows as $row) {
+            while ($row->date !== $date->format('Y-m-d H:i:s')) {
+                $result[] = array_merge($zeroRow, ['date' => $date->format(DateTimeInterface::ATOM)]);
+                DateUtils::advanceStartDate($resolution, $date);
+            }
+            $result[] = [
+                'DspAdvertisersExpense' => (int)$row->DspAdvertisersExpense,
+                'DspLicenseFee' => (int)$row->DspLicenseFee,
+                'DspOperatorFee' => (int)$row->DspOperatorFee,
+                'DspCommunityFee' => (int)$row->DspCommunityFee,
+                'DspExpense' => (int)$row->DspExpense,
+                'SspIncome' => (int)$row->SspIncome,
+                'SspLicenseFee' => (int)$row->SspLicenseFee,
+                'SspOperatorFee' => (int)$row->SspOperatorFee,
+                'SspPublishersIncome' => (int)$row->SspPublishersIncome,
+                'date' => $date->format(DateTimeInterface::ATOM),
+            ];
+            DateUtils::advanceStartDate($resolution, $date);
+        }
+        while ($date <= $to) {
+            $result[] = array_merge($zeroRow, ['date' => $date->format(DateTimeInterface::ATOM)]);
+            DateUtils::advanceStartDate($resolution, $date);
+        }
+        $result[0]['date'] = $from->format(DateTimeInterface::ATOM);
+        return $result;
     }
 }
