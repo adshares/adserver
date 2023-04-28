@@ -234,51 +234,7 @@ final class ServerMonitoringControllerTest extends TestCase
     public function testFetchTurnover(): void
     {
         $this->setUpAdmin();
-        TurnoverEntry::factory()
-            ->count(9)
-            ->sequence(
-                [
-                    'amount' => 200_000_000_000,
-                    'type' => TurnoverEntryType::DspAdvertisersExpense,
-                ],
-                [
-                    'ads_address' => '0001-00000024-FF89',
-                    'amount' => 2_000_000_000,
-                    'type' => TurnoverEntryType::DspLicenseFee,
-                ],
-                [
-                    'amount' => 19_800_000_000,
-                    'type' => TurnoverEntryType::DspOperatorFee,
-                ],
-                [
-                    'ads_address' => '0001-00000001-8B4E',
-                    'amount' => 1_782_000_000,
-                    'type' => TurnoverEntryType::DspCommunityFee,
-                ],
-                [
-                    'ads_address' => '0001-00000002-BB2D',
-                    'amount' => 76_018_000_000,
-                    'type' => TurnoverEntryType::DspExpense,
-                ],
-                [
-                    'ads_address' => '0001-00000003-AB0C',
-                    'amount' => 100_400_000_000,
-                    'type' => TurnoverEntryType::DspExpense,
-                ],
-                [
-                    'ads_address' => '0001-00000003-AB0C',
-                    'amount' => 2_000,
-                    'type' => TurnoverEntryType::SspIncome,
-                ],
-                [
-                    'amount' => 500,
-                    'type' => TurnoverEntryType::SspOperatorFee,
-                ],
-                [
-                    'amount' => 1_500,
-                    'type' => TurnoverEntryType::SspPublishersIncome,
-                ]
-            )->create();
+        $this->seedTurnoverData();
 
         $response = $this->getJson(
             self::buildUriForKey(
@@ -286,8 +242,8 @@ final class ServerMonitoringControllerTest extends TestCase
                 [
                     'filter' => [
                         'date' => [
-                            'from' => (new DateTimeImmutable('-1 day'))->format(DateTimeInterface::ATOM),
-                            'to' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+                            'from' => (new DateTimeImmutable('2023-04-10 23:30:00'))->format(DateTimeInterface::ATOM),
+                            'to' => (new DateTimeImmutable('2023-04-11 23:59:59'))->format(DateTimeInterface::ATOM),
                         ]
                     ]
                 ]
@@ -310,63 +266,66 @@ final class ServerMonitoringControllerTest extends TestCase
         );
     }
 
+    public function testFetchTurnoverByType(): void
+    {
+        $this->setUpAdmin();
+        $this->seedTurnoverData();
+
+        $response = $this->getJson(
+            self::buildUriForKey(
+                'turnover/DspExpense',
+                [
+                    'filter' => [
+                        'date' => [
+                            'from' => (new DateTimeImmutable('2023-04-10 23:30:00'))->format(DateTimeInterface::ATOM),
+                            'to' => (new DateTimeImmutable('2023-04-11 23:59:59'))->format(DateTimeInterface::ATOM),
+                        ]
+                    ]
+                ]
+            )
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(
+            [
+                [
+                    'adsAddress' => '0001-00000002-BB2D',
+                    'amount' => 76_018_000_000,
+                ],
+                [
+                    'adsAddress' => '0001-00000003-AB0C',
+                    'amount' => 100_400_000_000,
+                ],
+            ]
+        );
+    }
+
+    public function testFetchTurnoverByTypeFailWhileInvalidType(): void
+    {
+        $this->setUpAdmin();
+        $this->seedTurnoverData();
+
+        $response = $this->getJson(
+            self::buildUriForKey(
+                'turnover/Invalid',
+                [
+                    'filter' => [
+                        'date' => [
+                            'from' => (new DateTimeImmutable('2023-04-10 23:30:00'))->format(DateTimeInterface::ATOM),
+                            'to' => (new DateTimeImmutable('2023-04-11 23:59:59'))->format(DateTimeInterface::ATOM),
+                        ]
+                    ]
+                ]
+            )
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testFetchTurnoverChart(): void
     {
         $this->setUpAdmin();
-        TurnoverEntry::factory()
-            ->count(9)
-            ->sequence(
-                [
-                    'amount' => 200_000_000_000,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::DspAdvertisersExpense,
-                ],
-                [
-                    'ads_address' => '0001-00000024-FF89',
-                    'amount' => 2_000_000_000,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::DspLicenseFee,
-                ],
-                [
-                    'amount' => 19_800_000_000,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::DspOperatorFee,
-                ],
-                [
-                    'ads_address' => '0001-00000001-8B4E',
-                    'amount' => 1_782_000_000,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::DspCommunityFee,
-                ],
-                [
-                    'ads_address' => '0001-00000002-BB2D',
-                    'amount' => 76_018_000_000,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::DspExpense,
-                ],
-                [
-                    'ads_address' => '0001-00000003-AB0C',
-                    'amount' => 100_400_000_000,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::DspExpense,
-                ],
-                [
-                    'ads_address' => '0001-00000003-AB0C',
-                    'amount' => 2_000,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::SspIncome,
-                ],
-                [
-                    'amount' => 500,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::SspOperatorFee,
-                ],
-                [
-                    'amount' => 1_500,
-                    'hour_timestamp' => '2023-04-11 13:00:00',
-                    'type' => TurnoverEntryType::SspPublishersIncome,
-                ]
-            )->create();
+        $this->seedTurnoverData();
 
         $response = $this->getJson(
             self::buildUriForKey(
@@ -2170,5 +2129,63 @@ final class ServerMonitoringControllerTest extends TestCase
             $user = User::factory()->create();
         }
         Passport::actingAs($user, [], 'jwt');
+    }
+
+    private function seedTurnoverData(): void
+    {
+        TurnoverEntry::factory()
+            ->count(9)
+            ->sequence(
+                [
+                    'amount' => 200_000_000_000,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::DspAdvertisersExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000024-FF89',
+                    'amount' => 2_000_000_000,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::DspLicenseFee,
+                ],
+                [
+                    'amount' => 19_800_000_000,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::DspOperatorFee,
+                ],
+                [
+                    'ads_address' => '0001-00000001-8B4E',
+                    'amount' => 1_782_000_000,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::DspCommunityFee,
+                ],
+                [
+                    'ads_address' => '0001-00000002-BB2D',
+                    'amount' => 76_018_000_000,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::DspExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000003-AB0C',
+                    'amount' => 100_400_000_000,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::DspExpense,
+                ],
+                [
+                    'ads_address' => '0001-00000003-AB0C',
+                    'amount' => 2_000,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::SspIncome,
+                ],
+                [
+                    'amount' => 500,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::SspOperatorFee,
+                ],
+                [
+                    'amount' => 1_500,
+                    'hour_timestamp' => '2023-04-11 13:00:00',
+                    'type' => TurnoverEntryType::SspPublishersIncome,
+                ]
+            )->create();
     }
 }

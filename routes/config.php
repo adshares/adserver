@@ -38,6 +38,7 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
     );
 
     Route::get('turnover/chart/{resolution}', [ServerMonitoringController::class, 'fetchTurnoverChart']);
+    Route::get('turnover/{type}', [ServerMonitoringController::class, 'fetchTurnoverByType']);
     Route::get('turnover', [ServerMonitoringController::class, 'fetchTurnover']);
     Route::get('wallet', [ServerMonitoringController::class, 'fetchWallet']);
 });

@@ -139,6 +139,23 @@ class ServerMonitoringController extends Controller
         return self::json($data);
     }
 
+    public function fetchTurnoverByType(string $type, Request $request): JsonResponse
+    {
+        $filters = FilterCollection::fromRequest($request, [
+            'date' => FilterType::Date,
+        ]);
+        /** @var DateFilter $dateFilter */
+        $dateFilter = $filters?->getFilterByName('date');
+        $turnoverType = TurnoverEntryType::tryFrom($type) ?: throw new UnprocessableEntityHttpException('Invalid type');
+
+        $data = TurnoverEntry::fetchByHourTimestampAndType(
+            $dateFilter?->getFrom() ?: new DateTimeImmutable('-1 month'),
+            $dateFilter?->getTo() ?: new DateTimeImmutable(),
+            $turnoverType,
+        );
+        return self::json($data);
+    }
+
     public function fetchTurnoverChart(string $resolution, Request $request): JsonResponse
     {
         $filters = FilterCollection::fromRequest($request, [
