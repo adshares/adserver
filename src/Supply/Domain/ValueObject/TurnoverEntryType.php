@@ -23,15 +23,15 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
-enum TurnoverEntryType
+enum TurnoverEntryType: string
 {
-    case DspAdvertisersExpense;
-    case DspLicenseFee;
-    case DspOperatorFee;
-    case DspCommunityFee;
-    case DspExpense;
-    case SspIncome;
-    case SspLicenseFee;
-    case SspOperatorFee;
-    case SspPublishersIncome;
+    case DspAdvertisersExpense = 'DspAdvertisersExpense';
+    case DspLicenseFee = 'DspLicenseFee';
+    case DspOperatorFee = 'DspOperatorFee';
+    case DspCommunityFee = 'DspCommunityFee';
+    case DspExpense = 'DspExpense';
+    case SspIncome = 'SspIncome';
+    case SspLicenseFee = 'SspLicenseFee';
+    case SspOperatorFee = 'SspOperatorFee';
+    case SspPublishersIncome = 'SspPublishersIncome';
 }

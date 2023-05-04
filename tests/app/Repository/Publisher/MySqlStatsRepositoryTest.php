@@ -129,8 +129,8 @@ SQL;
         $size = count($resultArray);
         // if test is executed 0-10 minutes after full hour, two records should be returned
         self::assertLessThanOrEqual(2, $size);
+        self::assertEquals($dateStart->format(DateTimeInterface::ATOM), $resultArray[0][0]);
         $lastIndex = $size - 1;
-        self::assertEquals($dateStart->format(DateTimeInterface::ATOM), $resultArray[$lastIndex][0]);
         self::assertEquals(1, $resultArray[$lastIndex][1]);
     }
 
