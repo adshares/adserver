@@ -33,6 +33,7 @@ use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
 use DateTimeInterface;
 
@@ -42,7 +43,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchView(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -60,7 +61,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchViewAll(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -71,7 +72,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchViewInvalidRate(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -89,7 +90,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchViewUnique(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -100,7 +101,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchClick(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -118,7 +119,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchClickAll(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -129,7 +130,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchClickInvalidRate(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -147,7 +148,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchCpc(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -165,7 +166,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchCpm(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -183,7 +184,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchSum(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -201,7 +202,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchSumPayment(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -219,7 +220,7 @@ class DummyStatsRepository implements StatsRepository
 
     public function fetchCtr(
         string $advertiserId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null,
@@ -320,6 +321,7 @@ class DummyStatsRepository implements StatsRepository
         bool $showAdvertisers = false
     ): DataCollection {
         // TODO: Implement fetchStatsToReport() method.
+        return new DataCollection([]);
     }
 
     public function fetchStatsConversion(
@@ -329,6 +331,7 @@ class DummyStatsRepository implements StatsRepository
         ?int $campaignId = null
     ): ConversionDataCollection {
         // TODO: Implement fetchStatsConversion() method.
+        return new ConversionDataCollection([]);
     }
 
     public function aggregateStatistics(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): void

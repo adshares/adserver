@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -44,12 +44,8 @@ final class ChartDataProvider
         StatsRepository::TYPE_CTR => 'fetchCtr',
     ];
 
-    /** @var StatsRepository */
-    private $repository;
-
-    public function __construct(StatsRepository $repository)
+    public function __construct(private readonly StatsRepository $repository)
     {
-        $this->repository = $repository;
     }
 
     public function fetch(ChartInput $input): ChartResult

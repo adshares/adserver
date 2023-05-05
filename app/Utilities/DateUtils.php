@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,7 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Utilities;
 
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
+use DateTimeZone;
 
 final class DateUtils
 {
@@ -59,5 +61,63 @@ final class DateUtils
     public static function roundTimestampToHour(int $timestamp): int
     {
         return ((int)floor($timestamp / self::HOUR)) * self::HOUR;
+    }
+
+    public static function advanceStartDate(ChartResolution $resolution, DateTime $date): void
+    {
+        switch ($resolution) {
+            case ChartResolution::HOUR:
+                $date->modify('next hour');
+                break;
+            case ChartResolution::DAY:
+                $date->modify('tomorrow');
+                break;
+            case ChartResolution::WEEK:
+                $date->modify('+7 days midnight');
+                break;
+            case ChartResolution::MONTH:
+                $date->modify('first day of next month midnight');
+                break;
+            case ChartResolution::QUARTER:
+                $date->modify('first day of third month midnight');
+                break;
+            default:
+                $date->modify('first day of January next year midnight');
+                break;
+        }
+    }
+
+    public static function createSanitizedStartDate(
+        DateTimeZone $dateTimeZone,
+        ChartResolution $resolution,
+        DateTime $dateStart,
+    ): DateTime {
+        $date = (clone $dateStart)->setTimezone($dateTimeZone);
+
+        switch ($resolution) {
+            case ChartResolution::HOUR:
+                $date->setTime((int)$date->format('H'), 0);
+                break;
+            case ChartResolution::DAY:
+                $date->modify('midnight');
+                break;
+            case ChartResolution::WEEK:
+                $date->modify('Monday this week midnight');
+                break;
+            case ChartResolution::MONTH:
+                $date->modify('first day of this month midnight');
+                break;
+            case ChartResolution::QUARTER:
+                $quarter = (int)floor(((int)$date->format('m') - 1) / 3);
+                $month = $quarter * 3 + 1;
+                $date->setDate((int)$date->format('Y'), $month, 1)
+                    ->modify('midnight');
+                break;
+            case ChartResolution::YEAR:
+                $date->modify('first day of January this year midnight');
+                break;
+        }
+
+        return $date;
     }
 }

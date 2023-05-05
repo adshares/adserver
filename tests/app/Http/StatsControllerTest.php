@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use DateTime;
 use DateTimeImmutable;
@@ -56,11 +57,10 @@ final class StatsControllerTest extends TestCase
 
     /**
      * @param string $type
-     * @param array $resolutions
      *
      * @dataProvider providerDataForAdvertiserChart
      */
-    public function testAdvertiserChartWhenViewTypeAndHourResolution(string $type, array $resolutions): void
+    public function testAdvertiserChartWhenViewTypeAndHourResolution(string $type): void
     {
         $repository = new DummyStatsRepository();
         $user = $this->login();
@@ -68,12 +68,12 @@ final class StatsControllerTest extends TestCase
         $dateStart = new DateTime();
         $dateEnd = new DateTime();
 
-        foreach ($resolutions as $resolution) {
+        foreach (ChartResolution::cases() as $chartResolution) {
             $url = sprintf(
                 '%s/%s/%s/%s/%s',
                 self::ADVERTISER_CHART_URI,
                 $type,
-                $resolution,
+                $chartResolution->value,
                 $dateStart->format(DateTimeInterface::ATOM),
                 $dateEnd->format(DateTimeInterface::ATOM)
             );
@@ -97,7 +97,7 @@ final class StatsControllerTest extends TestCase
 
             $response = $this->getJson($url);
             $response->assertStatus(Response::HTTP_OK);
-            $response->assertJson($repository->$method($user->uuid, $resolution, $dateStart, $dateEnd)->toArray());
+            $response->assertJson($repository->$method($user->uuid, $chartResolution, $dateStart, $dateEnd)->toArray());
         }
     }
 
@@ -223,17 +223,17 @@ final class StatsControllerTest extends TestCase
     public function providerDataForAdvertiserChart(): array
     {
         return [
-            ['view', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['viewUnique', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['viewAll', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['viewInvalidRate', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['click', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['clickAll', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['clickInvalidRate', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['cpc', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['cpm', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['sum', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
-            ['ctr', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['view'],
+            ['viewUnique'],
+            ['viewAll'],
+            ['viewInvalidRate'],
+            ['click'],
+            ['clickAll'],
+            ['clickInvalidRate'],
+            ['cpc'],
+            ['cpm'],
+            ['sum'],
+            ['ctr'],
         ];
     }
 

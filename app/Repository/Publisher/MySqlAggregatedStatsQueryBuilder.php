@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTimeInterface;
 
@@ -154,10 +155,10 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    public function appendResolution(string $resolution): self
+    public function appendResolution(ChartResolution $resolution): self
     {
         switch ($resolution) {
-            case StatsRepository::RESOLUTION_HOUR:
+            case ChartResolution::HOUR:
                 $this->column('YEAR(e.hour_timestamp) AS y');
                 $this->column('MONTH(e.hour_timestamp) as m');
                 $this->column('DAY(e.hour_timestamp) AS d');
@@ -167,7 +168,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
                 $this->groupBy('DAY(e.hour_timestamp)');
                 $this->groupBy('HOUR(e.hour_timestamp)');
                 break;
-            case StatsRepository::RESOLUTION_DAY:
+            case ChartResolution::DAY:
                 $this->column('YEAR(e.hour_timestamp) AS y');
                 $this->column('MONTH(e.hour_timestamp) as m');
                 $this->column('DAY(e.hour_timestamp) AS d');
@@ -176,23 +177,23 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
                 $this->groupBy('MONTH(e.hour_timestamp)');
                 $this->groupBy('DAY(e.hour_timestamp)');
                 break;
-            case StatsRepository::RESOLUTION_WEEK:
+            case ChartResolution::WEEK:
                 $this->column('YEARWEEK(e.hour_timestamp, 3) as yw');
                 $this->groupBy('YEARWEEK(e.hour_timestamp, 3)');
                 break;
-            case StatsRepository::RESOLUTION_MONTH:
+            case ChartResolution::MONTH:
                 $this->column('YEAR(e.hour_timestamp) AS y');
                 $this->column('MONTH(e.hour_timestamp) as m');
                 $this->groupBy('YEAR(e.hour_timestamp)');
                 $this->groupBy('MONTH(e.hour_timestamp)');
                 break;
-            case StatsRepository::RESOLUTION_QUARTER:
+            case ChartResolution::QUARTER:
                 $this->column('YEAR(e.hour_timestamp) AS y');
                 $this->column('QUARTER(e.hour_timestamp) as q');
                 $this->groupBy('YEAR(e.hour_timestamp)');
                 $this->groupBy('QUARTER(e.hour_timestamp)');
                 break;
-            case StatsRepository::RESOLUTION_YEAR:
+//            case ChartResolution::YEAR:
             default:
                 $this->column('YEAR(e.hour_timestamp) AS y');
                 $this->groupBy('YEAR(e.hour_timestamp)');

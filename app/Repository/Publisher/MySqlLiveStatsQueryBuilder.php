@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTimeInterface;
 
@@ -133,50 +134,38 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    public function appendResolution(string $resolution): self
+    public function appendResolution(ChartResolution $resolution): self
     {
         $dateColumn = StatsRepository::TYPE_REVENUE_BY_HOUR === $this->getType() ? 'ncp.pay_time' : 'e.created_at';
 
-        switch ($resolution) {
-            case StatsRepository::RESOLUTION_HOUR:
-                $resolutionColumns = [
-                    ['YEAR(%s)', 'y'],
-                    ['MONTH(%s)', 'm'],
-                    ['DAY(%s)', 'd'],
-                    ['HOUR(%s)', 'h'],
-                ];
-                break;
-            case StatsRepository::RESOLUTION_DAY:
-                $resolutionColumns = [
-                    ['YEAR(%s)', 'y'],
-                    ['MONTH(%s)', 'm'],
-                    ['DAY(%s)', 'd'],
-                ];
-                break;
-            case StatsRepository::RESOLUTION_WEEK:
-                $resolutionColumns = [
-                    ['YEARWEEK(%s, 3)', 'yw'],
-                ];
-                break;
-            case StatsRepository::RESOLUTION_MONTH:
-                $resolutionColumns = [
-                    ['YEAR(%s)', 'y'],
-                    ['MONTH(%s)', 'm'],
-                ];
-                break;
-            case StatsRepository::RESOLUTION_QUARTER:
-                $resolutionColumns = [
-                    ['YEAR(%s)', 'y'],
-                    ['QUARTER(%s)', 'q'],
-                ];
-                break;
-            case StatsRepository::RESOLUTION_YEAR:
-            default:
-                $resolutionColumns = [
-                    ['YEAR(%s)', 'y'],
-                ];
-                break;
-        }
+        $resolutionColumns = match ($resolution) {
+            ChartResolution::HOUR => [
+                ['YEAR(%s)', 'y'],
+                ['MONTH(%s)', 'm'],
+                ['DAY(%s)', 'd'],
+                ['HOUR(%s)', 'h'],
+            ],
+            ChartResolution::DAY => [
+                ['YEAR(%s)', 'y'],
+                ['MONTH(%s)', 'm'],
+                ['DAY(%s)', 'd'],
+            ],
+            ChartResolution::WEEK => [
+                ['YEARWEEK(%s, 3)', 'yw'],
+            ],
+            ChartResolution::MONTH => [
+                ['YEAR(%s)', 'y'],
+                ['MONTH(%s)', 'm'],
+            ],
+            ChartResolution::QUARTER => [
+                ['YEAR(%s)', 'y'],
+                ['QUARTER(%s)', 'q'],
+            ],
+            // ChartResolution::YEAR
+            default => [
+                ['YEAR(%s)', 'y'],
+            ],
+        };
 
         foreach ($resolutionColumns as $resolutionColumn) {
             $alias = $resolutionColumn[1];

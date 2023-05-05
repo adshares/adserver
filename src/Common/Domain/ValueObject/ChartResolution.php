@@ -21,17 +21,14 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Supply\Domain\ValueObject;
+namespace Adshares\Common\Domain\ValueObject;
 
-enum TurnoverEntryType: string
+enum ChartResolution: string
 {
-    case DspAdvertisersExpense = 'DspAdvertisersExpense';
-    case DspLicenseFee = 'DspLicenseFee';
-    case DspOperatorFee = 'DspOperatorFee';
-    case DspCommunityFee = 'DspCommunityFee';
-    case DspExpense = 'DspExpense';
-    case SspIncome = 'SspIncome';
-    case SspLicenseFee = 'SspLicenseFee';
-    case SspOperatorFee = 'SspOperatorFee';
-    case SspPublishersIncome = 'SspPublishersIncome';
+    case HOUR = 'hour';
+    case DAY = 'day';
+    case WEEK = 'week';
+    case MONTH = 'month';
+    case QUARTER = 'quarter';
+    case YEAR = 'year';
 }

@@ -21,17 +21,26 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Supply\Domain\ValueObject;
+namespace Adshares\Tests\Advertiser\Dto\Input;
 
-enum TurnoverEntryType: string
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Advertiser\Dto\Input\ChartInput;
+use Adshares\Advertiser\Dto\Input\InvalidInputException;
+use DateTime;
+
+class ChartInputTest extends TestCase
 {
-    case DspAdvertisersExpense = 'DspAdvertisersExpense';
-    case DspLicenseFee = 'DspLicenseFee';
-    case DspOperatorFee = 'DspOperatorFee';
-    case DspCommunityFee = 'DspCommunityFee';
-    case DspExpense = 'DspExpense';
-    case SspIncome = 'SspIncome';
-    case SspLicenseFee = 'SspLicenseFee';
-    case SspOperatorFee = 'SspOperatorFee';
-    case SspPublishersIncome = 'SspPublishersIncome';
+    public function testConstructWithInvalidResolution(): void
+    {
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage('Unsupported chart resolution `two hours`.');
+
+        new ChartInput(
+            '10000000000000000000000000000000',
+            'view',
+            'two hours',
+            new DateTime(),
+            new DateTime('+1 day'),
+        );
+    }
 }

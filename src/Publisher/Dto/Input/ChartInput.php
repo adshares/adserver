@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Publisher\Dto\Input;
 
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
 use DateTimeInterface;
@@ -46,46 +47,22 @@ final class ChartInput
         StatsRepository::TYPE_CTR,
     ];
 
-    private const ALLOWED_RESOLUTIONS = [
-        StatsRepository::RESOLUTION_HOUR,
-        StatsRepository::RESOLUTION_DAY,
-        StatsRepository::RESOLUTION_WEEK,
-        StatsRepository::RESOLUTION_MONTH,
-        StatsRepository::RESOLUTION_QUARTER,
-        StatsRepository::RESOLUTION_YEAR,
-    ];
-
-    /** @var string */
-    private $publisherId;
-
-    /** @var string  */
-    private $type;
-
-    /** @var string  */
-    private $resolution;
-
-    /** @var DateTime */
-    private $dateStart;
-
-    /** @var DateTime */
-    private $dateEnd;
-
-    /** @var string|null */
-    private $siteId;
+    private ChartResolution $resolution;
 
     public function __construct(
-        string $publisherId,
-        string $type,
+        private readonly string $publisherId,
+        private readonly string $type,
         string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?string $siteId = null
+        private readonly DateTime $dateStart,
+        private readonly DateTime $dateEnd,
+        private readonly ?string $siteId = null,
     ) {
         if (!in_array($type, self::ALLOWED_TYPES, true)) {
             throw new InvalidInputException(sprintf('Unsupported chart type `%s`.', $type));
         }
 
-        if (!in_array($resolution, self::ALLOWED_RESOLUTIONS, true)) {
+        $chartResolution = ChartResolution::tryFrom($resolution);
+        if (null === $chartResolution) {
             throw new InvalidInputException(sprintf('Unsupported chart resolution `%s`.', $resolution));
         }
 
@@ -97,12 +74,7 @@ final class ChartInput
             ));
         }
 
-        $this->type = $type;
-        $this->resolution = $resolution;
-        $this->publisherId = $publisherId;
-        $this->siteId = $siteId;
-        $this->dateStart = $dateStart;
-        $this->dateEnd = $dateEnd;
+        $this->resolution = $chartResolution;
     }
 
     public function getPublisherId(): string
@@ -115,7 +87,7 @@ final class ChartInput
         return $this->type;
     }
 
-    public function getResolution(): string
+    public function getResolution(): ChartResolution
     {
         return $this->resolution;
     }

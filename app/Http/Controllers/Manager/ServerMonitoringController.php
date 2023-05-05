@@ -49,6 +49,7 @@ use Adshares\Adserver\Repository\Common\ServerEventLogRepository;
 use Adshares\Adserver\Repository\Common\UserRepository;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
@@ -129,13 +130,57 @@ class ServerMonitoringController extends Controller
             $data[Str::camel($type->name)] = 0;
         }
         $entries = TurnoverEntry::fetchByHourTimestamp(
-            $dateFilter?->getFrom() ?: new DateTimeImmutable('-1 day'),
+            $dateFilter?->getFrom() ?: new DateTimeImmutable('-1 month'),
             $dateFilter?->getTo() ?: new DateTimeImmutable(),
         );
         foreach ($entries as $entry) {
             $data[Str::camel($entry->type->name)] = (int)$entry->amount;
         }
         return self::json($data);
+    }
+
+    public function fetchTurnoverByType(string $type, Request $request): JsonResponse
+    {
+        $filters = FilterCollection::fromRequest($request, [
+            'date' => FilterType::Date,
+        ]);
+        /** @var DateFilter $dateFilter */
+        $dateFilter = $filters?->getFilterByName('date');
+        $turnoverType = TurnoverEntryType::tryFrom($type) ?: throw new UnprocessableEntityHttpException('Invalid type');
+
+        $data = TurnoverEntry::fetchByHourTimestampAndType(
+            $dateFilter?->getFrom() ?: new DateTimeImmutable('-1 month'),
+            $dateFilter?->getTo() ?: new DateTimeImmutable(),
+            $turnoverType,
+        );
+        return self::json($data);
+    }
+
+    public function fetchTurnoverChart(string $resolution, Request $request): JsonResponse
+    {
+        $filters = FilterCollection::fromRequest($request, [
+            'date' => FilterType::Date,
+        ]);
+        /** @var DateFilter $dateFilter */
+        $dateFilter = $filters?->getFilterByName('date');
+
+        $chartResolution = ChartResolution::tryFrom($resolution);
+        if (
+            null === $chartResolution || !in_array(
+                $chartResolution,
+                [ChartResolution::HOUR, ChartResolution::DAY, ChartResolution::WEEK, ChartResolution::MONTH]
+            )
+        ) {
+            throw new UnprocessableEntityHttpException('Invalid resolution');
+        }
+
+        $entries = TurnoverEntry::fetchByHourTimestampForChart(
+            $dateFilter?->getFrom() ?: new DateTimeImmutable('-1 month'),
+            $dateFilter?->getTo() ?: new DateTimeImmutable(),
+            $chartResolution,
+        );
+
+        return self::json($entries);
     }
 
     public function fetchUsers(Request $request, UserRepository $userRepository): JsonResource

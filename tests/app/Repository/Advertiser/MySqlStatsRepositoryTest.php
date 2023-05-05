@@ -28,6 +28,8 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
+use DateTime;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -36,6 +38,7 @@ final class MySqlStatsRepositoryTest extends TestCase
     public function testAggregateStatisticsWhileSingleEvent(): void
     {
         $payment = Payment::factory()->create(['state' => Payment::STATE_SUCCESSFUL]);
+        /** @var EventLog $event */
         $event = EventLog::factory()->create([
             'domain' => 'example.com',
             'event_type' => EventLog::TYPE_VIEW,
@@ -348,6 +351,44 @@ final class MySqlStatsRepositoryTest extends TestCase
         self::expectException(MissingEventsException::class);
 
         $repository->aggregateStatistics($dateFrom, $dateTo);
+    }
+
+    /**
+     * @dataProvider fetchEmptyRepositoryProvider
+     */
+    public function testFetchEmptyRepository(string $method): void
+    {
+        $repository = new MysqlAdvertiserStatsRepository();
+
+        $result = $repository->$method(
+            $this->randomUuid(),
+            ChartResolution::HOUR,
+            new DateTime('2023-04-26 09:00:00'),
+            new DateTime('2023-04-26 09:59:59'),
+        );
+
+        $resultArray = $result->toArray();
+        self::assertCount(1, $resultArray);
+        self::assertEquals('2023-04-26T09:00:00+00:00', $resultArray[0][0]);
+        self::assertEquals(0, $resultArray[0][1]);
+    }
+
+    public function fetchEmptyRepositoryProvider(): array
+    {
+        return [
+            'fetchClick' => ['fetchClick'],
+            'fetchClickAll' => ['fetchClickAll'],
+            'fetchClickInvalidRate' => ['fetchClickInvalidRate'],
+            'fetchView' => ['fetchView'],
+            'fetchViewUnique' => ['fetchViewUnique'],
+            'fetchViewAll' => ['fetchViewAll'],
+            'fetchViewInvalidRate' => ['fetchViewInvalidRate'],
+            'fetchCpc' => ['fetchCpc'],
+            'fetchCpm' => ['fetchCpm'],
+            'fetchSum' => ['fetchSum'],
+            'fetchSumPayment' => ['fetchSumPayment'],
+            'fetchCtr' => ['fetchCtr'],
+        ];
     }
 
     private function randomUuid(): string
