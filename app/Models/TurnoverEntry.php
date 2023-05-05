@@ -27,10 +27,12 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTime;
 use DateTimeInterface;
+use DateTimeZone;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -105,12 +107,14 @@ class TurnoverEntry extends Model
 
     public static function fetchByHourTimestamp(DateTimeInterface $from, DateTimeInterface $to): Collection
     {
-        return self::query()
+        $dateTimeZone = new DateTimeZone($from->format('O'));
+        $closure = fn() => self::query()
             ->where('hour_timestamp', '>=', $from)
             ->where('hour_timestamp', '<=', $to)
             ->selectRaw('SUM(amount) as amount, type')
             ->groupBy('type')
             ->get();
+        return SqlUtils::executeTimezoneAwareQuery($dateTimeZone, $closure);
     }
 
     public static function fetchByHourTimestampAndType(
@@ -118,13 +122,15 @@ class TurnoverEntry extends Model
         DateTimeInterface $to,
         TurnoverEntryType $type,
     ): Collection {
-        return self::query()
+        $dateTimeZone = new DateTimeZone($from->format('O'));
+        $closure = fn() => self::query()
             ->where('hour_timestamp', '>=', $from)
             ->where('hour_timestamp', '<=', $to)
             ->where('type', $type->name)
             ->selectRaw('SUM(amount) as amount, ads_address')
             ->groupBy('ads_address')
             ->get();
+        return SqlUtils::executeTimezoneAwareQuery($dateTimeZone, $closure);
     }
 
     public static function fetchByHourTimestampForChart(

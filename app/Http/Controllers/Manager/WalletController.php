@@ -791,21 +791,6 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): void
-    {
-        if (DB::isMySql()) {
-            DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
-            DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
-        }
-    }
-
-    private function unsetDbSessionTimeZone(): void
-    {
-        if (DB::isMySql()) {
-            DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
-        }
-    }
-
     private function getUserLedgerEntryAddress(stdClass $ledgerItem): ?string
     {
         if ((int)$ledgerItem->amount > 0) {
