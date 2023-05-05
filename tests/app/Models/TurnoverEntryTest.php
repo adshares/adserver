@@ -315,6 +315,48 @@ class TurnoverEntryTest extends TestCase
         self::assertEquals(1100, $result[2][TurnoverEntryType::SspIncome->name]);
     }
 
+    public function testFetchByHourTimestampForChartHourlyWithTimezone(): void
+    {
+        TurnoverEntry::factory()
+            ->count(3)->sequence(
+                [
+                    'amount' => 10,
+                    'hour_timestamp' => '2023-04-10 10:00:00',
+                ],
+                [
+                    'amount' => 200,
+                    'hour_timestamp' => '2023-04-10 11:00:00',
+                ],
+                [
+                    'amount' => 3000,
+                    'hour_timestamp' => '2023-04-10 12:00:00',
+                ],
+            )
+            ->create(
+                [
+                    'ads_address' => '0001-00000000-9B6F',
+                    'type' => TurnoverEntryType::SspIncome,
+                ]
+            );
+
+        $result = TurnoverEntry::fetchByHourTimestampForChart(
+            new DateTimeImmutable('2023-04-10T10:00:00+01:00'),
+            new DateTimeImmutable('2023-04-10T12:00:00+01:00'),
+            ChartResolution::HOUR,
+        );
+
+        self::assertCount(3, $result);
+
+        foreach ($result as $entry) {
+            foreach (self::EXPECTED_CHART_KEYS as $expectedKey) {
+                self::assertArrayHasKey($expectedKey, $entry);
+            }
+        }
+        self::assertEquals(0, $result[0][TurnoverEntryType::SspIncome->name]);
+        self::assertEquals(10, $result[1][TurnoverEntryType::SspIncome->name]);
+        self::assertEquals(200, $result[2][TurnoverEntryType::SspIncome->name]);
+    }
+
     public function testFetchByHourTimestampForChartDaily(): void
     {
         TurnoverEntry::factory()
