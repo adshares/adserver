@@ -164,9 +164,12 @@ class TurnoverEntry extends Model
         };
 
         $columns = [...self::AMOUNT_BY_TYPE_COLUMNS, $dateColumn];
-        $rows = $builder->selectRaw(join(',', $columns))
+
+        $dateTimeZone = new DateTimeZone($from->format('O'));
+        $closure = fn() => $builder->selectRaw(join(',', $columns))
             ->groupBy('date')
             ->get();
+        $rows = SqlUtils::executeTimezoneAwareQuery($dateTimeZone, $closure);
 
         $date = DateUtils::createSanitizedStartDate(
             $from->getTimezone(),
