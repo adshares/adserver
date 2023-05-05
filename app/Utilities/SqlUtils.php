@@ -23,6 +23,9 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Utilities;
 
+use Adshares\Adserver\Facades\DB;
+use Closure;
+use DateTimeZone;
 use Illuminate\Database\QueryException;
 
 class SqlUtils
@@ -46,5 +49,27 @@ class SqlUtils
                 $values,
             ),
         );
+    }
+
+    public static function executeTimezoneAwareQuery(DateTimeZone $dateTimeZone, Closure $closure): mixed
+    {
+        $previousTimezone = self::setDbSessionTimezoneAndGetPrevious($dateTimeZone);
+        $result = $closure();
+        if ($previousTimezone) {
+            self::setDbSessionTimeZone($previousTimezone);
+        }
+        return $result;
+    }
+
+    public static function setDbSessionTimezoneAndGetPrevious(DateTimeZone $dateTimeZone): string
+    {
+        $row = DB::selectOne('SELECT @@session.time_zone AS tz');
+        self::setDbSessionTimeZone($dateTimeZone->getName());
+        return $row->tz ?? '';
+    }
+
+    public static function setDbSessionTimeZone(string $timezone): void
+    {
+        DB::statement(sprintf("SET time_zone = '%s'", $timezone));
     }
 }

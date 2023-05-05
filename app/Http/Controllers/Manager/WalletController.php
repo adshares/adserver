@@ -38,6 +38,7 @@ use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\NonceGenerator;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
@@ -747,9 +748,10 @@ class WalletController extends Controller
         $changeDbSessionTimezone = null !== $from;
         if ($changeDbSessionTimezone) {
             $dateTimeZone = new DateTimeZone($from->format('O'));
-            $this->setDbSessionTimezone($dateTimeZone);
+            $previousTimezone = SqlUtils::setDbSessionTimezoneAndGetPrevious($dateTimeZone);
         } else {
             $dateTimeZone = null;
+            $previousTimezone = '';
         }
 
         $builder = UserLedgerEntry::getBillingHistoryBuilder($userId, $types, $from, $to);
@@ -776,8 +778,8 @@ class WalletController extends Controller
             }
         }
 
-        if ($changeDbSessionTimezone) {
-            $this->unsetDbSessionTimeZone();
+        if ($changeDbSessionTimezone && $previousTimezone) {
+            SqlUtils::setDbSessionTimeZone($previousTimezone);
         }
 
         $resp['limit'] = (int)$limit;
