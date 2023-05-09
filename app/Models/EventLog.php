@@ -406,9 +406,12 @@ SQL;
             $this->user_id = Uuid::fromString($userId)->hex();
         }
         if (
-            MetaverseVendor::Decentraland->value === $this->vendor &&
-            MediumName::Metaverse->value === $this->medium &&
-            !isset($userContext->keywords()['user']['external_user_id'])
+            !$userId ||
+            (
+                MetaverseVendor::Decentraland->value === $this->vendor &&
+                MediumName::Metaverse->value === $this->medium &&
+                !isset($userContext->keywords()['user']['external_user_id'])
+            )
         ) {
             $this->human_score = 0.0;
         } else {
