@@ -29,6 +29,8 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
@@ -403,7 +405,15 @@ SQL;
         if ($userId) {
             $this->user_id = Uuid::fromString($userId)->hex();
         }
-        $this->human_score = $userContext->humanScore();
+        if (
+            MetaverseVendor::Decentraland->value === $this->vendor &&
+            MediumName::Metaverse->value === $this->medium &&
+            !isset($userContext->keywords()['user']['external_user_id'])
+        ) {
+            $this->human_score = 0.0;
+        } else {
+            $this->human_score = $userContext->humanScore();
+        }
         $this->page_rank = $userContext->pageRank();
         $this->our_userdata = $userContext->keywords();
     }

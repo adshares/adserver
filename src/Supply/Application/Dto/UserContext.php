@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,33 +32,13 @@ use function json_encode;
 
 final class UserContext
 {
-    /** @var array */
-    private $keywords;
-
-    /** @var float */
-    private $humanScore;
-
-    /** @var float */
-    private $pageRank;
-
-    /** @var string */
-    private $pageRankInfo;
-
-    /** @var string */
-    private $userId;
-
     public function __construct(
-        array $keywords,
-        float $humanScore,
-        float $pageRank,
-        string $pageRankInfo,
-        string $userId
+        private readonly array $keywords,
+        private readonly float $humanScore,
+        private readonly float $pageRank,
+        private readonly string $pageRankInfo,
+        private readonly string $userId,
     ) {
-        $this->keywords = $keywords;
-        $this->humanScore = $humanScore;
-        $this->pageRank = $pageRank;
-        $this->pageRankInfo = $pageRankInfo;
-        $this->userId = $userId;
     }
 
     public static function fromAdUserArray(array $body): self
