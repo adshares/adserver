@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Persist turnover data
 - Turnover monitoring API
 - Validate ads.txt
+- Opportunity to changing favicon via AdController
 ### Changed
 - Payment processing loop is continued if exchange rate for particular period is not available
 - Reject site during find if it has rejected domain
