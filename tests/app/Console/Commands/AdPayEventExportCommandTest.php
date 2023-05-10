@@ -86,12 +86,8 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
                     }
                 )
             );
-        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(
-            self::checkEventCount(0)
-        );
-        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(
-            self::checkEventCount(0)
-        );
+        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(self::checkEventCount(0));
+        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(self::checkEventCount(0));
         $this->instance(AdPay::class, $adPay);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
@@ -121,12 +117,8 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
                     }
                 )
             );
-        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(
-            self::checkEventCount(0)
-        );
-        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(
-            self::checkEventCount(0)
-        );
+        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(self::checkEventCount(0));
+        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(self::checkEventCount(0));
         $this->instance(AdPay::class, $adPay);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
@@ -175,6 +167,42 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
         Log::shouldHaveReceived('error')->once();
+    }
+
+    public function testExportViewWhileExternalUserIdIsMissingForDecentraland(): void
+    {
+        $event = $this->insertEventView();
+        $event->domain = 'my.example.com';
+        $event->medium = 'metaverse';
+        $event->vendor = 'decentraland';
+        $event->saveOrFail();
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
+        $this->bindAdUser();
+
+        $adPay = $this->createMock(AdPay::class);
+        $adPay->expects(self::atLeastOnce())
+            ->method('addViews')
+            ->will(
+                self::returnCallback(
+                    function (AdPayEvents $adPayEvents) {
+                        $events = $adPayEvents->toArray()['events'];
+                        self::assertCount(1, $events);
+                        self::assertEquals(
+                            0,
+                            $events[0]['human_score'],
+                            sprintf(
+                                'Failed asserting that human_score %s matches expected 0.',
+                                $events[0]['human_score'],
+                            ),
+                        );
+                    }
+                )
+            );
+        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(self::checkEventCount(0));
+        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(self::checkEventCount(0));
+        $this->instance(AdPay::class, $adPay);
+
+        $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }
 
     public function testExportViewAndConversionWhileTooManyEventsInSecond(): void
@@ -282,15 +310,9 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         $this->bindAdUser();
 
         $adPay = $this->createMock(AdPay::class);
-        $adPay->expects(self::atLeastOnce())->method('addViews')->will(
-            self::checkEventCount(0)
-        );
-        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(
-            self::checkEventCount(1)
-        );
-        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(
-            self::checkEventCount(0)
-        );
+        $adPay->expects(self::atLeastOnce())->method('addViews')->will(self::checkEventCount(0));
+        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(self::checkEventCount(1));
+        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(self::checkEventCount(0));
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventClick();
@@ -304,15 +326,9 @@ class AdPayEventExportCommandTest extends ConsoleTestCase
         $this->bindAdUser();
 
         $adPay = $this->createMock(AdPay::class);
-        $adPay->expects(self::atLeastOnce())->method('addViews')->will(
-            self::checkEventCount(0)
-        );
-        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(
-            self::checkEventCount(0)
-        );
-        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(
-            self::checkEventCount(1)
-        );
+        $adPay->expects(self::atLeastOnce())->method('addViews')->will(self::checkEventCount(0));
+        $adPay->expects(self::atLeastOnce())->method('addClicks')->will(self::checkEventCount(0));
+        $adPay->expects(self::atLeastOnce())->method('addConversions')->will(self::checkEventCount(1));
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventConversion();
