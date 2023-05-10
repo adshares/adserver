@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Payment processing loop is continued if exchange rate for particular period is not available
 - Reject site during find if it has rejected domain
+- Check user ID during event export
 ### Fixed
 - Do not process payments older than 2 days (by default)
 - Start date for quarterly statistics
