@@ -50,3 +50,5 @@ if [ $? -ne 0 ]; then exit 1; fi
 rm -f bootstrap/cache/config.php
 artisanCommand optimize
 if [ $? -ne 0 ]; then exit 1; fi
+
+deploy/reload.sh
