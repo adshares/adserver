@@ -7,13 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.5.0] - 2023-05-15
 ### Added
 - Persist turnover data
 - Turnover monitoring API
 - Validate ads.txt
-- Opportunity to changing favicon via AdController
+- Custom favicon
 ### Changed
-- Payment processing loop is continued if exchange rate for particular period is not available
+- Payment processing loop is continued if exchange rate errored
 - Reject site during find if it has rejected domain
 - Check user ID during event export
 ### Fixed
@@ -925,7 +927,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.12...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.5.0...develop
+[2.5.0]: https://github.com/adshares/adserver/compare/v2.4.12...v2.5.0
 [2.4.12]: https://github.com/adshares/adserver/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
