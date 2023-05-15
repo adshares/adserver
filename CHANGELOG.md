@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not process payments older than 2 days (by default)
 - Start date for quarterly statistics
 
+## [2.4.13] - 2023-04-21
+### Changed
+- Payment processing loop is continued if exchange rate for particular period is not available
+- Disallow robots to index pages
+### Fixed
+- Do not process payments older than 2 days (by default)
+
 ## [2.4.12] - 2023-03-31
 ### Added
 - Non-withdrawable user ledger entries
@@ -927,8 +934,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.5.0...develop
-[2.5.0]: https://github.com/adshares/adserver/compare/v2.4.12...v2.5.0
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.12...develop
 [2.4.12]: https://github.com/adshares/adserver/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
