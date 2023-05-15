@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,8 @@ namespace Adshares\Adserver\Repository\Publisher;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Adserver\Utilities\SqlUtils;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
@@ -43,7 +45,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchView(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -62,7 +64,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchViewAll(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -81,7 +83,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchViewInvalidRate(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -120,7 +122,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchViewUnique(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -139,7 +141,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchClick(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -158,7 +160,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchClickAll(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -177,7 +179,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchClickInvalidRate(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -216,7 +218,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchRpc(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -255,7 +257,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchRpm(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -294,7 +296,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchSum(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -313,7 +315,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchSumHour(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -332,7 +334,7 @@ class MySqlStatsRepository implements StatsRepository
 
     public function fetchCtr(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -632,7 +634,7 @@ class MySqlStatsRepository implements StatsRepository
     private function fetch(
         string $type,
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId,
@@ -681,7 +683,7 @@ class MySqlStatsRepository implements StatsRepository
     private function fetchAggregates(
         string $type,
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId,
@@ -710,7 +712,7 @@ class MySqlStatsRepository implements StatsRepository
     private function fetchLive(
         string $type,
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId,
@@ -736,30 +738,17 @@ class MySqlStatsRepository implements StatsRepository
 
     private function executeQuery(string $query, DateTimeInterface $dateStart): array
     {
-        $dateTimeZone = new DateTimeZone($dateStart->format('O'));
-        $tz = $this->setDbSessionTimezone($dateTimeZone);
-        $queryResult = DB::select($query);
-        if ($tz) {
-            $this->unsetDbSessionTimeZone($tz);
-        }
-
-        return $queryResult;
+        return SqlUtils::executeTimezoneAwareQuery(
+            new DateTimeZone($dateStart->format('O')),
+            fn() => DB::select($query),
+        );
     }
 
-    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): string
-    {
-        $tz = DB::selectOne('SELECT @@session.time_zone AS tz');
-        DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
-        return $tz->tz ?? '';
-    }
-
-    private function unsetDbSessionTimeZone($tz): void
-    {
-        DB::statement(sprintf("SET time_zone = '%s'", $tz));
-    }
-
-    private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
-    {
+    private static function concatenateDateColumns(
+        DateTimeZone $dateTimeZone,
+        array $result,
+        ChartResolution $resolution,
+    ): array {
         if (count($result) === 0) {
             return [];
         }
@@ -767,34 +756,34 @@ class MySqlStatsRepository implements StatsRepository
         $formattedResult = [];
 
         $date = (new DateTime())->setTimezone($dateTimeZone);
-        if ($resolution !== StatsRepository::RESOLUTION_HOUR) {
-            $date->setTime(0, 0, 0, 0);
+        if ($resolution !== ChartResolution::HOUR) {
+            $date->setTime(0, 0);
         }
 
         foreach ($result as $row) {
-            if ($resolution === StatsRepository::RESOLUTION_HOUR) {
-                $date->setTime($row->h, 0, 0, 0);
+            if ($resolution === ChartResolution::HOUR) {
+                $date->setTime($row->h, 0);
             }
 
             switch ($resolution) {
-                case StatsRepository::RESOLUTION_HOUR:
-                case StatsRepository::RESOLUTION_DAY:
+                case ChartResolution::HOUR:
+                case ChartResolution::DAY:
                     $date->setDate($row->y, $row->m, $row->d);
                     break;
-                case StatsRepository::RESOLUTION_WEEK:
+                case ChartResolution::WEEK:
                     $yearweek = (string)$row->yw;
                     $year = (int)substr($yearweek, 0, 4);
                     $week = (int)substr($yearweek, 4);
                     $date->setISODate($year, $week, 1);
                     break;
-                case StatsRepository::RESOLUTION_MONTH:
+                case ChartResolution::MONTH:
                     $date->setDate($row->y, $row->m, 1);
                     break;
-                case StatsRepository::RESOLUTION_QUARTER:
+                case ChartResolution::QUARTER:
                     $month = $row->q * 3 - 2;
                     $date->setDate($row->y, $month, 1);
                     break;
-                case StatsRepository::RESOLUTION_YEAR:
+//                case ChartResolution::YEAR:
                 default:
                     $date->setDate($row->y, 1, 1);
                     break;
@@ -809,16 +798,16 @@ class MySqlStatsRepository implements StatsRepository
 
     private static function createEmptyResult(
         DateTimeZone $dateTimeZone,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd
     ): array {
         $dates = [];
-        $date = self::createSanitizedStartDate($dateTimeZone, $resolution, $dateStart);
+        $date = DateUtils::createSanitizedStartDate($dateTimeZone, $resolution, $dateStart);
 
         while ($date < $dateEnd) {
             $dates[] = $date->format(DateTimeInterface::ATOM);
-            self::advanceDateTime($resolution, $date);
+            DateUtils::advanceStartDate($resolution, $date);
         }
 
         if (empty($dates)) {
@@ -831,70 +820,6 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return $result;
-    }
-
-    private static function createSanitizedStartDate(
-        DateTimeZone $dateTimeZone,
-        string $resolution,
-        DateTime $dateStart
-    ): DateTime {
-        $date = (clone $dateStart)->setTimezone($dateTimeZone);
-
-        if ($resolution === StatsRepository::RESOLUTION_HOUR) {
-            $date->setTime((int)$date->format('H'), 0, 0, 0);
-        } else {
-            $date->setTime(0, 0, 0, 0);
-        }
-
-        switch ($resolution) {
-            case StatsRepository::RESOLUTION_HOUR:
-            case StatsRepository::RESOLUTION_DAY:
-                break;
-            case StatsRepository::RESOLUTION_WEEK:
-                $date->setISODate((int)$date->format('Y'), (int)$date->format('W'), 1);
-                break;
-            case StatsRepository::RESOLUTION_MONTH:
-                $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
-                break;
-            case StatsRepository::RESOLUTION_QUARTER:
-                $quarter = (int)floor((int)$date->format('m') - 1 / 3);
-                $month = $quarter * 3 + 1;
-                $date->setDate((int)$date->format('Y'), $month, 1);
-                break;
-            case StatsRepository::RESOLUTION_YEAR:
-            default:
-                $date->setDate((int)$date->format('Y'), 1, 1);
-                break;
-        }
-
-        return $date;
-    }
-
-    private static function advanceDateTime(string $resolution, DateTime $date): void
-    {
-        switch ($resolution) {
-            case StatsRepository::RESOLUTION_HOUR:
-                $date->modify('+1 hour');
-                break;
-            case StatsRepository::RESOLUTION_DAY:
-                $date->modify('tomorrow');
-                break;
-            case StatsRepository::RESOLUTION_WEEK:
-                $date->modify('+7 days');
-                break;
-            case StatsRepository::RESOLUTION_MONTH:
-                $date->modify('first day of next month');
-                break;
-            case StatsRepository::RESOLUTION_QUARTER:
-                $date->modify('first day of next month');
-                $date->modify('first day of next month');
-                $date->modify('first day of next month');
-                break;
-            case StatsRepository::RESOLUTION_YEAR:
-            default:
-                $date->modify('first day of next year');
-                break;
-        }
     }
 
     private static function joinResultWithEmpty(array $formattedResult, array $emptyResult): array

@@ -25,6 +25,7 @@ namespace Adshares\Advertiser\Dto\Input;
 
 use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
 use DateTimeInterface;
 
@@ -47,19 +48,12 @@ final class ChartInput
         StatsRepository::TYPE_CTR,
     ];
 
-    private const ALLOWED_RESOLUTIONS = [
-        StatsRepository::RESOLUTION_HOUR,
-        StatsRepository::RESOLUTION_DAY,
-        StatsRepository::RESOLUTION_WEEK,
-        StatsRepository::RESOLUTION_MONTH,
-        StatsRepository::RESOLUTION_QUARTER,
-        StatsRepository::RESOLUTION_YEAR,
-    ];
+    private ChartResolution $resolution;
 
     public function __construct(
         private readonly string $advertiserId,
         private readonly string $type,
-        private readonly string $resolution,
+        string $resolution,
         private readonly DateTime $dateStart,
         private readonly DateTime $dateEnd,
         private readonly ?string $campaignId = null,
@@ -69,7 +63,8 @@ final class ChartInput
             throw new InvalidInputException(sprintf('Unsupported chart type `%s`.', $type));
         }
 
-        if (!in_array($resolution, self::ALLOWED_RESOLUTIONS, true)) {
+        $chartResolution = ChartResolution::tryFrom($resolution);
+        if (null === $chartResolution) {
             throw new InvalidInputException(sprintf('Unsupported chart resolution `%s`.', $resolution));
         }
 
@@ -80,6 +75,8 @@ final class ChartInput
                 $dateEnd->format(DateTimeInterface::ATOM)
             ));
         }
+
+        $this->resolution = $chartResolution;
     }
 
     public function getAdvertiserId(): string
@@ -92,7 +89,7 @@ final class ChartInput
         return $this->type;
     }
 
-    public function getResolution(): string
+    public function getResolution(): ChartResolution
     {
         return $this->resolution;
     }

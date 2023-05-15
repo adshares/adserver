@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,9 +43,18 @@ class InventoryImporter
     ) {
     }
 
-    public function import(AccountId $sourceAddress, string $sourceHost, string $inventoryHost): void
-    {
-        $campaigns = $this->client->fetchAllInventory($sourceAddress, $sourceHost, $inventoryHost);
+    public function import(
+        AccountId $sourceAddress,
+        string $sourceHost,
+        string $inventoryHost,
+        bool $isAdsTxtRequiredBySourceHost,
+    ): void {
+        $campaigns = $this->client->fetchAllInventory(
+            $sourceAddress,
+            $sourceHost,
+            $inventoryHost,
+            $isAdsTxtRequiredBySourceHost,
+        );
         $bannersPublicIds = $this->getBannerIds($campaigns);
         $classificationCollection = $this->classifyClient->fetchBannersClassification($bannersPublicIds);
 

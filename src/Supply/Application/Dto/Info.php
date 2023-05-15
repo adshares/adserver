@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
@@ -61,6 +62,8 @@ final class Info
         private readonly array $capabilities,
         private readonly string $registrationMode,
         private readonly string $appMode,
+        private readonly string $adsTxtDomain,
+        private readonly bool $adsTxtRequired,
     ) {
         $this->validateCapabilities($capabilities);
     }
@@ -74,7 +77,6 @@ final class Info
         }
     }
 
-    /** @deprecated Use object casting in NetworkHosts model */
     public static function fromArray(array $data): self
     {
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
@@ -96,7 +98,9 @@ final class Info
             $email,
             $data['capabilities'],
             $data['registrationMode'] ?? RegistrationMode::PUBLIC,
-            $data['mode'] ?? AppMode::OPERATIONAL
+            $data['mode'] ?? AppMode::OPERATIONAL,
+            $data['adsTxtDomain'] ?? DomainReader::domain($data['serverUrl']),
+            $data['adsTxtRequired'] ?? false,
         );
 
         if (isset($data['demandFee'])) {
@@ -130,6 +134,8 @@ final class Info
             'adsAddress' => $this->adsAddress->toString(),
             'registrationMode' => $this->registrationMode,
             'mode' => $this->appMode,
+            'adsTxtDomain' => $this->adsTxtDomain,
+            'adsTxtRequired' => $this->adsTxtRequired,
         ];
 
         if (null !== $this->supportEmail) {
@@ -227,6 +233,16 @@ final class Info
     public function getAppMode(): string
     {
         return $this->appMode;
+    }
+
+    public function getAdsTxtDomain(): string
+    {
+        return $this->adsTxtDomain;
+    }
+
+    public function isAdsTxtRequired(): bool
+    {
+        return $this->adsTxtRequired;
     }
 
     public function hasDemandCapabilities(): bool

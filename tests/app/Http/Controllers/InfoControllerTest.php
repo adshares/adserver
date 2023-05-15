@@ -25,7 +25,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Config\RegistrationMode;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class InfoControllerTest extends TestCase
 {
@@ -62,6 +62,8 @@ class InfoControllerTest extends TestCase
                     'sites' => 0,
                 ],
                 'mode' => 'operational',
+                'adsTxtDomain' => 'example.com',
+                'adsTxtRequired' => false,
             ],
             $response->json()
         );

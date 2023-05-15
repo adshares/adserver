@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,23 +28,14 @@ use Illuminate\Contracts\Support\Arrayable;
 
 class AdPayEvents implements Arrayable
 {
-    /** @var DateTimeInterface */
-    private $timeStart;
-
-    /** @var DateTimeInterface */
-    private $timeEnd;
-
-    /** @var array */
-    private $events;
-
-    public function __construct(DateTimeInterface $timeStart, DateTimeInterface $timeEnd, array $events)
-    {
-        $this->timeStart = $timeStart;
-        $this->timeEnd = $timeEnd;
-        $this->events = $events;
+    public function __construct(
+        private readonly DateTimeInterface $timeStart,
+        private readonly DateTimeInterface $timeEnd,
+        private readonly array $events,
+    ) {
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'time_start' => $this->timeStart->getTimestamp(),

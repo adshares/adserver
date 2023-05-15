@@ -80,6 +80,8 @@ final class InfoResponse implements Arrayable
                 [Info::CAPABILITY_ADVERTISER, Info::CAPABILITY_PUBLISHER],
                 config('app.registration_mode'),
                 AppMode::getAppMode(),
+                config('app.ads_txt_domain'),
+                config('app.ads_txt_check_demand_enabled'),
             )
         );
     }

@@ -57,7 +57,7 @@ final class LicenseFeeSender
 
     public function eventValueSum(): int
     {
-        return (int)array_reduce(
+        return array_reduce(
             $this->results,
             static function (int $carry, PaymentProcessingResult $result) {
                 return $carry + $result->eventValuePartialSum();
@@ -68,7 +68,7 @@ final class LicenseFeeSender
 
     public function licenseFeeSum(): int
     {
-        return (int)array_reduce(
+        return array_reduce(
             $this->results,
             static function (int $carry, PaymentProcessingResult $result) {
                 return $carry + $result->licenseFeePartialSum();
@@ -77,9 +77,20 @@ final class LicenseFeeSender
         );
     }
 
+    public function operatorFeeSum(): int
+    {
+        return array_reduce(
+            $this->results,
+            static function (int $carry, PaymentProcessingResult $result) {
+                return $carry + $result->operatorFeePartialSum();
+            },
+            0
+        );
+    }
+
     public function sendAllLicensePayments(): ?NetworkPayment
     {
-        $receiverAddress = $this->licenseReader->getAddress()?->toString();
+        $receiverAddress = $this->licenseAddress();
         if (null === $receiverAddress) {
             return null;
         }
@@ -127,5 +138,10 @@ final class LicenseFeeSender
                 $payment->amount
             ));
         }
+    }
+
+    public function licenseAddress(): ?string
+    {
+        return $this->licenseReader->getAddress()?->toString();
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,6 +27,7 @@ trait AccountAddress
     {
         if ($value === null) {
             $this->attributes[$key] = $value;
+            return;
         }
 
         $binAddress = $this->decodeAddress($value);
@@ -48,7 +49,7 @@ trait AccountAddress
     public function accountAddressAccessor($value)
     {
         if ($value === null) {
-            return $value;
+            return null;
         }
 
         return $this->encodeAddress(bin2hex($value));

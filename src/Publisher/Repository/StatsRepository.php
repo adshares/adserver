@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Publisher\Repository;
 
+use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
 use Adshares\Publisher\Dto\Result\Stats\Total;
@@ -45,16 +46,9 @@ interface StatsRepository
     public const TYPE_STATS = 'stats';
     public const TYPE_STATS_REPORT = 'statsReport';
 
-    public const RESOLUTION_HOUR = 'hour';
-    public const RESOLUTION_DAY = 'day';
-    public const RESOLUTION_WEEK = 'week';
-    public const RESOLUTION_MONTH = 'month';
-    public const RESOLUTION_QUARTER = 'quarter';
-    public const RESOLUTION_YEAR = 'year';
-
     public function fetchView(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -62,7 +56,7 @@ interface StatsRepository
 
     public function fetchViewAll(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -70,7 +64,7 @@ interface StatsRepository
 
     public function fetchViewInvalidRate(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -78,7 +72,7 @@ interface StatsRepository
 
     public function fetchViewUnique(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -86,7 +80,7 @@ interface StatsRepository
 
     public function fetchClick(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -94,7 +88,7 @@ interface StatsRepository
 
     public function fetchClickAll(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -102,7 +96,7 @@ interface StatsRepository
 
     public function fetchClickInvalidRate(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -110,7 +104,7 @@ interface StatsRepository
 
     public function fetchRpc(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -118,7 +112,7 @@ interface StatsRepository
 
     public function fetchRpm(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -126,7 +120,7 @@ interface StatsRepository
 
     public function fetchSum(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -134,7 +128,7 @@ interface StatsRepository
 
     public function fetchSumHour(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -142,7 +136,7 @@ interface StatsRepository
 
     public function fetchCtr(
         string $publisherId,
-        string $resolution,
+        ChartResolution $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null

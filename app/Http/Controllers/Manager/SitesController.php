@@ -245,6 +245,7 @@ class SitesController extends Controller
             $site->fill($input);
             if ($updateDomainAndUrl) {
                 $site->accepted_at = null;
+                $site->ads_txt_confirmed_at = null;
             }
             if (Site::STATUS_ACTIVE === $site->status) {
                 $site->approvalProcedure();
