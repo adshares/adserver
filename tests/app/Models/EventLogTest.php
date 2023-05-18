@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Models;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Supply\Application\Dto\UserContext;
 
 class EventLogTest extends TestCase
 {
@@ -225,5 +226,24 @@ class EventLogTest extends TestCase
             [null, ['site' => []]],
             [null, []],
         ];
+    }
+
+    public function testUpdateWithUserContext(): void
+    {
+        $userContext = UserContext::fromAdUserArray(
+            [
+                'human_score' => 0.44,
+                'uuid' => '00000000000000000000000000000001',
+            ]
+        );
+        /** @var EventLog $eventLog */
+        $eventLog = EventLog::factory()->create();
+        $eventLog->domain = 'scene-0-0.decentraland.org';
+        $eventLog->medium = 'metaverse';
+        $eventLog->saveOrFail();
+
+        $eventLog->updateWithUserContext($userContext);
+
+        self::assertEquals(0, $eventLog->human_score);
     }
 }
