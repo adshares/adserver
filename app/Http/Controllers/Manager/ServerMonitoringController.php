@@ -244,7 +244,9 @@ class ServerMonitoringController extends Controller
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        Mail::to($user)->queue(new UserBanned($reason));
+        if (null !== $user->email) {
+            Mail::to($user)->queue(new UserBanned($reason));
+        }
 
         return new UserResource($user);
     }

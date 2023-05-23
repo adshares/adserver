@@ -29,6 +29,7 @@ use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
 use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
@@ -1061,26 +1062,10 @@ SQL;
 
     private function executeQuery(string $query, DateTimeInterface $dateStart, array $bindings = []): array
     {
-        $dateTimeZone = new DateTimeZone($dateStart->format('O'));
-        $tz = $this->setDbSessionTimezone($dateTimeZone);
-        $queryResult = DB::select($query, $bindings);
-        if ($tz) {
-            $this->unsetDbSessionTimeZone($tz);
-        }
-
-        return $queryResult;
-    }
-
-    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): string
-    {
-        $tz = DB::selectOne('SELECT @@session.time_zone AS tz');
-        DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
-        return $tz->tz ?? '';
-    }
-
-    private function unsetDbSessionTimeZone($tz): void
-    {
-        DB::statement(sprintf("SET time_zone = '%s'", $tz));
+        return SqlUtils::executeTimezoneAwareQuery(
+            new DateTimeZone($dateStart->format('O')),
+            fn() => DB::select($query, $bindings),
+        );
     }
 
     private static function concatenateDateColumns(

@@ -266,6 +266,43 @@ final class ServerMonitoringControllerTest extends TestCase
         );
     }
 
+    public function testFetchTurnoverWithTimezone(): void
+    {
+        $this->setUpAdmin();
+        TurnoverEntry::factory()
+            ->count(2)->sequence(
+                ['hour_timestamp' => '2023-04-10 23:00:00'],
+                ['hour_timestamp' => '2023-04-11 00:00:00'],
+            )
+            ->create(
+                [
+                    'amount' => 100_000_000_000,
+                    'type' => TurnoverEntryType::DspAdvertisersExpense,
+                ]
+            );
+
+        $response = $this->getJson(
+            self::buildUriForKey(
+                'turnover',
+                [
+                    'filter' => [
+                        'date' => [
+                            'from' => '2023-04-11T00:00:00+02:00',
+                            'to' => '2023-04-11T23:59:59+02:00',
+                        ]
+                    ]
+                ]
+            )
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(
+            [
+                'dspAdvertisersExpense' => 200_000_000_000,
+            ]
+        );
+    }
+
     public function testFetchTurnoverByType(): void
     {
         $this->setUpAdmin();

@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Repository\Publisher;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Domain\ValueObject\ChartResolution;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
@@ -737,26 +738,10 @@ class MySqlStatsRepository implements StatsRepository
 
     private function executeQuery(string $query, DateTimeInterface $dateStart): array
     {
-        $dateTimeZone = new DateTimeZone($dateStart->format('O'));
-        $tz = $this->setDbSessionTimezone($dateTimeZone);
-        $queryResult = DB::select($query);
-        if ($tz) {
-            $this->unsetDbSessionTimeZone($tz);
-        }
-
-        return $queryResult;
-    }
-
-    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): string
-    {
-        $tz = DB::selectOne('SELECT @@session.time_zone AS tz');
-        DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
-        return $tz->tz ?? '';
-    }
-
-    private function unsetDbSessionTimeZone($tz): void
-    {
-        DB::statement(sprintf("SET time_zone = '%s'", $tz));
+        return SqlUtils::executeTimezoneAwareQuery(
+            new DateTimeZone($dateStart->format('O')),
+            fn() => DB::select($query),
+        );
     }
 
     private static function concatenateDateColumns(

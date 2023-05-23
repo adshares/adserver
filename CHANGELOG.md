@@ -8,16 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- DSP Bridge integration
+### Fixed
+- Do not send ban email if banned user has not registered address
+
+## [2.5.0] - 2023-05-15
+### Added
 - Persist turnover data
 - Turnover monitoring API
 - Validate ads.txt
-- DSP Bridge integration
+- Custom favicon
 ### Changed
-- Payment processing loop is continued if exchange rate for particular period is not available
+- Payment processing loop is continued if exchange rate errored
 - Reject site during find if it has rejected domain
+- Check user ID during event export
 ### Fixed
 - Do not process payments older than 2 days (by default)
 - Start date for quarterly statistics
+
+## [2.4.13] - 2023-04-21
+### Changed
+- Payment processing loop is continued if exchange rate for particular period is not available
+- Disallow robots to index pages
+### Fixed
+- Do not process payments older than 2 days (by default)
 
 ## [2.4.12] - 2023-03-31
 ### Added
