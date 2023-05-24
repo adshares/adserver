@@ -39,6 +39,7 @@ use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Common\Application\Service\AdUser;
@@ -315,6 +316,74 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(0, 'data');
+    }
+
+    public function testFindWhileNoBannersButPlaceholderPresent(): void
+    {
+        $this->app->bind(
+            AdSelect::class,
+            function () {
+                $adSelect = self::createMock(AdSelect::class);
+                $adSelect->method('findBanners')->willReturnCallback(function (array $zones) {
+                    return new FoundBanners(array_map(fn($zone) => null, $zones));
+                });
+                return $adSelect;
+            }
+        );
+        $this->app->bind(
+            BannerPlaceholderProvider::class,
+            function () {
+                $placeholderProvider = self::createMock(BannerPlaceholderProvider::class);
+                $placeholderProvider->method('findBannerPlaceholders')
+                    ->willReturnCallback(function (array $zones) {
+                        return new FoundBanners(
+                            [
+                                [
+                                    'id' => '5a0f58f3571c42cb8595119c9b77c22e',
+                                    'publisher_id' => '65fba894af014a109775f709c898331c',
+                                    'zone_id' => '2e7adf8df5dd447f93448716cfba3c08',
+                                    'pay_from' => '0001-000000F1-6451',
+                                    'pay_to' => '0001-00000050-C19A',
+                                    'type' => 'image',
+                                    'size' => '300x250',
+                                    'serve_url' => 'https://app.web3ads.net/serve/x21bf68a2b51446b2b70d1eab1e940b6e.doc?v=5ba6',
+                                    'creative_sha1' => '5ba647ac8808b6f58526b2bda8268f45d48a3081',
+                                    'click_url' => 'http://localhost:8010/l/n/click/5a0f58f3571c42cb8595119c9b77c22e?iid=c39a09c29c5224c284c3bac389083b09&r=aHR0cHM6Ly9hcHAud2ViM2Fkcy5uZXQvY2xpY2svMjFiZjY4YTJiNTE0NDZiMmI3MGQxZWFiMWU5NDBiNmU&zid=2e7adf8df5dd447f93448716cfba3c08',
+                                    'view_url' => 'http://localhost:8010/l/n/view/5a0f58f3571c42cb8595119c9b77c22e?iid=c39a09c29c5224c284c3bac389083b09&r=aHR0cHM6Ly9hcHAud2ViM2Fkcy5uZXQvdmlldy8yMWJmNjhhMmI1MTQ0NmIyYjcwZDFlYWIxZTk0MGI2ZQ&zid=2e7adf8df5dd447f93448716cfba3c08',
+                                    'info_box' => true,
+                                    'rpm' => 0,
+                                    'request_id' => '3',
+                                ],
+                            ]
+                        );
+                    });
+                return $placeholderProvider;
+            }
+        );
+
+        /** @var User $user */
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                ],
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', '3');
     }
 
     public function testFindFailWhileSiteRejected(): void

@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
+use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
@@ -501,6 +502,7 @@ class SupplyController extends Controller
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionId);
+        $foundBanners = $this->fillMissingBannersWithPlaceholders($foundBanners, $zones);
 
         if ($foundBanners->exists(fn($key, $element) => $element != null)) {
             NetworkImpression::register(
@@ -1309,5 +1311,25 @@ class SupplyController extends Controller
             $ctx['user']['account'] = $account;
         }
         return Utils::UrlSafeBase64Encode(json_encode($ctx));
+    }
+
+    private function fillMissingBannersWithPlaceholders(FoundBanners $foundBanners, array $zones): FoundBanners
+    {
+        $indicesToReplace = [];
+        foreach ($foundBanners as $index => $banner) {
+            if (null === $banner) {
+                $indicesToReplace[] = $index;
+            }
+        }
+
+        if (!empty($indicesToReplace)) {
+            $zonesToReplace = array_intersect_key($zones, $indicesToReplace);
+            $bannerPlaceholderProvider = resolve(BannerPlaceholderProvider::class);
+            foreach ($bannerPlaceholderProvider->findBannerPlaceholders($zonesToReplace) as $bannerPlaceholder) {
+                $foundBanners[array_shift($indicesToReplace)] = $bannerPlaceholder;
+            }
+        }
+
+        return $foundBanners;
     }
 }
