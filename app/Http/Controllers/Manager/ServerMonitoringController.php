@@ -153,6 +153,16 @@ class ServerMonitoringController extends Controller
             $dateFilter?->getTo() ?: new DateTimeImmutable(),
             $turnoverType,
         );
+        $addresses = $data->pluck('ads_address')->toArray();
+        $nameByAddress = [];
+        foreach (NetworkHost::fetchByAddresses($addresses) as $networkHost) {
+            $nameByAddress[$networkHost->address] = $networkHost->info->getName();
+        }
+        $data = $data->toArray();
+        foreach ($data as &$entry) {
+            $entry['name'] = $nameByAddress[$entry['ads_address']] ?? null;
+        }
+
         return self::json($data);
     }
 
