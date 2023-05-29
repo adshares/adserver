@@ -177,6 +177,20 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
+    public function testPageWhyForPlaceholder(): void
+    {
+        /** @var SupplyBannerPlaceholder $banner */
+        $banner = SupplyBannerPlaceholder::factory()->create();
+        $query = [
+            'bid' => $banner->uuid,
+            'cid' => '0123456789abcdef0123456789abcdef',
+        ];
+
+        $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
     public function testReportAd(): void
     {
         Storage::fake('local');

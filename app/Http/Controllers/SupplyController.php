@@ -878,6 +878,23 @@ class SupplyController extends Controller
         }
 
         if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
+            if (null !== ($placeholder = SupplyBannerPlaceholder::fetchByPublicId($bannerId))) {
+                $placeholderData = [
+                    'url' => ServeDomain::changeUrlHost(
+                        (new SecureUrl(
+                            route(
+                                'placeholder-serve',
+                                [
+                                    'banner_id' => $placeholder->uuid,
+                                ]
+                            )
+                        ))->toString()
+                    ),
+                    'bannerSize' => $placeholder->size,
+                    'bannerType' => $placeholder->type,
+                ];
+                return $this->buildViewWhy($placeholderData);
+            }
             throw new NotFoundHttpException('No matching banner');
         }
         $campaign = $banner->campaign()->first();
@@ -887,11 +904,6 @@ class SupplyController extends Controller
 
         $data = [
             'url' => $banner->serve_url,
-            'source' => strtolower(preg_replace('/\s/', '-', config('app.adserver_name'))),
-            'supplyName' => config('app.adserver_name'),
-            'supplyTermsUrl' => route('terms-url'),
-            'supplyPrivacyUrl' => route('privacy-url'),
-            'supplyLandingUrl' => config('app.landing_url'),
             'supplyBannerReportUrl' => new SecureUrl(
                 route(
                     'report-ad',
@@ -902,7 +914,6 @@ class SupplyController extends Controller
                 )
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
-            'demand' => false,
             'bannerSize' => $banner->size,
             'bannerType' => $banner->type,
         ];
@@ -920,10 +931,23 @@ class SupplyController extends Controller
             );
         }
 
-        return view(
-            'supply/why',
-            $data
+        return $this->buildViewWhy($data);
+    }
+
+    private function buildViewWhy(array $data): View
+    {
+        $viewData = array_merge(
+            [
+                'source' => strtolower(preg_replace('/\s/', '-', config('app.adserver_name'))),
+                'supplyName' => config('app.adserver_name'),
+                'supplyTermsUrl' => route('terms-url'),
+                'supplyPrivacyUrl' => route('privacy-url'),
+                'supplyLandingUrl' => config('app.landing_url'),
+                'demand' => false,
+            ],
+            $data,
         );
+        return view('supply/why', $viewData);
     }
 
     public function reportAd(string $caseId, string $bannerId): string
