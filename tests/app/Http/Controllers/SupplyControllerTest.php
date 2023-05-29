@@ -37,11 +37,13 @@ use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\SupplyBannerPlaceholder;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
@@ -62,6 +64,7 @@ final class SupplyControllerTest extends TestCase
 {
     private const BANNER_FIND_URI = '/supply/find';
     private const PAGE_WHY_URI = '/supply/why';
+    private const PNG_MAGIC_NUMBER_HEX = '89504E47';
     private const REPORT_AD_URI = '/supply/ad/report';
     private const SUPPLY_ANON_URI = '/supply/anon';
     private const TARGETING_REACH_URI = '/supply/targeting-reach';
@@ -335,8 +338,8 @@ final class SupplyControllerTest extends TestCase
             function () {
                 $placeholderProvider = self::createMock(BannerPlaceholderProvider::class);
                 $placeholderProvider->method('findBannerPlaceholders')
-                    ->willReturnCallback(function (array $zones) {
-                        return new FoundBanners(
+                    ->willReturnCallback(
+                        fn () => new FoundBanners(
                             [
                                 [
                                     'id' => '5a0f58f3571c42cb8595119c9b77c22e',
@@ -346,17 +349,17 @@ final class SupplyControllerTest extends TestCase
                                     'pay_to' => '0001-00000050-C19A',
                                     'type' => 'image',
                                     'size' => '300x250',
-                                    'serve_url' => 'https://app.web3ads.net/serve/x21bf68a2b51446b2b70d1eab1e940b6e.doc?v=5ba6',
+                                    'serve_url' => 'https://example.com/serve/5ba6',
                                     'creative_sha1' => '5ba647ac8808b6f58526b2bda8268f45d48a3081',
-                                    'click_url' => 'http://localhost:8010/l/n/click/5a0f58f3571c42cb8595119c9b77c22e?iid=c39a09c29c5224c284c3bac389083b09&r=aHR0cHM6Ly9hcHAud2ViM2Fkcy5uZXQvY2xpY2svMjFiZjY4YTJiNTE0NDZiMmI3MGQxZWFiMWU5NDBiNmU&zid=2e7adf8df5dd447f93448716cfba3c08',
-                                    'view_url' => 'http://localhost:8010/l/n/view/5a0f58f3571c42cb8595119c9b77c22e?iid=c39a09c29c5224c284c3bac389083b09&r=aHR0cHM6Ly9hcHAud2ViM2Fkcy5uZXQvdmlldy8yMWJmNjhhMmI1MTQ0NmIyYjcwZDFlYWIxZTk0MGI2ZQ&zid=2e7adf8df5dd447f93448716cfba3c08',
+                                    'click_url' => 'https://example.com/l/n/click/5ba6',
+                                    'view_url' => 'https://example.com/l/n/view/5ba6',
                                     'info_box' => true,
                                     'rpm' => 0,
                                     'request_id' => '3',
                                 ],
                             ]
-                        );
-                    });
+                        )
+                    );
                 return $placeholderProvider;
             }
         );
@@ -1092,6 +1095,84 @@ final class SupplyControllerTest extends TestCase
         $response->assertCookie('tid', $expectedTrackingId, false);
     }
 
+    public function testPlaceholderServe(): void
+    {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+        $response = $this->get('/l/p/serve/' . $placeholder->uuid);
+
+        $response->assertStatus(Response::HTTP_OK);
+        ob_start();
+        $response->sendContent();
+        $content = ob_get_clean();
+        self::assertStringStartsWith(hex2bin(self::PNG_MAGIC_NUMBER_HEX), $content);
+    }
+
+    public function testPlaceholderServeOptions(): void
+    {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+        $response = $this->options('/l/p/serve/' . $placeholder->uuid, [], ['Origin' => 'https://example.com']);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
+    }
+
+    public function testPlaceholderServeWhileInvalidPlaceholderId(): void
+    {
+        $response = $this->get('/l/p/serve/1');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testPlaceholderServeWhilePlaceholderDeleted(): void
+    {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create(['deleted_at' => now()]);
+        $response = $this->get('/l/p/serve/' . $placeholder->uuid);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testLogPlaceholderClick(): void
+    {
+        Config::updateAdminSettings([Config::LANDING_URL => 'https://landing.example.com']);
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+
+        $response = $this->get('/l/p/click/' . $placeholder->uuid, ['Origin' => 'https://example.com']);
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location', 'https://landing.example.com');
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
+    }
+
+    public function testLogPlaceholderClickWhileInvalidPlaceholderId(): void
+    {
+        $response = $this->get('/l/p/click/1');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        
+    }
+
+    public function testLogPlaceholderView(): void
+    {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+
+        $response = $this->get('/l/p/view/' . $placeholder->uuid, ['Origin' => 'https://example.com']);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
+    }
+
+    public function testLogPlaceholderViewWhileInvalidPlaceholderId(): void
+    {
+        $response = $this->get('/l/p/view/1');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+    
     private static function findJsonData(array $merge = []): array
     {
         return array_merge(

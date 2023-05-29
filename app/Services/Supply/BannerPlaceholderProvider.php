@@ -139,7 +139,7 @@ class BannerPlaceholderProvider
                         route(
                             'placeholder-serve',
                             [
-                                'id' => $placeholder->uuid,
+                                'banner_id' => $placeholder->uuid,
                             ]
                         )
                     ))->toString()
@@ -150,7 +150,7 @@ class BannerPlaceholderProvider
                         route(
                             'log-placeholder-click',
                             [
-                                'id' => $placeholder->uuid,
+                                'banner_id' => $placeholder->uuid,
                                 'iid' => $impressionId,
                                 'zid' => $zone->uuid,
                             ]
@@ -162,7 +162,7 @@ class BannerPlaceholderProvider
                         route(
                             'log-placeholder-view',
                             [
-                                'id' => $placeholder->uuid,
+                                'banner_id' => $placeholder->uuid,
                                 'iid' => $impressionId,
                                 'zid' => $zone->uuid,
                             ]
