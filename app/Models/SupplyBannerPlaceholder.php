@@ -165,11 +165,11 @@ class SupplyBannerPlaceholder extends Model
         return $query->first(self::COLUMNS_WITHOUT_CONTENT);
     }
 
-    public static function fetchByPublicId(string $publicId): ?self
+    public static function fetchByPublicId(string $publicId, bool $withContent = false): ?self
     {
         return self::query()
             ->where('uuid', hex2bin($publicId))
-            ->first();
+            ->first($withContent ? '*' : self::COLUMNS_WITHOUT_CONTENT);
     }
 
     public function getServeUrlAttribute(): string

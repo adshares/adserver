@@ -1363,7 +1363,7 @@ class SupplyController extends Controller
         }
         $bannerId = str_replace('-', '', $bannerId);
         /** @var SupplyBannerPlaceholder $bannerPlaceholder */
-        if (null === ($bannerPlaceholder = SupplyBannerPlaceholder::fetchByPublicId($bannerId))) {
+        if (null === ($bannerPlaceholder = SupplyBannerPlaceholder::fetchByPublicId($bannerId, true))) {
             throw new NotFoundHttpException();
         }
 

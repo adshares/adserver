@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 use Adshares\Adserver\Http\Controllers\Manager\ServerConfigurationController;
 use Adshares\Adserver\Http\Controllers\Manager\ServerMonitoringController;
+use Adshares\Adserver\Http\Controllers\Manager\SupplyBannerPlaceholderController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,10 @@ Route::middleware([Kernel::ADMIN_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix
     Route::get('turnover/{type}', [ServerMonitoringController::class, 'fetchTurnoverByType']);
     Route::get('turnover', [ServerMonitoringController::class, 'fetchTurnover']);
     Route::get('wallet', [ServerMonitoringController::class, 'fetchWallet']);
+
+    Route::post('creatives/placeholder', [SupplyBannerPlaceholderController::class, 'uploadPlaceholder']);
+    Route::get('creatives/placeholder', [SupplyBannerPlaceholderController::class, 'fetchPlaceholders']);
+    Route::delete('creatives/placeholder/{uuid}', [SupplyBannerPlaceholderController::class, 'deletePlaceholder']);
 });
 
 Route::middleware([Kernel::MODERATOR_JWT_ACCESS, Kernel::JSON_API_CAMELIZE])->prefix('v2')->group(function () {
