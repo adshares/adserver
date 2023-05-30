@@ -880,16 +880,7 @@ class SupplyController extends Controller
         if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
             if (null !== ($placeholder = SupplyBannerPlaceholder::fetchByPublicId($bannerId))) {
                 $placeholderData = [
-                    'url' => ServeDomain::changeUrlHost(
-                        (new SecureUrl(
-                            route(
-                                'placeholder-serve',
-                                [
-                                    'banner_id' => $placeholder->uuid,
-                                ]
-                            )
-                        ))->toString()
-                    ),
+                    'url' => $placeholder->serve_url,
                     'bannerSize' => $placeholder->size,
                     'bannerType' => $placeholder->type,
                 ];

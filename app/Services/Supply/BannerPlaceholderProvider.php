@@ -27,8 +27,10 @@ use Adshares\Adserver\Models\SupplyBannerPlaceholder;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Dto\FoundBanners;
+use Illuminate\Support\Facades\Log;
 
 class BannerPlaceholderProvider
 {
@@ -47,9 +49,35 @@ class BannerPlaceholderProvider
         }
     }
 
-    public function deleteBannerPlaceholders(array $bannerPlaceholderIds): void
+    public function deleteBannerPlaceholder(SupplyBannerPlaceholder $placeholder): void
     {
-        SupplyBannerPlaceholder::deleteByPublicIds($bannerPlaceholderIds);
+        if ($placeholder->is_default) {
+            throw new RuntimeException('Cannot delete default placeholder');
+        }
+        $placeholder->delete();
+
+        $defaultPlaceholder = SupplyBannerPlaceholder::fetch(
+            $placeholder->medium,
+            $placeholder->vendor,
+            [$placeholder->size],
+            [$placeholder->type],
+            [$placeholder->mime],
+            true,
+        );
+        if (null === $defaultPlaceholder) {
+            Log::warning(
+                sprintf(
+                    'Default banner placeholder not found (medium=%s, vendor=%s, size=%s, type=%s, mime=%s)',
+                    $placeholder->medium,
+                    $placeholder->vendor ?? 'null',
+                    $placeholder->size,
+                    $placeholder->type,
+                    $placeholder->mime,
+                )
+            );
+        } else {
+            $defaultPlaceholder->restore();
+        }
     }
 
     public function findBannerPlaceholders(array $zones, string $impressionId): FoundBanners
@@ -135,16 +163,7 @@ class BannerPlaceholderProvider
                 'pay_to' => $adserverAddress,
                 'type' => $placeholder->type,
                 'size' => $placeholder->size,
-                'serve_url' => ServeDomain::changeUrlHost(
-                    (new SecureUrl(
-                        route(
-                            'placeholder-serve',
-                            [
-                                'banner_id' => $placeholder->uuid,
-                            ]
-                        )
-                    ))->toString()
-                ),
+                'serve_url' => $placeholder->serve_url,
                 'creative_sha1' => $placeholder->checksum,
                 'click_url' => ServeDomain::changeUrlHost(
                     (new SecureUrl(

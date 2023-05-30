@@ -31,7 +31,10 @@ use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\MediumName;
 use Adshares\Adserver\ViewModel\MetaverseVendor;
+use Adshares\Common\Exception\RuntimeException;
+use DateTimeImmutable;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 
 class BannerPlaceholderProviderTest extends TestCase
 {
@@ -74,13 +77,55 @@ class BannerPlaceholderProviderTest extends TestCase
 
     public function testDeleteBannerPlaceholders(): void
     {
+        /** @var SupplyBannerPlaceholder $defaultPlaceholder */
+        $defaultPlaceholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'deleted_at' => new DateTimeImmutable(),
+                'is_default' => true,
+                'size' => '300x250',
+            ]
+        );
         /** @var SupplyBannerPlaceholder $placeholder */
-        $placeholder = SupplyBannerPlaceholder::factory()->create();
+        $placeholder = SupplyBannerPlaceholder::factory()->create(['size' => '300x250']);
         $placeholderProvider = new BannerPlaceholderProvider();
 
-        $placeholderProvider->deleteBannerPlaceholders([$placeholder->uuid]);
+        $placeholderProvider->deleteBannerPlaceholder($placeholder);
+
+        self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertFalse($defaultPlaceholder->refresh()->trashed());
+        self::assertTrue($placeholder->refresh()->trashed());
+    }
+
+    public function testDeleteBannerPlaceholdersWhileDefaultIsMissing(): void
+    {
+        Log::spy();
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create(['size' => '300x250']);
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        $placeholderProvider->deleteBannerPlaceholder($placeholder);
 
         self::assertCount(0, SupplyBannerPlaceholder::all());
+        self::assertTrue($placeholder->refresh()->trashed());
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn($message) => 1 === preg_match(
+                '~^Default banner placeholder not found '
+                . '\(medium=web, vendor=null, size=[0-9x]+, type=image, mime=image/png\)$~',
+                $message,
+            ));
+    }
+
+    public function testDeleteBannerPlaceholdersFailWhileDefault(): void
+    {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create(['is_default' => true]);
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        self::expectException(RuntimeException::class);
+        self::expectExceptionMessage('Cannot delete default placeholder');
+
+        $placeholderProvider->deleteBannerPlaceholder($placeholder);
     }
 
     /**

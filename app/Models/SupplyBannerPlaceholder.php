@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -44,6 +45,7 @@ use Illuminate\Support\Carbon;
  * @property bool is_default
  * @property string content
  * @property string checksum
+ * @property string serve_url
  * @mixin Builder
  */
 class SupplyBannerPlaceholder extends Model
@@ -135,19 +137,13 @@ class SupplyBannerPlaceholder extends Model
         return $model;
     }
 
-    public static function deleteByPublicIds(array $publicIds): void
-    {
-        self::query()
-            ->whereIn('uuid', array_map(fn($publicId) => hex2bin($publicId), $publicIds))
-            ->delete();
-    }
-
     public static function fetch(
         string $medium,
         ?string $vendor,
         array $scopes,
         ?array $types = null,
         ?array $mimes = null,
+        bool $withThrashed = false,
     ): ?self {
         $query = self::query()
             ->where('medium', $medium)
@@ -162,6 +158,9 @@ class SupplyBannerPlaceholder extends Model
         if (null !== $mimes) {
             $query->whereIn('mime', $mimes);
         }
+        if ($withThrashed) {
+            $query->where('is_default', true)->withTrashed();
+        }
 
         return $query->first(self::COLUMNS_WITHOUT_CONTENT);
     }
@@ -171,5 +170,19 @@ class SupplyBannerPlaceholder extends Model
         return self::query()
             ->where('uuid', hex2bin($publicId))
             ->first();
+    }
+
+    public function getServeUrlAttribute(): string
+    {
+        return ServeDomain::changeUrlHost(
+            (new SecureUrl(
+                route(
+                    'placeholder-serve',
+                    [
+                        'banner_id' => $this->uuid,
+                    ]
+                )
+            ))->toString()
+        );
     }
 }
