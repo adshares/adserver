@@ -117,8 +117,8 @@ class SupplyBannerPlaceholder extends Model
         string $size,
         string $type,
         string $mime,
-        bool $isDefault,
         string $content,
+        bool $isDefault,
     ): self {
         $model = new self();
         $model->fill(

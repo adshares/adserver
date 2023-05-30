@@ -36,19 +36,24 @@ use Illuminate\Support\Facades\Log;
 
 class BannerPlaceholderProvider
 {
-    public function addBannerPlaceholders(array $bannerPlaceholders, bool $isDefault = false): void
-    {
-        foreach ($bannerPlaceholders as $bannerPlaceholder) {
-            SupplyBannerPlaceholder::register(
-                $bannerPlaceholder['medium'],
-                $bannerPlaceholder['vendor'],
-                $bannerPlaceholder['size'],
-                $bannerPlaceholder['type'],
-                $bannerPlaceholder['mime'],
-                $isDefault,
-                $bannerPlaceholder['content'],
-            );
-        }
+    public function addBannerPlaceholder(
+        string $medium,
+        ?string $vendor,
+        string $size,
+        string $type,
+        string $mime,
+        string $content,
+        bool $isDefault = false,
+    ): SupplyBannerPlaceholder {
+        return SupplyBannerPlaceholder::register(
+            $medium,
+            $vendor,
+            $size,
+            $type,
+            $mime,
+            $content,
+            $isDefault,
+        );
     }
 
     public function deleteBannerPlaceholder(SupplyBannerPlaceholder $placeholder): void

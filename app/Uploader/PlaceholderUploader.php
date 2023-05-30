@@ -22,7 +22,7 @@
 namespace Adshares\Adserver\Uploader;
 
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
-use Adshares\Adserver\Models\SupplyBannerPlaceholder;
+use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\Model\Banner;
@@ -31,6 +31,10 @@ use Illuminate\Http\UploadedFile;
 
 class PlaceholderUploader
 {
+    public function __construct(private readonly BannerPlaceholderProvider $provider)
+    {
+    }
+
     public function upload(UploadedFile $file, Medium $medium): string
     {
         $size = $file->getSize();
@@ -47,13 +51,12 @@ class PlaceholderUploader
         $mimeType = $file->getMimeType();
         $bannerValidator->validateMimeType(Banner::TYPE_IMAGE, $mimeType);
 
-        $placeholder = SupplyBannerPlaceholder::register(
+        $placeholder = $this->provider->addBannerPlaceholder(
             $medium->getName(),
             $medium->getVendor(),
             $scope,
             Banner::TYPE_IMAGE,
             $mimeType,
-            false,
             $file->getContent(),
         );
         return $placeholder->uuid;

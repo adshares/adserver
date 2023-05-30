@@ -70,7 +70,7 @@ class BannerPlaceholderProviderTest extends TestCase
         ];
         $placeholderProvider = new BannerPlaceholderProvider();
 
-        $placeholderProvider->addBannerPlaceholders([$placeholderData]);
+        $placeholderProvider->addBannerPlaceholder(...$placeholderData);
 
         self::assertCount(1, SupplyBannerPlaceholder::all());
     }
