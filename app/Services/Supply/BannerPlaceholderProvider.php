@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Services\Supply;
 
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SupplyBannerPlaceholder;
@@ -30,6 +31,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Dto\FoundBanners;
+use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\Log;
 
 class BannerPlaceholderProvider
@@ -196,5 +198,19 @@ class BannerPlaceholderProvider
         }
 
         return new FoundBanners($banners);
+    }
+
+    public function fetchByFilters(?FilterCollection $filters = null, ?int $perPage = null): CursorPaginator
+    {
+        $query = SupplyBannerPlaceholder::query()
+            ->orderBy('id', 'desc');
+
+        if (null !== $filters) {
+            foreach ($filters->getFilters() as $filter) {
+                $query->whereIn($filter->getName(), $filter->getValues());
+            }
+        }
+
+        return $query->tokenPaginate($perPage);
     }
 }
