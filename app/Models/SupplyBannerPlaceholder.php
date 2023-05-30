@@ -41,6 +41,7 @@ use Illuminate\Support\Carbon;
  * @property string size
  * @property string type
  * @property string mime
+ * @property bool is_default
  * @property string content
  * @property string checksum
  * @mixin Builder
@@ -76,7 +77,12 @@ class SupplyBannerPlaceholder extends Model
         'size',
         'type',
         'mime',
+        'is_default',
         'checksum',
+    ];
+
+    protected $casts = [
+        'is_default' => 'boolean',
     ];
 
     protected $dates = [
@@ -93,6 +99,7 @@ class SupplyBannerPlaceholder extends Model
         'size',
         'type',
         'mime',
+        'is_default',
         'content',
         'checksum',
     ];
@@ -108,6 +115,7 @@ class SupplyBannerPlaceholder extends Model
         string $size,
         string $type,
         string $mime,
+        bool $isDefault,
         string $content,
     ): self {
         $model = new self();
@@ -118,6 +126,7 @@ class SupplyBannerPlaceholder extends Model
                 'size' => $size,
                 'type' => $type,
                 'mime' => $mime,
+                'is_default' => $isDefault,
                 'content' => $content,
                 'checksum' => sha1($content),
             ]

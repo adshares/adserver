@@ -41,6 +41,7 @@ return new class extends Migration {
             $table->string('size', 16)->default('');
             $table->string('type', 32);
             $table->string('mime', self::MAXIMAL_MIME_TYPE_LENGTH);
+            $table->boolean('is_default')->default(false);
         });
         DB::statement('ALTER TABLE supply_banner_placeholders ADD uuid VARBINARY(16) NOT NULL AFTER id');
         DB::statement('ALTER TABLE supply_banner_placeholders ADD content LONGBLOB NOT NULL');

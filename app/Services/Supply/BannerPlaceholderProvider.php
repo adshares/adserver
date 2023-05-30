@@ -32,7 +32,7 @@ use Adshares\Supply\Application\Dto\FoundBanners;
 
 class BannerPlaceholderProvider
 {
-    public function addBannerPlaceholders(array $bannerPlaceholders): void
+    public function addBannerPlaceholders(array $bannerPlaceholders, bool $isDefault = false): void
     {
         foreach ($bannerPlaceholders as $bannerPlaceholder) {
             SupplyBannerPlaceholder::register(
@@ -41,6 +41,7 @@ class BannerPlaceholderProvider
                 $bannerPlaceholder['size'],
                 $bannerPlaceholder['type'],
                 $bannerPlaceholder['mime'],
+                $isDefault,
                 $bannerPlaceholder['content'],
             );
         }
