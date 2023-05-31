@@ -31,7 +31,9 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Dto\FoundBanners;
+use Exception;
 use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BannerPlaceholderProvider
@@ -45,15 +47,31 @@ class BannerPlaceholderProvider
         string $content,
         bool $isDefault = false,
     ): SupplyBannerPlaceholder {
-        return SupplyBannerPlaceholder::register(
-            $medium,
-            $vendor,
-            $size,
-            $type,
-            $mime,
-            $content,
-            $isDefault,
-        );
+        DB::beginTransaction();
+        try {
+            SupplyBannerPlaceholder::fetch(
+                $medium,
+                $vendor,
+                [$size],
+                [$type],
+                [$mime],
+            )?->delete();
+            $supplyBannerPlaceholder = SupplyBannerPlaceholder::register(
+                $medium,
+                $vendor,
+                $size,
+                $type,
+                $mime,
+                $content,
+                $isDefault,
+            );
+            DB::commit();
+        } catch (Exception $exception) {
+            Log::error(sprintf('Saving placeholder failed (%s)', $exception->getMessage()));
+            DB::rollBack();
+            throw new RuntimeException('Saving placeholder failed');
+        }
+        return $supplyBannerPlaceholder;
     }
 
     public function deleteBannerPlaceholder(SupplyBannerPlaceholder $placeholder): void

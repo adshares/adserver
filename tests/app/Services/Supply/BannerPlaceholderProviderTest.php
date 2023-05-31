@@ -34,7 +34,9 @@ use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Exception\RuntimeException;
 use DateTimeImmutable;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PDOException;
 
 class BannerPlaceholderProviderTest extends TestCase
 {
@@ -55,8 +57,15 @@ class BannerPlaceholderProviderTest extends TestCase
         'zone_id',
     ];
 
-    public function testAddBannerPlaceholders(): void
+    public function testAddBannerPlaceholder(): void
     {
+        /** @var SupplyBannerPlaceholder $defaultPlaceholder */
+        $defaultPlaceholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'is_default' => true,
+                'size' => '300x250',
+            ]
+        );
         $placeholderData = [
             'medium' => MediumName::Web->value,
             'vendor' => null,
@@ -73,6 +82,41 @@ class BannerPlaceholderProviderTest extends TestCase
         $placeholderProvider->addBannerPlaceholder(...$placeholderData);
 
         self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertTrue($defaultPlaceholder->refresh()->trashed());
+    }
+
+    public function testAddBannerPlaceholderFailOnDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        /** @var SupplyBannerPlaceholder $defaultPlaceholder */
+        $defaultPlaceholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'is_default' => true,
+                'size' => '300x250',
+            ]
+        );
+        $placeholderData = [
+            'medium' => MediumName::Web->value,
+            'vendor' => null,
+            'size' => '300x250',
+            'type' => 'image',
+            'mime' => 'image/png',
+            'content' => UploadedFile::fake()
+                ->image('test.png', 300, 250)
+                ->size(100)
+                ->getContent(),
+        ];
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        self::expectException(RuntimeException::class);
+        self::expectExceptionMessage('Saving placeholder failed');
+
+        $placeholderProvider->addBannerPlaceholder(...$placeholderData);
+
+        self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertFalse($defaultPlaceholder->refresh()->trashed());
     }
 
     public function testDeleteBannerPlaceholders(): void
