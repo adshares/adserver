@@ -190,7 +190,7 @@ Route::middleware([
     });
 
 Route::middleware([
-    Kernel::ADVERTISER_JWT_ACCESS,
+    Kernel::USER_JWT_ACCESS,
     Kernel::JSON_API_NO_TRANSFORM,
 ])
     ->prefix('v2')
