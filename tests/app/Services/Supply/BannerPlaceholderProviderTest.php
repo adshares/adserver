@@ -131,13 +131,20 @@ class BannerPlaceholderProviderTest extends TestCase
         );
         /** @var SupplyBannerPlaceholder $placeholder */
         $placeholder = SupplyBannerPlaceholder::factory()->create(['size' => '300x250']);
+        /** @var SupplyBannerPlaceholder $derivedPlaceholder */
+        $derivedPlaceholder = SupplyBannerPlaceholder::factory()->create([
+            'mime' => 'image/jpeg',
+            'parent_uuid' => hex2bin($placeholder->uuid),
+            'size' => '300x250',
+        ]);
         $placeholderProvider = new BannerPlaceholderProvider();
 
         $placeholderProvider->deleteBannerPlaceholder($placeholder);
 
         self::assertCount(1, SupplyBannerPlaceholder::all());
         self::assertFalse($defaultPlaceholder->refresh()->trashed());
-        self::assertTrue($placeholder->refresh()->trashed());
+        self::assertDatabaseMissing('supply_banner_placeholders', ['id' => $placeholder->id]);
+        self::assertDatabaseMissing('supply_banner_placeholders', ['id' => $derivedPlaceholder->id]);
     }
 
     public function testDeleteBannerPlaceholdersWhileDefaultIsMissing(): void
@@ -150,7 +157,7 @@ class BannerPlaceholderProviderTest extends TestCase
         $placeholderProvider->deleteBannerPlaceholder($placeholder);
 
         self::assertCount(0, SupplyBannerPlaceholder::all());
-        self::assertTrue($placeholder->refresh()->trashed());
+        self::assertDatabaseMissing('supply_banner_placeholders', ['id' => $placeholder->id]);
         Log::shouldHaveReceived('warning')
             ->once()
             ->withArgs(fn($message) => 1 === preg_match(

@@ -46,16 +46,24 @@ class BannerPlaceholderProvider
         string $mime,
         string $content,
         bool $isDefault = false,
+        ?string $parentUuid = null,
     ): SupplyBannerPlaceholder {
         DB::beginTransaction();
         try {
-            SupplyBannerPlaceholder::fetch(
+            $previousPlaceholder = SupplyBannerPlaceholder::fetchOne(
                 $medium,
                 $vendor,
                 [$size],
                 [$type],
                 [$mime],
-            )?->delete();
+            );
+            if (null !== $previousPlaceholder) {
+                if ($previousPlaceholder->is_default) {
+                    $previousPlaceholder->delete();
+                } else {
+                    $previousPlaceholder->forceDelete();
+                }
+            }
             $supplyBannerPlaceholder = SupplyBannerPlaceholder::register(
                 $medium,
                 $vendor,
@@ -64,6 +72,7 @@ class BannerPlaceholderProvider
                 $mime,
                 $content,
                 $isDefault,
+                $parentUuid,
             );
             DB::commit();
         } catch (Exception $exception) {
@@ -79,9 +88,9 @@ class BannerPlaceholderProvider
         if ($placeholder->is_default) {
             throw new RuntimeException('Cannot delete default placeholder');
         }
-        $placeholder->delete();
+        $placeholder->forceDeleteWithDerived();
 
-        $defaultPlaceholder = SupplyBannerPlaceholder::fetch(
+        $defaultPlaceholder = SupplyBannerPlaceholder::fetchOne(
             $placeholder->medium,
             $placeholder->vendor,
             [$placeholder->size],
@@ -167,7 +176,7 @@ class BannerPlaceholderProvider
             $options = $zoneInputByUuid[$zone->uuid]['options'] ?? [];
             $types = isset($options['banner_type']) ? (array)$options['banner_type'] : null;
             $mimes = isset($options['banner_mime']) ? (array)$options['banner_mime'] : null;
-            $placeholder = SupplyBannerPlaceholder::fetch(
+            $placeholder = SupplyBannerPlaceholder::fetchOne(
                 $sitesMap[$zone->site_id]['medium'],
                 $sitesMap[$zone->site_id]['vendor'],
                 $zone->scopes,
@@ -226,6 +235,7 @@ class BannerPlaceholderProvider
     public function fetchByFilters(?FilterCollection $filters = null, ?int $perPage = null): CursorPaginator
     {
         $query = SupplyBannerPlaceholder::query()
+            ->whereNull('parent_uuid')
             ->orderBy('id', 'desc');
 
         if (null !== $filters) {

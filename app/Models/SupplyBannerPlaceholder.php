@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int id
  * @property string uuid
+ * @property string|null parent_uuid
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
@@ -71,6 +72,7 @@ class SupplyBannerPlaceholder extends Model
     private const COLUMNS_WITHOUT_CONTENT = [
         'id',
         'uuid',
+        'parent_uuid',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -102,6 +104,7 @@ class SupplyBannerPlaceholder extends Model
         'type',
         'mime',
         'is_default',
+        'parent_uuid',
         'content',
         'checksum',
     ];
@@ -119,6 +122,7 @@ class SupplyBannerPlaceholder extends Model
         string $mime,
         string $content,
         bool $isDefault,
+        ?string $parentUuid,
     ): self {
         $model = new self();
         $model->fill(
@@ -129,6 +133,7 @@ class SupplyBannerPlaceholder extends Model
                 'type' => $type,
                 'mime' => $mime,
                 'is_default' => $isDefault,
+                'parent_uuid' => null === $parentUuid ? null : hex2bin($parentUuid),
                 'content' => $content,
                 'checksum' => sha1($content),
             ]
@@ -137,7 +142,7 @@ class SupplyBannerPlaceholder extends Model
         return $model;
     }
 
-    public static function fetch(
+    public static function fetchOne(
         string $medium,
         ?string $vendor,
         array $scopes,
@@ -170,6 +175,14 @@ class SupplyBannerPlaceholder extends Model
         return self::query()
             ->where('uuid', hex2bin($publicId))
             ->first($withContent ? '*' : self::COLUMNS_WITHOUT_CONTENT);
+    }
+
+    public function forceDeleteWithDerived(): void
+    {
+        SupplyBannerPlaceholder::query()
+            ->where('parent_uuid', hex2bin($this->uuid))
+            ->forceDelete();
+        $this->forceDelete();
     }
 
     public function getServeUrlAttribute(): string

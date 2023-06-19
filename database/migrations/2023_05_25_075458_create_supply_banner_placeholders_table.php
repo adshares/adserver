@@ -44,11 +44,13 @@ return new class extends Migration {
             $table->boolean('is_default')->default(false);
         });
         DB::statement('ALTER TABLE supply_banner_placeholders ADD uuid VARBINARY(16) NOT NULL AFTER id');
+        DB::statement('ALTER TABLE supply_banner_placeholders ADD parent_uuid VARBINARY(16) AFTER uuid');
         DB::statement('ALTER TABLE supply_banner_placeholders ADD content LONGBLOB NOT NULL');
         DB::statement('ALTER TABLE supply_banner_placeholders ADD checksum VARBINARY(20) NOT NULL');
 
         Schema::table('supply_banner_placeholders', function (Blueprint $table) {
             $table->unique('uuid');
+            $table->index('parent_uuid');
         });
     }
 

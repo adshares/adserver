@@ -25,12 +25,32 @@ use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Lib\ZipToHtml;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\ValueObject\Size;
+use FFMpeg\Exception\ExecutableNotFoundException;
+use FFMpeg\FFMpeg;
+use FFMpeg\Format\Video\X264;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Imagick;
+use Throwable;
+use ZipArchive;
 
 class PlaceholderUploader
 {
+    private const HTML_TEMPLATE = <<<HTML
+<html lang="en">
+  <head>
+    <title>placeholder</title>
+  </head>
+  <body>
+    <img src="data:image/png;base64,%s" alt="">
+  </body>
+</html>
+HTML;
+
     public function __construct(private readonly BannerPlaceholderProvider $provider)
     {
     }
@@ -51,14 +71,131 @@ class PlaceholderUploader
         $mimeType = $file->getMimeType();
         $bannerValidator->validateMimeType(Banner::TYPE_IMAGE, $mimeType);
 
-        $placeholder = $this->provider->addBannerPlaceholder(
+        DB::beginTransaction();
+        try {
+            $placeholder = $this->provider->addBannerPlaceholder(
+                $medium->getName(),
+                $medium->getVendor(),
+                $scope,
+                Banner::TYPE_IMAGE,
+                $mimeType,
+                $file->getContent(),
+            );
+            $placeholderUuid = $placeholder->uuid;
+            $this->convertToImages($placeholderUuid, $file, $medium, $scope);
+            $this->convertToHtml($placeholderUuid, $file, $medium, $scope);
+            $this->convertToVideos($placeholderUuid, $file, $medium, $scope);
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+            Log::error(sprintf('Cannot store placeholder: %s', $throwable->getMessage()));
+            throw new RuntimeException('Cannot store placeholder');
+        }
+
+        return $placeholderUuid;
+    }
+
+    private function getSupportedMimesForBannerType(Medium $medium, string $type): array
+    {
+        $mimes = [];
+        foreach ($medium->getFormats() as $format) {
+            if ($type === $format->getType()) {
+                $mimes = $format->getMimes();
+                break;
+            }
+        }
+        return $mimes;
+    }
+
+    private function convertToImages(string $placeholderUuid, UploadedFile $file, Medium $medium, string $scope): void
+    {
+        $mimeType = $file->getMimeType();
+        $imagick = new Imagick();
+        $imagick->readImageBlob($file->getContent());
+        $imagickFormats = $imagick->queryFormats();
+        foreach ($this->getSupportedMimesForBannerType($medium, Banner::TYPE_IMAGE) as $mime) {
+            if ($mimeType === $mime) {
+                continue;
+            }
+            $format = strtoupper(explode('/', $mime, 2)[1]);
+            if (!in_array($format, $imagickFormats, true)) {
+                Log::error(sprintf('Cannot convert to mime %s', $mime));
+                continue;
+            }
+            $imagick->setImageFormat($format);
+            $this->provider->addBannerPlaceholder(
+                $medium->getName(),
+                $medium->getVendor(),
+                $scope,
+                Banner::TYPE_IMAGE,
+                $mime,
+                $imagick->getImageBlob(),
+                parentUuid: $placeholderUuid,
+            );
+        }
+    }
+
+    private function convertToHtml(string $placeholderUuid, UploadedFile $file, Medium $medium, string $scope): void
+    {
+        $imagick = new Imagick();
+        $imagick->readImageBlob($file->getContent());
+        $imagick->setImageFormat('PNG');
+
+        $zip = new ZipArchive();
+        $outFile = $file->getRealPath() . '.zip';
+        if (true !== $zip->open($outFile, ZipArchive::CREATE)) {
+            Log::error('Cannot convert to html: cannot create zip file');
+            return;
+        }
+        $zip->addFromString(
+            'index.html',
+            sprintf(self::HTML_TEMPLATE, base64_encode($imagick->getImageBlob())),
+        );
+        $zip->close();
+
+        try {
+            $zipToHtml = new ZipToHtml($outFile);
+            $content = $zipToHtml->getHtml();
+        } catch (RuntimeException $exception) {
+            Log::error(sprintf('Cannot convert to html: %s', $exception->getMessage()));
+            return;
+        }
+
+        $this->provider->addBannerPlaceholder(
             $medium->getName(),
             $medium->getVendor(),
             $scope,
-            Banner::TYPE_IMAGE,
-            $mimeType,
-            $file->getContent(),
+            Banner::TYPE_HTML,
+            'text/html',
+            $content,
+            parentUuid: $placeholderUuid,
         );
-        return $placeholder->uuid;
+        unlink($outFile);
+    }
+
+    private function convertToVideos(string $placeholderUuid, UploadedFile $file, Medium $medium, string $scope): void
+    {
+        $videoMimes = $this->getSupportedMimesForBannerType($medium, Banner::TYPE_VIDEO);
+        if (in_array('video/mp4', $videoMimes, true)) {
+            $outFile = $file->getRealPath() . '.mp4';
+            try {
+                $ffmpeg = FFMpeg::create();
+                $loaded = $ffmpeg->open($file->getRealPath());
+                $loaded->save(new X264(), $outFile);
+
+                $this->provider->addBannerPlaceholder(
+                    $medium->getName(),
+                    $medium->getVendor(),
+                    $scope,
+                    Banner::TYPE_VIDEO,
+                    'video/mp4',
+                    file_get_contents($outFile),
+                    parentUuid: $placeholderUuid,
+                );
+                unlink($outFile);
+            } catch (ExecutableNotFoundException $exception) {
+                Log::critical(sprintf('Check if ffmpeg is installed in system (%s)', $exception->getMessage()));
+            }
+        }
     }
 }
