@@ -164,6 +164,7 @@ SQL;
             'fetchViewUnique' => ['fetchViewUnique'],
             'fetchViewAll' => ['fetchViewAll'],
             'fetchViewInvalidRate' => ['fetchViewInvalidRate'],
+            'fetchViewMissedRate' => ['fetchViewMissedRate'],
             'fetchRpc' => ['fetchRpc'],
             'fetchRpm' => ['fetchRpm'],
             'fetchSum' => ['fetchSum'],

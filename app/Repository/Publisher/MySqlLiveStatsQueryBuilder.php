@@ -37,6 +37,7 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_VIEW,
         StatsRepository::TYPE_VIEW_UNIQUE,
         StatsRepository::TYPE_VIEW_ALL,
+        StatsRepository::TYPE_VIEW_MISSED,
         StatsRepository::TYPE_CLICK,
         StatsRepository::TYPE_CLICK_ALL,
         StatsRepository::TYPE_REVENUE_BY_CASE,
@@ -60,7 +61,8 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 
     protected function getTableName(): string
     {
-        return 'network_cases e';
+        return (StatsRepository::TYPE_VIEW_MISSED === $this->getType())
+            ? 'network_missed_cases e' : 'network_cases e';
     }
 
     private function selectBaseColumns(string $type): void
@@ -71,6 +73,7 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
                 $this->column('SUM(IF(i.human_score >= 0.5, 1, 0)) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_ALL:
+            case StatsRepository::TYPE_VIEW_MISSED:
             case StatsRepository::TYPE_CLICK_ALL:
                 $this->column('COUNT(1) AS c');
                 break;

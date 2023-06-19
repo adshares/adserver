@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
+use Adshares\Adserver\Models\NetworkMissedCase;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
@@ -1414,11 +1415,44 @@ class SupplyController extends Controller
         return new RedirectResponse(config('app.landing_url'));
     }
 
-    public function logPlaceholderView(string $bannerId): BaseResponse
+    public function logPlaceholderView(Request $request, string $bannerId): BaseResponse
     {
         if (!Uuid::isValid($bannerId)) {
             throw new UnprocessableEntityHttpException('Invalid ID');
         }
-        return new BaseResponse();
+        $requiredParameters = [
+            'cid',
+            'iid',
+            'zid',
+        ];
+        foreach ($requiredParameters as $parameter) {
+            if (!Uuid::isValid($request->query->get($parameter, ''))) {
+                throw new UnprocessableEntityHttpException(sprintf('Parameter `%s` is required', $parameter));
+            }
+        }
+        $impressionId = str_replace('-', '', $request->query->get('iid'));
+        if (null === ($networkImpression = NetworkImpression::fetchByImpressionId($impressionId))) {
+            throw new NotFoundHttpException();
+        }
+
+        $response = new BaseResponse();
+        $response->send();
+
+        if (null !== SupplyBannerPlaceholder::fetchByPublicId($bannerId)) {
+            $caseId = str_replace('-', '', $request->query->get('cid'));
+            $zoneId = str_replace('-', '', $request->query->get('zid'));
+            $case = NetworkMissedCase::create(
+                $caseId,
+                Zone::fetchPublisherPublicIdByPublicId($zoneId),
+                Zone::fetchSitePublicIdByPublicId($zoneId),
+                $zoneId,
+                $bannerId,
+            );
+            if (null !== $case) {
+                $networkImpression->networkMissedCases()->save($case);
+            }
+        }
+
+        return $response;
     }
 }

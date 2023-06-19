@@ -37,6 +37,7 @@ final class ChartDataProvider
         StatsRepository::TYPE_VIEW_UNIQUE => 'fetchViewUnique',
         StatsRepository::TYPE_VIEW_ALL => 'fetchViewAll',
         StatsRepository::TYPE_VIEW_INVALID_RATE => 'fetchViewInvalidRate',
+        StatsRepository::TYPE_VIEW_MISSED_RATE => 'fetchViewMissedRate',
         StatsRepository::TYPE_RPC => 'fetchRpc',
         StatsRepository::TYPE_RPM => 'fetchRpm',
         StatsRepository::TYPE_REVENUE_BY_CASE => 'fetchSum',
