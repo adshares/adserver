@@ -96,9 +96,4 @@ class NetworkMissedCase extends Model
     {
         return (new self())->where('case_id', hex2bin($caseId))->first();
     }
-
-    public function networkImpression(): BelongsTo
-    {
-        return $this->belongsTo(NetworkImpression::class);
-    }
 }

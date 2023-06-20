@@ -23,7 +23,10 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\SupplyBannerPlaceholder;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Exception\RuntimeException;
+use Exception;
 use Illuminate\Http\UploadedFile;
 use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
@@ -126,6 +129,62 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
             'mime' => 'image/png',
             'isDefault' => false,
         ]);
+    }
+
+    public function testDeletePlaceholder(): void
+    {
+        $this->setUpAdmin();
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'medium' => 'metaverse',
+                'vendor' => 'decentraland',
+                'size' => '512x512',
+            ]
+        );
+
+        $response = $this->deleteJson(self::URI_PLACEHOLDER . '/' . $placeholder->uuid);
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        self::assertDatabaseMissing(
+            SupplyBannerPlaceholder::class,
+            [
+                'id' => $placeholder->id,
+            ]
+        );
+    }
+
+    public function testDeletePlaceholderFailWhileProviderException(): void
+    {
+        $this->setUpAdmin();
+        $providerMock = self::createMock(BannerPlaceholderProvider::class);
+        $providerMock->method('deleteBannerPlaceholder')
+            ->willThrowException(new RuntimeException('test-exception'));
+        $this->app->bind(BannerPlaceholderProvider::class, fn() => $providerMock);
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+
+        $response = $this->deleteJson(self::URI_PLACEHOLDER . '/' . $placeholder->uuid);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeletePlaceholderFailWhileInvalidId(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->deleteJson(self::URI_PLACEHOLDER . '/132');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDeletePlaceholderFailWhileNotExist(): void
+    {
+        $this->setUpAdmin();
+
+        $response = $this->deleteJson(self::URI_PLACEHOLDER . '/10000000000000000000000000000000');
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testUploadPlaceholder(): void

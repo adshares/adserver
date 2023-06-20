@@ -85,6 +85,29 @@ class BannerPlaceholderProviderTest extends TestCase
         self::assertTrue($defaultPlaceholder->refresh()->trashed());
     }
 
+    public function testAddBannerPlaceholderOverwrite(): void
+    {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create(['size' => '300x250']);
+        $placeholderData = [
+            'medium' => MediumName::Web->value,
+            'vendor' => null,
+            'size' => '300x250',
+            'type' => 'image',
+            'mime' => 'image/png',
+            'content' => UploadedFile::fake()
+                ->image('test.png', 300, 250)
+                ->size(100)
+                ->getContent(),
+        ];
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        $placeholderProvider->addBannerPlaceholder(...$placeholderData);
+
+        self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertDatabaseMissing(SupplyBannerPlaceholder::class, ['id' => $placeholder->id]);
+    }
+
     public function testAddBannerPlaceholderFailOnDbException(): void
     {
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
@@ -143,8 +166,8 @@ class BannerPlaceholderProviderTest extends TestCase
 
         self::assertCount(1, SupplyBannerPlaceholder::all());
         self::assertFalse($defaultPlaceholder->refresh()->trashed());
-        self::assertDatabaseMissing('supply_banner_placeholders', ['id' => $placeholder->id]);
-        self::assertDatabaseMissing('supply_banner_placeholders', ['id' => $derivedPlaceholder->id]);
+        self::assertDatabaseMissing(SupplyBannerPlaceholder::class, ['id' => $placeholder->id]);
+        self::assertDatabaseMissing(SupplyBannerPlaceholder::class, ['id' => $derivedPlaceholder->id]);
     }
 
     public function testDeleteBannerPlaceholdersWhileDefaultIsMissing(): void
@@ -157,7 +180,7 @@ class BannerPlaceholderProviderTest extends TestCase
         $placeholderProvider->deleteBannerPlaceholder($placeholder);
 
         self::assertCount(0, SupplyBannerPlaceholder::all());
-        self::assertDatabaseMissing('supply_banner_placeholders', ['id' => $placeholder->id]);
+        self::assertDatabaseMissing(SupplyBannerPlaceholder::class, ['id' => $placeholder->id]);
         Log::shouldHaveReceived('warning')
             ->once()
             ->withArgs(fn($message) => 1 === preg_match(

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -43,7 +43,6 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
         $hour = $this->option('hour');
         if (null === $hour && !$this->lock()) {
             $this->info('Command ' . $this->getName() . ' already running');
-
             return;
         }
 
@@ -52,7 +51,6 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
         if ($hour !== null) {
             if (false === ($timestamp = strtotime($hour))) {
                 $this->error(sprintf('[Aggregate statistics] Invalid hour option format "%s"', $hour));
-
                 return;
             }
 
