@@ -107,7 +107,7 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
                     (int)((microtime(true) - $startTime) * 1000)
                 );
 
-                $this->error(sprintf($missingCasesException->getMessage()));
+                $this->error($missingCasesException->getMessage());
             } catch (Throwable $throwable) {
                 DB::rollBack();
                 $this->error(
@@ -178,7 +178,7 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
 
     private const SQL_TEMPLATE_UPDATE_AGGREGATES_WITH_CASES = <<<SQL
 INSERT INTO network_case_logs_hourly (publisher_id, site_id, zone_id, domain, hour_timestamp,
-                                      views_all, views, views_unique, clicks_all, clicks, revenue_case)
+                                      views_all, views, views_missed, views_unique, clicks_all, clicks, revenue_case)
 SELECT
   publisher_id,
   site_id,
@@ -187,6 +187,7 @@ SELECT
   '#date_start'                                             AS hour_timestamp,
   COUNT(1)                                                  AS views_all,
   SUM(IF(amount IS NOT NULL, 1, 0))                         AS views,
+  SUM(IF(missed = 1, 1, 0))                                 AS views_missed,
   COUNT(DISTINCT (IF(amount IS NOT NULL, uid, NULL)))       AS views_unique,
   SUM(IF(is_view_clicked = 1, 1, 0))                        AS clicks_all,
   SUM(IF(is_view_clicked = 1 AND amount IS NOT NULL, 1, 0)) AS clicks,
@@ -199,11 +200,26 @@ FROM
      c.domain                                                                                   AS domain,
      IFNULL(i.user_id, i.tracking_id)                                                           AS uid,
      IF(clicks.network_case_id IS NULL, 0, 1)                                                   AS is_view_clicked,
-     (SELECT SUM(paid_amount_currency) FROM network_case_payments WHERE network_case_id = c.id) AS amount
+     (SELECT SUM(paid_amount_currency) FROM network_case_payments WHERE network_case_id = c.id) AS amount,
+     NULL                                                                                       AS missed
    FROM network_cases c
          LEFT JOIN network_case_clicks clicks ON c.id=clicks.network_case_id
          JOIN network_impressions i ON c.network_impression_id = i.id
-   WHERE c.created_at BETWEEN '#date_start' AND '#date_end') d
+   WHERE c.created_at BETWEEN '#date_start' AND '#date_end'
+
+   UNION ALL
+
+   SELECT
+     m.publisher_id                                                                             AS publisher_id,
+     m.site_id                                                                                  AS site_id,
+     m.zone_id                                                                                  AS zone_id,
+     'local'                                                                                    AS domain,
+     NULL                                                                                       AS uid,
+     '0'                                                                                        AS is_view_clicked,
+     NULL                                                                                       AS amount,
+     1                                                                                          AS missed
+   FROM network_missed_cases m
+   WHERE m.created_at BETWEEN '#date_start' AND '#date_end') d
 GROUP BY 1, 2, 3, 4
 ON DUPLICATE KEY UPDATE
   views_all=VALUES(views_all),
@@ -243,6 +259,7 @@ INSERT INTO network_case_logs_hourly_stats (publisher_id,
                                             views_unique,
                                             clicks_all,
                                             clicks,
+                                            views_missed,
                                             revenue_case,
                                             revenue_hour,
                                             hour_timestamp)
@@ -255,6 +272,7 @@ SELECT
   SUM(views_unique),
   SUM(clicks_all),
   SUM(clicks),
+  SUM(views_missed),
   SUM(revenue_case),
   SUM(revenue_hour),
   '#date_start'
@@ -265,7 +283,7 @@ SQL;
 
     private const SQL_TEMPLATE_INSERT_STATS_AGGREGATES_GROUPED_BY_SITE = <<<SQL
 INSERT INTO network_case_logs_hourly_stats (publisher_id, site_id, hour_timestamp, views_all, views, views_unique,
-                                            clicks_all, clicks, revenue_case, revenue_hour)
+                                            clicks_all, clicks, views_missed, revenue_case, revenue_hour)
 SELECT
   publisher_id,
   site_id,
@@ -274,7 +292,8 @@ SELECT
   SUM(views),
   SUM(views_unique),
   SUM(clicks_all),
-  SUM(clicks) ,
+  SUM(clicks),
+  SUM(view_missed),
   SUM(revenue_case),
   SUM(revenue_hour)
 FROM
@@ -286,6 +305,7 @@ FROM
      0                           AS views_unique,
      0                           AS clicks_all,
      0                           AS clicks,
+     0                           AS view_missed,
      0                           AS revenue_case,
      SUM(p.paid_amount_currency) AS revenue_hour
    FROM network_case_payments p
@@ -293,7 +313,7 @@ FROM
    WHERE pay_time BETWEEN '#date_start' AND '#date_end'
    GROUP BY 1, 2
 
-   UNION
+   UNION ALL
 
    SELECT
      publisher_id,
@@ -303,6 +323,7 @@ FROM
      COUNT(DISTINCT (IF(amount IS NOT NULL, uid, NULL)))       AS views_unique,
      SUM(IF(is_view_clicked = 1, 1, 0))                        AS clicks_all,
      SUM(IF(is_view_clicked = 1 AND amount IS NOT NULL, 1, 0)) AS clicks,
+     0                                                         AS view_missed,
      SUM(IF(amount IS NOT NULL, amount, 0))                    AS revenue_case,
      0                                                         AS revenue_hour
    FROM
@@ -316,7 +337,25 @@ FROM
              LEFT JOIN network_case_clicks clicks ON c.id = clicks.network_case_id
              JOIN network_impressions i ON c.network_impression_id = i.id
       WHERE c.created_at BETWEEN '#date_start' AND '#date_end') d
-   GROUP BY 1, 2) u
+   GROUP BY 1, 2
+   
+   UNION ALL
+
+   SELECT
+     publisher_id,
+     site_id,
+     COUNT(1) AS views_all,
+     0        AS views,
+     0        AS views_unique,
+     0        AS clicks_all,
+     0        AS clicks,
+     COUNT(1) AS view_missed,
+     0        AS revenue_case,
+     0        AS revenue_hour
+   FROM network_missed_cases m
+   WHERE created_at BETWEEN '#date_start' AND '#date_end'
+   GROUP BY 1, 2
+   ) u
 GROUP BY 1,2;
 SQL;
 }
