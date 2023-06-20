@@ -61,7 +61,7 @@ class NetworkMissedCase extends Model
 
     protected $visible = [];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'case_id' => 'BinHex',
         'publisher_id' => 'BinHex',
         'site_id' => 'BinHex',
@@ -77,7 +77,7 @@ class NetworkMissedCase extends Model
         string $zoneId,
         string $bannerId,
     ): ?self {
-        if (self::fetchByCaseId($caseId)) {
+        if (null !== self::fetchByCaseId($caseId)) {
             return null;
         }
 
@@ -94,7 +94,7 @@ class NetworkMissedCase extends Model
 
     public static function fetchByCaseId(string $caseId): ?NetworkMissedCase
     {
-        return self::where('case_id', hex2bin($caseId))->first();
+        return (new self())->where('case_id', hex2bin($caseId))->first();
     }
 
     public function networkImpression(): BelongsTo

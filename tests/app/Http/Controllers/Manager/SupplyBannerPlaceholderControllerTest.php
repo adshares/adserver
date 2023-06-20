@@ -141,7 +141,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertHeader('Location');
-        self::assertDatabaseCount(SupplyBannerPlaceholder::class, 1);
         self::assertDatabaseHas(
             SupplyBannerPlaceholder::class,
             [

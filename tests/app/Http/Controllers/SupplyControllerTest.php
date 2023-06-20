@@ -1171,22 +1171,44 @@ final class SupplyControllerTest extends TestCase
 
     public function testLogPlaceholderView(): void
     {
-        /** @var SupplyBannerPlaceholder $placeholder */
-        $placeholder = SupplyBannerPlaceholder::factory()->create();
+        $uri = $this->initUriForLogPlaceholderView();
 
-        $response = $this->get('/l/p/view/' . $placeholder->uuid, ['Origin' => 'https://example.com']);
+        $response = $this->get($uri, ['Origin' => 'https://example.com']);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
     }
 
-    public function testLogPlaceholderViewWhileInvalidPlaceholderId(): void
+    public function testLogPlaceholderViewFailWhileInvalidPlaceholderId(): void
     {
-        $response = $this->get('/l/p/view/1');
+        $uri = $this->initUriForLogPlaceholderView();
+        $uri = preg_replace('~/[a-z0-9]{32}\?~i', '/1?', $uri);
+
+        $response = $this->get($uri, ['Origin' => 'https://example.com']);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
-    
+
+    public function testLogPlaceholderViewFailWhileInvalidCaseId(): void
+    {
+        $uri = $this->initUriForLogPlaceholderView();
+        $uri = str_replace('cid=13245679801324567980132456798012', 'cid=xyz', $uri);
+
+        $response = $this->get($uri, ['Origin' => 'https://example.com']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testLogPlaceholderViewFailWhileImpressionNotExist(): void
+    {
+        $uri = $this->initUriForLogPlaceholderView();
+        $uri = preg_replace('~iid=[a-z0-9]{32}~i', 'iid=12121212121212121212121212121212', $uri);
+
+        $response = $this->get($uri, ['Origin' => 'https://example.com']);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     private static function findJsonData(array $merge = []): array
     {
         return array_merge(
@@ -1345,5 +1367,23 @@ final class SupplyControllerTest extends TestCase
             'r' => $redirectUrl,
         ];
         return [$query, $banner, $zone];
+    }
+
+    private function initUriForLogPlaceholderView(): string
+    {
+        /** @var NetworkImpression $impression */
+        $impression = NetworkImpression::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => User::factory()->create()]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+        $query = [
+            'cid' => '13245679801324567980132456798012',
+            'iid' => $impression->impression_id,
+            'zid' => $zone->uuid,
+        ];
+        return sprintf('/l/p/view/%s?%s', $placeholder->uuid, http_build_query($query));
     }
 }
