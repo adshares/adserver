@@ -354,8 +354,7 @@ FROM
      0        AS revenue_hour
    FROM network_missed_cases m
    WHERE created_at BETWEEN '#date_start' AND '#date_end'
-   GROUP BY 1, 2
-   ) u
+   GROUP BY 1, 2) u
 GROUP BY 1,2;
 SQL;
 }
