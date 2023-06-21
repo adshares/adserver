@@ -75,7 +75,6 @@ HTML;
         try {
             $placeholder = $this->provider->addBannerPlaceholder(
                 $medium->getName(),
-                $medium->getVendor(),
                 $scope,
                 Banner::TYPE_IMAGE,
                 $mimeType,
@@ -125,12 +124,11 @@ HTML;
             $imagick->setImageFormat($format);
             $this->provider->addBannerPlaceholder(
                 $medium->getName(),
-                $medium->getVendor(),
                 $scope,
                 Banner::TYPE_IMAGE,
                 $mime,
                 $imagick->getImageBlob(),
-                parentUuid: $placeholderUuid,
+                $placeholderUuid,
             );
         }
     }
@@ -163,12 +161,11 @@ HTML;
 
         $this->provider->addBannerPlaceholder(
             $medium->getName(),
-            $medium->getVendor(),
             $scope,
             Banner::TYPE_HTML,
             'text/html',
             $content,
-            parentUuid: $placeholderUuid,
+            $placeholderUuid,
         );
         unlink($outFile);
     }
@@ -185,12 +182,11 @@ HTML;
 
                 $this->provider->addBannerPlaceholder(
                     $medium->getName(),
-                    $medium->getVendor(),
                     $scope,
                     Banner::TYPE_VIDEO,
                     'video/mp4',
                     file_get_contents($outFile),
-                    parentUuid: $placeholderUuid,
+                    $placeholderUuid,
                 );
                 unlink($outFile);
             } catch (ExecutableNotFoundException $exception) {

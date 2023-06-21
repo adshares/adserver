@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -39,7 +40,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
  * @property string medium
- * @property string|null vendor
  * @property string size
  * @property string type
  * @property string mime
@@ -77,7 +77,6 @@ class SupplyBannerPlaceholder extends Model
         'updated_at',
         'deleted_at',
         'medium',
-        'vendor',
         'size',
         'type',
         'mime',
@@ -99,7 +98,6 @@ class SupplyBannerPlaceholder extends Model
 
     protected $fillable = [
         'medium',
-        'vendor',
         'size',
         'type',
         'mime',
@@ -116,7 +114,6 @@ class SupplyBannerPlaceholder extends Model
 
     public static function register(
         string $medium,
-        ?string $vendor,
         string $size,
         string $type,
         string $mime,
@@ -128,7 +125,6 @@ class SupplyBannerPlaceholder extends Model
         $model->fill(
             [
                 'medium' => $medium,
-                'vendor' => $vendor,
                 'size' => $size,
                 'type' => $type,
                 'mime' => $mime,
@@ -144,7 +140,6 @@ class SupplyBannerPlaceholder extends Model
 
     public static function fetchOne(
         string $medium,
-        ?string $vendor,
         array $scopes,
         ?array $types = null,
         ?array $mimes = null,
@@ -154,9 +149,6 @@ class SupplyBannerPlaceholder extends Model
             ->where('medium', $medium)
             ->whereIn('size', $scopes);
 
-        if (null !== $vendor) {
-            $query->where('vendor', $vendor);
-        }
         if (null !== $types) {
             $query->whereIn('type', $types);
         }
@@ -177,12 +169,11 @@ class SupplyBannerPlaceholder extends Model
             ->first($withContent ? '*' : self::COLUMNS_WITHOUT_CONTENT);
     }
 
-    public function forceDeleteWithDerived(): void
+    public function fetchDerived(): Collection
     {
-        SupplyBannerPlaceholder::query()
+        return SupplyBannerPlaceholder::query()
             ->where('parent_uuid', hex2bin($this->uuid))
-            ->forceDelete();
-        $this->forceDelete();
+            ->get();
     }
 
     public function getServeUrlAttribute(): string

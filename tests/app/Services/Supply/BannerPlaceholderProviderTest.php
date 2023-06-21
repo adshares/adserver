@@ -68,7 +68,6 @@ class BannerPlaceholderProviderTest extends TestCase
         );
         $placeholderData = [
             'medium' => MediumName::Web->value,
-            'vendor' => null,
             'size' => '300x250',
             'type' => 'image',
             'mime' => 'image/png',
@@ -85,13 +84,12 @@ class BannerPlaceholderProviderTest extends TestCase
         self::assertTrue($defaultPlaceholder->refresh()->trashed());
     }
 
-    public function testAddBannerPlaceholderOverwrite(): void
+    public function testAddBannerPlaceholderOverwriteCustom(): void
     {
         /** @var SupplyBannerPlaceholder $placeholder */
         $placeholder = SupplyBannerPlaceholder::factory()->create(['size' => '300x250']);
         $placeholderData = [
             'medium' => MediumName::Web->value,
-            'vendor' => null,
             'size' => '300x250',
             'type' => 'image',
             'mime' => 'image/png',
@@ -122,7 +120,6 @@ class BannerPlaceholderProviderTest extends TestCase
         );
         $placeholderData = [
             'medium' => MediumName::Web->value,
-            'vendor' => null,
             'size' => '300x250',
             'type' => 'image',
             'mime' => 'image/png',
@@ -137,6 +134,101 @@ class BannerPlaceholderProviderTest extends TestCase
         self::expectExceptionMessage('Saving placeholder failed');
 
         $placeholderProvider->addBannerPlaceholder(...$placeholderData);
+
+        self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertFalse($defaultPlaceholder->refresh()->trashed());
+    }
+
+    public function testAddDefaultBannerPlaceholderOverwriteWithoutCustom(): void
+    {
+        /** @var SupplyBannerPlaceholder $defaultPlaceholder */
+        $defaultPlaceholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'is_default' => true,
+                'size' => '300x250',
+            ]
+        );
+        $placeholderData = [
+            'medium' => MediumName::Web->value,
+            'size' => '300x250',
+            'type' => 'image',
+            'mime' => 'image/png',
+            'content' => UploadedFile::fake()
+                ->image('test.png', 300, 250)
+                ->size(100)
+                ->getContent(),
+        ];
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        $newDefaultPlaceholder = $placeholderProvider->addDefaultBannerPlaceholder(...$placeholderData);
+
+        self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertDatabaseMissing(SupplyBannerPlaceholder::class, ['id' => $defaultPlaceholder->id]);
+        self::assertDatabaseHas(SupplyBannerPlaceholder::class, ['id' => $newDefaultPlaceholder->id]);
+        self::assertFalse($newDefaultPlaceholder->trashed());
+    }
+
+    public function testAddDefaultBannerPlaceholderOverwriteWithCustom(): void
+    {
+        /** @var SupplyBannerPlaceholder $defaultPlaceholder */
+        $defaultPlaceholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'deleted_at' => new DateTimeImmutable(),
+                'is_default' => true,
+                'size' => '300x250',
+            ]
+        );
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create(['size' => '300x250']);
+        $placeholderData = [
+            'medium' => MediumName::Web->value,
+            'size' => '300x250',
+            'type' => 'image',
+            'mime' => 'image/png',
+            'content' => UploadedFile::fake()
+                ->image('test.png', 300, 250)
+                ->size(100)
+                ->getContent(),
+        ];
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        $newDefaultPlaceholder = $placeholderProvider->addDefaultBannerPlaceholder(...$placeholderData);
+
+        self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertDatabaseMissing(SupplyBannerPlaceholder::class, ['id' => $defaultPlaceholder->id]);
+        self::assertDatabaseHas(SupplyBannerPlaceholder::class, ['id' => $placeholder->id]);
+        self::assertDatabaseHas(SupplyBannerPlaceholder::class, ['id' => $newDefaultPlaceholder->id]);
+        self::assertTrue($newDefaultPlaceholder->trashed());
+    }
+
+    public function testAddDefaultBannerPlaceholderFailOnDbException(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new PDOException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        /** @var SupplyBannerPlaceholder $defaultPlaceholder */
+        $defaultPlaceholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'is_default' => true,
+                'size' => '300x250',
+            ]
+        );
+        $placeholderData = [
+            'medium' => MediumName::Web->value,
+            'size' => '300x250',
+            'type' => 'image',
+            'mime' => 'image/png',
+            'content' => UploadedFile::fake()
+                ->image('test.png', 300, 250)
+                ->size(100)
+                ->getContent(),
+        ];
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        self::expectException(RuntimeException::class);
+        self::expectExceptionMessage('Saving placeholder failed');
+
+        $placeholderProvider->addDefaultBannerPlaceholder(...$placeholderData);
 
         self::assertCount(1, SupplyBannerPlaceholder::all());
         self::assertFalse($defaultPlaceholder->refresh()->trashed());
@@ -185,7 +277,7 @@ class BannerPlaceholderProviderTest extends TestCase
             ->once()
             ->withArgs(fn($message) => 1 === preg_match(
                 '~^Default banner placeholder not found '
-                . '\(medium=web, vendor=null, size=[0-9x]+, type=image, mime=image/png\)$~',
+                . '\(medium=web, size=[0-9x]+, type=image, mime=image/png\)$~',
                 $message,
             ));
     }
@@ -277,7 +369,6 @@ class BannerPlaceholderProviderTest extends TestCase
         $placeholder = SupplyBannerPlaceholder::factory()->create(
             [
                 'medium' => MediumName::Web->value,
-                'vendor' => null,
                 'size' => '300x250',
                 'type' => 'image',
                 'mime' => 'image/png',

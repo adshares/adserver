@@ -40,19 +40,16 @@ class BannerPlaceholderProvider
 {
     public function addBannerPlaceholder(
         string $medium,
-        ?string $vendor,
         string $size,
         string $type,
         string $mime,
         string $content,
-        bool $isDefault = false,
         ?string $parentUuid = null,
     ): SupplyBannerPlaceholder {
         DB::beginTransaction();
         try {
             $previousPlaceholder = SupplyBannerPlaceholder::fetchOne(
                 $medium,
-                $vendor,
                 [$size],
                 [$type],
                 [$mime],
@@ -66,14 +63,56 @@ class BannerPlaceholderProvider
             }
             $supplyBannerPlaceholder = SupplyBannerPlaceholder::register(
                 $medium,
-                $vendor,
                 $size,
                 $type,
                 $mime,
                 $content,
-                $isDefault,
+                false,
                 $parentUuid,
             );
+            DB::commit();
+        } catch (Exception $exception) {
+            Log::error(sprintf('Saving placeholder failed (%s)', $exception->getMessage()));
+            DB::rollBack();
+            throw new RuntimeException('Saving placeholder failed');
+        }
+        return $supplyBannerPlaceholder;
+    }
+
+    public function addDefaultBannerPlaceholder(
+        string $medium,
+        string $size,
+        string $type,
+        string $mime,
+        string $content,
+        ?string $parentUuid = null,
+    ): SupplyBannerPlaceholder {
+        DB::beginTransaction();
+        try {
+            $previousPlaceholder = SupplyBannerPlaceholder::fetchOne(
+                $medium,
+                [$size],
+                [$type],
+                [$mime],
+                true,
+            );
+            $deleted = false;
+            if (null !== $previousPlaceholder) {
+                $deleted = $previousPlaceholder->trashed();
+                $previousPlaceholder->forceDelete();
+            }
+            $supplyBannerPlaceholder = SupplyBannerPlaceholder::register(
+                $medium,
+                $size,
+                $type,
+                $mime,
+                $content,
+                true,
+                $parentUuid,
+            );
+            if ($deleted) {
+                $supplyBannerPlaceholder->delete();
+            }
             DB::commit();
         } catch (Exception $exception) {
             Log::error(sprintf('Saving placeholder failed (%s)', $exception->getMessage()));
@@ -88,29 +127,30 @@ class BannerPlaceholderProvider
         if ($placeholder->is_default) {
             throw new RuntimeException('Cannot delete default placeholder');
         }
-        $placeholder->forceDeleteWithDerived();
+        $placeholders = $placeholder->fetchDerived()->add($placeholder);
 
-        $defaultPlaceholder = SupplyBannerPlaceholder::fetchOne(
-            $placeholder->medium,
-            $placeholder->vendor,
-            [$placeholder->size],
-            [$placeholder->type],
-            [$placeholder->mime],
-            true,
-        );
-        if (null === $defaultPlaceholder) {
-            Log::warning(
-                sprintf(
-                    'Default banner placeholder not found (medium=%s, vendor=%s, size=%s, type=%s, mime=%s)',
-                    $placeholder->medium,
-                    $placeholder->vendor ?? 'null',
-                    $placeholder->size,
-                    $placeholder->type,
-                    $placeholder->mime,
-                )
+        foreach ($placeholders as $placeholder) {
+            $defaultPlaceholder = SupplyBannerPlaceholder::fetchOne(
+                $placeholder->medium,
+                [$placeholder->size],
+                [$placeholder->type],
+                [$placeholder->mime],
+                true,
             );
-        } else {
-            $defaultPlaceholder->restore();
+            if (null === $defaultPlaceholder) {
+                Log::warning(
+                    sprintf(
+                        'Default banner placeholder not found (medium=%s, size=%s, type=%s, mime=%s)',
+                        $placeholder->medium,
+                        $placeholder->size,
+                        $placeholder->type,
+                        $placeholder->mime,
+                    )
+                );
+            } else {
+                $defaultPlaceholder->restore();
+            }
+            $placeholder->forceDelete();
         }
     }
 
@@ -149,7 +189,6 @@ class BannerPlaceholderProvider
                     $sitesMap[$siteId] = [
                         'active' => true,
                         'medium' => $site->medium,
-                        'vendor' => $site->vendor,
                     ];
                 } else {
                     $sitesMap[$siteId] = [
@@ -178,7 +217,6 @@ class BannerPlaceholderProvider
             $mimes = isset($options['banner_mime']) ? (array)$options['banner_mime'] : null;
             $placeholder = SupplyBannerPlaceholder::fetchOne(
                 $sitesMap[$zone->site_id]['medium'],
-                $sitesMap[$zone->site_id]['vendor'],
                 $zone->scopes,
                 $types,
                 $mimes,

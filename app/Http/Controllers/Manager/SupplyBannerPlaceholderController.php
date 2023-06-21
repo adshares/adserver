@@ -28,7 +28,11 @@ use Adshares\Adserver\Http\Resources\SupplyBannerPlaceholderResource;
 use Adshares\Adserver\Models\SupplyBannerPlaceholder;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Uploader\PlaceholderUploader;
+use Adshares\Common\Application\Dto\TaxonomyV2\Format;
+use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
+use Adshares\Common\Application\Dto\TaxonomyV2\Targeting;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
@@ -54,7 +58,6 @@ class SupplyBannerPlaceholderController extends Controller
         $limit = $request->query('limit', 10);
         $filters = FilterCollection::fromRequest($request, [
             'medium' => FilterType::String,
-            'vendor' => FilterType::String,
             'type' => FilterType::String,
             'mime' => FilterType::String,
         ]);
@@ -89,12 +92,8 @@ class SupplyBannerPlaceholderController extends Controller
             throw new UnprocessableEntityHttpException('Field `type` must be `image`');
         }
         $mediumName = $request->get('medium');
-        $vendor = $request->get('vendor');
         if (!is_string($mediumName)) {
             throw new UnprocessableEntityHttpException('Field `medium` must be a string');
-        }
-        if (null !== $vendor && !is_string($vendor)) {
-            throw new UnprocessableEntityHttpException('Field `vendor` must be a string or null');
         }
 
         $files = $request->allFiles();
@@ -103,7 +102,7 @@ class SupplyBannerPlaceholderController extends Controller
         }
 
         try {
-            $medium = $this->configurationRepository->fetchMedium($mediumName, $vendor);
+            $medium = $this->mergeMediaByName($mediumName);
             foreach ($files as $file) {
                 $uuid = $this->placeholderUploader->upload($file, $medium);
             }
@@ -116,5 +115,52 @@ class SupplyBannerPlaceholderController extends Controller
 
         return self::json($data, Response::HTTP_CREATED)
             ->header('Location', $lastPlaceholder->serve_url);
+    }
+
+    private function mergeMediaByName(string $mediumName): Medium
+    {
+        $formatsData = [];
+        foreach ($this->configurationRepository->fetchTaxonomy()->getMedia() as $medium) {
+            if ($medium->getName() === $mediumName) {
+                foreach ($medium->getFormats() as $format) {
+                    if (isset($formatsData[$format->getType()])) {
+                        $formatsData[$format->getType()]['mimes'] = array_unique(
+                            array_merge(
+                                $formatsData[$format->getType()]['mimes'],
+                                $format->getMimes(),
+                            )
+                        );
+                        $formatsData[$format->getType()]['scopes'] = array_unique(
+                            array_merge(
+                                $formatsData[$format->getType()]['scopes'],
+                                $format->getScopes(),
+                            )
+                        );
+                    } else {
+                        $formatsData[$format->getType()] = [
+                            'type' => $format->getType(),
+                            'mimes' => $format->getMimes(),
+                            'scopes' => $format->getScopes(),
+                        ];
+                    }
+                }
+            }
+        }
+        $formats = new ArrayableItemCollection();
+        foreach ($formatsData as $formatData) {
+            $formats->add(Format::fromArray($formatData));
+        }
+        return new Medium(
+            $mediumName,
+            $mediumName,
+            null,
+            null,
+            $formats,
+            new Targeting(
+                new ArrayableItemCollection(),
+                new ArrayableItemCollection(),
+                new ArrayableItemCollection(),
+            )
+        );
     }
 }

@@ -36,7 +36,6 @@ class SupplyBannerPlaceholderResource extends JsonResource
             'createdAt' => $this->created_at->format(DateTimeInterface::ATOM),
             'updatedAt' => $this->updated_at->format(DateTimeInterface::ATOM),
             'medium' => $this->medium,
-            'vendor' => $this->vendor,
             'scope' => $this->size,
             'type' => $this->type,
             'mime' => $this->mime,

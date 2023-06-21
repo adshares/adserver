@@ -39,7 +39,6 @@ return new class extends Migration {
                 $table->timestamps();
                 $table->softDeletes();
                 $table->string('medium', 16)->default('web');
-                $table->string('vendor', 32)->nullable();
                 $table->string('size', 16)->default('');
                 $table->string('type', 32);
                 $table->string('mime', self::MAXIMAL_MIME_TYPE_LENGTH);
@@ -55,6 +54,7 @@ return new class extends Migration {
             function (Blueprint $table) {
                 $table->unique('uuid');
                 $table->index('parent_uuid');
+                $table->index(['medium', 'size']);
             },
         );
 

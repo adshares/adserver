@@ -41,7 +41,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
                 'createdAt',
                 'updatedAt',
                 'medium',
-                'vendor',
                 'scope',
                 'type',
                 'mime',
@@ -59,7 +58,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
             [
                 'medium' => 'metaverse',
                 'size' => '512x512',
-                'vendor' => 'decentraland',
             ]
         );
         SupplyBannerPlaceholder::factory()->create(
@@ -76,7 +74,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
         $response->assertJsonCount(2, 'data');
         $response->assertJsonFragment([
             'medium' => 'metaverse',
-            'vendor' => 'decentraland',
             'scope' => '512x512',
             'type' => 'image',
             'mime' => 'image/png',
@@ -84,7 +81,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
         ]);
         $response->assertJsonFragment([
             'medium' => 'web',
-            'vendor' => null,
             'scope' => '728x90',
             'type' => 'image',
             'mime' => 'image/png',
@@ -99,7 +95,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
             [
                 'medium' => 'metaverse',
                 'size' => '512x512',
-                'vendor' => 'decentraland',
             ]
         );
         SupplyBannerPlaceholder::factory()->create(
@@ -123,7 +118,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
         $response->assertJsonCount(1, 'data');
         $response->assertJsonFragment([
             'medium' => 'metaverse',
-            'vendor' => 'decentraland',
             'scope' => '512x512',
             'type' => 'image',
             'mime' => 'image/png',
@@ -138,7 +132,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
         $placeholder = SupplyBannerPlaceholder::factory()->create(
             [
                 'medium' => 'metaverse',
-                'vendor' => 'decentraland',
                 'size' => '512x512',
             ]
         );
@@ -246,21 +239,6 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
 
         $response = $this->post(self::URI_PLACEHOLDER, [
             'medium' => 'invalid',
-            'type' => 'image',
-            'file-0' => $file,
-        ]);
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testUploadPlaceholderFailWhileInvalidVendor(): void
-    {
-        $this->setUpAdmin();
-        $file = UploadedFile::fake()->image('test.png', 300, 250);
-
-        $response = $this->post(self::URI_PLACEHOLDER, [
-            'medium' => 'metaverse',
-            'vendor' => 1,
             'type' => 'image',
             'file-0' => $file,
         ]);

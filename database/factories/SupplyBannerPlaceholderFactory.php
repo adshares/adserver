@@ -42,7 +42,6 @@ class SupplyBannerPlaceholderFactory extends Factory
         return [
             'uuid' => $this->faker->uuid,
             'medium' => MediumName::Web->value,
-            'vendor' => null,
             'size' => $size,
             'type' => 'image',
             'mime' => 'image/png',
