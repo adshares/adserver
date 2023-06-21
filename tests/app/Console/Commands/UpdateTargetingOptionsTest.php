@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,14 +26,15 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
-use Adshares\Common\Application\Service\AdUser;
-use Adshares\Mock\Client\DummyAdUserClient;
+use Adshares\Demand\Application\Service\TargetingOptionsImporter;
 
 class UpdateTargetingOptionsTest extends ConsoleTestCase
 {
     public function testTargetingOptionsUpdate(): void
     {
-        $this->app->bind(AdUser::class, DummyAdUserClient::class);
+        $targetingOptionsImporter = self::createMock(TargetingOptionsImporter::class);
+        $targetingOptionsImporter->expects(self::once())->method('import');
+        $this->app->bind(TargetingOptionsImporter::class, fn() => $targetingOptionsImporter);
 
         $this->artisan('ops:targeting-options:update')
             ->assertExitCode(0);
