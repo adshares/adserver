@@ -56,19 +56,6 @@ class SupplyBannerPlaceholder extends Model
     use HasFactory;
     use SoftDeletes;
 
-    private const TYPE_HTML = 'html';
-    private const TYPE_IMAGE = 'image';
-    private const TYPE_DIRECT_LINK = 'direct';
-    private const TYPE_VIDEO = 'video';
-    private const TYPE_MODEL = 'model';
-
-    public const ALLOWED_TYPES = [
-        self::TYPE_HTML,
-        self::TYPE_IMAGE,
-        self::TYPE_DIRECT_LINK,
-        self::TYPE_VIDEO,
-        self::TYPE_MODEL,
-    ];
     private const COLUMNS_WITHOUT_CONTENT = [
         'id',
         'uuid',

@@ -55,8 +55,6 @@ class SupplyBannerPlaceholderController extends Controller
         $limit = $request->query('limit', 10);
         $filters = FilterCollection::fromRequest($request, [
             'medium' => FilterType::String,
-            'type' => FilterType::String,
-            'mime' => FilterType::String,
         ]);
 
         return SupplyBannerPlaceholderResource::collection(

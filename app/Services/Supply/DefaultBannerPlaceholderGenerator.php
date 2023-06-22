@@ -149,7 +149,7 @@ class DefaultBannerPlaceholderGenerator
     private function createFile(string $size): UploadedFile
     {
         $fileName = 'seed.png';
-        $path = Storage::disk( 'local')->path($fileName);
+        $path = Storage::disk('local')->path($fileName);
 
         $color = config('app.supply_placeholder_color');
         $file = config('app.supply_placeholder_file');

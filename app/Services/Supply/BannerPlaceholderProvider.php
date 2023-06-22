@@ -183,9 +183,7 @@ class BannerPlaceholderProvider
             if (!array_key_exists($siteId, $sitesMap)) {
                 $site = $zone->site;
 
-                $isActive = null !== $site && $site->status === Site::STATUS_ACTIVE && null !== $site->user;
-
-                if ($isActive) {
+                if ($this->isSiteActive($site)) {
                     $sitesMap[$siteId] = [
                         'active' => true,
                         'medium' => $site->medium,
@@ -283,5 +281,10 @@ class BannerPlaceholderProvider
         }
 
         return $query->tokenPaginate($perPage);
+    }
+
+    private function isSiteActive(?Site $site): bool
+    {
+        return null !== $site && Site::STATUS_ACTIVE === $site->status && null !== $site->user;
     }
 }
