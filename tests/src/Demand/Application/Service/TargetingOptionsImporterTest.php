@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Tests\Demand\Application\Service;
 
+use Adshares\Adserver\Services\Supply\DefaultBannerPlaceholderGenerator;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Demand\Application\Service\TargetingOptionsImporter;
@@ -34,8 +35,14 @@ final class TargetingOptionsImporterTest extends TestCase
     {
         $configurationRepository = self::createMock(ConfigurationRepository::class);
         $configurationRepository->expects(self::once())->method('storeTaxonomyV2');
+        $generator = self::createMock(DefaultBannerPlaceholderGenerator::class);
+        $generator->expects(self::once())->method('generate')->with(false);
 
-        $targetingOptionsImporter = new TargetingOptionsImporter(new DummyAdUserClient(), $configurationRepository);
+        $targetingOptionsImporter = new TargetingOptionsImporter(
+            new DummyAdUserClient(),
+            $configurationRepository,
+            $generator,
+        );
 
         $targetingOptionsImporter->import();
     }

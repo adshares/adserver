@@ -24,6 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Uploader;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\SupplyBannerPlaceholder;
+use Adshares\Adserver\Services\Supply\BannerPlaceholderConverter;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Uploader\PlaceholderUploader;
@@ -38,9 +40,29 @@ final class PlaceholderUploaderTest extends TestCase
 {
     public function testUpload(): void
     {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+        $converter = self::createMock(BannerPlaceholderConverter::class);
+        $converter->expects(self::once())->method('convert');
+        $provider = self::createMock(BannerPlaceholderProvider::class);
+        $provider->expects(self::once())
+            ->method('addBannerPlaceholder')
+            ->willReturn($placeholder);
+        $uploader = new PlaceholderUploader($converter, $provider);
+        $file = UploadedFile::fake()->image('test.png', 300, 250)->size(100);
+        $medium = (new DummyConfigurationRepository())->fetchMedium();
+
+        $uuid = $uploader->upload($file, $medium);
+
+        self::assertEquals($placeholder->uuid, $uuid);
+    }
+
+    public function testUploadFailWhileTooBigSize(): void
+    {
+        $converter = self::createMock(BannerPlaceholderConverter::class);
         Config::updateAdminSettings([Config::UPLOAD_LIMIT_IMAGE => 0]);
         DatabaseConfigReader::overwriteAdministrationConfig();
-        $uploader = new PlaceholderUploader(new BannerPlaceholderProvider());
+        $uploader = new PlaceholderUploader($converter, new BannerPlaceholderProvider());
         $file = UploadedFile::fake()->image('test.png', 300, 250)->size(100);
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
@@ -49,13 +71,14 @@ final class PlaceholderUploaderTest extends TestCase
         $uploader->upload($file, $medium);
     }
 
-    public function testUploadFail(): void
+    public function testUploadFailWhileProviderCannotStorePlaceholder(): void
     {
+        $converter = self::createMock(BannerPlaceholderConverter::class);
         $provider = self::createMock(BannerPlaceholderProvider::class);
         $provider->expects(self::once())
             ->method('addBannerPlaceholder')
             ->willThrowException(new PDOException('test-exception'));
-        $uploader = new PlaceholderUploader($provider);
+        $uploader = new PlaceholderUploader($converter, $provider);
         $file = UploadedFile::fake()->image('test.png', 300, 250)->size(100);
         $medium = (new DummyConfigurationRepository())->fetchMedium();
 
