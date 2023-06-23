@@ -58,57 +58,7 @@ class DefaultBannerPlaceholderGenerator
             DB::beginTransaction();
             try {
                 foreach ($formats as $format) {
-                    switch ($format->getType()) {
-                        case Banner::TYPE_IMAGE:
-                            foreach (array_keys($format->getScopes()) as $scope) {
-                                $file = $this->createFile($scope);
-                                $groupUuid = UuidStringGenerator::v4();
-                                $this->provider->addDefaultBannerPlaceholder(
-                                    $mediumName,
-                                    $scope,
-                                    Banner::TYPE_IMAGE,
-                                    'image/png',
-                                    $file->getContent(),
-                                    $groupUuid,
-                                    $forceOverwrite,
-                                );
-                                $this->converter->convertToImages(
-                                    $file,
-                                    $medium,
-                                    $scope,
-                                    $groupUuid,
-                                    true,
-                                    $forceOverwrite,
-                                );
-                            }
-                            break;
-                        case Banner::TYPE_HTML:
-                            foreach (array_keys($format->getScopes()) as $scope) {
-                                $this->converter->convertToHtml(
-                                    $this->createFile($scope),
-                                    $medium,
-                                    $scope,
-                                    UuidStringGenerator::v4(),
-                                    true,
-                                    $forceOverwrite,
-                                );
-                            }
-                            break;
-                        case Banner::TYPE_VIDEO:
-                            foreach (array_keys($format->getScopes()) as $scope) {
-                                $this->converter->convertToVideos(
-                                    $this->createFile($scope),
-                                    $medium,
-                                    $scope,
-                                    UuidStringGenerator::v4(),
-                                    true,
-                                    $forceOverwrite,
-                                );
-                            }
-                            break;
-                        default:
-                            break;
-                    }
+                    $this->generateForFormat($format, $medium, $forceOverwrite);
                 }
                 DB::commit();
             } catch (Throwable $throwable) {
@@ -193,5 +143,60 @@ class DefaultBannerPlaceholderGenerator
         $image->writeImage($path);
 
         return UploadedFile::createFromBase(new SymfonyUploadedFile($path, $fileName, 'image/png'));
+    }
+
+    private function generateForFormat(Format $format, Medium $medium, bool $forceOverwrite): void
+    {
+        switch ($format->getType()) {
+            case Banner::TYPE_IMAGE:
+                foreach (array_keys($format->getScopes()) as $scope) {
+                    $file = $this->createFile($scope);
+                    $groupUuid = UuidStringGenerator::v4();
+                    $this->provider->addDefaultBannerPlaceholder(
+                        $medium->getName(),
+                        $scope,
+                        Banner::TYPE_IMAGE,
+                        'image/png',
+                        $file->getContent(),
+                        $groupUuid,
+                        $forceOverwrite,
+                    );
+                    $this->converter->convertToImages(
+                        $file,
+                        $medium,
+                        $scope,
+                        $groupUuid,
+                        true,
+                        $forceOverwrite,
+                    );
+                }
+                break;
+            case Banner::TYPE_HTML:
+                foreach (array_keys($format->getScopes()) as $scope) {
+                    $this->converter->convertToHtml(
+                        $this->createFile($scope),
+                        $medium,
+                        $scope,
+                        UuidStringGenerator::v4(),
+                        true,
+                        $forceOverwrite,
+                    );
+                }
+                break;
+            case Banner::TYPE_VIDEO:
+                foreach (array_keys($format->getScopes()) as $scope) {
+                    $this->converter->convertToVideos(
+                        $this->createFile($scope),
+                        $medium,
+                        $scope,
+                        UuidStringGenerator::v4(),
+                        true,
+                        $forceOverwrite,
+                    );
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

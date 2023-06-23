@@ -45,6 +45,8 @@ class BannerPlaceholderConverter
   </body>
 </html>
 HTML;
+    private const MIME_TYPE_TEXT_HTML = 'text/html';
+    private const MIME_TYPE_VIDEO_MP4 = 'video/mp4';
 
     public function __construct(private readonly BannerPlaceholderProvider $provider)
     {
@@ -129,7 +131,7 @@ HTML;
                 $medium->getName(),
                 $scope,
                 Banner::TYPE_HTML,
-                'text/html',
+                self::MIME_TYPE_TEXT_HTML,
                 $content,
                 $groupUuid,
                 $forceOverwrite,
@@ -139,7 +141,7 @@ HTML;
                 $medium->getName(),
                 $scope,
                 Banner::TYPE_HTML,
-                'text/html',
+                self::MIME_TYPE_TEXT_HTML,
                 $content,
                 $groupUuid,
             );
@@ -156,7 +158,7 @@ HTML;
         bool $forceOverwrite = false,
     ): void {
         $videoMimes = $this->getSupportedMimesForBannerType($medium, Banner::TYPE_VIDEO);
-        if (in_array('video/mp4', $videoMimes, true)) {
+        if (in_array(self::MIME_TYPE_VIDEO_MP4, $videoMimes, true)) {
             $outFile = $file->getRealPath() . '.mp4';
             try {
                 $ffmpeg = FFMpeg::create();
@@ -168,7 +170,7 @@ HTML;
                         $medium->getName(),
                         $scope,
                         Banner::TYPE_VIDEO,
-                        'video/mp4',
+                        self::MIME_TYPE_VIDEO_MP4,
                         file_get_contents($outFile),
                         $groupUuid,
                         $forceOverwrite,
@@ -178,7 +180,7 @@ HTML;
                         $medium->getName(),
                         $scope,
                         Banner::TYPE_VIDEO,
-                        'video/mp4',
+                        self::MIME_TYPE_VIDEO_MP4,
                         file_get_contents($outFile),
                         $groupUuid,
                     );
