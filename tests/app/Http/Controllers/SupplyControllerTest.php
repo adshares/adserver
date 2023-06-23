@@ -1193,14 +1193,6 @@ final class SupplyControllerTest extends TestCase
         $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
     }
 
-    public function testLogPlaceholderClickWhileInvalidPlaceholderId(): void
-    {
-        $response = $this->get('/l/p/click/1');
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        
-    }
-
     public function testLogPlaceholderView(): void
     {
         $uri = $this->initUriForLogPlaceholderView();

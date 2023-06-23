@@ -1407,11 +1407,8 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logPlaceholderClick(string $bannerId): BaseResponse
+    public function logPlaceholderClick(): BaseResponse
     {
-        if (!Uuid::isValid($bannerId)) {
-            throw new UnprocessableEntityHttpException('Invalid ID');
-        }
         return new RedirectResponse(config('app.landing_url'));
     }
 
