@@ -75,6 +75,7 @@ class BannerPlaceholderProviderTest extends TestCase
                 ->image('test.png', 300, 250)
                 ->size(100)
                 ->getContent(),
+            'groupUuid' => $this->faker->uuid,
         ];
         $placeholderProvider = new BannerPlaceholderProvider();
 
@@ -97,6 +98,7 @@ class BannerPlaceholderProviderTest extends TestCase
                 ->image('test.png', 300, 250)
                 ->size(100)
                 ->getContent(),
+            'groupUuid' => $this->faker->uuid,
         ];
         $placeholderProvider = new BannerPlaceholderProvider();
 
@@ -127,6 +129,7 @@ class BannerPlaceholderProviderTest extends TestCase
                 ->image('test.png', 300, 250)
                 ->size(100)
                 ->getContent(),
+            'groupUuid' => $this->faker->uuid,
         ];
         $placeholderProvider = new BannerPlaceholderProvider();
 
@@ -157,6 +160,7 @@ class BannerPlaceholderProviderTest extends TestCase
                 ->image('test.png', 300, 250)
                 ->size(100)
                 ->getContent(),
+            'groupUuid' => $this->faker->uuid,
         ];
         $placeholderProvider = new BannerPlaceholderProvider();
 
@@ -189,6 +193,7 @@ class BannerPlaceholderProviderTest extends TestCase
                 ->image('test.png', 300, 250)
                 ->size(100)
                 ->getContent(),
+            'groupUuid' => $this->faker->uuid,
         ];
         $placeholderProvider = new BannerPlaceholderProvider();
 
@@ -222,6 +227,7 @@ class BannerPlaceholderProviderTest extends TestCase
                 ->image('test.png', 300, 250)
                 ->size(100)
                 ->getContent(),
+            'groupUuid' => $this->faker->uuid,
         ];
         $placeholderProvider = new BannerPlaceholderProvider();
 
@@ -248,8 +254,8 @@ class BannerPlaceholderProviderTest extends TestCase
         $placeholder = SupplyBannerPlaceholder::factory()->create(['size' => '300x250']);
         /** @var SupplyBannerPlaceholder $derivedPlaceholder */
         $derivedPlaceholder = SupplyBannerPlaceholder::factory()->create([
+            'group_uuid' => $placeholder->group_uuid,
             'mime' => 'image/jpeg',
-            'parent_uuid' => hex2bin($placeholder->uuid),
             'size' => '300x250',
         ]);
         $placeholderProvider = new BannerPlaceholderProvider();

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Uploader;
 use Adshares\Adserver\Http\Requests\Campaign\BannerValidator;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderConverter;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
+use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\Model\Banner;
@@ -59,15 +60,16 @@ class PlaceholderUploader
 
         DB::beginTransaction();
         try {
+            $groupUuid = UuidStringGenerator::v4();
             $placeholder = $this->provider->addBannerPlaceholder(
                 $medium->getName(),
                 $scope,
                 Banner::TYPE_IMAGE,
                 $mimeType,
                 $file->getContent(),
+                $groupUuid,
             );
-            $placeholderUuid = $placeholder->uuid;
-            $this->converter->convert($file, $medium, $scope, $placeholderUuid);
+            $this->converter->convert($file, $medium, $scope, $groupUuid);
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
@@ -75,6 +77,6 @@ class PlaceholderUploader
             throw new RuntimeException('Cannot store placeholder');
         }
 
-        return $placeholderUuid;
+        return $placeholder->uuid;
     }
 }

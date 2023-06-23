@@ -35,7 +35,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int id
  * @property string uuid
- * @property string|null parent_uuid
+ * @property string group_uuid
  * @property Carbon created_at
  * @property Carbon updated_at
  * @property Carbon|null deleted_at
@@ -59,7 +59,7 @@ class SupplyBannerPlaceholder extends Model
     private const COLUMNS_WITHOUT_CONTENT = [
         'id',
         'uuid',
-        'parent_uuid',
+        'group_uuid',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -89,7 +89,7 @@ class SupplyBannerPlaceholder extends Model
         'type',
         'mime',
         'is_default',
-        'parent_uuid',
+        'group_uuid',
         'content',
         'checksum',
     ];
@@ -97,6 +97,7 @@ class SupplyBannerPlaceholder extends Model
     protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'checksum' => 'BinHex',
+        'group_uuid' => 'BinHex',
     ];
 
     public static function register(
@@ -106,7 +107,7 @@ class SupplyBannerPlaceholder extends Model
         string $mime,
         string $content,
         bool $isDefault,
-        ?string $parentUuid,
+        string $groupUuid,
     ): self {
         $model = new self();
         $model->fill(
@@ -116,7 +117,7 @@ class SupplyBannerPlaceholder extends Model
                 'type' => $type,
                 'mime' => $mime,
                 'is_default' => $isDefault,
-                'parent_uuid' => null === $parentUuid ? null : hex2bin($parentUuid),
+                'group_uuid' => $groupUuid,
                 'content' => $content,
                 'checksum' => sha1($content),
             ]
@@ -156,10 +157,10 @@ class SupplyBannerPlaceholder extends Model
             ->first($withContent ? '*' : self::COLUMNS_WITHOUT_CONTENT);
     }
 
-    public function fetchDerived(): Collection
+    public function fetchGroup(): Collection
     {
         return SupplyBannerPlaceholder::query()
-            ->where('parent_uuid', hex2bin($this->uuid))
+            ->where('group_uuid', hex2bin($this->group_uuid))
             ->get();
     }
 

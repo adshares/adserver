@@ -47,6 +47,7 @@ class SupplyBannerPlaceholderFactory extends Factory
             'mime' => 'image/png',
             'content' => $content,
             'checksum' => sha1($content),
+            'group_uuid' => $this->faker->uuid,
         ];
     }
 

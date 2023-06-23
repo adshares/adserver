@@ -54,7 +54,8 @@ HTML;
         UploadedFile $file,
         Medium $medium,
         string $scope,
-        ?string $placeholderUuid = null,
+        string $groupUuid,
+        bool $isDefault = false,
     ): void {
         $mimeType = $file->getMimeType();
         $imagick = new Imagick();
@@ -70,13 +71,13 @@ HTML;
                 continue;
             }
             $imagick->setImageFormat($format);
-            $this->provider->{self::chooseAddMethod($placeholderUuid)}(
+            $this->provider->{self::chooseAddMethod($isDefault)}(
                 $medium->getName(),
                 $scope,
                 Banner::TYPE_IMAGE,
                 $mime,
                 $imagick->getImageBlob(),
-                $placeholderUuid,
+                $groupUuid,
             );
         }
     }
@@ -85,7 +86,8 @@ HTML;
         UploadedFile $file,
         Medium $medium,
         string $scope,
-        ?string $placeholderUuid = null,
+        string $groupUuid,
+        bool $isDefault = false,
     ): void {
         $imagick = new Imagick();
         $imagick->readImageBlob($file->getContent());
@@ -108,13 +110,13 @@ HTML;
             return;
         }
 
-        $this->provider->{self::chooseAddMethod($placeholderUuid)}(
+        $this->provider->{self::chooseAddMethod($isDefault)}(
             $medium->getName(),
             $scope,
             Banner::TYPE_HTML,
             'text/html',
             $content,
-            $placeholderUuid,
+            $groupUuid,
         );
         unlink($outFile);
     }
@@ -123,7 +125,8 @@ HTML;
         UploadedFile $file,
         Medium $medium,
         string $scope,
-        ?string $placeholderUuid = null,
+        string $groupUuid,
+        bool $isDefault = false,
     ): void {
         $videoMimes = $this->getSupportedMimesForBannerType($medium, Banner::TYPE_VIDEO);
         if (in_array('video/mp4', $videoMimes, true)) {
@@ -133,13 +136,13 @@ HTML;
                 $loaded = $ffmpeg->open($file->getRealPath());
                 $loaded->save(new X264(), $outFile);
 
-                $this->provider->{self::chooseAddMethod($placeholderUuid)}(
+                $this->provider->{self::chooseAddMethod($isDefault)}(
                     $medium->getName(),
                     $scope,
                     Banner::TYPE_VIDEO,
                     'video/mp4',
                     file_get_contents($outFile),
-                    $placeholderUuid,
+                    $groupUuid,
                 );
                 unlink($outFile);
             } catch (ExecutableNotFoundException $exception) {
@@ -160,28 +163,28 @@ HTML;
         return $mimes;
     }
 
-    private static function chooseAddMethod(?string $placeholderUuid): string
+    private static function chooseAddMethod(bool $isDefault): string
     {
-        return null === $placeholderUuid ? 'addDefaultBannerPlaceholder' : 'addBannerPlaceholder';
+        return $isDefault ? 'addDefaultBannerPlaceholder' : 'addBannerPlaceholder';
     }
 
-    public function convert(UploadedFile $file, Medium $medium, string $scope, string $placeholderUuid): void
+    public function convert(UploadedFile $file, Medium $medium, string $scope, string $groupUuid): void
     {
         foreach ($medium->getFormats() as $format) {
             switch ($format->getType()) {
                 case Banner::TYPE_IMAGE:
                     if (isset($format->getScopes()[$scope])) {
-                        $this->convertToImages($file, $medium, $scope, $placeholderUuid);
+                        $this->convertToImages($file, $medium, $scope, $groupUuid);
                     }
                     break;
                 case Banner::TYPE_HTML:
                     if (isset($format->getScopes()[$scope])) {
-                        $this->convertToHtml($file, $medium, $scope, $placeholderUuid);
+                        $this->convertToHtml($file, $medium, $scope, $groupUuid);
                     }
                     break;
                 case Banner::TYPE_VIDEO:
                     if (isset($format->getScopes()[$scope])) {
-                        $this->convertToVideos($file, $medium, $scope, $placeholderUuid);
+                        $this->convertToVideos($file, $medium, $scope, $groupUuid);
                     }
                     break;
                 default:

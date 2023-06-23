@@ -46,14 +46,14 @@ return new class extends Migration {
             },
         );
         DB::statement('ALTER TABLE supply_banner_placeholders ADD uuid VARBINARY(16) NOT NULL AFTER id');
-        DB::statement('ALTER TABLE supply_banner_placeholders ADD parent_uuid VARBINARY(16) AFTER uuid');
+        DB::statement('ALTER TABLE supply_banner_placeholders ADD group_uuid VARBINARY(16) NOT NULL AFTER uuid');
         DB::statement('ALTER TABLE supply_banner_placeholders ADD content LONGBLOB NOT NULL');
         DB::statement('ALTER TABLE supply_banner_placeholders ADD checksum VARBINARY(20) NOT NULL');
         Schema::table(
             'supply_banner_placeholders',
             function (Blueprint $table) {
                 $table->unique('uuid');
-                $table->index('parent_uuid');
+                $table->index('group_uuid');
                 $table->index(['medium', 'size']);
             },
         );

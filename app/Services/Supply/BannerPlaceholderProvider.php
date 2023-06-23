@@ -44,7 +44,7 @@ class BannerPlaceholderProvider
         string $type,
         string $mime,
         string $content,
-        ?string $parentUuid = null,
+        string $groupUuid,
     ): SupplyBannerPlaceholder {
         DB::beginTransaction();
         try {
@@ -68,7 +68,7 @@ class BannerPlaceholderProvider
                 $mime,
                 $content,
                 false,
-                $parentUuid,
+                $groupUuid,
             );
             DB::commit();
         } catch (Exception $exception) {
@@ -85,7 +85,7 @@ class BannerPlaceholderProvider
         string $type,
         string $mime,
         string $content,
-        ?string $parentUuid = null,
+        string $groupUuid,
     ): SupplyBannerPlaceholder {
         DB::beginTransaction();
         try {
@@ -108,7 +108,7 @@ class BannerPlaceholderProvider
                 $mime,
                 $content,
                 true,
-                $parentUuid,
+                $groupUuid,
             );
             if ($deleted) {
                 $supplyBannerPlaceholder->delete();
@@ -127,9 +127,7 @@ class BannerPlaceholderProvider
         if ($placeholder->is_default) {
             throw new RuntimeException('Cannot delete default placeholder');
         }
-        $placeholders = $placeholder->fetchDerived()->add($placeholder);
-
-        foreach ($placeholders as $placeholder) {
+        foreach ($placeholder->fetchGroup() as $placeholder) {
             $defaultPlaceholder = SupplyBannerPlaceholder::fetchOne(
                 $placeholder->medium,
                 [$placeholder->size],
@@ -271,7 +269,7 @@ class BannerPlaceholderProvider
     public function fetchByFilters(?FilterCollection $filters = null, ?int $perPage = null): CursorPaginator
     {
         $query = SupplyBannerPlaceholder::query()
-            ->whereNull('parent_uuid')
+            ->where('mime', 'image/png')
             ->orderBy('id', 'desc');
 
         if (null !== $filters) {

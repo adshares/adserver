@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Services\Supply;
 
+use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Adshares\Common\Application\Dto\TaxonomyV2\Format;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Dto\TaxonomyV2\Targeting;
@@ -51,7 +52,7 @@ class DefaultBannerPlaceholderGenerator
         $media = $this->repository->fetchTaxonomy()->getMedia();
 
         foreach ($this->repository->fetchMedia()->toArray() as $mediumName => $mediumLabel) {
-            if ($mediumName !== 'web') {
+            if ($mediumName !== 'web') {//TODO test
                 continue;
             }
             $medium = self::mergeMediaByName($media, $mediumName);
@@ -63,26 +64,30 @@ class DefaultBannerPlaceholderGenerator
                         case Banner::TYPE_IMAGE:
                             foreach (array_keys($format->getScopes()) as $scope) {
                                 $file = $this->createFile($scope);
+                                $groupUuid = UuidStringGenerator::v4();
                                 $this->provider->addDefaultBannerPlaceholder(
                                     $mediumName,
                                     $scope,
                                     Banner::TYPE_IMAGE,
                                     'image/png',
                                     $file->getContent(),
+                                    $groupUuid,
                                 );
-                                $this->converter->convertToImages($file, $medium, $scope);
+                                $this->converter->convertToImages($file, $medium, $scope, $groupUuid, true);
                             }
                             break;
                         case Banner::TYPE_HTML:
                             foreach (array_keys($format->getScopes()) as $scope) {
                                 $file = $this->createFile($scope);
-                                $this->converter->convertToHtml($file, $medium, $scope);
+                                $groupUuid = UuidStringGenerator::v4();
+                                $this->converter->convertToHtml($file, $medium, $scope, $groupUuid, true);
                             }
                             break;
                         case Banner::TYPE_VIDEO:
                             foreach (array_keys($format->getScopes()) as $scope) {
                                 $file = $this->createFile($scope);
-                                $this->converter->convertToVideos($file, $medium, $scope);
+                                $groupUuid = UuidStringGenerator::v4();
+                                $this->converter->convertToVideos($file, $medium, $scope, $groupUuid, true);
                             }
                             break;
                         default:
