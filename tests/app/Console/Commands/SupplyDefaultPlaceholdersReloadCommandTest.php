@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Services\Supply\DefaultBannerPlaceholderGenerator;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\ServerEventType;
 
 class SupplyDefaultPlaceholdersReloadCommandTest extends ConsoleTestCase
 {
@@ -39,6 +40,8 @@ class SupplyDefaultPlaceholdersReloadCommandTest extends ConsoleTestCase
 
         $this->artisan(self::SIGNATURE)
             ->assertExitCode(0);
+
+        self::assertServerEventDispatched(ServerEventType::BannerPlaceholdersReloaded);
     }
 
     public function testLock(): void

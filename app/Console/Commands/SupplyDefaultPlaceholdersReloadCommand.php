@@ -22,7 +22,9 @@
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Services\Supply\DefaultBannerPlaceholderGenerator;
+use Adshares\Adserver\ViewModel\ServerEventType;
 
 class SupplyDefaultPlaceholdersReloadCommand extends BaseCommand
 {
@@ -42,6 +44,7 @@ class SupplyDefaultPlaceholdersReloadCommand extends BaseCommand
         }
         $this->info('Start command ' . $this->getName());
         $this->generator->generate(true);
+        ServerEvent::dispatch(ServerEventType::BannerPlaceholdersReloaded);
         $this->info('End command ' . $this->getName());
         return self::SUCCESS;
     }

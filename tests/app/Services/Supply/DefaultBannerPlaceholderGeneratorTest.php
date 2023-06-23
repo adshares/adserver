@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Services\Supply;
 
-use Adshares\Adserver\Models\SupplyBannerPlaceholder;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderConverter;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Services\Supply\DefaultBannerPlaceholderGenerator;
@@ -35,6 +34,8 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Dto\TaxonomyV2\Targeting;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
+use Adshares\Common\Exception\Exception;
+use Adshares\Common\Exception\RuntimeException;
 
 class DefaultBannerPlaceholderGeneratorTest extends TestCase
 {
@@ -56,20 +57,14 @@ class DefaultBannerPlaceholderGeneratorTest extends TestCase
         $formats = new ArrayableItemCollection();
         $formats->add(new Format('image', ['image/png', 'image/jpeg'], ['1x1' => '1']));
         $media->add(new Medium('test', 'test', null, null, $formats, $targeting));
-
         $taxonomy = $this->createMock(TaxonomyV2::class);
         $taxonomy->method('getMedia')->willReturn($media);
-
         $simpleMedia = new Media();
         $simpleMedia->add('test', 'test');
         $repository = $this->createMock(ConfigurationRepository::class);
         $repository->method('fetchTaxonomy')->willReturn($taxonomy);
         $repository->method('fetchMedia')->willReturn($simpleMedia);
-        $generator = new DefaultBannerPlaceholderGenerator(
-            $converter,
-            $provider,
-            $repository,
-        );
+        $generator = new DefaultBannerPlaceholderGenerator($converter, $provider, $repository);
 
         $generator->generate();
     }
@@ -93,20 +88,78 @@ class DefaultBannerPlaceholderGeneratorTest extends TestCase
         $formats->add(new Format('html', ['text/html'], ['1x1' => '1']));
         $formats->add(new Format('video', ['video/mp4'], ['1x1' => '1']));
         $media->add(new Medium('test', 'test', null, null, $formats, $targeting));
-
         $taxonomy = $this->createMock(TaxonomyV2::class);
         $taxonomy->method('getMedia')->willReturn($media);
-
         $simpleMedia = new Media();
         $simpleMedia->add('test', 'test');
         $repository = $this->createMock(ConfigurationRepository::class);
         $repository->method('fetchTaxonomy')->willReturn($taxonomy);
         $repository->method('fetchMedia')->willReturn($simpleMedia);
-        $generator = new DefaultBannerPlaceholderGenerator(
-            $converter,
-            $provider,
-            $repository,
+        $generator = new DefaultBannerPlaceholderGenerator($converter, $provider, $repository);
+
+        $generator->generate();
+    }
+
+    public function testGenerateDirect(): void
+    {
+        $converter = $this->createMock(BannerPlaceholderConverter::class);
+        $converter->expects(self::never())->method('convertToImages');
+        $converter->expects(self::never())->method('convertToHtml');
+        $converter->expects(self::never())->method('convertToVideos');
+        $provider = $this->createMock(BannerPlaceholderProvider::class);
+        $provider->expects(self::never())->method('addBannerPlaceholder');
+        $provider->expects(self::never())->method('addDefaultBannerPlaceholder');
+        $media = new ArrayableItemCollection();
+        $targeting = new Targeting(
+            new ArrayableItemCollection(),
+            new ArrayableItemCollection(),
+            new ArrayableItemCollection(),
         );
+        $formats = new ArrayableItemCollection();
+        $formats->add(new Format('direct', ['text/plain'], ['pop-up' => 'Pop Up']));
+        $media->add(new Medium('test', 'test', null, null, $formats, $targeting));
+        $taxonomy = $this->createMock(TaxonomyV2::class);
+        $taxonomy->method('getMedia')->willReturn($media);
+        $simpleMedia = new Media();
+        $simpleMedia->add('test', 'test');
+        $repository = $this->createMock(ConfigurationRepository::class);
+        $repository->method('fetchTaxonomy')->willReturn($taxonomy);
+        $repository->method('fetchMedia')->willReturn($simpleMedia);
+        $generator = new DefaultBannerPlaceholderGenerator($converter, $provider, $repository);
+
+        $generator->generate();
+    }
+
+    public function testGenerateFail(): void
+    {
+        $converter = $this->createMock(BannerPlaceholderConverter::class);
+        $converter->expects(self::never())->method('convertToImages');
+        $converter->expects(self::never())->method('convertToHtml');
+        $converter->expects(self::never())->method('convertToVideos');
+        $provider = $this->createMock(BannerPlaceholderProvider::class);
+        $provider->expects(self::never())->method('addBannerPlaceholder');
+        $provider->expects(self::once())
+            ->method('addDefaultBannerPlaceholder')
+            ->willThrowException(new Exception('test-exception'));
+        $media = new ArrayableItemCollection();
+        $targeting = new Targeting(
+            new ArrayableItemCollection(),
+            new ArrayableItemCollection(),
+            new ArrayableItemCollection(),
+        );
+        $formats = new ArrayableItemCollection();
+        $formats->add(new Format('image', ['image/png'], ['1x1' => '1']));
+        $media->add(new Medium('test', 'test', null, null, $formats, $targeting));
+        $taxonomy = $this->createMock(TaxonomyV2::class);
+        $taxonomy->method('getMedia')->willReturn($media);
+        $simpleMedia = new Media();
+        $simpleMedia->add('test', 'test');
+        $repository = $this->createMock(ConfigurationRepository::class);
+        $repository->method('fetchTaxonomy')->willReturn($taxonomy);
+        $repository->method('fetchMedia')->willReturn($simpleMedia);
+        $generator = new DefaultBannerPlaceholderGenerator($converter, $provider, $repository);
+
+        $this->expectException(RuntimeException::class);
 
         $generator->generate();
     }

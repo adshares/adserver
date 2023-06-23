@@ -27,6 +27,7 @@ use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Dto\TaxonomyV2\Targeting;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Domain\Adapter\ArrayableItemCollection;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\UploadedFile;
@@ -113,7 +114,7 @@ class DefaultBannerPlaceholderGenerator
             } catch (Throwable $throwable) {
                 DB::rollBack();
                 Log::error(sprintf('Generating default banner placeholders failed: %s', $throwable->getMessage()));
-                throw $throwable;
+                throw new RuntimeException('Generating default banner placeholders failed');
             }
         }
     }
