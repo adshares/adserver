@@ -25,8 +25,8 @@ use Adshares\Adserver\Models\SupplyBannerPlaceholder;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Uploader\PlaceholderUploader;
 use Adshares\Common\Exception\RuntimeException;
-use Exception;
 use Illuminate\Http\UploadedFile;
 use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
@@ -203,6 +203,24 @@ final class SupplyBannerPlaceholderControllerTest extends TestCase
                 'is_default' => false,
             ],
         );
+    }
+
+    public function testUploadPlaceholderFailWhileUploaderThrowsError(): void
+    {
+        $uploader = self::createMock(PlaceholderUploader::class);
+        $uploader->method('upload')
+            ->willThrowException(new RuntimeException('test-exception'));
+        $this->app->bind(PlaceholderUploader::class, fn() => $uploader);
+        $this->setUpAdmin();
+        $file = UploadedFile::fake()->image('test.png', 300, 250);
+
+        $response = $this->post(self::URI_PLACEHOLDER, [
+            'medium' => 'web',
+            'type' => 'image',
+            'file-0' => $file,
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUploadPlaceholderFailWhileUnsupportedType(): void

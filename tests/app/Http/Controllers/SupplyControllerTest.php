@@ -1132,6 +1132,38 @@ final class SupplyControllerTest extends TestCase
         $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
     }
 
+    public function testPlaceholderServeWhileHtml(): void
+    {
+        $htmlContent = '<html><body>test</body></html>';
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create([
+            'type' => 'html',
+            'mime' => 'text/html',
+            'content' => $htmlContent,
+            'checksum' => sha1($htmlContent),
+        ]);
+        $response = $this->get('/l/p/serve/' . $placeholder->uuid);
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testPlaceholderServeWhileIeCompatibleBrowser(): void
+    {
+        /** @var SupplyBannerPlaceholder $placeholder */
+        $placeholder = SupplyBannerPlaceholder::factory()->create();
+        $response = $this->get(sprintf('/l/p/serve/%s?xdr=1', $placeholder->uuid));
+
+        $response->assertStatus(Response::HTTP_OK);
+        ob_start();
+        $response->sendContent();
+        $content = ob_get_clean();
+        $contentRows = explode("\n", $content);
+        self::assertStringStartsWith(
+            hex2bin(self::PNG_MAGIC_NUMBER_HEX),
+            base64_decode($contentRows[count($contentRows) - 1])
+        );
+    }
+
     public function testPlaceholderServeWhileInvalidPlaceholderId(): void
     {
         $response = $this->get('/l/p/serve/1');
