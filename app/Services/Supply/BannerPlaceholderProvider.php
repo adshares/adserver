@@ -86,6 +86,7 @@ class BannerPlaceholderProvider
         string $mime,
         string $content,
         string $groupUuid,
+        bool $forceOverwrite = true,
     ): SupplyBannerPlaceholder {
         DB::beginTransaction();
         try {
@@ -98,6 +99,9 @@ class BannerPlaceholderProvider
             );
             $deleted = false;
             if (null !== $previousPlaceholder) {
+                if (!$forceOverwrite) {
+                    return $previousPlaceholder;
+                }
                 $deleted = $previousPlaceholder->trashed();
                 $previousPlaceholder->forceDelete();
             }

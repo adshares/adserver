@@ -56,6 +56,7 @@ HTML;
         string $scope,
         string $groupUuid,
         bool $isDefault = false,
+        bool $forceOverwrite = false,
     ): void {
         $mimeType = $file->getMimeType();
         $imagick = new Imagick();
@@ -71,14 +72,26 @@ HTML;
                 continue;
             }
             $imagick->setImageFormat($format);
-            $this->provider->{self::chooseAddMethod($isDefault)}(
-                $medium->getName(),
-                $scope,
-                Banner::TYPE_IMAGE,
-                $mime,
-                $imagick->getImageBlob(),
-                $groupUuid,
-            );
+            if ($isDefault) {
+                $this->provider->addDefaultBannerPlaceholder(
+                    $medium->getName(),
+                    $scope,
+                    Banner::TYPE_IMAGE,
+                    $mime,
+                    $imagick->getImageBlob(),
+                    $groupUuid,
+                    $forceOverwrite,
+                );
+            } else {
+                $this->provider->addBannerPlaceholder(
+                    $medium->getName(),
+                    $scope,
+                    Banner::TYPE_IMAGE,
+                    $mime,
+                    $imagick->getImageBlob(),
+                    $groupUuid,
+                );
+            }
         }
     }
 
@@ -88,6 +101,7 @@ HTML;
         string $scope,
         string $groupUuid,
         bool $isDefault = false,
+        bool $forceOverwrite = false,
     ): void {
         $imagick = new Imagick();
         $imagick->readImageBlob($file->getContent());
@@ -110,14 +124,26 @@ HTML;
             return;
         }
 
-        $this->provider->{self::chooseAddMethod($isDefault)}(
-            $medium->getName(),
-            $scope,
-            Banner::TYPE_HTML,
-            'text/html',
-            $content,
-            $groupUuid,
-        );
+        if ($isDefault) {
+            $this->provider->addDefaultBannerPlaceholder(
+                $medium->getName(),
+                $scope,
+                Banner::TYPE_HTML,
+                'text/html',
+                $content,
+                $groupUuid,
+                $forceOverwrite,
+            );
+        } else {
+            $this->provider->addBannerPlaceholder(
+                $medium->getName(),
+                $scope,
+                Banner::TYPE_HTML,
+                'text/html',
+                $content,
+                $groupUuid,
+            );
+        }
         unlink($outFile);
     }
 
@@ -127,6 +153,7 @@ HTML;
         string $scope,
         string $groupUuid,
         bool $isDefault = false,
+        bool $forceOverwrite = false,
     ): void {
         $videoMimes = $this->getSupportedMimesForBannerType($medium, Banner::TYPE_VIDEO);
         if (in_array('video/mp4', $videoMimes, true)) {
@@ -136,14 +163,26 @@ HTML;
                 $loaded = $ffmpeg->open($file->getRealPath());
                 $loaded->save(new X264(), $outFile);
 
-                $this->provider->{self::chooseAddMethod($isDefault)}(
-                    $medium->getName(),
-                    $scope,
-                    Banner::TYPE_VIDEO,
-                    'video/mp4',
-                    file_get_contents($outFile),
-                    $groupUuid,
-                );
+                if ($isDefault) {
+                    $this->provider->addDefaultBannerPlaceholder(
+                        $medium->getName(),
+                        $scope,
+                        Banner::TYPE_VIDEO,
+                        'video/mp4',
+                        file_get_contents($outFile),
+                        $groupUuid,
+                        $forceOverwrite,
+                    );
+                } else {
+                    $this->provider->addBannerPlaceholder(
+                        $medium->getName(),
+                        $scope,
+                        Banner::TYPE_VIDEO,
+                        'video/mp4',
+                        file_get_contents($outFile),
+                        $groupUuid,
+                    );
+                }
                 unlink($outFile);
             } catch (ExecutableNotFoundException $exception) {
                 Log::critical(sprintf('Check if ffmpeg is installed in system (%s)', $exception->getMessage()));
@@ -161,11 +200,6 @@ HTML;
             }
         }
         return $mimes;
-    }
-
-    private static function chooseAddMethod(bool $isDefault): string
-    {
-        return $isDefault ? 'addDefaultBannerPlaceholder' : 'addBannerPlaceholder';
     }
 
     public function convert(UploadedFile $file, Medium $medium, string $scope, string $groupUuid): void

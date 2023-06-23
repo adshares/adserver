@@ -142,6 +142,37 @@ class BannerPlaceholderProviderTest extends TestCase
         self::assertFalse($defaultPlaceholder->refresh()->trashed());
     }
 
+    public function testAddDefaultBannerPlaceholderDoNotOverwrite(): void
+    {
+        /** @var SupplyBannerPlaceholder $defaultPlaceholder */
+        $defaultPlaceholder = SupplyBannerPlaceholder::factory()->create(
+            [
+                'is_default' => true,
+                'size' => '300x250',
+            ]
+        );
+        $placeholderData = [
+            'medium' => MediumName::Web->value,
+            'size' => '300x250',
+            'type' => 'image',
+            'mime' => 'image/png',
+            'content' => UploadedFile::fake()
+                ->image('test.png', 300, 250)
+                ->size(100)
+                ->getContent(),
+            'groupUuid' => $this->faker->uuid,
+            'forceOverwrite' => false,
+        ];
+        $placeholderProvider = new BannerPlaceholderProvider();
+
+        $newDefaultPlaceholder = $placeholderProvider->addDefaultBannerPlaceholder(...$placeholderData);
+
+        self::assertCount(1, SupplyBannerPlaceholder::all());
+        self::assertDatabaseHas(SupplyBannerPlaceholder::class, ['id' => $defaultPlaceholder->id]);
+        self::assertFalse($newDefaultPlaceholder->trashed());
+        self::assertEquals($defaultPlaceholder->id, $newDefaultPlaceholder->id);
+    }
+
     public function testAddDefaultBannerPlaceholderOverwriteWithoutCustom(): void
     {
         /** @var SupplyBannerPlaceholder $defaultPlaceholder */
