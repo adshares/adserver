@@ -1,12 +1,10 @@
 @component('mail::message')
 # Password Recovery
 
-{{-- Dear {{ $name }} --}}
-
-Please use button below to setup your new password
+Please use button below to set up your new password
 
 @component('mail::button', ['url' => config('app.adpanel_url').$uri.$token])
-Setup new password
+Set up new password
 @endcomponent
 
 Thanks,
