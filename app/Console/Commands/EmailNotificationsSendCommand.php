@@ -134,7 +134,8 @@ class EmailNotificationsSendCommand extends BaseCommand
 
     private function notifyAboutInactivity(): void
     {
-        User::fetchInactiveUsersWithEmails()->each(static function (User $user) {
+        $users = User::fetchInactiveUsersWithEmailsCreatedBefore(new DateTimeImmutable('-3 days'));
+        $users->each(static function (User $user) {
             $lastActivity = $user->last_active_at ?? $user->updated_at;
             if (new DateTimeImmutable('-2 weeks') > $lastActivity) {
                 Mail::to($user->email)->queue(new InactiveUserExtend());

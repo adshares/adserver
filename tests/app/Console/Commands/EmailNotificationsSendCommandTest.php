@@ -160,6 +160,14 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
             ]
         );
 
+        $userWithoutEmail = User::factory()->create(['email' => null]);
+        Campaign::factory()->create(
+            [
+                'status' => Campaign::STATUS_ACTIVE,
+                'user_id' => $userWithoutEmail,
+            ]
+        );
+
         $this->artisan('ops:email-notifications:send')
             ->assertExitCode(0);
 
@@ -174,13 +182,14 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
         $this->artisan('ops:email-notifications:send')
             ->assertExitCode(0);
 
+        Mail::assertQueued(Mailable::class, 1);
         Mail::assertQueued(InactiveUser::class, fn($mail) => $mail->hasTo($user->email));
     }
 
     /**
-     * @dataProvider inactiveUserForLongTimeProvider
+     * @dataProvider userInactiveForLongTimeProvider
      */
-    public function testHandleInactiveUserForLongTime(array $userData): void
+    public function testHandleUserInactiveForLongTime(array $userData): void
     {
         /** @var User $user */
         $user = User::factory()->create($userData);
@@ -192,11 +201,12 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
         Mail::assertQueued(InactiveUserExtend::class, fn($mail) => $mail->hasTo($user->email));
     }
 
-    public function inactiveUserForLongTimeProvider(): array
+    public function userInactiveForLongTimeProvider(): array
     {
         return [
             'last activity 1 month ago' => [
                 [
+                    'created_at' => new DateTimeImmutable('-1 month'),
                     'email' => 'user@example.com',
                     'email_confirmed_at' => new DateTimeImmutable('-1 month'),
                     'last_active_at' => new DateTimeImmutable('-1 month'),
@@ -205,6 +215,7 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
             ],
             'updated 1 month ago' => [
                 [
+                    'created_at' => new DateTimeImmutable('-1 month'),
                     'email' => 'user@example.com',
                     'email_confirmed_at' => new DateTimeImmutable('-1 month'),
                     'last_active_at' => null,
@@ -219,10 +230,12 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
         /** @var User $user */
         $user = User::factory()->create(
             [
+                'created_at' => new DateTimeImmutable('-5 days'),
                 'email' => 'user@example.com',
-                'email_confirmed_at' => new DateTimeImmutable(),
+                'email_confirmed_at' => new DateTimeImmutable('-5 days'),
                 'is_publisher' => 0,
                 'last_active_at' => new DateTimeImmutable('-1 day'),
+                'updated_at' => new DateTimeImmutable('-5 days'),
             ]
         );
 
@@ -238,10 +251,12 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
         /** @var User $user */
         $user = User::factory()->create(
             [
+                'created_at' => new DateTimeImmutable('-5 days'),
                 'email' => 'user@example.com',
-                'email_confirmed_at' => new DateTimeImmutable(),
+                'email_confirmed_at' => new DateTimeImmutable('-5 days'),
                 'is_advertiser' => 0,
                 'last_active_at' => new DateTimeImmutable('-1 day'),
+                'updated_at' => new DateTimeImmutable('-5 days'),
             ]
         );
 
@@ -279,9 +294,11 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
         /** @var User $user */
         $user = User::factory()->create(
             [
+                'created_at' => new DateTimeImmutable('-5 days'),
                 'email' => 'user@example.com',
-                'email_confirmed_at' => new DateTimeImmutable(),
+                'email_confirmed_at' => new DateTimeImmutable('-5 days'),
                 'last_active_at' => new DateTimeImmutable('-1 day'),
+                'updated_at' => new DateTimeImmutable('-5 days'),
             ]
         );
         return $user;

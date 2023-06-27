@@ -595,9 +595,11 @@ class User extends Authenticatable
         return self::where('subscribe', 1)->whereNotNull('email')->get()->pluck('email');
     }
 
-    public static function fetchInactiveUsersWithEmails(): Collection
+    public static function fetchInactiveUsersWithEmailsCreatedBefore(DateTimeInterface $dateTo): Collection
     {
         return self::query()
+            ->select('users.*')
+            ->where('users.created_at', '<', $dateTo)
             ->whereNotNull('email')
             ->whereNotNull('email_confirmed_at')
             ->where(function (Builder $query) {
