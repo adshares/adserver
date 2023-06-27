@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,28 +19,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Mail\Notifications;
 
-namespace Adshares\Adserver\Mail;
-
+use Adshares\Adserver\Utilities\AdPanelUrlBuilder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class CampaignSuspension extends Mailable
+class InactiveUser extends Mailable
 {
     use Queueable;
     use SerializesModels;
 
-    private const SUBJECT = 'Your campaigns have been suspended';
-
-    public function __construct()
+    public function build(): Mailable
     {
-        $this->subject(self::SUBJECT);
-    }
-
-    public function build()
-    {
-        return $this->markdown('emails.campaign-suspension');
+        $this->subject = 'Get Started with Your First Campaign or Add Website';
+        return $this->markdown('emails.notifications.inactive-user')
+            ->with(
+                [
+                    'advertiserDashboardUrl' => AdPanelUrlBuilder::buildAdvertiserDashboardUrl(),
+                    'bookingUrl' => config('app.booking_url'),
+                    'contactEmail' => config('app.support_email'),
+                    'publisherDashboardUrl' => AdPanelUrlBuilder::buildPublisherDashboardUrl(),
+                ]
+            );
     }
 }

@@ -34,6 +34,7 @@ use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\CursorPaginator;
@@ -83,6 +84,25 @@ class CampaignRepository
         );
 
         return $query->with('banners')->get();
+    }
+
+    /**
+     * @return Collection|Campaign[]
+     */
+    public function fetchCampaignsWhichEndsBetween(DateTimeInterface $startDate, DateTimeInterface $endDate): Collection
+    {
+        return Campaign::query()
+            ->where('status', Campaign::STATUS_ACTIVE)
+            ->whereBetween('time_end', [$startDate, $endDate])
+            ->get();
+    }
+
+    public function fetchDraftCampaignsCreatedBefore(DateTimeInterface $dateFrom): Collection
+    {
+        return Campaign::query()
+            ->where('status', Campaign::STATUS_DRAFT)
+            ->where('created_at', '<', $dateFrom)
+            ->get();
     }
 
     /**

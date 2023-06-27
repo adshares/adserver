@@ -595,6 +595,25 @@ class User extends Authenticatable
         return self::where('subscribe', 1)->whereNotNull('email')->get()->pluck('email');
     }
 
+    public static function fetchInactiveUsersWithEmails(): Collection
+    {
+        return self::query()
+            ->whereNotNull('email')
+            ->whereNotNull('email_confirmed_at')
+            ->where(function (Builder $query) {
+                $query->where('is_advertiser', 1)
+                    ->orWhere('is_publisher', 1);
+            })
+            ->where('is_admin', 0)
+            ->where('is_moderator', 0)
+            ->where('is_agency', 0)
+            ->leftJoin('campaigns', 'users.id', '=', 'campaigns.user_id')
+            ->whereNull('campaigns.user_id')
+            ->leftJoin('sites', 'users.id', '=', 'sites.user_id')
+            ->whereNull('sites.user_id')
+            ->get();
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Mail\CampaignSuspension;
+use Adshares\Adserver\Mail\Notifications\FundsEnded;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
@@ -89,7 +89,7 @@ class DemandBlockRequiredAmount extends BaseCommand
                 Log::warning($e->getMessage());
 
                 if (Campaign::suspendAllForUserId($userId) > 0 && null !== ($email = User::fetchById($userId)->email)) {
-                    Mail::to($email)->queue(new CampaignSuspension());
+                    Mail::to($email)->queue(new FundsEnded());
                 }
             }
         });
