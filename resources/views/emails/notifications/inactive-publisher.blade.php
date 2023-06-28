@@ -1,5 +1,5 @@
 @component('mail::message')
-Dear Publisher, 
+Dear Publisher,
 
 Welcome to {{ config('app.adserver_name') }}! We noticed that you haven't added your website yet.
 

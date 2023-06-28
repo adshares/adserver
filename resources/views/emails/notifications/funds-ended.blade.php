@@ -1,5 +1,5 @@
 @component('mail::message')
-Dear Advertiser, 
+Dear Advertiser,
 
 We've noticed your account balance has been depleted.
 

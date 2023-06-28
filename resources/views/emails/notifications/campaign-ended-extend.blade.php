@@ -1,5 +1,5 @@
 @component('mail::message')
-Dear Advertiser, 
+Dear Advertiser,
 
 We've noticed it's been a few weeks since your last campaign and we haven't seen you around.
 

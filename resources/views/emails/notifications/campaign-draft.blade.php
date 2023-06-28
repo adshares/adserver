@@ -1,5 +1,5 @@
 @component('mail::message')
-Dear Advertiser, 
+Dear Advertiser,
 
 We noticed that your campaign, "{{ $campaignName }}" is currently saved as a draft.
 

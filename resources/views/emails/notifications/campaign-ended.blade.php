@@ -1,5 +1,5 @@
 @component('mail::message')
-Dear Advertiser, 
+Dear Advertiser,
 
 Your campaign, "{{ $campaignName }}" has successfully concluded.
 

@@ -1,5 +1,5 @@
 @component('mail::message')
-Dear User, 
+Dear User,
 
 It seems like it's been a while since we've seen you.
 There's so much waiting for you at {{ config('app.adserver_name') }}. 

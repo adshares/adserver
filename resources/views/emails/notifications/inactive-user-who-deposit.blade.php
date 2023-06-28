@@ -1,5 +1,5 @@
 @component('mail::message')
-Dear Advertiser, 
+Dear Advertiser,
 
 Welcome to {{ config('app.adserver_name') }}! We noticed that you've successfully credited your account but haven't launched your first campaign yet.
 
