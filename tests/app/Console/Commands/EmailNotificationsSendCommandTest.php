@@ -32,6 +32,7 @@ use Adshares\Adserver\Mail\Notifications\InactiveAdvertiser;
 use Adshares\Adserver\Mail\Notifications\InactivePublisher;
 use Adshares\Adserver\Mail\Notifications\InactiveUser;
 use Adshares\Adserver\Mail\Notifications\InactiveUserExtend;
+use Adshares\Adserver\Mail\Notifications\InactiveUserWhoDeposit;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
@@ -186,6 +187,27 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
         Mail::assertQueued(InactiveUser::class, fn($mail) => $mail->hasTo($user->email));
     }
 
+    public function testHandleInactiveUserWhoDeposit(): void
+    {
+        $user = $this->initUserWithConfirmedEmail();
+        UserLedgerEntry::factory()->create(
+            [
+                'created_at' => new DateTimeImmutable('-4 days'),
+                'amount' => 1e12,
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                'updated_at' => new DateTimeImmutable('-4 days'),
+                'user_id' => $user,
+            ]
+        );
+
+        $this->artisan('ops:email-notifications:send')
+            ->assertExitCode(0);
+
+        Mail::assertQueued(Mailable::class, 1);
+        Mail::assertQueued(InactiveUserWhoDeposit::class, fn($mail) => $mail->hasTo($user->email));
+    }
+
     /**
      * @dataProvider userInactiveForLongTimeProvider
      */
@@ -291,8 +313,7 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
 
     private function initUserWithConfirmedEmail(): User
     {
-        /** @var User $user */
-        $user = User::factory()->create(
+        return User::factory()->create(
             [
                 'created_at' => new DateTimeImmutable('-5 days'),
                 'email' => 'user@example.com',
@@ -301,6 +322,5 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
                 'updated_at' => new DateTimeImmutable('-5 days'),
             ]
         );
-        return $user;
     }
 }

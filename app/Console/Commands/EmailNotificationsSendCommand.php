@@ -32,9 +32,11 @@ use Adshares\Adserver\Mail\Notifications\InactiveAdvertiser;
 use Adshares\Adserver\Mail\Notifications\InactivePublisher;
 use Adshares\Adserver\Mail\Notifications\InactiveUser;
 use Adshares\Adserver\Mail\Notifications\InactiveUserExtend;
+use Adshares\Adserver\Mail\Notifications\InactiveUserWhoDeposit;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
@@ -139,6 +141,14 @@ class EmailNotificationsSendCommand extends BaseCommand
             $lastActivity = $user->last_active_at ?? $user->updated_at;
             if (new DateTimeImmutable('-2 weeks') > $lastActivity) {
                 Mail::to($user->email)->queue(new InactiveUserExtend());
+                return;
+            }
+            $userId = $user->id;
+            if (
+                null !== ($deposit = UserLedgerEntry::fetchFirstDeposit($userId)) &&
+                new DateTimeImmutable('-3 days') > $deposit->created_at
+            ) {
+                Mail::to($user->email)->queue(new InactiveUserWhoDeposit());
                 return;
             }
 
