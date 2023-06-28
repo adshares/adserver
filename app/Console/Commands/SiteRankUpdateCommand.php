@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
-use Adshares\Adserver\Mail\SiteVerified;
+use Adshares\Adserver\Mail\Notifications\SiteAccepted;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
@@ -165,6 +165,7 @@ class SiteRankUpdateCommand extends BaseCommand
                     && $site->created_at > $this->notificationDateTimeThreshold
                 ) {
                     $this->mails[$site->user_id][] = [
+                        'medium' => $site->medium,
                         'name' => $site->name,
                         'url' => $this->siteBaseUrl . $site->id,
                     ];
@@ -205,7 +206,9 @@ class SiteRankUpdateCommand extends BaseCommand
 
         foreach ($this->mails as $userId => $sites) {
             if (null !== ($email = $users->get($userId)->email)) {
-                Mail::to($email)->send(new SiteVerified($sites));
+                foreach ($sites as $site) {
+                    Mail::to($email)->send(new SiteAccepted($site['medium'], $site['name'], $site['url']));
+                }
             }
         }
     }
