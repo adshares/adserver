@@ -34,11 +34,13 @@ use Adshares\Adserver\Mail\Notifications\InactivePublisher;
 use Adshares\Adserver\Mail\Notifications\InactiveUser;
 use Adshares\Adserver\Mail\Notifications\InactiveUserExtend;
 use Adshares\Adserver\Mail\Notifications\InactiveUserWhoDeposit;
+use Adshares\Adserver\Mail\Notifications\SiteDraft;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\ViewModel\MediumName;
 use DateTimeImmutable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
@@ -180,6 +182,77 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
             ->assertExitCode(0);
 
         Mail::assertNothingQueued();
+    }
+
+    /**
+     * @dataProvider mediumNameProvider
+     */
+    public function testHandleSiteDraft(string $mediumName): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['email' => 'user@example.com']);
+        Site::factory()->create(
+            [
+                'created_at' => new DateTimeImmutable('-4 day'),
+                'medium' => $mediumName,
+                'status' => Site::STATUS_DRAFT,
+                'updated_at' => new DateTimeImmutable('-4 day'),
+                'user_id' => $user,
+            ]
+        );
+        Site::factory()->create(
+            [
+                'created_at' => new DateTimeImmutable('-4 day'),
+                'medium' => $mediumName,
+                'status' => Site::STATUS_DRAFT,
+                'updated_at' => new DateTimeImmutable('-4 day'),
+                'user_id' => $user,
+            ]
+        );
+
+        $this->artisan('ops:email-notifications:send')
+            ->assertExitCode(0);
+
+        Mail::assertQueued(Mailable::class, 1);
+        Mail::assertQueued(SiteDraft::class, fn($mail) => $mail->hasTo($user->email));
+    }
+
+    public function mediumNameProvider(): array
+    {
+        return [
+            'web' => ['web'],
+            'metaverse' => ['metaverse'],
+        ];
+    }
+
+    public function testHandleSitesDraft(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['email' => 'user@example.com']);
+        Site::factory()->create(
+            [
+                'created_at' => new DateTimeImmutable('-4 day'),
+                'medium' => MediumName::Web,
+                'status' => Site::STATUS_DRAFT,
+                'updated_at' => new DateTimeImmutable('-4 day'),
+                'user_id' => $user,
+            ]
+        );
+        Site::factory()->create(
+            [
+                'created_at' => new DateTimeImmutable('-4 day'),
+                'medium' => MediumName::Metaverse,
+                'status' => Site::STATUS_DRAFT,
+                'updated_at' => new DateTimeImmutable('-4 day'),
+                'user_id' => $user,
+            ]
+        );
+
+        $this->artisan('ops:email-notifications:send')
+            ->assertExitCode(0);
+
+        Mail::assertQueued(Mailable::class, 2);
+        Mail::assertQueued(SiteDraft::class, fn($mail) => $mail->hasTo($user->email));
     }
 
     public function testHandleFundsEnds(): void

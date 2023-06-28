@@ -34,8 +34,10 @@ use Adshares\Adserver\Mail\Notifications\InactivePublisher;
 use Adshares\Adserver\Mail\Notifications\InactiveUser;
 use Adshares\Adserver\Mail\Notifications\InactiveUserExtend;
 use Adshares\Adserver\Mail\Notifications\InactiveUserWhoDeposit;
+use Adshares\Adserver\Mail\Notifications\SiteDraft;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -68,6 +70,7 @@ class EmailNotificationsSendCommand extends BaseCommand
         $this->info('Start command ' . $this->signature);
 
         $this->notifyAboutCampaigns();
+        $this->notifyAboutSites();
         $this->notifyAboutFunds();
         $this->notifyAboutInactivity();
 
@@ -80,7 +83,7 @@ class EmailNotificationsSendCommand extends BaseCommand
     {
         $now = new DateTimeImmutable();
 
-        $campaigns = $this->campaignRepository->fetchDraftCampaignsCreatedBefore(new DateTimeImmutable('-3 days'));
+        $campaigns = $this->campaignRepository->fetchDraftCampaignsCreatedBefore($now->modify('-3 days'));
         foreach ($campaigns as $campaign) {
             if (null !== $campaign->user->email) {
                 Mail::to($campaign->user->email)->queue(new CampaignDraft($campaign));
@@ -172,5 +175,21 @@ class EmailNotificationsSendCommand extends BaseCommand
                 Mail::to($user->email)->queue(new InactivePublisher());
             }
         });
+    }
+
+    private function notifyAboutSites(): void
+    {
+        $sites = Site::fetchDraftSitesCreatedBefore(new DateTimeImmutable('-3 days'));
+        $notifiedUserIds = [];
+        foreach ($sites as $site) {
+            $user = $site->user;
+            if (isset($notifiedUserIds[$site->medium][$user->id])) {
+                continue;
+            }
+            $notifiedUserIds[$site->medium][$user->id] = true;
+            if (null !== $user->email) {
+                Mail::to($user->email)->queue(new SiteDraft($site->medium));
+            }
+        }
     }
 }
