@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Mail\Notifications\CampaignDraft;
 use Adshares\Adserver\Mail\Notifications\CampaignEnded;
+use Adshares\Adserver\Mail\Notifications\CampaignEndedExtend;
 use Adshares\Adserver\Mail\Notifications\CampaignEnds;
 use Adshares\Adserver\Mail\Notifications\FundsEnds;
 use Adshares\Adserver\Mail\Notifications\InactiveAdvertiser;
@@ -77,6 +78,8 @@ class EmailNotificationsSendCommand extends BaseCommand
 
     private function notifyAboutCampaigns(): void
     {
+        $now = new DateTimeImmutable();
+
         $campaigns = $this->campaignRepository->fetchDraftCampaignsCreatedBefore(new DateTimeImmutable('-3 days'));
         foreach ($campaigns as $campaign) {
             if (null !== $campaign->user->email) {
@@ -84,9 +87,16 @@ class EmailNotificationsSendCommand extends BaseCommand
             }
         }
 
-        $campaigns = $this->campaignRepository->fetchCampaignsWhichEndsBetween(
-            new DateTimeImmutable(),
-            new DateTimeImmutable('+3 days'),
+        $campaigns = $this->campaignRepository->fetchLastCampaignsEndedBefore($now->modify('-2 weeks'));
+        foreach ($campaigns as $campaign) {
+            if (null !== $campaign->user->email) {
+                Mail::to($campaign->user->email)->queue(new CampaignEndedExtend());
+            }
+        }
+
+        $campaigns = $this->campaignRepository->fetchCampaignsWhichEndBetween(
+            $now,
+            $now->modify('+3 days'),
         );
         foreach ($campaigns as $campaign) {
             if (null !== $campaign->user->email) {
@@ -94,9 +104,9 @@ class EmailNotificationsSendCommand extends BaseCommand
             }
         }
 
-        $campaigns = $this->campaignRepository->fetchCampaignsWhichEndsBetween(
-            new DateTimeImmutable('-3 days'),
-            new DateTimeImmutable(),
+        $campaigns = $this->campaignRepository->fetchCampaignsWhichEndBetween(
+            $now->modify('-2 weeks'),
+            $now,
         );
         foreach ($campaigns as $campaign) {
             if (null !== $campaign->user->email) {

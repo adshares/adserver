@@ -89,7 +89,7 @@ class CampaignRepository
     /**
      * @return Collection|Campaign[]
      */
-    public function fetchCampaignsWhichEndsBetween(DateTimeInterface $startDate, DateTimeInterface $endDate): Collection
+    public function fetchCampaignsWhichEndBetween(DateTimeInterface $startDate, DateTimeInterface $endDate): Collection
     {
         return Campaign::query()
             ->where('status', Campaign::STATUS_ACTIVE)
@@ -97,11 +97,27 @@ class CampaignRepository
             ->get();
     }
 
-    public function fetchDraftCampaignsCreatedBefore(DateTimeInterface $dateFrom): Collection
+    /**
+     * @return Collection|Campaign[]
+     */
+    public function fetchLastCampaignsEndedBefore(DateTimeInterface $dateTo): Collection
+    {
+        return Campaign::query()
+            ->select('user_id', DB::raw('MAX(time_end) as time_end'))
+            ->where('status', Campaign::STATUS_ACTIVE)
+            ->groupBy('user_id')
+            ->having('time_end', '<', $dateTo)
+            ->get();
+    }
+
+    /**
+     * @return Collection|Campaign[]
+     */
+    public function fetchDraftCampaignsCreatedBefore(DateTimeInterface $dateTo): Collection
     {
         return Campaign::query()
             ->where('status', Campaign::STATUS_DRAFT)
-            ->where('created_at', '<', $dateFrom)
+            ->where('created_at', '<', $dateTo)
             ->get();
     }
 

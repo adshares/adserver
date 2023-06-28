@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Mail\Notifications\CampaignDraft;
 use Adshares\Adserver\Mail\Notifications\CampaignEnded;
+use Adshares\Adserver\Mail\Notifications\CampaignEndedExtend;
 use Adshares\Adserver\Mail\Notifications\CampaignEnds;
 use Adshares\Adserver\Mail\Notifications\FundsEnds;
 use Adshares\Adserver\Mail\Notifications\InactiveAdvertiser;
@@ -124,6 +125,61 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
 
         Mail::assertQueued(Mailable::class, 1);
         Mail::assertQueued(CampaignEnded::class, fn($mail) => $mail->hasTo($user->email));
+    }
+
+    public function testHandleLastCampaignEndedLongAgo(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['email' => 'user@example.com']);
+        Campaign::factory()->create(
+            [
+                'status' => Campaign::STATUS_ACTIVE,
+                'time_start' => (new DateTimeImmutable('-1 month'))->format(DATE_ATOM),
+                'time_end' => (new DateTimeImmutable('-20 days'))->format(DATE_ATOM),
+                'user_id' => $user,
+            ]
+        );
+
+        $this->artisan('ops:email-notifications:send')
+            ->assertExitCode(0);
+
+        Mail::assertQueued(Mailable::class, 1);
+        Mail::assertQueued(CampaignEndedExtend::class, fn($mail) => $mail->hasTo($user->email));
+    }
+
+    public function testHandleCampaignEndedLongAgoButAnotherIsActive(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['email' => 'user@example.com']);
+        UserLedgerEntry::factory()->create(
+            [
+                'amount' => 100_000 * 1e11,
+                'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                'user_id' => $user,
+            ]
+        );
+        Campaign::factory()->create(
+            [
+                'status' => Campaign::STATUS_ACTIVE,
+                'time_start' => (new DateTimeImmutable('-1 month'))->format(DATE_ATOM),
+                'time_end' => (new DateTimeImmutable('-20 days'))->format(DATE_ATOM),
+                'user_id' => $user,
+            ]
+        );
+        Campaign::factory()->create(
+            [
+                'status' => Campaign::STATUS_ACTIVE,
+                'time_start' => (new DateTimeImmutable('-1 month'))->format(DATE_ATOM),
+                'time_end' => (new DateTimeImmutable('+1 week'))->format(DATE_ATOM),
+                'user_id' => $user,
+            ]
+        );
+
+        $this->artisan('ops:email-notifications:send')
+            ->assertExitCode(0);
+
+        Mail::assertNothingQueued();
     }
 
     public function testHandleFundsEnds(): void
