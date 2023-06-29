@@ -937,7 +937,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.12...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.5.1...develop
+[2.5.1]: https://github.com/adshares/adserver/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/adshares/adserver/compare/v2.4.13...v2.5.0
+[2.4.13]: https://github.com/adshares/adserver/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/adshares/adserver/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
