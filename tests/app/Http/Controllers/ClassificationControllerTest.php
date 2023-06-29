@@ -24,12 +24,14 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Client\ClassifierExternalClient;
+use Adshares\Adserver\Mail\Notifications\CampaignAccepted;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
+use Illuminate\Support\Facades\Mail;
 use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -67,8 +69,46 @@ class ClassificationControllerTest extends TestCase
                 'gambling',
             ],
         ];
-
         $this->assertEquals($expectedKeywords, $keywords);
+        Mail::assertQueued(CampaignAccepted::class, 1);
+    }
+
+    public function testUpdateClassificationOneBannerOfTwo(): void
+    {
+        $banner = $this->insertBanner();
+        Banner::factory()->create(['campaign_id' => $banner->campaign, 'status' => Banner::STATUS_ACTIVE]);
+
+        $response = $this->patchJson(
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
+            $this->getKeywords($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Mail::assertNothingQueued();
+    }
+
+    public function testUpdateClassificationTwoBannersFromOneCampaignInSubsequentRequests(): void
+    {
+        $banner = $this->insertBanner();
+        /** @var Banner $banner2 */
+        $banner2 = Banner::factory()->create(['campaign_id' => $banner->campaign, 'status' => Banner::STATUS_ACTIVE]);
+        $banner2->classifications()->save(BannerClassification::prepare(self::CLASSIFIER_NAME));
+
+        $response = $this->patchJson(
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
+            $this->getKeywords($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Mail::assertNothingQueued();
+
+        $response2 = $this->patchJson(
+            self::URI_UPDATE . self::CLASSIFIER_NAME,
+            $this->getKeywords($banner2)
+        );
+
+        $response2->assertStatus(Response::HTTP_NO_CONTENT);
+        Mail::assertQueued(CampaignAccepted::class, 1);
     }
 
     public function testUpdateClassificationDeletedBanner(): void
@@ -170,8 +210,8 @@ class ClassificationControllerTest extends TestCase
                 'gambling',
             ],
         ];
-
         $this->assertEquals($expectedKeywords, $keywords);
+        Mail::assertQueued(CampaignAccepted::class, 1);
     }
 
     public function testUpdateClassificationError(): void
@@ -235,8 +275,9 @@ class ClassificationControllerTest extends TestCase
     private function insertBanner(): Banner
     {
         $user = User::factory()->create();
-        $campaign = Campaign::factory()->create(['status' => Campaign::STATUS_ACTIVE, 'user_id' => $user->id]);
-        $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
+        $campaign = Campaign::factory()->create(['status' => Campaign::STATUS_ACTIVE, 'user_id' => $user]);
+        /** @var Banner $banner */
+        $banner = Banner::factory()->create(['campaign_id' => $campaign, 'status' => Banner::STATUS_ACTIVE]);
         $banner->classifications()->save(BannerClassification::prepare(self::CLASSIFIER_NAME));
 
         return $banner;
