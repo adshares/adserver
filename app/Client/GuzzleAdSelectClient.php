@@ -259,15 +259,21 @@ class GuzzleAdSelectClient implements AdSelect
         }
 
         $bannerIds = [];
-        foreach ($zoneCollection as $requestId => $zone) {
+        $requestMapping = [];
+        foreach ($zoneIds as $i => $id) {
+            $originalRequestId = $zones[$i]['id'] ?? $i;
+            $requestId = $zoneInputByUuid[$id]['id'] ?? $i;
+            $requestMapping[$originalRequestId] = $requestId;
             if (isset($existingZones[$requestId]) && isset($items[$requestId])) {
-                $bannerIds[$requestId] = $items[$requestId];
+                $bannerIds[$originalRequestId] = $items[$requestId];
             } else {
-                $bannerIds[$requestId] = [null];
+                $bannerIds[$originalRequestId] = [null];
             }
         }
 
-        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection, $impressionId));
+        $banners = iterator_to_array(
+            $this->fetchInOrderOfAppearance($bannerIds, $zoneCollection, $requestMapping, $impressionId)
+        );
 
         return new FoundBanners($banners);
     }
@@ -275,6 +281,7 @@ class GuzzleAdSelectClient implements AdSelect
     private function fetchInOrderOfAppearance(
         array $params,
         Collection $zoneCollection,
+        array $requestMapping,
         string $impressionId,
     ): Generator {
         /** @var LicenseReader $licenseReader */
@@ -293,7 +300,7 @@ class GuzzleAdSelectClient implements AdSelect
 
                     yield null;
                 } else {
-                    $zone = $zoneCollection[$requestId];
+                    $zone = $zoneCollection[$requestMapping[$requestId]];
                     $campaign = $banner->campaign;
                     $data = [
                         'id'            => $bannerId,
