@@ -32,18 +32,23 @@ class CampaignAccepted extends Mailable
     use SerializesModels;
 
     protected $campaign;
+    protected $allBannersAccepted;
 
-    public function __construct($campaign)
+    public function __construct($campaign, $allBannersAccepted)
     {
         $this->campaign = $campaign;
+        $this->allBannersAccepted = $allBannersAccepted;
     }
 
     public function build(): Mailable
     {
-        $this->subject = sprintf('Good News: Your Campaign "%s" Has Been Approved!', $this->campaign->name);
+        $this->subject = $this->allBannersAccepted
+            ? sprintf('Good News: Your Campaign "%s" Has Been Approved!', $this->campaign->name)
+            : sprintf('Campaign "%s" Approved, Some Banners Rejected', $this->campaign->name);
         return $this->markdown('emails.notifications.campaign-accepted')
             ->with(
                 [
+                    'allBannersAccepted' => $this->allBannersAccepted,
                     'bookingUrl' => config('app.booking_url'),
                     'campaignName' => $this->campaign->name,
                     'campaignUrl' => AdPanelUrlBuilder::buildCampaignUrl($this->campaign),

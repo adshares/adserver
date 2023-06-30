@@ -27,11 +27,25 @@ use Adshares\Adserver\Tests\Mail\MailTestCase;
 
 class CampaignAcceptedTest extends MailTestCase
 {
-    public function testBuild(): void
+    private const COMMON_TEXT = 'Your campaign, "Go Adshares", has been verified and accepted.';
+    private const REJECTED_ONLY_TEXT =
+        "However, certain banners didn't meet our guidelines due to quality and thematic issues.";
+
+    public function testBuildWhileAllBannerAccepted(): void
     {
         $campaign = Campaign::factory()->create(['name' => 'Go Adshares']);
-        $mailable = new CampaignAccepted($campaign);
+        $mailable = new CampaignAccepted($campaign, true);
 
-        $mailable->assertSeeInText('Your campaign, "Go Adshares", has been verified and accepted.');
+        $mailable->assertSeeInText(self::COMMON_TEXT);
+        $mailable->assertDontSeeInText(self::REJECTED_ONLY_TEXT);
+    }
+
+    public function testBuildWhileSomeBannersRejected(): void
+    {
+        $campaign = Campaign::factory()->create(['name' => 'Go Adshares']);
+        $mailable = new CampaignAccepted($campaign, false);
+
+        $mailable->assertSeeInText(self::COMMON_TEXT);
+        $mailable->assertSeeInText(self::REJECTED_ONLY_TEXT);
     }
 }

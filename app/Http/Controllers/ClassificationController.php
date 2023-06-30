@@ -44,6 +44,11 @@ use function sprintf;
 
 class ClassificationController extends Controller
 {
+    private const CAMPAIGN_NOT_CLASSIFIED = 1;
+    private const CAMPAIGN_ACCEPTED = 2;
+    private const CAMPAIGN_PARTIALLY_ACCEPTED = 3;
+    private const CAMPAIGN_REJECTED = 4;
+
     public function __construct(
         private readonly CampaignRepository $campaignRepository,
         private readonly ClassifierExternalRepository $classifierRepository,
@@ -230,30 +235,40 @@ class ClassificationController extends Controller
 
         $campaigns = $this->campaignRepository->fetchCampaignByIds(array_keys($campaignIds));
         foreach ($campaigns as $campaign) {
-            $allClassified = $this->areAllCampaignBannersClassified($campaign, $classifier);
-            if ($allClassified && null !== $campaign->user->email) {
-                Mail::to($campaign->user->email)->queue(new CampaignAccepted($campaign));
+            if (null !== $campaign->user->email) {
+                $status = $this->getClassificationStatus($campaign, $classifier);
+                if (in_array($status, [self::CAMPAIGN_ACCEPTED, self::CAMPAIGN_PARTIALLY_ACCEPTED], true)) {
+                    Mail::to($campaign->user->email)
+                        ->queue(new CampaignAccepted($campaign, self::CAMPAIGN_ACCEPTED === $status));
+                }
             }
         }
     }
 
-    private function areAllCampaignBannersClassified(Campaign $campaign, string $classifier): bool
+    private function getClassificationStatus(Campaign $campaign, string $classifier): int
     {
         $bannerIds = $campaign->banners->pluck('id')->toArray();
         $classificationStatuses = BannerClassification::fetchBannersClassificationStatus($bannerIds, $classifier);
 
         if (count($classificationStatuses) !== count($bannerIds)) {
-            return false;
+            return self::CAMPAIGN_NOT_CLASSIFIED;
         }
 
+        $isAnyAccepted = false;
+        $isAnyRejected = false;
         foreach ($classificationStatuses as $status) {
-            if (
-                BannerClassification::STATUS_NEW === $status ||
-                BannerClassification::STATUS_IN_PROGRESS === $status
-            ) {
-                return false;
+            if (BannerClassification::STATUS_SUCCESS === $status) {
+                $isAnyAccepted = true;
+            } elseif (BannerClassification::STATUS_FAILURE === $status) {
+                $isAnyRejected = true;
+            } else {
+                return self::CAMPAIGN_NOT_CLASSIFIED;
             }
         }
-        return true;
+
+        if ($isAnyAccepted) {
+            return $isAnyRejected ? self::CAMPAIGN_PARTIALLY_ACCEPTED : self::CAMPAIGN_ACCEPTED;
+        }
+        return self::CAMPAIGN_REJECTED;
     }
 }
