@@ -156,6 +156,7 @@ abstract class TestCase extends BaseTestCase
                 $licenseReader = self::createMock(LicenseReader::class);
                 $licenseReader->method('getAddress')->willReturn(new AccountId('FFFF-00000000-3F2E'));
                 $licenseReader->method('getFee')->willReturn(0.01);
+                $licenseReader->method('getInfoBox')->willReturn(true);
                 return $licenseReader;
             }
         );
