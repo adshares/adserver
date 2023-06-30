@@ -31,6 +31,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -154,6 +155,7 @@ class GuzzleAdSelectClient implements AdSelect
             if (!array_key_exists($siteId, $sitesMap)) {
                 $site = $zone->site;
 
+                /** @var User $user */
                 $isActive = null !== $site && $site->status === Site::STATUS_ACTIVE && null !== ($user = $site->user);
 
                 if ($isActive) {
@@ -179,11 +181,13 @@ class GuzzleAdSelectClient implements AdSelect
                     }
                     // always include active pop zones
                     foreach ($site->zones as $popupZone) {
-                        if (!in_array($popupZone->uuid, $zoneIds)) {
-                            if ($popupZone->type == 'pop' && $popupZone->status == Zone::STATUS_ACTIVE) {
-                                $zoneIds[] = $popupZone->uuid;
-                                $zoneList[] = $popupZone;
-                            }
+                        if (
+                            Zone::TYPE_POP === $popupZone->type &&
+                            Zone::STATUS_ACTIVE === $popupZone->status &&
+                            !in_array($popupZone->uuid, $zoneIds)
+                        ) {
+                            $zoneIds[] = $popupZone->uuid;
+                            $zoneList[] = $popupZone;
                         }
                     }
                 } else {
