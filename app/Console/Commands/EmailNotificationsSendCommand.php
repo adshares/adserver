@@ -37,10 +37,12 @@ use Adshares\Adserver\Mail\Notifications\InactiveUserWhoDeposit;
 use Adshares\Adserver\Mail\Notifications\SiteDraft;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -85,15 +87,38 @@ class EmailNotificationsSendCommand extends BaseCommand
 
         $campaigns = $this->campaignRepository->fetchDraftCampaignsCreatedBefore($now->modify('-3 days'));
         foreach ($campaigns as $campaign) {
-            if (null !== $campaign->user->email) {
+            if (
+                null !== $campaign->user->email &&
+                null === NotificationEmailLog::fetch(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignDraft,
+                    ['campaignId' => $campaign->id],
+                )
+            ) {
                 Mail::to($campaign->user->email)->queue(new CampaignDraft($campaign));
+                NotificationEmailLog::register(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignDraft,
+                    null,
+                    ['campaignId' => $campaign->id],
+                );
             }
         }
 
         $campaigns = $this->campaignRepository->fetchLastCampaignsEndedBefore($now->modify('-2 weeks'));
         foreach ($campaigns as $campaign) {
-            if (null !== $campaign->user->email) {
+            if (
+                null !== $campaign->user->email &&
+                null === NotificationEmailLog::fetch(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignEndedExtend,
+                )
+            ) {
                 Mail::to($campaign->user->email)->queue(new CampaignEndedExtend());
+                NotificationEmailLog::register(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignEndedExtend,
+                );
             }
         }
 
@@ -102,8 +127,21 @@ class EmailNotificationsSendCommand extends BaseCommand
             $now->modify('+3 days'),
         );
         foreach ($campaigns as $campaign) {
-            if (null !== $campaign->user->email) {
+            if (
+                null !== $campaign->user->email &&
+                null === NotificationEmailLog::fetch(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignEnds,
+                    ['campaignId' => $campaign->id],
+                )
+            ) {
                 Mail::to($campaign->user->email)->queue(new CampaignEnds($campaign));
+                NotificationEmailLog::register(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignEnds,
+                    $now->modify('+3 days'),
+                    ['campaignId' => $campaign->id],
+                );
             }
         }
 
@@ -112,8 +150,21 @@ class EmailNotificationsSendCommand extends BaseCommand
             $now,
         );
         foreach ($campaigns as $campaign) {
-            if (null !== $campaign->user->email) {
+            if (
+                null !== $campaign->user->email &&
+                null === NotificationEmailLog::fetch(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignEnded,
+                    ['campaignId' => $campaign->id],
+                )
+            ) {
                 Mail::to($campaign->user->email)->queue(new CampaignEnded($campaign));
+                NotificationEmailLog::register(
+                    $campaign->user->id,
+                    NotificationEmailCategory::CampaignEnded,
+                    null,
+                    ['campaignId' => $campaign->id],
+                );
             }
         }
     }
@@ -136,13 +187,18 @@ class EmailNotificationsSendCommand extends BaseCommand
             $walletBalance = $user->getWalletBalance();
             $bonusBalance = $user->getBonusBalance();
 
-            $periodCount = 24 * 5;
+            $periodCount = 24 * 5;// 5 days
             $requiredBonus = $exchangeRate->toClick($budget->bonusable()) * $periodCount;
             $requiredTotal = $exchangeRate->toClick($budget->total()) * $periodCount;
             $requiredTotal -= min($bonusBalance, $requiredBonus);
 
             if ($walletBalance < $requiredTotal) {
                 Mail::to($user->email)->queue(new FundsEnds());
+                NotificationEmailLog::register(
+                    $userId,
+                    NotificationEmailCategory::FundsEnds,
+                    new DateTimeImmutable('+5 days'),
+                );
             }
         });
     }
@@ -151,28 +207,45 @@ class EmailNotificationsSendCommand extends BaseCommand
     {
         $users = User::fetchInactiveUsersWithEmailsCreatedBefore(new DateTimeImmutable('-3 days'));
         $users->each(static function (User $user) {
-            $lastActivity = $user->last_active_at ?? $user->updated_at;
-            if (new DateTimeImmutable('-2 weeks') > $lastActivity) {
-                Mail::to($user->email)->queue(new InactiveUserExtend());
-                return;
-            }
-            $userId = $user->id;
-            if (
-                null !== ($deposit = UserLedgerEntry::fetchFirstDeposit($userId)) &&
-                new DateTimeImmutable('-3 days') > $deposit->created_at
-            ) {
-                Mail::to($user->email)->queue(new InactiveUserWhoDeposit());
+            if (null !== NotificationEmailLog::fetch($user->id, NotificationEmailCategory::InactiveUserExtend)) {
                 return;
             }
 
-            if ($user->isAdvertiser()) {
-                if ($user->isPublisher()) {
-                    Mail::to($user->email)->queue(new InactiveUser());
-                } else {
-                    Mail::to($user->email)->queue(new InactiveAdvertiser());
+            $lastActivity = $user->last_active_at ?? $user->updated_at;
+            if (new DateTimeImmutable('-2 weeks') > $lastActivity) {
+                Mail::to($user->email)->queue(new InactiveUserExtend());
+                NotificationEmailLog::register($user->id, NotificationEmailCategory::InactiveUserExtend);
+                return;
+            }
+
+            if (null !== NotificationEmailLog::fetch($user->id, NotificationEmailCategory::InactiveUserWhoDeposit)) {
+                return;
+            }
+
+            if (
+                null !== ($deposit = UserLedgerEntry::fetchFirstDeposit($user->id)) &&
+                new DateTimeImmutable('-3 days') > $deposit->created_at
+            ) {
+                Mail::to($user->email)->queue(new InactiveUserWhoDeposit());
+                NotificationEmailLog::register($user->id, NotificationEmailCategory::InactiveUserWhoDeposit);
+                return;
+            }
+
+            if (null === NotificationEmailLog::fetch($user->id, NotificationEmailCategory::InactiveUser)) {
+                $mailable = null;
+                if ($user->isAdvertiser()) {
+                    if ($user->isPublisher()) {
+                        $mailable = new InactiveUser();
+                    } else {
+                        $mailable = new InactiveAdvertiser();
+                    }
+                } elseif ($user->isPublisher()) {
+                    $mailable = new InactivePublisher();
                 }
-            } elseif ($user->isPublisher()) {
-                Mail::to($user->email)->queue(new InactivePublisher());
+                if (null !== $mailable) {
+                    Mail::to($user->email)->queue($mailable);
+                    NotificationEmailLog::register($user->id, NotificationEmailCategory::InactiveUser);
+                }
             }
         });
     }
@@ -187,8 +260,21 @@ class EmailNotificationsSendCommand extends BaseCommand
                 continue;
             }
             $notifiedUserIds[$site->medium][$user->id] = true;
-            if (null !== $user->email) {
+            if (
+                null !== $user->email &&
+                null === NotificationEmailLog::fetch(
+                    $user->id,
+                    NotificationEmailCategory::SiteDraft,
+                    ['siteId' => $site->id],
+                )
+            ) {
                 Mail::to($user->email)->queue(new SiteDraft($site->medium));
+                NotificationEmailLog::register(
+                    $user->id,
+                    NotificationEmailCategory::SiteDraft,
+                    null,
+                    ['siteId' => $site->id],
+                );
             }
         }
     }

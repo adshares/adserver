@@ -27,9 +27,11 @@ use Adshares\Adserver\Mail\Notifications\CampaignAccepted;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Http\Request;
@@ -237,9 +239,22 @@ class ClassificationController extends Controller
         foreach ($campaigns as $campaign) {
             if (null !== $campaign->user->email) {
                 $status = $this->getClassificationStatus($campaign, $classifier);
-                if (in_array($status, [self::CAMPAIGN_ACCEPTED, self::CAMPAIGN_PARTIALLY_ACCEPTED], true)) {
+                if (
+                    in_array($status, [self::CAMPAIGN_ACCEPTED, self::CAMPAIGN_PARTIALLY_ACCEPTED], true) &&
+                    null === NotificationEmailLog::fetch(
+                        $campaign->user->id,
+                        NotificationEmailCategory::CampaignAccepted,
+                        ['campaignId' => $campaign->id],
+                    )
+                ) {
                     Mail::to($campaign->user->email)
                         ->queue(new CampaignAccepted($campaign, self::CAMPAIGN_ACCEPTED === $status));
+                    NotificationEmailLog::register(
+                        $campaign->user->id,
+                        NotificationEmailCategory::CampaignAccepted,
+                        null,
+                        ['campaignId' => $campaign->id],
+                    );
                 }
             }
         }

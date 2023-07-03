@@ -36,11 +36,13 @@ use Adshares\Adserver\Mail\Notifications\InactiveUserExtend;
 use Adshares\Adserver\Mail\Notifications\InactiveUserWhoDeposit;
 use Adshares\Adserver\Mail\Notifications\SiteDraft;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use DateTimeImmutable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
@@ -314,6 +316,38 @@ class EmailNotificationsSendCommandTest extends ConsoleTestCase
 
         Mail::assertQueued(Mailable::class, 1);
         Mail::assertQueued(InactiveUser::class, fn($mail) => $mail->hasTo($user->email));
+    }
+
+    public function testHandleInactiveUserIfNotifiedBeforeAboutLongInactivity(): void
+    {
+        $user = $this->initUserWithConfirmedEmail();
+        NotificationEmailLog::factory()->create(
+            [
+                'category' => NotificationEmailCategory::InactiveUserExtend,
+                'user_id' => $user,
+            ]
+        );
+
+        $this->artisan('ops:email-notifications:send')
+            ->assertExitCode(0);
+
+        Mail::assertNothingQueued();
+    }
+
+    public function testHandleInactiveUserIfNotifiedBeforeAboutDeposit(): void
+    {
+        $user = $this->initUserWithConfirmedEmail();
+        NotificationEmailLog::factory()->create(
+            [
+                'category' => NotificationEmailCategory::InactiveUserWhoDeposit,
+                'user_id' => $user,
+            ]
+        );
+
+        $this->artisan('ops:email-notifications:send')
+            ->assertExitCode(0);
+
+        Mail::assertNothingQueued();
     }
 
     public function testHandleInactiveUserWhoDeposit(): void

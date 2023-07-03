@@ -21,8 +21,6 @@
 
 namespace Adshares\Adserver\Utilities;
 
-use Adshares\Adserver\Models\Campaign;
-
 class AdPanelUrlBuilder
 {
     public static function buildAdvertiserDashboardUrl(): string
@@ -30,9 +28,9 @@ class AdPanelUrlBuilder
         return config('app.adpanel_url') . '/advertiser/dashboard';
     }
 
-    public static function buildCampaignUrl(Campaign $campaign): string
+    public static function buildCampaignUrl(int $campaignId): string
     {
-        return config('app.adpanel_url') . '/advertiser/campaign/' . $campaign->id;
+        return config('app.adpanel_url') . '/advertiser/campaign/' . $campaignId;
     }
 
     public static function buildDepositUrl(): string
@@ -43,6 +41,11 @@ class AdPanelUrlBuilder
     public static function buildPublisherDashboardUrl(): string
     {
         return config('app.adpanel_url') . '/publisher/dashboard';
+    }
+
+    public static function buildSiteUrl(int $siteId): string
+    {
+        return config('app.adpanel_url') . '/publisher/site/' . $siteId;
     }
 
     public static function buildUrl(): string

@@ -46,7 +46,7 @@ class CampaignDraft extends Mailable
                 [
                     'bookingUrl' => config('app.booking_url'),
                     'campaignName' => $this->campaign->name,
-                    'campaignUrl' => AdPanelUrlBuilder::buildCampaignUrl($this->campaign),
+                    'campaignUrl' => AdPanelUrlBuilder::buildCampaignUrl($this->campaign->id),
                     'contactEmail' => config('app.support_email'),
                 ]
             );
