@@ -103,7 +103,8 @@ class CampaignRepository
     public function fetchLastCampaignsEndedBefore(DateTimeInterface $dateTo): Collection
     {
         return Campaign::query()
-            ->select('user_id', DB::raw('MAX(time_end) as time_end'))
+            // NULL as MAXIMAL TIMESTAMP
+            ->select('user_id', DB::raw("MAX(IFNULL(time_end, '2038-01-19 03:14:07')) as time_end"))
             ->where('status', Campaign::STATUS_ACTIVE)
             ->groupBy('user_id')
             ->having('time_end', '<', $dateTo)

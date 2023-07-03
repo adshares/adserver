@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class NotificationEmailLogFactory extends Factory
 {
+    private const MAXIMAL_TIMESTAMP = '@2147483647';
+
     /**
      * @return array<string, mixed>
      */
@@ -22,7 +24,7 @@ class NotificationEmailLogFactory extends Factory
             'created_at' => new DateTimeImmutable(),
             'properties' => [],
             'user_id' => User::factory()->create(),
-            'valid_until' => new DateTimeImmutable('+1 year'),
+            'valid_until' => new DateTimeImmutable(self::MAXIMAL_TIMESTAMP),
         ];
     }
 }

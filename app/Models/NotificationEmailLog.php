@@ -49,6 +49,10 @@ class NotificationEmailLog extends Model
         'category' => NotificationEmailCategory::class,
     ];
 
+    protected $dates = [
+        'valid_until',
+    ];
+
     public static function register(
         int $userId,
         NotificationEmailCategory $category,
@@ -85,6 +89,12 @@ class NotificationEmailLog extends Model
             }
         }
         return null;
+    }
+
+    public function invalidate(): void
+    {
+        $this->valid_until = Carbon::now();
+        $this->save();
     }
 
     public function getPropertiesAttribute(): array
