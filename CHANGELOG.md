@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not send ban email if banned user has not registered address
 - Check Decentraland user ID during event export in case of general metaverse campaign
 
+## [2.5.1] - 2023-06-30
+### Changed
+- Extend placements visibility check
+- Find request for duplicated placements receives duplicated creatives
+
 ## [2.5.0] - 2023-05-15
 ### Added
 - Persist turnover data
@@ -941,7 +946,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.4.12...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.5.1...develop
+[2.5.1]: https://github.com/adshares/adserver/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/adshares/adserver/compare/v2.4.13...v2.5.0
+[2.4.13]: https://github.com/adshares/adserver/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/adshares/adserver/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/adshares/adserver/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/adshares/adserver/compare/v2.4.9...v2.4.10
