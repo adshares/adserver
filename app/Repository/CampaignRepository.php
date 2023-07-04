@@ -26,7 +26,9 @@ use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -291,6 +293,22 @@ class CampaignRepository
                 && !$campaign->banners()->where('status', Banner::STATUS_ACTIVE)->exists()
             ) {
                 throw new InvalidArgumentException('Cannot update active campaign without creatives');
+            }
+            if (Campaign::STATUS_ACTIVE === $campaign->status && !$campaign->isOutdated()) {
+                NotificationEmailLog::fetch($campaign->user_id, NotificationEmailCategory::CampaignEndedExtend)
+                    ?->invalidate();
+                NotificationEmailLog::fetch(
+                    $campaign->user_id,
+                    NotificationEmailCategory::CampaignEnded,
+                    ['campaignId' => $campaign->id],
+                )?->invalidate();
+            }
+            if (!empty($bannersToInsert)) {
+                NotificationEmailLog::fetch(
+                    $campaign->user_id,
+                    NotificationEmailCategory::CampaignAccepted,
+                    ['campaignId' => $campaign->id],
+                )?->invalidate();
             }
             DB::commit();
         } catch (InvalidArgumentException $exception) {

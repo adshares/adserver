@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 
-class NotificationEmailTest extends TestCase
+class NotificationEmailLogTest extends TestCase
 {
     /**
      * @dataProvider fetchProvider
@@ -87,7 +87,8 @@ class NotificationEmailTest extends TestCase
         ];
     }
 
-    public function testFetchWhilePropertiesAreIrrelevant(): void {
+    public function testFetchWhilePropertiesAreIrrelevant(): void
+    {
         /** @var User $user */
         $user = User::factory()->create();
         NotificationEmailLog::factory()->create([

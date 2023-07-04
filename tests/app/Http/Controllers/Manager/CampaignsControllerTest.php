@@ -30,10 +30,12 @@ use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\UploadedFile as UploadedFileModel;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -47,6 +49,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use PDOException;
 use Symfony\Component\HttpFoundation\Response;
@@ -114,7 +117,14 @@ final class CampaignsControllerTest extends TestCase
 
     public function testAddCampaignWithBanner(): void
     {
-        $this->createUser();
+        $user = $this->createUser();
+        /** @var NotificationEmailLog $notificationLogEntry */
+        $notificationLogEntry = NotificationEmailLog::factory()->create(
+            [
+                'category' => NotificationEmailCategory::CampaignEndedExtend,
+                'user_id' => $user,
+            ]
+        );
         $campaignData = $this->getCampaignData();
         $campaignData['basicInformation']['budget'] = (int)1e11;
 
@@ -122,10 +132,10 @@ final class CampaignsControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_CREATED);
         $bannerId = $response->json('ads.0.id');
-
         self::assertDatabaseHas(BannerClassification::class, [
             'banner_id' => $bannerId,
         ]);
+        self::assertLessThanOrEqual(Carbon::now(), $notificationLogEntry->refresh()->valid_until);
     }
 
     public function testAddMetaverseCampaign(): void
@@ -251,6 +261,7 @@ final class CampaignsControllerTest extends TestCase
 
     private function getBannerData(array $mergeData = [], string $remove = null): array
     {
+        /** @var UploadedFileModel $file */
         $file = UploadedFileModel::factory()->create(['user_id' => User::first()]);
         $data = array_merge(
             [
