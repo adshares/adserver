@@ -153,6 +153,16 @@ class ServerMonitoringController extends Controller
             $dateFilter?->getTo() ?: new DateTimeImmutable(),
             $turnoverType,
         );
+        $addresses = $data->pluck('ads_address')->toArray();
+        $nameByAddress = [];
+        foreach (NetworkHost::fetchByAddresses($addresses) as $networkHost) {
+            $nameByAddress[$networkHost->address] = $networkHost->info->getName();
+        }
+        $data = $data->toArray();
+        foreach ($data as &$entry) {
+            $entry['name'] = $nameByAddress[$entry['ads_address']] ?? null;
+        }
+
         return self::json($data);
     }
 
@@ -244,7 +254,9 @@ class ServerMonitoringController extends Controller
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        Mail::to($user)->queue(new UserBanned($reason));
+        if (null !== $user->email) {
+            Mail::to($user)->queue(new UserBanned($reason));
+        }
 
         return new UserResource($user);
     }

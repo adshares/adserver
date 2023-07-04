@@ -305,6 +305,10 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testFetchTurnoverByType(): void
     {
+        /** @var NetworkHost $networkHost1 */
+        $networkHost1 = NetworkHost::factory()->create(['address' => '0001-00000002-BB2D']);
+        /** @var NetworkHost $networkHost2 */
+        $networkHost2 = NetworkHost::factory()->create(['address' => '0001-00000003-AB0C']);
         $this->setUpAdmin();
         $this->seedTurnoverData();
 
@@ -328,10 +332,12 @@ final class ServerMonitoringControllerTest extends TestCase
                 [
                     'adsAddress' => '0001-00000002-BB2D',
                     'amount' => 76_018_000_000,
+                    'name' => $networkHost1->info->getName(),
                 ],
                 [
                     'adsAddress' => '0001-00000003-AB0C',
                     'amount' => 100_400_000_000,
+                    'name' => $networkHost2->info->getName(),
                 ],
             ]
         );
