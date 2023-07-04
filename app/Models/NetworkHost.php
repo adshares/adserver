@@ -87,6 +87,11 @@ class NetworkHost extends Model
         return (new self())->where('address', $address)->first();
     }
 
+    public static function fetchByAddresses(array $addresses): Collection
+    {
+        return self::query()->whereIn('address', $addresses)->withTrashed()->get();
+    }
+
     public static function fetchByHost(string $host): ?self
     {
         return (new self())->where('host', $host)->first();

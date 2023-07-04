@@ -408,8 +408,11 @@ SQL;
         if (
             !$userId ||
             (
-                MetaverseVendor::Decentraland->value === $this->vendor &&
                 MediumName::Metaverse->value === $this->medium &&
+                (
+                    MetaverseVendor::Decentraland->value === $this->vendor ||
+                    str_ends_with($this->domain ?? '', '.' . MetaverseVendor::Decentraland->baseDomain())
+                ) &&
                 !isset($userContext->keywords()['user']['external_user_id'])
             )
         ) {
