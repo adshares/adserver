@@ -182,9 +182,6 @@ class CampaignRepository
             $this->bannerClassificationCreator->createForCampaign($campaign);
             $campaign->refresh();
             DB::commit();
-        } catch (InvalidArgumentException $exception) {
-            DB::rollBack();
-            throw $exception;
         } catch (Throwable $throwable) {
             DB::rollBack();
             Log::error(sprintf('Campaign save failed (%s)', $throwable->getMessage()));
