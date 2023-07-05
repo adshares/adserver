@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Do not send ban email if banned user has not registered address
 - Check Decentraland user ID during event export in case of general metaverse campaign
+- Do not return redundant fields (time_start, time_end, bid_strategy_uuid) for campaign
 
 ## [2.5.1] - 2023-06-30
 ### Changed
