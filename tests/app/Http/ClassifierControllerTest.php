@@ -29,6 +29,8 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -81,6 +83,40 @@ final class ClassifierControllerTest extends TestCase
         $expectedBannerIds = [$bannerDecentraland->id];
 
         $response = $this->getJson(sprintf('%s/%d?sizes=%s', self::CLASSIFICATION_LIST, $site->id, $sizes));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('itemsCount', 1);
+        self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
+    }
+
+    public function testFetchWithFilterByCreationDate(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user]);
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create([
+            'created_at' => new DateTimeImmutable('2023-04-11 10:30:00'),
+            'network_campaign_id' => $campaign,
+        ]);
+        NetworkBanner::factory()->create([
+            'created_at' => new DateTimeImmutable('2023-06-11 10:30:00'),
+            'network_campaign_id' => $campaign,
+        ]);
+        $query = http_build_query(
+            [
+                'filter' => [
+                    'createdAt' => [
+                        'from' => (new DateTimeImmutable('2023-04-11 00:00:00'))->format(DateTimeInterface::ATOM),
+                        'to' => (new DateTimeImmutable('2023-04-11 23:59:59'))->format(DateTimeInterface::ATOM),
+                    ]
+                ]
+            ]
+        );
+        $expectedBannerIds = [$banner->id];
+
+        $response = $this->getJson(sprintf('%s/%d?%s', self::CLASSIFICATION_LIST, $site->id, $query));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('itemsCount', 1);
@@ -406,6 +442,7 @@ final class ClassifierControllerTest extends TestCase
             ['adshares.net'],
         ];
     }
+
     public function testFetchInvalidSiteId(): void
     {
         $user = $this->login();

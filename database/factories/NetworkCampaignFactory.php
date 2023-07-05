@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Adshares\Adserver\ViewModel\MediumName;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class NetworkCampaignFactory extends Factory
@@ -42,6 +43,8 @@ class NetworkCampaignFactory extends Factory
             'budget' => $this->faker->randomDigit(),
             'date_start' => $this->faker->date('Y-m-d H:i:s'),
             'date_end' => $this->faker->date('Y-m-d H:i:s'),
+            'medium' => MediumName::Web->value,
+            'vendor' => null,
         ];
     }
 }

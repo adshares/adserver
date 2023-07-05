@@ -22,6 +22,8 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
+use Adshares\Adserver\Http\Requests\Filter\DateFilter;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -74,6 +76,7 @@ class NetworkBanner extends Model
     ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
+    private const NETWORK_BANNERS_COLUMN_CREATED_AT = 'network_banners.created_at';
     private const NETWORK_BANNERS_COLUMN_SERVE_URL = 'network_banners.serve_url';
     private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
     private const NETWORK_BANNERS_COLUMN_MIME = 'network_banners.mime';
@@ -165,18 +168,23 @@ class NetworkBanner extends Model
 
     /**
      * @param NetworkBannerFilter $networkBannerFilter
+     * @param ?FilterCollection $filters
      * @param Collection<Site> $sites
+     *
      * @return Collection<self>
      */
     public static function fetchByFilter(
         NetworkBannerFilter $networkBannerFilter,
-        Collection $sites
+        ?FilterCollection $filters,
+        Collection $sites,
     ): Collection {
         if ($sites->isEmpty()) {
             return new Collection();
         }
         $sizes = $networkBannerFilter->getSizes();
-        return self::queryByFilter($networkBannerFilter)->get()->filter(
+        $builder = self::queryByFilter($networkBannerFilter);
+        $builder = self::appendFilterCollection($builder, $filters);
+        return $builder->get()->filter(
             function (NetworkBanner $banner) use ($sites, $sizes) {
                 if ($sizes && self::TYPE_VIDEO === $banner->type) {
                     $matching = Size::findMatchingWithSizes($sizes, ...Size::toDimensions($banner->size));
@@ -435,6 +443,32 @@ class NetworkBanner extends Model
         }
 
         return $ids;
+    }
+
+    private static function appendFilterCollection(Builder $builder, ?FilterCollection $filters): Builder
+    {
+        if (null === $filters) {
+            return $builder;
+        }
+
+        foreach ($filters->getFilters() as $filter) {
+            switch ($filter->getName()) {
+                case 'created_at':
+                    if ($filter instanceof DateFilter) {
+                        if (null !== ($from = $filter->getFrom())) {
+                            $builder->where(self::NETWORK_BANNERS_COLUMN_CREATED_AT, '>=', $from);
+                        }
+                        if (null !== ($to = $filter->getTo())) {
+                            $builder->where(self::NETWORK_BANNERS_COLUMN_CREATED_AT, '<=', $to);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return $builder;
     }
 
     public function campaign(): BelongsTo
