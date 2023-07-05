@@ -170,6 +170,7 @@ class GuzzleDemandClientTest extends TestCase
         self::assertEquals(Status::STATUS_PROCESSING, $banner->getStatus());
         self::assertEquals('fdf53fcb69012345678b6bbf69c33b348ebc6e85', $banner->getChecksum());
         self::assertEquals([], $banner->getClassification());
+        self::assertNull($banner->getSignedAt());
     }
 
     public function testFetchAllInventoryWithSignatures(): void
@@ -235,6 +236,7 @@ class GuzzleDemandClientTest extends TestCase
         self::assertEquals(['crypto'], $keywords['category']);
         self::assertEquals(['1'], $keywords['classified']);
         self::assertEquals(['high'], $keywords['quality']);
+        self::assertEquals('2022-02-10T14:08:00+00:00', $banner->getSignedAt()?->format(DateTimeInterface::ATOM));
     }
 
     public function testFetchAllInventoryWhileMissingRequiredClassification(): void
