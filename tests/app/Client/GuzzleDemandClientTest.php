@@ -172,6 +172,101 @@ class GuzzleDemandClientTest extends TestCase
         self::assertEquals([], $banner->getClassification());
     }
 
+    public function testFetchAllInventoryWithSignatures(): void
+    {
+        Config::updateAdminSettings([
+            Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '1',
+            Config::ADS_TXT_DOMAIN => 'example.com',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $inventoryResponse = json_decode($this->getInventoryResponse(), true);
+        $inventoryResponse[0]['banners'][0]['classification'] = [
+            'test-classifier' => [
+                'keywords' => [
+                    'quality' => [
+                        'high',
+                    ],
+                    'category' => [
+                        'crypto',
+                    ],
+                ],
+                'signature' => str_repeat('01', 64),
+                'signed_at' => '2022-02-10T14:08:00+00:00',
+            ]
+        ];
+        /** @var Client $client */
+        $client = self::createMock(Client::class);
+        $client->expects(self::once())
+            ->method('get')
+            ->willReturn(new GuzzleResponse(body: json_encode($inventoryResponse)));
+        $classifierRepository = self::createMock(ClassifierExternalRepository::class);
+        $classifierRepository->expects(self::once())
+            ->method('fetchRequiredClassifiersNames')
+            ->willReturn(['test-classifier']);
+        $classifierSignatureVerifier = self::createMock(ClassifierExternalSignatureVerifier::class);
+        $classifierSignatureVerifier->expects(self::once())->method('isSignatureValid')->willReturn(true);
+        $demandClient = new GuzzleDemandClient(
+            $classifierRepository,
+            $classifierSignatureVerifier,
+            $client,
+            self::createMock(SignatureVerifier::class),
+            self::createMock(AdsAuthenticator::class),
+        );
+
+        $campaigns = $demandClient->fetchAllInventory(
+            new AccountId('0001-00000004-DBEB'),
+            'https://example.com',
+            'https://app.example.com/inventory',
+            true,
+        );
+
+        self::assertCount(1, $campaigns);
+        self::assertCount(1, $campaigns->get(0)->getBanners());
+        /** @var Banner $banner */
+        $banner = $campaigns->get(0)->getBanners()->get(0);
+        $classifications = $banner->getClassification();
+        self::assertCount(1, $classifications);
+        $classification = $classifications[0];
+        self::assertEquals('test-classifier', $classification->getClassifier());
+        $keywords = $classification->getKeywords();
+        foreach (['category', 'classified', 'quality'] as $expectedKey) {
+            self::assertArrayHasKey($expectedKey, $keywords);
+        }
+        self::assertEquals(['crypto'], $keywords['category']);
+        self::assertEquals(['1'], $keywords['classified']);
+        self::assertEquals(['high'], $keywords['quality']);
+    }
+
+    public function testFetchAllInventoryWhileMissingRequiredClassification(): void
+    {
+        /** @var Client $client */
+        $client = self::createMock(Client::class);
+        $client->expects(self::once())
+            ->method('get')
+            ->willReturn(new GuzzleResponse(body: $this->getInventoryResponse()));
+        $classifierRepository = self::createMock(ClassifierExternalRepository::class);
+        $classifierRepository->expects(self::once())
+            ->method('fetchRequiredClassifiersNames')
+            ->willReturn(['test-classifier']);
+        $demandClient = new GuzzleDemandClient(
+            $classifierRepository,
+            self::createMock(ClassifierExternalSignatureVerifier::class),
+            $client,
+            self::createMock(SignatureVerifier::class),
+            self::createMock(AdsAuthenticator::class),
+        );
+
+        $campaigns = $demandClient->fetchAllInventory(
+            new AccountId('0001-00000004-DBEB'),
+            'https://example.com',
+            'https://app.example.com/inventory',
+            false,
+        );
+
+        self::assertCount(1, $campaigns);
+        self::assertCount(0, $campaigns->get(0)->getBanners());
+    }
+
     public function testFetchAllInventoryWhileDspRequiresAdsTxtButSspDoesNotSupportId(): void
     {
         Config::updateAdminSettings([Config::ADS_TXT_CHECK_SUPPLY_ENABLED => '0']);
@@ -406,4 +501,29 @@ JSON
 ]
 JSON;
     }
+//
+//    private function getInventoryResponse(): string
+//    {
+//        return <<<JSON
+//
+//        "banners": [
+//            {
+//                "classification": {
+//                    "test-classifier": {
+//                        "keywords": {
+//                            "quality": [
+//                                "high"
+//                            ],
+//                            "category": [
+//                                "crypto"
+//                            ]
+//                        },
+//                        "signature": "d6e67db9dbf662f27b1ddff693c8a8eeb4eb9deab873f88e4ad0bb03fded9b75d44c168af169f6229f9f46784b61669a9ffbe80f91c82e2f18d4256bc00b3902",
+//                        "signed_at": "2022-02-10T14:08:02+00:00"
+//                    }
+//                }
+//            }
+//        ]
+//JSON;
+//    }
 }

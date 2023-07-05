@@ -53,6 +53,7 @@ class ClassifierController extends Controller
             $request,
             [
                 'created_at' => FilterType::Date,
+                'signed_at' => FilterType::Date,
             ],
         );
 

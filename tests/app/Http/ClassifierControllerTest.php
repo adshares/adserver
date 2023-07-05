@@ -123,6 +123,40 @@ final class ClassifierControllerTest extends TestCase
         self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
     }
 
+    public function testFetchWithFilterBySignedDate(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user]);
+        $campaign = NetworkCampaign::factory()->create();
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaign,
+            'signed_at' => new DateTimeImmutable('2023-04-11 10:30:00'),
+        ]);
+        NetworkBanner::factory()->create([
+            'network_campaign_id' => $campaign,
+            'signed_at' => new DateTimeImmutable('2023-06-11 10:30:00'),
+        ]);
+        $query = http_build_query(
+            [
+                'filter' => [
+                    'signedAt' => [
+                        'from' => (new DateTimeImmutable('2023-04-11 00:00:00'))->format(DateTimeInterface::ATOM),
+                        'to' => (new DateTimeImmutable('2023-04-11 23:59:59'))->format(DateTimeInterface::ATOM),
+                    ]
+                ]
+            ]
+        );
+        $expectedBannerIds = [$banner->id];
+
+        $response = $this->getJson(sprintf('%s/%d?%s', self::CLASSIFICATION_LIST, $site->id, $query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('itemsCount', 1);
+        self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
+    }
+
     public function testFetchWithInvalidFilter(): void
     {
         $user = $this->login();
