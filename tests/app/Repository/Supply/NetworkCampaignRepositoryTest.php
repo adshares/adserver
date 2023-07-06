@@ -46,5 +46,6 @@ final class NetworkCampaignRepositoryTest extends TestCase
 
         self::assertDatabaseCount(NetworkCampaign::class, 1);
         self::assertDatabaseCount(NetworkBanner::class, 3);
+        self::assertDatabaseMissing(NetworkBanner::class, ['signed_at' => null]);
     }
 }
