@@ -58,6 +58,84 @@ final class CampaignsControllerTest extends TestCase
 {
     private const URI = '/api/campaigns';
     private const URI_FILTERS = '/api/campaigns/media';
+    private const CAMPAIGN_STRUCTURE = [
+        'campaign' => self::CAMPAIGN_DATA_STRUCTURE,
+    ];
+    private const CAMPAIGNS_STRUCTURE = [
+        '*' => self::CAMPAIGN_DATA_STRUCTURE,
+    ];
+    private const CAMPAIGN_DATA_STRUCTURE = [
+        'id',
+        'uuid',
+        'createdAt',
+        'updatedAt',
+        'secret',
+        'conversionClick',
+        'conversionClickLink',
+        'classifications' => [
+            '*' => [
+                'classifier',
+                'status',
+                'keywords',
+            ],
+        ],
+        'basicInformation' => [
+            'status',
+            'name',
+            'targetUrl',
+            'maxCpc',
+            'maxCpm',
+            'budget',
+            'medium',
+            'vendor',
+            'dateStart',
+            'dateEnd',
+        ],
+        'targeting' => [
+            'requires',
+            'excludes',
+        ],
+        'ads' => [
+            '*' => self::CREATIVE_DATA_STRUCTURE,
+        ],
+        'bidStrategy' => [
+            'name',
+            'uuid',
+        ],
+        'conversions' => [],
+    ];
+
+    private const CREATIVE_DATA_STRUCTURE = [
+        'id',
+        'uuid',
+        'createdAt',
+        'updatedAt',
+        'creativeType',
+        'creativeMime',
+        'creativeSha1',
+        'creativeSize',
+        'name',
+        'status',
+        'cdnUrl',
+        'url',
+    ];
+
+    public function testRead(): void
+    {
+        $user = $this->createUser();
+        /** @var Campaign $campaign */
+        $campaign = Campaign::factory()->create(['user_id' => $user]);
+
+        $response = $this->getJson(self::URI . '/' . $campaign->id);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
+        $arrayDiff = array_diff(
+            array_keys($response->json('campaign')),
+            self::flatStructure(self::CAMPAIGN_DATA_STRUCTURE),
+        );
+        self::assertEmpty($arrayDiff, sprintf('Redundant field(s): %s', join(', ', $arrayDiff)));
+    }
 
     public function testBrowse(): void
     {
@@ -75,7 +153,13 @@ final class CampaignsControllerTest extends TestCase
         $response = $this->getJson(self::URI);
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGNS_STRUCTURE);
         $response->assertJsonCount(3);
+        $arrayDiff = array_diff(
+            array_keys($response->json()[0]),
+            self::flatStructure(self::CAMPAIGN_DATA_STRUCTURE),
+        );
+        self::assertEmpty($arrayDiff, sprintf('Redundant field(s): %s', join(', ', $arrayDiff)));
     }
 
     public function testBrowseWhenNoCampaigns(): void
@@ -83,7 +167,9 @@ final class CampaignsControllerTest extends TestCase
         $this->createUser();
 
         $response = $this->getJson(self::URI);
+
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGNS_STRUCTURE);
         $response->assertJsonCount(0);
     }
 
@@ -104,6 +190,7 @@ final class CampaignsControllerTest extends TestCase
         $response = $this->getJson(sprintf('%s?%s', self::URI, $query));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGNS_STRUCTURE);
         $response->assertJsonCount(1);
     }
 
@@ -296,6 +383,7 @@ final class CampaignsControllerTest extends TestCase
 
             $response = $this->getJson(self::URI . '/' . $id);
             $response->assertStatus(Response::HTTP_OK);
+            $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
         }
     }
 
@@ -635,6 +723,7 @@ final class CampaignsControllerTest extends TestCase
 
         $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
         $response->assertJson(['campaign' => ['basicInformation' => ['status' => $status]]]);
     }
 
@@ -778,6 +867,7 @@ final class CampaignsControllerTest extends TestCase
 
         $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
 
         $cloned = $response->json('campaign');
 
@@ -787,7 +877,7 @@ final class CampaignsControllerTest extends TestCase
 
         $this->assertEquals($campaign->conversion_click, $cloned['conversionClick']);
         $this->assertEquals($campaign->targeting, $cloned['targeting']);
-        $this->assertEquals($campaign->bid_strategy_uuid, $cloned['bidStrategyUuid']);
+        $this->assertEquals($campaign->bid_strategy_uuid, $cloned['bidStrategy']['uuid']);
 
         $info = $cloned['basicInformation'];
         $this->assertEquals(Campaign::STATUS_DRAFT, $info['status']);
@@ -846,6 +936,7 @@ final class CampaignsControllerTest extends TestCase
 
         $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
 
         $cloned = $response->json('campaign');
 
@@ -885,6 +976,7 @@ final class CampaignsControllerTest extends TestCase
 
         $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::CAMPAIGN_STRUCTURE);
 
         $cloned = $response->json('campaign');
 
@@ -1152,5 +1244,18 @@ final class CampaignsControllerTest extends TestCase
     private static function buildCampaignStatusUri(int $campaignId): string
     {
         return sprintf('%s/%d/status', self::URI, $campaignId);
+    }
+
+    private static function flatStructure(array $structure): array
+    {
+        $result = [];
+        foreach ($structure as $key => $value) {
+            if (is_array($value)) {
+                $result[] = $key;
+            } else {
+                $result[] = $value;
+            }
+        }
+        return $result;
     }
 }

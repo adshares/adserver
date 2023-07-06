@@ -206,11 +206,13 @@ class CampaignsController extends Controller
         ]);
         $campaigns = $this->campaignRepository->find($filters);
 
+        $result = [];
         foreach ($campaigns as $campaign) {
             $campaign->classifications = BannerClassification::fetchCampaignClassifications($campaign->id);
+            $result[] = self::mapCampaign($campaign);
         }
 
-        return self::json($campaigns);
+        return self::json($result);
     }
 
     public function edit(Request $request, int $campaignId): JsonResponse
@@ -429,7 +431,7 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
         $campaign->classifications = BannerClassification::fetchCampaignClassifications($campaign->id);
 
-        return self::json(['campaign' => $campaign->toArray()]);
+        return self::json(['campaign' => $this->mapCampaign($campaign)]);
     }
 
     public function clone(int $campaignId): JsonResponse
@@ -558,5 +560,14 @@ class CampaignsController extends Controller
         }
 
         return new JsonResponse(['campaignsMedia' => $campaignsMedia]);
+    }
+
+    private static function mapCampaign(Campaign $campaign): array
+    {
+        $mapped = $campaign->toArray();
+        foreach (['time_start', 'time_end', 'bid_strategy_uuid'] as $key) {
+            unset($mapped[$key]);
+        }
+        return $mapped;
     }
 }
