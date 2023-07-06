@@ -721,11 +721,15 @@ domReady(function () {
                 });
 
                 zones.forEach(function (zone, i) {
-                    var requestId = i.toString();
-                    var banner = bannerMap[requestId];
+                    const requestId = i.toString();
+                    const banner = bannerMap[requestId];
                     delete bannerMap[requestId];
 
-                    if (!banner || typeof banner !== 'object') {
+                    if (
+                        !banner
+                        || typeof banner !== 'object'
+                        || ('00000000000000000000000000000000' === banner.publisherId && !!zone.backfill) // placeholder
+                    ) {
                         insertBackfill(zone.destElement, zone.backfill);
                         return;
                     }

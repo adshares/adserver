@@ -24,21 +24,24 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Services\Supply\DefaultBannerPlaceholderGenerator;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
-use Adshares\Demand\Application\Service\TargetingOptionsImporter;
 
-class UpdateTargetingOptionsTest extends ConsoleTestCase
+class SupplyDefaultPlaceholdersReloadCommandTest extends ConsoleTestCase
 {
-    public function testTargetingOptionsUpdate(): void
-    {
-        $targetingOptionsImporter = self::createMock(TargetingOptionsImporter::class);
-        $targetingOptionsImporter->expects(self::once())->method('import');
-        $this->app->bind(TargetingOptionsImporter::class, fn() => $targetingOptionsImporter);
+    private const SIGNATURE = 'ops:supply:default-placeholders:reload';
 
-        $this->artisan('ops:targeting-options:update')
+    public function testReload(): void
+    {
+        $generator = self::createMock(DefaultBannerPlaceholderGenerator::class);
+        $generator->expects(self::once())->method('generate')->with(true);
+        $this->app->bind(DefaultBannerPlaceholderGenerator::class, fn() => $generator);
+
+        $this->artisan(self::SIGNATURE)
             ->assertExitCode(0);
-        self::assertServerEventDispatched(ServerEventType::TargetingUpdated);
+
+        self::assertServerEventDispatched(ServerEventType::BannerPlaceholdersReloaded);
     }
 
     public function testLock(): void
@@ -47,8 +50,8 @@ class UpdateTargetingOptionsTest extends ConsoleTestCase
         $lockerMock->expects(self::once())->method('lock')->willReturn(false);
         $this->instance(Locker::class, $lockerMock);
 
-        $this->artisan('ops:targeting-options:update')
-            ->expectsOutput('Command ops:targeting-options:update already running')
-            ->assertExitCode(0);
+        $this->artisan(self::SIGNATURE)
+            ->expectsOutput('Command ops:supply:default-placeholders:reload already running')
+            ->assertExitCode(1);
     }
 }

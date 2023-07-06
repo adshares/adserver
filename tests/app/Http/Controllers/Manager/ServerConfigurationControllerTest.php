@@ -239,6 +239,8 @@ final class ServerConfigurationControllerTest extends TestCase
             'MAX_INVALID_LOGIN_ATTEMPTS' => [Config::MAX_INVALID_LOGIN_ATTEMPTS, '8'],
             'REFERRAL_REFUND_COMMISSION' => [Config::REFERRAL_REFUND_COMMISSION, '0'],
             'REFERRAL_REFUND_ENABLED' => [Config::REFERRAL_REFUND_ENABLED, '1'],
+            'SUPPLY_PLACEHOLDER_COLOR' => [Config::SUPPLY_PLACEHOLDER_COLOR, '00FF00'],
+            'SUPPLY_PLACEHOLDER_FILE' => [Config::SUPPLY_PLACEHOLDER_FILE, '/path/to/file'],
             'SUPPORT_EMAIL' => [Config::SUPPORT_EMAIL, 'sup@example.com'],
             'TECHNICAL_EMAIL' => [Config::TECHNICAL_EMAIL, 'tech@example.com'],
         ];

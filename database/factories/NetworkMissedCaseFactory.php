@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,14 +21,21 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Models;
+namespace Database\Factories;
 
-use Adshares\Common\Exception\Exception;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-final class ConfigException extends Exception
+class NetworkMissedCaseFactory extends Factory
 {
-    public static function missingEntry(string $key)
+    public function definition(): array
     {
-        return new static(sprintf('Missing Config "%s" key', $key));
+        return [
+            'case_id' => $this->faker->uuid,
+            'network_impression_id' => 1,
+            'publisher_id' => $this->faker->uuid,
+            'site_id' => $this->faker->uuid,
+            'zone_id' => $this->faker->uuid,
+            'banner_id' => $this->faker->uuid,
+        ];
     }
 }
