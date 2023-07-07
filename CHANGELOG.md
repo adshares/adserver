@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Placeholders for missing creatives
 - Email notifications about funds, campaigns, sites and inactivity
 ### Changed
 - Extend turnover by type response with name of AdServer
