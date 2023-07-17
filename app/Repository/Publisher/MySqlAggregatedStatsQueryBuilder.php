@@ -37,6 +37,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_VIEW,
         StatsRepository::TYPE_VIEW_UNIQUE,
         StatsRepository::TYPE_VIEW_ALL,
+        StatsRepository::TYPE_VIEW_MISSED,
         StatsRepository::TYPE_CLICK,
         StatsRepository::TYPE_CLICK_ALL,
         StatsRepository::TYPE_REVENUE_BY_CASE,
@@ -78,6 +79,9 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::TYPE_CLICK_ALL:
                 $this->column('SUM(e.clicks_all) AS c');
+                break;
+            case StatsRepository::TYPE_VIEW_MISSED:
+                $this->column('SUM(e.views_missed) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_UNIQUE:
                 $this->column('SUM(e.views_unique) AS c');

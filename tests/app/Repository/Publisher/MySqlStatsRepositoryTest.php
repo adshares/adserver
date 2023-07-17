@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Repository\Publisher;
 
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkImpression;
+use Adshares\Adserver\Models\NetworkMissedCase;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -32,6 +33,7 @@ use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\ChartResolution;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -164,12 +166,47 @@ SQL;
             'fetchViewUnique' => ['fetchViewUnique'],
             'fetchViewAll' => ['fetchViewAll'],
             'fetchViewInvalidRate' => ['fetchViewInvalidRate'],
+            'fetchViewMissedRate' => ['fetchViewMissedRate'],
             'fetchRpc' => ['fetchRpc'],
             'fetchRpm' => ['fetchRpm'],
             'fetchSum' => ['fetchSum'],
             'fetchSumPayment' => ['fetchSumHour'],
             'fetchCtr' => ['fetchCtr'],
         ];
+    }
+
+    public function testFetchViewMissedRate(): void
+    {
+        $now = new DateTimeImmutable();
+        $start = $now->setTime(0, 0);
+        $end = $now->setTime(23, 59, 59);
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $publisher]);
+        NetworkCase::factory()->create([
+            'created_at' => $now,
+            'publisher_id' => $publisher->uuid,
+            'site_id' => $site->uuid,
+        ]);
+        NetworkMissedCase::factory()->create([
+            'created_at' => $now,
+            'publisher_id' => $publisher->uuid,
+            'site_id' => $site->uuid,
+        ]);
+        $repository = new MySqlStatsRepository();
+
+        $result = $repository->fetchViewMissedRate(
+            $publisher->uuid,
+            ChartResolution::DAY,
+            DateTime::createFromImmutable($start),
+            DateTime::createFromImmutable($end),
+        );
+
+        $resultArray = $result->toArray();
+        self::assertCount(1, $resultArray);
+        self::assertEquals($start->format(DateTimeInterface::ATOM), $resultArray[0][0]);
+        self::assertEquals(0.5, $resultArray[0][1]);
     }
 
     private static function initRepository(User $publisher, ?Site $site = null): void

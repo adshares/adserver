@@ -34,6 +34,8 @@ interface StatsRepository
     public const TYPE_VIEW = 'view';
     public const TYPE_VIEW_ALL = 'viewAll';
     public const TYPE_VIEW_INVALID_RATE = 'viewInvalidRate';
+    public const TYPE_VIEW_MISSED = 'viewMissed';
+    public const TYPE_VIEW_MISSED_RATE = 'viewMissedRate';
     public const TYPE_VIEW_UNIQUE = 'viewUnique';
     public const TYPE_CLICK = 'click';
     public const TYPE_CLICK_ALL = 'clickAll';
@@ -63,6 +65,14 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchViewInvalidRate(
+        string $publisherId,
+        ChartResolution $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchViewMissedRate(
         string $publisherId,
         ChartResolution $resolution,
         DateTime $dateStart,

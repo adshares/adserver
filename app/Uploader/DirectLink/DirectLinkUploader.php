@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -50,9 +50,7 @@ class DirectLinkUploader extends Uploader
         if (null === $file) {
             throw new RuntimeException('Field `file` is required');
         }
-        $content = $file->getContent();
-        $size = $file->getSize();
-        if ($size > config('app.upload_limit_direct_link')) {
+        if ($file->getSize() > config('app.upload_limit_direct_link')) {
             throw new RuntimeException('Invalid direct link length');
         }
 
@@ -67,7 +65,7 @@ class DirectLinkUploader extends Uploader
             'vendor' => $medium->getVendor(),
             'mime' => $mimeType,
             'scope' => $scope,
-            'content' => $content,
+            'content' => $file->getContent(),
         ]);
         Auth::user()->uploadedFiles()->save($model);
 
