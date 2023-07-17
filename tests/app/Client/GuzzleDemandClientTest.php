@@ -494,7 +494,21 @@ JSON
                 "checksum": "fdf53fcb69012345678b6bbf69c33b348ebc6e85",
                 "serve_url": "https://example.com/serve/x0123456789abcdef0123456789abcdef.doc?v=f5f5",
                 "click_url": "https://example.com/click/0123456789abcdef0123456789abcdef",
-                "view_url": "https://example.com/view/0123456789abcdef0123456789abcdef"
+                "view_url": "https://example.com/view/0123456789abcdef0123456789abcdef",
+                "classification" : {
+                    "test-classifier": {
+                        "keywords": {
+                            "quality": [
+                                "high"
+                            ],
+                            "category": [
+                                "crypto"
+                            ]
+                        },
+                        "signature": "01010101",
+                        "signed_at": "2022-02-10T03:14:15+00:00"
+                    }
+                }
             }
         ],
         "targeting_requires": [],

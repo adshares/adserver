@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Adshares\Adserver\ViewModel\MediumName;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class NetworkCampaignFactory extends Factory
@@ -37,12 +38,14 @@ class NetworkCampaignFactory extends Factory
             'publisher_id' => $this->faker->uuid,
             'source_host' => $this->faker->url,
             'source_version' => '0.1',
+            'source_created_at' => $this->faker->date('Y-m-d H:i:s'),
+            'source_updated_at' => $this->faker->date('Y-m-d H:i:s'),
             'landing_url' => $this->faker->url,
             'max_cpc' => $this->faker->randomDigit(),
             'max_cpm' => $this->faker->randomDigit(),
-            'budget' => $this->faker->randomDigit(),
-            'date_start' => $this->faker->date('Y-m-d H:i:s'),
-            'date_end' => $this->faker->date('Y-m-d H:i:s'),
+            'budget' => 1e11,
+            'date_start' => new DateTimeImmutable('-2 days'),
+            'date_end' => new DateTimeImmutable('+2 days'),
             'medium' => MediumName::Web->value,
             'vendor' => null,
         ];

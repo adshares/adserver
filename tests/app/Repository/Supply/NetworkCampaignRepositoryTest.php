@@ -29,6 +29,7 @@ use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Mock\Client\DummyDemandClient;
+use Adshares\Supply\Domain\ValueObject\Status;
 
 final class NetworkCampaignRepositoryTest extends TestCase
 {
@@ -47,5 +48,29 @@ final class NetworkCampaignRepositoryTest extends TestCase
         self::assertDatabaseCount(NetworkCampaign::class, 1);
         self::assertDatabaseCount(NetworkBanner::class, 3);
         self::assertDatabaseMissing(NetworkBanner::class, ['signed_at' => null]);
+    }
+
+    public function testFetchActiveCampaigns(): void
+    {
+        $campaign = NetworkCampaign::factory()->create(['status' => Status::STATUS_ACTIVE]);
+        NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        $repository = new NetworkCampaignRepository();
+
+        $campaigns = $repository->fetchActiveCampaigns();
+
+        self::assertCount(1, $campaigns);
+        self::assertCount(1, $campaigns[0]->getBanners());
+    }
+
+    public function testFetchCampaignsToDelete(): void
+    {
+        $campaign = NetworkCampaign::factory()->create(['status' => Status::STATUS_TO_DELETE]);
+        NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        $repository = new NetworkCampaignRepository();
+
+        $campaigns = $repository->fetchCampaignsToDelete();
+
+        self::assertCount(1, $campaigns);
+        self::assertCount(1, $campaigns[0]->getBanners());
     }
 }

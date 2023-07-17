@@ -276,7 +276,7 @@ final class GuzzleDemandClient implements DemandClient
                 continue;
             }
             $banner['signed_at'] = $this->getOldestSignatureDate(
-                $banner['classification'],
+                $banner['classification'] ?? [],
                 $classifiersRequired,
                 $mappedClassification,
             );
