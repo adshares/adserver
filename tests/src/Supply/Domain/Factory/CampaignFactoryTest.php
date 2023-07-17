@@ -25,6 +25,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Factory\Exception\InvalidCampaignArgumentException;
 use DateTime;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 final class CampaignFactoryTest extends TestCase
@@ -77,6 +78,7 @@ final class CampaignFactoryTest extends TestCase
             'type' => 'image',
             'mime' => 'image/png',
             'size' => '728x90',
+            'signed_at' => null,
         ];
     }
 
@@ -98,6 +100,7 @@ final class CampaignFactoryTest extends TestCase
                         ],
                     ],
                 ],
+                'signed_at' => new DateTimeImmutable('-10 days'),
             ]
         );
     }

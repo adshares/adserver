@@ -36,7 +36,7 @@ class NetworkCampaignFactory extends Factory
             'source_address' => '0001-00000001-8B4E',
             'demand_campaign_id' => $this->faker->uuid,
             'publisher_id' => $this->faker->uuid,
-            'source_host' => $this->faker->url,
+            'source_host' => parse_url($this->faker->url, PHP_URL_HOST),
             'source_version' => '0.1',
             'source_created_at' => $this->faker->date('Y-m-d H:i:s'),
             'source_updated_at' => $this->faker->date('Y-m-d H:i:s'),
