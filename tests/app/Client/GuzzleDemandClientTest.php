@@ -503,29 +503,4 @@ JSON
 ]
 JSON;
     }
-//
-//    private function getInventoryResponse(): string
-//    {
-//        return <<<JSON
-//
-//        "banners": [
-//            {
-//                "classification": {
-//                    "test-classifier": {
-//                        "keywords": {
-//                            "quality": [
-//                                "high"
-//                            ],
-//                            "category": [
-//                                "crypto"
-//                            ]
-//                        },
-//                        "signature": "d6e67db9dbf662f27b1ddff693c8a8eeb4eb9deab873f88e4ad0bb03fded9b75d44c168af169f6229f9f46784b61669a9ffbe80f91c82e2f18d4256bc00b3902",
-//                        "signed_at": "2022-02-10T14:08:02+00:00"
-//                    }
-//                }
-//            }
-//        ]
-//JSON;
-//    }
 }
