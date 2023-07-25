@@ -25,16 +25,18 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
+use Adshares\Adserver\Http\Requests\Filter\FilterType;
 use Adshares\Adserver\Http\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Site;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -47,10 +49,17 @@ class ClassifierController extends Controller
         $limit = (int)$request->get('limit', 20);
         $offset = (int)$request->get('offset', 0);
         $userId = Auth::user()->id;
+        $filters = FilterCollection::fromRequest(
+            $request,
+            [
+                'created_at' => FilterType::Date,
+                'signed_at' => FilterType::Date,
+            ],
+        );
 
         try {
             $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
-            $banners = NetworkBanner::fetchByFilter($networkBannerFilter, Site::fetchAll());
+            $banners = NetworkBanner::fetchByFilter($networkBannerFilter, $filters, Site::fetchAll());
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
@@ -102,7 +111,7 @@ class ClassifierController extends Controller
 
         try {
             Classification::classify($userId, $bannerId, $status, $siteId);
-        } catch (QueryException $exception) {
+        } catch (QueryException) {
             throw new AccessDeniedHttpException('Operation cannot be proceed. Wrong permissions.');
         }
 

@@ -21,20 +21,52 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
-use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 
 class AdSelectInventoryExporterCommandTest extends ConsoleTestCase
 {
     public function testExport(): void
     {
-        $this->app->bind(AdSelect::class, function () {
-            $adSelect = $this->createMock(AdSelect::class);
-
-            return $adSelect;
-        });
+        $repositoryMock = $this->createMock(NetworkCampaignRepository::class);
+        $repositoryMock->expects(self::once())
+            ->method('fetchActiveCampaigns')
+            ->willReturn(new CampaignCollection());
+        $repositoryMock->expects(self::once())
+            ->method('fetchCampaignsToDelete')
+            ->willReturn(new CampaignCollection());
+        $this->instance(NetworkCampaignRepository::class, $repositoryMock);
+        $exporterMock = $this->createMock(AdSelectInventoryExporter::class);
+        $exporterMock->expects(self::once())
+            ->method('export');
+        $this->instance(AdSelectInventoryExporter::class, $exporterMock);
 
         $this->artisan('ops:adselect:inventory:export')
             ->assertExitCode(0);
+    }
+
+    public function testLock(): void
+    {
+        $repositoryMock = $this->createMock(NetworkCampaignRepository::class);
+        $repositoryMock->expects(self::never())
+            ->method('fetchActiveCampaigns');
+        $repositoryMock->expects(self::never())
+            ->method('fetchCampaignsToDelete');
+        $this->instance(NetworkCampaignRepository::class, $repositoryMock);
+        $exporterMock = $this->createMock(AdSelectInventoryExporter::class);
+        $exporterMock->expects(self::never())
+            ->method('export');
+        $this->instance(AdSelectInventoryExporter::class, $exporterMock);
+        $lockerMock = $this->createMock(Locker::class);
+        $lockerMock->expects(self::once())
+            ->method('lock')
+            ->willReturn(false);
+        $this->instance(Locker::class, $lockerMock);
+
+        self::artisan('ops:adselect:inventory:export')
+            ->assertExitCode(1);
     }
 }

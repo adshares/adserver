@@ -28,6 +28,7 @@ use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerTypeException;
 use Adshares\Supply\Domain\ValueObject\Status;
+use DateTimeInterface;
 
 class Banner
 {
@@ -66,6 +67,8 @@ class Banner
 
     private Id $demandBannerId;
 
+    private ?DateTimeInterface $signedAt;
+
     public function __construct(
         Campaign $campaign,
         Id $id,
@@ -76,7 +79,8 @@ class Banner
         string $size,
         string $checksum,
         Status $status,
-        array $classification = []
+        array $classification = [],
+        ?DateTimeInterface $signedAt = null,
     ) {
         if (!in_array($type, self::SUPPORTED_TYPES, true)) {
             throw new UnsupportedBannerTypeException(sprintf(
@@ -96,6 +100,7 @@ class Banner
         $this->checksum = $checksum;
         $this->classification = $classification;
         $this->demandBannerId = $demandBannerId;
+        $this->signedAt = $signedAt;
     }
 
     public function activate(): void
@@ -146,6 +151,7 @@ class Banner
             'view_url' => $this->bannerUrl->getViewUrl(),
             'status' => $this->status->getStatus(),
             'classification' => $classification,
+            'signed_at' => $this->getSignedAt(),
         ];
     }
 
@@ -192,5 +198,10 @@ class Banner
     public function getClassification(): ?array
     {
         return $this->classification;
+    }
+
+    public function getSignedAt(): ?DateTimeInterface
+    {
+        return $this->signedAt;
     }
 }

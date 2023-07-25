@@ -50,7 +50,7 @@ class AdSelectInventoryExporterCommand extends BaseCommand
         parent::__construct($locker);
     }
 
-    public function handle()
+    public function handle(): int
     {
         if (!$this->lock(InventoryImporterCommand::getLockName())) {
             $this->info(
@@ -58,8 +58,7 @@ class AdSelectInventoryExporterCommand extends BaseCommand
                 . $this->signature
                 . ' cannot be started while import from demand or export to adselect is in progress'
             );
-
-            return;
+            return self::FAILURE;
         }
 
         $this->info('Started exporting inventory to AdSelect.');
@@ -78,5 +77,6 @@ class AdSelectInventoryExporterCommand extends BaseCommand
         Config::upsertDateTime(Config::ADSELECT_INVENTORY_EXPORT_TIME, new DateTime());
 
         $this->info('Finished exporting inventory to AdSelect.');
+        return self::SUCCESS;
     }
 }

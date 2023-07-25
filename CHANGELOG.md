@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Placeholders for missing creatives
+- Filtering banners for classification by dates
 ### Changed
 - Extend turnover by type response with name of AdServer
 ### Fixed

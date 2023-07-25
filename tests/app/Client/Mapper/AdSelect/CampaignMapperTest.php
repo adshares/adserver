@@ -30,6 +30,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use DateTime;
+use DateTimeImmutable;
 use stdClass;
 
 final class CampaignMapperTest extends TestCase
@@ -222,6 +223,7 @@ final class CampaignMapperTest extends TestCase
                 'type' => 'image',
                 'mime' => 'image/png',
                 'size' => '728x90',
+                'signed_at' => null,
             ],
             $arr
         );
@@ -264,6 +266,7 @@ final class CampaignMapperTest extends TestCase
                             'classified' => ['1'],
                         ],
                     ],
+                    'signed_at' => new DateTimeImmutable('-1 hour'),
                 ],
             ],
             'max_cpc' => 10000000001,
