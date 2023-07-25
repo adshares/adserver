@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,32 +19,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Mail;
+declare(strict_types=1);
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
+namespace Adshares\Adserver\ViewModel;
 
-class SiteVerified extends Mailable
+enum NotificationEmailCategory: string
 {
-    use Queueable;
-    use SerializesModels;
-
-    /** @var array */
-    private $sites;
-
-    public function __construct(array $sites)
-    {
-        $this->sites = $sites;
-        $this->subject(1 == count($sites) ? 'Site verified' : 'Sites verified');
-    }
-
-    public function build(): Mailable
-    {
-        return $this->markdown('emails.site-verified')->with(
-            [
-                'sites' => $this->sites,
-            ]
-        );
-    }
+    case CampaignAccepted = 'CampaignAccepted';
+    case CampaignDraft = 'CampaignDraft';
+    case CampaignEnded = 'CampaignEnded';
+    case CampaignEndedExtend = 'CampaignEndedExtend';
+    case CampaignEnds = 'CampaignEnds';
+    case FundsEnded = 'FundsEnded';
+    case FundsEnds = 'FundsEnds';
+    case InactiveUser = 'InactiveUser';
+    case InactiveUserExtend = 'InactiveUserExtend';
+    case InactiveUserWhoDeposit = 'InactiveUserWhoDeposit';
+    case SiteAccepted = 'SiteAccepted';
+    case SiteDraft = 'SiteDraft';
 }

@@ -23,12 +23,15 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Mail\BannerClassified;
+use Adshares\Adserver\Mail\Notifications\CampaignAccepted;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
-use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NotificationEmailLog;
+use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Http\Request;
@@ -43,9 +46,13 @@ use function sprintf;
 
 class ClassificationController extends Controller
 {
-    private array $notifyUserIds = [];
+    private const CAMPAIGN_NOT_CLASSIFIED = 1;
+    private const CAMPAIGN_ACCEPTED = 2;
+    private const CAMPAIGN_PARTIALLY_ACCEPTED = 3;
+    private const CAMPAIGN_REJECTED = 4;
 
     public function __construct(
+        private readonly CampaignRepository $campaignRepository,
         private readonly ClassifierExternalRepository $classifierRepository,
         private readonly ClassifierExternalSignatureVerifier $signatureVerifier,
     ) {
@@ -65,6 +72,7 @@ class ClassificationController extends Controller
             $bannerPublicIds[] = $input['id'];
         }
         $banners = Banner::fetchBannerByPublicIds($bannerPublicIds)->keyBy('uuid');
+        $campaignIds = [];
 
         foreach ($inputs as $input) {
             /** @var $banner Banner */
@@ -75,16 +83,18 @@ class ClassificationController extends Controller
             ) {
                 Log::info(
                     sprintf(
-                        '[classification update] Missing banner id (%s) from classifier (%s)',
+                        '[classification update] Missing banner for id (%s) from classifier (%s)',
                         $input['id'],
                         $classifier
                     )
                 );
-
                 continue;
             }
 
             if (null !== ($errorCode = $input['error']['code'] ?? null)) {
+                if (!isset($campaignIds[$banner->campaign_id])) {
+                    $campaignIds[$banner->campaign_id] = true;
+                }
                 Log::info(
                     sprintf(
                         '[classification update] Error for banner id (%s) from classifier (%s): (code:%s)(message:%s)',
@@ -109,7 +119,6 @@ class ClassificationController extends Controller
                         )
                     );
                 }
-
                 continue;
             }
 
@@ -127,8 +136,11 @@ class ClassificationController extends Controller
                         $classification->signed_at->format(DateTimeInterface::ATOM)
                     )
                 );
-
                 continue;
+            }
+
+            if (!isset($campaignIds[$banner->campaign_id])) {
+                $campaignIds[$banner->campaign_id] = true;
             }
 
             $signature = $input['signature'];
@@ -156,18 +168,13 @@ class ClassificationController extends Controller
 
                 $isAnySignatureInvalid = true;
                 $classification->failed();
-
                 continue;
             }
 
             $classification->classified($keywords, $signature, $signedAt);
-            $userId = $banner->campaign->user_id;
-            if (!in_array($userId, $this->notifyUserIds)) {
-                $this->notifyUserIds[] = $userId;
-            }
         }
 
-        $this->sendMails();
+        $this->sendMails($campaignIds, $classifier);
 
         if ($isAnySignatureInvalid) {
             return self::json(['message' => 'Invalid signature'], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -192,66 +199,91 @@ class ClassificationController extends Controller
                     $classifier
                 )
             );
-
             throw new UnprocessableEntityHttpException('No classification');
         }
 
         foreach ($inputs as $input) {
             if (!isset($input['id'])) {
-                Log::info(
-                    sprintf(
-                        '[classification update] Missing field banner id from classifier (%s)',
-                        $classifier
-                    )
-                );
-
+                Log::info(sprintf('[classification update] Missing field `id` from classifier (%s)', $classifier));
                 throw new UnprocessableEntityHttpException('Missing banner id');
             }
-
             if (isset($input['error'])) {
                 if (!isset($input['error']['code'])) {
                     throw new UnprocessableEntityHttpException('Missing error code');
                 }
-
                 continue;
             }
-
-            if (!isset($input['signature'])) {
-                Log::info(
-                    sprintf(
-                        '[classification update] Missing field signature from classifier (%s)',
-                        $classifier
-                    )
-                );
-
-                throw new UnprocessableEntityHttpException('Missing signature');
-            }
-
-            if (!isset($input['timestamp'])) {
-                Log::info(
-                    sprintf(
-                        '[classification update] Missing field timestamp from classifier (%s)',
-                        $classifier
-                    )
-                );
-
-                throw new UnprocessableEntityHttpException('Missing timestamp');
+            $requiredFields = ['signature', 'timestamp'];
+            foreach ($requiredFields as $requiredField) {
+                if (!isset($input[$requiredField])) {
+                    Log::info(
+                        sprintf(
+                            '[classification update] Missing field `%s` from classifier (%s)',
+                            $requiredField,
+                            $classifier,
+                        )
+                    );
+                    throw new UnprocessableEntityHttpException(sprintf('Missing %s', $requiredField));
+                }
             }
         }
     }
 
-    private function sendMails(): void
+    private function sendMails(array $campaignIds, string $classifier): void
     {
-        if (empty($this->notifyUserIds)) {
+        if (empty($campaignIds)) {
             return;
         }
 
-        $users = User::fetchByIds($this->notifyUserIds);
-
-        foreach ($users as $user) {
-            if (null !== $user->email) {
-                Mail::to($user)->queue(new BannerClassified());
+        $campaigns = $this->campaignRepository->fetchCampaignByIds(array_keys($campaignIds));
+        foreach ($campaigns as $campaign) {
+            if (null !== $campaign->user->email) {
+                $status = $this->getClassificationStatus($campaign, $classifier);
+                if (
+                    in_array($status, [self::CAMPAIGN_ACCEPTED, self::CAMPAIGN_PARTIALLY_ACCEPTED], true) &&
+                    null === NotificationEmailLog::fetch(
+                        $campaign->user->id,
+                        NotificationEmailCategory::CampaignAccepted,
+                        ['campaignId' => $campaign->id],
+                    )
+                ) {
+                    Mail::to($campaign->user->email)
+                        ->queue(new CampaignAccepted($campaign, self::CAMPAIGN_ACCEPTED === $status));
+                    NotificationEmailLog::register(
+                        $campaign->user->id,
+                        NotificationEmailCategory::CampaignAccepted,
+                        null,
+                        ['campaignId' => $campaign->id],
+                    );
+                }
             }
         }
+    }
+
+    private function getClassificationStatus(Campaign $campaign, string $classifier): int
+    {
+        $bannerIds = $campaign->banners->pluck('id')->toArray();
+        $classificationStatuses = BannerClassification::fetchBannersClassificationStatus($bannerIds, $classifier);
+
+        if (count($classificationStatuses) !== count($bannerIds)) {
+            return self::CAMPAIGN_NOT_CLASSIFIED;
+        }
+
+        $isAnyAccepted = false;
+        $isAnyRejected = false;
+        foreach ($classificationStatuses as $status) {
+            if (BannerClassification::STATUS_SUCCESS === $status) {
+                $isAnyAccepted = true;
+            } elseif (BannerClassification::STATUS_FAILURE === $status) {
+                $isAnyRejected = true;
+            } else {
+                return self::CAMPAIGN_NOT_CLASSIFIED;
+            }
+        }
+
+        if ($isAnyAccepted) {
+            return $isAnyRejected ? self::CAMPAIGN_PARTIALLY_ACCEPTED : self::CAMPAIGN_ACCEPTED;
+        }
+        return self::CAMPAIGN_REJECTED;
     }
 }

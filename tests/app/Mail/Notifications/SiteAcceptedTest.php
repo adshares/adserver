@@ -19,30 +19,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Mail;
+namespace Adshares\Adserver\Tests\Mail\Notifications;
 
-use Adshares\Adserver\Mail\SiteVerified;
+use Adshares\Adserver\Mail\Notifications\SiteAccepted;
+use Adshares\Adserver\Tests\Mail\MailTestCase;
+use Adshares\Adserver\ViewModel\MediumName;
 
-class SiteVerifiedTest extends MailTestCase
+class SiteAcceptedTest extends MailTestCase
 {
     public function testBuild(): void
     {
-        $mailable = new SiteVerified(
-            [
-                [
-                    'name' => 'test-site-example',
-                    'url' => 'https://example.com',
-                ],
-                [
-                    'name' => 'test-site-adshares',
-                    'url' => 'https://adshares.net',
-                ],
-            ]
+        $mailable = new SiteAccepted(
+            MediumName::Web->value,
+            'test-site-example',
+            'https://example.com/publisher/site/1',
         );
 
         $mailable->assertSeeInText('test-site-example');
-        $mailable->assertSeeInHtml('https://example.com');
-        $mailable->assertSeeInText('test-site-adshares');
-        $mailable->assertSeeInHtml('https://adshares.net');
+        $mailable->assertSeeInText('https://example.com/publisher/site/1');
+        $mailable->assertSeeInHtml('test-site-example');
+        $mailable->assertSeeInHtml('https://example.com/publisher/site/1');
     }
 }

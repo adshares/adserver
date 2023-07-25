@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,28 +19,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests\Mail\Notifications;
 
-namespace Adshares\Adserver\Mail;
+use Adshares\Adserver\Mail\Notifications\FundsEnds;
+use Adshares\Adserver\Tests\Mail\MailTestCase;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
-
-class CampaignSuspension extends Mailable
+class FundsEndsTest extends MailTestCase
 {
-    use Queueable;
-    use SerializesModels;
-
-    private const SUBJECT = 'Your campaigns have been suspended';
-
-    public function __construct()
+    public function testBuild(): void
     {
-        $this->subject(self::SUBJECT);
-    }
+        $mailable = new FundsEnds();
 
-    public function build()
-    {
-        return $this->markdown('emails.campaign-suspension');
+        $mailable->assertSeeInText("We've noticed your account balance is nearing depletion.");
     }
 }

@@ -25,11 +25,14 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
-use Adshares\Adserver\Mail\SiteVerified;
+use Adshares\Adserver\Mail\Notifications\SiteAccepted;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
+use Adshares\Adserver\Utilities\AdPanelUrlBuilder;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
@@ -49,18 +52,15 @@ class SiteRankUpdateCommand extends BaseCommand
     protected $signature = 'ops:supply:site-rank:update {--A|all : Update all sites}';
     protected $description = "Updates sites' rank";
 
-    private AdUser $adUser;
-    private SiteCategoriesValidator $siteCategoriesValidator;
-    private string $siteBaseUrl;
     private array $mails = [];
     private DateTime $notificationDateTimeThreshold;
 
-    public function __construct(Locker $locker, AdUser $adUser, SiteCategoriesValidator $siteCategoriesValidator)
-    {
+    public function __construct(
+        Locker $locker,
+        private readonly AdUser $adUser,
+        private readonly SiteCategoriesValidator $siteCategoriesValidator,
+    ) {
         parent::__construct($locker);
-
-        $this->adUser = $adUser;
-        $this->siteCategoriesValidator = $siteCategoriesValidator;
     }
 
     public function handle(): void
@@ -74,7 +74,6 @@ class SiteRankUpdateCommand extends BaseCommand
 
         $lastId = 0;
         $isOptionAll = (bool)$this->option('all');
-        $this->siteBaseUrl = config('app.adpanel_url') . '/publisher/site/';
         $this->notificationDateTimeThreshold =
             Config::fetchDateTime(Config::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD);
 
@@ -123,11 +122,9 @@ class SiteRankUpdateCommand extends BaseCommand
             $results = $this->adUser->fetchPageRankBatch($urls);
         } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
             $this->error($unexpectedClientResponseException->getMessage());
-
             return;
         } catch (RuntimeException $exception) {
             $this->warn($exception->getMessage());
-
             return;
         }
 
@@ -136,7 +133,6 @@ class SiteRankUpdateCommand extends BaseCommand
             $site = $sites->get($index);
             if (null === $site) {
                 $this->warn(sprintf('Invalid index (%s) in response', $index));
-
                 continue;
             }
 
@@ -144,7 +140,6 @@ class SiteRankUpdateCommand extends BaseCommand
                 $this->warn(
                     sprintf('Error for an URL (%s) from site id (%d) (%s)', $site->url, $site->id, $result['error'])
                 );
-
                 continue;
             }
 
@@ -152,7 +147,6 @@ class SiteRankUpdateCommand extends BaseCommand
                 $this->warn(
                     sprintf('Missing `rank` or `info` for an URL (%s) from site id (%d)', $site->url, $site->id)
                 );
-
                 continue;
             }
 
@@ -165,8 +159,9 @@ class SiteRankUpdateCommand extends BaseCommand
                     && $site->created_at > $this->notificationDateTimeThreshold
                 ) {
                     $this->mails[$site->user_id][] = [
+                        'id' => $site->id,
+                        'medium' => $site->medium,
                         'name' => $site->name,
-                        'url' => $this->siteBaseUrl . $site->id,
                     ];
                 }
 
@@ -205,7 +200,29 @@ class SiteRankUpdateCommand extends BaseCommand
 
         foreach ($this->mails as $userId => $sites) {
             if (null !== ($email = $users->get($userId)->email)) {
-                Mail::to($email)->send(new SiteVerified($sites));
+                foreach ($sites as $site) {
+                    if (
+                        null === NotificationEmailLog::fetch(
+                            $userId,
+                            NotificationEmailCategory::SiteAccepted,
+                            ['siteId' => $site['id']],
+                        )
+                    ) {
+                        Mail::to($email)->send(
+                            new SiteAccepted(
+                                $site['medium'],
+                                $site['name'],
+                                AdPanelUrlBuilder::buildSiteUrl($site['id']),
+                            )
+                        );
+                        NotificationEmailLog::register(
+                            $userId,
+                            NotificationEmailCategory::SiteAccepted,
+                            null,
+                            ['siteId' => $site['id']],
+                        );
+                    }
+                }
             }
         }
     }
