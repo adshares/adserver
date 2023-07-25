@@ -46,6 +46,7 @@ class SiteFactory extends Factory
             'info' => AdUser::PAGE_INFO_OK,
             'categories' => ['unknown'],
             'only_accepted_banners' => 0,
+            'only_direct_deals' => 0,
             'accepted_at' => $now,
             'ads_txt_check_at' => $now,
             'ads_txt_confirmed_at' => $now,

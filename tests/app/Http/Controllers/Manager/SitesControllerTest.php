@@ -275,6 +275,7 @@ class SitesControllerTest extends TestCase
             'missing status' => [self::simpleSiteData([], 'status')],
             'invalid status' => [self::simpleSiteData(['status' => -1])],
             'invalid only_accepted_banners' => [self::simpleSiteData(['only_accepted_banners' => 1])],
+            'invalid only_direct_deals' => [self::simpleSiteData(['only_direct_deals' => 1])],
             'missing url' => [self::simpleSiteData([], 'url')],
             'invalid url' => [self::simpleSiteData(['url' => 'example'])],
             'invalid ad units type' => [self::simpleSiteData(['adUnits' => 'adUnits'])],
@@ -527,6 +528,18 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $site->refresh();
         self::assertTrue($site->only_accepted_banners);
+    }
+
+    public function testUpdateSiteFailOnlyDirectDeals(): void
+    {
+        $user = $this->setupUser();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['onlyAcceptedBanners' => 1]]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertFalse($site->refresh()->only_direct_deals);
     }
 
     public function testUpdateSiteOnlyAcceptedBannersInvalidType(): void
