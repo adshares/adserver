@@ -34,9 +34,7 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
-
-use function array_chunk;
-use function floor;
+use DateTimeImmutable;
 
 final class DummyDemandClient implements DemandClient
 {
@@ -122,6 +120,7 @@ final class DummyDemandClient implements DemandClient
             'type' => 'image',
             'mime' => 'image/png',
             'size' => '728x90',
+            'signed_at' => new DateTimeImmutable('-1 hour'),
         ];
     }
 
