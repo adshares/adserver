@@ -22,19 +22,23 @@
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
+use Adshares\Adserver\Models\NetworkMissedCase;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
+use Adshares\Adserver\Models\SupplyBannerPlaceholder;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
+use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
@@ -501,6 +505,7 @@ class SupplyController extends Controller
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionId);
+        $foundBanners = $this->fillMissingBannersWithPlaceholders($foundBanners, $zones, $impressionId);
 
         if ($foundBanners->exists(fn($key, $element) => $element != null)) {
             NetworkImpression::register(
@@ -874,6 +879,14 @@ class SupplyController extends Controller
         }
 
         if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
+            if (null !== ($placeholder = SupplyBannerPlaceholder::fetchByPublicId($bannerId))) {
+                $placeholderData = [
+                    'url' => $placeholder->serve_url,
+                    'bannerSize' => $placeholder->size,
+                    'bannerType' => $placeholder->type,
+                ];
+                return $this->buildViewWhy($placeholderData);
+            }
             throw new NotFoundHttpException('No matching banner');
         }
         $campaign = $banner->campaign()->first();
@@ -883,11 +896,6 @@ class SupplyController extends Controller
 
         $data = [
             'url' => $banner->serve_url,
-            'source' => strtolower(preg_replace('/\s/', '-', config('app.adserver_name'))),
-            'supplyName' => config('app.adserver_name'),
-            'supplyTermsUrl' => route('terms-url'),
-            'supplyPrivacyUrl' => route('privacy-url'),
-            'supplyLandingUrl' => config('app.landing_url'),
             'supplyBannerReportUrl' => new SecureUrl(
                 route(
                     'report-ad',
@@ -898,7 +906,6 @@ class SupplyController extends Controller
                 )
             ),
             'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
-            'demand' => false,
             'bannerSize' => $banner->size,
             'bannerType' => $banner->type,
         ];
@@ -916,10 +923,23 @@ class SupplyController extends Controller
             );
         }
 
-        return view(
-            'supply/why',
-            $data
+        return $this->buildViewWhy($data);
+    }
+
+    private function buildViewWhy(array $data): View
+    {
+        $viewData = array_merge(
+            [
+                'source' => strtolower(preg_replace('/\s/', '-', config('app.adserver_name'))),
+                'supplyName' => config('app.adserver_name'),
+                'supplyTermsUrl' => route('terms-url'),
+                'supplyPrivacyUrl' => route('privacy-url'),
+                'supplyLandingUrl' => config('app.landing_url'),
+                'demand' => false,
+            ],
+            $data,
         );
+        return view('supply/why', $viewData);
     }
 
     public function reportAd(string $caseId, string $bannerId): string
@@ -1309,5 +1329,127 @@ class SupplyController extends Controller
             $ctx['user']['account'] = $account;
         }
         return Utils::UrlSafeBase64Encode(json_encode($ctx));
+    }
+
+    private function fillMissingBannersWithPlaceholders(
+        FoundBanners $foundBanners,
+        array $zones,
+        string $impressionId,
+    ): FoundBanners {
+        $indicesToReplace = [];
+        foreach ($foundBanners as $index => $banner) {
+            if (null === $banner) {
+                $indicesToReplace[] = $index;
+            }
+        }
+
+        if (!empty($indicesToReplace)) {
+            $zonesToReplace = array_intersect_key($zones, $indicesToReplace);
+            /** @var BannerPlaceholderProvider $bannerPlaceholderProvider */
+            $bannerPlaceholderProvider = resolve(BannerPlaceholderProvider::class);
+            foreach (
+                $bannerPlaceholderProvider->findBannerPlaceholders($zonesToReplace, $impressionId) as $bannerPlaceholder
+            ) {
+                $foundBanners[array_shift($indicesToReplace)] = $bannerPlaceholder;
+            }
+        }
+
+        return $foundBanners;
+    }
+
+    public function placeholderServe(string $bannerId, Request $request): BaseResponse
+    {
+        if (!Uuid::isValid($bannerId)) {
+            throw new UnprocessableEntityHttpException('Invalid ID');
+        }
+        $bannerId = str_replace('-', '', $bannerId);
+        /** @var SupplyBannerPlaceholder $bannerPlaceholder */
+        if (null === ($bannerPlaceholder = SupplyBannerPlaceholder::fetchByPublicId($bannerId, true))) {
+            throw new NotFoundHttpException();
+        }
+
+        if (str_starts_with($bannerPlaceholder->mime, 'text')) {
+            $response = new GzippedStreamedResponse();
+        } else {
+            $response = new StreamedResponse();
+        }
+
+        $isIECompat = $request->query->has('xdr');
+        $response->setCallback(
+            function () use ($response, $bannerPlaceholder, $isIECompat) {
+                if (!$isIECompat) {
+                    echo $bannerPlaceholder->content;
+                    return;
+                }
+
+                $headers = [];
+                foreach ($response->headers->allPreserveCase() as $name => $value) {
+                    if (str_starts_with($name, 'X-')) {
+                        $headers[] = "$name:" . implode(',', $value);
+                    }
+                }
+                echo implode("\n", $headers) . "\n\n";
+                echo base64_encode($bannerPlaceholder->content);
+            }
+        );
+
+        $response->setCache(
+            [
+                'last_modified' => $bannerPlaceholder->updated_at,
+                'max_age' => 3600 * 24 * 30,
+                's_maxage' => 3600 * 24 * 30,
+                'private' => false,
+                'public' => true,
+            ]
+        );
+        $response->headers->addCacheControlDirective('no-transform');
+        $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '') . $bannerPlaceholder->mime);
+        return $response;
+    }
+
+    public function logPlaceholderClick(): BaseResponse
+    {
+        return new RedirectResponse(config('app.landing_url'));
+    }
+
+    public function logPlaceholderView(Request $request, string $bannerId): BaseResponse
+    {
+        if (!Uuid::isValid($bannerId)) {
+            throw new UnprocessableEntityHttpException('Invalid ID');
+        }
+        $requiredParameters = [
+            'cid',
+            'iid',
+            'zid',
+        ];
+        foreach ($requiredParameters as $parameter) {
+            if (!Uuid::isValid($request->query->get($parameter, ''))) {
+                throw new UnprocessableEntityHttpException(sprintf('Parameter `%s` is required', $parameter));
+            }
+        }
+        $impressionId = str_replace('-', '', $request->query->get('iid'));
+        if (null === ($networkImpression = NetworkImpression::fetchByImpressionId($impressionId))) {
+            throw new NotFoundHttpException();
+        }
+
+        $response = new BaseResponse();
+        $response->send();
+
+        if (null !== SupplyBannerPlaceholder::fetchByPublicId($bannerId)) {
+            $caseId = str_replace('-', '', $request->query->get('cid'));
+            $zoneId = str_replace('-', '', $request->query->get('zid'));
+            $case = NetworkMissedCase::create(
+                $caseId,
+                Zone::fetchPublisherPublicIdByPublicId($zoneId),
+                Zone::fetchSitePublicIdByPublicId($zoneId),
+                $zoneId,
+                $bannerId,
+            );
+            if (null !== $case) {
+                $networkImpression->networkMissedCases()->save($case);
+            }
+        }
+
+        return $response;
     }
 }

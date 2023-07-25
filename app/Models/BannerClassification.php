@@ -152,6 +152,16 @@ class BannerClassification extends Model
         )->limit($limit)->offset($offset)->get();
     }
 
+    public static function fetchBannersClassificationStatus(array $bannerIds, string $classifier): array
+    {
+        return self::query()
+            ->select(['banner_id', 'status'])
+            ->whereIn('banner_id', $bannerIds)
+            ->where('classifier', $classifier)
+            ->pluck('status', 'banner_id')
+            ->toArray();
+    }
+
     public static function fetchCampaignClassifications(int $campaignId): array
     {
         /** @var Collection $grouped */

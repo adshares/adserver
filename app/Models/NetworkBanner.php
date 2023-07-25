@@ -22,18 +22,22 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
+use Adshares\Adserver\Http\Requests\Filter\DateFilter;
+use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\Status;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -41,6 +45,8 @@ use Illuminate\Support\Facades\Cache;
  * @property int id
  * @property string uuid
  * @property string demand_banner_id
+ * @property Carbon created_at
+ * @property Carbon updated_at
  * @property string checksum
  * @property string click_url
  * @property string serve_url
@@ -51,6 +57,7 @@ use Illuminate\Support\Facades\Cache;
  * @property int status
  * @property array classification
  * @property NetworkCampaign campaign
+ * @property ?Carbon signed_at
  * @mixin Builder
  */
 class NetworkBanner extends Model
@@ -74,6 +81,7 @@ class NetworkBanner extends Model
     ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
+    private const NETWORK_BANNERS_COLUMN_CREATED_AT = 'network_banners.created_at';
     private const NETWORK_BANNERS_COLUMN_SERVE_URL = 'network_banners.serve_url';
     private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
     private const NETWORK_BANNERS_COLUMN_MIME = 'network_banners.mime';
@@ -81,6 +89,7 @@ class NetworkBanner extends Model
     private const NETWORK_BANNERS_COLUMN_STATUS = 'network_banners.status';
     private const NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID = 'network_banners.network_campaign_id';
     private const NETWORK_BANNERS_COLUMN_CLASSIFICATION = 'network_banners.classification';
+    private const NETWORK_BANNERS_COLUMN_SIGNED_AT = 'network_banners.signed_at';
 
     private const CLASSIFICATIONS_COLUMN_BANNER_ID = 'classifications.banner_id';
     private const CLASSIFICATIONS_COLUMN_STATUS = 'classifications.status';
@@ -106,8 +115,6 @@ class NetworkBanner extends Model
         'uuid',
         'demand_banner_id',
         'network_campaign_id',
-        'source_created_at',
-        'source_updated_at',
         'serve_url',
         'click_url',
         'view_url',
@@ -117,6 +124,7 @@ class NetworkBanner extends Model
         'size',
         'status',
         'classification',
+        'signed_at',
     ];
 
     /**
@@ -142,6 +150,7 @@ class NetworkBanner extends Model
 
     protected $casts = [
         'classification' => 'json',
+        'signed_at' => 'date:' . DateTimeInterface::ATOM,
     ];
 
     public static function getTableName()
@@ -165,18 +174,23 @@ class NetworkBanner extends Model
 
     /**
      * @param NetworkBannerFilter $networkBannerFilter
+     * @param ?FilterCollection $filters
      * @param Collection<Site> $sites
+     *
      * @return Collection<self>
      */
     public static function fetchByFilter(
         NetworkBannerFilter $networkBannerFilter,
-        Collection $sites
+        ?FilterCollection $filters,
+        Collection $sites,
     ): Collection {
         if ($sites->isEmpty()) {
             return new Collection();
         }
         $sizes = $networkBannerFilter->getSizes();
-        return self::queryByFilter($networkBannerFilter)->get()->filter(
+        $builder = self::queryByFilter($networkBannerFilter);
+        $builder = self::appendFilterCollection($builder, $filters);
+        return $builder->get()->filter(
             function (NetworkBanner $banner) use ($sites, $sizes) {
                 if ($sizes && self::TYPE_VIDEO === $banner->type) {
                     $matching = Size::findMatchingWithSizes($sizes, ...Size::toDimensions($banner->size));
@@ -435,6 +449,30 @@ class NetworkBanner extends Model
         }
 
         return $ids;
+    }
+
+    private static function appendFilterCollection(Builder $builder, ?FilterCollection $filters): Builder
+    {
+        if (null === $filters) {
+            return $builder;
+        }
+
+        foreach ($filters->getFilters() as $filter) {
+            $name = $filter->getName();
+            if (in_array($name, ['created_at', 'signed_at']) && $filter instanceof DateFilter) {
+                $column = 'created_at' === $name
+                    ? self::NETWORK_BANNERS_COLUMN_CREATED_AT
+                    : self::NETWORK_BANNERS_COLUMN_SIGNED_AT;
+                if (null !== ($from = $filter->getFrom())) {
+                    $builder->where($column, '>=', $from);
+                }
+                if (null !== ($to = $filter->getTo())) {
+                    $builder->where($column, '<=', $to);
+                }
+            }
+        }
+
+        return $builder;
     }
 
     public function campaign(): BelongsTo

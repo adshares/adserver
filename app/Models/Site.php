@@ -40,6 +40,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -262,6 +263,17 @@ class Site extends Model
         return Site::where('user_id', $userId)
             ->where('domain', $domain)
             ->first();
+    }
+
+    /**
+     * @return Collection|Site[]
+     */
+    public static function fetchDraftSitesCreatedBefore(DateTimeInterface $dateTo): Collection
+    {
+        return self::query()
+            ->where('status', Site::STATUS_DRAFT)
+            ->where('created_at', '<', $dateTo)
+            ->get();
     }
 
     public static function create(

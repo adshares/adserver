@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Mail\CampaignSuspension;
+use Adshares\Adserver\Mail\Notifications\FundsEnded;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
@@ -281,6 +281,6 @@ class DemandBlockRequiredAmountTest extends ConsoleTestCase
 
         $this->artisan(self::SIGNATURE)
             ->assertExitCode(0);
-        Mail::assertQueued(CampaignSuspension::class);
+        Mail::assertQueued(FundsEnded::class);
     }
 }

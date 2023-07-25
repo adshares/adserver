@@ -44,6 +44,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
@@ -270,10 +271,16 @@ final class GuzzleDemandClient implements DemandClient
                 unset($banner['id']);
             }
 
-            $banner['classification'] = $this->validateAndMapClassification($banner);
-            if ($this->missingRequiredClassifier($classifiersRequired, $banner['classification'])) {
+            $mappedClassification = $this->validateAndMapClassification($banner);
+            if ($this->missingRequiredClassifier($classifiersRequired, $mappedClassification)) {
                 continue;
             }
+            $banner['signed_at'] = $this->getOldestSignatureDate(
+                $banner['classification'] ?? [],
+                $classifiersRequired,
+                $mappedClassification,
+            );
+            $banner['classification'] = $mappedClassification;
 
             $banners[] = $banner;
         }
@@ -415,5 +422,25 @@ final class GuzzleDemandClient implements DemandClient
         $classifiers = array_keys($classification);
 
         return empty(array_intersect($classifiersRequired, $classifiers));
+    }
+
+    private function getOldestSignatureDate(
+        array $originalClassification,
+        array $classifiersRequired,
+        array $mappedClassification,
+    ): ?DateTimeImmutable {
+        $signedAt = null;
+        foreach ($mappedClassification as $classifier => $classification) {
+            if (in_array($classifier, $classifiersRequired, true)) {
+                $signedAtCandidate = DateTimeImmutable::createFromFormat(
+                    DateTimeInterface::ATOM,
+                    $originalClassification[$classifier]['signed_at'],
+                );
+                if ($signedAt === null || $signedAtCandidate < $signedAt) {
+                    $signedAt = $signedAtCandidate;
+                }
+            }
+        }
+        return $signedAt;
     }
 }

@@ -32,7 +32,7 @@ class ConversionDefinitionFactory extends Factory
     public function definition(): array
     {
         return [
-            'campaign_id' => Campaign::factory()->create(),
+            'campaign_id' => Campaign::factory(),
             'name' => $this->faker->word,
             'limit_type' => 'in_budget',
             'event_type' => 'Add to cart',

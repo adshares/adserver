@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -130,5 +130,10 @@ class NetworkImpression extends Model
     public function networkCases(): HasMany
     {
         return $this->hasMany(NetworkCase::class);
+    }
+
+    public function networkMissedCases(): HasMany
+    {
+        return $this->hasMany(NetworkMissedCase::class);
     }
 }

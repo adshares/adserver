@@ -7,11 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.6.0] - 2023-07-25
+### Added
+- Placeholders for missing creatives
+- Email notifications about funds, campaigns, sites and inactivity
+- Filtering banners for classification by dates
 ### Changed
 - Extend turnover by type response with name of AdServer
 ### Fixed
 - Do not send ban email if banned user has not registered address
 - Check Decentraland user ID during event export in case of general metaverse campaign
+- Do not return redundant fields (time_start, time_end, bid_strategy_uuid) for campaign
 
 ## [2.5.1] - 2023-06-30
 ### Changed
@@ -944,7 +951,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.5.1...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.6.0...develop
+[2.6.0]: https://github.com/adshares/adserver/compare/v2.5.1...v2.6.0
 [2.5.1]: https://github.com/adshares/adserver/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/adshares/adserver/compare/v2.4.13...v2.5.0
 [2.4.13]: https://github.com/adshares/adserver/compare/v2.4.12...v2.4.13
