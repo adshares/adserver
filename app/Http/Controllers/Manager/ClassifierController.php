@@ -57,13 +57,23 @@ class ClassifierController extends Controller
             ],
         );
 
+        if (null === $siteId) {
+            $site = null;
+            $sites = Site::fetchAll();
+        } else {
+            if (null === ($site = Site::fetchById($siteId))) {
+                throw new NotFoundHttpException(sprintf('Cannot find site for id %d', $siteId));
+            }
+            $sites = new Collection([$site]);
+        }
+
         try {
-            $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
-            $banners = NetworkBanner::fetchByFilter($networkBannerFilter, $filters, Site::fetchAll());
+            $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId, $site?->medium, $site?->vendor);
         } catch (InvalidArgumentException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage());
         }
 
+        $banners = NetworkBanner::fetchByFilter($networkBannerFilter, $filters, $sites);
         $paginated = $banners->slice($offset, $limit);
 
         $bannerIds = $this->getIdsFromBanners($paginated);

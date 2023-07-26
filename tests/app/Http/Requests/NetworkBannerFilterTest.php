@@ -46,6 +46,8 @@ final class NetworkBannerFilterTest extends TestCase
         self::assertEquals('https://example.com', $filter->getLandingUrl());
         self::assertEquals(1, $filter->getUserId());
         self::assertEquals(2, $filter->getSiteId());
+        self::assertNull($filter->getMedium());
+        self::assertNull($filter->getVendor());
     }
 
     public function testInvalidUuid(): void

@@ -27,7 +27,6 @@ use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTimeInterface;
@@ -190,7 +189,8 @@ class NetworkBanner extends Model
         $sizes = $networkBannerFilter->getSizes();
         $builder = self::queryByFilter($networkBannerFilter);
         $builder = self::appendFilterCollection($builder, $filters);
-        return $builder->get()->filter(
+        $banners = $builder->get();
+        return $banners->filter(
             function (NetworkBanner $banner) use ($sites, $sizes) {
                 if ($sizes && self::TYPE_VIDEO === $banner->type) {
                     $matching = Size::findMatchingWithSizes($sizes, ...Size::toDimensions($banner->size));
@@ -327,12 +327,9 @@ class NetworkBanner extends Model
             $query->where('network_banners.uuid', $networkBannerPublicId->bin());
         }
 
-        if (null !== ($siteId = $networkBannerFilter->getSiteId())) {
-            if (null === ($site = Site::fetchById($siteId))) {
-                throw new InvalidArgumentException(sprintf('Cannot find site for id %d', $siteId));
-            }
-            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $site->medium);
-            if (null !== ($vendor = $site->vendor)) {
+        if (null !== ($medium = $networkBannerFilter->getMedium())) {
+            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $medium);
+            if (null !== ($vendor = $networkBannerFilter->getVendor())) {
                 $query->where(function (Builder $sub) use ($vendor) {
                     $sub->where(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR, $vendor)
                         ->orWhereNull(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR);

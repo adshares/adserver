@@ -79,7 +79,7 @@ final class ClassifierControllerTest extends TestCase
             'size' => '100x100',
             'type' => 'video',
         ]);
-        $sizes = urlencode(json_encode(['2048x2048','1024x1024']));
+        $sizes = urlencode(json_encode(['2048x2048', '1024x1024']));
         $expectedBannerIds = [$bannerDecentraland->id];
 
         $response = $this->getJson(sprintf('%s/%d?sizes=%s', self::CLASSIFICATION_LIST, $site->id, $sizes));
@@ -484,6 +484,6 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(sprintf('%s/%d', self::CLASSIFICATION_LIST, 1));
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 }
