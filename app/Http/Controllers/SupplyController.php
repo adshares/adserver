@@ -1339,18 +1339,23 @@ class SupplyController extends Controller
         $indicesToReplace = [];
         foreach ($foundBanners as $index => $banner) {
             if (null === $banner) {
-                $indicesToReplace[] = $index;
+                $indicesToReplace[$index] = $index;
             }
         }
 
         if (!empty($indicesToReplace)) {
             $zonesToReplace = array_intersect_key($zones, $indicesToReplace);
-            /** @var BannerPlaceholderProvider $bannerPlaceholderProvider */
-            $bannerPlaceholderProvider = resolve(BannerPlaceholderProvider::class);
-            foreach (
-                $bannerPlaceholderProvider->findBannerPlaceholders($zonesToReplace, $impressionId) as $bannerPlaceholder
-            ) {
-                $foundBanners[array_shift($indicesToReplace)] = $bannerPlaceholder;
+            if (!empty($zonesToReplace)) {
+                /** @var BannerPlaceholderProvider $bannerPlaceholderProvider */
+                $bannerPlaceholderProvider = resolve(BannerPlaceholderProvider::class);
+                foreach (
+                    $bannerPlaceholderProvider->findBannerPlaceholders(
+                        $zonesToReplace,
+                        $impressionId,
+                    ) as $bannerPlaceholder
+                ) {
+                    $foundBanners[array_shift($indicesToReplace)] = $bannerPlaceholder;
+                }
             }
         }
 

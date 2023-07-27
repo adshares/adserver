@@ -43,7 +43,6 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
-use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
@@ -382,6 +381,74 @@ final class SupplyControllerTest extends TestCase
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
         /** @var Zone $zone */
         $zone = Zone::factory()->create(['site_id' => Site::factory()->create(['user_id' => $user])]);
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                ],
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', '3');
+    }
+
+    public function testFindWhilePopupNotFound(): void
+    {
+        $this->app->bind(
+            AdSelect::class,
+            function () {
+                $adSelect = self::createMock(AdSelect::class);
+                $adSelect->method('findBanners')->willReturn(
+                    new FoundBanners(
+                        [
+                            [
+                                'id' => '5a0f58f3571c42cb8595119c9b77c22e',
+                                'publisher_id' => '65fba894af014a109775f709c898331c',
+                                'zone_id' => '2e7adf8df5dd447f93448716cfba3c08',
+                                'pay_from' => '0001-000000F1-6451',
+                                'pay_to' => '0001-00000050-C19A',
+                                'type' => 'image',
+                                'size' => '300x250',
+                                'serve_url' => 'https://example.com/serve/5ba6',
+                                'creative_sha1' => '5ba647ac8808b6f58526b2bda8268f45d48a3081',
+                                'click_url' => 'https://example.com/l/n/click/5ba6',
+                                'view_url' => 'https://example.com/l/n/view/5ba6',
+                                'info_box' => true,
+                                'rpm' => 0,
+                                'request_id' => '3',
+                            ],
+                            null,
+                        ]
+                    )
+                );
+                return $adSelect;
+            }
+        );
+        $this->app->bind(
+            BannerPlaceholderProvider::class,
+            function () {
+                $placeholderProvider = self::createMock(BannerPlaceholderProvider::class);
+                $placeholderProvider->expects(self::never())->method('findBannerPlaceholders');
+                return $placeholderProvider;
+            }
+        );
+
+        /** @var User $user */
+        $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
+        $site = Site::factory()->create(['user_id' => $user]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
+        Zone::factory()->create(['site_id' => $site, 'type' => Zone::TYPE_POP]);
         $data = [
             'context' => [
                 'iid' => '0123456789ABCDEF0123456789ABCDEF',
