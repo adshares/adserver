@@ -268,7 +268,7 @@ class GuzzleAdSelectClient implements AdSelect
             $originalRequestId = $zones[$i]['id'] ?? $i;
             $requestId = $zoneInputByUuid[$id]['id'] ?? $i;
             $requestMapping[$originalRequestId] = $requestId;
-            if (isset($existingZones[$requestId]) && isset($items[$requestId])) {
+            if (isset($existingZones[$requestId]) && !empty($items[$requestId])) {
                 $bannerIds[$originalRequestId] = $items[$requestId];
             } else {
                 $bannerIds[$originalRequestId] = [null];
