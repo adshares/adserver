@@ -169,6 +169,7 @@ class GuzzleAdSelectClient implements AdSelect
                         'publisher_id' => $user->uuid,
                         'uuid'         => $site->uuid,
                         'medium'       => $site->medium,
+                        'direct_deal'  => $site->only_direct_deals,
                     ];
                     if (null !== $site->vendor) {
                         $sitesMap[$siteId]['vendor'] = $site->vendor;
