@@ -128,6 +128,7 @@ final class ImpressionContext
             $trackingId = $this->hexUuidFromBase64UrlWithChecksum($this->trackingId());
             $userId = $this->userId();
             $siteKeywords = $this->site;
+            $siteKeywords['domain'] = $siteMap['domain'];
             $siteKeywords['medium'] = $siteMap['medium'];
             if (isset($siteMap['vendor'])) {
                 $siteKeywords['vendor'] = $siteMap['vendor'];
