@@ -536,7 +536,7 @@ class SitesControllerTest extends TestCase
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['onlyAcceptedBanners' => 1]]);
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['onlyDirectDeals' => 'yes']]);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         self::assertFalse($site->refresh()->only_direct_deals);
