@@ -81,6 +81,9 @@ class CampaignMapper
             ),
             $campaignArray['targeting_excludes']
         );
+        $directDealTargeting = isset($targeting['require']['site:domain'])
+            ? ['require:site:domain' => $targeting['require']['site:domain']]
+            : [];
 
         $dateStart = (int)$campaignArray['date_start']->format('U');
         $dateEnd = self::processDateEnd($campaignArray['date_end']);
@@ -93,6 +96,7 @@ class CampaignMapper
             'keywords' => [
                 'source_host' => $campaignArray['source_host'],
                 'adshares_address' => $campaignArray['source_address'],
+                ...$directDealTargeting,
             ],
             'budget' => $campaign->getBudget(),
             'max_cpc' => $campaign->getMaxCpc(),

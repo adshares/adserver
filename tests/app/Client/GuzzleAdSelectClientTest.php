@@ -363,6 +363,70 @@ class GuzzleAdSelectClientTest extends TestCase
         self::assertEquals($popupZone->uuid, $body[1]['zone_id']);
     }
 
+    public function testFindBannersWhileSiteAcceptsDirectDealsOnly(): void
+    {
+        /** @var Zone $zone */
+        [$publisher, $zone] = $this->initZone();
+        $site = $zone->site;
+        $site->only_direct_deals = true;
+        $site->save();
+        [$campaign, $banner] = $this->initBanner();
+        $zones = [
+            [
+                'id' => '1',
+                'placementId' => $zone->uuid,
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://example.com',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler(
+            [
+                new Response(
+                    body: json_encode(
+                        [
+                            '1' => [
+                                [
+                                    'banner_id' => $banner->uuid,
+                                    'rpm' => 0.3,
+                                ]
+                            ]
+                        ]
+                    )
+                ),
+            ]
+        );
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $foundBanners = $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+        self::assertCount(1, $foundBanners);
+        $foundBanner = $foundBanners[0];
+        self::assertNotNull($foundBanner);
+        /** @var Request $request */
+        $request = $container[0]['request'];
+        self::assertEquals('POST', $request->getMethod());
+        self::assertEquals('https://example.com/api/v1/find', $request->getUri());
+        self::assertTrue($request->hasHeader('Content-Type'));
+        self::assertContains('application/json', $request->getHeader('Content-Type'));
+        $body = json_decode($request->getBody()->getContents(), true);
+        self::assertTrue($body[0]['zone_options']['direct_deal']);
+        self::assertEquals('example.com', $body[0]['banner_filters']['require']['require:site:domain']);
+    }
+
     public function testFindBannersWhileZoneNotExist(): void
     {
         [$publisher, $zone] = $this->initZone();

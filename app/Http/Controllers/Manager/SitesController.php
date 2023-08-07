@@ -108,6 +108,10 @@ class SitesController extends Controller
                 throw new UnprocessableEntityHttpException('Field `only_accepted_banners` must be a boolean');
             }
         }
+        $onlyDirectDeals = $input['only_direct_deals'] ?? false;
+        if (!is_bool($onlyDirectDeals)) {
+            throw new UnprocessableEntityHttpException('Field `only_direct_deals` must be a boolean');
+        }
 
         $inputZones = $input['ad_units'] ?? null;
         $this->validateInputZones($this->configurationRepository->fetchMedium($medium, $vendor), $inputZones);
@@ -134,6 +138,7 @@ class SitesController extends Controller
                 $input['primary_language'],
                 $categoriesByUser,
                 $filtering,
+                $onlyDirectDeals,
             );
 
             if ($inputZones) {
@@ -234,6 +239,9 @@ class SitesController extends Controller
             ) {
                 throw new UnprocessableEntityHttpException('Field `only_accepted_banners` cannot be changed');
             }
+        }
+        if (isset($input['only_direct_deals']) && !is_bool($input['only_direct_deals'])) {
+            throw new UnprocessableEntityHttpException('Field `only_direct_deals` must be a boolean');
         }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones(

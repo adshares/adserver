@@ -103,6 +103,35 @@ final class CampaignMapperTest extends TestCase
         $this->assertEquals($expected, $mapped['filters']['require']);
     }
 
+    public function testMappingCampaignWithDirectDeal(): void
+    {
+        $campaignData = array_merge(
+            $this->getCampaignData(),
+            [
+                'targeting_requires' => [
+                    'site' => [
+                        'domain' => ['example.com']
+                    ],
+                ],
+            ]
+        );
+        $campaign = CampaignFactory::createFromArray($campaignData);
+        $expectedRequirements = [
+            'site:domain' => ['example.com'],
+            'site:medium' => ['web'],
+        ];
+        $expectedKeywords = [
+            'adshares_address' => $campaignData['source_campaign']['address'],
+            'require:site:domain' => ['example.com'],
+            'source_host' => $campaignData['source_campaign']['host'],
+        ];
+
+        $mapped = CampaignMapper::map($this->getMedium(), $campaign);
+
+        $this->assertEquals($expectedKeywords, $mapped['keywords']);
+        $this->assertEquals($expectedRequirements, $mapped['filters']['require']);
+    }
+
     public function testMappingCampaignWithClassification(): void
     {
         $campaignDataWithClassification = $this->getCampaignDataWithClassification();
@@ -276,9 +305,9 @@ final class CampaignMapperTest extends TestCase
             'vendor' => null,
             'targeting_excludes' => [],
             'targeting_requires' => [
-                "device" => [
-                    "type" => [
-                        "desktop",
+                'device' => [
+                    'type' => [
+                        'desktop',
                     ],
                 ],
             ],

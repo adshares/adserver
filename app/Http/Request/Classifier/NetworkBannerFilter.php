@@ -47,16 +47,17 @@ class NetworkBannerFilter
 
     private bool $local;
 
-    private int $userId;
-
-    private ?int $siteId;
-
     private ?Uuid $networkBannerPublicId;
 
     private ?string $landingUrl;
 
-    public function __construct(Request $request, int $userId, ?int $siteId)
-    {
+    public function __construct(
+        Request $request,
+        private readonly int $userId,
+        private readonly ?int $siteId,
+        private readonly ?string $medium = null,
+        private readonly ?string $vendor = null,
+    ) {
         $this->approved = (bool)$request->get('approved', false);
         $this->rejected = (bool)$request->get('rejected', false);
         $this->unclassified = (bool)$request->get('unclassified', false);
@@ -66,8 +67,6 @@ class NetworkBannerFilter
         $this->local = config('app.site_classifier_local_banners') === Config::CLASSIFIER_LOCAL_BANNERS_LOCAL_ONLY
             || $request->get('local', false);
 
-        $this->userId = $userId;
-        $this->siteId = $siteId;
 
         try {
             $this->networkBannerPublicId =
@@ -121,6 +120,16 @@ class NetworkBannerFilter
     public function getSiteId(): ?int
     {
         return $this->siteId;
+    }
+
+    public function getMedium(): ?string
+    {
+        return $this->medium;
+    }
+
+    public function getVendor(): ?string
+    {
+        return $this->vendor;
     }
 
     public function getNetworkBannerPublicId(): ?Uuid
