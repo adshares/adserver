@@ -27,7 +27,6 @@ use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTimeInterface;
@@ -105,6 +104,7 @@ class NetworkBanner extends Model
     private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPC = 'network_campaigns.max_cpc';
     private const NETWORK_CAMPAIGNS_COLUMN_MEDIUM = 'network_campaigns.medium';
     private const NETWORK_CAMPAIGNS_COLUMN_VENDOR = 'network_campaigns.vendor';
+    private const NETWORK_CAMPAIGNS_COLUMN_TARGETING_REQUIRES = 'network_campaigns.targeting_requires';
 
     /**
      * The attributes that are mass assignable.
@@ -187,11 +187,13 @@ class NetworkBanner extends Model
         if ($sites->isEmpty()) {
             return new Collection();
         }
+        $expectingDirectDeal = 1 === $sites->count() && $sites->first()->only_direct_deals;
         $sizes = $networkBannerFilter->getSizes();
         $builder = self::queryByFilter($networkBannerFilter);
         $builder = self::appendFilterCollection($builder, $filters);
-        return $builder->get()->filter(
-            function (NetworkBanner $banner) use ($sites, $sizes) {
+        $banners = $builder->get();
+        return $banners->filter(
+            function (NetworkBanner $banner) use ($sites, $sizes, $expectingDirectDeal) {
                 if ($sizes && self::TYPE_VIDEO === $banner->type) {
                     $matching = Size::findMatchingWithSizes($sizes, ...Size::toDimensions($banner->size));
                     if (empty($matching)) {
@@ -199,6 +201,9 @@ class NetworkBanner extends Model
                     }
                 }
                 foreach ($sites as $site) {
+                    if ($expectingDirectDeal && !NetworkBanner::isDirectDeal($banner, $site)) {
+                        return false;
+                    }
                     if ($site->matchFiltering($banner->classification ?? [])) {
                         return true;
                     }
@@ -206,6 +211,21 @@ class NetworkBanner extends Model
                 return false;
             }
         );
+    }
+
+    private static function isDirectDeal($banner, Site $site): bool
+    {
+        $requires = json_decode($banner->targeting_requires, true);
+        if (null === $requires || !isset($requires['site']['domain'])) {
+            return false;
+        }
+        $domains = $requires['site']['domain'];
+        foreach ($domains as $domain) {
+            if ($domain === $site->domain || str_ends_with($domain, '.' . $site->domain)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function fetchAll(NetworkBannerFilter $networkBannerFilter): Builder
@@ -327,12 +347,9 @@ class NetworkBanner extends Model
             $query->where('network_banners.uuid', $networkBannerPublicId->bin());
         }
 
-        if (null !== ($siteId = $networkBannerFilter->getSiteId())) {
-            if (null === ($site = Site::fetchById($siteId))) {
-                throw new InvalidArgumentException(sprintf('Cannot find site for id %d', $siteId));
-            }
-            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $site->medium);
-            if (null !== ($vendor = $site->vendor)) {
+        if (null !== ($medium = $networkBannerFilter->getMedium())) {
+            $query->where(self::NETWORK_CAMPAIGNS_COLUMN_MEDIUM, $medium);
+            if (null !== ($vendor = $networkBannerFilter->getVendor())) {
                 $query->where(function (Builder $sub) use ($vendor) {
                     $sub->where(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR, $vendor)
                         ->orWhereNull(self::NETWORK_CAMPAIGNS_COLUMN_VENDOR);
@@ -359,6 +376,7 @@ class NetworkBanner extends Model
             self::NETWORK_CAMPAIGNS_COLUMN_BUDGET,
             self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPM,
             self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPC,
+            self::NETWORK_CAMPAIGNS_COLUMN_TARGETING_REQUIRES,
         );
 
         return $query;

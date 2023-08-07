@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -61,6 +62,49 @@ final class ClassifierControllerTest extends TestCase
         self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
     }
 
+    public function testFetchBannerForSite(): void
+    {
+        $user = $this->login();
+        /** @var Site $site */
+        $site = Site::factory()->create([
+            'domain' => 'example.com',
+            'only_accepted_banners' => 1,
+            'only_direct_deals' => 1,
+            'url' => 'https://example.com',
+            'user_id' => $user,
+        ]);
+        Zone::factory()->create([
+            'site_id' => $site->id,
+            'size' => '300x250',
+            'scopes' => ['300x250'],
+        ]);
+        $directCampaign = NetworkCampaign::factory()->create([
+            'targeting_requires' => [
+                'site' => [
+                    'domain' => [
+                        'app.example.com',
+                    ],
+                ],
+            ],
+        ]);
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create([
+            'network_campaign_id' => $directCampaign,
+            'size' => '300x250',
+        ]);
+        NetworkBanner::factory()->create([
+            'network_campaign_id' => NetworkCampaign::factory()->create(),
+            'size' => '300x250',
+        ]);
+        $expectedBannerIds = [$banner->id];
+
+        $response = $this->getJson(sprintf('%s/%d', self::CLASSIFICATION_LIST, $site->id));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('itemsCount', 1);
+        self::assertEqualsCanonicalizing($expectedBannerIds, $response->json('items.*.bannerId'));
+    }
+
     public function testFetchWithFilterBySize(): void
     {
         $user = $this->login();
@@ -79,7 +123,7 @@ final class ClassifierControllerTest extends TestCase
             'size' => '100x100',
             'type' => 'video',
         ]);
-        $sizes = urlencode(json_encode(['2048x2048','1024x1024']));
+        $sizes = urlencode(json_encode(['2048x2048', '1024x1024']));
         $expectedBannerIds = [$bannerDecentraland->id];
 
         $response = $this->getJson(sprintf('%s/%d?sizes=%s', self::CLASSIFICATION_LIST, $site->id, $sizes));
@@ -484,6 +528,6 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(sprintf('%s/%d', self::CLASSIFICATION_LIST, 1));
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 }

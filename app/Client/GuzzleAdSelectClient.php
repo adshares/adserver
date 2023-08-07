@@ -169,6 +169,7 @@ class GuzzleAdSelectClient implements AdSelect
                         'publisher_id' => $user->uuid,
                         'uuid'         => $site->uuid,
                         'medium'       => $site->medium,
+                        'direct_deal'  => $site->only_direct_deals,
                     ];
                     if (null !== $site->vendor) {
                         $sitesMap[$siteId]['vendor'] = $site->vendor;
@@ -178,6 +179,9 @@ class GuzzleAdSelectClient implements AdSelect
                     }
                     if (isset($zones[$i]['options']['banner_mime'])) {
                         $sitesMap[$siteId]['filters']['require']['mime'] = (array)$zones[$i]['options']['banner_mime'];
+                    }
+                    if ($site->only_direct_deals) {
+                        $sitesMap[$siteId]['filters']['require']['require:site:domain'] = $site->domain;
                     }
                     // always include active pop zones
                     foreach ($site->zones as $popupZone) {
