@@ -148,8 +148,9 @@ final class SupplyControllerTest extends TestCase
     public function testPageWhy(): void
     {
         $address = '0001-00000003-AB0C';
-        NetworkHost::factory()->create(['address' => $address]);
-        $campaign = NetworkCampaign::factory()->create(['source_address' => $address]);
+        $host = 'https://example.com';
+        NetworkHost::factory()->create(['address' => $address, 'host' => $host]);
+        $campaign = NetworkCampaign::factory()->create(['source_address' => $address, 'source_host' => $host]);
         /** @var NetworkBanner $banner */
         $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
         $query = [
@@ -166,8 +167,9 @@ final class SupplyControllerTest extends TestCase
     public function testPageWhyWhileCaseIdAndBannerIdAreUuid(): void
     {
         $address = '0001-00000003-AB0C';
-        NetworkHost::factory()->create(['address' => $address]);
-        $campaign = NetworkCampaign::factory()->create(['source_address' => $address]);
+        $host = 'https://example.com';
+        NetworkHost::factory()->create(['address' => $address, 'host' => $host]);
+        $campaign = NetworkCampaign::factory()->create(['source_address' => $address, 'source_host' => $host]);
         /** @var NetworkBanner $banner */
         $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
         $query = [
