@@ -23,16 +23,19 @@ namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Mail\SiteApprovalPending;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use DateTime;
 use DateTimeImmutable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -272,6 +275,7 @@ class SitesControllerTest extends TestCase
             'missing status' => [self::simpleSiteData([], 'status')],
             'invalid status' => [self::simpleSiteData(['status' => -1])],
             'invalid only_accepted_banners' => [self::simpleSiteData(['only_accepted_banners' => 1])],
+            'invalid only_direct_deals' => [self::simpleSiteData(['only_direct_deals' => 1])],
             'missing url' => [self::simpleSiteData([], 'url')],
             'invalid url' => [self::simpleSiteData(['url' => 'example'])],
             'invalid ad units type' => [self::simpleSiteData(['adUnits' => 'adUnits'])],
@@ -456,6 +460,14 @@ class SitesControllerTest extends TestCase
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
         $url = 'https://example2.com';
+        /** @var NotificationEmailLog $notificationLogEntry */
+        $notificationLogEntry = NotificationEmailLog::factory()->create(
+            [
+                'category' => NotificationEmailCategory::SiteAccepted,
+                'properties' => ['siteId' => $site->id],
+                'user_id' => $user,
+            ]
+        );
 
         $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['url' => $url]]);
 
@@ -469,6 +481,7 @@ class SitesControllerTest extends TestCase
         self::assertEquals('unknown', $site->info);
         self::assertNull($site->accepted_at);
         self::assertEquals(Site::STATUS_PENDING_APPROVAL, $site->status);
+        self::assertLessThanOrEqual(Carbon::now(), $notificationLogEntry->refresh()->valid_until);
     }
 
     public function testUpdateSiteUrlFailWhenExists(): void
@@ -515,6 +528,18 @@ class SitesControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $site->refresh();
         self::assertTrue($site->only_accepted_banners);
+    }
+
+    public function testUpdateSiteFailOnlyDirectDeals(): void
+    {
+        $user = $this->setupUser();
+        /** @var Site $site */
+        $site = Site::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::getSiteUri($site->id), ['site' => ['onlyDirectDeals' => 'yes']]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertFalse($site->refresh()->only_direct_deals);
     }
 
     public function testUpdateSiteOnlyAcceptedBannersInvalidType(): void

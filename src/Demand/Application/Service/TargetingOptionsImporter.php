@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,19 +24,18 @@ declare(strict_types=1);
 namespace Adshares\Demand\Application\Service;
 
 use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Services\Supply\DefaultBannerPlaceholderGenerator;
 use Adshares\Common\Application\Dto\TaxonomyV2;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 
 class TargetingOptionsImporter
 {
-    private AdUser $client;
-    private ConfigurationRepository $repository;
-
-    public function __construct(AdUser $client, ConfigurationRepository $repository)
-    {
-        $this->client = $client;
-        $this->repository = $repository;
+    public function __construct(
+        private readonly AdUser $client,
+        private readonly ConfigurationRepository $repository,
+        private readonly DefaultBannerPlaceholderGenerator $generator,
+    ) {
     }
 
     public function import(): void
@@ -44,6 +43,7 @@ class TargetingOptionsImporter
         $taxonomy = $this->client->fetchTargetingOptions();
         $this->repository->storeTaxonomyV2($taxonomy);
         $this->registerBidStrategyIfNewMedium($taxonomy);
+        $this->generator->generate();
     }
 
     private function registerBidStrategyIfNewMedium(TaxonomyV2 $taxonomy): void

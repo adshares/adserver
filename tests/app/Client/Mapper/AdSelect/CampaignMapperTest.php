@@ -30,6 +30,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use DateTime;
+use DateTimeImmutable;
 use stdClass;
 
 final class CampaignMapperTest extends TestCase
@@ -100,6 +101,35 @@ final class CampaignMapperTest extends TestCase
         $mapped = CampaignMapper::map($medium, $campaign);
 
         $this->assertEquals($expected, $mapped['filters']['require']);
+    }
+
+    public function testMappingCampaignWithDirectDeal(): void
+    {
+        $campaignData = array_merge(
+            $this->getCampaignData(),
+            [
+                'targeting_requires' => [
+                    'site' => [
+                        'domain' => ['example.com']
+                    ],
+                ],
+            ]
+        );
+        $campaign = CampaignFactory::createFromArray($campaignData);
+        $expectedRequirements = [
+            'site:domain' => ['example.com'],
+            'site:medium' => ['web'],
+        ];
+        $expectedKeywords = [
+            'adshares_address' => $campaignData['source_campaign']['address'],
+            'require:site:domain' => ['example.com'],
+            'source_host' => $campaignData['source_campaign']['host'],
+        ];
+
+        $mapped = CampaignMapper::map($this->getMedium(), $campaign);
+
+        $this->assertEquals($expectedKeywords, $mapped['keywords']);
+        $this->assertEquals($expectedRequirements, $mapped['filters']['require']);
     }
 
     public function testMappingCampaignWithClassification(): void
@@ -222,6 +252,7 @@ final class CampaignMapperTest extends TestCase
                 'type' => 'image',
                 'mime' => 'image/png',
                 'size' => '728x90',
+                'signed_at' => null,
             ],
             $arr
         );
@@ -264,6 +295,7 @@ final class CampaignMapperTest extends TestCase
                             'classified' => ['1'],
                         ],
                     ],
+                    'signed_at' => new DateTimeImmutable('-1 hour'),
                 ],
             ],
             'max_cpc' => 10000000001,
@@ -273,9 +305,9 @@ final class CampaignMapperTest extends TestCase
             'vendor' => null,
             'targeting_excludes' => [],
             'targeting_requires' => [
-                "device" => [
-                    "type" => [
-                        "desktop",
+                'device' => [
+                    'type' => [
+                        'desktop',
                     ],
                 ],
             ],

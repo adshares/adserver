@@ -40,6 +40,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -77,6 +78,7 @@ use Illuminate\Support\Facades\Mail;
  * @property array|null categories
  * @property array|null categories_by_user
  * @property bool only_accepted_banners
+ * @property bool only_direct_deals
  * @property int|null reject_reason_id
  * @property string|null reject_reason
  * @property Zone[]|Collection zones
@@ -127,6 +129,7 @@ class Site extends Model
         'site_requires' => 'json',
         'site_excludes' => 'json',
         'only_accepted_banners' => 'boolean',
+        'only_direct_deals' => 'boolean',
         'rank' => 'float',
         'categories' => 'json',
         'categories_by_user' => 'json',
@@ -140,6 +143,7 @@ class Site extends Model
         'primary_language',
         'filtering',
         'only_accepted_banners',
+        'only_direct_deals',
     ];
 
     protected $hidden = [
@@ -264,6 +268,17 @@ class Site extends Model
             ->first();
     }
 
+    /**
+     * @return Collection|Site[]
+     */
+    public static function fetchDraftSitesCreatedBefore(DateTimeInterface $dateTo): Collection
+    {
+        return self::query()
+            ->where('status', Site::STATUS_DRAFT)
+            ->where('created_at', '<', $dateTo)
+            ->get();
+    }
+
     public static function create(
         int $userId,
         string $url,
@@ -274,7 +289,8 @@ class Site extends Model
         int $status = Site::STATUS_ACTIVE,
         string $primaryLanguage = 'en',
         array $categoriesByUser = null,
-        array $filtering = null
+        array $filtering = null,
+        bool $onlyDirectDeals = false,
     ): Site {
         if ($categoriesByUser === null) {
             $categoriesByUser = ['unknown'];
@@ -294,6 +310,7 @@ class Site extends Model
         $site->vendor = $vendor;
         $site->name = $name;
         $site->only_accepted_banners = $onlyAcceptedBanners;
+        $site->only_direct_deals = $onlyDirectDeals;
         $site->primary_language = $primaryLanguage;
         $site->url = $url;
         $site->user_id = $userId;

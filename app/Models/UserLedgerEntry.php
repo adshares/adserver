@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 use function array_filter;
@@ -54,6 +55,9 @@ use const PHP_INT_MAX;
  * @property User user
  * @property ?RefLink refLink
  * @property int ref_link_id
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
  */
 class UserLedgerEntry extends Model
 {
@@ -593,5 +597,14 @@ class UserLedgerEntry extends Model
             },
             'u'
         )->groupBy(['date_helper', 'type', 'status', 'txid', 'address_from', 'address_to']);
+    }
+
+    public static function fetchFirstDeposit(int $userId): ?self
+    {
+        return (new self())->where('user_id', $userId)
+            ->where('type', self::TYPE_DEPOSIT)
+            ->where('status', self::STATUS_ACCEPTED)
+            ->orderBy('id')
+            ->first();
     }
 }

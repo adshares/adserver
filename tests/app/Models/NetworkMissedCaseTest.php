@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,32 +19,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Mail;
+namespace Adshares\Adserver\Tests\Models;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
+use Adshares\Adserver\Models\NetworkMissedCase;
+use Adshares\Adserver\Tests\TestCase;
 
-class SiteVerified extends Mailable
+class NetworkMissedCaseTest extends TestCase
 {
-    use Queueable;
-    use SerializesModels;
-
-    /** @var array */
-    private $sites;
-
-    public function __construct(array $sites)
+    public function testCreateWhileSameCaseIdExist(): void
     {
-        $this->sites = $sites;
-        $this->subject(1 == count($sites) ? 'Site verified' : 'Sites verified');
-    }
+        NetworkMissedCase::factory()->create(['case_id' => '10000000000000000000000000000000']);
 
-    public function build(): Mailable
-    {
-        return $this->markdown('emails.site-verified')->with(
-            [
-                'sites' => $this->sites,
-            ]
+        $case = NetworkMissedCase::create(
+            '10000000000000000000000000000000',
+            '20000000000000000000000000000000',
+            '30000000000000000000000000000000',
+            '40000000000000000000000000000000',
+            '50000000000000000000000000000000',
         );
+
+        self::assertNull($case);
     }
 }

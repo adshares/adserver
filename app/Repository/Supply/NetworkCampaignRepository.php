@@ -46,24 +46,16 @@ class NetworkCampaignRepository implements CampaignRepository
     private const CAMPAIGN_UUID_FIELD = 'uuid';
 
     private const BANNER_CLICK_URL_FIELD = 'click_url';
-
     private const BANNER_SERVE_URL_FIELD = 'serve_url';
-
     private const BANNER_VIEW_URL_FIELD = 'view_url';
-
     private const BANNER_UUID_FIELD = 'uuid';
-
     private const BANNER_ID_FIELD = 'id';
-
     private const BANNER_DEMAND_BANNER_ID_FIELD = 'demand_banner_id';
-
     private const BANNER_TYPE_FIELD = 'type';
-
     private const BANNER_MIME_FIELD = 'mime';
-
     private const BANNER_SIZE_FIELD = 'size';
-
     private const BANNER_CLASSIFICATION_FIELD = 'classification';
+    private const BANNER_SIGNED_AT_FIELD = 'signed_at';
 
     public function markedAsDeletedBySourceAddress(AccountId $sourceAddress): void
     {
@@ -192,6 +184,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 self::BANNER_SIZE_FIELD => $networkBanner->size,
                 self::STATUS_FIELD => $networkBanner->status,
                 self::BANNER_CLASSIFICATION_FIELD => $networkBanner->classification,
+                self::BANNER_SIGNED_AT_FIELD => $networkBanner->signed_at,
             ];
         }
 

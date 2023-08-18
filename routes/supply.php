@@ -40,6 +40,9 @@ Route::get('/l/n/view/{banner_id}', [SupplyController::class, 'logNetworkView'])
 Route::get('/l/n/click/{banner_id}', [SupplyController::class, 'logNetworkClick']);
 Route::get('/l/ns/view', [SupplyController::class, 'logNetworkSimpleView']);
 Route::get('/l/ns/click', [SupplyController::class, 'logNetworkSimpleClick']);
+Route::get('/l/p/serve/{banner_id}', [SupplyController::class, 'placeholderServe']);
+Route::get('/l/p/view/{banner_id}', [SupplyController::class, 'logPlaceholderView']);
+Route::get('/l/p/click/{banner_id}', [SupplyController::class, 'logPlaceholderClick']);
 
 Route::get('/supply/targeting-reach', [SupplyController::class, 'targetingReachList']);
 
@@ -55,6 +58,12 @@ Route::group(
             ->name('log-network-view');
         Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])
             ->name('log-network-click');
+        Route::get('/l/p/serve/{banner_id}', [SupplyController::class, 'placeholderServe'])
+            ->name('placeholder-serve');
+        Route::get('/l/p/view/{banner_id}', [SupplyController::class, 'logPlaceholderView'])
+            ->name('log-placeholder-view');
+        Route::get('/l/p/click/{banner_id}', [SupplyController::class, 'logPlaceholderClick'])
+            ->name('log-placeholder-click');
     }
 );
 

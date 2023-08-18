@@ -177,6 +177,8 @@ class Config extends Model
     public const SKYNET_API_KEY = 'skynet-api-key';
     public const SKYNET_API_URL = 'skynet-api-url';
     public const SKYNET_CDN_URL = 'skynet-cdn-url';
+    public const SUPPLY_PLACEHOLDER_COLOR = 'supply-placeholder-color';
+    public const SUPPLY_PLACEHOLDER_FILE = 'supply-placeholder-file';
     public const SUPPORT_CHAT = 'support-chat';
     public const SUPPORT_EMAIL = 'support-email';
     public const SUPPORT_TELEGRAM = 'support-telegram';
@@ -559,6 +561,8 @@ class Config extends Model
             self::SKYNET_API_KEY => '',
             self::SKYNET_API_URL => 'https://siasky.net',
             self::SKYNET_CDN_URL => '',
+            self::SUPPLY_PLACEHOLDER_COLOR => 'FFFFFF',
+            self::SUPPLY_PLACEHOLDER_FILE => base_path('resources/img/placeholder_seed.png'),
             self::SUPPORT_CHAT => null,
             self::SUPPORT_EMAIL => 'mail@example.com',
             self::SUPPORT_TELEGRAM => null,

@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SiteRejectReason;
 use Adshares\Adserver\Models\SitesRejectedDomain;
@@ -39,6 +40,7 @@ use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Adserver\ViewModel\MediumName;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\TaxonomyV2\Medium;
 use Adshares\Common\Application\Service\ConfigurationRepository;
@@ -106,6 +108,10 @@ class SitesController extends Controller
                 throw new UnprocessableEntityHttpException('Field `only_accepted_banners` must be a boolean');
             }
         }
+        $onlyDirectDeals = $input['only_direct_deals'] ?? false;
+        if (!is_bool($onlyDirectDeals)) {
+            throw new UnprocessableEntityHttpException('Field `only_direct_deals` must be a boolean');
+        }
 
         $inputZones = $input['ad_units'] ?? null;
         $this->validateInputZones($this->configurationRepository->fetchMedium($medium, $vendor), $inputZones);
@@ -132,6 +138,7 @@ class SitesController extends Controller
                 $input['primary_language'],
                 $categoriesByUser,
                 $filtering,
+                $onlyDirectDeals,
             );
 
             if ($inputZones) {
@@ -233,6 +240,9 @@ class SitesController extends Controller
                 throw new UnprocessableEntityHttpException('Field `only_accepted_banners` cannot be changed');
             }
         }
+        if (isset($input['only_direct_deals']) && !is_bool($input['only_direct_deals'])) {
+            throw new UnprocessableEntityHttpException('Field `only_direct_deals` must be a boolean');
+        }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones(
             $this->configurationRepository->fetchMedium($site->medium, $site->vendor),
@@ -259,6 +269,11 @@ class SitesController extends Controller
 
             if ($updateDomainAndUrl) {
                 $site->updateWithPageRank(PageRank::default());
+                NotificationEmailLog::fetch(
+                    $site->user_id,
+                    NotificationEmailCategory::SiteAccepted,
+                    ['siteId' => $site->id],
+                )?->invalidate();
             }
         } catch (Exception $exception) {
             DB::rollBack();

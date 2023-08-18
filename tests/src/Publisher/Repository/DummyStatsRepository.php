@@ -78,6 +78,23 @@ class DummyStatsRepository implements StatsRepository
         return new ChartResult($data);
     }
 
+    public function fetchViewMissedRate(
+        string $publisherId,
+        ChartResolution $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $data = [
+            ['2019-01-01T15:00:00+00:00', 0.0],
+            ['2019-01-01T16:00:00+00:00', 0.3],
+            ['2019-01-01T17:00:00+00:00', 0.6],
+            ['2019-01-01T18:00:00+00:00', 0.9],
+        ];
+
+        return new ChartResult($data);
+    }
+
     public function fetchViewUnique(
         string $publisherId,
         ChartResolution $resolution,

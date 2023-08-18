@@ -381,7 +381,34 @@ var isOccluded = function(rect, el) {
 
 // checks if element is visible on screen
 var isVisible = function (el) {
-    return isRendered(el) && isWindowVisible();
+    if (!isRendered(el) || !isWindowVisible()) {
+        return false;
+    }
+
+    const rootEl = el;
+    const rootRect = getBoundRect(el);
+    const rootArea = rootRect.width * rootRect.height;
+
+    let area, rect;
+    let intersect = rootRect;
+    el = el.parentElement;
+
+    while (el.parentElement) {
+        rect = getBoundRect(el, true);
+        intersect = rectIntersect(intersect, rect);
+        area = intersect ? intersect.width * intersect.height : 0;
+        if (area < rootArea / 2) {
+            return false;
+        }
+        el = el.parentElement;
+    }
+
+    intersect = rectIntersect(intersect, viewSize());
+    if (isOccluded(intersect, rootEl)) {
+        return false;
+    }
+    area = intersect ? intersect.width * intersect.height : 0;
+    return area >= rootArea / 2;
 };
 
 var impressionId;
@@ -694,11 +721,15 @@ domReady(function () {
                 });
 
                 zones.forEach(function (zone, i) {
-                    var requestId = i.toString();
-                    var banner = bannerMap[requestId];
+                    const requestId = i.toString();
+                    const banner = bannerMap[requestId];
                     delete bannerMap[requestId];
 
-                    if (!banner || typeof banner !== 'object') {
+                    if (
+                        !banner
+                        || typeof banner !== 'object'
+                        || ('00000000000000000000000000000000' === banner.publisherId && !!zone.backfill) // placeholder
+                    ) {
                         insertBackfill(zone.destElement, zone.backfill);
                         return;
                     }

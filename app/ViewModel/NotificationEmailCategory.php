@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2022 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,14 +21,20 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Adserver\ViewModel;
 
-use Adshares\Common\Exception\Exception;
-
-final class ConfigException extends Exception
+enum NotificationEmailCategory: string
 {
-    public static function missingEntry(string $key)
-    {
-        return new static(sprintf('Missing Config "%s" key', $key));
-    }
+    case CampaignAccepted = 'CampaignAccepted';
+    case CampaignDraft = 'CampaignDraft';
+    case CampaignEnded = 'CampaignEnded';
+    case CampaignEndedExtend = 'CampaignEndedExtend';
+    case CampaignEnds = 'CampaignEnds';
+    case FundsEnded = 'FundsEnded';
+    case FundsEnds = 'FundsEnds';
+    case InactiveUser = 'InactiveUser';
+    case InactiveUserExtend = 'InactiveUserExtend';
+    case InactiveUserWhoDeposit = 'InactiveUserWhoDeposit';
+    case SiteAccepted = 'SiteAccepted';
+    case SiteDraft = 'SiteDraft';
 }

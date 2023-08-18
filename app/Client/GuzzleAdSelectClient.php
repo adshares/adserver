@@ -31,6 +31,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -154,6 +155,7 @@ class GuzzleAdSelectClient implements AdSelect
             if (!array_key_exists($siteId, $sitesMap)) {
                 $site = $zone->site;
 
+                /** @var User $user */
                 $isActive = null !== $site && $site->status === Site::STATUS_ACTIVE && null !== ($user = $site->user);
 
                 if ($isActive) {
@@ -167,6 +169,7 @@ class GuzzleAdSelectClient implements AdSelect
                         'publisher_id' => $user->uuid,
                         'uuid'         => $site->uuid,
                         'medium'       => $site->medium,
+                        'direct_deal'  => $site->only_direct_deals,
                     ];
                     if (null !== $site->vendor) {
                         $sitesMap[$siteId]['vendor'] = $site->vendor;
@@ -183,13 +186,18 @@ class GuzzleAdSelectClient implements AdSelect
                             $zones[$i]['options']['exclude'],
                         );
                     }
+                    if ($site->only_direct_deals) {
+                        $sitesMap[$siteId]['filters']['require']['require:site:domain'] = $site->domain;
+                    }
                     // always include active pop zones
                     foreach ($site->zones as $popupZone) {
-                        if (!in_array($popupZone->uuid, $zoneIds)) {
-                            if ($popupZone->type == 'pop' && $popupZone->status == Zone::STATUS_ACTIVE) {
-                                $zoneIds[] = $popupZone->uuid;
-                                $zoneList[] = $popupZone;
-                            }
+                        if (
+                            Zone::TYPE_POP === $popupZone->type &&
+                            Zone::STATUS_ACTIVE === $popupZone->status &&
+                            !in_array($popupZone->uuid, $zoneIds)
+                        ) {
+                            $zoneIds[] = $popupZone->uuid;
+                            $zoneList[] = $popupZone;
                         }
                     }
                 } else {
@@ -265,15 +273,21 @@ class GuzzleAdSelectClient implements AdSelect
         }
 
         $bannerIds = [];
-        foreach ($zoneCollection as $requestId => $zone) {
-            if (isset($existingZones[$requestId]) && isset($items[$requestId])) {
-                $bannerIds[$requestId] = $items[$requestId];
+        $requestMapping = [];
+        foreach ($zoneIds as $i => $id) {
+            $originalRequestId = $zones[$i]['id'] ?? $i;
+            $requestId = $zoneInputByUuid[$id]['id'] ?? $i;
+            $requestMapping[$originalRequestId] = $requestId;
+            if (isset($existingZones[$requestId]) && !empty($items[$requestId])) {
+                $bannerIds[$originalRequestId] = $items[$requestId];
             } else {
-                $bannerIds[$requestId] = [null];
+                $bannerIds[$originalRequestId] = [null];
             }
         }
 
-        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection, $impressionId));
+        $banners = iterator_to_array(
+            $this->fetchInOrderOfAppearance($bannerIds, $zoneCollection, $requestMapping, $impressionId)
+        );
 
         return new FoundBanners($banners);
     }
@@ -281,6 +295,7 @@ class GuzzleAdSelectClient implements AdSelect
     private function fetchInOrderOfAppearance(
         array $params,
         Collection $zoneCollection,
+        array $requestMapping,
         string $impressionId,
     ): Generator {
         /** @var LicenseReader $licenseReader */
@@ -299,7 +314,7 @@ class GuzzleAdSelectClient implements AdSelect
 
                     yield null;
                 } else {
-                    $zone = $zoneCollection[$requestId];
+                    $zone = $zoneCollection[$requestMapping[$requestId]];
                     $campaign = $banner->campaign;
                     $data = [
                         'id'            => $bannerId,

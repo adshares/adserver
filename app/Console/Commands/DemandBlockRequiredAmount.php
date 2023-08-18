@@ -25,14 +25,17 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Mail\CampaignSuspension;
+use Adshares\Adserver\Mail\Notifications\FundsEnded;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use DateTimeImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -85,11 +88,16 @@ class DemandBlockRequiredAmount extends BaseCommand
                     $exchangeRate->toClick($budget->total()),
                     $exchangeRate->toClick($budget->bonusable())
                 );
-            } catch (InvalidArgumentException $e) {
-                Log::warning($e->getMessage());
+            } catch (InvalidArgumentException $exception) {
+                Log::warning($exception->getMessage());
 
                 if (Campaign::suspendAllForUserId($userId) > 0 && null !== ($email = User::fetchById($userId)->email)) {
-                    Mail::to($email)->queue(new CampaignSuspension());
+                    Mail::to($email)->queue(new FundsEnded());
+                    NotificationEmailLog::register(
+                        $userId,
+                        NotificationEmailCategory::FundsEnded,
+                        new DateTimeImmutable(),
+                    );
                 }
             }
         });

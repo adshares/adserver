@@ -168,6 +168,8 @@ class ServerConfigurationController extends Controller
         Config::SKYNET_API_KEY => 'nullable|notEmpty',
         Config::SKYNET_API_URL => 'nullable|url',
         Config::SKYNET_CDN_URL => 'nullable|url',
+        Config::SUPPLY_PLACEHOLDER_COLOR => 'nullable|hex:6',
+        Config::SUPPLY_PLACEHOLDER_FILE => 'nullable',
         Config::SUPPORT_CHAT => 'nullable|url',
         Config::SUPPORT_EMAIL => 'email',
         Config::SUPPORT_TELEGRAM => 'nullable|notEmpty',
@@ -420,12 +422,12 @@ class ServerConfigurationController extends Controller
 
     private static function validateHex(string $field, string $value, ?string $length = null): void
     {
-        if (null !== $length && strlen($value) !== (int)$length) {
+        if ($length && strlen($value) !== (int)$length) {
             throw new UnprocessableEntityHttpException(
                 sprintf('Field `%s` must be have %d characters', $field, (int)$length)
             );
         }
-        if (1 !== preg_match('/^[\dA-Z]{64}$/', $value)) {
+        if (1 !== preg_match('/^[\dA-F]+$/', $value)) {
             throw new UnprocessableEntityHttpException(sprintf('Field `%s` must be a hexadecimal string', $field));
         }
     }

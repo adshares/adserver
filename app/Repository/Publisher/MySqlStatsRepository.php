@@ -120,6 +120,45 @@ class MySqlStatsRepository implements StatsRepository
         return new ChartResult($result);
     }
 
+    public function fetchViewMissedRate(
+        string $publisherId,
+        ChartResolution $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $resultViewAll = $this->fetch(
+            StatsRepository::TYPE_VIEW_ALL,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId,
+        );
+
+        $resultViewMissed = $this->fetch(
+            StatsRepository::TYPE_VIEW_MISSED,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId,
+        );
+
+        $result = [];
+
+        $rowCount = count($resultViewMissed);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultViewMissed[$i][0],
+                self::calculateMissedRate((int)$resultViewAll[$i][1], (int)$resultViewMissed[$i][1]),
+            ];
+        }
+
+        return new ChartResult($result);
+    }
+
     public function fetchViewUnique(
         string $publisherId,
         ChartResolution $resolution,
@@ -672,6 +711,20 @@ class MySqlStatsRepository implements StatsRepository
 
             $concatenatedResultLive = self::concatenateDateColumns($dateTimeZone, $queryResultLive, $resolution);
             $concatenatedResult = self::joinResultWithResultLive($concatenatedResult, $concatenatedResultLive);
+
+            if (StatsRepository::TYPE_VIEW_ALL === $type) {
+                $queryResultLive = $this->fetchLive(
+                    StatsRepository::TYPE_VIEW_MISSED,
+                    $publisherId,
+                    $resolution,
+                    max($dateStart, $dateThreshold),
+                    $dateEnd,
+                    $siteId,
+                    $zoneId,
+                );
+                $concatenatedResultLive = self::concatenateDateColumns($dateTimeZone, $queryResultLive, $resolution);
+                $concatenatedResult = self::joinResultWithResultLive($concatenatedResult, $concatenatedResultLive);
+            }
         }
 
         $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
@@ -883,6 +936,11 @@ class MySqlStatsRepository implements StatsRepository
     private static function calculateInvalidRate(int $totalCount, int $validCount): float
     {
         return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
+    }
+
+    private static function calculateMissedRate(int $totalCount, int $missedCount): float
+    {
+        return (0 === $totalCount) ? 0 : $missedCount / $totalCount;
     }
 
     private function getDataEntriesWithoutEvents(array $queryResult, array $allZones, bool $showPublishers): array

@@ -31,59 +31,109 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
+use Adshares\Supply\Domain\ValueObject\Budget;
+use Adshares\Supply\Domain\ValueObject\CampaignDate;
+use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 class GuzzleAdSelectClientTest extends TestCase
 {
     private const URI_FIND_BANNERS = '/api/v1/find';
     private const URI_INVENTORY = '/api/v1/campaigns';
 
+    private const FOUND_BANNER_STRUCTURE = [
+        'id',
+        'publisher_id',
+        'zone_id',
+        'pay_from',
+        'pay_to',
+        'type',
+        'size',
+        'serve_url',
+        'creative_sha1',
+        'click_url',
+        'view_url',
+        'info_box',
+        'rpm',
+        'request_id',
+    ];
+
+    public function testExportInventory(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler([new Response()]);
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+        $campaigns = new CampaignCollection(self::campaign());
+
+        $guzzleAdSelectClient->exportInventory($campaigns);
+
+        self::assertCount(1, $container);
+        $request = $container[0]['request'];
+        self::assertEquals('POST', $request->getMethod());
+        self::assertEquals('https://example.com/api/v1/campaigns', $request->getUri());
+        self::assertTrue($request->hasHeader('Content-Type'));
+        self::assertContains('application/json', $request->getHeader('Content-Type'));
+    }
+
+    public function testExportInventoryFail(): void
+    {
+        $mock = new MockHandler([new Response(BaseResponse::HTTP_SERVICE_UNAVAILABLE, [], '{"error": "test"}')]);
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+        $campaigns = new CampaignCollection(self::campaign());
+
+        self::expectException(UnexpectedClientResponseException::class);
+
+        $guzzleAdSelectClient->exportInventory($campaigns);
+    }
+
     public function testDeleteFromInventory(): void
     {
-        $ids = ['10000000000000000000000000000000', '20000000000000000000000000000000'];
-        $campaigns = new CampaignCollection();
-        foreach ($ids as $id) {
-            $campaigns->add(CampaignFactory::createFromArray($this->getCampaignData(['id' => new Uuid($id)])));
-        }
-        $client = self::createMock(Client::class);
-        $client->expects(self::once())->method('delete')->with(
-            self::URI_INVENTORY,
-            self::callback(function ($options) use ($ids): bool {
-                self::assertIsArray($options);
-                self::assertArrayHasKey('json', $options);
-                self::assertIsArray($options['json']);
-                self::assertArrayHasKey('campaigns', $options['json']);
-                self::assertIsArray($options['json']['campaigns']);
-                self::assertEquals($ids, $options['json']['campaigns']);
-                return true;
-            })
-        );
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler([new Response()]);
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
         $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+        $campaigns = new CampaignCollection(self::campaign());
 
         $guzzleAdSelectClient->deleteFromInventory($campaigns);
+
+        self::assertCount(1, $container);
+        $request = $container[0]['request'];
+        self::assertEquals('DELETE', $request->getMethod());
+        self::assertEquals('https://example.com/api/v1/campaigns', $request->getUri());
+        self::assertTrue($request->hasHeader('Content-Type'));
+        self::assertContains('application/json', $request->getHeader('Content-Type'));
     }
 
     public function testDeleteFromInventoryFail(): void
     {
-        $ids = ['10000000000000000000000000000000', '20000000000000000000000000000000'];
-        $campaigns = new CampaignCollection();
-        foreach ($ids as $id) {
-            $campaigns->add(CampaignFactory::createFromArray($this->getCampaignData(['id' => new Uuid($id)])));
-        }
-        $mock = new MockHandler([
-            new Response(500),
-        ]);
+        $mock = new MockHandler([new Response(BaseResponse::HTTP_SERVICE_UNAVAILABLE, [], '{"error": "test"}')]);
         $handlerStack = HandlerStack::create($mock);
         $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
         $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+        $campaigns = new CampaignCollection(self::campaign());
 
         self::expectException(UnexpectedClientResponseException::class);
 
@@ -92,100 +142,493 @@ class GuzzleAdSelectClientTest extends TestCase
 
     public function testFindBanners(): void
     {
-        /** @var NetworkBanner $networkBanner */
-        $networkBanner = NetworkBanner::factory()->create([
-            'network_campaign_id' => NetworkCampaign::factory()->create(),
-            'serve_url' => 'https://adshares.net/serve/' . Uuid::v4()->toString(),
-        ]);
-        $responseBody = [
-            '1' => [
-                [
-                    'banner_id' => $networkBanner->uuid,
-                    'rpm' => 0.5,
-                ],
-            ],
-        ];
-        $client = self::createMock(Client::class);
-        $client->expects(self::once())
-            ->method('post')
-            ->with(
-                self::URI_FIND_BANNERS,
-                self::callback(function ($options): bool {
-                    self::assertIsArray($options);
-                    self::assertArrayHasKey('json', $options);
-                    self::assertIsArray($options['json']);
-                    self::assertCount(1, $options['json']);
-                    self::assertArrayHasKey('banner_filters', $options['json'][0]);
-                    $filters = $options['json'][0]['banner_filters'];
-                    self::assertEquals(['image'], $filters['require']['type']);
-                    self::assertEquals(['image/png'], $filters['require']['mime']);
-                    self::assertEquals(['source_host' => ['http://localhost:8000']], $filters['exclude']);
-                    return true;
-                })
-            )
-            ->willReturn(new Response(body: json_encode($responseBody)));
-        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
-
-        /** @var Zone $zone */
-        $zone = Zone::factory()
-            ->create(['site_id' => Site::factory()->create(['user_id' => User::factory()->create()])]);
+        [$publisher, $zone] = $this->initZone();
+        [$campaign, $banner] = $this->initBanner();
         $zones = [
             [
                 'id' => '1',
                 'placementId' => $zone->uuid,
-                'options' => [
-                    'banner_mime' => ['image/png'],
-                    'banner_type' => ['image'],
-                    'exclude' => ['source_host' => ['http://localhost:8000']],
-                ]
             ],
         ];
         $context = new ImpressionContext(
-            ['page' => 'https://example.com'],
+            [
+                'page' => 'https://example.com',
+            ],
             [],
             [
                 'keywords' => [],
-                'uid' => Uuid::v4()->toString(),
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $mock = new MockHandler(
+            [
+                new Response(
+                    body: json_encode(
+                        [
+                            '1' => [
+                                [
+                                    'banner_id' => $banner->uuid,
+                                    'rpm' => 0.3,
+                                ]
+                            ]
+                        ]
+                    )
+                ),
             ]
         );
-        $impressionId = Uuid::v4()->toString();
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
 
         $foundBanners = $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
-
         self::assertCount(1, $foundBanners);
-        self::assertNotNull($foundBanners[0]);
-        self::assertEquals($networkBanner->uuid, $foundBanners[0]['id']);
+        $foundBanner = $foundBanners[0];
+        self::assertNotNull($foundBanner);
+        foreach (self::FOUND_BANNER_STRUCTURE as $key) {
+            self::assertArrayHasKey($key, $foundBanner);
+        }
+        self::assertEquals($banner->uuid, $foundBanner['id']);
+        self::assertEquals($publisher->uuid, $foundBanner['publisher_id']);
+        self::assertEquals($zone->uuid, $foundBanner['zone_id']);
+        self::assertEquals($campaign->source_address, $foundBanner['pay_from']);
+        self::assertEquals('0001-00000005-CBCA', $foundBanner['pay_to']);
+        self::assertEquals($banner->type, $foundBanner['type']);
+        self::assertEquals($banner->size, $foundBanner['size']);
+        self::assertEquals($banner->serve_url, $foundBanner['serve_url']);
+        self::assertEquals($banner->checksum, $foundBanner['creative_sha1']);
+        self::assertStringStartsWith('https://example.com/l/n/click/' . $banner->uuid, $foundBanner['click_url']);
+        self::assertStringStartsWith('https://example.com/l/n/view/' . $banner->uuid, $foundBanner['view_url']);
+        self::assertTrue($foundBanner['info_box']);
+        self::assertEquals(0.3, $foundBanner['rpm']);
+        self::assertEquals('1', $foundBanner['request_id']);
     }
 
-    private function getCampaignData(array $merge = []): array
+    public function testFindBannersForMetaverse(): void
     {
-        return array_merge(
+        $publisher = User::factory()->create();
+        $site = Site::factory()->create(
             [
-                'id' => Uuid::v4(),
-                'demand_id' => Uuid::v4(),
-                'landing_url' => 'https://exmaple.com',
-                'date_start' => new DateTime('-1 day'),
-                'date_end' => new DateTime('+2 days'),
-                'created_at' => new DateTime('-1 days'),
-                'updated_at' => new DateTime('-1 days'),
-                'source_campaign' => [
-                    'host' => 'localhost:8101',
-                    'address' => '0001-00000001-8B4E',
-                    'version' => '0.1',
-                    'created_at' => new DateTime(),
-                    'updated_at' => new DateTime(),
-                ],
-                'banners' => [],
-                'max_cpc' => null,
-                'max_cpm' => null,
-                'budget' => 1_000_000_000_000,
-                'demand_host' => 'localhost:8101',
-                'medium' => 'web',
-                'vendor' => null,
-                'targeting_excludes' => [],
-                'targeting_requires' => [],
-            ],
-            $merge,
+                'domain' => 'scene-0-0.decentraland.org',
+                'medium' => 'metaverse',
+                'url' => 'https://scene-0-0.decentraland.org',
+                'user_id' => $publisher,
+                'vendor' => 'decentraland',
+            ]
         );
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create(['site_id' => $site]);
+        $campaign = NetworkCampaign::factory()->create(
+            [
+                'medium' => 'metaverse',
+                'vendor' => 'decentraland',
+            ]
+        );
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        $zones = [
+            [
+                'id' => '0',
+                'placementId' => $zone->uuid,
+                'options' => [
+                    'banner_type' => ['image'],
+                    'banner_mime' => ['image/png'],
+                ],
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://scene-0-0.decentraland.org',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler(
+            [
+                new Response(
+                    body: json_encode(
+                        [
+                            '0' => [
+                                [
+                                    'banner_id' => $banner->uuid,
+                                    'rpm' => 0.3,
+                                ]
+                            ]
+                        ]
+                    )
+                ),
+            ]
+        );
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $foundBanners = $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+        self::assertCount(1, $foundBanners);
+        $foundBanner = $foundBanners[0];
+        self::assertNotNull($foundBanner);
+        self::assertCount(1, $container);
+        /** @var Request $request */
+        $request = $container[0]['request'];
+        self::assertEquals('POST', $request->getMethod());
+        self::assertEquals('https://example.com/api/v1/find', $request->getUri());
+        self::assertTrue($request->hasHeader('Content-Type'));
+        self::assertContains('application/json', $request->getHeader('Content-Type'));
+        $body = json_decode($request->getBody()->getContents(), true);
+        self::assertContains('image', $body[0]['banner_filters']['require']['type'] ?? []);
+        self::assertContains('image/png', $body[0]['banner_filters']['require']['mime'] ?? []);
+    }
+
+    public function testFindBannersWhileSiteHasPopup(): void
+    {
+        [$publisher, $zone] = $this->initZone();
+        /** @var Site $site */
+        $site = $zone->site;
+        /** @var Zone $popupZone */
+        $popupZone = Zone::factory()->create(
+            [
+                'scopes' => ['pop-up'],
+                'site_id' => $site,
+                'size' => 'pop-up',
+                'type' => 'pop',
+            ]
+        );
+        [$campaign, $banner] = $this->initBanner();
+        $zones = [
+            [
+                'id' => '0',
+                'placementId' => $zone->uuid,
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://example.com',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler(
+            [
+                new Response(
+                    body: json_encode(
+                        [
+                            '0' => [
+                                [
+                                    'banner_id' => $banner->uuid,
+                                    'rpm' => 0.3,
+                                ]
+                            ]
+                        ]
+                    )
+                ),
+            ]
+        );
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $foundBanners = $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+        self::assertCount(2, $foundBanners);
+        $foundBanner = $foundBanners[0];
+        self::assertNotNull($foundBanner);
+        foreach (self::FOUND_BANNER_STRUCTURE as $key) {
+            self::assertArrayHasKey($key, $foundBanner);
+        }
+        self::assertNull($foundBanners[1]);
+        self::assertCount(1, $container);
+        /** @var Request $request */
+        $request = $container[0]['request'];
+        self::assertEquals('POST', $request->getMethod());
+        self::assertEquals('https://example.com/api/v1/find', $request->getUri());
+        self::assertTrue($request->hasHeader('Content-Type'));
+        self::assertContains('application/json', $request->getHeader('Content-Type'));
+        $body = json_decode($request->getBody()->getContents(), true);
+        self::assertCount(2, $body);
+        self::assertArrayHasKey('zone_id', $body[0]);
+        self::assertEquals($zone->uuid, $body[0]['zone_id']);
+        self::assertArrayHasKey('zone_id', $body[1]);
+        self::assertEquals($popupZone->uuid, $body[1]['zone_id']);
+    }
+
+    public function testFindBannersWhileSiteAcceptsDirectDealsOnly(): void
+    {
+        /** @var Zone $zone */
+        [$publisher, $zone] = $this->initZone();
+        $site = $zone->site;
+        $site->only_direct_deals = true;
+        $site->save();
+        [$campaign, $banner] = $this->initBanner();
+        $zones = [
+            [
+                'id' => '1',
+                'placementId' => $zone->uuid,
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://example.com',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler(
+            [
+                new Response(
+                    body: json_encode(
+                        [
+                            '1' => [
+                                [
+                                    'banner_id' => $banner->uuid,
+                                    'rpm' => 0.3,
+                                ]
+                            ]
+                        ]
+                    )
+                ),
+            ]
+        );
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $foundBanners = $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+        self::assertCount(1, $foundBanners);
+        $foundBanner = $foundBanners[0];
+        self::assertNotNull($foundBanner);
+        /** @var Request $request */
+        $request = $container[0]['request'];
+        self::assertEquals('POST', $request->getMethod());
+        self::assertEquals('https://example.com/api/v1/find', $request->getUri());
+        self::assertTrue($request->hasHeader('Content-Type'));
+        self::assertContains('application/json', $request->getHeader('Content-Type'));
+        $body = json_decode($request->getBody()->getContents(), true);
+        self::assertTrue($body[0]['zone_options']['direct_deal']);
+        self::assertEquals('example.com', $body[0]['banner_filters']['require']['require:site:domain']);
+    }
+
+    public function testFindBannersWhileZoneNotExist(): void
+    {
+        [$publisher, $zone] = $this->initZone();
+        [$campaign, $banner] = $this->initBanner();
+        $zones = [
+            [
+                'id' => '1',
+                'placementId' => '00000000000000000000000000000000',
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://example.com',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $mock = new MockHandler(
+            [
+                new Response(
+                    body: json_encode(
+                        [
+                            '1' => [
+                                [
+                                    'banner_id' => $banner->uuid,
+                                    'rpm' => 0.3,
+                                ]
+                            ]
+                        ]
+                    )
+                ),
+            ]
+        );
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $foundBanners = $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+        self::assertCount(1, $foundBanners);
+        $foundBanner = $foundBanners[0];
+        self::assertNull($foundBanner);
+    }
+
+    public function testFindBannersWhileSiteNotActive(): void
+    {
+        [$publisher, $zone] = $this->initZone();
+        /** @var Site $site */
+        $site = $zone->site;
+        $site->status = Site::STATUS_INACTIVE;
+        $site->saveOrFail();
+        [$campaign, $banner] = $this->initBanner();
+        $zones = [
+            [
+                'id' => '1',
+                'placementId' => $zone->uuid,
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://example.com',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $mock = new MockHandler(
+            [
+                new Response(
+                    body: json_encode(
+                        [
+                            '1' => [
+                                [
+                                    'banner_id' => $banner->uuid,
+                                    'rpm' => 0.3,
+                                ]
+                            ]
+                        ]
+                    )
+                ),
+            ]
+        );
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $foundBanners = $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+        self::assertCount(1, $foundBanners);
+        $foundBanner = $foundBanners[0];
+        self::assertNull($foundBanner);
+    }
+
+    public function testFindBannersFailWhileAdSelectUnavailable(): void
+    {
+        [$publisher, $zone] = $this->initZone();
+        [$campaign, $banner] = $this->initBanner();
+        $zones = [
+            [
+                'id' => '1',
+                'placementId' => $zone->uuid,
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://example.com',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $mock = new MockHandler([new Response(BaseResponse::HTTP_SERVICE_UNAVAILABLE, [], '{"error": "test"}')]);
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        self::expectException(UnexpectedClientResponseException::class);
+
+        $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+    }
+
+    public function testFindBannersFailWhileAdSelectResponseMalformed(): void
+    {
+        [$publisher, $zone] = $this->initZone();
+        [$campaign, $banner] = $this->initBanner();
+        $zones = [
+            [
+                'id' => '1',
+                'placementId' => $zone->uuid,
+            ],
+        ];
+        $context = new ImpressionContext(
+            [
+                'page' => 'https://example.com',
+            ],
+            [],
+            [
+                'keywords' => [],
+                'tid' => 'LWuhOmg74MmOJ7lLXA65oktx8iLvmQ',
+                'uid' => '22222222222222222222222222222222',
+            ],
+        );
+        $impressionId = '0123456789ABCDEF0123456789ABCDEF';
+        $mock = new MockHandler([new Response(body: '{ "1": [')]);
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        self::expectException(RuntimeException::class);
+
+        $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+    }
+
+    private static function campaign(): Campaign
+    {
+        return new Campaign(
+            Uuid::v4(),
+            Uuid::v4(),
+            'https://example.com',
+            new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
+            [],
+            new Budget(1_000_000_000_000, null, null),
+            new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
+            Status::processing(),
+            'web',
+            null
+        );
+    }
+
+    private function initZone(): array
+    {
+        $publisher = User::factory()->create();
+        $site = Site::factory()->create(
+            [
+                'domain' => 'example.com',
+                'url' => 'https://example.com',
+                'user_id' => $publisher,
+            ]
+        );
+        $zone = Zone::factory()->create(['site_id' => $site]);
+        return [$publisher, $zone];
+    }
+
+    private function initBanner(): array
+    {
+        $campaign = NetworkCampaign::factory()->create();
+        $banner = NetworkBanner::factory()->create(['network_campaign_id' => $campaign]);
+        return [$campaign, $banner];
     }
 }

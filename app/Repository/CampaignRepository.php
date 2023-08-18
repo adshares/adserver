@@ -26,7 +26,9 @@ use Adshares\Adserver\Http\Requests\Filter\FilterCollection;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
+use Adshares\Adserver\ViewModel\NotificationEmailCategory;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -34,6 +36,7 @@ use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\CursorPaginator;
@@ -83,6 +86,42 @@ class CampaignRepository
         );
 
         return $query->with('banners')->get();
+    }
+
+    /**
+     * @return Collection|Campaign[]
+     */
+    public function fetchCampaignsWhichEndBetween(DateTimeInterface $startDate, DateTimeInterface $endDate): Collection
+    {
+        return Campaign::query()
+            ->where('status', Campaign::STATUS_ACTIVE)
+            ->whereBetween('time_end', [$startDate, $endDate])
+            ->get();
+    }
+
+    /**
+     * @return Collection|Campaign[]
+     */
+    public function fetchLastCampaignsEndedBefore(DateTimeInterface $dateTo): Collection
+    {
+        return Campaign::query()
+            // NULL as MAXIMAL TIMESTAMP
+            ->select('user_id', DB::raw("MAX(IFNULL(time_end, '2038-01-19 03:14:07')) as time_end"))
+            ->where('status', Campaign::STATUS_ACTIVE)
+            ->groupBy('user_id')
+            ->having('time_end', '<', $dateTo)
+            ->get();
+    }
+
+    /**
+     * @return Collection|Campaign[]
+     */
+    public function fetchDraftCampaignsCreatedBefore(DateTimeInterface $dateTo): Collection
+    {
+        return Campaign::query()
+            ->where('status', Campaign::STATUS_DRAFT)
+            ->where('created_at', '<', $dateTo)
+            ->get();
     }
 
     /**
@@ -143,9 +182,6 @@ class CampaignRepository
             $this->bannerClassificationCreator->createForCampaign($campaign);
             $campaign->refresh();
             DB::commit();
-        } catch (InvalidArgumentException $exception) {
-            DB::rollBack();
-            throw $exception;
         } catch (Throwable $throwable) {
             DB::rollBack();
             Log::error(sprintf('Campaign save failed (%s)', $throwable->getMessage()));
@@ -254,6 +290,22 @@ class CampaignRepository
                 && !$campaign->banners()->where('status', Banner::STATUS_ACTIVE)->exists()
             ) {
                 throw new InvalidArgumentException('Cannot update active campaign without creatives');
+            }
+            if (Campaign::STATUS_ACTIVE === $campaign->status && !$campaign->isOutdated()) {
+                NotificationEmailLog::fetch($campaign->user_id, NotificationEmailCategory::CampaignEndedExtend)
+                    ?->invalidate();
+                NotificationEmailLog::fetch(
+                    $campaign->user_id,
+                    NotificationEmailCategory::CampaignEnded,
+                    ['campaignId' => $campaign->id],
+                )?->invalidate();
+            }
+            if (!empty($bannersToInsert)) {
+                NotificationEmailLog::fetch(
+                    $campaign->user_id,
+                    NotificationEmailCategory::CampaignAccepted,
+                    ['campaignId' => $campaign->id],
+                )?->invalidate();
             }
             DB::commit();
         } catch (InvalidArgumentException $exception) {
