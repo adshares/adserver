@@ -203,7 +203,7 @@ var prepareInfoBox = function (context, banner) {
     });
 
     const div = document.createElement('div');
-    div.setAttribute('style', 'all: revert; position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important; height: 16px; width: 16px; overflow: hidden; padding: 0;z-index:1');
+    div.setAttribute('style', 'all: revert; position: absolute !important; top: 0px !important; right: 0px !important; font-size: 1rem; background-color: #fff !important; height: 16px; width: 16px; overflow: hidden; padding: 0;z-index:1');
 
     const link = document.createElement('a');
     link.target = '_blank';
