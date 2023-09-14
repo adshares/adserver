@@ -74,6 +74,6 @@ class Locker
 
     private function isSemaphoreStoreSupported(): bool
     {
-        return \extension_loaded('sysvsem');
+        return false;//\extension_loaded('sysvsem');
     }
 }
