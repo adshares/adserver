@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Services;
 
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\User;
@@ -33,7 +34,7 @@ use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -47,7 +48,7 @@ class PaymentDetailsProcessor
 
     public function processPaidEvents(
         AdsPayment $adsPayment,
-        DateTime $transactionTime,
+        DateTimeInterface $transactionTime,
         array $paymentDetails,
         int $carriedEventValueSum
     ): PaymentProcessingResult {
@@ -94,11 +95,49 @@ class PaymentDetailsProcessor
         return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
     }
 
+    public function processEventsPaidByBridge(
+        BridgePayment $payment,
+        DateTimeInterface $transactionTime,
+        array $paymentDetails,
+        int $carriedEventValueSum,
+    ): PaymentProcessingResult {
+        $bridgePaymentId = $payment->id;
+        $availableAmount = $payment->amount - $carriedEventValueSum;
+
+        $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
+        $totalEventValue = 0;
+        $cases = $this->fetchNetworkCasesForPaymentDetails($paymentDetails);
+
+        foreach ($paymentDetails as $paymentDetail) {
+            /** @var NetworkCase $case */
+            if (null === ($case = $cases->get($paymentDetail['case_id']))) {
+                continue;
+            }
+
+            $spendableAmount = max(0, $availableAmount - $totalEventValue);
+            $eventValue = (int)min($spendableAmount, $paymentDetail['event_value']);
+
+            $networkCasePayment = NetworkCasePayment::createByBridgePaymentId(
+                $bridgePaymentId,
+                $transactionTime,
+                $eventValue,
+                $exchangeRateValue,
+                $exchangeRate->fromClick($eventValue),
+            );
+            $case->networkCasePayments()->save($networkCasePayment);
+
+            $totalEventValue += $eventValue;
+        }
+
+        return new PaymentProcessingResult($totalEventValue, 0, 0);
+    }
+
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
     {
         $adServerAddress = config('app.adshares_address');
         $usePaidAmountCurrency = Currency::ADS !== Currency::from(config('app.currency'));
-        $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByAdsPaymentId(
+        $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByPaymentId(
             $adsPayment->id,
             $usePaidAmountCurrency
         );
@@ -113,7 +152,6 @@ class PaymentDetailsProcessor
                         $splitPayment->paid_amount
                     )
                 );
-
                 continue;
             }
 
@@ -126,6 +164,42 @@ class PaymentDetailsProcessor
                 $adsPayment->address,
                 $adServerAddress,
                 $adsPayment->txid
+            )->save();
+        }
+    }
+
+    public function addBridgeAdIncomeToUserLedger(BridgePayment $payment): void
+    {
+        $adServerAddress = config('app.adshares_address');
+        $usePaidAmountCurrency = Currency::ADS !== Currency::from(config('app.currency'));
+        $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByPaymentId(
+            $payment->id,
+            $usePaidAmountCurrency,
+            false,
+        );
+
+        foreach ($splitPayments as $splitPayment) {
+            if (null === ($user = User::fetchByUuid($splitPayment->publisher_id))) {
+                Log::warning(
+                    sprintf(
+                        '[PaymentDetailsProcessor] User id (%s) does not exist. BridgePayment id (%s). Amount (%s).',
+                        $splitPayment->publisher_id,
+                        $payment->id,
+                        $splitPayment->paid_amount
+                    )
+                );
+                continue;
+            }
+
+            $amount = (int)$splitPayment->paid_amount;
+            UserLedgerEntry::constructWithAddressAndTransaction(
+                $user->id,
+                $amount,
+                UserLedgerEntry::STATUS_ACCEPTED,
+                UserLedgerEntry::TYPE_AD_INCOME,
+                $payment->address,
+                $adServerAddress,
+                $payment->payment_id,
             )->save();
         }
     }

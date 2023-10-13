@@ -180,6 +180,12 @@ class GuzzleAdSelectClient implements AdSelect
                     if (isset($zones[$i]['options']['banner_mime'])) {
                         $sitesMap[$siteId]['filters']['require']['mime'] = (array)$zones[$i]['options']['banner_mime'];
                     }
+                    if (isset($zones[$i]['options']['exclude'])) {
+                        $sitesMap[$siteId]['filters']['exclude'] = array_merge_recursive(
+                            $sitesMap[$siteId]['filters']['exclude'],
+                            $zones[$i]['options']['exclude'],
+                        );
+                    }
                     if ($site->only_direct_deals) {
                         $sitesMap[$siteId]['filters']['require']['require:site:domain'] = $site->domain;
                     }
@@ -312,6 +318,7 @@ class GuzzleAdSelectClient implements AdSelect
                     $campaign = $banner->campaign;
                     $data = [
                         'id'            => $bannerId,
+                        'demand_id'     => $banner->demand_banner_id,
                         'publisher_id'  => $zone->site->user->uuid,
                         'zone_id'       => $zone->uuid,
                         'pay_from'      => $campaign->source_address,

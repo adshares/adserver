@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\BridgePayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
@@ -32,8 +33,10 @@ use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\NullUrl;
@@ -45,6 +48,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 class SupplyProcessPaymentsTest extends ConsoleTestCase
 {
@@ -54,8 +58,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessOutdated(): void
     {
-        $demandClient = new DummyDemandClient();
-        $networkHost = self::registerHost($demandClient);
+        $networkHost = self::registerHost();
 
         $createdAt = new DateTimeImmutable('-30 hours');
         AdsPayment::factory()->create([
@@ -88,8 +91,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessDepositWithoutUser(): void
     {
-        $demandClient = new DummyDemandClient();
-        $networkHost = self::registerHost($demandClient);
+        $networkHost = self::registerHost();
 
         AdsPayment::factory()->create([
             'txid' => self::TX_ID_SEND_ONE,
@@ -119,7 +121,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessEventPayment(): void
     {
         $demandClient = new DummyDemandClient();
-        $networkHost = self::registerHost($demandClient);
+        $networkHost = self::registerHost();
 
         $networkImpression = NetworkImpression::factory()->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
@@ -231,6 +233,53 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         self::assertDatabaseEmpty(TurnoverEntry::class);
     }
 
+    public function testHandleBridgePayment(): void
+    {
+        $this->initDspBridgeConfiguration();
+        $networkHost = self::registerHost();
+        /** @var BridgePayment $bridgePayment */
+        $bridgePayment = BridgePayment::factory()->create(['address' => $networkHost->address]);
+        $networkImpression = NetworkImpression::factory()->create();
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+        $caseCount = 2;
+        /** @var Collection<NetworkCase> $networkCases */
+        $networkCases = NetworkCase::factory()->times($caseCount)->create([
+            'network_impression_id' => $networkImpression,
+            'publisher_id' => $publisher->uuid,
+        ]);
+        $expectedPaidAmount = 1e11;
+        $expectedLicenseFee = 0;
+        $demandClient = self::createMock(DemandClient::class);
+        $demandClient->expects(self::once())->method('fetchPaymentDetails')->willReturn(
+            $networkCases->map(
+                fn($case) => [
+                    'case_id' => $case->case_id,
+                    'event_value' => (int)($expectedPaidAmount / $caseCount),
+                ],
+            )->toArray()
+        );
+        $this->app->bind(DemandClient::class, fn() => $demandClient);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
+
+        self::assertDatabaseCount(BridgePayment::class, 1);
+        self::assertDatabaseHas(BridgePayment::class, ['status' => BridgePayment::STATUS_DONE]);
+        self::assertEquals($expectedPaidAmount, (new NetworkCasePayment())->sum('total_amount'));
+        self::assertEquals($expectedLicenseFee, (new NetworkPayment())->sum('amount'));
+        self::assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched(1);
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'amount' => $expectedPaidAmount,
+            'user_id' => $publisher->id,
+        ]);
+        self::assertDatabaseCount(NetworkCasePayment::class, $caseCount);
+        self::assertDatabaseHas(NetworkCasePayment::class, [
+            'bridge_payment_id' => $bridgePayment->id,
+            'network_case_id' => $networkCases->first()->id,
+        ]);
+    }
+
     public function testAdsProcessEventPaymentWithPaymentProcessorError(): void
     {
         $paymentDetailsProcessor = self::createMock(PaymentDetailsProcessor::class);
@@ -238,13 +287,13 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->app->bind(PaymentDetailsProcessor::class, fn() => $paymentDetailsProcessor);
 
         $demandClient = new DummyDemandClient();
-        $networkHost = self::registerHost($demandClient);
+        $networkHost = self::registerHost();
         $networkImpression = NetworkImpression::factory()->create();
         $paymentDetail = $demandClient->fetchPaymentDetails('', '', 1, 0)[0];
 
         NetworkCase::factory()->create([
             'case_id' => $paymentDetail['case_id'],
-            'network_impression_id' => $networkImpression->id,
+            'network_impression_id' => $networkImpression,
             'publisher_id' => $paymentDetail['publisher_id'],
         ]);
 
@@ -267,7 +316,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessEventPaymentWithServerError(): void
     {
         $demandClient = new DummyDemandClient();
-        $networkHost = self::registerHost($demandClient);
+        $networkHost = self::registerHost();
 
         $networkImpression = NetworkImpression::factory()->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
@@ -356,7 +405,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
     public function testAdsProcessEventPaymentWithNoLicense(): void
     {
         $demandClient = new DummyDemandClient();
-        $networkHost = self::registerHost($demandClient);
+        $networkHost = self::registerHost();
 
         /** @var NetworkImpression $networkImpression */
         $networkImpression = NetworkImpression::factory()->create();
@@ -420,9 +469,9 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
     }
 
-    private function registerHost(DummyDemandClient $demandClient): NetworkHost
+    private function registerHost(): NetworkHost
     {
-        $info = $demandClient->fetchInfo(new NullUrl());
+        $info = (new DummyDemandClient())->fetchInfo(new NullUrl());
         return NetworkHost::factory()->create([
             'address' => $info->getAdsAddress(),
             'info' => $info,
@@ -435,5 +484,14 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         self::assertServerEventDispatched(ServerEventType::IncomingAdPaymentProcessed, [
             'adsPaymentCount' => $count,
         ]);
+    }
+
+    private static function initDspBridgeConfiguration(): void
+    {
+        Config::updateAdminSettings([
+                Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+                Config::DSP_BRIDGE_URL => 'https://example.com',
+        ]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
     }
 }

@@ -255,6 +255,32 @@ class Utils
         }
     }
 
+    public static function removeUrlParameter($url, $name): string
+    {
+        $parsed = parse_url($url);
+
+        parse_str($parsed['query'], $params);
+        unset($params[$name]);
+        $parsed['query'] = http_build_query($params) ?: null;
+
+        return self::revertParseUrl($parsed);
+    }
+
+    private static function revertParseUrl(array $parsed): string
+    {
+        $scheme = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : '';
+        $user = $parsed['user'] ?? '';
+        $pass = isset($parsed['pass']) ? ':' . $parsed['pass'] : '';
+        $pass = ($user || $pass) ? "$pass@" : '';
+        $host = $parsed['host'] ?? '';
+        $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
+        $path = $parsed['path'] ?? '';
+        $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+        $fragment = isset($parsed['fragment']) ? '#' . $parsed['fragment'] : '';
+
+        return "$scheme$user$pass$host$port$path$query$fragment";
+    }
+
     public static function attachOrProlongTrackingCookie(
         Request $request,
         Response $response,

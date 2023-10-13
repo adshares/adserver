@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -19,14 +19,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Repository\Supply;
+declare(strict_types=1);
 
-use Adshares\Adserver\Models\NetworkHost;
+namespace Database\Factories;
 
-class NetworkHostRepository
+use Adshares\Adserver\Models\BridgePayment;
+use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class BridgePaymentFactory extends Factory
 {
-    public function find()
+    public function definition(): array
     {
-        return (new NetworkHost())->get();
+        return [
+            'created_at' => new DateTimeImmutable(),
+            'updated_at' => new DateTimeImmutable(),
+            'address' => '0001-00000001-8B4E',
+            'payment_id' => '0',
+            'payment_time' => new DateTimeImmutable('-1 hour'),
+            'amount' => 1e11,
+            'status' => BridgePayment::STATUS_NEW,
+            'last_offset' => 0,
+        ];
     }
 }

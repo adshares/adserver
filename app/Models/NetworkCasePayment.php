@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -63,6 +63,7 @@ class NetworkCasePayment extends Model
     protected $fillable = [
         'pay_time',
         'ads_payment_id',
+        'bridge_payment_id',
         'total_amount',
         'license_fee',
         'operator_fee',
@@ -89,7 +90,7 @@ class NetworkCasePayment extends Model
     ];
 
     public static function create(
-        DateTime $payTime,
+        DateTimeInterface $payTime,
         int $adsPaymentId,
         int $totalAmount,
         int $licenseFee,
@@ -112,11 +113,34 @@ class NetworkCasePayment extends Model
         );
     }
 
-    public static function fetchPaymentsForPublishersByAdsPaymentId(
-        int $adsPaymentId,
-        bool $usePaidAmountCurrency
+    public static function createByBridgePaymentId(
+        int $bridgePaymentId,
+        DateTimeInterface $payTime,
+        int $totalAmount,
+        float $exchangeRate,
+        int $paidAmountCurrency,
+    ): self {
+        return new self(
+            [
+                'bridge_payment_id' => $bridgePaymentId,
+                'exchange_rate' => $exchangeRate,
+                'license_fee' => 0,
+                'operator_fee' => 0,
+                'paid_amount' => $totalAmount,
+                'paid_amount_currency' => $paidAmountCurrency,
+                'pay_time' => $payTime,
+                'total_amount' => $totalAmount,
+            ]
+        );
+    }
+
+    public static function fetchPaymentsForPublishersByPaymentId(
+        int $paymentId,
+        bool $usePaidAmountCurrency,
+        bool $isAdsPayment = true,
     ): Collection {
         $paidAmountColumn = $usePaidAmountCurrency ? 'paid_amount_currency' : 'paid_amount';
+        $paymentIdColumn = $isAdsPayment ? 'ads_payment_id' : 'bridge_payment_id';
         return self::select(
             [
                 'publisher_id',
@@ -127,7 +151,7 @@ class NetworkCasePayment extends Model
             function (JoinClause $join) {
                 $join->on('network_case_payments.network_case_id', '=', 'network_cases.id');
             }
-        )->where('ads_payment_id', $adsPaymentId)->groupBy('publisher_id')->get();
+        )->where($paymentIdColumn, $paymentId)->groupBy('publisher_id')->get();
     }
 
     public static function fetchPaymentsToExport(

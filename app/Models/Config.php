@@ -108,6 +108,8 @@ class Config extends Model
     public const CURRENCY = 'currency';
     public const DEFAULT_USER_ROLES = 'default-user-roles';
     public const DISPLAY_CURRENCY = 'display-currency';
+    public const DSP_BRIDGE_ACCOUNT_ADDRESS = 'dsp-bridge-account-address';
+    public const DSP_BRIDGE_URL = 'dsp-bridge-url';
     public const EMAIL_VERIFICATION_REQUIRED = 'email-verification-required';
     public const EXCHANGE_API_KEY = 'exchange-api-key';
     public const EXCHANGE_API_SECRET = 'exchange-api-secret';
@@ -495,6 +497,8 @@ class Config extends Model
             self::CURRENCY => Currency::ADS->value,
             self::DEFAULT_USER_ROLES => [UserRole::ADVERTISER, UserRole::PUBLISHER],
             self::DISPLAY_CURRENCY => Currency::USD->value,
+            self::DSP_BRIDGE_ACCOUNT_ADDRESS => null,
+            self::DSP_BRIDGE_URL => null,
             self::EMAIL_VERIFICATION_REQUIRED => true,
             self::EXCHANGE_API_KEY => '',
             self::EXCHANGE_API_SECRET => '',

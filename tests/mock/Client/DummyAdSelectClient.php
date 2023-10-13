@@ -77,7 +77,7 @@ final class DummyAdSelectClient implements AdSelect
         }
 
         $banners = [];
-        foreach ($bannerIds as $bannerId) {
+        foreach ($bannerIds as $index => $bannerId) {
             $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : null;
 
             if (empty($banner)) {
@@ -87,6 +87,7 @@ final class DummyAdSelectClient implements AdSelect
                 $zoneId = $zoneData[$bannerId]['zone_id'];
                 $banners[] = [
                     'id' => $bannerId,
+                    'demand_id' => $banner->demand_banner_id,
                     'publisher_id' => $zoneData[$bannerId]['publisher_id'],
                     'zone_id' => $zoneId,
                     'pay_from' => $campaign->source_address,
@@ -119,6 +120,7 @@ final class DummyAdSelectClient implements AdSelect
                     ),
                     'info_box' => true,
                     'rpm' => 0.5,
+                    'request_id' => (string)$index,
                 ];
             }
         }

@@ -237,6 +237,8 @@ final class ServerConfigurationControllerTest extends TestCase
             'INVENTORY_FAILED_CONNECTION_LIMIT' => [Config::INVENTORY_FAILED_CONNECTION_LIMIT, '8'],
             'LANDING_URL' => [Config::LANDING_URL, 'https://example.com'],
             'MAX_INVALID_LOGIN_ATTEMPTS' => [Config::MAX_INVALID_LOGIN_ATTEMPTS, '8'],
+            'DSP_BRIDGE_ACCOUNT_ADDRESS' => [Config::DSP_BRIDGE_ACCOUNT_ADDRESS, '0001-00000003-AB0C'],
+            'DSP_BRIDGE_URL' => [Config::DSP_BRIDGE_URL, 'http://localhost:8015'],
             'REFERRAL_REFUND_COMMISSION' => [Config::REFERRAL_REFUND_COMMISSION, '0'],
             'REFERRAL_REFUND_ENABLED' => [Config::REFERRAL_REFUND_ENABLED, '1'],
             'SUPPLY_PLACEHOLDER_COLOR' => [Config::SUPPLY_PLACEHOLDER_COLOR, '00FF00'],

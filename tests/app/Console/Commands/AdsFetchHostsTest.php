@@ -29,6 +29,7 @@ use Adshares\Ads\Response\GetBroadcastResponse;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Services\Supply\DspBridgeRegistrar;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Config\AppMode;
@@ -49,7 +50,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         $lockerMock->expects(self::once())->method('lock')->willReturn(false);
         $this->instance(Locker::class, $lockerMock);
 
-        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(1);
     }
 
     public function testFetchingHosts(): void
@@ -257,6 +258,47 @@ class AdsFetchHostsTest extends ConsoleTestCase
 
         self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
         self::assertServerEventDispatched(ServerEventType::HostBroadcastProcessed);
+    }
+
+    public function testRegisterDspBridge(): void
+    {
+        $this->app->bind(
+            AdsClient::class,
+            function () {
+                $clientMock = self::createMock(AdsClient::class);
+                $clientMock->method('getBroadcast')
+                    ->willReturn(new GetBroadcastResponse($this->getRawEmptyBroadcastData()));
+                return $clientMock;
+            }
+        );
+        $this->app->bind(
+            DspBridgeRegistrar::class,
+            function () {
+                $mock = self::createMock(DspBridgeRegistrar::class);
+                $mock->method('registerAsNetworkHost')
+                    ->will($this->returnCallback(function () {
+                        NetworkHost::factory()->create();
+                        return true;
+                    }));
+                return $mock;
+            }
+        );
+        Config::updateAdminSettings([
+            Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::DSP_BRIDGE_URL => 'https://example.com',
+        ]);
+
+        self::artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
+
+        self::assertServerEventDispatched(
+            ServerEventType::HostBroadcastProcessed,
+            [
+                'added' => 1,
+                'found' => 1,
+                'marked' => 0,
+                'removed' => 0,
+            ]
+        );
     }
 
     private function setupAdsClient(): void

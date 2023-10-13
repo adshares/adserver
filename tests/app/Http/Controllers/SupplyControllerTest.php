@@ -43,7 +43,9 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Supply\Application\Dto\FoundBanners;
@@ -53,9 +55,11 @@ use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Psr\Http\Message\ResponseInterface;
 use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 // phpcs:ignoreFile PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
@@ -143,11 +147,12 @@ final class SupplyControllerTest extends TestCase
 
     public function testPageWhy(): void
     {
+        $address = '0001-00000003-AB0C';
         $host = 'https://example.com';
-        $campaignId = 1;
-        NetworkHost::factory()->create(['host' => $host]);
-        NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
-        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        NetworkHost::factory()->create(['address' => $address, 'host' => $host]);
+        $campaign = NetworkCampaign::factory()->create(['source_address' => $address, 'source_host' => $host]);
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
         $query = [
             'bid' => $banner->uuid,
             'cid' => '0123456789abcdef0123456789abcdef',
@@ -156,16 +161,17 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewHas('demand', true);
     }
 
     public function testPageWhyWhileCaseIdAndBannerIdAreUuid(): void
     {
+        $address = '0001-00000003-AB0C';
         $host = 'https://example.com';
-        $campaignId = 1;
-        NetworkHost::factory()->create(['host' => $host]);
-        NetworkCampaign::factory()->create(['id' => $campaignId, 'source_host' => $host]);
+        NetworkHost::factory()->create(['address' => $address, 'host' => $host]);
+        $campaign = NetworkCampaign::factory()->create(['source_address' => $address, 'source_host' => $host]);
         /** @var NetworkBanner $banner */
-        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaignId]);
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
         $query = [
             'bid' => Uuid::fromString($banner->uuid)->toString(),
             'cid' => Uuid::uuid4()->toString(),
@@ -174,6 +180,7 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewHas('demand', true);
     }
 
     public function testPageWhyForPlaceholder(): void
@@ -188,6 +195,33 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
 
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testPageWhileBannerFromDsp(): void
+    {
+        $address = '0001-00000001-8B4E';
+        $host = 'https://example.com';
+        Config::updateAdminSettings([
+            Config::DSP_BRIDGE_ACCOUNT_ADDRESS => $address,
+            Config::DSP_BRIDGE_URL => $host,
+        ]);
+        NetworkHost::factory()->create(['address' => $address]);
+        $campaign = NetworkCampaign::factory()->create([
+            'source_address' => $address,
+            'source_host' => $host,
+        ]);
+        /** @var NetworkBanner $banner */
+        $banner = NetworkBanner::factory()->create(['id' => 1, 'network_campaign_id' => $campaign]);
+        $query = [
+            'bid' => $banner->uuid,
+            'cid' => '0123456789abcdef0123456789abcdef',
+        ];
+
+        $response = $this->get(self::PAGE_WHY_URI . '?' . http_build_query($query));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewHas('demand', true);
+        $response->assertViewHas('demandName', 'AdServer');
     }
 
     public function testReportAd(): void
@@ -259,17 +293,7 @@ final class SupplyControllerTest extends TestCase
     public function testFind(): void
     {
         $this->mockAdSelect();
-        $adUser = self::createMock(AdUser::class);
-        $adUser->expects(self::once())
-            ->method('getUserContext')
-            ->willReturnCallback(function ($context) {
-                self::assertInstanceOf(ImpressionContext::class, $context);
-                $contextArray = $context->toArray();
-                self::assertEquals(1, $contextArray['device']['extensions']['metamask']);
-                self::assertEquals('good-user', $contextArray['user']['account']);
-                return (new DummyAdUserClient())->getUserContext($context);
-            });
-        $this->instance(AdUser::class, $adUser);
+        $this->initAdUser();
         /** @var User $user */
         $user = User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]);
         /** @var Zone $zone */
@@ -295,6 +319,76 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.id', '3');
+    }
+
+    public function testFindFailWhileInvalidPlacement(): void
+    {
+        $data = [
+            'context' => [
+                'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                'id' => '3',
+            ],
+        ];
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testFindDspBridge(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'example.com/bid' => Http::response([[
+                'request_id' => '0',
+                'ext_id' => '1',
+                'serve_url' => 'https://example.com/serve/1',
+            ]]),
+        ]);
+        $data = $this->initDspBridge();
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', '3');
+        Http::assertSentCount(1);
+    }
+
+    public function testFindDspBridgeWhileEmptyResponse(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['example.com/bid' => Http::response([])]);
+        $data = $this->initDspBridge();
+        $dspNetworkBanner = (new NetworkBanner())->first();
+        /** @var NetworkBanner $adserverNetworkBanner */
+        $adserverNetworkBanner = NetworkBanner::factory()->create([
+            'network_campaign_id' => NetworkCampaign::factory()->create(),
+            'serve_url' => 'https://adshares.net/serve/' . Uuid::uuid4()->toString(),
+        ]);
+        $zone = Zone::fetchByPublicId($data['placements'][0]['placementId']);
+        $impressionId = $data['context']['iid'];
+        $adSelect = self::createMock(AdSelect::class);
+        $adSelect->expects(self::exactly(2))->method('findBanners')->willReturnOnConsecutiveCalls(
+            new FoundBanners([$this->createFoundBanner($dspNetworkBanner, $zone, $impressionId)]),
+            new FoundBanners([$this->createFoundBanner($adserverNetworkBanner, $zone, $impressionId)]),
+        );
+        $this->app->bind(AdSelect::class, fn () => $adSelect);
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', '3');
+        $response->assertJsonPath('data.0.serveUrl', $adserverNetworkBanner->serve_url);
+        Http::assertSentCount(1);
     }
 
     public function testFindWhileNoBanners(): void
@@ -601,6 +695,19 @@ final class SupplyControllerTest extends TestCase
                     ],
                 ]
             ],
+            'missing placement placementId' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                        ]
+                    ],
+                ]
+            ],
             'invalid placement id type' => [
                 [
                     'context' => [
@@ -611,6 +718,20 @@ final class SupplyControllerTest extends TestCase
                         [
                             'id' => 1,
                             'placementId' => '0123456789ABCDEF0123456789ABCDEF',
+                        ]
+                    ],
+                ]
+            ],
+            'invalid placement placementId format' => [
+                [
+                    'context' => [
+                        'iid' => '0123456789ABCDEF0123456789ABCDEF',
+                        'url' => 'https://example.com',
+                    ],
+                    'placements' => [
+                        [
+                            'id' => '1',
+                            'placementId' => '0123456789ABCDEF',
                         ]
                     ],
                 ]
@@ -696,6 +817,17 @@ final class SupplyControllerTest extends TestCase
         $response->assertJsonStructure(self::FIND_BANNER_STRUCTURE);
         $response->assertJsonCount(1, 'data');
         self::assertNotNull(User::firstOrFail()->admin_confirmed_at);
+    }
+
+    public function testFindDynamicWithoutExistingUserWhileInvalidPublisherId(): void
+    {
+        Config::updateAdminSettings([Config::AUTO_CONFIRMATION_ENABLED => '1']);
+        $this->mockAdSelect();
+        $data = self::getDynamicFindData(['context' => self::getContextData(['publisher' => '0001-00000001-8B4E'])]);
+
+        $response = $this->postJson(self::BANNER_FIND_URI, $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testFindDynamicWhileSiteApprovalRequired(): void
@@ -1043,15 +1175,71 @@ final class SupplyControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
+    public function testLogNetworkClickWhileBannerFromBridgeRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/click?*' => Http::response(['redirect_url' => 'https://adshares.net/click'])]);
+
+        ob_start();
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+        ob_get_clean();
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://adshares.net/click', $location);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+        Http::assertSentCount(1);
+    }
+
+    public function testLogNetworkClickWhileBannerFromBridgeNoRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/click?*' => Http::response(status: Response::HTTP_NO_CONTENT)]);
+
+        ob_start();
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+        ob_get_clean();
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringContainsString('/supply/why?', $location);
+        self::assertDatabaseCount(NetworkCaseClick::class, 1);
+        Http::assertSentCount(1);
+    }
+
+    public function testLogNetworkClickWhileBannerFromBridgeNoUrl(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingClick();
+        unset($query['r']);
+        $query['extid'] = '12';
+        $banner->click_url = '';
+        $banner->saveOrFail();
+        Http::preventStrayRequests();
+
+        $response = $this->get(self::buildLogClickUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        Http::assertNothingSent();
+    }
+
     public function testLogNetworkView(): void
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
 
         ob_start();
-        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query), ['Origin' => 'https://example.com']);
         ob_get_clean();
 
         $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
         $response->assertHeader('Location');
         $location = $response->headers->get('Location');
         self::assertStringStartsWith('https://example.com/view', $location);
@@ -1143,6 +1331,16 @@ final class SupplyControllerTest extends TestCase
         self::assertEquals('0001-00000005-CBCA', $locationQuery['pto']);
     }
 
+    public function testLogNetworkViewFailWhileInvalidRedirectUrlAndBannerId(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        $query['r'] = '';
+
+        $response = $this->get(self::buildLogViewUri('invalid', $query));
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     public function testLogNetworkViewFailWhileImpressionIdIsMissing(): void
     {
         [$query, $banner, $zone] = self::initBeforeLoggingView();
@@ -1161,6 +1359,55 @@ final class SupplyControllerTest extends TestCase
         $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testLogNetworkViewWhileBannerFromBridgeRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/view?*' => Http::response(['redirect_url' => 'https://adshares.net/view'])]);
+
+        ob_start();
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+        ob_get_clean();
+
+        $response->assertStatus(Response::HTTP_FOUND);
+        $response->assertHeader('Location');
+        $location = $response->headers->get('Location');
+        self::assertStringStartsWith('https://adshares.net/view', $location);
+        Http::assertSentCount(1);
+    }
+
+    public function testLogNetworkViewWhileBannerFromBridgeNoRedirection(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+        Http::fake(['example.com/view?*' => Http::response(status: Response::HTTP_NO_CONTENT)]);
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query));
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        Http::assertSentCount(1);
+    }
+
+    public function testLogNetworkViewWhileBannerFromBridgeNoUrl(): void
+    {
+        [$query, $banner, $zone] = self::initBeforeLoggingView();
+        $banner->view_url = '';
+        $banner->saveOrFail();
+        unset($query['r']);
+        $query['extid'] = '12';
+        Http::preventStrayRequests();
+
+        $response = $this->get(self::buildLogViewUri($banner->uuid, $query), ['Origin' => 'https://example.com']);
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://example.com');
+        Http::assertNothingSent();
     }
 
     public function testRegister(): void
@@ -1337,14 +1584,7 @@ final class SupplyControllerTest extends TestCase
             $response->method('getBody')->willReturn($content);
             return $response;
         });
-
-
-        $this->app->bind(
-            AdSelect::class,
-            static function () use ($client) {
-                return new GuzzleAdSelectClient($client);
-            }
-        );
+        $this->app->bind(AdSelect::class, fn () => new GuzzleAdSelectClient($client));
     }
 
     private static function getDynamicFindData(array $merge = []): array
@@ -1427,6 +1667,7 @@ final class SupplyControllerTest extends TestCase
         $campaign = NetworkCampaign::factory()->create();
         /** @var NetworkBanner $banner */
         $banner = NetworkBanner::factory()->create([
+            'click_url' => 'https://example.com/click',
             'network_campaign_id' => $campaign,
             'view_url' => 'https://example.com/view',
         ]);
@@ -1458,6 +1699,110 @@ final class SupplyControllerTest extends TestCase
             'r' => $redirectUrl,
         ];
         return [$query, $banner, $zone];
+    }
+
+    private function initAdUser(): void
+    {
+        $adUser = self::createMock(AdUser::class);
+        $adUser->expects(self::once())
+            ->method('getUserContext')
+            ->willReturnCallback(function ($context) {
+                self::assertInstanceOf(ImpressionContext::class, $context);
+                $contextArray = $context->toArray();
+                self::assertEquals(1, $contextArray['device']['extensions']['metamask']);
+                self::assertEquals('good-user', $contextArray['user']['account']);
+                return (new DummyAdUserClient())->getUserContext($context);
+            });
+        $this->instance(AdUser::class, $adUser);
+    }
+
+    private function initDspBridge(): array
+    {
+        Config::updateAdminSettings([
+            Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000001-8B4E',
+            Config::DSP_BRIDGE_URL => 'https://example.com',
+        ]);
+        NetworkHost::factory()->create([
+            'address' => '0001-00000001-8B4E',
+            'host' => 'https://example.com',
+        ]);
+        /** @var Zone $zone */
+        $zone = Zone::factory()->create([
+            'site_id' => Site::factory()->create([
+                'user_id' => User::factory()->create(['api_token' => '1234', 'auto_withdrawal' => 1e11]),
+                'status' => Site::STATUS_ACTIVE,
+            ]),
+        ]);
+        /** @var NetworkBanner $networkBanner */
+        $networkBanner = NetworkBanner::factory()->create([
+            'network_campaign_id' => NetworkCampaign::factory()->create(),
+            'serve_url' => 'https://example.com/serve/' . Uuid::uuid4()->toString(),
+        ]);
+        $impressionId = Uuid::uuid4();
+        $adSelect = self::createMock(AdSelect::class);
+        $adSelect->method('findBanners')->willReturn(
+            new FoundBanners([$this->createFoundBanner($networkBanner, $zone, $impressionId)])
+        );
+        $this->app->bind(AdSelect::class, fn () => $adSelect);
+        $this->initAdUser();
+        return [
+            'context' => [
+                'iid' => $impressionId,
+                'url' => 'https://example.com',
+                'metamask' => true,
+                'uid' => 'good-user',
+            ],
+            'placements' => [
+                [
+                    'id' => '3',
+                    'placementId' => $zone->uuid,
+                ],
+            ],
+        ];
+    }
+
+    private function createFoundBanner(
+        NetworkBanner $networkBanner,
+        Zone $zone,
+        UuidInterface $impressionId
+    ): array {
+        return [
+            'id' => $networkBanner->uuid,
+            'demand_id' => $networkBanner->demand_banner_id,
+            'publisher_id' => '0123456879ABCDEF0123456879ABCDEF',
+            'zone_id' => $zone->uuid,
+            'pay_from' => '0001-00000001-8B4E',
+            'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+            'type' => $networkBanner->type,
+            'size' => $networkBanner->size,
+            'serve_url' => $networkBanner->serve_url,
+            'creative_sha1' => '',
+            'click_url' => SecureUrl::change(
+                route(
+                    'log-network-click',
+                    [
+                        'id' => $networkBanner->uuid,
+                        'iid' => $impressionId,
+                        'r' => Utils::urlSafeBase64Encode($networkBanner->click_url),
+                        'zid' => $zone->uuid,
+                    ]
+                )
+            ),
+            'view_url' => SecureUrl::change(
+                route(
+                    'log-network-view',
+                    [
+                        'id' => $networkBanner->uuid,
+                        'iid' => $impressionId,
+                        'r' => Utils::urlSafeBase64Encode($networkBanner->view_url),
+                        'zid' => $zone->uuid,
+                    ]
+                )
+            ),
+            'info_box' => true,
+            'rpm' => 0.5,
+            'request_id' => '3',
+        ];
     }
 
     private function initUriForLogPlaceholderView(): string

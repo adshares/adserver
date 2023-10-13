@@ -25,6 +25,8 @@ namespace Adshares\Adserver\Tests\Client;
 
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Adserver\Tests\TestCase;
@@ -237,6 +239,91 @@ class GuzzleDemandClientTest extends TestCase
         self::assertEquals(['1'], $keywords['classified']);
         self::assertEquals(['high'], $keywords['quality']);
         self::assertEquals('2022-02-10T14:08:00+00:00', $banner->getSignedAt()?->format(DateTimeInterface::ATOM));
+    }
+
+    public function testFetchAllInventoryWhileBannerExist(): void
+    {
+        $networkCampaign = NetworkCampaign::factory()->create(
+            [
+                'demand_campaign_id' => '12345678901234567890123456789012',
+                'source_address' => '0001-00000004-DBEB',
+                'uuid' => '10000000000000000000000000000000',
+            ]
+        );
+        NetworkBanner::factory()->create(
+            [
+                'demand_banner_id' => '0123456789abcdef0123456789abcdef',
+                'network_campaign_id' => $networkCampaign,
+                'uuid' => '20000000000000000000000000000000',
+            ]
+        );
+        $client = self::createMock(Client::class);
+        $inventoryResponse = json_decode($this->getInventoryResponse(), true);
+        unset($inventoryResponse[0]['medium']);
+        unset($inventoryResponse[0]['vendor']);
+        $client->expects(self::once())
+            ->method('get')
+            ->willReturn(new GuzzleResponse(body: json_encode($inventoryResponse)));
+        /** @var Client $client */
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        $campaigns = $demandClient->fetchAllInventory(
+            new AccountId('0001-00000004-DBEB'),
+            'https://example.com',
+            'https://app.example.com/inventory',
+            false,
+        );
+
+        self::assertCount(1, $campaigns);
+        $campaign = $campaigns->get(0);
+        self::assertEquals('10000000000000000000000000000000', $campaign->getId());
+        self::assertEquals('12345678901234567890123456789012', $campaign->getDemandCampaignId());
+        self::assertCount(1, $campaign->getBanners());
+        self::assertEquals('20000000000000000000000000000000', $campaign->getBanners()->get(0)->getId());
+        self::assertEquals('0123456789abcdef0123456789abcdef', $campaign->getBanners()->get(0)->getDemandBannerId());
+    }
+
+    public function testFetchAllInventoryFromDspBridge(): void
+    {
+        Config::updateAdminSettings(
+            [
+                Config::DSP_BRIDGE_ACCOUNT_ADDRESS => '0001-00000004-DBEB',
+                Config::DSP_BRIDGE_URL => 'https://example.com',
+            ]
+        );
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $client = self::createMock(Client::class);
+        $inventoryResponse = json_decode($this->getInventoryResponse(), true);
+        unset($inventoryResponse[0]['medium']);
+        unset($inventoryResponse[0]['vendor']);
+        $inventoryResponse[0]['targeting_requires'] = [
+            'site' => [
+                'domain' => ['https://scene-2-n5.decentraland.org'],
+            ],
+        ];
+        $client->expects(self::once())
+            ->method('get')
+            ->willReturn(new GuzzleResponse(body: json_encode($inventoryResponse)));
+        /** @var Client $client */
+        $demandClient = $this->createGuzzleDemandClient($client);
+
+        $campaigns = $demandClient->fetchAllInventory(
+            new AccountId('0001-00000004-DBEB'),
+            'https://example.com',
+            'https://app.example.com/inventory',
+            false,
+        );
+
+        self::assertCount(1, $campaigns);
+        /** @var Campaign $campaign */
+        $campaign = $campaigns->get(0);
+        self::assertEquals('12345678901234567890123456789012', $campaign->getDemandCampaignId());
+        self::assertEquals('metaverse', $campaign->getMedium());
+        self::assertEquals('decentraland', $campaign->getVendor());
+        self::assertCount(1, $campaign->getBanners());
+        /** @var Banner $banner */
+        $banner = $campaign->getBanners()->get(0);
+        self::assertEquals('0123456789abcdef0123456789abcdef', $banner->getDemandBannerId());
     }
 
     public function testFetchAllInventoryWhileMissingRequiredClassification(): void

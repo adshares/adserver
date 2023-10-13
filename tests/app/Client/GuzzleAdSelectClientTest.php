@@ -35,6 +35,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
@@ -51,6 +52,9 @@ use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 class GuzzleAdSelectClientTest extends TestCase
 {
+    private const URI_FIND_BANNERS = '/api/v1/find';
+    private const URI_INVENTORY = '/api/v1/campaigns';
+
     private const FOUND_BANNER_STRUCTURE = [
         'id',
         'publisher_id',

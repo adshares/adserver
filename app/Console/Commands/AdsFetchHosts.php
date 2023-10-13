@@ -32,6 +32,7 @@ use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\Services\Supply\DspBridgeRegistrar;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Config\AppMode;
@@ -56,16 +57,20 @@ class AdsFetchHosts extends BaseCommand
     protected $signature = 'ads:fetch-hosts';
     protected $description = 'Fetches Demand AdServers';
 
-    public function __construct(Locker $locker, private readonly DemandClient $client)
-    {
+    public function __construct(
+        Locker $locker,
+        private readonly AdsClient $adsClient,
+        private readonly DemandClient $client,
+        private readonly DspBridgeRegistrar $dspBridgeRegistrar,
+    ) {
         parent::__construct($locker);
     }
 
-    public function handle(AdsClient $adsClient): void
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-            return;
+            return self::FAILURE;
         }
 
         $this->info('Start command ' . $this->signature);
@@ -79,12 +84,15 @@ class AdsFetchHosts extends BaseCommand
         $progressBar->start();
         while ($timeBlock <= $timeNow - self::BLOCK_TIME) {
             $blockId = dechex($timeBlock);
-            $found += $this->handleBlock($adsClient, $blockId);
+            $found += $this->handleBlock($blockId);
             $timeBlock += self::BLOCK_TIME;
             $progressBar->advance();
         }
         $progressBar->finish();
         $this->newLine();
+        if ($this->dspBridgeRegistrar->registerAsNetworkHost()) {
+            $found++;
+        }
 
         $this->comment('Cleaning up old hosts...');
         $added = NetworkHost::all()->count() - $hostsCount;
@@ -103,6 +111,7 @@ class AdsFetchHosts extends BaseCommand
         $this->info($removed > 0 ? sprintf('Removed %d hosts', $removed) : 'Nothing to remove');
 
         $this->info('Finished command ' . $this->signature);
+        return self::SUCCESS;
     }
 
     private function getTimeOfFirstBlock(int $timeNow): int
@@ -119,11 +128,11 @@ class AdsFetchHosts extends BaseCommand
         return $timeBlock;
     }
 
-    private function handleBlock(AdsClient $adsClient, string $blockId): int
+    private function handleBlock(string $blockId): int
     {
         $foundHosts = 0;
         try {
-            $response = $adsClient->getBroadcast($blockId);
+            $response = $this->adsClient->getBroadcast($blockId);
             $broadcastArray = $response->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {

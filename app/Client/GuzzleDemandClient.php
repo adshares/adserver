@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
+use Adshares\Adserver\Services\Supply\DspBridge;
 use Adshares\Adserver\Services\Supply\SiteFilteringUpdater;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\ViewModel\MediumName;
@@ -260,9 +261,11 @@ final class GuzzleDemandClient implements DemandClient
             'updated_at' => DateTime::createFromFormat(DateTimeInterface::ATOM, $data['updated_at']),
         ];
 
+        $isFromDspBridge = DspBridge::isDspAddress($sourceAddress);
         $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
         $banners = [];
-        foreach ((array)$data['banners'] as $banner) {
+        $bannersInput = $data['creatives'] ?? $data['banners'];// legacy fallback, field 'banners' is deprecated
+        foreach ((array)$bannersInput as $banner) {
             $banner['demand_banner_id'] = Uuid::fromString($banner['id']);
 
             if (array_key_exists($banner['id'], $bannerDemandIdsToSupplyIds)) {
@@ -271,7 +274,9 @@ final class GuzzleDemandClient implements DemandClient
                 unset($banner['id']);
             }
 
-            $mappedClassification = $this->validateAndMapClassification($banner);
+            $mappedClassification = $isFromDspBridge
+                ? self::flattenClassification($banner['classification'] ?? [])
+                : $this->validateAndMapClassification($banner);
             if ($this->missingRequiredClassifier($classifiersRequired, $mappedClassification)) {
                 continue;
             }
@@ -365,7 +370,8 @@ final class GuzzleDemandClient implements DemandClient
     {
         $bannerDemandIds = [];
         foreach ($campaigns as $campaign) {
-            foreach ((array)$campaign['banners'] as $banner) {
+            $banners = $campaign['creatives'] ?? $campaign['banners'];// legacy fallback, field 'banners' is deprecated
+            foreach ((array)$banners as $banner) {
                 $bannerDemandIds[] = $banner['id'];
             }
         }
@@ -399,17 +405,17 @@ final class GuzzleDemandClient implements DemandClient
             unset($classification[$invalidClassifier]);
         }
 
+        return self::flattenClassification($classification);
+    }
+
+    private static function flattenClassification(mixed $classification): array
+    {
         $flatClassification = [];
         foreach ($classification as $classifier => $classificationItem) {
             $keywords = $classificationItem['keywords'] ?? [];
-            $keywords[SiteFilteringUpdater::KEYWORD_CLASSIFIED] =
-                SiteFilteringUpdater::KEYWORD_CLASSIFIED_VALUE;
-
-            $flatClassification[$classifier] = AbstractFilterMapper::generateNestedStructure(
-                $keywords
-            );
+            $keywords[SiteFilteringUpdater::KEYWORD_CLASSIFIED] = SiteFilteringUpdater::KEYWORD_CLASSIFIED_VALUE;
+            $flatClassification[$classifier] = AbstractFilterMapper::generateNestedStructure($keywords);
         }
-
         return $flatClassification;
     }
 

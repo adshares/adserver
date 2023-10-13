@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Repository\Supply;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Services\Supply\DspBridge;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -107,14 +108,17 @@ class NetworkCampaignRepository implements CampaignRepository
         $banners = $campaign->getBanners();
         $networkBanners = [];
 
+        $isFromDspBridge = DspBridge::isDspAddress($networkCampaign->source_address);
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
             $banner[self::BANNER_UUID_FIELD] = $banner[self::BANNER_ID_FIELD];
-            $banner[self::BANNER_SERVE_URL_FIELD] = SecureUrl::change($banner[self::BANNER_SERVE_URL_FIELD]);
-            $banner[self::BANNER_CLICK_URL_FIELD] = SecureUrl::change($banner[self::BANNER_CLICK_URL_FIELD]);
-            $banner[self::BANNER_VIEW_URL_FIELD] = SecureUrl::change($banner[self::BANNER_VIEW_URL_FIELD]);
+            if (!$isFromDspBridge) {
+                $banner[self::BANNER_SERVE_URL_FIELD] = SecureUrl::change($banner[self::BANNER_SERVE_URL_FIELD]);
+                $banner[self::BANNER_CLICK_URL_FIELD] = SecureUrl::change($banner[self::BANNER_CLICK_URL_FIELD]);
+                $banner[self::BANNER_VIEW_URL_FIELD] = SecureUrl::change($banner[self::BANNER_VIEW_URL_FIELD]);
+            }
 
-            unset($banner['id']);
+            unset($banner[self::BANNER_ID_FIELD]);
 
             $networkBanner = NetworkBanner::where('demand_banner_id', hex2bin($domainBanner->getDemandBannerId()))
                 ->where('network_campaign_id', $networkCampaign->id)->first();

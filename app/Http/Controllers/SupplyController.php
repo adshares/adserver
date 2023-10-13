@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
@@ -39,6 +40,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Rules\PayoutAddressRule;
 use Adshares\Adserver\Services\Supply\BannerPlaceholderProvider;
+use Adshares\Adserver\Services\Supply\DspBridge;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\CssUtils;
@@ -211,7 +213,7 @@ class SupplyController extends Controller
             } elseif ('POST' === $request->getRealMethod()) {
                 $data = (string)$request->getContent();
             } elseif ('OPTIONS' === $request->getRealMethod()) {
-                $response->setStatusCode(Response::HTTP_NO_CONTENT);
+                $response->setStatusCode(BaseResponse::HTTP_NO_CONTENT);
                 $response->headers->set('Access-Control-Max-Age', 1728000);
                 return $response;
             } else {
@@ -241,7 +243,7 @@ class SupplyController extends Controller
                         if (!$user) {
                             if (config('app.auto_registration_enabled')) {
                                 if (!in_array(UserRole::PUBLISHER, config('app.default_user_roles'))) {
-                                    throw new HttpException(Response::HTTP_FORBIDDEN, 'Cannot register publisher');
+                                    throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Cannot register publisher');
                                 }
                                 $user = User::registerWithWallet($payoutAddress, true);
                                 if (config('app.auto_confirmation_enabled')) {
@@ -253,7 +255,7 @@ class SupplyController extends Controller
                             }
                         }
                         if (!$user->isPublisher()) {
-                            throw new HttpException(Response::HTTP_FORBIDDEN, 'Forbidden');
+                            throw new HttpException(BaseResponse::HTTP_FORBIDDEN, 'Forbidden');
                         }
                         $site = Site::fetchOrCreate(
                             $user->id,
@@ -463,7 +465,7 @@ class SupplyController extends Controller
         Request $request,
         Response $response,
         AdUser $contextProvider,
-        AdSelect $bannerFinder
+        AdSelect $bannerFinder,
     ): FoundBanners {
         $this->checkDecodedQueryData($decodedQueryData);
         $impressionId = self::impressionIdToUuid($decodedQueryData['page']['iid']);
@@ -505,9 +507,37 @@ class SupplyController extends Controller
 
         $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
         $foundBanners = $bannerFinder->findBanners($zones, $context, $impressionId);
+        if (DspBridge::isActive()) {
+            $indices = [];
+            foreach ($foundBanners as $index => $banner) {
+                if (null !== $banner) {
+                    $indices[] = $index;
+                }
+            }
+            $foundBanners = (new DspBridge())->replaceBridgeBanners($foundBanners, $context, $zones);
+            $indicesToReplace = [];
+            foreach ($indices as $index) {
+                if (null === $foundBanners[$index]) {
+                    $indicesToReplace[$index] = $index;
+                }
+            }
+            if (!empty($indicesToReplace)) {
+                $exclude = ['source_host' => [config('app.dsp_bridge_url')]];
+                $zonesToReplace = array_map(
+                    function ($zone) use ($exclude) {
+                        $zone['options']['exclude'] = $exclude;
+                        return $zone;
+                    },
+                    array_intersect_key($zones, $indicesToReplace),
+                );
+                foreach ($bannerFinder->findBanners($zonesToReplace, $context, $impressionId) as $banner) {
+                    $foundBanners[array_shift($indicesToReplace)] = $banner;
+                }
+            }
+        }
         $foundBanners = $this->fillMissingBannersWithPlaceholders($foundBanners, $zones, $impressionId);
 
-        if ($foundBanners->exists(fn($key, $element) => $element != null)) {
+        if ($foundBanners->exists(fn($key, $element) => null !== $element)) {
             NetworkImpression::register(
                 $impressionId,
                 Utils::hexUuidFromBase64UrlWithChecksum($tid),
@@ -606,7 +636,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkSimpleClick(Request $request): RedirectResponse
+    public function logNetworkSimpleClick(Request $request): BaseResponse
     {
         $impressionId = self::impressionIdToUuid($request->query->get('iid'));
         $networkImpression = NetworkImpression::fetchByImpressionId($impressionId);
@@ -633,19 +663,21 @@ class SupplyController extends Controller
         return $this->logNetworkClick($request, $networkImpression->context->banner_id);
     }
 
-    public function logNetworkClick(Request $request, string $bannerId): RedirectResponse
+    public function logNetworkClick(Request $request, string $bannerId): BaseResponse
     {
         $this->validateEventRequest($request);
 
+        $isDspBridge = $request->query->has('extid');
         $url = $this->getRedirectionUrlFromQuery($request);
-
         if (!$url) {
             if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
                 throw new NotFoundHttpException();
             }
             $url = $banner->click_url;
         }
-
+        if (!$url) {
+            throw new UnprocessableEntityHttpException();
+        }
         $url = $this->addQueryStringToUrl($request, $url);
 
         $caseId = str_replace('-', '', $request->query->get('cid'));
@@ -674,7 +706,13 @@ class SupplyController extends Controller
             $url = Utils::addUrlParameter($url, 'ctx', $ctx);
         }
 
-        $response = new RedirectResponse($url);
+        if ($isDspBridge) {
+            $redirectUrl = (new DspBridge())->getEventRedirectUrl($url)
+                ?: route('why', ['bid' => $bannerId, 'cid' => $caseId]);
+            $response = new RedirectResponse($redirectUrl);
+        } else {
+            $response = new RedirectResponse($url);
+        }
         $response->send();
 
         try {
@@ -726,7 +764,7 @@ class SupplyController extends Controller
         return $url;
     }
 
-    public function logNetworkSimpleView(Request $request): RedirectResponse
+    public function logNetworkSimpleView(Request $request): BaseResponse
     {
         $impressionId = self::impressionIdToUuid($request->query->get('iid'));
         $networkImpression = NetworkImpression::fetchByImpressionId($impressionId);
@@ -753,7 +791,7 @@ class SupplyController extends Controller
         return $this->logNetworkView($request, $networkImpression->context->banner_id);
     }
 
-    public function logNetworkView(Request $request, string $bannerId): RedirectResponse
+    public function logNetworkView(Request $request, string $bannerId): BaseResponse
     {
         $this->validateEventRequest($request);
 
@@ -766,10 +804,22 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
+        $isDspBridge = $request->query->has('extid');
         $url = $this->getRedirectionUrlFromQuery($request);
-        if ($url) {
-            $url = $this->addQueryStringToUrl($request, $url);
+        if (!$url) {
+            if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
+                throw new NotFoundHttpException();
+            }
+            $url = $banner->view_url;
         }
+        if (!$url) {
+            $response = new BaseResponse(status: BaseResponse::HTTP_NO_CONTENT);
+            if ($request->headers->has('Origin')) {
+                $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+            }
+            return $response;
+        }
+        $url = $this->addQueryStringToUrl($request, $url);
 
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
@@ -791,7 +841,15 @@ class SupplyController extends Controller
             $ctx = $this->buildCtx($networkImpression, $impressionId, $zoneId);
             $url = Utils::addUrlParameter($url, 'ctx', $ctx);
         }
-        $response = new RedirectResponse($url);
+
+        if ($isDspBridge) {
+            $redirectUrl = (new DspBridge())->getEventRedirectUrl($url);
+            $response = null !== $redirectUrl
+                ? new RedirectResponse($redirectUrl)
+                : new BaseResponse(status: BaseResponse::HTTP_NO_CONTENT);
+        } else {
+            $response = new RedirectResponse($url);
+        }
 
         if ($request->headers->has('Origin')) {
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
@@ -818,7 +876,7 @@ class SupplyController extends Controller
     private function validateEventRequest(Request $request): void
     {
         if (
-            !$request->query->has('r')
+            !($request->query->has('r') || $request->query->has('extid'))
             || !($request->query->has('ctx') || (Uuid::isValid($request->query->get('zid', ''))))
             || !Uuid::isValid($request->query->get('cid', ''))
         ) {
@@ -889,13 +947,12 @@ class SupplyController extends Controller
             }
             throw new NotFoundHttpException('No matching banner');
         }
+        /** @var NetworkCampaign $campaign */
         $campaign = $banner->campaign()->first();
-        $networkHost = NetworkHost::fetchByHost($campaign->source_host);
-
-        $info = $networkHost->info ?? null;
+        $isDsp = DspBridge::isDspAddress($campaign->source_address);
 
         $data = [
-            'url' => $banner->serve_url,
+            'url' => $isDsp ? '' : $banner->serve_url,
             'supplyBannerReportUrl' => new SecureUrl(
                 route(
                     'report-ad',
@@ -910,17 +967,32 @@ class SupplyController extends Controller
             'bannerType' => $banner->type,
         ];
 
-        if ($info) {
+        if ($isDsp) {
             $data = array_merge(
                 $data,
                 [
                     'demand' => true,
-                    'demandName' => $info->getName(),
-                    'demandTermsUrl' => $info->getTermsUrl(),
-                    'demandPrivacyUrl' => $info->getPrivacyUrl(),
-                    'demandLandingUrl' => $info->getLandingUrl(),
-                ]
+                    'demandName' => config('app.adserver_name'),
+                    'demandTermsUrl' => route('terms-url'),
+                    'demandPrivacyUrl' => route('privacy-url'),
+                    'demandLandingUrl' => config('app.landing_url'),
+                ],
             );
+        } else {
+            $networkHost = NetworkHost::fetchByHost($campaign->source_host);
+            $info = $networkHost->info ?? null;
+            if ($info) {
+                $data = array_merge(
+                    $data,
+                    [
+                        'demand' => true,
+                        'demandName' => $info->getName(),
+                        'demandTermsUrl' => $info->getTermsUrl(),
+                        'demandPrivacyUrl' => $info->getPrivacyUrl(),
+                        'demandLandingUrl' => $info->getLandingUrl(),
+                    ]
+                );
+            }
         }
 
         return $this->buildViewWhy($data);

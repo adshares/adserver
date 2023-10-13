@@ -105,6 +105,8 @@ class ServerConfigurationController extends Controller
         Config::CRM_MAIL_ADDRESS_ON_USER_REGISTERED => 'nullable|email',
         Config::CURRENCY => 'nullable|appCurrency',
         Config::DEFAULT_USER_ROLES => 'nullable|notEmpty|list:userRole',
+        Config::DSP_BRIDGE_ACCOUNT_ADDRESS => 'nullable|accountId',
+        Config::DSP_BRIDGE_URL => 'nullable|url',
         Config::EMAIL_VERIFICATION_REQUIRED => 'nullable|boolean',
         Config::EXCHANGE_API_KEY => 'nullable',
         Config::EXCHANGE_API_SECRET => 'nullable',
