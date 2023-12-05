@@ -580,7 +580,12 @@ class SitesController extends Controller
 
     private function getLabelBySize(Site $site): array
     {
-        $formats = $this->configurationRepository->fetchMedium($site->medium, $site->vendor)->getFormats();
+        try {
+            $formats = $this->configurationRepository->fetchMedium($site->medium, $site->vendor)->getFormats();
+        } catch (InvalidArgumentException) {
+            return [];
+        }
+
         $labelBySize = [];
 
         foreach ($formats as $format) {
