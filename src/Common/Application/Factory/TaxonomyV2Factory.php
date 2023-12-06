@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2023 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -67,6 +67,9 @@ class TaxonomyV2Factory
 
             foreach ($data['vendors'] as $vendorData) {
                 $baseData = self::getBaseData($data, $vendorData['medium']);
+                if (null === $baseData) {
+                    continue;
+                }
                 $baseData['vendor'] = $vendorData['name'];
                 $baseData['vendorLabel'] = $vendorData['label'];
 
@@ -184,7 +187,7 @@ class TaxonomyV2Factory
                 return $mediumData;
             }
         }
-        throw new InvalidArgumentException('The field `medium` must match existing medium.');
+        return null;
     }
 
     private static function parseJsonPath(string $path): array
