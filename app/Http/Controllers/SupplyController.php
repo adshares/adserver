@@ -197,20 +197,18 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
         string $data = null
     ) {
-        $response = new Response();
-
-        if ($request->headers->has('Origin')) {
-            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
-            $response->headers->set('Access-Control-Allow-Credentials', 'true');
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        }
-
         if (!$data) {
             if ('GET' === $request->getRealMethod()) {
                 $data = $request->getQueryString();
             } elseif ('POST' === $request->getRealMethod()) {
                 $data = (string)$request->getContent();
             } elseif ('OPTIONS' === $request->getRealMethod()) {
+                $response = new Response();
+                if ($request->headers->has('Origin')) {
+                    $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+                    $response->headers->set('Access-Control-Allow-Credentials', 'true');
+                    $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+                }
                 $response->setStatusCode(Response::HTTP_NO_CONTENT);
                 $response->headers->set('Access-Control-Max-Age', 1728000);
                 return $response;
@@ -280,7 +278,7 @@ class SupplyController extends Controller
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
         return self::json(
-            $this->findBanners($decodedQueryData, $request, $response, $contextProvider, $bannerFinder)->toArray()
+            $this->findBanners($decodedQueryData, $request, $contextProvider, $bannerFinder)->toArray()
         );
     }
 
@@ -289,14 +287,6 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
         Request $request,
     ): BaseResponse {
-        $response = new Response();
-
-        if ($request->headers->has('Origin')) {
-            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
-            $response->headers->set('Access-Control-Allow-Credentials', 'true');
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        }
-
         if ('POST' === $request->getRealMethod()) {
             $input = $request->input();
         } elseif ('GET' === $request->getRealMethod()) {
@@ -390,7 +380,7 @@ class SupplyController extends Controller
         }
 
         $mappedInput = self::mapFindInput($input);
-        $foundBanners = $this->findBanners($mappedInput, $request, $response, $contextProvider, $bannerFinder)
+        $foundBanners = $this->findBanners($mappedInput, $request, $contextProvider, $bannerFinder)
             ->filter(fn($banner) => null !== $banner)
             ->map($this->mapFoundBannerToResult())
             ->getValues();
@@ -452,7 +442,6 @@ class SupplyController extends Controller
     /**
      * @param array $decodedQueryData
      * @param Request $request
-     * @param Response $response
      * @param AdUser $contextProvider
      * @param AdSelect $bannerFinder
      *
@@ -461,7 +450,6 @@ class SupplyController extends Controller
     private function findBanners(
         array $decodedQueryData,
         Request $request,
-        Response $response,
         AdUser $contextProvider,
         AdSelect $bannerFinder
     ): FoundBanners {
@@ -470,7 +458,7 @@ class SupplyController extends Controller
 
         $tid = Utils::attachOrProlongTrackingCookie(
             $request,
-            $response,
+            new Response(),
             '',
             new DateTime(),
             $impressionId
