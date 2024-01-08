@@ -53,6 +53,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\UrlInterface;
 use Adshares\Config\UserRole;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -67,6 +68,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -280,6 +282,82 @@ class SupplyController extends Controller
         return self::json(
             $this->findBanners($decodedQueryData, $request, $contextProvider, $bannerFinder)->toArray()
         );
+    }
+
+    public function findHtml(
+        string $token,
+        AdUser $contextProvider,
+        AdSelect $bannerFinder,
+        Request $request,
+    ): BaseResponse {
+        $response = new Response();
+        $impressionId = Utils::urlSafeBase64Encode(random_bytes(16));
+        $caseId = bin2hex(random_bytes(15)) . '00';
+        Utils::attachOrProlongTrackingCookie(
+            $request,
+            $response,
+            '',
+            new DateTime(),
+            $impressionId,
+        );
+        $request->query->set('iid', $impressionId);
+
+        if (null === $placement = Zone::findByPublicIds([$token])->first()) {
+            throw new NotFoundHttpException();
+        }
+        $pageUrl = $request->getUri();
+        $mappedInput = [
+            'page' => [
+                'iid' => $impressionId,
+                'url' => $pageUrl,
+            ],
+            'placements' => [
+                [
+                    'id' => '0',
+                    'placementId' => $placement->uuid,
+                    'options' => [
+                        'banner_type' => 'pop',
+                        'banner_mime' => null,
+                        'topframe' => true,
+                    ],
+                ],
+            ],
+        ];
+        $foundBanners = $this->findBanners($mappedInput, $request, $contextProvider, $bannerFinder)
+            ->filter(fn($banner) => null !== $banner)
+            ->map($this->mapFoundBannerToResult())
+            ->getValues();
+        if (empty($foundBanners)) {
+            throw new NotFoundHttpException();
+        }
+
+        $banner = $foundBanners[0];
+        $serveUrl = $banner['serveUrl'];
+        $serveResponse = Http::get($serveUrl);
+        if (BaseResponse::HTTP_OK !== $serveResponse->status()) {
+            Log::error('Cannot log view', ['body' => $serveResponse->body(), 'url' => $serveUrl]);
+            throw new NotFoundHttpException();
+        }
+        $url = Utils::replaceLandingUrlPlaceholders(
+            $serveResponse->body(),
+            $caseId,
+            $banner['creativeId'],
+            $banner['publisherId'],
+            $banner['supplyServer'],
+            DomainReader::domain($pageUrl),
+            $banner['placementId'],
+        );
+
+        $viewUrl = $banner['viewUrl'];
+        $viewUrl = Utils::addUrlParameter($viewUrl, 'cid', $caseId);
+        $viewResponse = Http::withHeaders([
+            'Accept' => 'application/json',
+        ])->get($viewUrl);
+        if (BaseResponse::HTTP_OK === $viewResponse->status()) {
+            Log::warning('Cannot log view', ['body' => $viewResponse->body(), 'url' => $viewUrl]);
+        }
+
+        return new RedirectResponse($url);
     }
 
     public function find(
@@ -838,23 +916,10 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $adUserEndpoint = config('app.aduser_serve_subdomain')
-            ?
-            ServeDomain::current(config('app.aduser_serve_subdomain'))
-            :
-            config('app.aduser_base_url');
-
-        if ($adUserEndpoint) {
-            $adUserUrl = sprintf(
-                '%s/register/%s/%s/%s.html',
-                $adUserEndpoint,
-                urlencode(self::$adserverId),
-                $trackingId,
-                $impressionId
-            );
-
+        $adUserUrl = $this->getAdUserRegisterUrl($trackingId, $impressionId);
+        if (null !== $adUserUrl) {
             $response->setStatusCode(BaseResponse::HTTP_FOUND);
-            $response->headers->set('Location', new SecureUrl($adUserUrl));
+            $response->headers->set('Location', $adUserUrl);
         }
 
         return $response;
@@ -1447,5 +1512,27 @@ class SupplyController extends Controller
         }
 
         return $response;
+    }
+
+    private function getAdUserRegisterUrl(string $trackingId, string $impressionId): ?UrlInterface
+    {
+        $adUserEndpoint = config('app.aduser_serve_subdomain')
+            ?
+            ServeDomain::current(config('app.aduser_serve_subdomain'))
+            :
+            config('app.aduser_base_url');
+
+        if ($adUserEndpoint) {
+            $adUserUrl = sprintf(
+                '%s/register/%s/%s/%s.html',
+                $adUserEndpoint,
+                urlencode(self::$adserverId),
+                $trackingId,
+                $impressionId,
+            );
+            return new SecureUrl($adUserUrl);
+        }
+
+        return null;
     }
 }
