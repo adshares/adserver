@@ -74,12 +74,6 @@ SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM event_log
 LIMIT ?
 OFFSET ?;
 SQL;
-    private const PLACEHOLDER_BANNER_ID = '{bid}';
-    private const PLACEHOLDER_CASE_ID = '{cid}';
-    private const PLACEHOLDER_PUBLISHER_ID = '{pid}';
-    private const PLACEHOLDER_SERVER_ID = '{aid}';
-    private const PLACEHOLDER_SITE_ID = '{sid}';
-    private const PLACEHOLDER_ZONE_ID = '{zid}';
 
     public function __construct(
         private readonly AdsAuthenticator $authenticator,
@@ -219,7 +213,7 @@ SQL;
         if ($request->query->get('logonly')) {
             $response = new Response();
         } else {
-            $url = $this->replaceLandingUrlPlaceholders(
+            $url = Utils::replaceLandingUrlPlaceholders(
                 $url,
                 $caseId,
                 $bannerId,
@@ -617,40 +611,6 @@ SQL;
     private static function calculateBudgetAfterFees(int $budget, float $totalFee): int
     {
         return $budget - (int)floor($budget * $totalFee);
-    }
-
-    private function replaceLandingUrlPlaceholders(
-        string $landingUrl,
-        string $caseId,
-        string $bannerId,
-        string $publisherId,
-        string $serverId,
-        string $siteId,
-        string $zoneId
-    ): string {
-        if (str_contains($landingUrl, self::PLACEHOLDER_CASE_ID)) {
-            $landingUrl = str_replace(self::PLACEHOLDER_CASE_ID, $caseId, $landingUrl);
-        } else {
-            $landingUrl = Utils::addUrlParameter($landingUrl, 'cid', $caseId);
-        }
-
-        return str_replace(
-            [
-                self::PLACEHOLDER_BANNER_ID,
-                self::PLACEHOLDER_PUBLISHER_ID,
-                self::PLACEHOLDER_SERVER_ID,
-                self::PLACEHOLDER_SITE_ID,
-                self::PLACEHOLDER_ZONE_ID,
-            ],
-            [
-                $bannerId,
-                $publisherId,
-                $serverId,
-                $siteId,
-                $zoneId,
-            ],
-            $landingUrl
-        );
     }
 
     private static function getViewContentInput(string $eventId, ?string $adUserUrl): array

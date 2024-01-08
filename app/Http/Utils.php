@@ -55,6 +55,13 @@ class Utils
 
     public const ENV_PROD = 'production';
 
+    private const PLACEHOLDER_BANNER_ID = '{bid}';
+    private const PLACEHOLDER_CASE_ID = '{cid}';
+    private const PLACEHOLDER_PUBLISHER_ID = '{pid}';
+    private const PLACEHOLDER_SERVER_ID = '{aid}';
+    private const PLACEHOLDER_SITE_ID = '{sid}';
+    private const PLACEHOLDER_ZONE_ID = '{zid}';
+
     public static function getPartialImpressionContext(
         Request $request,
         $contextStr = null,
@@ -469,5 +476,39 @@ class Utils
     public static function extractFilename(string $imageUrl): string
     {
         return substr($imageUrl, strrpos($imageUrl, '/') + 1);
+    }
+
+    public static function replaceLandingUrlPlaceholders(
+        string $landingUrl,
+        string $caseId,
+        string $bannerId,
+        string $publisherId,
+        string $serverId,
+        string $siteId,
+        string $zoneId,
+    ): string {
+        if (str_contains($landingUrl, self::PLACEHOLDER_CASE_ID)) {
+            $landingUrl = str_replace(self::PLACEHOLDER_CASE_ID, $caseId, $landingUrl);
+        } else {
+            $landingUrl = Utils::addUrlParameter($landingUrl, 'cid', $caseId);
+        }
+
+        return str_replace(
+            [
+                self::PLACEHOLDER_BANNER_ID,
+                self::PLACEHOLDER_PUBLISHER_ID,
+                self::PLACEHOLDER_SERVER_ID,
+                self::PLACEHOLDER_SITE_ID,
+                self::PLACEHOLDER_ZONE_ID,
+            ],
+            [
+                $bannerId,
+                $publisherId,
+                $serverId,
+                $siteId,
+                $zoneId,
+            ],
+            $landingUrl,
+        );
     }
 }
