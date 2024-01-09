@@ -175,6 +175,7 @@ class Config extends Model
     public const SKYNET_API_KEY = 'skynet-api-key';
     public const SKYNET_API_URL = 'skynet-api-url';
     public const SKYNET_CDN_URL = 'skynet-cdn-url';
+    public const SUPPLY_DIRECT_LINK_ENABLED = 'supply-direct-link-enabled';
     public const SUPPLY_PLACEHOLDER_COLOR = 'supply-placeholder-color';
     public const SUPPLY_PLACEHOLDER_FILE = 'supply-placeholder-file';
     public const SUPPORT_CHAT = 'support-chat';
@@ -275,6 +276,7 @@ class Config extends Model
         self::SITE_FILTERING_EXCLUDE_ON_AUTO_CREATE => ConfigTypes::Json,
         self::SITE_FILTERING_REQUIRE => ConfigTypes::Json,
         self::SITE_FILTERING_REQUIRE_ON_AUTO_CREATE => ConfigTypes::Json,
+        self::SUPPLY_DIRECT_LINK_ENABLED => ConfigTypes::Bool,
         self::UPLOAD_LIMIT_DIRECT_LINK => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
@@ -557,6 +559,7 @@ class Config extends Model
             self::SKYNET_API_KEY => '',
             self::SKYNET_API_URL => 'https://siasky.net',
             self::SKYNET_CDN_URL => '',
+            self::SUPPLY_DIRECT_LINK_ENABLED => false,
             self::SUPPLY_PLACEHOLDER_COLOR => 'FFFFFF',
             self::SUPPLY_PLACEHOLDER_FILE => base_path('resources/img/placeholder_seed.png'),
             self::SUPPORT_CHAT => null,

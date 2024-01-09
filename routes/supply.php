@@ -24,10 +24,11 @@ declare(strict_types=1);
 use Adshares\Adserver\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/supply/find/{token}.html', [SupplyController::class, 'findHtml']);
 Route::get('/supply/find', [SupplyController::class, 'legacyFind']);
 Route::get('/supply/find/{data}', [SupplyController::class, 'legacyFind']);
 Route::post('/supply/find', [SupplyController::class, 'find']);
+Route::get('/supply/direct-link/{token}', [SupplyController::class, 'findDirectLink'])
+    ->name('find-direct-link');
 
 Route::get('/supply/anon', [SupplyController::class, 'findJson']);
 Route::post('/supply/anon', [SupplyController::class, 'findJson']);

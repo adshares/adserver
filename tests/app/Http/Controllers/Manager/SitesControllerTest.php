@@ -241,6 +241,35 @@ class SitesControllerTest extends TestCase
         self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Zone::TYPE_POP]);
     }
 
+    public function testCreateSiteWithDirectLinkAdUnitWhileDirectLinkDisabled(): void
+    {
+        $this->login();
+        $siteData = self::simpleSiteData([
+            'adUnits' => [
+                self::simpleAdUnit(['size' => 'direct-link']),
+            ]
+        ]);
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonFragment(['Invalid size.']);
+    }
+
+    public function testCreateSiteWithDirectLinkAdUnitWhileDirectLinkEnabled(): void
+    {
+        Config::updateAdminSettings([Config::SUPPLY_DIRECT_LINK_ENABLED => '1']);
+        $this->login();
+        $siteData = self::simpleSiteData([
+            'adUnits' => [
+                self::simpleAdUnit(['size' => 'direct-link']),
+            ]
+        ]);
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        self::assertDatabaseHas(Zone::class, ['size' => 'direct-link', 'type' => Zone::TYPE_DIRECT_LINK]);
+    }
+
     public function testCreateSiteWhileExist(): void
     {
         $user = $this->login();

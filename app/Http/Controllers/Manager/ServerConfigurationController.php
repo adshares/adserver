@@ -166,6 +166,7 @@ class ServerConfigurationController extends Controller
         Config::SKYNET_API_KEY => 'nullable|notEmpty',
         Config::SKYNET_API_URL => 'nullable|url',
         Config::SKYNET_CDN_URL => 'nullable|url',
+        Config::SUPPLY_DIRECT_LINK_ENABLED => 'nullable|boolean',
         Config::SUPPLY_PLACEHOLDER_COLOR => 'nullable|hex:6',
         Config::SUPPLY_PLACEHOLDER_FILE => 'nullable',
         Config::SUPPORT_CHAT => 'nullable|url',

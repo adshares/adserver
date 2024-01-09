@@ -147,8 +147,8 @@ class GuzzleAdSelectClient implements AdSelect
         $sitesMap = [];
 
         $zoneList = Zone::findByPublicIds($zoneIds);
-        /** @var Zone $zone */
         for ($i = 0; $i < count($zoneList); $i++) {
+            /** @var Zone $zone */
             $zone = $zoneList[$i];
             $siteId = $zone->site_id;
 
@@ -183,15 +183,17 @@ class GuzzleAdSelectClient implements AdSelect
                     if ($site->only_direct_deals) {
                         $sitesMap[$siteId]['filters']['require']['require:site:domain'] = $site->domain;
                     }
-                    // always include active pop zones
-                    foreach ($site->zones as $popupZone) {
-                        if (
-                            Zone::TYPE_POP === $popupZone->type &&
-                            Zone::STATUS_ACTIVE === $popupZone->status &&
-                            !in_array($popupZone->uuid, $zoneIds)
-                        ) {
-                            $zoneIds[] = $popupZone->uuid;
-                            $zoneList[] = $popupZone;
+                    if (Zone::TYPE_DIRECT_LINK !== $zone->type) {
+                        // include active pop zones
+                        foreach ($site->zones as $popupZone) {
+                            if (
+                                Zone::TYPE_POP === $popupZone->type &&
+                                Zone::STATUS_ACTIVE === $popupZone->status &&
+                                !in_array($popupZone->uuid, $zoneIds)
+                            ) {
+                                $zoneIds[] = $popupZone->uuid;
+                                $zoneList[] = $popupZone;
+                            }
                         }
                     }
                 } else {
@@ -205,6 +207,7 @@ class GuzzleAdSelectClient implements AdSelect
                 $sitesMap[$siteId]['active'] && (
                 !config('app.check_zone_domain')
                 || DomainReader::checkDomain($context->url(), $sitesMap[$siteId]['domain'])
+                || Zone::TYPE_DIRECT_LINK === $zone->type
                 )
             ) {
                 $zoneMap[$zone->uuid] = $zone;

@@ -56,6 +56,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlInterface;
 use Adshares\Config\UserRole;
 use Adshares\Supply\Application\Dto\FoundBanners;
+use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Closure;
 use DateTime;
@@ -284,7 +285,7 @@ class SupplyController extends Controller
         );
     }
 
-    public function findHtml(
+    public function findDirectLink(
         string $token,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
@@ -302,7 +303,8 @@ class SupplyController extends Controller
         );
         $request->query->set('iid', $impressionId);
 
-        if (null === $placement = Zone::findByPublicIds([$token])->first()) {
+        $placement = Zone::fetchByPublicId($token);
+        if (null === $placement || Zone::TYPE_DIRECT_LINK !== $placement->type) {
             throw new NotFoundHttpException();
         }
         $pageUrl = $request->getUri();
@@ -318,6 +320,7 @@ class SupplyController extends Controller
                     'options' => [
                         'banner_type' => 'pop',
                         'banner_mime' => null,
+                        'direct_link' => true,
                         'topframe' => true,
                     ],
                 ],
@@ -475,6 +478,24 @@ class SupplyController extends Controller
         return [];
     }
 
+    private function isDecodedQueryDataForDirectLink(array $input): bool
+    {
+        $placements = $input['placements'] ?? $input['zones'] ?? [];// Key 'zones' is for legacy search
+
+        $isSmartLink = false;
+        foreach ($placements as $placement) {
+            if ($placement['options']['direct_link'] ?? false) {
+                $isSmartLink = true;
+            }
+        }
+
+        if ($isSmartLink && 1 !== count($placements)) {
+            throw new BadRequestHttpException('Direct link detected');
+        }
+
+        return $isSmartLink;
+    }
+
     private function checkDecodedQueryData(array $decodedQueryData): void
     {
         if ($this->isSiteRejected($decodedQueryData['page']['url'] ?? '')) {
@@ -552,7 +573,18 @@ class SupplyController extends Controller
             $decodedQueryData['page'],
             $decodedQueryData['user']
         );
-        $userContext = $contextProvider->getUserContext($impressionContext);
+
+        if ($this->isDecodedQueryDataForDirectLink($decodedQueryData)) {
+            $userContext = new UserContext(
+                [],
+                0.0,
+                AdUser::CPA_ONLY_PAGE_RANK,
+                AdUser::PAGE_INFO_UNKNOWN,
+                Utils::hexUuidFromBase64UrlWithChecksum($tid),
+            );
+        } else {
+            $userContext = $contextProvider->getUserContext($impressionContext);
+        }
 
         if ($userContext->isCrawler()) {
             throw new AccessDeniedHttpException('Crawlers are not allowed');

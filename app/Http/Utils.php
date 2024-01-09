@@ -462,6 +462,7 @@ class Utils
     {
         return match ($type) {
             Banner::TEXT_TYPE_DIRECT_LINK => Zone::TYPE_POP,
+            'direct-link' => Zone::TYPE_DIRECT_LINK,
             Banner::TEXT_TYPE_MODEL => Zone::TYPE_MODEL,
             default => Zone::TYPE_DISPLAY,
         };
