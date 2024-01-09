@@ -494,7 +494,10 @@ class SupplyController extends Controller
 
         $zones = $this->extractZones($decodedQueryData);
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-            if ($userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK) {
+            if (
+                $userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK
+                || $userContext->pageRankInfo() === Aduser::PAGE_INFO_UNKNOWN
+            ) {
                 foreach ($zones as &$zone) {
                     $zone['options']['cpa_only'] = true;
                 }
