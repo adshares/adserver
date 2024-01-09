@@ -267,7 +267,21 @@ class SitesControllerTest extends TestCase
         $response = $this->postJson(self::URI, ['site' => $siteData]);
 
         $response->assertStatus(Response::HTTP_CREATED);
-        self::assertDatabaseHas(Zone::class, ['size' => 'direct-link', 'type' => Zone::TYPE_DIRECT_LINK]);
+        $response->assertHeader('Location');
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+        self::assertDatabaseHas(
+            Zone::class,
+            [
+                'size' => 'direct-link',
+                'type' => Zone::TYPE_DIRECT_LINK,
+            ],
+        );
+        $scopes = Site::find($id)->zones->first()->scopes;
+        self::assertCount(2, $scopes);
+        foreach (['pop-under', 'pop-up'] as $expectedScope) {
+            self::assertContainsEquals($expectedScope, $scopes);
+        }
     }
 
     public function testCreateSiteWhileExist(): void

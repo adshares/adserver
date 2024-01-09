@@ -294,8 +294,8 @@ class SitesController extends Controller
 
         foreach ($inputZones as $key => &$inputZone) {
             $size = $inputZone['size'];
-            $inputZone['scopes'] = [$size];
             $type = Utils::getZoneTypeByBannerType($bannerTypeBySize[$size]);
+            $inputZone['scopes'] = Zone::TYPE_DIRECT_LINK === $type ? ['pop-under', 'pop-up'] : [$size];
             $inputZone['type'] = $type;
 
             if (!in_array($type, [Zone::TYPE_DIRECT_LINK, Zone::TYPE_POP], true)) {

@@ -318,7 +318,7 @@ class SupplyController extends Controller
                     'id' => '0',
                     'placementId' => $placement->uuid,
                     'options' => [
-                        'banner_type' => 'pop',
+                        'banner_type' => 'direct',
                         'banner_mime' => null,
                         'direct_link' => true,
                         'topframe' => true,
@@ -552,7 +552,10 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         AdSelect $bannerFinder
     ): FoundBanners {
-        $this->checkDecodedQueryData($decodedQueryData);
+        $isDirectLink = $this->isDecodedQueryDataForDirectLink($decodedQueryData);
+        if (!$isDirectLink) {
+            $this->checkDecodedQueryData($decodedQueryData);
+        }
         $impressionId = self::impressionIdToUuid($decodedQueryData['page']['iid']);
 
         $tid = Utils::attachOrProlongTrackingCookie(
@@ -574,7 +577,7 @@ class SupplyController extends Controller
             $decodedQueryData['user']
         );
 
-        if ($this->isDecodedQueryDataForDirectLink($decodedQueryData)) {
+        if ($isDirectLink) {
             $userContext = new UserContext(
                 [],
                 0.0,
