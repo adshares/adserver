@@ -155,10 +155,15 @@ class GuzzleAdSelectClient implements AdSelect
             if (!array_key_exists($siteId, $sitesMap)) {
                 $site = $zone->site;
 
-                /** @var User $user */
-                $isActive = null !== $site && $site->status === Site::STATUS_ACTIVE && null !== ($user = $site->user);
-
-                if ($isActive) {
+                if (
+                    null === $site
+                    || null === ($user = $site->user)
+                    || ($site->status !== Site::STATUS_ACTIVE && Zone::TYPE_DIRECT_LINK !== $zone->type)
+                ) {
+                    $sitesMap[$siteId] = [
+                        'active' => false,
+                    ];
+                } else {
                     $sitesMap[$siteId] = [
                         'active'       => true,
                         'domain'       => $site->domain,
@@ -196,10 +201,6 @@ class GuzzleAdSelectClient implements AdSelect
                             }
                         }
                     }
-                } else {
-                    $sitesMap[$siteId] = [
-                        'active' => false,
-                    ];
                 }
             }
 
