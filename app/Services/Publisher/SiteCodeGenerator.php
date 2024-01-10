@@ -118,8 +118,8 @@ class SiteCodeGenerator
                 ]
             );
         }
-        if (Zone::TYPE_DIRECT_LINK === $zone->type) {
-            return route('find-direct-link', ['token' => $zone->uuid]);
+        if (Zone::TYPE_SMART_LINK === $zone->type) {
+            return route('find-smart-link', ['token' => $zone->uuid]);
         }
 
         $size = Size::toDimensions($zone->size);

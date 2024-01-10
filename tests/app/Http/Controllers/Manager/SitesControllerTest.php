@@ -246,7 +246,7 @@ class SitesControllerTest extends TestCase
         $this->login();
         $siteData = self::simpleSiteData([
             'adUnits' => [
-                self::simpleAdUnit(['size' => 'direct-link']),
+                self::simpleAdUnit(['size' => 'smart-link']),
             ]
         ]);
         $response = $this->postJson(self::URI, ['site' => $siteData]);
@@ -257,11 +257,11 @@ class SitesControllerTest extends TestCase
 
     public function testCreateSiteWithDirectLinkAdUnitWhileDirectLinkEnabled(): void
     {
-        Config::updateAdminSettings([Config::SUPPLY_DIRECT_LINK_ENABLED => '1']);
+        Config::updateAdminSettings([Config::SUPPLY_SMART_LINK_ENABLED => '1']);
         $this->login();
         $siteData = self::simpleSiteData([
             'adUnits' => [
-                self::simpleAdUnit(['size' => 'direct-link']),
+                self::simpleAdUnit(['size' => 'smart-link']),
             ]
         ]);
         $response = $this->postJson(self::URI, ['site' => $siteData]);
@@ -273,8 +273,8 @@ class SitesControllerTest extends TestCase
         self::assertDatabaseHas(
             Zone::class,
             [
-                'size' => 'direct-link',
-                'type' => Zone::TYPE_DIRECT_LINK,
+                'size' => 'smart-link',
+                'type' => Zone::TYPE_SMART_LINK,
             ],
         );
         $scopes = Site::find($id)->zones->first()->scopes;

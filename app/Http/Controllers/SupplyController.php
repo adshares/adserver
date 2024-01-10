@@ -285,7 +285,7 @@ class SupplyController extends Controller
         );
     }
 
-    public function findDirectLink(
+    public function findSmartLink(
         string $token,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
@@ -304,7 +304,7 @@ class SupplyController extends Controller
         $request->query->set('iid', $impressionId);
 
         $placement = Zone::fetchByPublicId($token);
-        if (null === $placement || Zone::TYPE_DIRECT_LINK !== $placement->type) {
+        if (null === $placement || Zone::TYPE_SMART_LINK !== $placement->type) {
             throw new NotFoundHttpException();
         }
         $pageUrl = $request->getUri();
@@ -320,7 +320,7 @@ class SupplyController extends Controller
                     'options' => [
                         'banner_type' => 'direct',
                         'banner_mime' => null,
-                        'direct_link' => true,
+                        'smart_link' => true,
                         'topframe' => true,
                     ],
                 ],
@@ -478,19 +478,19 @@ class SupplyController extends Controller
         return [];
     }
 
-    private function isDecodedQueryDataForDirectLink(array $input): bool
+    private function isDecodedQueryDataForSmartLink(array $input): bool
     {
         $placements = $input['placements'] ?? $input['zones'] ?? [];// Key 'zones' is for legacy search
 
         $isSmartLink = false;
         foreach ($placements as $placement) {
-            if ($placement['options']['direct_link'] ?? false) {
+            if ($placement['options']['smart_link'] ?? false) {
                 $isSmartLink = true;
             }
         }
 
         if ($isSmartLink && 1 !== count($placements)) {
-            throw new BadRequestHttpException('Direct link detected');
+            throw new BadRequestHttpException('Smart link detected');
         }
 
         return $isSmartLink;
@@ -552,8 +552,8 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         AdSelect $bannerFinder
     ): FoundBanners {
-        $isDirectLink = $this->isDecodedQueryDataForDirectLink($decodedQueryData);
-        if (!$isDirectLink) {
+        $isSmartLink = $this->isDecodedQueryDataForSmartLink($decodedQueryData);
+        if (!$isSmartLink) {
             $this->checkDecodedQueryData($decodedQueryData);
         }
         $impressionId = self::impressionIdToUuid($decodedQueryData['page']['iid']);
@@ -577,7 +577,7 @@ class SupplyController extends Controller
             $decodedQueryData['user']
         );
 
-        if ($isDirectLink) {
+        if ($isSmartLink) {
             $userContext = new UserContext(
                 [],
                 0.0,

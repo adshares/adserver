@@ -295,10 +295,10 @@ class SitesController extends Controller
         foreach ($inputZones as $key => &$inputZone) {
             $size = $inputZone['size'];
             $type = Utils::getZoneTypeByBannerType($bannerTypeBySize[$size]);
-            $inputZone['scopes'] = Zone::TYPE_DIRECT_LINK === $type ? ['pop-under', 'pop-up'] : [$size];
+            $inputZone['scopes'] = Zone::TYPE_SMART_LINK === $type ? ['pop-under', 'pop-up'] : [$size];
             $inputZone['type'] = $type;
 
-            if (!in_array($type, [Zone::TYPE_DIRECT_LINK, Zone::TYPE_POP], true)) {
+            if (!in_array($type, [Zone::TYPE_SMART_LINK, Zone::TYPE_POP], true)) {
                 continue;
             }
 
@@ -316,7 +316,7 @@ class SitesController extends Controller
 
         /** @var Zone $zone */
         foreach ($site->zones()->withTrashed()->get() as $zone) {
-            if (in_array($zone->type, [Zone::TYPE_DIRECT_LINK, Zone::TYPE_POP], true)) {
+            if (in_array($zone->type, [Zone::TYPE_SMART_LINK, Zone::TYPE_POP], true)) {
                 $size = $zone->size;
 
                 if (isset($presentUniqueSizes[$size])) {
@@ -465,8 +465,8 @@ class SitesController extends Controller
         $sizes = [];
         foreach ($medium->getFormats() as $format) {
             $sizes = array_merge($sizes, $format->getScopes());
-            if (config('app.supply_direct_link_enabled') && NetworkBanner::TYPE_DIRECT_LINK === $format->getType()) {
-                $sizes['direct-link'] = 'Direct link';
+            if (config('app.supply_smart_link_enabled') && NetworkBanner::TYPE_DIRECT_LINK === $format->getType()) {
+                $sizes['smart-link'] = 'Smart link';
             }
         }
 
@@ -579,8 +579,8 @@ class SitesController extends Controller
                     $typeBySize[$size] = $type;
                 }
             }
-            if (config('app.supply_direct_link_enabled') && NetworkBanner::TYPE_DIRECT_LINK === $type) {
-                $typeBySize['direct-link'] = 'direct-link';
+            if (config('app.supply_smart_link_enabled') && NetworkBanner::TYPE_DIRECT_LINK === $type) {
+                $typeBySize['smart-link'] = 'smart-link';
             }
         }
         return $typeBySize;

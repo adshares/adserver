@@ -76,7 +76,7 @@ class OptionsController extends Controller
             [
                 'acceptBannersManually' => config('app.site_accept_banners_manually'),
                 'classifierLocalBanners' => config('app.site_classifier_local_banners'),
-                'directLinkEnabled' => config('app.supply_direct_link_enabled'),
+                'smartLinkEnabled' => config('app.supply_smart_link_enabled'),
             ]
         );
     }
