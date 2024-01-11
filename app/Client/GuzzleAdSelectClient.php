@@ -147,18 +147,23 @@ class GuzzleAdSelectClient implements AdSelect
         $sitesMap = [];
 
         $zoneList = Zone::findByPublicIds($zoneIds);
-        /** @var Zone $zone */
         for ($i = 0; $i < count($zoneList); $i++) {
+            /** @var Zone $zone */
             $zone = $zoneList[$i];
             $siteId = $zone->site_id;
 
             if (!array_key_exists($siteId, $sitesMap)) {
                 $site = $zone->site;
 
-                /** @var User $user */
-                $isActive = null !== $site && $site->status === Site::STATUS_ACTIVE && null !== ($user = $site->user);
-
-                if ($isActive) {
+                if (
+                    null === $site
+                    || null === ($user = $site->user)
+                    || ($site->status !== Site::STATUS_ACTIVE && Zone::TYPE_SMART_LINK !== $zone->type)
+                ) {
+                    $sitesMap[$siteId] = [
+                        'active' => false,
+                    ];
+                } else {
                     $sitesMap[$siteId] = [
                         'active'       => true,
                         'domain'       => $site->domain,
@@ -183,21 +188,19 @@ class GuzzleAdSelectClient implements AdSelect
                     if ($site->only_direct_deals) {
                         $sitesMap[$siteId]['filters']['require']['require:site:domain'] = $site->domain;
                     }
-                    // always include active pop zones
-                    foreach ($site->zones as $popupZone) {
-                        if (
-                            Zone::TYPE_POP === $popupZone->type &&
-                            Zone::STATUS_ACTIVE === $popupZone->status &&
-                            !in_array($popupZone->uuid, $zoneIds)
-                        ) {
-                            $zoneIds[] = $popupZone->uuid;
-                            $zoneList[] = $popupZone;
+                    if (Zone::TYPE_SMART_LINK !== $zone->type) {
+                        // include active pop zones
+                        foreach ($site->zones as $popupZone) {
+                            if (
+                                Zone::TYPE_POP === $popupZone->type &&
+                                Zone::STATUS_ACTIVE === $popupZone->status &&
+                                !in_array($popupZone->uuid, $zoneIds)
+                            ) {
+                                $zoneIds[] = $popupZone->uuid;
+                                $zoneList[] = $popupZone;
+                            }
                         }
                     }
-                } else {
-                    $sitesMap[$siteId] = [
-                        'active' => false,
-                    ];
                 }
             }
 
@@ -205,6 +208,7 @@ class GuzzleAdSelectClient implements AdSelect
                 $sitesMap[$siteId]['active'] && (
                 !config('app.check_zone_domain')
                 || DomainReader::checkDomain($context->url(), $sitesMap[$siteId]['domain'])
+                || Zone::TYPE_SMART_LINK === $zone->type
                 )
             ) {
                 $zoneMap[$zone->uuid] = $zone;

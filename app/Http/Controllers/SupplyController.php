@@ -53,8 +53,10 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Domain\ValueObject\WalletAddress;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\UrlInterface;
 use Adshares\Config\UserRole;
 use Adshares\Supply\Application\Dto\FoundBanners;
+use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Closure;
 use DateTime;
@@ -67,6 +69,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -197,20 +200,18 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
         string $data = null
     ) {
-        $response = new Response();
-
-        if ($request->headers->has('Origin')) {
-            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
-            $response->headers->set('Access-Control-Allow-Credentials', 'true');
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        }
-
         if (!$data) {
             if ('GET' === $request->getRealMethod()) {
                 $data = $request->getQueryString();
             } elseif ('POST' === $request->getRealMethod()) {
                 $data = (string)$request->getContent();
             } elseif ('OPTIONS' === $request->getRealMethod()) {
+                $response = new Response();
+                if ($request->headers->has('Origin')) {
+                    $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+                    $response->headers->set('Access-Control-Allow-Credentials', 'true');
+                    $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+                }
                 $response->setStatusCode(Response::HTTP_NO_CONTENT);
                 $response->headers->set('Access-Control-Max-Age', 1728000);
                 return $response;
@@ -280,8 +281,86 @@ class SupplyController extends Controller
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
         return self::json(
-            $this->findBanners($decodedQueryData, $request, $response, $contextProvider, $bannerFinder)->toArray()
+            $this->findBanners($decodedQueryData, $request, $contextProvider, $bannerFinder)->toArray()
         );
+    }
+
+    public function findSmartLink(
+        string $token,
+        AdUser $contextProvider,
+        AdSelect $bannerFinder,
+        Request $request,
+    ): BaseResponse {
+        $response = new Response();
+        $impressionId = Utils::urlSafeBase64Encode(random_bytes(16));
+        $caseId = bin2hex(random_bytes(15)) . '00';
+        Utils::attachOrProlongTrackingCookie(
+            $request,
+            $response,
+            '',
+            new DateTime(),
+            $impressionId,
+        );
+        $request->query->set('iid', $impressionId);
+
+        $placement = Zone::fetchByPublicId($token);
+        if (null === $placement || Zone::TYPE_SMART_LINK !== $placement->type) {
+            throw new NotFoundHttpException();
+        }
+        $pageUrl = $request->getUri();
+        $mappedInput = [
+            'page' => [
+                'iid' => $impressionId,
+                'url' => $pageUrl,
+            ],
+            'placements' => [
+                [
+                    'id' => '0',
+                    'placementId' => $placement->uuid,
+                    'options' => [
+                        'banner_type' => 'direct',
+                        'banner_mime' => null,
+                        'smart_link' => true,
+                        'topframe' => true,
+                    ],
+                ],
+            ],
+        ];
+        $foundBanners = $this->findBanners($mappedInput, $request, $contextProvider, $bannerFinder)
+            ->filter(fn($banner) => null !== $banner)
+            ->map($this->mapFoundBannerToResult())
+            ->getValues();
+        if (empty($foundBanners)) {
+            throw new NotFoundHttpException();
+        }
+
+        $banner = $foundBanners[0];
+        $serveUrl = $banner['serveUrl'];
+        $serveResponse = Http::get($serveUrl);
+        if (BaseResponse::HTTP_OK !== $serveResponse->status()) {
+            Log::error('Cannot log view', ['body' => $serveResponse->body(), 'url' => $serveUrl]);
+            throw new NotFoundHttpException();
+        }
+        $url = Utils::replaceLandingUrlPlaceholders(
+            $serveResponse->body(),
+            $caseId,
+            $banner['creativeId'],
+            $banner['publisherId'],
+            $banner['supplyServer'],
+            DomainReader::domain($pageUrl),
+            $banner['placementId'],
+        );
+
+        $viewUrl = $banner['viewUrl'];
+        $viewUrl = Utils::addUrlParameter($viewUrl, 'cid', $caseId);
+        $viewResponse = Http::withHeaders([
+            'Accept' => 'application/json',
+        ])->get($viewUrl);
+        if (BaseResponse::HTTP_OK === $viewResponse->status()) {
+            Log::warning('Cannot log view', ['body' => $viewResponse->body(), 'url' => $viewUrl]);
+        }
+
+        return new RedirectResponse($url);
     }
 
     public function find(
@@ -289,14 +368,6 @@ class SupplyController extends Controller
         AdSelect $bannerFinder,
         Request $request,
     ): BaseResponse {
-        $response = new Response();
-
-        if ($request->headers->has('Origin')) {
-            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
-            $response->headers->set('Access-Control-Allow-Credentials', 'true');
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        }
-
         if ('POST' === $request->getRealMethod()) {
             $input = $request->input();
         } elseif ('GET' === $request->getRealMethod()) {
@@ -390,7 +461,7 @@ class SupplyController extends Controller
         }
 
         $mappedInput = self::mapFindInput($input);
-        $foundBanners = $this->findBanners($mappedInput, $request, $response, $contextProvider, $bannerFinder)
+        $foundBanners = $this->findBanners($mappedInput, $request, $contextProvider, $bannerFinder)
             ->filter(fn($banner) => null !== $banner)
             ->map($this->mapFoundBannerToResult())
             ->getValues();
@@ -405,6 +476,24 @@ class SupplyController extends Controller
     private function getCustomData(array $context, array $banners): array
     {
         return [];
+    }
+
+    private function isDecodedQueryDataForSmartLink(array $input): bool
+    {
+        $placements = $input['placements'] ?? $input['zones'] ?? [];// Key 'zones' is for legacy search
+
+        $isSmartLink = false;
+        foreach ($placements as $placement) {
+            if ($placement['options']['smart_link'] ?? false) {
+                $isSmartLink = true;
+            }
+        }
+
+        if ($isSmartLink && 1 !== count($placements)) {
+            throw new BadRequestHttpException('Smart link detected');
+        }
+
+        return $isSmartLink;
     }
 
     private function checkDecodedQueryData(array $decodedQueryData): void
@@ -452,7 +541,6 @@ class SupplyController extends Controller
     /**
      * @param array $decodedQueryData
      * @param Request $request
-     * @param Response $response
      * @param AdUser $contextProvider
      * @param AdSelect $bannerFinder
      *
@@ -461,16 +549,18 @@ class SupplyController extends Controller
     private function findBanners(
         array $decodedQueryData,
         Request $request,
-        Response $response,
         AdUser $contextProvider,
         AdSelect $bannerFinder
     ): FoundBanners {
-        $this->checkDecodedQueryData($decodedQueryData);
+        $isSmartLink = $this->isDecodedQueryDataForSmartLink($decodedQueryData);
+        if (!$isSmartLink) {
+            $this->checkDecodedQueryData($decodedQueryData);
+        }
         $impressionId = self::impressionIdToUuid($decodedQueryData['page']['iid']);
 
         $tid = Utils::attachOrProlongTrackingCookie(
             $request,
-            $response,
+            new Response(),
             '',
             new DateTime(),
             $impressionId
@@ -486,7 +576,18 @@ class SupplyController extends Controller
             $decodedQueryData['page'],
             $decodedQueryData['user']
         );
-        $userContext = $contextProvider->getUserContext($impressionContext);
+
+        if ($isSmartLink) {
+            $userContext = new UserContext(
+                [],
+                0.0,
+                AdUser::CPA_ONLY_PAGE_RANK,
+                AdUser::PAGE_INFO_UNKNOWN,
+                Utils::hexUuidFromBase64UrlWithChecksum($tid),
+            );
+        } else {
+            $userContext = $contextProvider->getUserContext($impressionContext);
+        }
 
         if ($userContext->isCrawler()) {
             throw new AccessDeniedHttpException('Crawlers are not allowed');
@@ -494,7 +595,10 @@ class SupplyController extends Controller
 
         $zones = $this->extractZones($decodedQueryData);
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-            if ($userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK) {
+            if (
+                $userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK
+                || $userContext->pageRankInfo() === Aduser::PAGE_INFO_UNKNOWN
+            ) {
                 foreach ($zones as &$zone) {
                     $zone['options']['cpa_only'] = true;
                 }
@@ -847,23 +951,10 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $adUserEndpoint = config('app.aduser_serve_subdomain')
-            ?
-            ServeDomain::current(config('app.aduser_serve_subdomain'))
-            :
-            config('app.aduser_base_url');
-
-        if ($adUserEndpoint) {
-            $adUserUrl = sprintf(
-                '%s/register/%s/%s/%s.html',
-                $adUserEndpoint,
-                urlencode(self::$adserverId),
-                $trackingId,
-                $impressionId
-            );
-
+        $adUserUrl = $this->getAdUserRegisterUrl($trackingId, $impressionId);
+        if (null !== $adUserUrl) {
             $response->setStatusCode(BaseResponse::HTTP_FOUND);
-            $response->headers->set('Location', new SecureUrl($adUserUrl));
+            $response->headers->set('Location', $adUserUrl);
         }
 
         return $response;
@@ -1456,5 +1547,27 @@ class SupplyController extends Controller
         }
 
         return $response;
+    }
+
+    private function getAdUserRegisterUrl(string $trackingId, string $impressionId): ?UrlInterface
+    {
+        $adUserEndpoint = config('app.aduser_serve_subdomain')
+            ?
+            ServeDomain::current(config('app.aduser_serve_subdomain'))
+            :
+            config('app.aduser_base_url');
+
+        if ($adUserEndpoint) {
+            $adUserUrl = sprintf(
+                '%s/register/%s/%s/%s.html',
+                $adUserEndpoint,
+                urlencode(self::$adserverId),
+                $trackingId,
+                $impressionId,
+            );
+            return new SecureUrl($adUserUrl);
+        }
+
+        return null;
     }
 }

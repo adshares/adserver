@@ -67,6 +67,8 @@ class Banner extends Model
     public const TEXT_TYPE_IMAGE = 'image';
     public const TEXT_TYPE_HTML = 'html';
     public const TEXT_TYPE_DIRECT_LINK = 'direct';
+    /** @var string Alias for `direct` */
+    public const TEXT_TYPE_SMART_LINK = 'smart-link';
     public const TEXT_TYPE_VIDEO = 'video';
     public const TEXT_TYPE_MODEL = 'model';
 

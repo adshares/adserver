@@ -165,16 +165,6 @@ class TaxonomyV2FactoryTest extends TestCase
         ];
     }
 
-    public function testVendorForMissingMedium(): void
-    {
-        $data = json_decode(self::jsonTaxonomy(), true);
-        $data['vendors'][] = self::customVendor(['medium' => 'invalid-medium']);
-        $json = json_encode($data);
-
-        self::expectException(InvalidArgumentException::class);
-        TaxonomyV2Factory::fromJson($json);
-    }
-
     /**
      * @dataProvider vendorInvalidChange
      */

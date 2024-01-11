@@ -177,6 +177,7 @@ class Config extends Model
     public const SKYNET_CDN_URL = 'skynet-cdn-url';
     public const SUPPLY_PLACEHOLDER_COLOR = 'supply-placeholder-color';
     public const SUPPLY_PLACEHOLDER_FILE = 'supply-placeholder-file';
+    public const SUPPLY_SMART_LINK_ENABLED = 'supply-smart-link-enabled';
     public const SUPPORT_CHAT = 'support-chat';
     public const SUPPORT_EMAIL = 'support-email';
     public const SUPPORT_TELEGRAM = 'support-telegram';
@@ -275,6 +276,7 @@ class Config extends Model
         self::SITE_FILTERING_EXCLUDE_ON_AUTO_CREATE => ConfigTypes::Json,
         self::SITE_FILTERING_REQUIRE => ConfigTypes::Json,
         self::SITE_FILTERING_REQUIRE_ON_AUTO_CREATE => ConfigTypes::Json,
+        self::SUPPLY_SMART_LINK_ENABLED => ConfigTypes::Bool,
         self::UPLOAD_LIMIT_DIRECT_LINK => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_IMAGE => ConfigTypes::Integer,
         self::UPLOAD_LIMIT_MODEL => ConfigTypes::Integer,
@@ -559,6 +561,7 @@ class Config extends Model
             self::SKYNET_CDN_URL => '',
             self::SUPPLY_PLACEHOLDER_COLOR => 'FFFFFF',
             self::SUPPLY_PLACEHOLDER_FILE => base_path('resources/img/placeholder_seed.png'),
+            self::SUPPLY_SMART_LINK_ENABLED => false,
             self::SUPPORT_CHAT => null,
             self::SUPPORT_EMAIL => 'mail@example.com',
             self::SUPPORT_TELEGRAM => null,
