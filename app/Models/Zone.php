@@ -73,6 +73,7 @@ class Zone extends Model
         self::STATUS_ARCHIVED,
     ];
 
+    public const TYPE_SMART_LINK = 'smart-link';
     public const TYPE_DISPLAY = 'display';
     public const TYPE_MODEL = 'model';
     public const TYPE_POP = 'pop';

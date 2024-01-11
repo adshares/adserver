@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NotificationEmailLog;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SiteRejectReason;
@@ -293,11 +294,11 @@ class SitesController extends Controller
 
         foreach ($inputZones as $key => &$inputZone) {
             $size = $inputZone['size'];
-            $inputZone['scopes'] = [$size];
             $type = Utils::getZoneTypeByBannerType($bannerTypeBySize[$size]);
+            $inputZone['scopes'] = Zone::TYPE_SMART_LINK === $type ? ['pop-under', 'pop-up'] : [$size];
             $inputZone['type'] = $type;
 
-            if (Zone::TYPE_POP !== $type) {
+            if (!in_array($type, [Zone::TYPE_SMART_LINK, Zone::TYPE_POP], true)) {
                 continue;
             }
 
@@ -315,7 +316,7 @@ class SitesController extends Controller
 
         /** @var Zone $zone */
         foreach ($site->zones()->withTrashed()->get() as $zone) {
-            if (Zone::TYPE_POP === $zone->type) {
+            if (in_array($zone->type, [Zone::TYPE_SMART_LINK, Zone::TYPE_POP], true)) {
                 $size = $zone->size;
 
                 if (isset($presentUniqueSizes[$size])) {
@@ -464,6 +465,9 @@ class SitesController extends Controller
         $sizes = [];
         foreach ($medium->getFormats() as $format) {
             $sizes = array_merge($sizes, $format->getScopes());
+            if (config('app.supply_smart_link_enabled') && NetworkBanner::TYPE_DIRECT_LINK === $format->getType()) {
+                $sizes['smart-link'] = 'Smart link';
+            }
         }
 
         return array_keys($sizes);
@@ -569,10 +573,14 @@ class SitesController extends Controller
         $typeBySize = [];
 
         foreach ($formats as $format) {
+            $type = $format->getType();
             foreach ($format->getScopes() as $size => $label) {
                 if (!isset($typeBySize[$size])) {
-                    $typeBySize[$size] = $format->getType();
+                    $typeBySize[$size] = $type;
                 }
+            }
+            if (config('app.supply_smart_link_enabled') && NetworkBanner::TYPE_DIRECT_LINK === $type) {
+                $typeBySize['smart-link'] = 'smart-link';
             }
         }
         return $typeBySize;

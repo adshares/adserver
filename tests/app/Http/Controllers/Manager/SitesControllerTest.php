@@ -241,6 +241,49 @@ class SitesControllerTest extends TestCase
         self::assertDatabaseHas(Zone::class, ['size' => 'pop-up', 'type' => Zone::TYPE_POP]);
     }
 
+    public function testCreateSiteWithDirectLinkAdUnitWhileDirectLinkDisabled(): void
+    {
+        $this->login();
+        $siteData = self::simpleSiteData([
+            'adUnits' => [
+                self::simpleAdUnit(['size' => 'smart-link']),
+            ]
+        ]);
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonFragment(['Invalid size.']);
+    }
+
+    public function testCreateSiteWithDirectLinkAdUnitWhileDirectLinkEnabled(): void
+    {
+        Config::updateAdminSettings([Config::SUPPLY_SMART_LINK_ENABLED => '1']);
+        $this->login();
+        $siteData = self::simpleSiteData([
+            'adUnits' => [
+                self::simpleAdUnit(['size' => 'smart-link']),
+            ]
+        ]);
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertHeader('Location');
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+        self::assertDatabaseHas(
+            Zone::class,
+            [
+                'size' => 'smart-link',
+                'type' => Zone::TYPE_SMART_LINK,
+            ],
+        );
+        $scopes = Site::find($id)->zones->first()->scopes;
+        self::assertCount(2, $scopes);
+        foreach (['pop-under', 'pop-up'] as $expectedScope) {
+            self::assertContainsEquals($expectedScope, $scopes);
+        }
+    }
+
     public function testCreateSiteWhileExist(): void
     {
         $user = $this->login();

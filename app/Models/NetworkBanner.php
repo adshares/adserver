@@ -67,7 +67,7 @@ class NetworkBanner extends Model
 
     private const TYPE_HTML = 'html';
     private const TYPE_IMAGE = 'image';
-    private const TYPE_DIRECT_LINK = 'direct';
+    public const TYPE_DIRECT_LINK = 'direct';
     public const TYPE_VIDEO = 'video';
     private const TYPE_MODEL = 'model';
 
