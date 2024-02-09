@@ -77,6 +77,8 @@ use Illuminate\Support\Facades\DB;
  * @property array basic_information
  * @property array|null classifications
  * @property array targeting
+ * @property int $experiment_budget
+ * @property Carbon|null $experiment_end_at
  * @mixin Builder
  */
 class Campaign extends Model
@@ -106,6 +108,7 @@ class Campaign extends Model
         'deleted_at',
         'time_start',
         'time_end',
+        'experiment_end_at',
     ];
 
     protected $casts = [
@@ -138,6 +141,8 @@ class Campaign extends Model
         'time_end',
         'conversion_click',
         'bid_strategy_uuid',
+        'experiment_budget',
+        'experiment_end_at',
     ];
 
     protected $visible = [
@@ -161,6 +166,7 @@ class Campaign extends Model
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
         'bid_strategy_uuid' => 'BinHex',
+        'experiment_end_at' => 'DateAtom',
     ];
 
     protected $appends = [
@@ -342,7 +348,7 @@ class Campaign extends Model
         $this->landing_url = $value["target_url"];
         $this->max_cpc = $value["max_cpc"];
         $this->max_cpm = $value["max_cpm"];
-        if ($value["budget"] < 0) {
+        if ($value["budget"] < 0 || $value["experiment_budget"] < 0) {
             throw new InvalidArgumentException('Budget needs to be non-negative');
         }
         $this->budget = $value["budget"];
@@ -350,6 +356,8 @@ class Campaign extends Model
         $this->vendor = $value["vendor"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
+        $this->experiment_budget = $value["experiment_budget"];
+        $this->experiment_end_at = $value["experiment_end_at"] ?? null;
     }
 
     public function getBasicInformationAttribute(): array
@@ -365,6 +373,8 @@ class Campaign extends Model
             "vendor" => $this->vendor,
             "date_start" => $this->time_start,
             "date_end" => $this->time_end,
+            "experiment_budget" => $this->experiment_budget,
+            "experiment_end_at" => $this->experiment_end_at,
         ];
     }
 
@@ -416,6 +426,20 @@ class Campaign extends Model
         if ($this->budget < config('app.campaign_min_budget')) {
             throw new InvalidArgumentException(
                 sprintf('Budget must be at least %d', config('app.campaign_min_budget'))
+            );
+        }
+
+        $experimentBudget = $this->getEffectiveExperimentBudget();
+        if (
+            (
+                0 !== $experimentBudget
+                ||
+                ($this->isCpa() && config('app.campaign_experiment_min_budget_for_cpa_required'))
+            )
+            && $experimentBudget < config('app.campaign_experiment_min_budget')
+        ) {
+            throw new InvalidArgumentException(
+                sprintf('Experiment budget must be at least %d', config('app.campaign_experiment_min_budget'))
             );
         }
 
@@ -499,12 +523,18 @@ class Campaign extends Model
 
     public function advertiserBudget(): AdvertiserBudget
     {
-        return new AdvertiserBudget($this->budget, $this->isDirectDeal() ? 0 : $this->budget);
+        $budget = $this->budget + $this->getEffectiveExperimentBudget();
+        return new AdvertiserBudget($budget, $this->isDirectDeal() ? 0 : $budget);
     }
 
     private function isAutoCpm(): bool
     {
         return $this->max_cpm === null;
+    }
+
+    private function isCpa(): bool
+    {
+        return 0 === $this->max_cpm && $this->conversions->isNotEmpty();
     }
 
     public function isDirectDeal(): bool
@@ -540,5 +570,12 @@ class Campaign extends Model
     public function hasClickConversionAdvanced(): bool
     {
         return Campaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
+    }
+
+    private function getEffectiveExperimentBudget(): int
+    {
+        return (null === $this->experiment_end_at || $this->experiment_end_at > Carbon::now())
+            ? $this->experiment_budget
+            : 0;
     }
 }

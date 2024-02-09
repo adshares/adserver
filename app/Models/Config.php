@@ -88,6 +88,8 @@ class Config extends Model
     public const BTC_WITHDRAW_FEE = 'btc-withdraw-fee';
     public const BTC_WITHDRAW_MAX_AMOUNT = 'btc-withdraw-max-amount';
     public const BTC_WITHDRAW_MIN_AMOUNT = 'btc-withdraw-min-amount';
+    public const CAMPAIGN_EXPERIMENT_MIN_BUDGET = 'campaign-experiment-min-budget';
+    public const CAMPAIGN_EXPERIMENT_MIN_BUDGET_FOR_CPA_REQUIRED = 'campaign-experiment-min-budget-for-cpa-required';
     public const CAMPAIGN_MIN_BUDGET = 'campaign-min-budget';
     public const CAMPAIGN_MIN_CPA = 'campaign-min-cpa';
     public const CAMPAIGN_MIN_CPM = 'campaign-min-cpm';
@@ -238,6 +240,8 @@ class Config extends Model
         self::BTC_WITHDRAW_FEE => ConfigTypes::Float,
         self::BTC_WITHDRAW_MAX_AMOUNT => ConfigTypes::Integer,
         self::BTC_WITHDRAW_MIN_AMOUNT => ConfigTypes::Integer,
+        self::CAMPAIGN_EXPERIMENT_MIN_BUDGET => ConfigTypes::Integer,
+        self::CAMPAIGN_EXPERIMENT_MIN_BUDGET_FOR_CPA_REQUIRED => ConfigTypes::Bool,
         self::CAMPAIGN_MIN_BUDGET => ConfigTypes::Integer,
         self::CAMPAIGN_MIN_CPA => ConfigTypes::Integer,
         self::CAMPAIGN_MIN_CPM => ConfigTypes::Integer,
@@ -475,11 +479,13 @@ class Config extends Model
             self::BANNER_ROTATE_INTERVAL => 86400,
             self::BTC_WITHDRAW => false,
             self::BTC_WITHDRAW_FEE => 0.05,
-            self::BTC_WITHDRAW_MAX_AMOUNT => 1000000000000000,
-            self::BTC_WITHDRAW_MIN_AMOUNT => 10000000000000,
-            self::CAMPAIGN_MIN_BUDGET => 5000000000,
-            self::CAMPAIGN_MIN_CPA => 1000000000,
-            self::CAMPAIGN_MIN_CPM => 5000000000,
+            self::BTC_WITHDRAW_MAX_AMOUNT => 1_000_000_000_000_000,
+            self::BTC_WITHDRAW_MIN_AMOUNT => 10_000_000_000_000,
+            self::CAMPAIGN_EXPERIMENT_MIN_BUDGET => 0,
+            self::CAMPAIGN_EXPERIMENT_MIN_BUDGET_FOR_CPA_REQUIRED => true,
+            self::CAMPAIGN_MIN_BUDGET => 5_000_000_000,
+            self::CAMPAIGN_MIN_CPA => 1_000_000_000,
+            self::CAMPAIGN_MIN_CPM => 5_000_000_000,
             self::CAMPAIGN_TARGETING_EXCLUDE => '',
             self::CAMPAIGN_TARGETING_REQUIRE => '',
             self::CDN_PROVIDER => '',

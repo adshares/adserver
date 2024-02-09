@@ -90,6 +90,12 @@ class CampaignCreator
             throw new RuntimeException('Default bid strategy is missing');
         }
 
+        $experimentBudget = self::validateAndExtractClickAmount($input['experiment_budget'] ?? 0, 'experimentBudget');
+        $experimentEndAt = $input['experiment_end_at'] ?? null;
+        if (null !== $experimentEndAt) {
+            self::validateDate($experimentEndAt, 'experimentEndAt');
+        }
+
         $campaign = new Campaign([
             'landing_url' => $landingUrl,
             'name' => $name,
@@ -104,6 +110,8 @@ class CampaignCreator
             'time_start' => $timeStart,
             'time_end' => $timeEnd,
             'bid_strategy_uuid' => $bidStrategy->uuid,
+            'experiment_budget' => $experimentBudget,
+            'experiment_end_at' => $experimentEndAt,
         ]);
 
         self::validateOutdated($campaign);
@@ -190,6 +198,26 @@ class CampaignCreator
             $value = $input['bid_strategy_uuid'];
             self::validateBidStrategyUuid($value);
             $campaign->bid_strategy_uuid = $value;
+        }
+
+        if (array_key_exists('experiment_budget', $input)) {
+            $value = self::validateAndExtractClickAmount($input['experiment_budget'], 'experimentBudget');
+            $checkLimits = true;
+            $campaign->experiment_budget = $value;
+        }
+
+        if (array_key_exists('experiment_end_at', $input)) {
+            $value = $input['experiment_end_at'];
+            if (null !== $value) {
+                self::validateDate($value, 'experimentEndAt');
+                if (
+                    DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $campaign->time_start)
+                    > DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value)
+                ) {
+                    throw new InvalidArgumentException('Field `experimentEndAt` must be later than `dateStart`');
+                }
+            }
+            $campaign->experiment_end_at = $value;
         }
 
         if ($checkLimits) {

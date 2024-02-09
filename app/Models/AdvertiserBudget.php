@@ -25,16 +25,8 @@ namespace Adshares\Adserver\Models;
 
 final class AdvertiserBudget
 {
-    /** @var int */
-    private $total;
-
-    /** @var int */
-    private $bonusable;
-
-    public function __construct(int $total = 0, int $bonusable = 0)
+    public function __construct(private readonly int $total = 0, private readonly int $bonusable = 0)
     {
-        $this->total = $total;
-        $this->bonusable = $bonusable;
     }
 
     public function add(self $budget): self

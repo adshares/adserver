@@ -39,6 +39,8 @@ class CampaignResource extends JsonResource
             'vendor' => $this->vendor,
             'dateStart' => $this->time_start,
             'dateEnd' => $this->time_end,
+            'experimentBudget' => $this->experiment_budget / self::CLICKS_RESOLUTION,
+            'experimentEndAt' => $this->experiment_end_at,
         ];
     }
 }

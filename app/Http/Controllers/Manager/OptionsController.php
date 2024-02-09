@@ -64,6 +64,7 @@ class OptionsController extends Controller
         return self::json(
             [
                 'minBudget' => config('app.campaign_min_budget'),
+                'minBudgetExperiment' => config('app.campaign_experiment_min_budget'),
                 'minCpm' => config('app.campaign_min_cpm'),
                 'minCpa' => config('app.campaign_min_cpa'),
             ]

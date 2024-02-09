@@ -110,7 +110,7 @@ class AdPayGetPayments extends BaseCommand
                 return self::STATUS_REQUEST_FAILED;
             }
             $calculationsCount = count($calculations);
-            $this->info("Found {$calculationsCount} calculations.");
+            $this->info(sprintf('Found %d calculations.', $calculationsCount));
 
             $eventIds = [];
             $conversionIds = [];
@@ -138,7 +138,7 @@ class AdPayGetPayments extends BaseCommand
 
         DB::commit();
 
-        $this->info("Created {$ledgerEntriesCount} Ledger Entries.");
+        $this->info(sprintf('Created %d Ledger Entries.', $ledgerEntriesCount));
         $this->release();
 
         return self::STATUS_OK;
