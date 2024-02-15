@@ -230,18 +230,8 @@ class Campaign extends Model
 
     public static function fetchRequiredBudgetsPerUser(): Collection
     {
-        $query = self::where('status', self::STATUS_ACTIVE)
-            ->where(
-                static function ($q) {
-                    $dateTime = DateUtils::getDateTimeRoundedToNextHour();
-                    $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
-                }
-            );
-
-        /** @var Collection $all */
-        $all = $query->get();
-
-        return $all->groupBy('user_id')
+        return self::fetchActiveCampaigns(DateUtils::getDateTimeRoundedToNextHour())
+            ->groupBy('user_id')
             ->map(
                 static function (Collection $collection) {
                     return $collection->reduce(
@@ -256,21 +246,23 @@ class Campaign extends Model
 
     private static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): AdvertiserBudget
     {
-        $query = self::where('status', self::STATUS_ACTIVE)->where(
-            static function ($q) {
-                $dateTime = DateUtils::getDateTimeRoundedToCurrentHour();
-                $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
-            }
-        );
+        return self::fetchActiveCampaigns(DateUtils::getDateTimeRoundedToCurrentHour())
+            ->reduce(
+                static function (AdvertiserBudget $carry, Campaign $campaign) {
+                    return $carry->add($campaign->advertiserBudget());
+                },
+                new AdvertiserBudget(),
+            );
+    }
 
-        $statics = $query->get();
-
-        return $statics->reduce(
-            static function (AdvertiserBudget $carry, Campaign $campaign) {
-                return $carry->add($campaign->advertiserBudget());
-            },
-            new AdvertiserBudget()
-        );
+    public static function fetchActiveCampaigns(DateTimeInterface $dateTime): Collection
+    {
+        return self::where('status', self::STATUS_ACTIVE)
+            ->where(
+                fn($q) => $q->where('time_end', '>=', $dateTime)
+                    ->orWhere('time_end', null)
+            )
+            ->get();
     }
 
     public function banners(): HasMany
@@ -572,7 +564,7 @@ class Campaign extends Model
         return Campaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
     }
 
-    private function getEffectiveExperimentBudget(): int
+    public function getEffectiveExperimentBudget(): int
     {
         return (null === $this->experiment_end_at || $this->experiment_end_at > Carbon::now())
             ? $this->experiment_budget

@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
@@ -375,5 +376,43 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         self::expectException(ExchangeRateNotAvailableException::class);
 
         $this->artisan(self::COMMAND_SIGNATURE);
+    }
+
+    public function testHandleExperimentBudgets(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Campaign::factory()->create([
+            'budget' => 5_000_000_000,
+            'experiment_budget' => 5_000_000_000,
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+
+        Campaign::factory()->create([
+            'budget' => 5_000_000_000,
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+
+        UserLedgerEntry::factory()->create([
+            'amount' => 60_006_000_600,// 20_000_000_000,
+            'user_id' => $user,
+            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+        ]);
+
+        NetworkHost::factory()->create([
+            'address' => '0001-00000001-8B4E',
+        ]);
+
+        $this->artisan(self::COMMAND_SIGNATURE)
+            ->assertExitCode(AdPayGetPayments::STATUS_OK);
+
+        $this->assertEquals(45_004_500_450, $user->getWalletBalance());//15_000_000_000
+        $this->assertDatabaseHas('event_credit_logs', [
+            'event_value_currency' => 5_000_000_000,
+            'pay_to' => hex2bin('000100000001'),
+        ]);
     }
 }

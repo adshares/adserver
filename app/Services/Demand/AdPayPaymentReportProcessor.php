@@ -26,9 +26,12 @@ namespace Adshares\Adserver\Services\Demand;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Exception\RuntimeException;
+use DateTimeInterface;
 use Illuminate\Support\Facades\Log;
 use stdClass;
 
@@ -190,17 +193,7 @@ class AdPayPaymentReportProcessor
                 return false;
             }
 
-            $walletBalance = $this->exchangeRate->fromClick($user->getWalletBalance());
-            $bonusBalance = $this->exchangeRate->fromClick($user->getBonusBalance());
-
-            $this->advertisers[$advertiserPublicId] = [
-                'id' => $user->id,
-                'wallet' => $walletBalance,
-                'walletLeft' => $walletBalance,
-                'bonus' => $bonusBalance,
-                'bonusLeft' => $bonusBalance,
-                'campaigns' => [],
-            ];
+            $this->initAdvertiser($advertiserPublicId, $user);
         }
 
         return true;
@@ -215,11 +208,7 @@ class AdPayPaymentReportProcessor
                 return false;
             }
 
-            $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId] = [
-                'isDirectDeal' => $campaign->isDirectDeal(),
-                'budget' => $campaign->budget,
-                'budgetLeft' => $campaign->budget,
-            ];
+            $this->initCampaign($advertiserPublicId, $campaign);
         }
 
         return true;
@@ -265,7 +254,7 @@ class AdPayPaymentReportProcessor
     {
         $expenses = [];
 
-        foreach ($this->advertisers as $advertiserId => $advertiserData) {
+        foreach ($this->advertisers as $advertiserData) {
             $wallet = $this->exchangeRate->toClick($advertiserData['wallet'] - $advertiserData['walletLeft']);
             $bonus = $this->exchangeRate->toClick($advertiserData['bonus'] - $advertiserData['bonusLeft']);
 
@@ -294,5 +283,106 @@ class AdPayPaymentReportProcessor
         }
 
         return $definitions;
+    }
+
+    public function allocateCampaignExperimentBudgets(DateTimeInterface $dateTime): void
+    {
+        $campaigns = Campaign::fetchActiveCampaigns($dateTime)
+//            ->filter(fn (Campaign $campaign) => $campaign->getEffectiveExperimentBudget() > 0);
+            ->groupBy('user_id')
+        ;
+
+        // TODO get SSPs and assign wages to them
+        $sspHosts = [];
+        $hosts = NetworkHost::fetchHosts();
+        foreach ($hosts as $host) {
+            $sspHosts[] = [
+                'host' => $host->address,
+                'weight' => 1 / count($hosts),
+            ];
+        }
+
+        foreach ($campaigns as $userId => $userCampaigns) {
+            foreach ($userCampaigns as $campaign) {
+                $experimentBudget = $campaign->getEffectiveExperimentBudget();
+                if ($experimentBudget <= 0) {
+                    continue;
+                }
+
+                if (null === $advertiser = User::fetchById($userId)) {
+                    continue;
+                }
+
+                $this->initAdvertiser($advertiser->uuid, $advertiser);
+                $this->initCampaign($advertiser->uuid, $campaign);
+
+                $isDirectDeal = $this->advertisers[$advertiser->uuid]['campaigns'][$campaign->uuid]['isDirectDeal'];
+                $wallet = $this->advertisers[$advertiser->uuid]['walletLeft'];
+                $bonus = $this->advertisers[$advertiser->uuid]['bonusLeft'];
+
+                $value = (int)min($experimentBudget, $isDirectDeal ? $wallet : $wallet + $bonus);
+
+                if ($isDirectDeal) {
+                    $this->advertisers[$advertiser->uuid]['walletLeft'] = $wallet - $value;
+                } else {
+                    if ($value > $bonus) {
+                        $this->advertisers[$advertiser->uuid]['bonusLeft'] = 0;
+                        $this->advertisers[$advertiser->uuid]['walletLeft'] = $wallet - ($value - $bonus);
+                    } else {
+                        $this->advertisers[$advertiser->uuid]['bonusLeft'] = $bonus - $value;
+                    }
+                }
+
+                foreach ($sspHosts as $ssp) {
+                    $eventValueInCurrency = (int)floor($value * $ssp['weight']);
+                    $eventValue = $this->exchangeRate->toClick($eventValueInCurrency);
+                    EventCreditLog::create(
+                        $dateTime,
+                        $advertiser->uuid,
+                        $campaign->uuid,
+                        $ssp['host'],
+                        $eventValueInCurrency,
+                        $this->exchangeRateValue,
+                        $eventValue,
+                        0,
+                        0,
+                        0,
+                        $eventValue,
+                    );
+                }
+            }
+        }
+    }
+
+    private function initAdvertiser(string $advertiserPublicId, User $user): void
+    {
+        if (isset($this->advertisers[$advertiserPublicId])) {
+            return;
+        }
+
+        $walletBalance = $this->exchangeRate->fromClick($user->getWalletBalance());
+        $bonusBalance = $this->exchangeRate->fromClick($user->getBonusBalance());
+
+        $this->advertisers[$advertiserPublicId] = [
+            'id' => $user->id,
+            'wallet' => $walletBalance,
+            'walletLeft' => $walletBalance,
+            'bonus' => $bonusBalance,
+            'bonusLeft' => $bonusBalance,
+            'campaigns' => [],
+        ];
+    }
+
+    private function initCampaign(string $advertiserPublicId, Campaign $campaign): void
+    {
+        if (isset($this->advertisers[$advertiserPublicId]['campaigns'][$campaign->uuid])) {
+            return;
+        }
+
+        $this->advertisers[$advertiserPublicId]['campaigns'][$campaign->uuid] = [
+            'isDirectDeal' => $campaign->isDirectDeal(),
+            'budget' => $campaign->budget,
+            'budgetLeft' => $campaign->budget,
+        ];
     }
 }
