@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -69,7 +69,6 @@ class AdPayPaymentReportProcessor
 
         if (!$this->isUser($advertiserPublicId)) {
             Log::warning(sprintf('No user with uuid (%s)', $advertiserPublicId));
-
             return $this->getEventValueAndStatus(0, 0, $status);
         }
 
@@ -77,17 +76,15 @@ class AdPayPaymentReportProcessor
 
         if (!$this->isCampaign($advertiserPublicId, $campaignPublicId)) {
             Log::warning(sprintf('No campaign with uuid (%s)', $campaignPublicId));
-
             return $this->getEventValueAndStatus(0, 0, $status);
         }
 
-        $isDirectDeal = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['isDirectDeal'];
-        $budget = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'];
-        $wallet = $this->advertisers[$advertiserPublicId]['walletLeft'];
-        $bonus = $this->advertisers[$advertiserPublicId]['bonusLeft'];
+        $isDirectDeal = $this->getIsDirectDeal($advertiserPublicId, $campaignPublicId);
+        $budget = $this->getBudgetLeft($advertiserPublicId, $campaignPublicId);
+        $wallet = $this->getWalletLeft($advertiserPublicId);
+        $bonus = $this->getBonusLeft($advertiserPublicId);
 
         $maxAvailableValue = (int)min($budget, $isDirectDeal ? $wallet : $wallet + $bonus);
-
         if ($value > $maxAvailableValue) {
             $value = $maxAvailableValue;
         }
@@ -116,7 +113,6 @@ class AdPayPaymentReportProcessor
 
         if (self::STATUS_PAYMENT_ACCEPTED !== ($status = $calculation['status'])) {
             $conversion->setStatus($status);
-
             return;
         }
 
@@ -128,7 +124,7 @@ class AdPayPaymentReportProcessor
         }
 
         if (!$conversion->event) {
-            Log::warning(sprintf('Cannot find conversion event'));
+            Log::warning('Cannot find conversion event');
             $conversion->setValueAndStatus(0, $this->exchangeRateValue, 0, $status);
             return;
         }
@@ -138,7 +134,6 @@ class AdPayPaymentReportProcessor
         if (!$this->isUser($advertiserPublicId)) {
             Log::warning(sprintf('No user with uuid (%s)', $advertiserPublicId));
             $conversion->setValueAndStatus(0, $this->exchangeRateValue, 0, $status);
-
             return;
         }
 
@@ -147,7 +142,6 @@ class AdPayPaymentReportProcessor
         if (!$this->isCampaign($advertiserPublicId, $campaignPublicId)) {
             Log::warning(sprintf('No campaign with uuid (%s)', $campaignPublicId));
             $conversion->setValueAndStatus(0, $this->exchangeRateValue, 0, $status);
-
             return;
         }
 
@@ -156,17 +150,14 @@ class AdPayPaymentReportProcessor
         if (!$this->isConversionDefinition($definitionId)) {
             Log::warning(sprintf('No conversions definitions with id (%s)', $definitionId));
             $conversion->setValueAndStatus(0, $this->exchangeRateValue, 0, $status);
-
             return;
         }
 
-        $campaignBudget = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'];
-        $wallet = $this->advertisers[$advertiserPublicId]['walletLeft'];
+        $campaignBudget = $this->getBudgetLeft($advertiserPublicId, $campaignPublicId);
+        $wallet = $this->getWalletLeft($advertiserPublicId);
         $conversionIsInCampaignBudget = $this->conversionDefinitions[$definitionId]['isInCampaignBudget'];
 
         $maxAvailableValue = $conversionIsInCampaignBudget ? (int)min($wallet, $campaignBudget) : $wallet;
-        $value = $calculation['value'];
-
         if ($value > $maxAvailableValue) {
             $value = $maxAvailableValue;
         }
@@ -285,22 +276,14 @@ class AdPayPaymentReportProcessor
         return $definitions;
     }
 
-    public function allocateCampaignExperimentBudgets(DateTimeInterface $dateTime): void
+    public function allocateCampaignExperimentBudgets(DateTimeInterface $computationDateTime): void
     {
-        $campaigns = Campaign::fetchActiveCampaigns($dateTime)
+        $campaigns = Campaign::fetchActiveCampaigns($computationDateTime)
 //            ->filter(fn (Campaign $campaign) => $campaign->getEffectiveExperimentBudget() > 0);
             ->groupBy('user_id')
         ;
 
-        // TODO get SSPs and assign wages to them
-        $sspHosts = [];
-        $hosts = NetworkHost::fetchHosts();
-        foreach ($hosts as $host) {
-            $sspHosts[] = [
-                'host' => $host->address,
-                'weight' => 1 / count($hosts),
-            ];
-        }
+        $sspHosts = $this->getSspHosts();
 
         foreach ($campaigns as $userId => $userCampaigns) {
             foreach ($userCampaigns as $campaign) {
@@ -313,23 +296,24 @@ class AdPayPaymentReportProcessor
                     continue;
                 }
 
-                $this->initAdvertiser($advertiser->uuid, $advertiser);
-                $this->initCampaign($advertiser->uuid, $campaign);
+                $advertiserPublicId = $advertiser->uuid;
+                $this->initAdvertiser($advertiserPublicId, $advertiser);
+                $this->initCampaign($advertiserPublicId, $campaign);
 
-                $isDirectDeal = $this->advertisers[$advertiser->uuid]['campaigns'][$campaign->uuid]['isDirectDeal'];
-                $wallet = $this->advertisers[$advertiser->uuid]['walletLeft'];
-                $bonus = $this->advertisers[$advertiser->uuid]['bonusLeft'];
+                $isDirectDeal = $this->getIsDirectDeal($advertiserPublicId, $campaign->uuid);
+                $wallet = $this->getWalletLeft($advertiserPublicId);
+                $bonus = $this->getBonusLeft($advertiserPublicId);
 
                 $value = (int)min($experimentBudget, $isDirectDeal ? $wallet : $wallet + $bonus);
 
                 if ($isDirectDeal) {
-                    $this->advertisers[$advertiser->uuid]['walletLeft'] = $wallet - $value;
+                    $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - $value;
                 } else {
                     if ($value > $bonus) {
-                        $this->advertisers[$advertiser->uuid]['bonusLeft'] = 0;
-                        $this->advertisers[$advertiser->uuid]['walletLeft'] = $wallet - ($value - $bonus);
+                        $this->advertisers[$advertiserPublicId]['bonusLeft'] = 0;
+                        $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - ($value - $bonus);
                     } else {
-                        $this->advertisers[$advertiser->uuid]['bonusLeft'] = $bonus - $value;
+                        $this->advertisers[$advertiserPublicId]['bonusLeft'] = $bonus - $value;
                     }
                 }
 
@@ -337,21 +321,33 @@ class AdPayPaymentReportProcessor
                     $eventValueInCurrency = (int)floor($value * $ssp['weight']);
                     $eventValue = $this->exchangeRate->toClick($eventValueInCurrency);
                     EventCreditLog::create(
-                        $dateTime,
-                        $advertiser->uuid,
+                        $computationDateTime,
+                        $advertiserPublicId,
                         $campaign->uuid,
                         $ssp['host'],
                         $eventValueInCurrency,
                         $this->exchangeRateValue,
                         $eventValue,
-                        0,
-                        0,
-                        0,
-                        $eventValue,
                     );
                 }
             }
         }
+    }
+
+    private function getSspHosts(): array
+    {
+        // TODO get SSPs and assign wages to them
+        $sspHosts = [];
+        $hosts = NetworkHost::fetchHosts()
+            ->filter(fn (NetworkHost $host) => $host->info->hasSupplyCapabilities());
+
+        foreach ($hosts as $host) {
+            $sspHosts[] = [
+                'host' => $host->address,
+                'weight' => 1 / count($hosts),
+            ];
+        }
+        return $sspHosts;
     }
 
     private function initAdvertiser(string $advertiserPublicId, User $user): void
@@ -384,5 +380,25 @@ class AdPayPaymentReportProcessor
             'budget' => $campaign->budget,
             'budgetLeft' => $campaign->budget,
         ];
+    }
+
+    private function getWalletLeft(string $uuid): mixed
+    {
+        return $this->advertisers[$uuid]['walletLeft'];
+    }
+
+    private function getBonusLeft(string $uuid): mixed
+    {
+        return $this->advertisers[$uuid]['bonusLeft'];
+    }
+
+    private function getIsDirectDeal(string $advertiserPublicId, string $campaignPublicId): bool
+    {
+        return $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['isDirectDeal'];
+    }
+
+    private function getBudgetLeft(string $advertiserPublicId, string $campaignPublicId): mixed
+    {
+        return $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'];
     }
 }

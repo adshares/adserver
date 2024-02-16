@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -42,10 +43,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property int event_value_currency
  * @property float exchange_rate
  * @property int event_value
- * @property int license_fee
- * @property int operator_fee
- * @property int community_fee
- * @property int paid_amount
+ * @property int|null license_fee
+ * @property int|null operator_fee
+ * @property int|null community_fee
+ * @property int|null paid_amount
  * @property int|null payment_id
  * @mixin Builder
  */
@@ -81,10 +82,6 @@ class EventCreditLog extends Model
         int $eventValueCurrency,
         float $exchangeRate,
         int $eventValue,
-        int $licenseFee,
-        int $operatorFee,
-        int $communityFee,
-        int $paidAmount,
     ): void {
         $log = new self();
         $log->computed_at = $computedAt;
@@ -94,10 +91,19 @@ class EventCreditLog extends Model
         $log->event_value_currency = $eventValueCurrency;
         $log->exchange_rate = $exchangeRate;
         $log->event_value = $eventValue;
-        $log->license_fee = $licenseFee;
-        $log->operator_fee = $operatorFee;
-        $log->community_fee = $communityFee;
-        $log->paid_amount = $paidAmount;
         $log->save();
+    }
+
+    public static function fetchUnpaid(?int $limit): Collection
+    {
+        $query = self::whereNotNull('event_value_currency')
+            ->whereNotNull('pay_to')
+            ->whereNull('payment_id');
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 }

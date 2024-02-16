@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,6 +34,7 @@ use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -175,8 +176,8 @@ SQL;
     ];
 
     public static function fetchUnpaidEvents(
-        DateTime $from,
-        ?DateTime $to = null,
+        DateTimeInterface $from,
+        ?DateTimeInterface $to = null,
         int $limit = null
     ): Collection {
         $query = self::whereNotNull('event_value_currency')

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,7 +29,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Carbon\Carbon;
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -125,8 +125,8 @@ class Conversion extends Model
     }
 
     public static function fetchUnpaidConversions(
-        DateTime $from,
-        ?DateTime $to = null,
+        DateTimeInterface $from,
+        ?DateTimeInterface $to = null,
         int $limit = null
     ): EloquentCollection {
         $query = self::whereNotNull('event_value_currency')
