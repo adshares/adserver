@@ -373,7 +373,7 @@ SQL;
         return self::select(DB::raw('DISTINCT FLOOR(UNIX_TIMESTAMP(created_at)/3600)*3600 AS ts'))
             ->whereIn('id', $ids)
             ->get()
-            ->pluck('ts')
+            ->map(fn ($item) => (int)$item->ts)
             ->all();
     }
 
