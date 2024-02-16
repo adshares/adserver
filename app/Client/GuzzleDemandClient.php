@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -57,7 +57,7 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
     private const DEFAULT_VENDOR = null;
-    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
+    private const URI_PAYMENT_DETAILS = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     . '?limit={limit}&offset={offset}';
 
     public function __construct(
@@ -124,40 +124,10 @@ final class GuzzleDemandClient implements DemandClient
 
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        $privateKey = Crypt::decryptString(config('app.adshares_secret'));
-        $accountAddress = config('app.adshares_address');
-        $date = new DateTime();
-        $signature = $this->signatureVerifier->createFromTransactionId(
-            $privateKey,
-            $transactionId,
-            $accountAddress,
-            $date
-        );
-
-        $dateFormatted = $date->format(DateTimeInterface::ATOM);
-
-        $endpoint = str_replace(
-            [
-                '{transactionId}',
-                '{accountAddress}',
-                '{date}',
-                '{signature}',
-                '{limit}',
-                '{offset}',
-            ],
-            [
-                $transactionId,
-                $accountAddress,
-                $dateFormatted,
-                $signature,
-                $limit,
-                $offset,
-            ],
-            self::PAYMENT_DETAILS_ENDPOINT
-        );
+        $uri = $this->getPaymentDetailsUri($transactionId, $limit, $offset);
 
         try {
-            $response = $this->client->get($endpoint, $this->requestParameters($host));
+            $response = $this->client->get($uri, $this->requestParameters($host));
         } catch (ClientExceptionInterface $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf('Transaction not found: %s.', $exception->getMessage()),
@@ -442,5 +412,39 @@ final class GuzzleDemandClient implements DemandClient
             }
         }
         return $signedAt;
+    }
+
+    private function getPaymentDetailsUri(string $transactionId, int $limit, int $offset): string|array
+    {
+        $privateKey = Crypt::decryptString(config('app.adshares_secret'));
+        $accountAddress = config('app.adshares_address');
+        $date = new DateTimeImmutable();
+        $signature = $this->signatureVerifier->createFromTransactionId(
+            $privateKey,
+            $transactionId,
+            $accountAddress,
+            $date,
+        );
+        $dateFormatted = $date->format(DateTimeInterface::ATOM);
+
+        return str_replace(
+            [
+                '{transactionId}',
+                '{accountAddress}',
+                '{date}',
+                '{signature}',
+                '{limit}',
+                '{offset}',
+            ],
+            [
+                $transactionId,
+                $accountAddress,
+                $dateFormatted,
+                $signature,
+                $limit,
+                $offset,
+            ],
+            self::URI_PAYMENT_DETAILS,
+        );
     }
 }
