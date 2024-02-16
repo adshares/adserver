@@ -1,4 +1,4 @@
-dist: bionic
+dist: jammy
 language: php
 sudo: false
 services: mysql
