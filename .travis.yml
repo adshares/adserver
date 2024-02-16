@@ -6,6 +6,7 @@ git:
   depth: false
 php:
   - 8.1
+jdk: openjdk17
 cache:
   directories:
     - $HOME/.composer/cache/files
@@ -37,6 +38,8 @@ before_install:
   - mkdir -p storage/framework/{sessions,views,cache}
   - chmod 777 -R storage
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2>/dev/null | mysql mysql
+  - export JAVA_HOME=/usr/local/lib/jvm/openjdk17
+  - export PATH="$JAVA_HOME/bin:$PATH"
 
 install:
   - yarn install && yarn run prod
