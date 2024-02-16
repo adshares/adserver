@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -121,35 +121,8 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $demandClient = new DummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
-        $networkImpression = NetworkImpression::factory()->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
-
-        $totalAmount = 0;
-        $licenseFee = 0;
-        $operatorFee = 0;
-
-        /** @var LicenseReader $licenseReader */
-        $licenseReader = app()->make(LicenseReader::class);
-        $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
-        $operatorFeeCoefficient = 0.01;
-
-        foreach ($paymentDetails as $paymentDetail) {
-            $publisherId = $paymentDetail['publisher_id'];
-
-            NetworkCase::factory()->create(
-                [
-                    'case_id' => $paymentDetail['case_id'],
-                    'network_impression_id' => $networkImpression,
-                    'publisher_id' => $publisherId,
-                ]
-            );
-
-            $eventValue = (int)$paymentDetail['event_value'];
-            $totalAmount += $eventValue;
-            $eventFee = (int)floor($eventValue * $licenseFeeCoefficient);
-            $licenseFee += $eventFee;
-            $operatorFee += (int)floor(($eventValue - $eventFee) * $operatorFeeCoefficient);
-        }
+        [$totalAmount, $licenseFee, $operatorFee] = $this->computeIncomeFromPayment($paymentDetails);
         $publishersIncome = $totalAmount - $licenseFee - $operatorFee;
 
         AdsPayment::factory()->create([
@@ -160,6 +133,58 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         ]);
 
         $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
+
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
+        $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
+        $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched(1);
+        self::assertDatabaseCount(TurnoverEntry::class, 4);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => $totalAmount,
+                'type' => TurnoverEntryType::SspIncome->name,
+            ],
+            [
+                'ads_address' => hex2bin('FFFF00000000'),
+                'amount' => $licenseFee,
+                'type' => TurnoverEntryType::SspLicenseFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $operatorFee,
+                'type' => TurnoverEntryType::SspOperatorFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $publishersIncome,
+                'type' => TurnoverEntryType::SspPublishersIncome->name,
+            ],
+        ];
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+    }
+
+    public function testAdsProcessEventPaymentWhileDetailsCountIsEqualToLimit(): void
+    {
+        $demandClient = new DummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 50, 0);
+        [$totalAmount, $licenseFee, $operatorFee] = $this->computeIncomeFromPayment($paymentDetails);
+        $publishersIncome = $totalAmount - $licenseFee - $operatorFee;
+
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => $totalAmount,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 100])
+            ->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
@@ -435,5 +460,39 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         self::assertServerEventDispatched(ServerEventType::IncomingAdPaymentProcessed, [
             'adsPaymentCount' => $count,
         ]);
+    }
+
+    private function computeIncomeFromPayment(array $paymentDetails): array
+    {
+        $networkImpression = NetworkImpression::factory()->create();
+
+        $totalAmount = 0;
+        $licenseFee = 0;
+        $operatorFee = 0;
+
+        /** @var LicenseReader $licenseReader */
+        $licenseReader = app()->make(LicenseReader::class);
+        $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
+        $operatorFeeCoefficient = 0.01;
+
+        foreach ($paymentDetails as $paymentDetail) {
+            $publisherId = $paymentDetail['publisher_id'];
+
+            NetworkCase::factory()->create(
+                [
+                    'case_id' => $paymentDetail['case_id'],
+                    'network_impression_id' => $networkImpression,
+                    'publisher_id' => $publisherId,
+                ]
+            );
+
+            $eventValue = (int)$paymentDetail['event_value'];
+            $totalAmount += $eventValue;
+            $eventFee = (int)floor($eventValue * $licenseFeeCoefficient);
+            $licenseFee += $eventFee;
+            $operatorFee += (int)floor(($eventValue - $eventFee) * $operatorFeeCoefficient);
+        }
+
+        return [$totalAmount, $licenseFee, $operatorFee];
     }
 }

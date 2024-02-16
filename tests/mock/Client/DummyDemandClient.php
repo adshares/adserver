@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,6 +31,7 @@ use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
 use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
@@ -160,6 +161,9 @@ final class DummyDemandClient implements DemandClient
                 ];
             }
         } else {
+            if ($offset >= count($arr)) {
+                throw new EmptyInventoryException('Empty list');
+            }
             return array_chunk($arr, $limit, false)[(int)floor($offset / $limit)];
         }
 

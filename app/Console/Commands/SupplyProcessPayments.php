@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -160,7 +160,7 @@ SQL;
         }
         $transactionTime = $incomingPayment->tx_time;
 
-        for ($paymentDetailsSize = $limit; $paymentDetailsSize === $limit;) {
+        do {
             try {
                 $paymentDetails = $this->demandClient->fetchPaymentDetails(
                     $networkHost->host,
@@ -168,8 +168,12 @@ SQL;
                     $limit,
                     $offset
                 );
-                $paymentDetailsSize = count($paymentDetails);
-            } catch (EmptyInventoryException | UnexpectedClientResponseException) {
+            } catch (EmptyInventoryException) {
+                if ($offset > 0) {
+                    break;
+                }
+                return;
+            } catch (UnexpectedClientResponseException) {
                 return;
             }
 
@@ -183,7 +187,7 @@ SQL;
             $resultsCollection->add($processPaymentDetails);
 
             $incomingPayment->last_offset = $offset += $limit;
-        }
+        } while (count($paymentDetails) === $limit);
 
         $this->storeTurnoverEntries($resultsCollection, $incomingPayment);
         $this->paymentDetailsProcessor->addAdIncomeToUserLedger($incomingPayment);
