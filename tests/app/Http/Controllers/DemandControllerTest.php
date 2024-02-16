@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,12 +27,14 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Crypt;
@@ -43,8 +45,8 @@ use function uniqid;
 
 final class DemandControllerTest extends TestCase
 {
-    private const PAYMENT_DETAIL_URL = '/payment-details';
-
+    private const CREDIT_DETAILS_URL = '/credit-details';
+    private const PAYMENT_DETAILS_URL = '/payment-details';
     private const INVENTORY_LIST_URL = '/adshares/inventory/list';
 
     public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGivenTransactionIdAndAddress(): void
@@ -93,7 +95,7 @@ final class DemandControllerTest extends TestCase
 
         $url = sprintf(
             '%s/%s/%s/%s/%s',
-            self::PAYMENT_DETAIL_URL,
+            self::PAYMENT_DETAILS_URL,
             $transactionId,
             $accountAddress,
             $date,
@@ -105,6 +107,157 @@ final class DemandControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $this->assertCount(5, $content);
+    }
+
+    public function testPaymentDetailsFailWhenTransactionIdIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '1';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPaymentDetailsFailWhenAccountAddressIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '1';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPaymentDetailsFailWhenDateIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPaymentDetailsFailWhenSignatureIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testCreditDetails(): void
+    {
+        $this->app->bind(
+            PaymentDetailsVerify::class,
+            function () {
+                $signatureVerify = $this->createMock(PaymentDetailsVerify::class);
+                $signatureVerify->method('verify')
+                    ->willReturn(true);
+                return $signatureVerify;
+            }
+        );
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01T10:10:00+00:00';
+        $payment1 = Payment::factory()->create([
+            'account_address' => $accountAddress,
+            'tx_id' => $transactionId,
+        ]);
+        $payment2 = Payment::factory()->create([
+            'account_address' => '0001-00000002-BB2D',
+            'tx_id' => $transactionId,
+        ]);
+        $campaignId = Uuid::v4()->hex();
+        EventCreditLog::factory()->create([
+            'campaign_id' => $campaignId,
+            'paid_amount' => 100,
+            'pay_to' => $accountAddress,
+            'payment_id' => $payment1,
+        ]);
+        EventCreditLog::factory()->create([
+            'campaign_id' => $campaignId,
+            'paid_amount' => 30,
+            'pay_to' => $accountAddress,
+            'payment_id' => $payment2,
+        ]);
+        EventCreditLog::factory()->create([
+            'campaign_id' => $campaignId,
+            'paid_amount' => 50,
+            'pay_to' => '0001-00000002-BB2D',
+            'payment_id' => $payment1,
+        ]);
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::CREDIT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment([
+            'campaign_id' => $campaignId,
+            'value' => 100,
+        ]);
     }
 
     public function testInventoryList(): void

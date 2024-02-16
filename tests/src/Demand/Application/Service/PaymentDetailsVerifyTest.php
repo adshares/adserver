@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,7 +26,7 @@ namespace Adshares\Tests\Demand\Application\Service;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
-use DateTime;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 final class PaymentDetailsVerifyTest extends TestCase
@@ -37,7 +37,7 @@ final class PaymentDetailsVerifyTest extends TestCase
         $signature = '11';
         $transactionId = '22';
         $accountAddress = '33';
-        $date = new DateTime();
+        $date = new DateTimeImmutable();
         $verifier = self::createMock(SignatureVerifier::class);
         $verifier->expects(self::once())
             ->method('verifyTransactionId')
@@ -50,6 +50,8 @@ final class PaymentDetailsVerifyTest extends TestCase
             ->willReturn($publicKey);
 
         $paymentDetailsVerify = new PaymentDetailsVerify($verifier, $adsClient);
-        $paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $date);
+        $result = $paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $date);
+
+        self::assertTrue($result);
     }
 }

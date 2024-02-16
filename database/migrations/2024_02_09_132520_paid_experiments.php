@@ -61,6 +61,7 @@ return new class extends Migration {
         DB::statement('ALTER TABLE event_credit_logs MODIFY pay_to VARBINARY(6)');
 
         Schema::table('event_credit_logs', function (Blueprint $table) {
+            $table->index('pay_to');
             $table->unique('uuid');
         });
     }

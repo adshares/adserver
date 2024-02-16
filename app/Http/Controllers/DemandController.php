@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventConversionLog;
+use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
@@ -41,6 +42,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -464,21 +466,26 @@ SQL;
         string $signature,
         Request $request
     ): JsonResponse {
-        $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
-        $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
-        $datetime = DateTime::createFromFormat(DateTimeInterface::ATOM, $date);
-
-        if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
+        $limit = (int)$request->get('limit', self::PAYMENT_DETAILS_LIMIT_DEFAULT);
+        if ($limit > self::PAYMENT_DETAILS_LIMIT_MAX) {
+            throw new BadRequestHttpException(sprintf('Maximum limit of %d exceeded', self::PAYMENT_DETAILS_LIMIT_MAX));
+        }
+        $offset = (int)$request->get('offset', 0);
+        if (
+            null === ($transactionIdDecoded = AdsUtils::decodeTxId($transactionId))
+            || null === ($accountAddressDecoded = AdsUtils::decodeAddress($accountAddress))
+            || false === ($datetime = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $date))
+        ) {
             throw new BadRequestHttpException('Input data are invalid.');
         }
-
         if (!$this->paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
             throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
         }
 
-        $payments = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded);
-
-        if ($payments->isEmpty()) {
+        $paymentIds = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded)
+            ->pluck('id')
+            ->toArray();
+        if (empty($paymentIds)) {
             throw new NotFoundHttpException(
                 sprintf(
                     'Payment for given transaction %s is not found.',
@@ -487,24 +494,21 @@ SQL;
             );
         }
 
-        $limit = (int)$request->get('limit', self::PAYMENT_DETAILS_LIMIT_DEFAULT);
-        if ($limit > self::PAYMENT_DETAILS_LIMIT_MAX) {
-            throw new BadRequestHttpException(sprintf('Maximum limit of %d exceeded', self::PAYMENT_DETAILS_LIMIT_MAX));
+        if (str_contains($request->getRequestUri(), '/credit-details/')) {
+            $data = EventCreditLog::fetchPaid($paymentIds, $accountAddressDecoded, $limit, $offset)
+                ->map(fn(EventCreditLog $log) => [
+                    'campaign_id' => $log->campaign_id,
+                    'value' => $log->paid_amount,
+                ]);
+        } else {
+            $data = $this->fetchPaidConversionsAndEvents($paymentIds, $limit, $offset);
         }
 
-        return self::json($this->fetchPaidConversionsAndEvents(
-            $payments->pluck('id')->toArray(),
-            $limit,
-            (int)$request->get('offset', 0)
-        ));
+        return self::json($data);
     }
 
     private static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset): array
     {
-        if (empty($paymentIds)) {
-            return [];
-        }
-
         $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1) . '?';
         $query = sprintf(
             self::SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE,

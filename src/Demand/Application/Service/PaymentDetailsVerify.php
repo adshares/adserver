@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,30 +24,35 @@ declare(strict_types=1);
 namespace Adshares\Demand\Application\Service;
 
 use Adshares\Common\Application\Service\Ads;
+use Adshares\Common\Application\Service\Exception\SignatureVerifierException;
 use Adshares\Common\Application\Service\SignatureVerifier;
-use DateTime;
+use DateTimeInterface;
 
 class PaymentDetailsVerify
 {
-    private SignatureVerifier $signatureVerifier;
-
-    private Ads $adsClient;
-
-    public function __construct(SignatureVerifier $signatureVerifier, Ads $adsClient)
-    {
-        $this->signatureVerifier = $signatureVerifier;
-        $this->adsClient = $adsClient;
+    public function __construct(
+        private readonly SignatureVerifier $signatureVerifier,
+        private readonly Ads $adsClient,
+    ) {
     }
 
-    public function verify(string $signature, string $transactionId, string $accountAddress, DateTime $date): bool
-    {
+    public function verify(
+        string $signature,
+        string $transactionId,
+        string $accountAddress,
+        DateTimeInterface $date,
+    ): bool {
         $publicKey = $this->adsClient->getPublicKeyByAccountAddress($accountAddress);
-        return $this->signatureVerifier->verifyTransactionId(
-            $publicKey,
-            $signature,
-            $transactionId,
-            $accountAddress,
-            $date
-        );
+        try {
+            return $this->signatureVerifier->verifyTransactionId(
+                $publicKey,
+                $signature,
+                $transactionId,
+                $accountAddress,
+                $date
+            );
+        } catch (SignatureVerifierException) {
+            return false;
+        }
     }
 }

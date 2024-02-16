@@ -109,4 +109,13 @@ class EventCreditLog extends Model
 
         return $query->get();
     }
+
+    public static function fetchPaid(array $paymentIds, string $payTo, int $limit, int $offset): Collection
+    {
+        return self::whereIn('payment_id', $paymentIds)
+            ->where('pay_to', hex2bin($payTo))
+            ->limit($limit)
+            ->offset($offset)
+            ->get();
+    }
 }
