@@ -279,9 +279,7 @@ class AdPayPaymentReportProcessor
     public function allocateCampaignExperimentBudgets(DateTimeInterface $computationDateTime): void
     {
         $campaigns = Campaign::fetchActiveCampaigns($computationDateTime)
-//            ->filter(fn (Campaign $campaign) => $campaign->getEffectiveExperimentBudget() > 0);
-            ->groupBy('user_id')
-        ;
+            ->groupBy('user_id');
 
         $sspHosts = $this->getSspHosts();
 

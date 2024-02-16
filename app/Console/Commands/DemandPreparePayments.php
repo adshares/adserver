@@ -163,7 +163,7 @@ class DemandPreparePayments extends BaseCommand
         }
 
         do {
-            $events = EventCreditLog::fetchUnpaid($chunkSize);
+            $events = EventCreditLog::fetchUnpaid($from, $to, $chunkSize);
 
             $eventCount = count($events);
             $this->info(sprintf('Found %d payable credit events.', $eventCount));

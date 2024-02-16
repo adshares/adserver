@@ -94,13 +94,16 @@ class EventCreditLog extends Model
         $log->save();
     }
 
-    public static function fetchUnpaid(?int $limit): Collection
+    public static function fetchUnpaid(DateTimeInterface $from, ?DateTimeInterface $to, ?int $limit): Collection
     {
         $query = self::whereNotNull('event_value_currency')
             ->whereNotNull('pay_to')
-            ->whereNull('payment_id');
-
-        if ($limit !== null) {
+            ->whereNull('payment_id')
+            ->where('computed_at', '>=', $from);
+        if (null !== $to) {
+            $query->where('computed_at', '<', $to);
+        }
+        if (null !== $limit) {
             $query->limit($limit);
         }
 

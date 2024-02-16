@@ -39,7 +39,7 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->binary('uuid');
-            $table->timestamp('computed_at');
+            $table->timestamp('computed_at')->index();
             $table->binary('advertiser_id');
             $table->binary('campaign_id');
             $table->binary('pay_to');
