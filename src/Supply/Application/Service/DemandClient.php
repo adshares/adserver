@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -37,7 +37,11 @@ interface DemandClient
         bool $isAdsTxtRequiredBySourceHost,
     ): CampaignCollection;
 
+    public function fetchPaymentDetailsMeta(string $host, string $transactionId): array;
+
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array;
+
+    public function fetchCreditDetails(string $host, string $transactionId, int $limit, int $offset): array;
 
     public function fetchInfo(UrlInterface $infoUrl): Info;
 }

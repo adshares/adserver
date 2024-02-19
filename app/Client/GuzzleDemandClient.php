@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
@@ -57,8 +58,7 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
     private const DEFAULT_VENDOR = null;
-    private const URI_PAYMENT_DETAILS = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
-    . '?limit={limit}&offset={offset}';
+    private const URI_PAYMENT_DETAILS = '/{category}/{transactionId}/{accountAddress}/{date}/{signature}';
 
     public function __construct(
         private readonly ClassifierExternalRepository $classifierRepository,
@@ -122,9 +122,29 @@ final class GuzzleDemandClient implements DemandClient
         return $campaignsCollection;
     }
 
+    public function fetchPaymentDetailsMeta(string $host, string $transactionId): array
+    {
+        return $this->fetchDetails('payment-details-meta', $host, $transactionId);
+    }
+
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        $uri = $this->getPaymentDetailsUri($transactionId, $limit, $offset);
+        return $this->fetchDetails('payment-details', $host, $transactionId, $limit, $offset);
+    }
+
+    public function fetchCreditDetails(string $host, string $transactionId, int $limit, int $offset): array
+    {
+        return $this->fetchDetails('credit-details', $host, $transactionId, $limit, $offset);
+    }
+
+    public function fetchDetails(
+        string $category,
+        string $host,
+        string $transactionId,
+        int $limit = 0,
+        int $offset = 0,
+    ): array {
+        $uri = $this->getDetailsUri($category, $transactionId, $limit, $offset);
 
         try {
             $response = $this->client->get($uri, $this->requestParameters($host));
@@ -414,7 +434,7 @@ final class GuzzleDemandClient implements DemandClient
         return $signedAt;
     }
 
-    private function getPaymentDetailsUri(string $transactionId, int $limit, int $offset): string|array
+    private function getDetailsUri(string $category, string $transactionId, int $limit, int $offset): string
     {
         $privateKey = Crypt::decryptString(config('app.adshares_secret'));
         $accountAddress = config('app.adshares_address');
@@ -427,24 +447,31 @@ final class GuzzleDemandClient implements DemandClient
         );
         $dateFormatted = $date->format(DateTimeInterface::ATOM);
 
-        return str_replace(
+        $uri = str_replace(
             [
+                '{category}',
                 '{transactionId}',
                 '{accountAddress}',
                 '{date}',
                 '{signature}',
-                '{limit}',
-                '{offset}',
             ],
             [
+                $category,
                 $transactionId,
                 $accountAddress,
                 $dateFormatted,
                 $signature,
-                $limit,
-                $offset,
             ],
             self::URI_PAYMENT_DETAILS,
         );
+
+        if ($limit > 0) {
+            $uri = Utils::addUrlParameter($uri, 'limit', $limit);
+        }
+        if ($offset > 0) {
+            $uri = Utils::addUrlParameter($uri, 'offset', $offset);
+        }
+
+        return $uri;
     }
 }

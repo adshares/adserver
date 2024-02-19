@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,14 +34,10 @@ class AdSelectCasePaymentsExportCommand extends BaseCommand
 
     protected $description = 'Export payments to AdSelect';
 
-    private AdSelectCaseExporter $adSelectCaseExporter;
-
     public function __construct(
         Locker $locker,
-        AdSelectCaseExporter $adSelectCaseExporter
+        private readonly AdSelectCaseExporter $adSelectCaseExporter,
     ) {
-        $this->adSelectCaseExporter = $adSelectCaseExporter;
-
         parent::__construct($locker);
     }
 
@@ -49,7 +45,6 @@ class AdSelectCasePaymentsExportCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('[AdSelectCaseExport] Command ' . $this->signature . ' already running.');
-
             return;
         }
 

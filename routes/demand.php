@@ -52,6 +52,10 @@ Route::get(
     '/credit-details/{transactionId}/{accountAddress}/{date}/{signature}',
     [DemandController::class, 'paymentDetails']
 );
+Route::get(
+    '/payment-details-meta/{transactionId}/{accountAddress}/{date}/{signature}',
+    [DemandController::class, 'paymentDetailsMeta']
+);
 
 Route::group(
     ['domain' => config('app.serve_base_url')],

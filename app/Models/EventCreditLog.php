@@ -110,12 +110,29 @@ class EventCreditLog extends Model
         return $query->get();
     }
 
-    public static function fetchPaid(array $paymentIds, string $payTo, int $limit, int $offset): Collection
+    public static function countPaid(array $paymentIds, string $payTo): int
     {
-        return self::whereIn('payment_id', $paymentIds)
-            ->where('pay_to', hex2bin($payTo))
+        return self::getEventCreditLogBuilder($paymentIds, $payTo)
+            ->count();
+    }
+
+    public static function fetchPaid(array $paymentIds, string $payTo, int $limit, int $offset = 0): Collection
+    {
+        return self::getEventCreditLogBuilder($paymentIds, $payTo)
             ->limit($limit)
             ->offset($offset)
             ->get();
+    }
+
+    public static function sumAmountPaid(array $paymentIds, string $payTo): int
+    {
+        return self::getEventCreditLogBuilder($paymentIds, $payTo)
+            ->sum('paid_amount');
+    }
+
+    private static function getEventCreditLogBuilder(array $paymentIds, string $payTo): Builder
+    {
+        return self::whereIn('payment_id', $paymentIds)
+            ->where('pay_to', hex2bin($payTo));
     }
 }

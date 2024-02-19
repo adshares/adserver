@@ -134,6 +134,20 @@ final class DummyDemandClient implements DemandClient
         return new CampaignCollection(...$this->campaigns);
     }
 
+    public function fetchPaymentDetailsMeta(string $host, string $transactionId): array
+    {
+        return [
+            'credits' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
+            'events' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
+        ];
+    }
+
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
         static $arr;
@@ -168,6 +182,11 @@ final class DummyDemandClient implements DemandClient
         }
 
         return $arr;
+    }
+
+    public function fetchCreditDetails(string $host, string $transactionId, int $limit, int $offset): array
+    {
+        return [];
     }
 
     public function fetchInfo(UrlInterface $infoUrl): Info

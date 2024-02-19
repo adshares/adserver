@@ -76,6 +76,14 @@ SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM event_log
 LIMIT ?
 OFFSET ?;
 SQL;
+    private const SQL_QUERY_SELECT_EVENTS_AGGREGATES_FOR_PAYMENT_DETAILS_TEMPLATE = <<<SQL
+SELECT SUM(m._count) AS _count, SUM(m._sum) AS _sum FROM 
+(
+  SELECT COUNT(1) AS _count, SUM(paid_amount) AS _sum FROM conversions WHERE payment_id IN (%s)
+  UNION ALL
+  SELECT COUNT(1) AS _count, SUM(paid_amount) AS _sum FROM event_logs WHERE payment_id IN (%s)
+) AS m;
+SQL;
 
     public function __construct(
         private readonly AdsAuthenticator $authenticator,
@@ -471,16 +479,12 @@ SQL;
             throw new BadRequestHttpException(sprintf('Maximum limit of %d exceeded', self::PAYMENT_DETAILS_LIMIT_MAX));
         }
         $offset = (int)$request->get('offset', 0);
-        if (
-            null === ($transactionIdDecoded = AdsUtils::decodeTxId($transactionId))
-            || null === ($accountAddressDecoded = AdsUtils::decodeAddress($accountAddress))
-            || false === ($datetime = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $date))
-        ) {
-            throw new BadRequestHttpException('Input data are invalid.');
-        }
-        if (!$this->paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
-            throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
-        }
+        [$transactionIdDecoded, $accountAddressDecoded] = $this->decodeTransactionIdAndAddressOrFail(
+            $transactionId,
+            $accountAddress,
+            $date,
+            $signature,
+        );
 
         $paymentIds = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded)
             ->pluck('id')
@@ -508,7 +512,82 @@ SQL;
         return self::json($data);
     }
 
-    private static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset): array
+    public function paymentDetailsMeta(
+        string $transactionId,
+        string $accountAddress,
+        string $date,
+        string $signature,
+    ): JsonResponse {
+        [$transactionIdDecoded, $accountAddressDecoded] = $this->decodeTransactionIdAndAddressOrFail(
+            $transactionId,
+            $accountAddress,
+            $date,
+            $signature,
+        );
+
+        $paymentIds = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded)
+            ->pluck('id')
+            ->toArray();
+        if (empty($paymentIds)) {
+            $data = [
+                'credits' => [
+                    'count' => 0,
+                    'sum' => 0,
+                ],
+                'events' => [
+                    'count' => 0,
+                    'sum' => 0,
+                ],
+            ];
+        } else {
+            $data = [
+                'credits' => [
+                    'count' => EventCreditLog::countPaid($paymentIds, $accountAddressDecoded),
+                    'sum' => EventCreditLog::sumAmountPaid($paymentIds, $accountAddressDecoded),
+                ],
+                'events' => $this->fetchMetaPaidConversionsAndEvents($paymentIds),
+            ];
+        }
+
+        return self::json($data);
+    }
+
+    private function decodeTransactionIdAndAddressOrFail(
+        string $transactionId,
+        string $accountAddress,
+        string $date,
+        string $signature,
+    ): array {
+        if (
+            null === ($transactionIdDecoded = AdsUtils::decodeTxId($transactionId))
+            || null === ($accountAddressDecoded = AdsUtils::decodeAddress($accountAddress))
+            || false === ($datetime = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $date))
+        ) {
+            throw new BadRequestHttpException('Input data are invalid.');
+        }
+        if (!$this->paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
+            throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
+        }
+        return [$transactionIdDecoded, $accountAddressDecoded];
+    }
+
+    private static function fetchMetaPaidConversionsAndEvents(array $paymentIds): array
+    {
+        $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1) . '?';
+        $query = sprintf(
+            self::SQL_QUERY_SELECT_EVENTS_AGGREGATES_FOR_PAYMENT_DETAILS_TEMPLATE,
+            $whereInPlaceholder,
+            $whereInPlaceholder,
+        );
+
+        $select = DB::select($query, array_merge($paymentIds, $paymentIds));
+        return [
+            'count' => (int)$select[0]->_count,
+            'sum' => (int)$select[0]->_sum,
+        ];
+    }
+
+    private static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset = 0): array
     {
         $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1) . '?';
         $query = sprintf(

@@ -27,6 +27,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
@@ -47,24 +48,12 @@ final class DemandControllerTest extends TestCase
 {
     private const CREDIT_DETAILS_URL = '/credit-details';
     private const PAYMENT_DETAILS_URL = '/payment-details';
+    private const PAYMENT_DETAILS_META_URL = '/payment-details-meta';
     private const INVENTORY_LIST_URL = '/adshares/inventory/list';
 
     public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGivenTransactionIdAndAddress(): void
     {
-        $this->app->bind(
-            PaymentDetailsVerify::class,
-            function () {
-                $signatureVerify = $this->createMock(PaymentDetailsVerify::class);
-
-                $signatureVerify
-                    ->expects($this->once())
-                    ->method('verify')
-                    ->willReturn(true);
-
-                return $signatureVerify;
-            }
-        );
-
+        $this->mockPaymentDetailsVerifier();
         $this->login();
 
         $accountAddress = '0001-00000001-8B4E';
@@ -636,6 +625,98 @@ final class DemandControllerTest extends TestCase
         self::assertDatabaseEmpty(EventLog::class);
     }
 
+    public function testPaymentDetailsMeta(): void
+    {
+        $this->mockPaymentDetailsVerifier();
+        $this->login();
+
+        $accountAddress = '0001-00000001-8B4E';
+        $transactionId = '0001:00000001:0001';
+        $date = '2018-01-01T10:10:00+00:00';
+        $payment1 = Payment::factory()->create([
+            'account_address' => $accountAddress,
+            'tx_id' => $transactionId,
+        ]);
+        $payment2 = Payment::factory()->create([
+            'account_address' => '0001-00000002-BB2D',
+            'tx_id' => $transactionId,
+        ]);
+        EventLog::factory()->create(['paid_amount' => 2, 'payment_id' => $payment1]);
+        EventConversionLog::factory()->create(['paid_amount' => 3, 'payment_id' => $payment1]);
+        EventLog::factory()->create(['paid_amount' => 3, 'payment_id' => $payment1]);
+        EventLog::factory()->create(['paid_amount' => 5, 'payment_id' => $payment2]);
+        EventCreditLog::factory()->create(['paid_amount' => 7, 'payment_id' => $payment1]);
+        EventCreditLog::factory()->create(['paid_amount' => 11, 'payment_id' => $payment2]);
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_META_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure([
+            'credits' => [
+                'count',
+                'sum',
+            ],
+            'events' => [
+                'count',
+                'sum',
+            ],
+        ]);
+
+        $content = json_decode($response->getContent(), true);
+        $this->assertEquals(1, $content['credits']['count']);
+        $this->assertEquals(7, $content['credits']['sum']);
+        $this->assertEquals(2, $content['events']['count']);
+        $this->assertEquals(5, $content['events']['sum']);
+    }
+
+    public function testPaymentDetailsMetaWhileNoEventsNor(): void
+    {
+        $this->mockPaymentDetailsVerifier();
+        $this->login();
+
+        $accountAddress = '0001-00000001-8B4E';
+        $transactionId = '0001:00000001:0001';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_META_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure([
+            'credits' => [
+                'count',
+                'sum',
+            ],
+            'events' => [
+                'count',
+                'sum',
+            ],
+        ]);
+
+        $content = json_decode($response->getContent(), true);
+        $this->assertEquals(0, $content['credits']['count']);
+        $this->assertEquals(0, $content['credits']['sum']);
+        $this->assertEquals(0, $content['events']['count']);
+        $this->assertEquals(0, $content['events']['sum']);
+    }
+
     public function testInitContext(): void
     {
         /** @var EventLog $event */
@@ -668,6 +749,21 @@ final class DemandControllerTest extends TestCase
             'pto' => '0001-00000005-CBCA',
         ];
         return [$query, $banner];
+    }
+
+    private function mockPaymentDetailsVerifier(): void
+    {
+        $this->app->bind(
+            PaymentDetailsVerify::class,
+            function () {
+                $signatureVerify = $this->createMock(PaymentDetailsVerify::class);
+                $signatureVerify
+                    ->expects($this->once())
+                    ->method('verify')
+                    ->willReturn(true);
+                return $signatureVerify;
+            }
+        );
     }
 
     private static function buildServeUri(string $uuid): string

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,7 +33,6 @@ use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -47,19 +46,19 @@ class PaymentDetailsProcessor
 
     public function processPaidEvents(
         AdsPayment $adsPayment,
-        DateTime $transactionTime,
         array $paymentDetails,
         int $carriedEventValueSum
     ): PaymentProcessingResult {
+        $transactionTime = $adsPayment->tx_time;
         $adsPaymentId = $adsPayment->id;
 
         $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
+
         $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), config('app.payment_rx_fee'));
         $totalLicenseFee = 0;
         $totalOperatorFee = 0;
         $totalEventValue = 0;
-
-        $exchangeRateValue = $exchangeRate->getValue();
 
         $cases = $this->fetchNetworkCasesForPaymentDetails($paymentDetails);
 
@@ -91,6 +90,17 @@ class PaymentDetailsProcessor
             $totalEventValue += $eventValue;
         }
 
+        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
+    }
+
+    public function processCredits(
+        AdsPayment $incomingPayment,
+        array $creditDetails,
+        int $carriedEventValueSum,
+    ): PaymentProcessingResult {
+        $totalLicenseFee = 0;
+        $totalOperatorFee = 0;
+        $totalEventValue = 0;
         return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
     }
 

@@ -41,6 +41,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use stdClass;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class SupplyProcessPayments extends BaseCommand
@@ -158,7 +159,6 @@ SQL;
                 new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
             );
         }
-        $transactionTime = $incomingPayment->tx_time;
 
         do {
             try {
@@ -179,15 +179,41 @@ SQL;
 
             $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
                 $incomingPayment,
-                $transactionTime,
                 $paymentDetails,
                 $resultsCollection->eventValueSum()
             );
-
             $resultsCollection->add($processPaymentDetails);
 
             $incomingPayment->last_offset = $offset += $limit;
         } while (count($paymentDetails) === $limit);
+
+        $offset = 0;
+        do {
+            try {
+                $creditDetails = $this->demandClient->fetchCreditDetails(
+                    $networkHost->host,
+                    $incomingPayment->txid,
+                    $limit,
+                    $offset,
+                );
+            } catch (EmptyInventoryException) {
+                break;
+            } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
+                if (Response::HTTP_NOT_FOUND === $unexpectedClientResponseException->getCode()) {
+                    break;
+                }
+                return;
+            }
+
+//            $processPaymentDetails = $this->paymentDetailsProcessor->processCredits(
+//                $incomingPayment,
+//                $creditDetails,
+//                $resultsCollection->eventValueSum(),
+//            );
+//            $resultsCollection->add($processPaymentDetails);
+
+            $offset += $limit;
+        } while (count($creditDetails) === $limit);
 
         $this->storeTurnoverEntries($resultsCollection, $incomingPayment);
         $this->paymentDetailsProcessor->addAdIncomeToUserLedger($incomingPayment);

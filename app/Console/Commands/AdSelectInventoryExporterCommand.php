@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,7 +27,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
-use DateTime;
+use DateTimeImmutable;
 
 class AdSelectInventoryExporterCommand extends BaseCommand
 {
@@ -35,18 +35,11 @@ class AdSelectInventoryExporterCommand extends BaseCommand
 
     protected $description = 'Export campaigns inventory to AdSelect';
 
-    private AdSelectInventoryExporter $inventoryExporterService;
-
-    private NetworkCampaignRepository $campaignRepository;
-
     public function __construct(
         Locker $locker,
-        AdSelectInventoryExporter $inventoryExporterService,
-        NetworkCampaignRepository $campaignRepository
+        private readonly AdSelectInventoryExporter $inventoryExporterService,
+        private readonly NetworkCampaignRepository $campaignRepository,
     ) {
-        $this->inventoryExporterService = $inventoryExporterService;
-        $this->campaignRepository = $campaignRepository;
-
         parent::__construct($locker);
     }
 
@@ -74,7 +67,7 @@ class AdSelectInventoryExporterCommand extends BaseCommand
 
         $this->inventoryExporterService->export($activeCampaigns, $deletedCampaigns);
 
-        Config::upsertDateTime(Config::ADSELECT_INVENTORY_EXPORT_TIME, new DateTime());
+        Config::upsertDateTime(Config::ADSELECT_INVENTORY_EXPORT_TIME, new DateTimeImmutable());
 
         $this->info('Finished exporting inventory to AdSelect.');
         return self::SUCCESS;
