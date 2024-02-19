@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -89,8 +89,6 @@ class AdPayGetPayments extends BaseCommand
 
         DB::beginTransaction();
 
-        $reportProcessor->allocateCampaignExperimentBudgets($dateTime);
-
         UserLedgerEntry::removeProcessingExpenses();
 
         do {
@@ -144,6 +142,8 @@ class AdPayGetPayments extends BaseCommand
 
             $offset += $limit;
         } while ($limit === $calculationsCount);
+
+        $reportProcessor->allocateCampaignExperimentBudgets($dateTime);
 
         $ledgerEntriesCount = $this->processExpenses($reportProcessor->getAdvertiserExpenses());
         ConversionDefinition::updateCostAndOccurrences($reportProcessor->getProcessedConversionDefinitions());

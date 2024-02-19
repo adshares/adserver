@@ -494,7 +494,8 @@ SQL;
             );
         }
 
-        if (str_contains($request->getRequestUri(), '/credit-details/')) {
+        $areCreditEventsRequested = str_contains($request->getRequestUri(), '/credit-details/');
+        if ($areCreditEventsRequested) {
             $data = EventCreditLog::fetchPaid($paymentIds, $accountAddressDecoded, $limit, $offset)
                 ->map(fn(EventCreditLog $log) => [
                     'campaign_id' => $log->campaign_id,

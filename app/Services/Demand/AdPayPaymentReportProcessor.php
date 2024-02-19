@@ -90,17 +90,7 @@ class AdPayPaymentReportProcessor
         }
 
         $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'] = $budget - $value;
-
-        if ($isDirectDeal) {
-            $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - $value;
-        } else {
-            if ($value > $bonus) {
-                $this->advertisers[$advertiserPublicId]['bonusLeft'] = 0;
-                $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - ($value - $bonus);
-            } else {
-                $this->advertisers[$advertiserPublicId]['bonusLeft'] = $bonus - $value;
-            }
-        }
+        $this->chargeEventValue($advertiserPublicId, $value, $wallet, $bonus, $isDirectDeal);
 
         return $this->getEventValueAndStatus($value, $this->exchangeRate->toClick($value), $status);
     }
@@ -284,6 +274,7 @@ class AdPayPaymentReportProcessor
         $sspHosts = $this->getSspHosts();
 
         foreach ($campaigns as $userId => $userCampaigns) {
+            /** @var Campaign $campaign */
             foreach ($userCampaigns as $campaign) {
                 $experimentBudget = $campaign->getEffectiveExperimentBudget();
                 if ($experimentBudget <= 0) {
@@ -304,30 +295,15 @@ class AdPayPaymentReportProcessor
 
                 $value = (int)min($experimentBudget, $isDirectDeal ? $wallet : $wallet + $bonus);
 
-                if ($isDirectDeal) {
-                    $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - $value;
-                } else {
-                    if ($value > $bonus) {
-                        $this->advertisers[$advertiserPublicId]['bonusLeft'] = 0;
-                        $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - ($value - $bonus);
-                    } else {
-                        $this->advertisers[$advertiserPublicId]['bonusLeft'] = $bonus - $value;
-                    }
-                }
+                $this->chargeEventValue($advertiserPublicId, $value, $wallet, $bonus, $isDirectDeal);
 
-                foreach ($sspHosts as $ssp) {
-                    $eventValueInCurrency = (int)floor($value * $ssp['weight']);
-                    $eventValue = $this->exchangeRate->toClick($eventValueInCurrency);
-                    EventCreditLog::create(
-                        $computationDateTime,
-                        $advertiserPublicId,
-                        $campaign->uuid,
-                        $ssp['host'],
-                        $eventValueInCurrency,
-                        $this->exchangeRateValue,
-                        $eventValue,
-                    );
-                }
+                $this->splitExperimentBudgetBetweenHosts(
+                    $sspHosts,
+                    $value,
+                    $computationDateTime,
+                    $advertiserPublicId,
+                    $campaign->uuid,
+                );
             }
         }
     }
@@ -380,12 +356,12 @@ class AdPayPaymentReportProcessor
         ];
     }
 
-    private function getWalletLeft(string $uuid): mixed
+    private function getWalletLeft(string $uuid): int
     {
         return $this->advertisers[$uuid]['walletLeft'];
     }
 
-    private function getBonusLeft(string $uuid): mixed
+    private function getBonusLeft(string $uuid): int
     {
         return $this->advertisers[$uuid]['bonusLeft'];
     }
@@ -398,5 +374,46 @@ class AdPayPaymentReportProcessor
     private function getBudgetLeft(string $advertiserPublicId, string $campaignPublicId): mixed
     {
         return $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'];
+    }
+
+    private function chargeEventValue(
+        string $advertiserPublicId,
+        int $fee,
+        int $wallet,
+        int $bonus,
+        bool $isDirectDeal,
+    ): void {
+        if ($isDirectDeal) {
+            $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - $fee;
+        } else {
+            if ($fee > $bonus) {
+                $this->advertisers[$advertiserPublicId]['bonusLeft'] = 0;
+                $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - ($fee - $bonus);
+            } else {
+                $this->advertisers[$advertiserPublicId]['bonusLeft'] = $bonus - $fee;
+            }
+        }
+    }
+
+    private function splitExperimentBudgetBetweenHosts(
+        array $sspHosts,
+        int $value,
+        DateTimeInterface $computationDateTime,
+        string $advertiserPublicId,
+        string $campaignPublicId,
+    ): void {
+        foreach ($sspHosts as $ssp) {
+            $eventValueInCurrency = (int)floor($value * $ssp['weight']);
+            $eventValue = $this->exchangeRate->toClick($eventValueInCurrency);
+            EventCreditLog::create(
+                $computationDateTime,
+                $advertiserPublicId,
+                $campaignPublicId,
+                $ssp['host'],
+                $eventValueInCurrency,
+                $this->exchangeRateValue,
+                $eventValue,
+            );
+        }
     }
 }
