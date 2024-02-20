@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -526,7 +526,7 @@ class Campaign extends Model
 
     private function isCpa(): bool
     {
-        return 0 === $this->max_cpm && $this->conversions->isNotEmpty();
+        return 0 === $this->max_cpm;
     }
 
     public function isDirectDeal(): bool
