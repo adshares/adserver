@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -128,12 +128,7 @@ class NetworkCampaign extends Model
 
     public static function findSupplyIdsByDemandIdsAndAddress(array $demandIds, string $sourceAddress): array
     {
-        $binDemandIds = array_map(
-            function (string $item) {
-                return hex2bin($item);
-            },
-            $demandIds
-        );
+        $binDemandIds = array_map(fn(string $item) => hex2bin($item), $demandIds);
 
         $campaigns = self::whereIn('demand_campaign_id', $binDemandIds)
             ->where('source_address', $sourceAddress)
@@ -141,9 +136,25 @@ class NetworkCampaign extends Model
             ->get();
 
         $ids = [];
-
         foreach ($campaigns as $campaign) {
             $ids[$campaign->demand_campaign_id] = $campaign->uuid;
+        }
+
+        return $ids;
+    }
+
+    public static function findIdsByDemandIdsAndAddress(array $demandIds, string $sourceAddress): array
+    {
+        $binDemandIds = array_map(fn(string $item) => hex2bin($item), $demandIds);
+
+        $campaigns = self::whereIn('demand_campaign_id', $binDemandIds)
+            ->where('source_address', $sourceAddress)
+            ->select('id', 'demand_campaign_id')
+            ->get();
+
+        $ids = [];
+        foreach ($campaigns as $campaign) {
+            $ids[$campaign->demand_campaign_id] = $campaign->id;
         }
 
         return $ids;

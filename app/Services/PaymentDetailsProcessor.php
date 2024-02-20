@@ -24,8 +24,10 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Services;
 
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
+use Adshares\Adserver\Models\NetworkCreditPayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
@@ -49,9 +51,6 @@ class PaymentDetailsProcessor
         array $paymentDetails,
         int $carriedEventValueSum
     ): PaymentProcessingResult {
-        $transactionTime = $adsPayment->tx_time;
-        $adsPaymentId = $adsPayment->id;
-
         $exchangeRate = $this->fetchExchangeRate();
         $exchangeRateValue = $exchangeRate->getValue();
 
@@ -73,8 +72,8 @@ class PaymentDetailsProcessor
             $calculatedFees = $feeCalculator->calculateFee($eventValue);
 
             $networkCasePayment = NetworkCasePayment::create(
-                $transactionTime,
-                $adsPaymentId,
+                $adsPayment->tx_time,
+                $adsPayment->id,
                 $eventValue,
                 $calculatedFees['license_fee'],
                 $calculatedFees['operator_fee'],
@@ -94,13 +93,49 @@ class PaymentDetailsProcessor
     }
 
     public function processCredits(
-        AdsPayment $incomingPayment,
+        AdsPayment $adsPayment,
         array $creditDetails,
         int $carriedEventValueSum,
     ): PaymentProcessingResult {
+        $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
+
+        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), config('app.payment_rx_fee'));
         $totalLicenseFee = 0;
         $totalOperatorFee = 0;
         $totalEventValue = 0;
+
+        $campaignIds = NetworkCampaign::findIdsByDemandIdsAndAddress(
+            array_map(fn(array $creditDetail) => $creditDetail['campaign_id'], $creditDetails),
+            $adsPayment->address,
+        );
+
+        foreach ($creditDetails as $creditDetail) {
+            if (null === ($campaignId = $campaignIds[$creditDetail['campaign_id']] ?? null)) {
+                continue;
+            }
+
+            $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
+            $value = min($spendableAmount, $creditDetail['value']);
+            $calculatedFees = $feeCalculator->calculateFee($value);
+
+            NetworkCreditPayment::create(
+                $adsPayment->tx_time,
+                $adsPayment->id,
+                $campaignId,
+                $value,
+                $calculatedFees['license_fee'],
+                $calculatedFees['operator_fee'],
+                $calculatedFees['paid_amount'],
+                $exchangeRateValue,
+                $exchangeRate->fromClick($calculatedFees['paid_amount']),
+            )->save();
+
+            $totalLicenseFee += $calculatedFees['license_fee'];
+            $totalOperatorFee += $calculatedFees['operator_fee'];
+            $totalEventValue += $value;
+        }
+
         return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
     }
 

@@ -37,9 +37,11 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use DateTimeImmutable;
 
-final class DummyDemandClient implements DemandClient
+class DummyDemandClient implements DemandClient
 {
     public array $campaigns;
+    private static ?array $creditDetails = null;
+    private static ?array $paymentDetails = null;
 
     public function __construct()
     {
@@ -137,25 +139,29 @@ final class DummyDemandClient implements DemandClient
     public function fetchPaymentDetailsMeta(string $host, string $transactionId): array
     {
         return [
-            'credits' => [
+            'credits' => (null === self::$creditDetails) ? [
                 'count' => 0,
                 'sum' => 0,
+            ] : [
+                'count' => count(self::$creditDetails),
+                'sum' => array_reduce(self::$creditDetails, fn($carry, $item) => $carry + $item['value'], 0),
             ],
-            'events' => [
+            'events' => (null === self::$paymentDetails) ? [
                 'count' => 0,
                 'sum' => 0,
+            ] : [
+                'count' => count(self::$paymentDetails),
+                'sum' => array_reduce(self::$paymentDetails, fn($carry, $item) => $carry + $item['event_value'], 0),
             ],
         ];
     }
 
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        static $arr;
-
-        if ($arr === null) {
-            $arr = [];
+        if (self::$paymentDetails === null) {
+            self::$paymentDetails = [];
             for ($i = 0; $i < $limit; $i++) {
-                $arr[] = [
+                self::$paymentDetails[] = [
                     'case_id' => Uuid::v4()->hex(),
                     'event_id' => Uuid::v4()->hex(),
                     'event_type' => 'view',
@@ -164,7 +170,7 @@ final class DummyDemandClient implements DemandClient
                     'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
                     'event_value' => 1000,
                 ];
-                $arr[] = [
+                self::$paymentDetails[] = [
                     'case_id' => Uuid::v4()->hex(),
                     'event_id' => Uuid::v4()->hex(),
                     'event_type' => 'click',
@@ -175,18 +181,32 @@ final class DummyDemandClient implements DemandClient
                 ];
             }
         } else {
-            if ($offset >= count($arr)) {
+            if ($offset >= count(self::$paymentDetails)) {
                 throw new EmptyInventoryException('Empty list');
             }
-            return array_chunk($arr, $limit, false)[(int)floor($offset / $limit)];
+            return array_chunk(self::$paymentDetails, $limit)[(int)floor($offset / $limit)];
         }
 
-        return $arr;
+        return self::$paymentDetails;
     }
 
     public function fetchCreditDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        return [];
+        if (self::$creditDetails === null) {
+            self::$creditDetails = [];
+            for ($i = 0; $i < $limit; $i++) {
+                self::$creditDetails[] = [
+                    'campaign_id' => Uuid::v4()->hex(),
+                    'value' => 20_000,
+                ];
+            }
+        } else {
+            if ($offset >= count(self::$creditDetails)) {
+                throw new EmptyInventoryException('Empty list');
+            }
+            return array_chunk(self::$creditDetails, $limit)[(int)floor($offset / $limit)];
+        }
+        return self::$creditDetails;
     }
 
     public function fetchInfo(UrlInterface $infoUrl): Info

@@ -64,10 +64,48 @@ return new class extends Migration {
             $table->index('pay_to');
             $table->unique('uuid');
         });
+
+        Schema::create('ads_payment_metas', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->unsignedBigInteger('ads_payment_id');
+            $table->foreign('ads_payment_id')
+                ->references('id')
+                ->on('ads_payments')
+                ->onUpdate('RESTRICT')
+                ->onDelete('CASCADE');
+            $table->json('meta');
+        });
+
+        Schema::create('network_credit_payments', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->unsignedBigInteger('ads_payment_id');
+            $table->foreign('ads_payment_id')
+                ->references('id')
+                ->on('ads_payments')
+                ->onUpdate('RESTRICT')
+                ->onDelete('CASCADE');
+            $table->unsignedBigInteger('network_campaign_id');
+            $table->foreign('network_campaign_id')
+                ->references('id')
+                ->on('network_campaigns')
+                ->onUpdate('RESTRICT')
+                ->onDelete('CASCADE');
+            $table->timestamp('pay_time')->index();
+            $table->unsignedBigInteger('total_amount');
+            $table->unsignedBigInteger('license_fee');
+            $table->unsignedBigInteger('operator_fee');
+            $table->unsignedBigInteger('paid_amount');
+            $table->decimal('exchange_rate', 9, 5);
+            $table->unsignedBigInteger('paid_amount_currency');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('network_credit_payments');
+        Schema::dropIfExists('ads_payment_metas');
         Schema::dropIfExists('event_credit_logs');
 
         Schema::table('campaigns', function (Blueprint $table) {

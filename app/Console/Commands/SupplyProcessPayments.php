@@ -26,6 +26,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\AdsPaymentMeta;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\TurnoverEntry;
@@ -53,6 +54,13 @@ SELECT IFNULL(SUM(total_amount), 0) AS total_amount,
        IFNULL(SUM(license_fee), 0)  AS license_fee,
        IFNULL(SUM(operator_fee), 0) AS operator_fee
 FROM network_case_payments
+WHERE ads_payment_id = ?
+SQL;
+    private const SQL_QUERY_GET_PROCESSED_CREDITS = <<<SQL
+SELECT IFNULL(SUM(total_amount), 0) AS total_amount,
+       IFNULL(SUM(license_fee), 0)  AS license_fee,
+       IFNULL(SUM(operator_fee), 0) AS operator_fee
+FROM network_credit_payments
 WHERE ads_payment_id = ?
 SQL;
 
@@ -107,9 +115,27 @@ SQL;
                 continue;
             }
 
+            if (null === ($networkHost = NetworkHost::fetchByAddress($adsPayment->address))) {
+                ++$processedPaymentsTotal;
+                continue;
+            }
+
+            if (null === $adsPayment->adsPaymentMeta()->first()) {
+                try {
+                    $meta = $this->demandClient->fetchPaymentDetailsMeta($networkHost->host, $adsPayment->txid);
+                } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
+                    if (Response::HTTP_NOT_FOUND !== $unexpectedClientResponseException->getCode()) {
+                        ++$processedPaymentsTotal;
+                        continue;
+                    }
+                    $meta = [];
+                }
+                $adsPayment->adsPaymentMeta()->save(new AdsPaymentMeta(['meta' => $meta]));
+            }
+
             DB::beginTransaction();
             try {
-                $this->handleEventPaymentCandidate($adsPayment);
+                $this->handleEventPaymentCandidate($adsPayment, $networkHost);
                 $adsPayment->save();
 
                 DB::commit();
@@ -143,77 +169,96 @@ SQL;
         $this->info('End command ' . $this->getName());
     }
 
-    private function handleEventPaymentCandidate(AdsPayment $incomingPayment): void
+    private function handleEventPaymentCandidate(AdsPayment $incomingPayment, NetworkHost $networkHost): void
     {
-        if (null === ($networkHost = NetworkHost::fetchByAddress($incomingPayment->address))) {
+        /** @var AdsPaymentMeta $adsPaymentMeta */
+        $adsPaymentMeta = $incomingPayment->adsPaymentMeta()->first();
+        $meta = $adsPaymentMeta->meta;
+
+        $areEvents = !isset($meta['events']['count']) || ($meta['events']['count'] > 0);
+        $areCredits = ($meta['credits']['count'] ?? 0) > 0;
+
+        if (!$areEvents && !$areCredits) {
             return;
         }
 
         $resultsCollection = new LicenseFeeSender($this->adsClient, $this->licenseReader, $incomingPayment);
 
         $limit = (int)$this->option('chunkSize');
-        $offset = $incomingPayment->last_offset ?? 0;
-        if ($offset > 0) {
-            $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
-            $resultsCollection->add(
-                new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
-            );
+
+        if ($areEvents) {
+            $offset = $incomingPayment->last_offset ?? 0;
+            if ($offset > 0) {
+                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
+                $resultsCollection->add(
+                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
+                );
+            }
+
+            do {
+                try {
+                    $paymentDetails = $this->demandClient->fetchPaymentDetails(
+                        $networkHost->host,
+                        $incomingPayment->txid,
+                        $limit,
+                        $offset,
+                    );
+                } catch (EmptyInventoryException) {
+                    break;
+                } catch (UnexpectedClientResponseException) {
+                    return;
+                }
+
+                $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
+                    $incomingPayment,
+                    $paymentDetails,
+                    $resultsCollection->eventValueSum()
+                );
+                $resultsCollection->add($processPaymentDetails);
+
+                $offset += count($paymentDetails);
+                $incomingPayment->last_offset = $offset;
+                $meta['events']['offset'] = $offset;
+                $adsPaymentMeta->meta = $meta;
+                $adsPaymentMeta->save();
+            } while (count($paymentDetails) === $limit);
         }
 
-        do {
-            try {
-                $paymentDetails = $this->demandClient->fetchPaymentDetails(
-                    $networkHost->host,
-                    $incomingPayment->txid,
-                    $limit,
-                    $offset
+        if ($areCredits) {
+            $offset = $meta['credits']['offset'] ?? 0;
+            if ($offset > 0) {
+                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_CREDITS, [$incomingPayment->id]);
+                $resultsCollection->add(
+                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
                 );
-            } catch (EmptyInventoryException) {
-                if ($offset > 0) {
-                    break;
-                }
-                return;
-            } catch (UnexpectedClientResponseException) {
-                return;
             }
+            do {
+                try {
+                    $creditDetails = $this->demandClient->fetchCreditDetails(
+                        $networkHost->host,
+                        $incomingPayment->txid,
+                        $limit,
+                        $offset,
+                    );
+                } catch (EmptyInventoryException) {
+                    break;
+                } catch (UnexpectedClientResponseException) {
+                    return;
+                }
 
-            $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
-                $incomingPayment,
-                $paymentDetails,
-                $resultsCollection->eventValueSum()
-            );
-            $resultsCollection->add($processPaymentDetails);
-
-            $incomingPayment->last_offset = $offset += $limit;
-        } while (count($paymentDetails) === $limit);
-
-        $offset = 0;
-        do {
-            try {
-                $creditDetails = $this->demandClient->fetchCreditDetails(
-                    $networkHost->host,
-                    $incomingPayment->txid,
-                    $limit,
-                    $offset,
+                $processPaymentDetails = $this->paymentDetailsProcessor->processCredits(
+                    $incomingPayment,
+                    $creditDetails,
+                    $resultsCollection->eventValueSum(),
                 );
-            } catch (EmptyInventoryException) {
-                break;
-            } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
-                if (Response::HTTP_NOT_FOUND === $unexpectedClientResponseException->getCode()) {
-                    break;
-                }
-                return;
-            }
+                $resultsCollection->add($processPaymentDetails);
 
-//            $processPaymentDetails = $this->paymentDetailsProcessor->processCredits(
-//                $incomingPayment,
-//                $creditDetails,
-//                $resultsCollection->eventValueSum(),
-//            );
-//            $resultsCollection->add($processPaymentDetails);
-
-            $offset += $limit;
-        } while (count($creditDetails) === $limit);
+                $offset += count($creditDetails);
+                $meta['credits']['offset'] = $offset;
+                $adsPaymentMeta->meta = $meta;
+                $adsPaymentMeta->save();
+            } while (count($creditDetails) === $limit);
+        }
 
         $this->storeTurnoverEntries($resultsCollection, $incomingPayment);
         $this->paymentDetailsProcessor->addAdIncomeToUserLedger($incomingPayment);

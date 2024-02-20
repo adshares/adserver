@@ -23,10 +23,13 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\AdsPaymentMeta;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkCasePayment;
+use Adshares\Adserver\Models\NetworkCreditPayment;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
@@ -42,9 +45,10 @@ use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Domain\ValueObject\Status;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class SupplyProcessPaymentsTest extends ConsoleTestCase
 {
@@ -167,6 +171,62 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         }
     }
 
+    public function testAdsProcessCreditPayment(): void
+    {
+        $demandClient = new DummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+
+        $creditDetails = $demandClient->fetchCreditDetails('', '', 4, 0);
+
+        [$totalAmount, $licenseFee, $operatorFee] = $this->computeIncomeFromCredit($creditDetails);
+        $publishersIncome = $totalAmount - $licenseFee - $operatorFee;
+
+        $adsPayment = AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => $totalAmount,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
+
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        $this->assertEquals($totalAmount, NetworkCreditPayment::sum('total_amount'));
+        $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
+//        $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertAdPaymentProcessedEventDispatched(1);
+        self::assertDatabaseCount(TurnoverEntry::class, 4);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => $totalAmount,
+                'type' => TurnoverEntryType::SspIncome->name,
+            ],
+            [
+                'ads_address' => hex2bin('FFFF00000000'),
+                'amount' => $licenseFee,
+                'type' => TurnoverEntryType::SspLicenseFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $operatorFee,
+                'type' => TurnoverEntryType::SspOperatorFee->name,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $publishersIncome,
+                'type' => TurnoverEntryType::SspPublishersIncome->name,
+            ],
+        ];
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+        self::assertDatabaseCount(AdsPaymentMeta::class, 1);
+        $adsPaymentMeta = AdsPaymentMeta::first();
+        self::assertEquals($adsPayment->id, $adsPaymentMeta->ads_payment_id);
+        self::assertEquals(4, $adsPaymentMeta->meta['credits']['offset']);
+    }
+
     public function testAdsProcessEventPaymentWhileDetailsCountIsEqualToLimit(): void
     {
         $demandClient = new DummyDemandClient();
@@ -225,7 +285,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $networkHost = self::registerHost($demandClient);
 
         $networkImpression = NetworkImpression::factory()->create();
-        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 100, 0);
 
         foreach ($paymentDetails as $paymentDetail) {
             $publisherId = $paymentDetail['publisher_id'];
@@ -343,6 +403,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 $dummyDemandClient = new DummyDemandClient();
 
                 $demandClient = $this->createMock(DemandClient::class);
+                $demandClient->method('fetchPaymentDetailsMeta')->willReturnCallback(
+                    fn(string $host, string $transactionId) => $dummyDemandClient->fetchPaymentDetailsMeta(
+                        $host,
+                        $transactionId,
+                    )
+                );
                 $demandClient->method('fetchPaymentDetails')->willReturnCallback(
                     function (
                         string $host,
@@ -491,6 +557,36 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             $eventFee = (int)floor($eventValue * $licenseFeeCoefficient);
             $licenseFee += $eventFee;
             $operatorFee += (int)floor(($eventValue - $eventFee) * $operatorFeeCoefficient);
+        }
+
+        return [$totalAmount, $licenseFee, $operatorFee];
+    }
+
+    private function computeIncomeFromCredit(array $creditDetails): array
+    {
+        $totalAmount = 0;
+        $licenseFee = 0;
+        $operatorFee = 0;
+
+        /** @var LicenseReader $licenseReader */
+        $licenseReader = app()->make(LicenseReader::class);
+        $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
+        $operatorFeeCoefficient = 0.01;
+
+        foreach ($creditDetails as $creditDetail) {
+            NetworkCampaign::factory()->create(
+                [
+                    'demand_campaign_id' => $creditDetail['campaign_id'],
+                    'source_address' => '0001-00000004-DBEB',
+                    'status' => Status::STATUS_ACTIVE,
+                ]
+            );
+
+            $value = (int)$creditDetail['value'];
+            $totalAmount += $value;
+            $eventFee = (int)floor($value * $licenseFeeCoefficient);
+            $licenseFee += $eventFee;
+            $operatorFee += (int)floor(($value - $eventFee) * $operatorFeeCoefficient);
         }
 
         return [$totalAmount, $licenseFee, $operatorFee];
