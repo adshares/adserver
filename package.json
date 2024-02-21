@@ -14,7 +14,7 @@
     "watch-poll": "mix watch -- --watch-options-poll=1000"
   },
   "devDependencies": {
-    "axios": "^0.21",
+    "axios": "^0.28",
     "bootstrap": "^4.3",
     "cross-env": "^7.0.3",
     "jquery": "^3.4",
