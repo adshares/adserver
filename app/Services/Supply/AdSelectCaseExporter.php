@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ namespace Adshares\Adserver\Services\Supply;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkCasePayment;
+use Adshares\Adserver\Models\NetworkCreditPayment;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
@@ -126,10 +127,11 @@ class AdSelectCaseExporter
         return $exported;
     }
 
-    public function exportCasePayments(int $casePaymentIdFrom): int
+    public function exportCasePayments(): int
     {
         $exported = 0;
         $caseIdMax = $this->getCaseIdToExport();
+        $casePaymentIdFrom = $this->getCasePaymentIdToExport();
 
         $maxId = NetworkCasePayment::max('id');
         $totalEstimate = $maxId - $casePaymentIdFrom + 1;
@@ -156,6 +158,26 @@ class AdSelectCaseExporter
 
         $this->output->writeln("");
         return $exported;
+    }
+
+    public function exportCreditPayments(): int
+    {
+        $exportedCount = 0;
+        $creditPaymentIdFrom = $this->getCasePaymentIdToExport();
+
+        do {
+            $creditPayments = NetworkCreditPayment::fetchPaymentsToExport($creditPaymentIdFrom, self::PACKAGE_SIZE);
+            if ($creditPayments->isEmpty()) {
+                break;
+            }
+
+            $this->adSelectClient->exportCreditPayments($creditPayments);
+
+            $creditPaymentIdFrom = $creditPayments->last()->id + 1;
+            $exportedCount += $creditPayments->count();
+        } while ($creditPayments->count() === self::PACKAGE_SIZE);
+
+        return $exportedCount;
     }
 
     public function getCaseIdToExport(): int

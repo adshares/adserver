@@ -21,13 +21,42 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 
+/**
+ * @property int id
+ * @property DateTimeInterface created_at
+ * @property DateTimeInterface updated_at
+ * @property DateTimeInterface pay_time
+ * @property int ads_payment_id
+ * @property int network_campaign_id
+ * @property int total_amount
+ * @property int license_fee
+ * @property int operator_fee
+ * @property int paid_amount
+ * @property float exchange_rate
+ * @property int paid_amount_currency
+ * @mixin Builder
+ */
 class NetworkCreditPayment extends Model
 {
+    use AutomateMutators;
+    use BinHex;
     use HasFactory;
+
+    protected $dates = [
+        'pay_time',
+    ];
+
+    protected $traitAutomate = [
+        'campaign_public_id' => 'BinHex',
+    ];
 
     public static function create(
         DateTimeInterface $payTime,
@@ -51,5 +80,35 @@ class NetworkCreditPayment extends Model
         $p->exchange_rate = $exchangeRate;
         $p->paid_amount_currency = $paidAmountCurrency;
         return $p;
+    }
+
+    public static function fetchPaymentsToExport(
+        int $idFrom,
+        int $limit,
+        int $offset = 0,
+    ): Collection {
+        return self::select(
+            [
+                'network_credit_payments.*',
+                'ads_payments.address as payer',
+                'network_campaigns.uuid AS campaign_public_id',
+            ]
+        )
+            ->where('network_credit_payments.id', '>=', $idFrom)
+            ->join(
+                'ads_payments',
+                'network_credit_payments.ads_payment_id',
+                '=',
+                'ads_payments.id'
+            )
+            ->join(
+                'network_campaigns',
+                'network_credit_payments.network_campaign_id',
+                '=',
+                'network_campaigns.id'
+            )
+            ->take($limit)
+            ->skip($offset)
+            ->get();
     }
 }

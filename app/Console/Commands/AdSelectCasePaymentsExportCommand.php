@@ -51,10 +51,15 @@ class AdSelectCasePaymentsExportCommand extends BaseCommand
         $this->info('[AdSelectCaseExport] Start command ' . $this->signature);
 
         try {
-            $casePaymentIdFrom = $this->adSelectCaseExporter->getCasePaymentIdToExport();
-            $exportedCount = $this->adSelectCaseExporter->exportCasePayments($casePaymentIdFrom);
+            $exportedCount = $this->adSelectCaseExporter->exportCasePayments();
+            $this->info(sprintf('[AdSelectCaseExport] Exported %s payment(s)', $exportedCount));
+        } catch (UnexpectedClientResponseException | RuntimeException $exception) {
+            $this->error($exception->getMessage());
+        }
 
-            $this->info(sprintf('[AdSelectCaseExport] Exported %s payments', $exportedCount));
+        try {
+            $exportedCount = $this->adSelectCaseExporter->exportCreditPayments();
+            $this->info(sprintf('[AdSelectCaseExport] Exported %s credit payment(s)', $exportedCount));
         } catch (UnexpectedClientResponseException | RuntimeException $exception) {
             $this->error($exception->getMessage());
         }
