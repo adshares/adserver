@@ -134,6 +134,9 @@ class Config extends Model
     public const INVOICE_CURRENCIES = 'invoice-currencies';
     public const INVOICE_ENABLED = 'invoice-enabled';
     public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
+    public const JOINING_FEE_ENABLED = 'joining-fee-enabled';
+    public const JOINING_FEE_MIN_VALUE = 'joining-fee-min-value';
+    public const JOINING_FEE_VALUE = 'joining-fee-value';
     public const LANDING_URL = 'landing-url';
     public const LAST_UPDATED_IMPRESSION_ID = 'last-updated-impression-id';
     public const MAIL_FROM_ADDRESS = 'mail-from-address';
@@ -262,6 +265,9 @@ class Config extends Model
         self::INVOICE_COMPANY_BANK_ACCOUNTS => ConfigTypes::Json,
         self::INVOICE_CURRENCIES => ConfigTypes::Array,
         self::INVOICE_ENABLED => ConfigTypes::Bool,
+        self::JOINING_FEE_ENABLED => ConfigTypes::Bool,
+        self::JOINING_FEE_MIN_VALUE => ConfigTypes::Integer,
+        self::JOINING_FEE_VALUE => ConfigTypes::Integer,
         self::MAX_INVALID_LOGIN_ATTEMPTS => ConfigTypes::Integer,
         self::MAX_PAGE_ZONES => ConfigTypes::Integer,
         self::MAIL_SMTP_PORT => ConfigTypes::Integer,
@@ -527,6 +533,9 @@ class Config extends Model
             self::INVOICE_CURRENCIES => [],
             self::INVOICE_ENABLED => false,
             self::INVOICE_NUMBER_FORMAT => 'INV NNNN/MM/YYYY',
+            self::JOINING_FEE_ENABLED => true,
+            self::JOINING_FEE_MIN_VALUE => 10_000_000_000_000,
+            self::JOINING_FEE_VALUE => 10_000_000_000_000,
             self::LANDING_URL => $fetched[self::ADPANEL_URL] ?? $adpanelUrlDefault,
             self::MAIL_FROM_ADDRESS => $fetched[self::SUPPORT_EMAIL] ?? '',
             self::MAIL_FROM_NAME => 'Adshares AdServer',

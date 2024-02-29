@@ -122,10 +122,20 @@ return new class extends Migration {
             $table->decimal('exchange_rate', 9, 5);
             $table->unsignedBigInteger('paid_amount_currency');
         });
+
+        Schema::create('ssp_hosts', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->softDeletes();
+            $table->binary('ads_address');
+            $table->boolean('accepted')->default(false);
+        });
+        DB::statement('ALTER TABLE ssp_hosts MODIFY ads_address VARBINARY(6)');
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('ssp_hosts');
         Schema::dropIfExists('network_credit_payments');
         Schema::dropIfExists('ads_payment_metas');
         Schema::dropIfExists('event_credit_logs');
