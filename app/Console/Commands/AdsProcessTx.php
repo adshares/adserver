@@ -33,13 +33,16 @@ use Adshares\Adserver\Mail\CampaignResume;
 use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Common\AdsLogReader;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -222,56 +225,62 @@ class AdsProcessTx extends BaseCommand
     private function handleSendOneTx(AdsPayment $adsPayment, SendOneTransaction $transaction): void
     {
         $adsPayment->tx_time = $transaction->getTime();
-
         $targetAddress = $transaction->getTargetAddress();
 
         if ($targetAddress === config('app.adshares_address')) {
             $message = $transaction->getMessage();
-            $uuid = $this->extractUuidFromMessage($message);
-            $user = User::fetchByUuid($uuid);
+            $decoded = AdsUtils::decodeMessage($message);
+
+            if (AdsPayment::MESSAGE_NETWORK_PAYMENT === $decoded) {
+                $this->handleNetworkPayment($adsPayment, $transaction);
+                return;
+            }
+
+            $user = User::fetchByUuid($this->extractUuidFromMessage($message));
 
             if (null === $user) {
                 $this->handleReservedTx($adsPayment);
-            } else {
-                DB::beginTransaction();
-
-                $senderAddress = $transaction->getSenderAddress();
-                $appCurrency = Currency::from(config('app.currency'));
-                $amount = $transaction->getAmount();
-                if (Currency::ADS !== $appCurrency) {
-                    $amount = $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)
-                        ->fromClick($amount);
-                }
-
-                $ledgerEntry = UserLedgerEntry::construct(
-                    $user->id,
-                    $amount,
-                    UserLedgerEntry::STATUS_ACCEPTED,
-                    UserLedgerEntry::TYPE_DEPOSIT
-                )->addressed($senderAddress, $targetAddress)
-                    ->processed($adsPayment->txid);
-
-                $adsPayment->status = AdsPayment::STATUS_USER_DEPOSIT;
-
-                $ledgerEntry->save();
-                $adsPayment->save();
-
-                if (null !== $user->email) {
-                    Mail::to($user)->queue(new DepositProcessed($amount, $appCurrency));
-                }
-
-                $reactivatedCount = $this->reactivateSuspendedCampaigns($user);
-                if ($reactivatedCount > 0) {
-                    Log::debug(sprintf('We restarted all suspended campaigns owned by user [%s].', $user->id));
-                    if (null !== $user->email) {
-                        Mail::to($user)->queue(new CampaignResume());
-                    }
-                }
-
-                DB::commit();
-                $transactionId = $transaction->getId();
-                ServerEvent::dispatch(ServerEventType::UserDepositProcessed, compact('amount', 'transactionId'));
+                return;
             }
+
+            DB::beginTransaction();
+
+            $senderAddress = $transaction->getSenderAddress();
+            $appCurrency = Currency::from(config('app.currency'));
+            $amount = $transaction->getAmount();
+            if (Currency::ADS !== $appCurrency) {
+                $amount = $this->exchangeRateReader->fetchExchangeRate(null, $appCurrency->value)
+                    ->fromClick($amount);
+            }
+
+            $ledgerEntry = UserLedgerEntry::construct(
+                $user->id,
+                $amount,
+                UserLedgerEntry::STATUS_ACCEPTED,
+                UserLedgerEntry::TYPE_DEPOSIT
+            )->addressed($senderAddress, $targetAddress)
+                ->processed($adsPayment->txid);
+
+            $adsPayment->status = AdsPayment::STATUS_USER_DEPOSIT;
+
+            $ledgerEntry->save();
+            $adsPayment->save();
+
+            if (null !== $user->email) {
+                Mail::to($user)->queue(new DepositProcessed($amount, $appCurrency));
+            }
+
+            $reactivatedCount = $this->reactivateSuspendedCampaigns($user);
+            if ($reactivatedCount > 0) {
+                Log::debug(sprintf('We restarted all suspended campaigns owned by user [%s].', $user->id));
+                if (null !== $user->email) {
+                    Mail::to($user)->queue(new CampaignResume());
+                }
+            }
+
+            DB::commit();
+            $transactionId = $transaction->getId();
+            ServerEvent::dispatch(ServerEventType::UserDepositProcessed, compact('amount', 'transactionId'));
         } else {
             $adsPayment->status = AdsPayment::STATUS_INVALID;
             $adsPayment->save();
@@ -281,6 +290,19 @@ class AdsProcessTx extends BaseCommand
     private function extractUuidFromMessage(string $message): string
     {
         return substr($message, -32);
+    }
+
+    private function handleNetworkPayment(AdsPayment $adsPayment, SendOneTransaction $transaction): void
+    {
+        $adsPayment->status = AdsPayment::STATUS_NETWORK_PAYMENT;
+        $adsPayment->save();
+
+        TurnoverEntry::increaseOrInsert(
+            $transaction->getTime(),
+            TurnoverEntryType::DspNetworkIncome,
+            $transaction->getAmount(),
+            $transaction->getSenderAddress(),
+        );
     }
 
     private function reactivateSuspendedCampaigns(User $user): int

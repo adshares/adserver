@@ -65,6 +65,8 @@ class TurnoverEntry extends Model
         'SUM(IF(type = "SspLicenseFee", amount, 0)) AS SspLicenseFee',
         'SUM(IF(type = "SspOperatorFee", amount, 0)) AS SspOperatorFee',
         'SUM(IF(type = "SspPublishersIncome", amount, 0)) AS SspPublishersIncome',
+        'SUM(IF(type = "DspNetworkIncome", amount, 0)) AS DspNetworkIncome',
+        'SUM(IF(type = "SspNetworkExpense", amount, 0)) AS SspNetworkExpense',
     ];
 
     protected $casts = [
@@ -188,6 +190,8 @@ class TurnoverEntry extends Model
             'SspLicenseFee' => 0,
             'SspOperatorFee' => 0,
             'SspPublishersIncome' => 0,
+            'DspNetworkIncome' => 0,
+            'SspNetworkExpense' => 0,
         ];
 
         foreach ($rows as $row) {
@@ -205,6 +209,8 @@ class TurnoverEntry extends Model
                 'SspLicenseFee' => (int)$row->SspLicenseFee,
                 'SspOperatorFee' => (int)$row->SspOperatorFee,
                 'SspPublishersIncome' => (int)$row->SspPublishersIncome,
+                'DspNetworkIncome' => (int)$row->DspNetworkIncome,
+                'SspNetworkExpense' => (int)$row->SspNetworkExpense,
                 'date' => $date->format(DateTimeInterface::ATOM),
             ];
             DateUtils::advanceStartDate($resolution, $date);

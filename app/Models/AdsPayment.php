@@ -51,7 +51,10 @@ class AdsPayment extends Model
     public const STATUS_EVENT_PAYMENT = 2;
     public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
     public const STATUS_EVENT_PAYMENT_CANDIDATE = 4;
+    public const STATUS_NETWORK_PAYMENT = 5;
     public const STATUS_RESERVED = 64;
+
+    public const MESSAGE_NETWORK_PAYMENT = 'Adshares network fee';
 
     protected $casts = [
         'amount' => 'int',

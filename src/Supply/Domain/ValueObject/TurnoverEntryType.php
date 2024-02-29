@@ -34,4 +34,6 @@ enum TurnoverEntryType: string
     case SspLicenseFee = 'SspLicenseFee';
     case SspOperatorFee = 'SspOperatorFee';
     case SspPublishersIncome = 'SspPublishersIncome';
+    case DspNetworkIncome = 'DspNetworkIncome';
+    case SspNetworkExpense = 'SspNetworkExpense';
 }

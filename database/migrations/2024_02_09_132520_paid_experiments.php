@@ -19,6 +19,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,27 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        $allowedTypes = [
+            TurnoverEntryType::DspAdvertisersExpense,
+            TurnoverEntryType::DspLicenseFee,
+            TurnoverEntryType::DspOperatorFee,
+            TurnoverEntryType::DspCommunityFee,
+            TurnoverEntryType::DspExpense,
+            TurnoverEntryType::SspIncome,
+            TurnoverEntryType::SspLicenseFee,
+            TurnoverEntryType::SspOperatorFee,
+            TurnoverEntryType::SspPublishersIncome,
+            TurnoverEntryType::DspNetworkIncome,
+            TurnoverEntryType::SspNetworkExpense,
+        ];
+        $allowed = join(',', array_map(fn($status) => "'" . $status->value . "'", $allowedTypes));
+        DB::statement(
+            sprintf(
+                'ALTER TABLE `turnover_entries` CHANGE `type` `type` ENUM(%s) NOT NULL',
+                $allowed,
+            )
+        );
+
         Schema::table('campaigns', function (Blueprint $table) {
             $table->bigInteger('experiment_budget')
                 ->nullable(false)
@@ -111,5 +133,28 @@ return new class extends Migration {
         Schema::table('campaigns', function (Blueprint $table) {
             $table->dropColumn(['experiment_budget', 'experiment_end_at']);
         });
+
+        DB::delete('DELETE FROM turnover_entries WHERE type IN (?, ?)', [
+            TurnoverEntryType::DspNetworkIncome->value,
+            TurnoverEntryType::SspNetworkExpense->value,
+        ]);
+        $allowedTypes = [
+            TurnoverEntryType::DspAdvertisersExpense,
+            TurnoverEntryType::DspLicenseFee,
+            TurnoverEntryType::DspOperatorFee,
+            TurnoverEntryType::DspCommunityFee,
+            TurnoverEntryType::DspExpense,
+            TurnoverEntryType::SspIncome,
+            TurnoverEntryType::SspLicenseFee,
+            TurnoverEntryType::SspOperatorFee,
+            TurnoverEntryType::SspPublishersIncome,
+        ];
+        $allowed = join(',', array_map(fn($status) => "'" . $status->value . "'", $allowedTypes));
+        DB::statement(
+            sprintf(
+                'ALTER TABLE `turnover_entries` CHANGE `type` `type` ENUM(%s) NOT NULL',
+                $allowed,
+            )
+        );
     }
 };
