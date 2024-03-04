@@ -77,7 +77,7 @@ LIMIT ?
 OFFSET ?;
 SQL;
     private const SQL_QUERY_SELECT_EVENTS_AGGREGATES_FOR_PAYMENT_DETAILS_TEMPLATE = <<<SQL
-SELECT SUM(m._count) AS _count, SUM(m._sum) AS _sum FROM 
+SELECT SUM(m._count) AS _count, SUM(m._sum) AS _sum FROM
 (
   SELECT COUNT(1) AS _count, SUM(paid_amount) AS _sum FROM conversions WHERE payment_id IN (%s)
   UNION ALL

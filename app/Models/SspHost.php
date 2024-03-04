@@ -49,12 +49,13 @@ class SspHost extends Model
         'ads_address' => 'AccountAddress',
     ];
 
-    public static function create(string $adsAddress, bool $accepted = false): void
+    public static function create(string $adsAddress, bool $accepted = false): self
     {
         $sspHost = new self();
         $sspHost->ads_address = $adsAddress;
         $sspHost->accepted = $accepted;
         $sspHost->save();
+        return $sspHost;
     }
 
     public static function fetchByAdsAddress(string $adsAddress): ?SspHost

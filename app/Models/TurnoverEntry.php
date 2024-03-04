@@ -222,4 +222,11 @@ class TurnoverEntry extends Model
         $result[0]['date'] = $from->format(DateTimeInterface::ATOM);
         return $result;
     }
+
+    public static function getNetworkIncome(string $adsAddress): int
+    {
+        return (int)self::where('type', TurnoverEntryType::DspNetworkIncome->value)
+            ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
+            ->sum('amount');
+    }
 }

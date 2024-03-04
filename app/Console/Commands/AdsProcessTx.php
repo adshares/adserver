@@ -33,6 +33,7 @@ use Adshares\Adserver\Mail\CampaignResume;
 use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -69,7 +70,6 @@ class AdsProcessTx extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->getName() . ' already running');
-
             return self::EXIT_CODE_LOCKED;
         }
 
@@ -303,6 +303,18 @@ class AdsProcessTx extends BaseCommand
             $transaction->getAmount(),
             $transaction->getSenderAddress(),
         );
+
+        $sspHost = SspHost::fetchByAdsAddress($transaction->getSenderAddress());
+        if (null === $sspHost) {
+            $sspHost = SspHost::create($transaction->getSenderAddress());
+        }
+        if (
+            config('app.joining_fee_enabled') &&
+            !$sspHost->accepted &&
+            TurnoverEntry::getNetworkIncome($transaction->getSenderAddress()) > config('app.joining_fee_value')
+        ) {
+            $sspHost->accept();
+        }
     }
 
     private function reactivateSuspendedCampaigns(User $user): int
