@@ -82,6 +82,7 @@ class TargetingReachFetchTest extends ConsoleTestCase
             AppMode::OPERATIONAL,
             'example.com',
             false,
+            0,
         );
         NetworkHost::factory()->create([
             'address' => '0001-00000004-DBEB',

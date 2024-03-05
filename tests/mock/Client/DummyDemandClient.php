@@ -228,6 +228,7 @@ class DummyDemandClient implements DemandClient
             AppMode::OPERATIONAL,
             'example.com',
             false,
+            0,
         );
 
         $info->setDemandFee(0.01);
