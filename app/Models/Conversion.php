@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Carbon\Carbon;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -172,6 +173,18 @@ class Conversion extends Model
         return null !== self::where('conversion_definition_id', $conversionDefinitionId)
             ->whereIn('case_id', $binaryCaseIds)
             ->first();
+    }
+
+    public static function fetchPaidConversionsByCampaignId(DateTimeInterface $from, array $addresses): Collection
+    {
+        $payTo = array_map(fn($address) => hex2bin(AdsUtils::decodeAddress($address)), $addresses);
+        return self::query()
+            ->selectRaw('campaign_id, pay_to, SUM(conversions.event_value) AS value')
+            ->join('conversion_definitions', 'conversions.conversion_definition_id', '=', 'conversion_definitions.id')
+            ->where('conversions.created_at', '>=', $from)
+            ->whereIn('conversions.pay_to', $payTo)
+            ->groupBy('campaign_id', 'pay_to')
+            ->get();
     }
 
     public function setStatus(int $status): void

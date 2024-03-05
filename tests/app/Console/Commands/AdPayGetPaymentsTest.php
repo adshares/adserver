@@ -30,8 +30,11 @@ use Adshares\Adserver\Exceptions\Demand\AdPayReportNotReadyException;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\Conversion;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
-use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\SspHost;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
@@ -42,10 +45,9 @@ use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
-
-use function json_decode;
 
 class AdPayGetPaymentsTest extends ConsoleTestCase
 {
@@ -383,12 +385,22 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        Campaign::factory()->create([
+        $campaign = Campaign::factory()->create([
             'budget' => 5_000_000_000,
             'experiment_budget' => 5_000_000_000,
             'status' => Campaign::STATUS_ACTIVE,
             'user_id' => $user,
         ]);
+        $conversionDefinition = ConversionDefinition::factory()->create([
+            'campaign_id' => $campaign->id,
+        ]);
+        Conversion::factory()->create(
+            [
+                'conversion_definition_id' => $conversionDefinition->id,
+                'pay_to' => '0001-00000001-8B4E',
+                'event_value' => 30_000_000_000_000,
+            ]
+        );
 
         Campaign::factory()->create([
             'budget' => 5_000_000_000,
@@ -402,16 +414,30 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             'type' => UserLedgerEntry::TYPE_DEPOSIT,
         ]);
 
-        NetworkHost::factory()->create([
-            'address' => '0001-00000001-8B4E',
-        ]);
+        TurnoverEntry::factory()
+            ->count(2)
+            ->sequence(
+                ['ads_address' => '0001-00000001-8B4E'],
+                ['ads_address' => '0001-00000002-BB2D'],
+            )->create([
+                'amount' => 10_000_000_000_000,
+                'type' => TurnoverEntryType::DspNetworkIncome,
+            ]);
+        SspHost::factory()
+            ->count(2)
+            ->sequence(
+                ['ads_address' => '0001-00000001-8B4E'],
+                ['ads_address' => '0001-00000002-BB2D'],
+            )->create([
+                'accepted' => true,
+            ]);
 
         $this->artisan(self::COMMAND_SIGNATURE)
             ->assertExitCode(AdPayGetPayments::STATUS_OK);
 
         $this->assertEquals(45_004_500_450, $user->getWalletBalance());//15_000_000_000
         $this->assertDatabaseHas('event_credit_logs', [
-            'event_value_currency' => 5_000_000_000,
+            'event_value_currency' => 4_000_000_000,
             'pay_to' => hex2bin('000100000001'),
         ]);
     }

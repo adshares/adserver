@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -56,6 +57,12 @@ class SspHost extends Model
         $sspHost->accepted = $accepted;
         $sspHost->save();
         return $sspHost;
+    }
+
+    public static function fetchAccepted(): Collection
+    {
+        return SspHost::where('accepted', true)
+            ->get();
     }
 
     public static function fetchByAdsAddress(string $adsAddress): ?SspHost
