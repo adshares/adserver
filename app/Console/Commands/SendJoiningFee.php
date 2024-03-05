@@ -35,14 +35,14 @@ use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 
-class SendNetworkFee extends BaseCommand
+class SendJoiningFee extends BaseCommand
 {
-    private const COMMAND_SIGNATURE = 'ops:supply:network-fee';
+    private const COMMAND_SIGNATURE = 'ops:supply:joining-fee';
 
     protected $signature = self::COMMAND_SIGNATURE
     . ' {address : Recipient address}'
     . ' {amount : Amount to send in clicks}';
-    protected $description = 'Sends amount to DSP to cover network fee';
+    protected $description = 'Sends amount to DSP to cover joining fee';
 
     public function __construct(
         Locker $locker,
@@ -64,7 +64,7 @@ class SendNetworkFee extends BaseCommand
         }
 
         $this->info(sprintf('Sending %d to %s', $amount, $address));
-        $command = new SendOneCommand($address, $amount, AdsUtils::encodeMessage(AdsPayment::MESSAGE_NETWORK_PAYMENT));
+        $command = new SendOneCommand($address, $amount, AdsUtils::encodeMessage(AdsPayment::MESSAGE_JOINING_FEE));
 
         try {
             $response = $this->adsClient->runTransaction($command);

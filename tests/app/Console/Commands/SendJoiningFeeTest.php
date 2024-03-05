@@ -26,7 +26,7 @@ use Adshares\Ads\Response\RawResponse;
 use Adshares\Ads\Response\TransactionResponse;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 
-class SendNetworkFeeTest extends ConsoleTestCase
+class SendJoiningFeeTest extends ConsoleTestCase
 {
     public function testHandle(): void
     {
@@ -35,7 +35,7 @@ class SendNetworkFeeTest extends ConsoleTestCase
         $this->app->bind(AdsClient::class, fn() => $mockAdsClient);
 
         $this->artisan(
-            'ops:supply:network-fee',
+            'ops:supply:joining-fee',
             [
                 'address' => '0001-00000001-8B4E',
                 'amount' => '10000',

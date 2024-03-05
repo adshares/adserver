@@ -64,6 +64,7 @@ class InfoControllerTest extends TestCase
                 'mode' => 'operational',
                 'adsTxtDomain' => 'example.com',
                 'adsTxtRequired' => false,
+                'joiningFee' => 10_000_000_000_000,
             ],
             $response->json()
         );

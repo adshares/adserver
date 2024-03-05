@@ -223,6 +223,13 @@ class TurnoverEntry extends Model
         return $result;
     }
 
+    public static function getNetworkExpense(string $adsAddress): int
+    {
+        return (int)self::where('type', TurnoverEntryType::SspNetworkExpense->value)
+            ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
+            ->sum('amount');
+    }
+
     public static function getNetworkIncome(string $adsAddress): int
     {
         return (int)self::where('type', TurnoverEntryType::DspNetworkIncome->value)

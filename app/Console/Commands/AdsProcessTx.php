@@ -229,10 +229,10 @@ class AdsProcessTx extends BaseCommand
 
         if ($targetAddress === config('app.adshares_address')) {
             $message = $transaction->getMessage();
-            $decoded = AdsUtils::decodeMessage($message);
+            $decodedMessage = AdsUtils::decodeMessage($message);
 
-            if (AdsPayment::MESSAGE_NETWORK_PAYMENT === $decoded) {
-                $this->handleNetworkPayment($adsPayment, $transaction);
+            if (AdsPayment::MESSAGE_JOINING_FEE === $decodedMessage) {
+                $this->handleJoiningFee($adsPayment, $transaction);
                 return;
             }
 
@@ -292,9 +292,9 @@ class AdsProcessTx extends BaseCommand
         return substr($message, -32);
     }
 
-    private function handleNetworkPayment(AdsPayment $adsPayment, SendOneTransaction $transaction): void
+    private function handleJoiningFee(AdsPayment $adsPayment, SendOneTransaction $transaction): void
     {
-        $adsPayment->status = AdsPayment::STATUS_NETWORK_PAYMENT;
+        $adsPayment->status = AdsPayment::STATUS_JOINING_FEE;
         $adsPayment->save();
 
         TurnoverEntry::increaseOrInsert(

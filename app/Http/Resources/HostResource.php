@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Http\Resources;
 
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\TurnoverEntry;
 use DateTimeInterface;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -46,6 +47,7 @@ class HostResource extends JsonResource
             'connectionErrorCount' => $this->failed_connection,
             'infoJson' => $info->toArray(),
             'error' => $this->error,
+            'paid' => TurnoverEntry::getNetworkExpense($this->address),
         ];
     }
 }
