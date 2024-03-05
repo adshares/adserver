@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
+use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
@@ -606,9 +607,14 @@ SQL;
         $campaigns = [];
 
         $whitelist = config('app.inventory_export_whitelist');
-        if (!empty($whitelist)) {
+        if (!empty($whitelist) || config('app.joining_fee_enabled')) {
             $account = $this->authenticator->verifyRequest($request);
-            if (!in_array($account, $whitelist)) {
+
+            if (!empty($whitelist) && !in_array($account, $whitelist)) {
+                throw new AccessDeniedHttpException();
+            }
+
+            if (config('app.joining_fee_enabled') && !(SspHost::fetchByAdsAddress($account)?->accepted ?? false)) {
                 throw new AccessDeniedHttpException();
             }
         }

@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
+use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
@@ -251,6 +252,7 @@ final class DemandControllerTest extends TestCase
 
     public function testInventoryList(): void
     {
+        Config::updateAdminSettings([Config::JOINING_FEE_ENABLED => false]);
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
         $user = $this->login();
 
@@ -315,12 +317,63 @@ final class DemandControllerTest extends TestCase
         $this->assertEquals($campaignActive->vendor, $content[0]['vendor']);
     }
 
+    public function testInventoryListWhileSspDidNotPayJoiningFee(): void
+    {
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = $this->login();
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+        Banner::factory()->create([
+            'campaign_id' => $campaign,
+            'creative_contents' => 'dummy',
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [...$this->getAuthenticationHeader()],
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testInventoryListWhileSspPaidJoiningFee(): void
+    {
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = $this->login();
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+        Banner::factory()->create([
+            'campaign_id' => $campaign,
+            'creative_contents' => 'dummy',
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+        SspHost::factory()->create([
+            'accepted' => true,
+            'ads_address' => '0001-00000005-CBCA',
+        ]);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [...$this->getAuthenticationHeader()],
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
     /**
      * @throws Throwable
      */
     public function testInventoryListWithCdn(): void
     {
-        Config::updateAdminSettings([Config::CDN_PROVIDER => 'skynet']);
+        Config::updateAdminSettings([
+            Config::CDN_PROVIDER => 'skynet',
+            Config::JOINING_FEE_ENABLED => false,
+        ]);
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
         $user = $this->login();
 
@@ -393,34 +446,24 @@ final class DemandControllerTest extends TestCase
             ]
         );
 
-        /** @var AdsAuthenticator $authenticator */
-        $authenticator = $this->app->make(AdsAuthenticator::class);
-
-        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+        Config::updateAdminSettings([
+            Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D',
+            Config::JOINING_FEE_ENABLED => false,
+        ]);
 
         $response = $this->getJson(self::INVENTORY_LIST_URL);
         $response->assertStatus(401);
 
         $response = $this->getJson(
             self::INVENTORY_LIST_URL,
-            [
-                'Authorization' => $authenticator->getHeader(
-                    config('app.adshares_address'),
-                    Crypt::decryptString(config('app.adshares_secret'))
-                )
-            ]
+            [...$this->getAuthenticationHeader()],
         );
         $response->assertStatus(403);
 
         Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000003-AB0C,0001-00000005-CBCA']);
         $response = $this->getJson(
             self::INVENTORY_LIST_URL,
-            [
-                'Authorization' => $authenticator->getHeader(
-                    config('app.adshares_address'),
-                    Crypt::decryptString(config('app.adshares_secret'))
-                )
-            ]
+            [...$this->getAuthenticationHeader()],
         );
         $response->assertSuccessful();
         $content = json_decode($response->getContent(), true);
@@ -764,6 +807,19 @@ final class DemandControllerTest extends TestCase
                 return $signatureVerify;
             }
         );
+    }
+
+    private function getAuthenticationHeader(): array
+    {
+        /** @var AdsAuthenticator $authenticator */
+        $authenticator = $this->app->make(AdsAuthenticator::class);
+
+        return [
+            'Authorization' => $authenticator->getHeader(
+                config('app.adshares_address'),
+                Crypt::decryptString(config('app.adshares_secret'))
+            )
+        ];
     }
 
     private static function buildServeUri(string $uuid): string

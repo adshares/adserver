@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Utilities\AdsUtils;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -67,7 +68,7 @@ class SspHost extends Model
 
     public static function fetchByAdsAddress(string $adsAddress): ?SspHost
     {
-        return SspHost::where('ads_address', $adsAddress)->first();
+        return SspHost::where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))->first();
     }
 
     public function accept(): void
