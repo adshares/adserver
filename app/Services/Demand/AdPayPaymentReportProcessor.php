@@ -312,23 +312,24 @@ class AdPayPaymentReportProcessor
 
     private function getSspHosts(): array
     {
-        $hosts = SspHost::fetchAccepted();
-        $addresses = $hosts->map(fn(SspHost $item) => $item->ads_address)->toArray();
+        $adsAddresses = SspHost::fetchAccepted()
+            ->map(fn(SspHost $item) => $item->ads_address)
+            ->toArray();
         $from = new DateTimeImmutable('-30 days');
-        $conversions = Conversion::fetchPaidConversionsByPayTo($from, $addresses)
+        $conversions = Conversion::fetchPaidConversionsByPayTo($from, $adsAddresses)
             ->keyBy('pay_to');
-        $creditLogs = EventCreditLog::fetchByPayTo($from, $addresses)
+        $creditLogs = EventCreditLog::fetchByPayTo($from, $adsAddresses)
             ->keyBy('pay_to');
 
         $totalReputation = 0;
         $sspHosts = [];
-        foreach ($hosts as $host) {
-            $reputation = TurnoverEntry::getJoiningFeeIncome($host->ads_address)
-                + (int)($conversions->get($host->ads_address)?->value ?? 0)
-                - (int)($creditLogs->get($host->ads_address)?->value ?? 0);
+        foreach ($adsAddresses as $adsAddress) {
+            $reputation = TurnoverEntry::getJoiningFeeIncome($adsAddress)
+                + (int)($conversions->get($adsAddress)?->value ?? 0)
+                - (int)($creditLogs->get($adsAddress)?->value ?? 0);
             $totalReputation += $reputation;
             $sspHosts[] = [
-                'ads_address' => $host->ads_address,
+                'ads_address' => $adsAddress,
                 'reputation' => $reputation,
             ];
         }

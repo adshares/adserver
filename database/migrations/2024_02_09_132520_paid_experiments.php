@@ -131,10 +131,27 @@ return new class extends Migration {
             $table->boolean('accepted')->default(false);
         });
         DB::statement('ALTER TABLE ssp_hosts MODIFY ads_address VARBINARY(6)');
+
+        Schema::create('joining_fees', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->softDeletes();
+            $table->binary('ads_address');
+            $table->unsignedBigInteger('total_amount');
+            $table->unsignedBigInteger('left_amount');
+            $table->unsignedBigInteger('allocation_amount');
+            $table->timestamp('next_allocation_at')->index();
+            $table->timestamp('allocation_ends_at');
+        });
+        DB::statement('ALTER TABLE joining_fees MODIFY ads_address VARBINARY(6)');
+        Schema::table('joining_fees', function (Blueprint $table) {
+            $table->index('ads_address');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('joining_fees');
         Schema::dropIfExists('ssp_hosts');
         Schema::dropIfExists('network_credit_payments');
         Schema::dropIfExists('ads_payment_metas');

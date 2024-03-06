@@ -33,6 +33,7 @@ use Adshares\Adserver\Mail\CampaignResume;
 use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\JoiningFee;
 use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
@@ -303,6 +304,7 @@ class AdsProcessTx extends BaseCommand
             $transaction->getAmount(),
             $transaction->getSenderAddress(),
         );
+        JoiningFee::create($transaction->getSenderAddress(), $transaction->getAmount());
 
         $sspHost = SspHost::fetchByAdsAddress($transaction->getSenderAddress());
         if (null === $sspHost) {

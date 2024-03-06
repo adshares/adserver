@@ -35,6 +35,7 @@ use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\JoiningFee;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
@@ -363,6 +364,11 @@ class AdsProcessTxTest extends ConsoleTestCase
             'accepted' => true,
             'ads_address' => hex2bin('000100000000'),
         ]);
+        self::assertDatabaseHas(JoiningFee::class, [
+            'ads_address' => hex2bin('000100000000'),
+            'left_amount' => 15_000_000_000_000,
+            'total_amount' => 15_000_000_000_000,
+        ]);
     }
 
     public function testProcessNetworkPaymentWhileLessThanFee(): void
@@ -380,6 +386,11 @@ class AdsProcessTxTest extends ConsoleTestCase
         self::assertDatabaseHas(SspHost::class, [
             'accepted' => false,
             'ads_address' => hex2bin('000100000000'),
+        ]);
+        self::assertDatabaseHas(JoiningFee::class, [
+            'ads_address' => hex2bin('000100000000'),
+            'left_amount' => 15_000_000_000_000,
+            'total_amount' => 15_000_000_000_000,
         ]);
     }
 

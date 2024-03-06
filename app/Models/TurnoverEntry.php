@@ -73,7 +73,7 @@ class TurnoverEntry extends Model
         'type' => TurnoverEntryType::class,
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'ads_address' => 'AccountAddress',
     ];
 

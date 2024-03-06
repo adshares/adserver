@@ -139,9 +139,9 @@ class EventCreditLog extends Model
             ->where('pay_to', hex2bin($payTo));
     }
 
-    public static function fetchByPayTo(DateTimeInterface $from, array $addresses): Collection
+    public static function fetchByPayTo(DateTimeInterface $from, array $adsAddresses): Collection
     {
-        $payTo = array_map(fn($address) => hex2bin(AdsUtils::decodeAddress($address)), $addresses);
+        $payTo = array_map(fn($adsAddress) => hex2bin(AdsUtils::decodeAddress($adsAddress)), $adsAddresses);
         return self::query()
             ->selectRaw('pay_to, SUM(event_value) AS value')
             ->where('computed_at', '>=', $from)
