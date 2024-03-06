@@ -47,7 +47,7 @@ class HostResource extends JsonResource
             'connectionErrorCount' => $this->failed_connection,
             'infoJson' => $info->toArray(),
             'error' => $this->error,
-            'paid' => TurnoverEntry::getNetworkExpense($this->address),
+            'paid' => TurnoverEntry::getJoiningFeeExpense($this->address),
         ];
     }
 }

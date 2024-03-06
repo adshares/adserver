@@ -33,6 +33,8 @@ use Illuminate\Support\Collection;
 /**
  * @property int id
  * @property int amount
+ * @property string|null receiver_address
+ * @property string|null tx_id
  * @mixin Builder
  */
 class NetworkPayment extends Model

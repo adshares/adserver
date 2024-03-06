@@ -299,7 +299,7 @@ class AdsProcessTx extends BaseCommand
 
         TurnoverEntry::increaseOrInsert(
             $transaction->getTime(),
-            TurnoverEntryType::DspNetworkIncome,
+            TurnoverEntryType::DspJoiningFeeIncome,
             $transaction->getAmount(),
             $transaction->getSenderAddress(),
         );
@@ -311,7 +311,7 @@ class AdsProcessTx extends BaseCommand
         if (
             config('app.joining_fee_enabled') &&
             !$sspHost->accepted &&
-            TurnoverEntry::getNetworkIncome($transaction->getSenderAddress()) > config('app.joining_fee_value')
+            TurnoverEntry::getJoiningFeeIncome($transaction->getSenderAddress()) > config('app.joining_fee_value')
         ) {
             $sspHost->accept();
         }

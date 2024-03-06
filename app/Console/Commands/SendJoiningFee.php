@@ -83,7 +83,7 @@ class SendJoiningFee extends BaseCommand
 
         TurnoverEntry::increaseOrInsert(
             new DateTimeImmutable(),
-            TurnoverEntryType::SspNetworkExpense,
+            TurnoverEntryType::SspJoiningFeeExpense,
             $amount,
             $address,
         );

@@ -59,7 +59,7 @@ class AdsProcessTxTest extends ConsoleTestCase
     private const TX_ID_CONNECTION = '0001:00000608:0002';
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
     private const TX_ID_SEND_ONE = '0001:00000083:0001';
-    private const TX_ID_NETWORK_PAYMENT = '0001:00000084:0001';
+    private const TX_ID_JOINING_FEE = '0001:00000084:0001';
 
     /**
      * @dataProvider depositProvider
@@ -357,7 +357,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         self::assertDatabaseHas(TurnoverEntry::class, [
             'ads_address' => hex2bin('000100000000'),
             'amount' => 15_000_000_000_000,
-            'type' => TurnoverEntryType::DspNetworkIncome,
+            'type' => TurnoverEntryType::DspJoiningFeeIncome,
         ]);
         self::assertDatabaseHas(SspHost::class, [
             'accepted' => true,
@@ -375,7 +375,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         self::assertDatabaseHas(TurnoverEntry::class, [
             'ads_address' => hex2bin('000100000000'),
             'amount' => 15_000_000_000_000,
-            'type' => TurnoverEntryType::DspNetworkIncome,
+            'type' => TurnoverEntryType::DspJoiningFeeIncome,
         ]);
         self::assertDatabaseHas(SspHost::class, [
             'accepted' => false,
@@ -423,7 +423,7 @@ class AdsProcessTxTest extends ConsoleTestCase
                 'address' => '0001-00000000-9B6F',
                 'amount' => 15_000_000_000_000,
                 'status' => AdsPayment::STATUS_NEW,
-                'txid' => self::TX_ID_NETWORK_PAYMENT,
+                'txid' => self::TX_ID_JOINING_FEE,
             ]
         );
     }
@@ -458,7 +458,7 @@ class AdsProcessTxTest extends ConsoleTestCase
                     self::TX_ID_CONNECTION,
                     self::TX_ID_SEND_MANY,
                     self::TX_ID_SEND_ONE,
-                    self::TX_ID_NETWORK_PAYMENT,
+                    self::TX_ID_JOINING_FEE,
                 ];
                 $map = [];
                 foreach ($txIds as $txId) {
@@ -528,7 +528,7 @@ class AdsProcessTxTest extends ConsoleTestCase
             self::TX_ID_CONNECTION => $this->getTxConnection(),
             self::TX_ID_SEND_MANY => $this->getTxSendMany(),
             self::TX_ID_SEND_ONE => $this->getTxSendOne(),
-            self::TX_ID_NETWORK_PAYMENT => $this->getTxSendOneNetworkPayment(),
+            self::TX_ID_JOINING_FEE => $this->getTxSendOneJoiningFee(),
             default => throw new Exception(),
         };
 
@@ -694,7 +694,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         }';
     }
 
-    private function getTxSendOneNetworkPayment(): string
+    private function getTxSendOneJoiningFee(): string
     {
         return '{
             "current_block_time": "1539179872",
@@ -744,7 +744,7 @@ class AdsProcessTxTest extends ConsoleTestCase
                 "sender_address": "0001-00000000-9B6F",
                 "target_address": "0001-00000005-CBCA",
                 "amount": "150.00000000000",
-                "message": "4164736861726573206e6574776f726b20666565000000000000000000000000",
+                "message": "4164736861726573206A6F696E696E6720666565000000000000000000000000",
                 "signature": "86A3F063531BAC0F779F6172FAEDF09A6606D64FBEC69E4B6ED779D17'
             . '1FEA7C94E1D430F1782E4621F10D758E1A4D6039162B8303AD359A38A2590D05E0AF909"
             }

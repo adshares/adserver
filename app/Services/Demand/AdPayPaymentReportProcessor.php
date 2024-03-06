@@ -323,7 +323,7 @@ class AdPayPaymentReportProcessor
         $totalReputation = 0;
         $sspHosts = [];
         foreach ($hosts as $host) {
-            $reputation = TurnoverEntry::getNetworkIncome($host->ads_address)
+            $reputation = TurnoverEntry::getJoiningFeeIncome($host->ads_address)
                 + (int)($conversions->get($host->ads_address)?->value ?? 0)
                 - (int)($creditLogs->get($host->ads_address)?->value ?? 0);
             $totalReputation += $reputation;

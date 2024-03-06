@@ -38,8 +38,8 @@ return new class extends Migration {
             TurnoverEntryType::SspLicenseFee,
             TurnoverEntryType::SspOperatorFee,
             TurnoverEntryType::SspPublishersIncome,
-            TurnoverEntryType::DspNetworkIncome,
-            TurnoverEntryType::SspNetworkExpense,
+            TurnoverEntryType::DspJoiningFeeIncome,
+            TurnoverEntryType::SspJoiningFeeExpense,
         ];
         $allowed = join(',', array_map(fn($status) => "'" . $status->value . "'", $allowedTypes));
         DB::statement(
@@ -145,8 +145,8 @@ return new class extends Migration {
         });
 
         DB::delete('DELETE FROM turnover_entries WHERE type IN (?, ?)', [
-            TurnoverEntryType::DspNetworkIncome->value,
-            TurnoverEntryType::SspNetworkExpense->value,
+            TurnoverEntryType::DspJoiningFeeIncome->value,
+            TurnoverEntryType::SspJoiningFeeExpense->value,
         ]);
         $allowedTypes = [
             TurnoverEntryType::DspAdvertisersExpense,

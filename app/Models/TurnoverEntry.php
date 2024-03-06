@@ -65,8 +65,8 @@ class TurnoverEntry extends Model
         'SUM(IF(type = "SspLicenseFee", amount, 0)) AS SspLicenseFee',
         'SUM(IF(type = "SspOperatorFee", amount, 0)) AS SspOperatorFee',
         'SUM(IF(type = "SspPublishersIncome", amount, 0)) AS SspPublishersIncome',
-        'SUM(IF(type = "DspNetworkIncome", amount, 0)) AS DspNetworkIncome',
-        'SUM(IF(type = "SspNetworkExpense", amount, 0)) AS SspNetworkExpense',
+        'SUM(IF(type = "DspJoiningFeeIncome", amount, 0)) AS DspJoiningFeeIncome',
+        'SUM(IF(type = "SspJoiningFeeExpense", amount, 0)) AS SspJoiningFeeExpense',
     ];
 
     protected $casts = [
@@ -190,8 +190,8 @@ class TurnoverEntry extends Model
             'SspLicenseFee' => 0,
             'SspOperatorFee' => 0,
             'SspPublishersIncome' => 0,
-            'DspNetworkIncome' => 0,
-            'SspNetworkExpense' => 0,
+            'DspJoiningFeeIncome' => 0,
+            'SspJoiningFeeExpense' => 0,
         ];
 
         foreach ($rows as $row) {
@@ -209,8 +209,8 @@ class TurnoverEntry extends Model
                 'SspLicenseFee' => (int)$row->SspLicenseFee,
                 'SspOperatorFee' => (int)$row->SspOperatorFee,
                 'SspPublishersIncome' => (int)$row->SspPublishersIncome,
-                'DspNetworkIncome' => (int)$row->DspNetworkIncome,
-                'SspNetworkExpense' => (int)$row->SspNetworkExpense,
+                'DspJoiningFeeIncome' => (int)$row->DspJoiningFeeIncome,
+                'SspJoiningFeeExpense' => (int)$row->SspJoiningFeeExpense,
                 'date' => $date->format(DateTimeInterface::ATOM),
             ];
             DateUtils::advanceStartDate($resolution, $date);
@@ -223,16 +223,16 @@ class TurnoverEntry extends Model
         return $result;
     }
 
-    public static function getNetworkExpense(string $adsAddress): int
+    public static function getJoiningFeeExpense(string $adsAddress): int
     {
-        return (int)self::where('type', TurnoverEntryType::SspNetworkExpense->value)
+        return (int)self::where('type', TurnoverEntryType::SspJoiningFeeExpense->value)
             ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
             ->sum('amount');
     }
 
-    public static function getNetworkIncome(string $adsAddress): int
+    public static function getJoiningFeeIncome(string $adsAddress): int
     {
-        return (int)self::where('type', TurnoverEntryType::DspNetworkIncome->value)
+        return (int)self::where('type', TurnoverEntryType::DspJoiningFeeIncome->value)
             ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
             ->sum('amount');
     }

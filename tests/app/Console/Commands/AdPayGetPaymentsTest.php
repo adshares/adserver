@@ -428,7 +428,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
                 ['ads_address' => '0001-00000002-BB2D'],
             )->create([
                 'amount' => 10_000_000_000_000,
-                'type' => TurnoverEntryType::DspNetworkIncome,
+                'type' => TurnoverEntryType::DspJoiningFeeIncome,
             ]);
         SspHost::factory()
             ->count(2)
