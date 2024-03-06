@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Models\TurnoverEntry;
@@ -398,7 +399,13 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             [
                 'conversion_definition_id' => $conversionDefinition->id,
                 'pay_to' => '0001-00000001-8B4E',
-                'event_value' => 30_000_000_000_000,
+                'event_value' => 35_000_000_000_000,
+            ]
+        );
+        EventCreditLog::factory()->create(
+            [
+                'pay_to' => '0001-00000001-8B4E',
+                'event_value' => 5_000_000_000_000,
             ]
         );
 
@@ -439,6 +446,10 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         $this->assertDatabaseHas('event_credit_logs', [
             'event_value_currency' => 4_000_000_000,
             'pay_to' => hex2bin('000100000001'),
+        ]);
+        $this->assertDatabaseHas('event_credit_logs', [
+            'event_value_currency' => 1_000_000_000,
+            'pay_to' => hex2bin('000100000002'),
         ]);
     }
 }

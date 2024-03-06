@@ -274,8 +274,6 @@ class AdPayPaymentReportProcessor
             ->groupBy('user_id');
 
         $sspHosts = $this->getSspHosts();
-        $addresses = array_map(fn(array $item) => $item['ads_address'], $sspHosts);
-        $conversionsByCampaignId = $this->getConversionsByCampaignId($addresses);
 
         foreach ($campaigns as $userId => $userCampaigns) {
             /** @var Campaign $campaign */
@@ -307,7 +305,6 @@ class AdPayPaymentReportProcessor
                     $computationDateTime,
                     $advertiserPublicId,
                     $campaign->uuid,
-                    $conversionsByCampaignId[$campaign->id] ?? [],
                 );
             }
         }
@@ -315,12 +312,32 @@ class AdPayPaymentReportProcessor
 
     private function getSspHosts(): array
     {
-        return SspHost::fetchAccepted()
-            ->map(fn(SspHost $host) => [
+        $hosts = SspHost::fetchAccepted();
+        $addresses = $hosts->map(fn(SspHost $item) => $item->ads_address)->toArray();
+        $from = new DateTimeImmutable('-30 days');
+        $conversions = Conversion::fetchPaidConversionsByPayTo($from, $addresses)
+            ->keyBy('pay_to');
+        $creditLogs = EventCreditLog::fetchByPayTo($from, $addresses)
+            ->keyBy('pay_to');
+
+        $totalReputation = 0;
+        $sspHosts = [];
+        foreach ($hosts as $host) {
+            $reputation = TurnoverEntry::getNetworkIncome($host->ads_address)
+                + (int)($conversions->get($host->ads_address)?->value ?? 0)
+                - (int)($creditLogs->get($host->ads_address)?->value ?? 0);
+            $totalReputation += $reputation;
+            $sspHosts[] = [
                 'ads_address' => $host->ads_address,
-                'payment' => TurnoverEntry::getNetworkIncome($host->ads_address),
-            ])
-            ->toArray();
+                'reputation' => $reputation,
+            ];
+        }
+
+        foreach ($sspHosts as &$sspHost) {
+            $sspHost['weight'] = $sspHost['reputation'] / $totalReputation;
+        }
+
+        return $sspHosts;
     }
 
     private function initAdvertiser(string $advertiserPublicId, User $user): void
@@ -400,19 +417,9 @@ class AdPayPaymentReportProcessor
         DateTimeInterface $computationDateTime,
         string $advertiserPublicId,
         string $campaignPublicId,
-        array $conversionValues,
     ): void {
-        $totalIncome = 0;
-        $weights = [];
-        foreach ($sspHosts as $index => $ssp) {
-            $sspIncome = $ssp['payment'] + ($conversionValues[$ssp['ads_address']] ?? 0);
-            $totalIncome += $sspIncome;
-            $weights[$index] = $sspIncome;
-        }
-        $weights = array_map(fn($weight) => $weight / $totalIncome, $weights);
-
-        foreach ($sspHosts as $index => $ssp) {
-            $eventValueInCurrency = (int)floor($value * $weights[$index]);
+        foreach ($sspHosts as $ssp) {
+            $eventValueInCurrency = (int)floor($value * $ssp['weight']);
             EventCreditLog::create(
                 $computationDateTime,
                 $advertiserPublicId,
@@ -423,16 +430,5 @@ class AdPayPaymentReportProcessor
                 $this->exchangeRate->toClick($eventValueInCurrency),
             );
         }
-    }
-
-    private function getConversionsByCampaignId(array $addresses): array
-    {
-        $conversions = Conversion::fetchPaidConversionsByCampaignId(new DateTimeImmutable('-30 days'), $addresses);
-
-        $conversionsByCampaignId = [];
-        foreach ($conversions as $conversion) {
-            $conversionsByCampaignId[$conversion->campaign_id][$conversion->pay_to] = (int)$conversion->value;
-        }
-        return $conversionsByCampaignId;
     }
 }

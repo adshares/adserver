@@ -175,15 +175,14 @@ class Conversion extends Model
             ->first();
     }
 
-    public static function fetchPaidConversionsByCampaignId(DateTimeInterface $from, array $addresses): Collection
+    public static function fetchPaidConversionsByPayTo(DateTimeInterface $from, array $addresses): Collection
     {
         $payTo = array_map(fn($address) => hex2bin(AdsUtils::decodeAddress($address)), $addresses);
         return self::query()
-            ->selectRaw('campaign_id, pay_to, SUM(conversions.event_value) AS value')
-            ->join('conversion_definitions', 'conversions.conversion_definition_id', '=', 'conversion_definitions.id')
-            ->where('conversions.created_at', '>=', $from)
-            ->whereIn('conversions.pay_to', $payTo)
-            ->groupBy('campaign_id', 'pay_to')
+            ->selectRaw('pay_to, SUM(event_value) AS value')
+            ->where('created_at', '>=', $from)
+            ->whereIn('pay_to', $payTo)
+            ->groupBy('pay_to')
             ->get();
     }
 

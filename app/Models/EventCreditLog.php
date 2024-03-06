@@ -25,6 +25,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Utilities\AdsUtils;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -96,7 +97,8 @@ class EventCreditLog extends Model
 
     public static function fetchUnpaid(DateTimeInterface $from, ?DateTimeInterface $to, ?int $limit): Collection
     {
-        $query = self::whereNotNull('event_value_currency')
+        $query = self::query()
+            ->whereNotNull('event_value_currency')
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
             ->where('computed_at', '>=', $from);
@@ -132,7 +134,19 @@ class EventCreditLog extends Model
 
     private static function getEventCreditLogBuilder(array $paymentIds, string $payTo): Builder
     {
-        return self::whereIn('payment_id', $paymentIds)
+        return self::query()
+            ->whereIn('payment_id', $paymentIds)
             ->where('pay_to', hex2bin($payTo));
+    }
+
+    public static function fetchByPayTo(DateTimeInterface $from, array $addresses): Collection
+    {
+        $payTo = array_map(fn($address) => hex2bin(AdsUtils::decodeAddress($address)), $addresses);
+        return self::query()
+            ->selectRaw('pay_to, SUM(event_value) AS value')
+            ->where('computed_at', '>=', $from)
+            ->whereIn('pay_to', $payTo)
+            ->groupBy('pay_to')
+            ->get();
     }
 }
