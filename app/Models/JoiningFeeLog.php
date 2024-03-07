@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -37,11 +38,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string uuid
  * @property DateTimeInterface computed_at
  * @property string pay_to
- * @property int event_value
- * @property int|null license_fee
- * @property int|null operator_fee
- * @property int|null community_fee
- * @property int|null paid_amount
+ * @property int|null amount
  * @property int|null payment_id
  * @mixin Builder
  */
@@ -68,12 +65,28 @@ class JoiningFeeLog extends Model
     public static function create(
         DateTimeInterface $computedAt,
         string $payTo,
-        int $eventValue,
+        int $amount,
     ): void {
         $log = new self();
         $log->computed_at = $computedAt;
         $log->pay_to = $payTo;
-        $log->event_value = $eventValue;
+        $log->amount = $amount;
         $log->save();
+    }
+
+    public static function fetchUnpaid(DateTimeInterface $from, ?DateTimeInterface $to, ?int $limit): Collection
+    {
+        $query = self::query()
+            ->whereNotNull('amount')
+            ->whereNotNull('pay_to')
+            ->whereNull('payment_id')
+            ->where('computed_at', '>=', $from);
+        if (null !== $to) {
+            $query->where('computed_at', '<', $to);
+        }
+        if (null !== $limit) {
+            $query->limit($limit);
+        }
+        return $query->get();
     }
 }

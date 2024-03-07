@@ -151,11 +151,7 @@ return new class extends Migration {
             $table->binary('uuid');
             $table->timestamp('computed_at')->index();
             $table->binary('pay_to');
-            $table->unsignedBigInteger('event_value')->nullable();
-            $table->unsignedBigInteger('license_fee')->nullable();
-            $table->unsignedBigInteger('operator_fee')->nullable();
-            $table->unsignedBigInteger('community_fee')->nullable();
-            $table->unsignedBigInteger('paid_amount')->nullable();
+            $table->unsignedBigInteger('amount')->nullable();
             $table->integer('payment_id')->nullable()->index();
         });
         DB::statement('ALTER TABLE joining_fee_logs MODIFY uuid VARBINARY(16)');

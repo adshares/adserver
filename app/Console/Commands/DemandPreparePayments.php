@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\EventLogsHourlyMeta;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Utilities\DateUtils;
@@ -108,15 +109,12 @@ class DemandPreparePayments extends BaseCommand
                 $totalCommunityFee,
                 $eventLogIds
             );
-
             $this->info(sprintf('In that, there are %d recipients', count($groupedConversions)));
 
             DB::beginTransaction();
-
             foreach (EventLog::fetchCreationHourTimestampByIds($eventLogIds) as $timestamp) {
                 EventLogsHourlyMeta::invalidate($timestamp);
             }
-
             $this->storeEventValue($totalEventValue, $hourTimestamp);
             $this->storeOperatorFee($totalOperatorFee, $hourTimestamp);
             $this->saveEventsPayments($groupedConversions, $hourTimestamp);
@@ -150,7 +148,6 @@ class DemandPreparePayments extends BaseCommand
                 $totalCommunityFee,
                 $eventLogIds
             );
-
             $this->info(sprintf('In that, there are %d recipients', count($groupedEvents)));
 
             DB::beginTransaction();
@@ -164,10 +161,8 @@ class DemandPreparePayments extends BaseCommand
 
         do {
             $events = EventCreditLog::fetchUnpaid($from, $to, $chunkSize);
-
             $eventCount = count($events);
             $this->info(sprintf('Found %d payable credit events.', $eventCount));
-
             if (0 === $eventCount) {
                 break;
             }
@@ -176,7 +171,7 @@ class DemandPreparePayments extends BaseCommand
             $totalLicenseFee = 0;
             $totalOperatorFee = 0;
             $totalCommunityFee = 0;
-            $eventLogIds = [];
+            $logIds = [];
             $groupedEvents = $this->processAndGroupEventsByRecipient(
                 $events,
                 $demandLicenseFeeCoefficient,
@@ -186,9 +181,8 @@ class DemandPreparePayments extends BaseCommand
                 $totalLicenseFee,
                 $totalOperatorFee,
                 $totalCommunityFee,
-                $eventLogIds,
+                $logIds,
             );
-
             $this->info(sprintf('In that, there are %d recipients', count($groupedEvents)));
 
             DB::beginTransaction();
@@ -199,6 +193,8 @@ class DemandPreparePayments extends BaseCommand
             $this->saveCommunityPayment($communityAccountAddress, $totalCommunityFee, $hourTimestamp);
             DB::commit();
         } while ($eventCount === $chunkSize);
+
+        $this->preparePaymentForJoiningFees($hourTimestamp, $from, $to, $chunkSize);
 
         $this->invalidateStatisticsForPreparedEvents($from, $to);
         $this->release();
@@ -354,6 +350,7 @@ class DemandPreparePayments extends BaseCommand
     {
         $groupedEvents->each(
             function (Collection $events, string $payTo) use ($hourTimestamp) {
+                $now = new DateTimeImmutable();
                 $amount = $events->sum('paid_amount');
                 $payment = $this->savePayment($payTo, $amount);
                 if ($amount > 0) {
@@ -361,10 +358,47 @@ class DemandPreparePayments extends BaseCommand
                 }
                 foreach ($events as $event) {
                     $event->payment_id = $payment->id;
-                    $event->updated_at = new DateTimeImmutable();
+                    $event->updated_at = $now;
                     $event->save();
                 }
             }
         );
+    }
+
+    private function preparePaymentForJoiningFees(
+        DateTimeInterface $hourTimestamp,
+        DateTimeInterface $from,
+        ?DateTimeInterface $to,
+        int $chunkSize,
+    ): void {
+        do {
+            $logs = JoiningFeeLog::fetchUnpaid($from, $to, $chunkSize);
+            $logsCount = count($logs);
+            $this->info(sprintf('Found %d payable joining fees.', $logsCount));
+            if (0 === $logsCount) {
+                break;
+            }
+
+            $groupedLogs = $logs->groupBy('pay_to');
+            $this->info(sprintf('In that, there are %d recipients', count($groupedLogs)));
+            DB::beginTransaction();
+            $groupedLogs->each(
+                function (Collection $logs, string $payTo) use ($hourTimestamp) {
+                    $now = new DateTimeImmutable();
+                    $amount = $logs->sum('amount');
+                    $payment = $this->savePayment($payTo, $amount);
+                    if ($amount > 0) {
+                        TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::DspExpense, $amount, $payTo);
+                    }
+                    /** @var JoiningFeeLog $log */
+                    foreach ($logs as $log) {
+                        $log->payment_id = $payment->id;
+                        $log->updated_at = $now;
+                        $log->save();
+                    }
+                }
+            );
+            DB::commit();
+        } while ($logsCount === $chunkSize);
     }
 }
