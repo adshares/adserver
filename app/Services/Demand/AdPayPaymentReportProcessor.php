@@ -27,6 +27,8 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\JoiningFee;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
@@ -273,7 +275,7 @@ class AdPayPaymentReportProcessor
         $campaigns = Campaign::fetchActiveCampaigns($computationDateTime)
             ->groupBy('user_id');
 
-        $sspHosts = $this->getSspHosts();
+        $sspHosts = $this->getSspHosts($computationDateTime);
 
         foreach ($campaigns as $userId => $userCampaigns) {
             /** @var Campaign $campaign */
@@ -308,9 +310,11 @@ class AdPayPaymentReportProcessor
                 );
             }
         }
+
+        $this->splitAllocationAmountBetweenHosts($sspHosts, $computationDateTime);
     }
 
-    private function getSspHosts(): array
+    private function getSspHosts(DateTimeInterface $computationDateTime): array
     {
         $adsAddresses = SspHost::fetchAccepted()
             ->map(fn(SspHost $item) => $item->ads_address)
@@ -320,6 +324,8 @@ class AdPayPaymentReportProcessor
             ->keyBy('pay_to');
         $creditLogs = EventCreditLog::fetchByPayTo($from, $adsAddresses)
             ->keyBy('pay_to');
+        $joiningFeesByAdsAddress = JoiningFee::fetchJoiningFeesForAllocation()
+            ->groupBy('ads_address');
 
         $totalReputation = 0;
         $sspHosts = [];
@@ -328,8 +334,24 @@ class AdPayPaymentReportProcessor
                 + (int)($conversions->get($adsAddress)?->value ?? 0)
                 - (int)($creditLogs->get($adsAddress)?->value ?? 0);
             $totalReputation += $reputation;
+
+            $allocationAmount = 0;
+            if (null !== $joiningFees = $joiningFeesByAdsAddress->get($adsAddress)) {
+                /** @var JoiningFee $joiningFee */
+                foreach ($joiningFees as $joiningFee) {
+                    $allocationAmountPart = $joiningFee->getAllocationAmount($computationDateTime);
+                    $joiningFee->left_amount -= $allocationAmountPart;
+                    $joiningFee->save();
+                    if ($joiningFee->left_amount < config('app.joining_fee_allocation_min')) {
+                        $joiningFee->delete();
+                    }
+                    $allocationAmount += $allocationAmountPart;
+                }
+            }
+
             $sspHosts[] = [
-                'ads_address' => $adsAddress,
+                'adsAddress' => $adsAddress,
+                'allocationAmount' => $allocationAmount,
                 'reputation' => $reputation,
             ];
         }
@@ -425,11 +447,34 @@ class AdPayPaymentReportProcessor
                 $computationDateTime,
                 $advertiserPublicId,
                 $campaignPublicId,
-                $ssp['ads_address'],
+                $ssp['adsAddress'],
                 $eventValueInCurrency,
                 $this->exchangeRateValue,
                 $this->exchangeRate->toClick($eventValueInCurrency),
             );
+        }
+    }
+
+    private function splitAllocationAmountBetweenHosts(array $sspHosts, DateTimeInterface $computationDateTime): void
+    {
+        $totalAllocationAmount = array_reduce(
+            $sspHosts,
+            fn(int $carry, array $sspHost) => $carry + $sspHost['allocationAmount'],
+            0,
+        );
+        $totalAllocationAmount = (int)floor($totalAllocationAmount / 2);
+
+        foreach ($sspHosts as $sspHost) {
+            $allocationAmount =
+                (int)floor($sspHost['allocationAmount'] / 2)
+                + (int)floor($totalAllocationAmount * $sspHost['weight']);
+            if ($allocationAmount > 0) {
+                JoiningFeeLog::create(
+                    $computationDateTime,
+                    $sspHost['adsAddress'],
+                    $allocationAmount,
+                );
+            }
         }
     }
 }

@@ -134,6 +134,8 @@ class Config extends Model
     public const INVOICE_CURRENCIES = 'invoice-currencies';
     public const INVOICE_ENABLED = 'invoice-enabled';
     public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
+    public const JOINING_FEE_ALLOCATION_MIN = 'joining-fee-allocation-min';
+    public const JOINING_FEE_ALLOCATION_PERIOD_IN_HOURS = 'joining-fee-allocation-period-in-hours';
     public const JOINING_FEE_ENABLED = 'joining-fee-enabled';
     public const JOINING_FEE_MIN_VALUE = 'joining-fee-min-value';
     public const JOINING_FEE_VALUE = 'joining-fee-value';
@@ -265,6 +267,8 @@ class Config extends Model
         self::INVOICE_COMPANY_BANK_ACCOUNTS => ConfigTypes::Json,
         self::INVOICE_CURRENCIES => ConfigTypes::Array,
         self::INVOICE_ENABLED => ConfigTypes::Bool,
+        self::JOINING_FEE_ALLOCATION_MIN => ConfigTypes::Integer,
+        self::JOINING_FEE_ALLOCATION_PERIOD_IN_HOURS => ConfigTypes::Integer,
         self::JOINING_FEE_ENABLED => ConfigTypes::Bool,
         self::JOINING_FEE_MIN_VALUE => ConfigTypes::Integer,
         self::JOINING_FEE_VALUE => ConfigTypes::Integer,
@@ -533,6 +537,8 @@ class Config extends Model
             self::INVOICE_CURRENCIES => [],
             self::INVOICE_ENABLED => false,
             self::INVOICE_NUMBER_FORMAT => 'INV NNNN/MM/YYYY',
+            self::JOINING_FEE_ALLOCATION_MIN => 100_000_000,//0.001 ADS
+            self::JOINING_FEE_ALLOCATION_PERIOD_IN_HOURS => 30 * 24,
             self::JOINING_FEE_ENABLED => true,
             self::JOINING_FEE_MIN_VALUE => 10_000_000_000_000,
             self::JOINING_FEE_VALUE => 10_000_000_000_000,

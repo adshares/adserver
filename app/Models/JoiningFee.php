@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
-use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,9 +37,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string ads_address
  * @property int total_amount
  * @property int left_amount
- * @property int allocation_amount
- * @property DateTimeInterface next_allocation_at
- * @property DateTimeInterface allocation_ends_at
  * @mixin Builder
  */
 class JoiningFee extends Model
@@ -49,44 +45,36 @@ class JoiningFee extends Model
     use AutomateMutators;
     use HasFactory;
 
-    public const ALLOCATION_PERIOD_IN_HOURS = 30 * 24;
-
     protected array $traitAutomate = [
         'ads_address' => 'AccountAddress',
     ];
 
     public static function create(string $adsAddress, int $amount): void
     {
-        $now = new DateTimeImmutable();
-
         $joiningFee = new self();
         $joiningFee->ads_address = $adsAddress;
         $joiningFee->total_amount = $amount;
         $joiningFee->left_amount = $amount;
-        $joiningFee->allocation_amount = 0;
-        $joiningFee->next_allocation_at = $now;
-        $joiningFee->allocation_ends_at = $now;
         $joiningFee->save();
     }
 
     public static function fetchJoiningFeesForAllocation(): Collection
     {
         return self::query()
-            ->where('next_allocation_at', '<', new DateTimeImmutable())
-            ->get()
-            ->map(fn(JoiningFee $joiningFee) => $joiningFee->computeAllocationIfNeeded());
+            ->get();
     }
 
-    private function computeAllocationIfNeeded(): self
+    public function getAllocationAmount(DateTimeInterface $date): int
     {
-        $now = new DateTimeImmutable();
-        if ($this->allocation_ends_at > $now) {
-            return $this;
+        $difference = $date->getTimestamp() - $this->created_at->getTimestamp();
+        if ($difference <= 0) {
+            return 0;
         }
-
-        $amountForPeriod = $this->left_amount / 2;
-        $this->allocation_amount = (int)floor($amountForPeriod / self::ALLOCATION_PERIOD_IN_HOURS);
-        $this->allocation_ends_at = $now->modify(sprintf('+%d hours', self::ALLOCATION_PERIOD_IN_HOURS));
-        return $this;
+        $difference /= 3600;
+        $allocationPeriodInHours = config('app.joining_fee_allocation_period_in_hours');
+        $period = (int)ceil($difference / $allocationPeriodInHours);
+        $amountPerPeriod = $this->total_amount / (2 ** $period);
+        $amount = (int)floor($amountPerPeriod / $allocationPeriodInHours);
+        return min($amount, $this->left_amount);
     }
 }

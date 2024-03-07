@@ -66,14 +66,14 @@ return new class extends Migration {
             $table->binary('campaign_id');
             $table->binary('pay_to');
 
-            $table->bigInteger('event_value_currency')->unsigned()->nullable();
+            $table->unsignedBigInteger('event_value_currency')->nullable();
             $table->decimal('exchange_rate', 9, 5)->nullable();
-            $table->bigInteger('event_value')->unsigned()->nullable();
+            $table->unsignedBigInteger('event_value')->nullable();
 
-            $table->bigInteger('license_fee')->unsigned()->nullable();
-            $table->bigInteger('operator_fee')->unsigned()->nullable();
-            $table->bigInteger('community_fee')->unsigned()->nullable();
-            $table->bigInteger('paid_amount')->unsigned()->nullable();
+            $table->unsignedBigInteger('license_fee')->nullable();
+            $table->unsignedBigInteger('operator_fee')->nullable();
+            $table->unsignedBigInteger('community_fee')->nullable();
+            $table->unsignedBigInteger('paid_amount')->nullable();
             $table->integer('payment_id')->nullable()->index();
         });
 
@@ -100,7 +100,7 @@ return new class extends Migration {
         });
 
         Schema::create('network_credit_payments', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->timestamps();
             $table->unsignedBigInteger('ads_payment_id');
             $table->foreign('ads_payment_id')
@@ -139,18 +139,36 @@ return new class extends Migration {
             $table->binary('ads_address');
             $table->unsignedBigInteger('total_amount');
             $table->unsignedBigInteger('left_amount');
-            $table->unsignedBigInteger('allocation_amount');
-            $table->timestamp('next_allocation_at')->index();
-            $table->timestamp('allocation_ends_at');
         });
         DB::statement('ALTER TABLE joining_fees MODIFY ads_address VARBINARY(6)');
         Schema::table('joining_fees', function (Blueprint $table) {
             $table->index('ads_address');
         });
+
+        Schema::create('joining_fee_logs', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->timestamps();
+            $table->binary('uuid');
+            $table->timestamp('computed_at')->index();
+            $table->binary('pay_to');
+            $table->unsignedBigInteger('event_value')->nullable();
+            $table->unsignedBigInteger('license_fee')->nullable();
+            $table->unsignedBigInteger('operator_fee')->nullable();
+            $table->unsignedBigInteger('community_fee')->nullable();
+            $table->unsignedBigInteger('paid_amount')->nullable();
+            $table->integer('payment_id')->nullable()->index();
+        });
+        DB::statement('ALTER TABLE joining_fee_logs MODIFY uuid VARBINARY(16)');
+        DB::statement('ALTER TABLE joining_fee_logs MODIFY pay_to VARBINARY(6)');
+        Schema::table('joining_fee_logs', function (Blueprint $table) {
+            $table->index('pay_to');
+            $table->unique('uuid');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('joining_fee_logs');
         Schema::dropIfExists('joining_fees');
         Schema::dropIfExists('ssp_hosts');
         Schema::dropIfExists('network_credit_payments');

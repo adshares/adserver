@@ -34,6 +34,8 @@ use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\JoiningFee;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
@@ -48,6 +50,7 @@ use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTime;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Collection;
 
 class AdPayGetPaymentsTest extends ConsoleTestCase
@@ -395,19 +398,15 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         $conversionDefinition = ConversionDefinition::factory()->create([
             'campaign_id' => $campaign->id,
         ]);
-        Conversion::factory()->create(
-            [
-                'conversion_definition_id' => $conversionDefinition->id,
-                'pay_to' => '0001-00000001-8B4E',
-                'event_value' => 35_000_000_000_000,
-            ]
-        );
-        EventCreditLog::factory()->create(
-            [
-                'pay_to' => '0001-00000001-8B4E',
-                'event_value' => 5_000_000_000_000,
-            ]
-        );
+        Conversion::factory()->create([
+            'conversion_definition_id' => $conversionDefinition->id,
+            'pay_to' => '0001-00000001-8B4E',
+            'event_value' => 35_000_000_000_000,
+        ]);
+        EventCreditLog::factory()->create([
+            'pay_to' => '0001-00000001-8B4E',
+            'event_value' => 5_000_000_000_000,
+        ]);
 
         Campaign::factory()->create([
             'budget' => 5_000_000_000,
@@ -430,6 +429,18 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
                 'amount' => 10_000_000_000_000,
                 'type' => TurnoverEntryType::DspJoiningFeeIncome,
             ]);
+        $joiningFeeDate = new DateTimeImmutable('-90 minutes');
+        JoiningFee::factory()
+            ->count(2)
+            ->sequence(
+                ['ads_address' => '0001-00000001-8B4E'],
+                ['ads_address' => '0001-00000002-BB2D'],
+            )->create([
+                'created_at' => $joiningFeeDate,
+                'updated_at' => $joiningFeeDate,
+                'total_amount' => 10_000_000_000_000,
+                'left_amount' => 10_000_000_000_000,
+            ]);
         SspHost::factory()
             ->count(2)
             ->sequence(
@@ -443,12 +454,20 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             ->assertExitCode(AdPayGetPayments::STATUS_OK);
 
         $this->assertEquals(45_004_500_450, $user->getWalletBalance());//15_000_000_000
-        $this->assertDatabaseHas('event_credit_logs', [
+        $this->assertDatabaseHas(EventCreditLog::class, [
             'event_value_currency' => 4_000_000_000,
             'pay_to' => hex2bin('000100000001'),
         ]);
-        $this->assertDatabaseHas('event_credit_logs', [
+        $this->assertDatabaseHas(EventCreditLog::class, [
             'event_value_currency' => 1_000_000_000,
+            'pay_to' => hex2bin('000100000002'),
+        ]);
+        $this->assertDatabaseHas(JoiningFeeLog::class, [
+            'event_value' => 3_472_222_222 + 5_555_555_555,
+            'pay_to' => hex2bin('000100000001'),
+        ]);
+        $this->assertDatabaseHas(JoiningFeeLog::class, [
+            'event_value' => 3_472_222_222 + 1_388_888_888,
             'pay_to' => hex2bin('000100000002'),
         ]);
     }
