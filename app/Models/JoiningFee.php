@@ -45,6 +45,11 @@ class JoiningFee extends Model
     use AutomateMutators;
     use HasFactory;
 
+    /**
+     * The fraction of the left amount that can be allocated in one hour
+     */
+    private const ALLOCATION_COEFFICIENT = 0.00096224116621657;//1 - 1/pow(2, 1/720) (720 - hours count in 30 days)
+
     protected array $traitAutomate = [
         'ads_address' => 'AccountAddress',
     ];
@@ -64,17 +69,8 @@ class JoiningFee extends Model
             ->get();
     }
 
-    public function getAllocationAmount(DateTimeInterface $date): int
+    public function getAllocationAmount(): int
     {
-        $difference = $date->getTimestamp() - $this->created_at->getTimestamp();
-        if ($difference <= 0) {
-            return 0;
-        }
-        $difference /= 3600;
-        $allocationPeriodInHours = config('app.joining_fee_allocation_period_in_hours');
-        $period = (int)ceil($difference / $allocationPeriodInHours);
-        $amountPerPeriod = $this->total_amount / (2 ** $period);
-        $amount = (int)floor($amountPerPeriod / $allocationPeriodInHours);
-        return min($amount, $this->left_amount);
+        return (int)floor($this->left_amount * self::ALLOCATION_COEFFICIENT);
     }
 }

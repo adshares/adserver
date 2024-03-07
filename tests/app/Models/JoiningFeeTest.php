@@ -21,41 +21,22 @@
 
 namespace Adshares\Adserver\Tests\Models;
 
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\JoiningFee;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Adserver\Utilities\DatabaseConfigReader;
-use DateTimeImmutable;
 
 class JoiningFeeTest extends TestCase
 {
     public function testGetAllocationAmount(): void
     {
-        Config::updateAdminSettings([Config::JOINING_FEE_ALLOCATION_PERIOD_IN_HOURS => 3]);
-        DatabaseConfigReader::overwriteAdministrationConfig();
-
         $joiningFee = JoiningFee::factory()->create();
-        $date = new DateTimeImmutable();
-
-        $amount = [];
-        for ($i = 0; $i < 10; $i++) {
-            $date = $date->modify('+1 hour');
-            $amount[] = $joiningFee->getAllocationAmount($date);
+        $totalAmount = 0;
+        $hours = 30 * 24 + 1;// more than 1 period
+        for ($i = 0; $i < $hours; $i++) {
+            $amount = $joiningFee->getAllocationAmount();
+            $joiningFee->left_amount -= $amount;
+            $totalAmount += $amount;
         }
-        self::assertEquals(
-            [
-                1_666_666_666_666,//50/3
-                1_666_666_666_666,
-                1_666_666_666_666,
-                833_333_333_333,//25/3
-                833_333_333_333,
-                833_333_333_333,
-                416_666_666_666,//12.5/3
-                416_666_666_666,
-                416_666_666_666,
-                208_333_333_333,//6.25/3
-            ],
-            $amount
-        );
+
+        self::assertGreaterThan($joiningFee->total_amount / 2, $totalAmount);
     }
 }

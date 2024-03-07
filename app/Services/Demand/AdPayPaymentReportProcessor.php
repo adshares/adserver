@@ -275,7 +275,7 @@ class AdPayPaymentReportProcessor
         $campaigns = Campaign::fetchActiveCampaigns($computationDateTime)
             ->groupBy('user_id');
 
-        $sspHosts = $this->getSspHosts($computationDateTime);
+        $sspHosts = $this->getSspHosts();
 
         foreach ($campaigns as $userId => $userCampaigns) {
             /** @var Campaign $campaign */
@@ -314,7 +314,7 @@ class AdPayPaymentReportProcessor
         $this->splitAllocationAmountBetweenHosts($sspHosts, $computationDateTime);
     }
 
-    private function getSspHosts(DateTimeInterface $computationDateTime): array
+    private function getSspHosts(): array
     {
         $adsAddresses = SspHost::fetchAccepted()
             ->map(fn(SspHost $item) => $item->ads_address)
@@ -339,7 +339,7 @@ class AdPayPaymentReportProcessor
             if (null !== $joiningFees = $joiningFeesByAdsAddress->get($adsAddress)) {
                 /** @var JoiningFee $joiningFee */
                 foreach ($joiningFees as $joiningFee) {
-                    $allocationAmountPart = $joiningFee->getAllocationAmount($computationDateTime);
+                    $allocationAmountPart = $joiningFee->getAllocationAmount();
                     $joiningFee->left_amount -= $allocationAmountPart;
                     $joiningFee->save();
                     if ($joiningFee->left_amount < config('app.joining_fee_allocation_min')) {

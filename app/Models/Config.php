@@ -268,7 +268,6 @@ class Config extends Model
         self::INVOICE_CURRENCIES => ConfigTypes::Array,
         self::INVOICE_ENABLED => ConfigTypes::Bool,
         self::JOINING_FEE_ALLOCATION_MIN => ConfigTypes::Integer,
-        self::JOINING_FEE_ALLOCATION_PERIOD_IN_HOURS => ConfigTypes::Integer,
         self::JOINING_FEE_ENABLED => ConfigTypes::Bool,
         self::JOINING_FEE_MIN_VALUE => ConfigTypes::Integer,
         self::JOINING_FEE_VALUE => ConfigTypes::Integer,
@@ -538,7 +537,6 @@ class Config extends Model
             self::INVOICE_ENABLED => false,
             self::INVOICE_NUMBER_FORMAT => 'INV NNNN/MM/YYYY',
             self::JOINING_FEE_ALLOCATION_MIN => 100_000_000,//0.001 ADS
-            self::JOINING_FEE_ALLOCATION_PERIOD_IN_HOURS => 30 * 24,
             self::JOINING_FEE_ENABLED => true,
             self::JOINING_FEE_MIN_VALUE => 10_000_000_000_000,
             self::JOINING_FEE_VALUE => 10_000_000_000_000,
