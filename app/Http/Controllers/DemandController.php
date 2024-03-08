@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\SspHost;
@@ -531,6 +532,10 @@ SQL;
             ->toArray();
         if (empty($paymentIds)) {
             $data = [
+                'allocation' => [
+                    'count' => 0,
+                    'sum' => 0,
+                ],
                 'credits' => [
                     'count' => 0,
                     'sum' => 0,
@@ -542,6 +547,10 @@ SQL;
             ];
         } else {
             $data = [
+                'allocation' => [
+                    'count' => JoiningFeeLog::countPaid($paymentIds, $accountAddressDecoded),
+                    'sum' => JoiningFeeLog::sumAmountPaid($paymentIds, $accountAddressDecoded),
+                ],
                 'credits' => [
                     'count' => EventCreditLog::countPaid($paymentIds, $accountAddressDecoded),
                     'sum' => EventCreditLog::sumAmountPaid($paymentIds, $accountAddressDecoded),

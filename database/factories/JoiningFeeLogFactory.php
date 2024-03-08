@@ -34,7 +34,7 @@ class JoiningFeeLogFactory extends Factory
     {
         return [
             'computed_at' => new DateTimeImmutable(),
-            'pay_to' => $this->faker->uuid,
+            'pay_to' => '0001-00000001-8B4E',
         ];
     }
 }

@@ -89,4 +89,23 @@ class JoiningFeeLog extends Model
         }
         return $query->get();
     }
+
+    public static function countPaid(array $paymentIds, string $payTo): int
+    {
+        return self::getJoiningFeeLogBuilder($paymentIds, $payTo)
+            ->count();
+    }
+
+    public static function sumAmountPaid(array $paymentIds, string $payTo): int
+    {
+        return self::getJoiningFeeLogBuilder($paymentIds, $payTo)
+            ->sum('amount');
+    }
+
+    private static function getJoiningFeeLogBuilder(array $paymentIds, string $payTo): Builder
+    {
+        return self::query()
+            ->whereIn('payment_id', $paymentIds)
+            ->where('pay_to', hex2bin($payTo));
+    }
 }

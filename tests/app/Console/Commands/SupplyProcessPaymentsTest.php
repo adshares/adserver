@@ -40,6 +40,7 @@ use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\NullUrl;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Mock\Client\DummyDemandClient;
@@ -143,7 +144,6 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
         self::assertAdPaymentProcessedEventDispatched(1);
-        self::assertDatabaseCount(TurnoverEntry::class, 4);
         $expectedTurnoverEntries = [
             [
                 'ads_address' => hex2bin('000100000004'),
@@ -166,6 +166,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 'type' => TurnoverEntryType::SspPublishersIncome->name,
             ],
         ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
         foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
             self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
         }
@@ -190,12 +191,10 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
         $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
 
-        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
-        $this->assertEquals($totalAmount, NetworkCreditPayment::sum('total_amount'));
-        $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
-//        $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+        self::assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        self::assertEquals($totalAmount, NetworkCreditPayment::sum('total_amount'));
+        self::assertEquals($licenseFee, NetworkPayment::sum('amount'));
         self::assertAdPaymentProcessedEventDispatched(1);
-        self::assertDatabaseCount(TurnoverEntry::class, 4);
         $expectedTurnoverEntries = [
             [
                 'ads_address' => hex2bin('000100000004'),
@@ -218,6 +217,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 'type' => TurnoverEntryType::SspPublishersIncome->name,
             ],
         ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
         foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
             self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
         }
@@ -225,6 +225,76 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $adsPaymentMeta = AdsPaymentMeta::first();
         self::assertEquals($adsPayment->id, $adsPaymentMeta->ads_payment_id);
         self::assertEquals(4, $adsPaymentMeta->meta['credits']['offset']);
+    }
+
+    /**
+     * @dataProvider adsProcessAllocationDataProvider
+     */
+    public function testAdsProcessAllocation(int $reportedAmount): void
+    {
+        $demandClient = new DummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+
+        $caseId = Uuid::v4()->hex();
+        NetworkCase::factory()->create([
+            'case_id' => $caseId,
+            'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
+        ]);
+
+        $allocationAmount = 123_000_000_000;
+        $demandClientMock = self::createMock(DemandClient::class);
+        $demandClientMock->method('fetchPaymentDetailsMeta')->willReturn([
+            'allocation' => [
+                'count' => 1,
+                'sum' => $reportedAmount,
+            ],
+            'credits' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
+            'events' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
+        ]);
+        $demandClientMock->expects(self::never())->method('fetchPaymentDetails');
+        $demandClientMock->expects(self::never())->method('fetchCreditDetails');
+        $this->app->bind(DemandClient::class, fn() => $demandClientMock);
+
+        $adsPayment = AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => $allocationAmount,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])
+            ->assertExitCode(0);
+
+        self::assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        self::assertAdPaymentProcessedEventDispatched(1);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => $allocationAmount,
+                'type' => TurnoverEntryType::SspIncome->name,
+            ],
+        ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+        self::assertDatabaseCount(AdsPaymentMeta::class, 1);
+        $adsPaymentMeta = AdsPaymentMeta::first();
+        self::assertEquals($adsPayment->id, $adsPaymentMeta->ads_payment_id);
+    }
+
+    public function adsProcessAllocationDataProvider(): array
+    {
+        return [
+            'equal to payment' => [123_000_000_000],
+            'greater than payment' => [150_000_000_000],
+        ];
     }
 
     public function testAdsProcessEventPaymentWhileDetailsCountIsEqualToLimit(): void
@@ -251,7 +321,6 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
         self::assertAdPaymentProcessedEventDispatched(1);
-        self::assertDatabaseCount(TurnoverEntry::class, 4);
         $expectedTurnoverEntries = [
             [
                 'ads_address' => hex2bin('000100000004'),
@@ -274,6 +343,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 'type' => TurnoverEntryType::SspPublishersIncome->name,
             ],
         ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
         foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
             self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
         }

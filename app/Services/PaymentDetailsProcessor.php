@@ -89,7 +89,12 @@ class PaymentDetailsProcessor
             $totalEventValue += $eventValue;
         }
 
-        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
+        return new PaymentProcessingResult(
+            $totalEventValue,
+            $totalLicenseFee,
+            $totalOperatorFee,
+            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
+        );
     }
 
     public function processCredits(
@@ -136,7 +141,12 @@ class PaymentDetailsProcessor
             $totalEventValue += $value;
         }
 
-        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
+        return new PaymentProcessingResult(
+            $totalEventValue,
+            $totalLicenseFee,
+            $totalOperatorFee,
+            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
+        );
     }
 
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void

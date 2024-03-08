@@ -139,6 +139,10 @@ class DummyDemandClient implements DemandClient
     public function fetchPaymentDetailsMeta(string $host, string $transactionId): array
     {
         return [
+            'allocation' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
             'credits' => (null === self::$creditDetails) ? [
                 'count' => 0,
                 'sum' => 0,

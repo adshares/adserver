@@ -177,8 +177,9 @@ SQL;
 
         $areEvents = !isset($meta['events']['count']) || ($meta['events']['count'] > 0);
         $areCredits = ($meta['credits']['count'] ?? 0) > 0;
+        $isAllocation = ($meta['allocation']['sum'] ?? 0) > 0;
 
-        if (!$areEvents && !$areCredits) {
+        if (!$areEvents && !$areCredits && !$isAllocation) {
             return;
         }
 
@@ -191,7 +192,12 @@ SQL;
             if ($offset > 0) {
                 $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
                 $resultsCollection->add(
-                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
+                    new PaymentProcessingResult(
+                        $sum->total_amount,
+                        $sum->license_fee,
+                        $sum->operator_fee,
+                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
+                    )
                 );
             }
 
@@ -229,7 +235,12 @@ SQL;
             if ($offset > 0) {
                 $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_CREDITS, [$incomingPayment->id]);
                 $resultsCollection->add(
-                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
+                    new PaymentProcessingResult(
+                        $sum->total_amount,
+                        $sum->license_fee,
+                        $sum->operator_fee,
+                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
+                    )
                 );
             }
             do {
@@ -258,6 +269,16 @@ SQL;
                 $adsPaymentMeta->meta = $meta;
                 $adsPaymentMeta->save();
             } while (count($creditDetails) === $limit);
+        }
+
+        if ($isAllocation) {
+            $allocationAmount = min(
+                $meta['allocation']['sum'],
+                $incomingPayment->amount - $resultsCollection->eventValueSum(),
+            );
+            if ($allocationAmount > 0) {
+                $resultsCollection->add(new PaymentProcessingResult($allocationAmount));
+            }
         }
 
         $this->storeTurnoverEntries($resultsCollection, $incomingPayment);
@@ -331,7 +352,7 @@ SQL;
             TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::SspOperatorFee, $totalOperatorFeeSum);
         }
 
-        $totalPublisherIncome = $totalEventValue - $totalLicenseFee - $totalOperatorFeeSum;
+        $totalPublisherIncome = $resultsCollection->publisherIncomeSum();
         if ($totalPublisherIncome > 0) {
             TurnoverEntry::increaseOrInsert(
                 $hourTimestamp,

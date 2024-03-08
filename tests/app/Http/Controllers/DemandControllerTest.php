@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventCreditLog;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\SspHost;
@@ -51,6 +52,20 @@ final class DemandControllerTest extends TestCase
     private const PAYMENT_DETAILS_URL = '/payment-details';
     private const PAYMENT_DETAILS_META_URL = '/payment-details-meta';
     private const INVENTORY_LIST_URL = '/adshares/inventory/list';
+    private const PAYMENTS_DETAILS_META_STRUCTURE = [
+        'allocation' => [
+            'count',
+            'sum',
+        ],
+        'credits' => [
+            'count',
+            'sum',
+        ],
+        'events' => [
+            'count',
+            'sum',
+        ],
+    ];
 
     public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGivenTransactionIdAndAddress(): void
     {
@@ -690,6 +705,7 @@ final class DemandControllerTest extends TestCase
         EventLog::factory()->create(['paid_amount' => 5, 'payment_id' => $payment2]);
         EventCreditLog::factory()->create(['paid_amount' => 7, 'payment_id' => $payment1]);
         EventCreditLog::factory()->create(['paid_amount' => 11, 'payment_id' => $payment2]);
+        JoiningFeeLog::factory()->create(['amount' => 13, 'payment_id' => $payment1]);
 
         $url = sprintf(
             '%s/%s/%s/%s/%s',
@@ -703,25 +719,18 @@ final class DemandControllerTest extends TestCase
         $response = $this->getJson($url);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure([
-            'credits' => [
-                'count',
-                'sum',
-            ],
-            'events' => [
-                'count',
-                'sum',
-            ],
-        ]);
+        $response->assertJsonStructure(self::PAYMENTS_DETAILS_META_STRUCTURE);
 
         $content = json_decode($response->getContent(), true);
+        $this->assertEquals(1, $content['allocation']['count']);
+        $this->assertEquals(13, $content['allocation']['sum']);
         $this->assertEquals(1, $content['credits']['count']);
         $this->assertEquals(7, $content['credits']['sum']);
         $this->assertEquals(2, $content['events']['count']);
         $this->assertEquals(5, $content['events']['sum']);
     }
 
-    public function testPaymentDetailsMetaWhileNoEventsNor(): void
+    public function testPaymentDetailsMetaWhileNoEvents(): void
     {
         $this->mockPaymentDetailsVerifier();
         $this->login();
@@ -742,18 +751,11 @@ final class DemandControllerTest extends TestCase
         $response = $this->getJson($url);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure([
-            'credits' => [
-                'count',
-                'sum',
-            ],
-            'events' => [
-                'count',
-                'sum',
-            ],
-        ]);
+        $response->assertJsonStructure(self::PAYMENTS_DETAILS_META_STRUCTURE);
 
         $content = json_decode($response->getContent(), true);
+        $this->assertEquals(0, $content['allocation']['count']);
+        $this->assertEquals(0, $content['allocation']['sum']);
         $this->assertEquals(0, $content['credits']['count']);
         $this->assertEquals(0, $content['credits']['sum']);
         $this->assertEquals(0, $content['events']['count']);
