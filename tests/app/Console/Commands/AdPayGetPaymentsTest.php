@@ -463,11 +463,11 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             'pay_to' => hex2bin('000100000002'),
         ]);
         $this->assertDatabaseHas(JoiningFeeLog::class, [
-            'event_value' => 3_472_222_222 + 5_555_555_555,
+            'amount' => 4_811_205_831 + 7_697_929_329,
             'pay_to' => hex2bin('000100000001'),
         ]);
         $this->assertDatabaseHas(JoiningFeeLog::class, [
-            'event_value' => 3_472_222_222 + 1_388_888_888,
+            'amount' => 4_811_205_831 + 1_924_482_332,
             'pay_to' => hex2bin('000100000002'),
         ]);
     }
