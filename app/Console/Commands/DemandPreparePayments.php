@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Conversion;
-use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Models\JoiningFeeLog;
@@ -160,9 +160,9 @@ class DemandPreparePayments extends BaseCommand
         }
 
         do {
-            $events = EventCreditLog::fetchUnpaid($from, $to, $chunkSize);
+            $events = EventBoostLog::fetchUnpaid($from, $to, $chunkSize);
             $eventCount = count($events);
-            $this->info(sprintf('Found %d payable credit events.', $eventCount));
+            $this->info(sprintf('Found %d payable boost events.', $eventCount));
             if (0 === $eventCount) {
                 break;
             }

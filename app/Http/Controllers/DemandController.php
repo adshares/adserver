@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventConversionLog;
-use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
@@ -500,10 +500,10 @@ SQL;
             );
         }
 
-        $areCreditEventsRequested = str_contains($request->getRequestUri(), '/credit-details/');
-        if ($areCreditEventsRequested) {
-            $data = EventCreditLog::fetchPaid($paymentIds, $accountAddressDecoded, $limit, $offset)
-                ->map(fn(EventCreditLog $log) => [
+        $isBoostRequested = str_contains($request->getRequestUri(), '/boost-details/');
+        if ($isBoostRequested) {
+            $data = EventBoostLog::fetchPaid($paymentIds, $accountAddressDecoded, $limit, $offset)
+                ->map(fn(EventBoostLog $log) => [
                     'campaign_id' => $log->campaign_id,
                     'value' => $log->paid_amount,
                 ]);
@@ -536,7 +536,7 @@ SQL;
                     'count' => 0,
                     'sum' => 0,
                 ],
-                'credits' => [
+                'boost' => [
                     'count' => 0,
                     'sum' => 0,
                 ],
@@ -551,9 +551,9 @@ SQL;
                     'count' => JoiningFeeLog::countPaid($paymentIds, $accountAddressDecoded),
                     'sum' => JoiningFeeLog::sumAmountPaid($paymentIds, $accountAddressDecoded),
                 ],
-                'credits' => [
-                    'count' => EventCreditLog::countPaid($paymentIds, $accountAddressDecoded),
-                    'sum' => EventCreditLog::sumAmountPaid($paymentIds, $accountAddressDecoded),
+                'boost' => [
+                    'count' => EventBoostLog::countPaid($paymentIds, $accountAddressDecoded),
+                    'sum' => EventBoostLog::sumAmountPaid($paymentIds, $accountAddressDecoded),
                 ],
                 'events' => $this->fetchMetaPaidConversionsAndEvents($paymentIds),
             ];

@@ -51,7 +51,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null payment_id
  * @mixin Builder
  */
-class EventCreditLog extends Model
+class EventBoostLog extends Model
 {
     use AccountAddress;
     use AutomateMutators;
@@ -114,13 +114,13 @@ class EventCreditLog extends Model
 
     public static function countPaid(array $paymentIds, string $payTo): int
     {
-        return self::getEventCreditLogBuilder($paymentIds, $payTo)
+        return self::getEventBoostLogBuilder($paymentIds, $payTo)
             ->count();
     }
 
     public static function fetchPaid(array $paymentIds, string $payTo, int $limit, int $offset = 0): Collection
     {
-        return self::getEventCreditLogBuilder($paymentIds, $payTo)
+        return self::getEventBoostLogBuilder($paymentIds, $payTo)
             ->limit($limit)
             ->offset($offset)
             ->get();
@@ -128,11 +128,11 @@ class EventCreditLog extends Model
 
     public static function sumAmountPaid(array $paymentIds, string $payTo): int
     {
-        return self::getEventCreditLogBuilder($paymentIds, $payTo)
+        return self::getEventBoostLogBuilder($paymentIds, $payTo)
             ->sum('paid_amount');
     }
 
-    private static function getEventCreditLogBuilder(array $paymentIds, string $payTo): Builder
+    private static function getEventBoostLogBuilder(array $paymentIds, string $payTo): Builder
     {
         return self::query()
             ->whereIn('payment_id', $paymentIds)

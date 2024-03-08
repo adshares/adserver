@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventConversionLog;
-use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
@@ -48,7 +48,7 @@ use function uniqid;
 
 final class DemandControllerTest extends TestCase
 {
-    private const CREDIT_DETAILS_URL = '/credit-details';
+    private const BOOST_DETAILS_URL = '/boost-details';
     private const PAYMENT_DETAILS_URL = '/payment-details';
     private const PAYMENT_DETAILS_META_URL = '/payment-details-meta';
     private const INVENTORY_LIST_URL = '/adshares/inventory/list';
@@ -57,7 +57,7 @@ final class DemandControllerTest extends TestCase
             'count',
             'sum',
         ],
-        'credits' => [
+        'boost' => [
             'count',
             'sum',
         ],
@@ -202,7 +202,7 @@ final class DemandControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
-    public function testCreditDetails(): void
+    public function testBoostDetails(): void
     {
         $this->app->bind(
             PaymentDetailsVerify::class,
@@ -227,19 +227,19 @@ final class DemandControllerTest extends TestCase
             'tx_id' => $transactionId,
         ]);
         $campaignId = Uuid::v4()->hex();
-        EventCreditLog::factory()->create([
+        EventBoostLog::factory()->create([
             'campaign_id' => $campaignId,
             'paid_amount' => 100,
             'pay_to' => $accountAddress,
             'payment_id' => $payment1,
         ]);
-        EventCreditLog::factory()->create([
+        EventBoostLog::factory()->create([
             'campaign_id' => $campaignId,
             'paid_amount' => 30,
             'pay_to' => $accountAddress,
             'payment_id' => $payment2,
         ]);
-        EventCreditLog::factory()->create([
+        EventBoostLog::factory()->create([
             'campaign_id' => $campaignId,
             'paid_amount' => 50,
             'pay_to' => '0001-00000002-BB2D',
@@ -248,7 +248,7 @@ final class DemandControllerTest extends TestCase
 
         $url = sprintf(
             '%s/%s/%s/%s/%s',
-            self::CREDIT_DETAILS_URL,
+            self::BOOST_DETAILS_URL,
             $transactionId,
             $accountAddress,
             $date,
@@ -703,8 +703,8 @@ final class DemandControllerTest extends TestCase
         EventConversionLog::factory()->create(['paid_amount' => 3, 'payment_id' => $payment1]);
         EventLog::factory()->create(['paid_amount' => 3, 'payment_id' => $payment1]);
         EventLog::factory()->create(['paid_amount' => 5, 'payment_id' => $payment2]);
-        EventCreditLog::factory()->create(['paid_amount' => 7, 'payment_id' => $payment1]);
-        EventCreditLog::factory()->create(['paid_amount' => 11, 'payment_id' => $payment2]);
+        EventBoostLog::factory()->create(['paid_amount' => 7, 'payment_id' => $payment1]);
+        EventBoostLog::factory()->create(['paid_amount' => 11, 'payment_id' => $payment2]);
         JoiningFeeLog::factory()->create(['amount' => 13, 'payment_id' => $payment1]);
 
         $url = sprintf(
@@ -724,8 +724,8 @@ final class DemandControllerTest extends TestCase
         $content = json_decode($response->getContent(), true);
         $this->assertEquals(1, $content['allocation']['count']);
         $this->assertEquals(13, $content['allocation']['sum']);
-        $this->assertEquals(1, $content['credits']['count']);
-        $this->assertEquals(7, $content['credits']['sum']);
+        $this->assertEquals(1, $content['boost']['count']);
+        $this->assertEquals(7, $content['boost']['sum']);
         $this->assertEquals(2, $content['events']['count']);
         $this->assertEquals(5, $content['events']['sum']);
     }
@@ -756,8 +756,8 @@ final class DemandControllerTest extends TestCase
         $content = json_decode($response->getContent(), true);
         $this->assertEquals(0, $content['allocation']['count']);
         $this->assertEquals(0, $content['allocation']['sum']);
-        $this->assertEquals(0, $content['credits']['count']);
-        $this->assertEquals(0, $content['credits']['sum']);
+        $this->assertEquals(0, $content['boost']['count']);
+        $this->assertEquals(0, $content['boost']['sum']);
         $this->assertEquals(0, $content['events']['count']);
         $this->assertEquals(0, $content['events']['sum']);
     }

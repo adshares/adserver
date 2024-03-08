@@ -40,7 +40,7 @@ interface AdSelect
 
     public function exportCasePayments(Collection $casePayments): void;
 
-    public function exportCreditPayments(Collection $creditPayments): void;
+    public function exportBoostPayments(Collection $boostPayments): void;
 
     public function getLastExportedCaseId(): int;
 
@@ -48,5 +48,5 @@ interface AdSelect
 
     public function getLastExportedCasePaymentId(): int;
 
-    public function getLastExportedCreditPaymentId(): int;
+    public function getLastExportedBoostPaymentId(): int;
 }

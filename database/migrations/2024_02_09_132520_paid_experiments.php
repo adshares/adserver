@@ -56,7 +56,7 @@ return new class extends Migration {
             $table->timestamp('experiment_end_at')->nullable();
         });
 
-        Schema::create('event_credit_logs', function (Blueprint $table) {
+        Schema::create('event_boost_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->timestamps();
 
@@ -77,12 +77,12 @@ return new class extends Migration {
             $table->integer('payment_id')->nullable()->index();
         });
 
-        DB::statement('ALTER TABLE event_credit_logs MODIFY uuid VARBINARY(16)');
-        DB::statement('ALTER TABLE event_credit_logs MODIFY advertiser_id VARBINARY(16)');
-        DB::statement('ALTER TABLE event_credit_logs MODIFY campaign_id VARBINARY(16)');
-        DB::statement('ALTER TABLE event_credit_logs MODIFY pay_to VARBINARY(6)');
+        DB::statement('ALTER TABLE event_boost_logs MODIFY uuid VARBINARY(16)');
+        DB::statement('ALTER TABLE event_boost_logs MODIFY advertiser_id VARBINARY(16)');
+        DB::statement('ALTER TABLE event_boost_logs MODIFY campaign_id VARBINARY(16)');
+        DB::statement('ALTER TABLE event_boost_logs MODIFY pay_to VARBINARY(6)');
 
-        Schema::table('event_credit_logs', function (Blueprint $table) {
+        Schema::table('event_boost_logs', function (Blueprint $table) {
             $table->index('pay_to');
             $table->unique('uuid');
         });
@@ -99,7 +99,7 @@ return new class extends Migration {
             $table->json('meta');
         });
 
-        Schema::create('network_credit_payments', function (Blueprint $table) {
+        Schema::create('network_boost_payments', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->timestamps();
             $table->unsignedBigInteger('ads_payment_id');
@@ -167,9 +167,9 @@ return new class extends Migration {
         Schema::dropIfExists('joining_fee_logs');
         Schema::dropIfExists('joining_fees');
         Schema::dropIfExists('ssp_hosts');
-        Schema::dropIfExists('network_credit_payments');
+        Schema::dropIfExists('network_boost_payments');
         Schema::dropIfExists('ads_payment_metas');
-        Schema::dropIfExists('event_credit_logs');
+        Schema::dropIfExists('event_boost_logs');
 
         Schema::table('campaigns', function (Blueprint $table) {
             $table->dropColumn(['experiment_budget', 'experiment_end_at']);

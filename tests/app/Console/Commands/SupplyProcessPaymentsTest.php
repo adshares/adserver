@@ -29,7 +29,7 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkCasePayment;
-use Adshares\Adserver\Models\NetworkCreditPayment;
+use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
@@ -172,14 +172,14 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         }
     }
 
-    public function testAdsProcessCreditPayment(): void
+    public function testAdsProcessBoostPayment(): void
     {
         $demandClient = new DummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
-        $creditDetails = $demandClient->fetchCreditDetails('', '', 4, 0);
+        $boostDetails = $demandClient->fetchBoostDetails('', '', 4, 0);
 
-        [$totalAmount, $licenseFee, $operatorFee] = $this->computeIncomeFromCredit($creditDetails);
+        [$totalAmount, $licenseFee, $operatorFee] = $this->computeIncomeFromBoost($boostDetails);
         $publishersIncome = $totalAmount - $licenseFee - $operatorFee;
 
         $adsPayment = AdsPayment::factory()->create([
@@ -192,7 +192,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
 
         self::assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
-        self::assertEquals($totalAmount, NetworkCreditPayment::sum('total_amount'));
+        self::assertEquals($totalAmount, NetworkBoostPayment::sum('total_amount'));
         self::assertEquals($licenseFee, NetworkPayment::sum('amount'));
         self::assertAdPaymentProcessedEventDispatched(1);
         $expectedTurnoverEntries = [
@@ -224,7 +224,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         self::assertDatabaseCount(AdsPaymentMeta::class, 1);
         $adsPaymentMeta = AdsPaymentMeta::first();
         self::assertEquals($adsPayment->id, $adsPaymentMeta->ads_payment_id);
-        self::assertEquals(4, $adsPaymentMeta->meta['credits']['offset']);
+        self::assertEquals(4, $adsPaymentMeta->meta['boost']['offset']);
     }
 
     /**
@@ -248,7 +248,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 'count' => 1,
                 'sum' => $reportedAmount,
             ],
-            'credits' => [
+            'boost' => [
                 'count' => 0,
                 'sum' => 0,
             ],
@@ -258,7 +258,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             ],
         ]);
         $demandClientMock->expects(self::never())->method('fetchPaymentDetails');
-        $demandClientMock->expects(self::never())->method('fetchCreditDetails');
+        $demandClientMock->expects(self::never())->method('fetchBoostDetails');
         $this->app->bind(DemandClient::class, fn() => $demandClientMock);
 
         $adsPayment = AdsPayment::factory()->create([
@@ -632,7 +632,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         return [$totalAmount, $licenseFee, $operatorFee];
     }
 
-    private function computeIncomeFromCredit(array $creditDetails): array
+    private function computeIncomeFromBoost(array $details): array
     {
         $totalAmount = 0;
         $licenseFee = 0;
@@ -643,16 +643,16 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
         $operatorFeeCoefficient = 0.01;
 
-        foreach ($creditDetails as $creditDetail) {
+        foreach ($details as $detail) {
             NetworkCampaign::factory()->create(
                 [
-                    'demand_campaign_id' => $creditDetail['campaign_id'],
+                    'demand_campaign_id' => $detail['campaign_id'],
                     'source_address' => '0001-00000004-DBEB',
                     'status' => Status::STATUS_ACTIVE,
                 ]
             );
 
-            $value = (int)$creditDetail['value'];
+            $value = (int)$detail['value'];
             $totalAmount += $value;
             $eventFee = (int)floor($value * $licenseFeeCoefficient);
             $licenseFee += $eventFee;

@@ -158,7 +158,7 @@ final class DummyAdSelectClient implements AdSelect
     {
     }
 
-    public function exportCreditPayments(Collection $creditPayments): void
+    public function exportBoostPayments(Collection $boostPayments): void
     {
     }
 
@@ -177,7 +177,7 @@ final class DummyAdSelectClient implements AdSelect
         return 0;
     }
 
-    public function getLastExportedCreditPaymentId(): int
+    public function getLastExportedBoostPaymentId(): int
     {
         return 0;
     }

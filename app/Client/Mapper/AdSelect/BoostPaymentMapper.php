@@ -21,26 +21,21 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-use Adshares\Adserver\Models\NetworkCreditPayment;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Adshares\Adserver\Models\NetworkBoostPayment;
+use DateTimeInterface;
 
-/**
- * @extends Factory<NetworkCreditPayment>
- */
-class NetworkCreditPaymentFactory extends Factory
+class BoostPaymentMapper
 {
-    public function definition(): array
+    public static function map(NetworkBoostPayment $payment): array
     {
         return [
-            'pay_time' => $this->faker->dateTime,
-            'total_amount' => 100_000_000_000,
-            'license_fee' => 0,
-            'operator_fee' => 0,
-            'paid_amount' => 100_000_000_000,
-            'exchange_rate' => 1,
-            'paid_amount_currency' => 100_000_000_000,
+            'id' => $payment->id,
+            'campaign_id' => $payment->campaign_public_id,
+            'paid_amount' => (int)((float)$payment->total_amount * $payment->exchange_rate),
+            'pay_time' => $payment->pay_time->format(DateTimeInterface::ATOM),
+            'payer' => $payment->payer,
         ];
     }
 }

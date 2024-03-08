@@ -32,7 +32,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\JoiningFee;
 use Adshares\Adserver\Models\JoiningFeeLog;
@@ -403,7 +403,7 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             'pay_to' => '0001-00000001-8B4E',
             'event_value' => 35_000_000_000_000,
         ]);
-        EventCreditLog::factory()->create([
+        EventBoostLog::factory()->create([
             'pay_to' => '0001-00000001-8B4E',
             'event_value' => 5_000_000_000_000,
         ]);
@@ -454,11 +454,11 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
             ->assertExitCode(AdPayGetPayments::STATUS_OK);
 
         $this->assertEquals(45_004_500_450, $user->getWalletBalance());//15_000_000_000
-        $this->assertDatabaseHas(EventCreditLog::class, [
+        $this->assertDatabaseHas(EventBoostLog::class, [
             'event_value_currency' => 4_000_000_000,
             'pay_to' => hex2bin('000100000001'),
         ]);
-        $this->assertDatabaseHas(EventCreditLog::class, [
+        $this->assertDatabaseHas(EventBoostLog::class, [
             'event_value_currency' => 1_000_000_000,
             'pay_to' => hex2bin('000100000002'),
         ]);

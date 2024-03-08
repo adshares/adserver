@@ -27,7 +27,7 @@ use Adshares\Adserver\Console\Commands\DemandPreparePayments;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
-use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
@@ -250,14 +250,14 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
         }
     }
 
-    public function testHandleEventCreditFees(): void
+    public function testHandleEventBoostFees(): void
     {
         Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $this->mockCommunityFeeReader(0.5);
         $this->mockLicenseReader(0.5);
-        /** @var EventCreditLog $event */
-        $event = EventCreditLog::factory()->create([
+        /** @var EventBoostLog $event */
+        $event = EventBoostLog::factory()->create([
             'event_value_currency' => 1000,
             'exchange_rate' => 1,
             'event_value' => 1000,
@@ -265,7 +265,7 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
         ]);
 
         $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE)
-            ->expectsOutput('Found 1 payable credit events.')
+            ->expectsOutput('Found 1 payable boost events.')
             ->expectsOutput('In that, there are 1 recipients')
             ->expectsOutput('and a license fee of 500 clicks payable to 0001-00000002-BB2D')
             ->expectsOutput('and a community fee of 125 clicks payable to 0001-00000024-FF89')

@@ -49,7 +49,7 @@ Route::get(
     [DemandController::class, 'paymentDetails']
 );
 Route::get(
-    '/credit-details/{transactionId}/{accountAddress}/{date}/{signature}',
+    '/boost-details/{transactionId}/{accountAddress}/{date}/{signature}',
     [DemandController::class, 'paymentDetails']
 );
 Route::get(

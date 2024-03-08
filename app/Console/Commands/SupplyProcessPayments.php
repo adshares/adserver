@@ -56,11 +56,11 @@ SELECT IFNULL(SUM(total_amount), 0) AS total_amount,
 FROM network_case_payments
 WHERE ads_payment_id = ?
 SQL;
-    private const SQL_QUERY_GET_PROCESSED_CREDITS = <<<SQL
+    private const SQL_QUERY_GET_PROCESSED_BOOST = <<<SQL
 SELECT IFNULL(SUM(total_amount), 0) AS total_amount,
        IFNULL(SUM(license_fee), 0)  AS license_fee,
        IFNULL(SUM(operator_fee), 0) AS operator_fee
-FROM network_credit_payments
+FROM network_boost_payments
 WHERE ads_payment_id = ?
 SQL;
 
@@ -176,10 +176,10 @@ SQL;
         $meta = $adsPaymentMeta->meta;
 
         $areEvents = !isset($meta['events']['count']) || ($meta['events']['count'] > 0);
-        $areCredits = ($meta['credits']['count'] ?? 0) > 0;
+        $isBoost = ($meta['boost']['count'] ?? 0) > 0;
         $isAllocation = ($meta['allocation']['sum'] ?? 0) > 0;
 
-        if (!$areEvents && !$areCredits && !$isAllocation) {
+        if (!$areEvents && !$isBoost && !$isAllocation) {
             return;
         }
 
@@ -230,10 +230,10 @@ SQL;
             } while (count($paymentDetails) === $limit);
         }
 
-        if ($areCredits) {
-            $offset = $meta['credits']['offset'] ?? 0;
+        if ($isBoost) {
+            $offset = $meta['boost']['offset'] ?? 0;
             if ($offset > 0) {
-                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_CREDITS, [$incomingPayment->id]);
+                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_BOOST, [$incomingPayment->id]);
                 $resultsCollection->add(
                     new PaymentProcessingResult(
                         $sum->total_amount,
@@ -245,7 +245,7 @@ SQL;
             }
             do {
                 try {
-                    $creditDetails = $this->demandClient->fetchCreditDetails(
+                    $boostDetails = $this->demandClient->fetchBoostDetails(
                         $networkHost->host,
                         $incomingPayment->txid,
                         $limit,
@@ -257,18 +257,18 @@ SQL;
                     return;
                 }
 
-                $processPaymentDetails = $this->paymentDetailsProcessor->processCredits(
+                $processPaymentDetails = $this->paymentDetailsProcessor->processBoost(
                     $incomingPayment,
-                    $creditDetails,
+                    $boostDetails,
                     $resultsCollection->eventValueSum(),
                 );
                 $resultsCollection->add($processPaymentDetails);
 
-                $offset += count($creditDetails);
-                $meta['credits']['offset'] = $offset;
+                $offset += count($boostDetails);
+                $meta['boost']['offset'] = $offset;
                 $adsPaymentMeta->meta = $meta;
                 $adsPaymentMeta->save();
-            } while (count($creditDetails) === $limit);
+            } while (count($boostDetails) === $limit);
         }
 
         if ($isAllocation) {

@@ -26,7 +26,7 @@ namespace Adshares\Adserver\Services\Demand;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\EventCreditLog;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\JoiningFee;
 use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\SspHost;
@@ -322,7 +322,7 @@ class AdPayPaymentReportProcessor
         $from = new DateTimeImmutable('-30 days');
         $conversions = Conversion::fetchPaidConversionsByPayTo($from, $adsAddresses)
             ->keyBy('pay_to');
-        $creditLogs = EventCreditLog::fetchByPayTo($from, $adsAddresses)
+        $boosts = EventBoostLog::fetchByPayTo($from, $adsAddresses)
             ->keyBy('pay_to');
         $joiningFeesByAdsAddress = JoiningFee::fetchJoiningFeesForAllocation()
             ->groupBy('ads_address');
@@ -332,7 +332,7 @@ class AdPayPaymentReportProcessor
         foreach ($adsAddresses as $adsAddress) {
             $reputation = TurnoverEntry::getJoiningFeeIncome($adsAddress)
                 + (int)($conversions->get($adsAddress)?->value ?? 0)
-                - (int)($creditLogs->get($adsAddress)?->value ?? 0);
+                - (int)($boosts->get($adsAddress)?->value ?? 0);
             $totalReputation += $reputation;
 
             $allocationAmount = 0;
@@ -443,7 +443,7 @@ class AdPayPaymentReportProcessor
     ): void {
         foreach ($sspHosts as $ssp) {
             $eventValueInCurrency = (int)floor($value * $ssp['weight']);
-            EventCreditLog::create(
+            EventBoostLog::create(
                 $computationDateTime,
                 $advertiserPublicId,
                 $campaignPublicId,

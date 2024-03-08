@@ -161,7 +161,7 @@ class Campaign extends Model
         'bid_strategy',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',

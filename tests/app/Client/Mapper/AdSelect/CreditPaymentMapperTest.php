@@ -23,10 +23,10 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Tests\Client\Mapper\AdSelect;
 
-use Adshares\Adserver\Client\Mapper\AdSelect\CreditPaymentMapper;
+use Adshares\Adserver\Client\Mapper\AdSelect\BoostPaymentMapper;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkCampaign;
-use Adshares\Adserver\Models\NetworkCreditPayment;
+use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Tests\TestCase;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -45,21 +45,21 @@ final class CreditPaymentMapperTest extends TestCase
     {
         $adsPayment = AdsPayment::factory()->create(['address' => '0001-00000001-8B4E']);
         $campaign = NetworkCampaign::factory()->create(['uuid' => '312064267be539d5a73d70ade6d08139']);
-        $expectedCreditPaymentId = NetworkCreditPayment::factory()->create([
+        $expectedBoostPaymentId = NetworkBoostPayment::factory()->create([
             'pay_time' => DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, '2024-02-23T12:51:34+00:00'),
             'ads_payment_id' => $adsPayment,
             'network_campaign_id' => $campaign,
             'total_amount' => 120_000_000_000,
             'exchange_rate' => 3.2,
         ])->id;
-        $creditPayment = NetworkCreditPayment::fetchPaymentsToExport(0, 1)->first();
+        $boostPayment = NetworkBoostPayment::fetchPaymentsToExport(0, 1)->first();
 
-        $mapped = CreditPaymentMapper::map($creditPayment);
+        $mapped = BoostPaymentMapper::map($boostPayment);
 
         foreach (self::EXPECTED_KEYS as $key) {
             self::assertArrayHasKey($key, $mapped);
         }
-        self::assertEquals($expectedCreditPaymentId, $mapped['id']);
+        self::assertEquals($expectedBoostPaymentId, $mapped['id']);
         self::assertEquals('2024-02-23T12:51:34+00:00', $mapped['pay_time']);
         self::assertEquals(384_000_000_000, $mapped['paid_amount']);
         self::assertEquals('0001-00000001-8B4E', $mapped['payer']);

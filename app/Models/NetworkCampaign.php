@@ -44,11 +44,6 @@ class NetworkCampaign extends Model
     use BinHex;
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $dates = [
         'date_start',
         'date_end',
@@ -61,11 +56,6 @@ class NetworkCampaign extends Model
         'targeting_excludes' => 'json',
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'uuid',
         'demand_campaign_id',
@@ -88,21 +78,11 @@ class NetworkCampaign extends Model
         'status',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'id',
     ];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'demand_campaign_id' => 'BinHex',
         'publisher_id' => 'BinHex',

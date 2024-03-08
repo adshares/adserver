@@ -47,7 +47,7 @@ class SspHost extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'ads_address' => 'AccountAddress',
     ];
 

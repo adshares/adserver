@@ -58,8 +58,8 @@ class AdSelectCasePaymentsExportCommand extends BaseCommand
         }
 
         try {
-            $exportedCount = $this->adSelectCaseExporter->exportCreditPayments();
-            $this->info(sprintf('[AdSelectCaseExport] Exported %s credit payment(s)', $exportedCount));
+            $exportedCount = $this->adSelectCaseExporter->exportBoostPayments();
+            $this->info(sprintf('[AdSelectCaseExport] Exported %s boost payment(s)', $exportedCount));
         } catch (UnexpectedClientResponseException | RuntimeException $exception) {
             $this->error($exception->getMessage());
         }

@@ -27,7 +27,7 @@ use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
-use Adshares\Adserver\Models\NetworkCreditPayment;
+use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
@@ -97,9 +97,9 @@ class PaymentDetailsProcessor
         );
     }
 
-    public function processCredits(
+    public function processBoost(
         AdsPayment $adsPayment,
-        array $creditDetails,
+        array $boostDetails,
         int $carriedEventValueSum,
     ): PaymentProcessingResult {
         $exchangeRate = $this->fetchExchangeRate();
@@ -111,20 +111,20 @@ class PaymentDetailsProcessor
         $totalEventValue = 0;
 
         $campaignIds = NetworkCampaign::findIdsByDemandIdsAndAddress(
-            array_map(fn(array $creditDetail) => $creditDetail['campaign_id'], $creditDetails),
+            array_map(fn(array $detail) => $detail['campaign_id'], $boostDetails),
             $adsPayment->address,
         );
 
-        foreach ($creditDetails as $creditDetail) {
-            if (null === ($campaignId = $campaignIds[$creditDetail['campaign_id']] ?? null)) {
+        foreach ($boostDetails as $boostDetail) {
+            if (null === ($campaignId = $campaignIds[$boostDetail['campaign_id']] ?? null)) {
                 continue;
             }
 
             $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
-            $value = min($spendableAmount, $creditDetail['value']);
+            $value = min($spendableAmount, $boostDetail['value']);
             $calculatedFees = $feeCalculator->calculateFee($value);
 
-            NetworkCreditPayment::create(
+            NetworkBoostPayment::create(
                 $adsPayment->tx_time,
                 $adsPayment->id,
                 $campaignId,

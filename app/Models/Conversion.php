@@ -93,7 +93,7 @@ class Conversion extends Model
         'weight',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'case_id' => 'BinHex',
         'group_id' => 'BinHex',

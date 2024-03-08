@@ -44,7 +44,7 @@ use Illuminate\Support\Collection;
  * @property int paid_amount_currency
  * @mixin Builder
  */
-class NetworkCreditPayment extends Model
+class NetworkBoostPayment extends Model
 {
     use AutomateMutators;
     use BinHex;
@@ -54,7 +54,7 @@ class NetworkCreditPayment extends Model
         'pay_time',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'campaign_public_id' => 'BinHex',
     ];
 
@@ -87,28 +87,32 @@ class NetworkCreditPayment extends Model
         int $limit,
         int $offset = 0,
     ): Collection {
-        return self::select(
-            [
-                'network_credit_payments.*',
+        return self::query()
+            ->select([
+                'network_boost_payments.*',
                 'ads_payments.address as payer',
                 'network_campaigns.uuid AS campaign_public_id',
-            ]
-        )
-            ->where('network_credit_payments.id', '>=', $idFrom)
+            ])
+            ->where('network_boost_payments.id', '>=', $idFrom)
             ->join(
                 'ads_payments',
-                'network_credit_payments.ads_payment_id',
+                'network_boost_payments.ads_payment_id',
                 '=',
                 'ads_payments.id'
             )
             ->join(
                 'network_campaigns',
-                'network_credit_payments.network_campaign_id',
+                'network_boost_payments.network_campaign_id',
                 '=',
                 'network_campaigns.id'
             )
             ->take($limit)
             ->skip($offset)
             ->get();
+    }
+
+    public static function fetchOldest(DateTimeInterface $from): ?self
+    {
+        return NetworkBoostPayment::where('pay_time', '>=', $from)->first();
     }
 }

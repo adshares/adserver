@@ -132,9 +132,9 @@ final class GuzzleDemandClient implements DemandClient
         return $this->fetchDetails('payment-details', $host, $transactionId, $limit, $offset);
     }
 
-    public function fetchCreditDetails(string $host, string $transactionId, int $limit, int $offset): array
+    public function fetchBoostDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        return $this->fetchDetails('credit-details', $host, $transactionId, $limit, $offset);
+        return $this->fetchDetails('boost-details', $host, $transactionId, $limit, $offset);
     }
 
     public function fetchDetails(

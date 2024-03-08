@@ -73,12 +73,7 @@ class NetworkCasePayment extends Model
 
     protected $visible = [];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation
-     *
-     * @var array
-     */
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         /** Mutators from @see NetworkCase::class */
         'case_id' => 'BinHex',
         'publisher_id' => 'BinHex',

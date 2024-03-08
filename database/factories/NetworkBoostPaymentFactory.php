@@ -19,35 +19,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\Domain\ValueObject\Uuid;
-use DateTimeImmutable;
+use Adshares\Adserver\Models\NetworkBoostPayment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Adshares\Adserver\Models\EventCreditLog>
+ * @extends Factory<NetworkBoostPayment>
  */
-class EventCreditLogFactory extends Factory
+class NetworkBoostPaymentFactory extends Factory
 {
     public function definition(): array
     {
         return [
-            'created_at' => new DateTimeImmutable(),
-            'updated_at' => new DateTimeImmutable(),
-            'computed_at' => new DateTimeImmutable(),
-            'advertiser_id' => Uuid::v4()->hex(),
-            'campaign_id' => Uuid::v4()->hex(),
-            'pay_to' => (new AccountId('0001-00000001-8B4E'))->toString(),
-            'event_value_currency' => 0,
-            'exchange_rate' => 1,
-            'event_value' => 0,
+            'pay_time' => $this->faker->dateTime,
+            'total_amount' => 100_000_000_000,
             'license_fee' => 0,
             'operator_fee' => 0,
-            'community_fee' => 0,
-            'paid_amount' => 0,
-            'payment_id' => null,
+            'paid_amount' => 100_000_000_000,
+            'exchange_rate' => 1,
+            'paid_amount_currency' => 100_000_000_000,
         ];
     }
 }

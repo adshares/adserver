@@ -40,7 +40,7 @@ use DateTimeImmutable;
 class DummyDemandClient implements DemandClient
 {
     public array $campaigns;
-    private static ?array $creditDetails = null;
+    private static ?array $boostDetails = null;
     private static ?array $paymentDetails = null;
 
     public function __construct()
@@ -143,12 +143,12 @@ class DummyDemandClient implements DemandClient
                 'count' => 0,
                 'sum' => 0,
             ],
-            'credits' => (null === self::$creditDetails) ? [
+            'boost' => (null === self::$boostDetails) ? [
                 'count' => 0,
                 'sum' => 0,
             ] : [
-                'count' => count(self::$creditDetails),
-                'sum' => array_reduce(self::$creditDetails, fn($carry, $item) => $carry + $item['value'], 0),
+                'count' => count(self::$boostDetails),
+                'sum' => array_reduce(self::$boostDetails, fn($carry, $item) => $carry + $item['value'], 0),
             ],
             'events' => (null === self::$paymentDetails) ? [
                 'count' => 0,
@@ -194,23 +194,23 @@ class DummyDemandClient implements DemandClient
         return self::$paymentDetails;
     }
 
-    public function fetchCreditDetails(string $host, string $transactionId, int $limit, int $offset): array
+    public function fetchBoostDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        if (self::$creditDetails === null) {
-            self::$creditDetails = [];
+        if (self::$boostDetails === null) {
+            self::$boostDetails = [];
             for ($i = 0; $i < $limit; $i++) {
-                self::$creditDetails[] = [
+                self::$boostDetails[] = [
                     'campaign_id' => Uuid::v4()->hex(),
                     'value' => 20_000,
                 ];
             }
         } else {
-            if ($offset >= count(self::$creditDetails)) {
+            if ($offset >= count(self::$boostDetails)) {
                 throw new EmptyInventoryException('Empty list');
             }
-            return array_chunk(self::$creditDetails, $limit)[(int)floor($offset / $limit)];
+            return array_chunk(self::$boostDetails, $limit)[(int)floor($offset / $limit)];
         }
-        return self::$creditDetails;
+        return self::$boostDetails;
     }
 
     public function fetchInfo(UrlInterface $infoUrl): Info

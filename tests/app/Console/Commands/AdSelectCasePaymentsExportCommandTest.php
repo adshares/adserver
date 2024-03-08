@@ -46,14 +46,14 @@ class AdSelectCasePaymentsExportCommandTest extends ConsoleTestCase
             function () {
                 $adSelectCaseExporter = self::createMock(AdSelectCaseExporter::class);
                 $adSelectCaseExporter->method('exportCasePayments')->willReturn(1);
-                $adSelectCaseExporter->method('exportCreditPayments')->willReturn(2);
+                $adSelectCaseExporter->method('exportBoostPayments')->willReturn(2);
                 return $adSelectCaseExporter;
             }
         );
 
         $this->artisan(self::SIGNATURE)
             ->expectsOutputToContain('[AdSelectCaseExport] Exported 1 payment(s)')
-            ->expectsOutputToContain('[AdSelectCaseExport] Exported 2 credit payment(s)')
+            ->expectsOutputToContain('[AdSelectCaseExport] Exported 2 boost payment(s)')
             ->assertExitCode(0);
     }
 
@@ -67,7 +67,7 @@ class AdSelectCasePaymentsExportCommandTest extends ConsoleTestCase
                     ->method('exportCasePayments')
                     ->willThrowException(new UnexpectedClientResponseException('test1'));
                 $adSelectCaseExporter
-                    ->method('exportCreditPayments')
+                    ->method('exportBoostPayments')
                     ->willThrowException(new UnexpectedClientResponseException('test2'));
                 return $adSelectCaseExporter;
             }

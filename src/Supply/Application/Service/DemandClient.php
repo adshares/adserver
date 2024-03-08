@@ -41,7 +41,7 @@ interface DemandClient
 
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array;
 
-    public function fetchCreditDetails(string $host, string $transactionId, int $limit, int $offset): array;
+    public function fetchBoostDetails(string $host, string $transactionId, int $limit, int $offset): array;
 
     public function fetchInfo(UrlInterface $infoUrl): Info;
 }
