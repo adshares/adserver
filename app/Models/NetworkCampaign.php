@@ -123,20 +123,13 @@ class NetworkCampaign extends Model
         return $ids;
     }
 
-    public static function findIdsByDemandIdsAndAddress(array $demandIds, string $sourceAddress): array
+    public static function fetchByDemandIdsAndAddress(array $demandIds, string $sourceAddress): Collection
     {
         $binDemandIds = array_map(fn(string $item) => hex2bin($item), $demandIds);
-
-        $campaigns = self::whereIn('demand_campaign_id', $binDemandIds)
+        return self::query()
+            ->whereIn('demand_campaign_id', $binDemandIds)
             ->where('source_address', $sourceAddress)
-            ->select('id', 'demand_campaign_id')
-            ->get();
-
-        $ids = [];
-        foreach ($campaigns as $campaign) {
-            $ids[$campaign->demand_campaign_id] = $campaign->id;
-        }
-
-        return $ids;
+            ->get()
+            ->keyBy('demand_campaign_id');
     }
 }

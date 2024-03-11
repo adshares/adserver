@@ -28,13 +28,16 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkBoostPayment;
+use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use DateTimeImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -110,13 +113,14 @@ class PaymentDetailsProcessor
         $totalOperatorFee = 0;
         $totalEventValue = 0;
 
-        $campaignIds = NetworkCampaign::findIdsByDemandIdsAndAddress(
+        $campaigns = NetworkCampaign::fetchByDemandIdsAndAddress(
             array_map(fn(array $detail) => $detail['campaign_id'], $boostDetails),
             $adsPayment->address,
         );
 
         foreach ($boostDetails as $boostDetail) {
-            if (null === ($campaignId = $campaignIds[$boostDetail['campaign_id']] ?? null)) {
+            /** @var NetworkCampaign $campaign */
+            if (null === $campaign = $campaigns->get($boostDetail['campaign_id'])) {
                 continue;
             }
 
@@ -127,7 +131,7 @@ class PaymentDetailsProcessor
             NetworkBoostPayment::create(
                 $adsPayment->tx_time,
                 $adsPayment->id,
-                $campaignId,
+                $campaign->id,
                 $value,
                 $calculatedFees['license_fee'],
                 $calculatedFees['operator_fee'],
@@ -135,6 +139,26 @@ class PaymentDetailsProcessor
                 $exchangeRateValue,
                 $exchangeRate->fromClick($calculatedFees['paid_amount']),
             )->save();
+
+            $to = DateTimeImmutable::createFromMutable(
+                DateUtils::getDateTimeRoundedToCurrentHour($adsPayment->tx_time)
+            );
+            $from = $to->modify('-1 hour');
+            $cases = NetworkCase::countForCampaignIdByPublisherPublicId($campaign->uuid, $from, $to);
+            $countByPublisherPublicId = [];
+            $userUuids = [];
+            $totalCount = 0;
+            foreach ($cases as $case) {
+                $countByPublisherPublicId[$case->publisher_id] = $case->count;
+                $userUuids[] = $case->publisher_id;
+                $totalCount += $case->count;
+            }
+            $users = User::fetchByUuids($userUuids);
+            foreach ($users as $user) {
+                $weight = $countByPublisherPublicId[$user->uuid] / $totalCount;
+                $amount = (int)floor($calculatedFees['paid_amount'] * $weight);
+                PublisherBoostLedgerEntry::create($user->id, $amount, $campaign->id);
+            }
 
             $totalLicenseFee += $calculatedFees['license_fee'];
             $totalOperatorFee += $calculatedFees['operator_fee'];

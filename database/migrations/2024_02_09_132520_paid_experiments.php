@@ -160,10 +160,29 @@ return new class extends Migration {
             $table->index('pay_to');
             $table->unique('uuid');
         });
+
+        Schema::create('publisher_boost_ledger_entries', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->timestamps();
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onUpdate('RESTRICT')
+                ->onDelete('CASCADE');
+            $table->bigInteger('amount');
+            $table->unsignedBigInteger('network_campaign_id');
+            $table->foreign('network_campaign_id')
+                ->references('id')
+                ->on('network_campaigns')
+                ->onUpdate('RESTRICT')
+                ->onDelete('CASCADE');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('publisher_boost_ledger_entries');
         Schema::dropIfExists('joining_fee_logs');
         Schema::dropIfExists('joining_fees');
         Schema::dropIfExists('ssp_hosts');

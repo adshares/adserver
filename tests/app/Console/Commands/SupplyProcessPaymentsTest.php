@@ -25,14 +25,15 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\AdsPaymentMeta;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkCasePayment;
-use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
+use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
@@ -194,6 +195,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         self::assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         self::assertEquals($totalAmount, NetworkBoostPayment::sum('total_amount'));
         self::assertEquals($licenseFee, NetworkPayment::sum('amount'));
+        self::assertEquals($publishersIncome, PublisherBoostLedgerEntry::sum('amount'));
         self::assertAdPaymentProcessedEventDispatched(1);
         $expectedTurnoverEntries = [
             [
@@ -634,6 +636,8 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     private function computeIncomeFromBoost(array $details): array
     {
+        $networkImpression = NetworkImpression::factory()->create();
+
         $totalAmount = 0;
         $licenseFee = 0;
         $operatorFee = 0;
@@ -643,20 +647,29 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $licenseFeeCoefficient = $licenseReader->getFee(LicenseReader::LICENSE_RX_FEE);
         $operatorFeeCoefficient = 0.01;
 
+        /** @var User $publisher */
+        $publisher = User::factory()->create();
+
         foreach ($details as $detail) {
-            NetworkCampaign::factory()->create(
-                [
-                    'demand_campaign_id' => $detail['campaign_id'],
-                    'source_address' => '0001-00000004-DBEB',
-                    'status' => Status::STATUS_ACTIVE,
-                ]
-            );
+            $networkCampaign = NetworkCampaign::factory()->create([
+                'demand_campaign_id' => $detail['campaign_id'],
+                'source_address' => '0001-00000004-DBEB',
+                'status' => Status::STATUS_ACTIVE,
+            ]);
 
             $value = (int)$detail['value'];
             $totalAmount += $value;
             $eventFee = (int)floor($value * $licenseFeeCoefficient);
             $licenseFee += $eventFee;
             $operatorFee += (int)floor(($value - $eventFee) * $operatorFeeCoefficient);
+
+            NetworkCase::factory()->create([
+                'campaign_id' => $networkCampaign->uuid,
+                'case_id' => Uuid::v4()->hex(),
+                'created_at' => new DateTimeImmutable('-1 hour'),
+                'network_impression_id' => $networkImpression,
+                'publisher_id' => $publisher->uuid,
+            ]);
         }
 
         return [$totalAmount, $licenseFee, $operatorFee];

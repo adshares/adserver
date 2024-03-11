@@ -187,6 +187,47 @@ SQL;
 
         $limit = (int)$this->option('chunkSize');
 
+        if ($isBoost) {
+            $offset = $meta['boost']['offset'] ?? 0;
+            if ($offset > 0) {
+                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_BOOST, [$incomingPayment->id]);
+                $resultsCollection->add(
+                    new PaymentProcessingResult(
+                        $sum->total_amount,
+                        $sum->license_fee,
+                        $sum->operator_fee,
+                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
+                    )
+                );
+            }
+            do {
+                try {
+                    $boostDetails = $this->demandClient->fetchBoostDetails(
+                        $networkHost->host,
+                        $incomingPayment->txid,
+                        $limit,
+                        $offset,
+                    );
+                } catch (EmptyInventoryException) {
+                    break;
+                } catch (UnexpectedClientResponseException) {
+                    return;
+                }
+
+                $processPaymentDetails = $this->paymentDetailsProcessor->processBoost(
+                    $incomingPayment,
+                    $boostDetails,
+                    $resultsCollection->eventValueSum(),
+                );
+                $resultsCollection->add($processPaymentDetails);
+
+                $offset += count($boostDetails);
+                $meta['boost']['offset'] = $offset;
+                $adsPaymentMeta->meta = $meta;
+                $adsPaymentMeta->save();
+            } while (count($boostDetails) === $limit);
+        }
+
         if ($areEvents) {
             $offset = $incomingPayment->last_offset ?? 0;
             if ($offset > 0) {
@@ -228,47 +269,6 @@ SQL;
                 $adsPaymentMeta->meta = $meta;
                 $adsPaymentMeta->save();
             } while (count($paymentDetails) === $limit);
-        }
-
-        if ($isBoost) {
-            $offset = $meta['boost']['offset'] ?? 0;
-            if ($offset > 0) {
-                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_BOOST, [$incomingPayment->id]);
-                $resultsCollection->add(
-                    new PaymentProcessingResult(
-                        $sum->total_amount,
-                        $sum->license_fee,
-                        $sum->operator_fee,
-                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
-                    )
-                );
-            }
-            do {
-                try {
-                    $boostDetails = $this->demandClient->fetchBoostDetails(
-                        $networkHost->host,
-                        $incomingPayment->txid,
-                        $limit,
-                        $offset,
-                    );
-                } catch (EmptyInventoryException) {
-                    break;
-                } catch (UnexpectedClientResponseException) {
-                    return;
-                }
-
-                $processPaymentDetails = $this->paymentDetailsProcessor->processBoost(
-                    $incomingPayment,
-                    $boostDetails,
-                    $resultsCollection->eventValueSum(),
-                );
-                $resultsCollection->add($processPaymentDetails);
-
-                $offset += count($boostDetails);
-                $meta['boost']['offset'] = $offset;
-                $adsPaymentMeta->meta = $meta;
-                $adsPaymentMeta->save();
-            } while (count($boostDetails) === $limit);
         }
 
         if ($isAllocation) {
