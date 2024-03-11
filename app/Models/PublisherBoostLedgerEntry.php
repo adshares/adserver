@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -43,7 +44,7 @@ class PublisherBoostLedgerEntry extends Model
         'ads_address' => 'AccountAddress',
     ];
 
-    public static function create(int $userId, int $amount, string $adsAddress, int $networkCampaignId): void
+    public static function create(int $userId, int $amount, string $adsAddress, ?int $networkCampaignId = null): void
     {
         $entry = new self();
         $entry->user_id = $userId;
@@ -57,7 +58,7 @@ class PublisherBoostLedgerEntry extends Model
     {
         return self::query()
             ->where('user_id', $userId)
-            ->where('ads_address', hex2bin($adsAddress))
+            ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
             ->sum('amount');
     }
 }

@@ -36,6 +36,7 @@ use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Adserver\ViewModel\ServerEventType;
@@ -60,7 +61,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessOutdated(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         $createdAt = new DateTimeImmutable('-30 hours');
@@ -94,7 +95,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessDepositWithoutUser(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         AdsPayment::factory()->create([
@@ -124,7 +125,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessEventPayment(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
@@ -173,9 +174,62 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         }
     }
 
+    public function testAdsProcessEventPaymentWhileBoostIsPresent(): void
+    {
+        $demandClient = $this->getDummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 1, 0);
+
+        $networkCampaign = NetworkCampaign::factory()->create();
+        $user1 = User::factory()->create();
+        $user1->uuid = 'fa9611d2d2f74e3f89c0e18b7c401891';
+        $user1->save();
+        $user2 = User::factory()->create();
+        $user2->uuid = 'd5f5deefd010449ab0ee0e5e6b884090';
+        $user2->save();
+
+        NetworkCase::factory()->create([
+            'campaign_id' => $networkCampaign->uuid,
+            'case_id' => $paymentDetails[0]['case_id'],
+            'network_impression_id' => NetworkImpression::factory()->create(),
+            'publisher_id' => $user1->uuid,
+        ]);
+        NetworkCase::factory()->create([
+            'campaign_id' => $networkCampaign->uuid,
+            'case_id' => $paymentDetails[1]['case_id'],
+            'network_impression_id' => NetworkImpression::factory()->create(),
+            'publisher_id' => $user2->uuid,
+        ]);
+        PublisherBoostLedgerEntry::factory()->create([
+            'ads_address' => '0001-00000004-DBEB',
+            'user_id' => $user1->id,
+            'amount' => 5_000,
+            'network_campaign_id' => $networkCampaign->id,
+        ]);
+
+        AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => 11_000,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
+
+        self::assertDatabaseHas(UserLedgerEntry::class, [
+            'user_id' => $user1->id,
+            'amount' => 2 * 981,
+        ]);
+        self::assertEquals(
+            5_000 - 981,
+            PublisherBoostLedgerEntry::getAvailableBoost($user1->id, '0001-00000004-DBEB'),
+        );
+    }
+
     public function testAdsProcessBoostPayment(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         $boostDetails = $demandClient->fetchBoostDetails('', '', 4, 0);
@@ -234,7 +288,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
      */
     public function testAdsProcessAllocation(int $reportedAmount): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         $caseId = Uuid::v4()->hex();
@@ -301,7 +355,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessEventPaymentWhileDetailsCountIsEqualToLimit(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 50, 0);
@@ -353,7 +407,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessEventZeroPayment(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         $networkImpression = NetworkImpression::factory()->create();
@@ -394,7 +448,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $paymentDetailsProcessor->method('processPaidEvents')->willThrowException(new RuntimeException());
         $this->app->bind(PaymentDetailsProcessor::class, fn() => $paymentDetailsProcessor);
 
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
         $networkImpression = NetworkImpression::factory()->create();
         $paymentDetail = $demandClient->fetchPaymentDetails('', '', 1, 0)[0];
@@ -423,7 +477,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessEventPaymentWithServerError(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         $networkImpression = NetworkImpression::factory()->create();
@@ -518,7 +572,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
 
     public function testAdsProcessEventPaymentWithNoLicense(): void
     {
-        $demandClient = new DummyDemandClient();
+        $demandClient = $this->getDummyDemandClient();
         $networkHost = self::registerHost($demandClient);
 
         /** @var NetworkImpression $networkImpression */
@@ -583,7 +637,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
     }
 
-    private function registerHost(DummyDemandClient $demandClient): NetworkHost
+    private function registerHost(DemandClient $demandClient): NetworkHost
     {
         $info = $demandClient->fetchInfo(new NullUrl());
         return NetworkHost::factory()->create([
@@ -673,5 +727,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         }
 
         return [$totalAmount, $licenseFee, $operatorFee];
+    }
+
+    private function getDummyDemandClient(): DemandClient
+    {
+        $client = new DummyDemandClient();
+        $client->reset();
+        return $client;
     }
 }

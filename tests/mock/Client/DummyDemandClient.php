@@ -241,4 +241,10 @@ class DummyDemandClient implements DemandClient
 
         return $info;
     }
+
+    public function reset(): void
+    {
+        self::$boostDetails = null;
+        self::$paymentDetails = null;
+    }
 }

@@ -32,7 +32,6 @@ use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
-use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
@@ -183,8 +182,16 @@ class PaymentDetailsProcessor
             $usePaidAmountCurrency
         );
 
+        $exchangeRate = $usePaidAmountCurrency
+            ? new ExchangeRate(
+                $adsPayment->tx_time,
+                NetworkCasePayment::fetchExchangeRateUsedByAdsPaymentId($adsPayment->id),
+                Currency::from(config('app.currency'))->value,
+            )
+            : ExchangeRate::ONE(Currency::ADS);
+
         foreach ($splitPayments as $splitPayment) {
-            if (null === ($user = User::fetchByUuid($splitPayment->publisher_id))) {
+            if (null === $user = User::fetchByUuid($splitPayment->publisher_id)) {
                 Log::warning(
                     sprintf(
                         '[PaymentDetailsProcessor] User id (%s) does not exist. AdsPayment id (%s). Amount (%s).',
@@ -193,11 +200,22 @@ class PaymentDetailsProcessor
                         $splitPayment->paid_amount
                     )
                 );
-
                 continue;
             }
 
             $amount = (int)$splitPayment->paid_amount;
+            $availableBoost = PublisherBoostLedgerEntry::getAvailableBoost($user->id, $adsPayment->address);
+            $boost = min(
+                $amount,
+                $usePaidAmountCurrency ? $exchangeRate->fromClick($availableBoost) : $availableBoost,
+            );
+            if ($boost > 0) {
+                $amount += $boost;
+
+                $usedBoost = $usePaidAmountCurrency ? $exchangeRate->toClick($boost) : $boost;
+                PublisherBoostLedgerEntry::create($user->id, -$usedBoost, $adsPayment->address);
+            }
+
             UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
                 $amount,

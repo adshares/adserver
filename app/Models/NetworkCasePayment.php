@@ -43,7 +43,7 @@ use Illuminate\Support\Facades\DB;
  * @property int license_fee
  * @property int operator_fee
  * @property int paid_amount
- * @property string exchange_rate
+ * @property float exchange_rate
  * @property int paid_amount_currency
  * @mixin Builder
  */
@@ -123,6 +123,15 @@ class NetworkCasePayment extends Model
                 $join->on('network_case_payments.network_case_id', '=', 'network_cases.id');
             }
         )->where('ads_payment_id', $adsPaymentId)->groupBy('publisher_id')->get();
+    }
+
+    public static function fetchExchangeRateUsedByAdsPaymentId(int $adsPaymentId): float
+    {
+        return self::query()
+            ->select('exchange_rate')
+            ->where('ads_payment_id', $adsPaymentId)
+            ->first()
+            ->exchange_rate;
     }
 
     public static function fetchPaymentsToExport(
