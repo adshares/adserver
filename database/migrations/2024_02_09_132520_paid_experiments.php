@@ -171,12 +171,17 @@ return new class extends Migration {
                 ->onUpdate('RESTRICT')
                 ->onDelete('CASCADE');
             $table->bigInteger('amount');
+            $table->binary('ads_address');
             $table->unsignedBigInteger('network_campaign_id');
             $table->foreign('network_campaign_id')
                 ->references('id')
                 ->on('network_campaigns')
                 ->onUpdate('RESTRICT')
                 ->onDelete('CASCADE');
+        });
+        DB::statement('ALTER TABLE publisher_boost_ledger_entries MODIFY ads_address VARBINARY(6)');
+        Schema::table('publisher_boost_ledger_entries', function (Blueprint $table) {
+            $table->index('ads_address');
         });
     }
 

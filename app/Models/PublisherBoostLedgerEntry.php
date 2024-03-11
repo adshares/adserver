@@ -21,6 +21,8 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Models\Traits\AccountAddress;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,25 +30,34 @@ use Illuminate\Database\Eloquent\Model;
  * @property int id
  * @property int user_id
  * @property int amount
+ * @property string ads_address
  * @property int network_campaign_id
  */
 class PublisherBoostLedgerEntry extends Model
 {
+    use AccountAddress;
+    use AutomateMutators;
     use HasFactory;
 
-    public static function create(int $userId, int $amount, int $networkCampaignId): void
+    protected array $traitAutomate = [
+        'ads_address' => 'AccountAddress',
+    ];
+
+    public static function create(int $userId, int $amount, string $adsAddress, int $networkCampaignId): void
     {
         $entry = new self();
         $entry->user_id = $userId;
         $entry->amount = $amount;
+        $entry->ads_address = $adsAddress;
         $entry->network_campaign_id = $networkCampaignId;
         $entry->save();
     }
 
-    public static function getAvailableBoost(int $userId): int
+    public static function getAvailableBoost(int $userId, string $adsAddress): int
     {
         return self::query()
             ->where('user_id', $userId)
+            ->where('ads_address', hex2bin($adsAddress))
             ->sum('amount');
     }
 }

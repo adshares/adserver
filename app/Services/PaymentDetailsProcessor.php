@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
@@ -157,7 +158,7 @@ class PaymentDetailsProcessor
             foreach ($users as $user) {
                 $weight = $countByPublisherPublicId[$user->uuid] / $totalCount;
                 $amount = (int)floor($calculatedFees['paid_amount'] * $weight);
-                PublisherBoostLedgerEntry::create($user->id, $amount, $campaign->id);
+                PublisherBoostLedgerEntry::create($user->id, $amount, $adsPayment->address, $campaign->id);
             }
 
             $totalLicenseFee += $calculatedFees['license_fee'];
@@ -224,11 +225,7 @@ class PaymentDetailsProcessor
 
     private function fetchNetworkCasesForPaymentDetails(array $paymentDetails): Collection
     {
-        $caseIds = [];
-        foreach ($paymentDetails as $paymentDetail) {
-            $caseIds[] = $paymentDetail['case_id'];
-        }
-
+        $caseIds = array_map(fn(array $paymentDetail) => $paymentDetail['case_id'], $paymentDetails);
         return NetworkCase::fetchByCaseIds($caseIds);
     }
 }
