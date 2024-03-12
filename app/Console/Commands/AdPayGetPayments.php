@@ -143,7 +143,7 @@ class AdPayGetPayments extends BaseCommand
             $offset += $limit;
         } while ($limit === $calculationsCount);
 
-        $reportProcessor->allocateCampaignExperimentBudgets($dateTime);
+        $reportProcessor->allocateCampaignBoostBudgets($dateTime);
 
         $ledgerEntriesCount = $this->processExpenses($reportProcessor->getAdvertiserExpenses());
         ConversionDefinition::updateCostAndOccurrences($reportProcessor->getProcessedConversionDefinitions());

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Boosting events
+- Joining fee
 ### Fixed
 - Processing payment details for events while details count is equal fetch limit
 

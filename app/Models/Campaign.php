@@ -77,8 +77,8 @@ use Illuminate\Support\Facades\DB;
  * @property array basic_information
  * @property array|null classifications
  * @property array targeting
- * @property int $experiment_budget
- * @property Carbon|null $experiment_end_at
+ * @property int $boost_budget
+ * @property Carbon|null $boost_end_at
  * @mixin Builder
  */
 class Campaign extends Model
@@ -105,10 +105,10 @@ class Campaign extends Model
     public const URL_MAXIMAL_LENGTH = 1024;
 
     protected $dates = [
+        'boost_end_at',
         'deleted_at',
         'time_start',
         'time_end',
-        'experiment_end_at',
     ];
 
     protected $casts = [
@@ -141,8 +141,8 @@ class Campaign extends Model
         'time_end',
         'conversion_click',
         'bid_strategy_uuid',
-        'experiment_budget',
-        'experiment_end_at',
+        'boost_budget',
+        'boost_end_at',
     ];
 
     protected $visible = [
@@ -166,7 +166,7 @@ class Campaign extends Model
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
         'bid_strategy_uuid' => 'BinHex',
-        'experiment_end_at' => 'DateAtom',
+        'boost_end_at' => 'DateAtom',
     ];
 
     protected $appends = [
@@ -340,7 +340,7 @@ class Campaign extends Model
         $this->landing_url = $value["target_url"];
         $this->max_cpc = $value["max_cpc"];
         $this->max_cpm = $value["max_cpm"];
-        if ($value["budget"] < 0 || $value["experiment_budget"] < 0) {
+        if ($value["budget"] < 0 || $value["boost_budget"] < 0) {
             throw new InvalidArgumentException('Budget needs to be non-negative');
         }
         $this->budget = $value["budget"];
@@ -348,8 +348,8 @@ class Campaign extends Model
         $this->vendor = $value["vendor"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
-        $this->experiment_budget = $value["experiment_budget"];
-        $this->experiment_end_at = $value["experiment_end_at"] ?? null;
+        $this->boost_budget = $value["boost_budget"];
+        $this->boost_end_at = $value["boost_end_at"] ?? null;
     }
 
     public function getBasicInformationAttribute(): array
@@ -365,8 +365,8 @@ class Campaign extends Model
             "vendor" => $this->vendor,
             "date_start" => $this->time_start,
             "date_end" => $this->time_end,
-            "experiment_budget" => $this->experiment_budget,
-            "experiment_end_at" => $this->experiment_end_at,
+            "boost_budget" => $this->boost_budget,
+            "boost_end_at" => $this->boost_end_at,
         ];
     }
 
@@ -421,17 +421,13 @@ class Campaign extends Model
             );
         }
 
-        $experimentBudget = $this->getEffectiveExperimentBudget();
+        $boostBudget = $this->getEffectiveBoostBudget();
         if (
-            (
-                0 !== $experimentBudget
-                ||
-                ($this->isCpa() && config('app.campaign_experiment_min_budget_for_cpa_required'))
-            )
-            && $experimentBudget < config('app.campaign_experiment_min_budget')
+            (0 !== $boostBudget || ($this->isCpa() && config('app.campaign_boost_min_budget_for_cpa_required')))
+            && $boostBudget < config('app.campaign_boost_min_budget')
         ) {
             throw new InvalidArgumentException(
-                sprintf('Experiment budget must be at least %d', config('app.campaign_experiment_min_budget'))
+                sprintf('Boost budget must be at least %d', config('app.campaign_boost_min_budget'))
             );
         }
 
@@ -515,7 +511,7 @@ class Campaign extends Model
 
     public function advertiserBudget(): AdvertiserBudget
     {
-        $budget = $this->budget + $this->getEffectiveExperimentBudget();
+        $budget = $this->budget + $this->getEffectiveBoostBudget();
         return new AdvertiserBudget($budget, $this->isDirectDeal() ? 0 : $budget);
     }
 
@@ -564,10 +560,10 @@ class Campaign extends Model
         return Campaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
     }
 
-    public function getEffectiveExperimentBudget(): int
+    public function getEffectiveBoostBudget(): int
     {
-        return (null === $this->experiment_end_at || $this->experiment_end_at > Carbon::now())
-            ? $this->experiment_budget
+        return (null === $this->boost_end_at || $this->boost_end_at > Carbon::now())
+            ? $this->boost_budget
             : 0;
     }
 }

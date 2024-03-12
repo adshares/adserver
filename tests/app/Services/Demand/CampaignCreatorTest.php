@@ -87,8 +87,8 @@ final class CampaignCreatorTest extends TestCase
             'invalid status type' => [self::getCampaignData(['status' => 'invalid'])],
             'invalid status unknown' => [self::getCampaignData(['status' => 1024])],
             'invalid target_url' => [self::getCampaignData(['target_url' => 'invalid'])],
-            'invalid experiment_budget' => [self::getCampaignData(['experiment_budget' => -1.8])],
-            'invalid experiment_end_at format' => [self::getCampaignData(['experiment_end_at' => '2020'])],
+            'invalid boost_budget' => [self::getCampaignData(['boost_budget' => -1.8])],
+            'invalid boost_end_at format' => [self::getCampaignData(['boost_end_at' => '2020'])],
         ];
     }
 
@@ -127,8 +127,8 @@ final class CampaignCreatorTest extends TestCase
                     ],
                 ],
             ],
-            'experiment_budget' => 0,
-            'experiment_end_at' => null,
+            'boost_budget' => 0,
+            'boost_end_at' => null,
         ], $merge);
 
         if ($remove) {
@@ -168,9 +168,9 @@ final class CampaignCreatorTest extends TestCase
                 'date_start' => (new DateTimeImmutable('+2 day'))->format(DateTimeInterface::ATOM),
                 'date_end' => (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM),
             ]],
-            'invalid experiment date range' => [[
+            'invalid boost date range' => [[
                 'date_start' => (new DateTimeImmutable('+2 day'))->format(DateTimeInterface::ATOM),
-                'experiment_end_at' => (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM),
+                'boost_end_at' => (new DateTimeImmutable('+1 day'))->format(DateTimeInterface::ATOM),
             ]],
         ];
     }

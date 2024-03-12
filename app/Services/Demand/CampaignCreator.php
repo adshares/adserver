@@ -90,10 +90,10 @@ class CampaignCreator
             throw new RuntimeException('Default bid strategy is missing');
         }
 
-        $experimentBudget = self::validateAndExtractClickAmount($input['experiment_budget'] ?? 0, 'experimentBudget');
-        $experimentEndAt = $input['experiment_end_at'] ?? null;
-        if (null !== $experimentEndAt) {
-            self::validateDate($experimentEndAt, 'experimentEndAt');
+        $boostBudget = self::validateAndExtractClickAmount($input['boost_budget'] ?? 0, 'boostBudget');
+        $boostEndAt = $input['boost_end_at'] ?? null;
+        if (null !== $boostEndAt) {
+            self::validateDate($boostEndAt, 'boostEndAt');
         }
 
         $campaign = new Campaign([
@@ -110,8 +110,8 @@ class CampaignCreator
             'time_start' => $timeStart,
             'time_end' => $timeEnd,
             'bid_strategy_uuid' => $bidStrategy->uuid,
-            'experiment_budget' => $experimentBudget,
-            'experiment_end_at' => $experimentEndAt,
+            'boost_budget' => $boostBudget,
+            'boost_end_at' => $boostEndAt,
         ]);
 
         self::validateOutdated($campaign);
@@ -200,24 +200,24 @@ class CampaignCreator
             $campaign->bid_strategy_uuid = $value;
         }
 
-        if (array_key_exists('experiment_budget', $input)) {
-            $value = self::validateAndExtractClickAmount($input['experiment_budget'], 'experimentBudget');
+        if (array_key_exists('boost_budget', $input)) {
+            $value = self::validateAndExtractClickAmount($input['boost_budget'], 'boostBudget');
             $checkLimits = true;
-            $campaign->experiment_budget = $value;
+            $campaign->boost_budget = $value;
         }
 
-        if (array_key_exists('experiment_end_at', $input)) {
-            $value = $input['experiment_end_at'];
+        if (array_key_exists('boost_end_at', $input)) {
+            $value = $input['boost_end_at'];
             if (null !== $value) {
-                self::validateDate($value, 'experimentEndAt');
+                self::validateDate($value, 'boostEndAt');
                 if (
                     DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $campaign->time_start)
                     > DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value)
                 ) {
-                    throw new InvalidArgumentException('Field `experimentEndAt` must be later than `dateStart`');
+                    throw new InvalidArgumentException('Field `boostEndAt` must be later than `dateStart`');
                 }
             }
-            $campaign->experiment_end_at = $value;
+            $campaign->boost_end_at = $value;
         }
 
         if ($checkLimits) {

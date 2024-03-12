@@ -305,14 +305,14 @@ class CampaignTest extends TestCase
      */
     public function testAdvertiserBudget(
         int $budget,
-        int $experimentBudget,
-        ?DateTimeImmutable $experimentEndAt,
+        int $boostBudget,
+        ?DateTimeImmutable $boostEndAt,
         int $expectedBudget,
     ): void {
         $campaign = Campaign::factory()->makeOne([
             'budget' => $budget,
-            'experiment_budget' => $experimentBudget,
-            'experiment_end_at' => $experimentEndAt?->format(DateTimeInterface::ATOM),
+            'boost_budget' => $boostBudget,
+            'boost_end_at' => $boostEndAt?->format(DateTimeInterface::ATOM),
         ]);
 
         self::assertEquals($expectedBudget, $campaign->advertiserBudget()->total());
@@ -327,19 +327,19 @@ class CampaignTest extends TestCase
                 null,
                 1000,
             ],
-            'budget with experiment' => [
+            'budget with boost' => [
                 1000,
                 100,
                 null,
                 1100,
             ],
-            'budget with ongoing experiment' => [
+            'budget with ongoing boost' => [
                 1000,
                 100,
                 new DateTimeImmutable('+1 day'),
                 1100,
             ],
-            'budget with ended experiment' => [
+            'budget with ended boost' => [
                 1000,
                 100,
                 new DateTimeImmutable('-1 day'),
@@ -348,31 +348,31 @@ class CampaignTest extends TestCase
         ];
     }
 
-    public function testCheckBudgetLimitsWhileNoExperimentBudget(): void
+    public function testCheckBudgetLimitsWhileNoBoostBudget(): void
     {
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
-        Config::updateAdminSettings([Config::CAMPAIGN_EXPERIMENT_MIN_BUDGET => 300]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $campaign = Campaign::factory()->makeOne([
             'budget' => 1000,
-            'experiment_budget' => 0,
+            'boost_budget' => 0,
         ]);
 
         $campaign->checkBudgetLimits();
 
-        self::assertEquals(0, $campaign->experiment_budget);
+        self::assertEquals(0, $campaign->boost_budget);
     }
 
-    public function testCheckBudgetLimitsWhileNoExperimentBudgetAndCpaCampaign(): void
+    public function testCheckBudgetLimitsWhileNoBoostBudgetAndCpaCampaign(): void
     {
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
-        Config::updateAdminSettings([Config::CAMPAIGN_EXPERIMENT_MIN_BUDGET => 300]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $campaign = Campaign::factory()->create([
             'budget' => 1000,
-            'experiment_budget' => 0,
+            'boost_budget' => 0,
             'max_cpm' => 0,
         ]);
         Conversiondefinition::factory()->create([
@@ -381,21 +381,21 @@ class CampaignTest extends TestCase
         ]);
 
         self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('Experiment budget must be at least 300');
+        self::expectExceptionMessage('Boost budget must be at least 300');
 
         $campaign->checkBudgetLimits();
     }
 
-    public function testCheckBudgetLimitsWhileNoExperimentBudgetAndCpaCampaignButMinIsNotRequiredForCpa(): void
+    public function testCheckBudgetLimitsWhileNoBoostBudgetAndCpaCampaignButMinIsNotRequiredForCpa(): void
     {
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
-        Config::updateAdminSettings([Config::CAMPAIGN_EXPERIMENT_MIN_BUDGET => 300]);
-        Config::updateAdminSettings([Config::CAMPAIGN_EXPERIMENT_MIN_BUDGET_FOR_CPA_REQUIRED => false]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET_FOR_CPA_REQUIRED => false]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $campaign = Campaign::factory()->create([
             'budget' => 1000,
-            'experiment_budget' => 0,
+            'boost_budget' => 0,
             'max_cpm' => 0,
         ]);
         Conversiondefinition::factory()->create([
@@ -405,22 +405,22 @@ class CampaignTest extends TestCase
 
         $campaign->checkBudgetLimits();
 
-        self::assertEquals(0, $campaign->experiment_budget);
+        self::assertEquals(0, $campaign->boost_budget);
     }
 
-    public function testCheckBudgetLimitsWhileExperimentBudgetIsTooLow(): void
+    public function testCheckBudgetLimitsWhileBoostBudgetIsTooLow(): void
     {
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
         Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
-        Config::updateAdminSettings([Config::CAMPAIGN_EXPERIMENT_MIN_BUDGET => 300]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
         DatabaseConfigReader::overwriteAdministrationConfig();
         $campaign = Campaign::factory()->makeOne([
             'budget' => 1000,
-            'experiment_budget' => 100,
+            'boost_budget' => 100,
         ]);
 
         self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('Experiment budget must be at least 300');
+        self::expectExceptionMessage('Boost budget must be at least 300');
 
         $campaign->checkBudgetLimits();
     }

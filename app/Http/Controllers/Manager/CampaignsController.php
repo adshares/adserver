@@ -565,7 +565,7 @@ class CampaignsController extends Controller
     private static function mapCampaign(Campaign $campaign): array
     {
         $mapped = $campaign->toArray();
-        foreach (['time_start', 'time_end', 'bid_strategy_uuid', 'experiment_end_at'] as $key) {
+        foreach (['time_start', 'time_end', 'bid_strategy_uuid', 'boost_end_at'] as $key) {
             unset($mapped[$key]);
         }
         return $mapped;

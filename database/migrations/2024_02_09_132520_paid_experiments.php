@@ -50,10 +50,10 @@ return new class extends Migration {
         );
 
         Schema::table('campaigns', function (Blueprint $table) {
-            $table->bigInteger('experiment_budget')
+            $table->bigInteger('boost_budget')
                 ->nullable(false)
                 ->default('0');
-            $table->timestamp('experiment_end_at')->nullable();
+            $table->timestamp('boost_end_at')->nullable();
         });
 
         Schema::create('event_boost_logs', function (Blueprint $table) {
@@ -191,7 +191,7 @@ return new class extends Migration {
         Schema::dropIfExists('event_boost_logs');
 
         Schema::table('campaigns', function (Blueprint $table) {
-            $table->dropColumn(['experiment_budget', 'experiment_end_at']);
+            $table->dropColumn(['boost_budget', 'boost_end_at']);
         });
 
         DB::delete('DELETE FROM turnover_entries WHERE type IN (?, ?)', [

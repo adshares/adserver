@@ -39,6 +39,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\NullUrl;
@@ -242,6 +243,8 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             'amount' => $totalAmount,
             'address' => $networkHost->address,
             'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+            'tx_time' =>
+                DateUtils::getDateTimeRoundedToNextHour(NetworkCase::first()->created_at)->modify('+5 minutes'),
         ]);
 
         $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);

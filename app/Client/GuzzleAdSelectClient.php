@@ -58,7 +58,7 @@ use Throwable;
 
 class GuzzleAdSelectClient implements AdSelect
 {
-    private const URI_BOOST_PAYMENT_EXPORT = '/api/v1/experiment-payments';
+    private const URI_BOOST_PAYMENT_EXPORT = '/api/v1/boost-payments';
     private const URI_BOOST_PAYMENT_LAST_EXPORTED_ID = self::URI_BOOST_PAYMENT_EXPORT . '/last';
     private const URI_CASE_EXPORT = '/api/v1/cases';
     private const URI_CASE_LAST_EXPORTED_ID = '/api/v1/cases/last';

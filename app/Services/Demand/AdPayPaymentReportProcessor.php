@@ -270,7 +270,7 @@ class AdPayPaymentReportProcessor
         return $definitions;
     }
 
-    public function allocateCampaignExperimentBudgets(DateTimeInterface $computationDateTime): void
+    public function allocateCampaignBoostBudgets(DateTimeInterface $computationDateTime): void
     {
         $campaigns = Campaign::fetchActiveCampaigns($computationDateTime)
             ->groupBy('user_id');
@@ -280,8 +280,8 @@ class AdPayPaymentReportProcessor
         foreach ($campaigns as $userId => $userCampaigns) {
             /** @var Campaign $campaign */
             foreach ($userCampaigns as $campaign) {
-                $experimentBudget = $campaign->getEffectiveExperimentBudget();
-                if ($experimentBudget <= 0) {
+                $boost = $campaign->getEffectiveBoostBudget();
+                if ($boost <= 0) {
                     continue;
                 }
 
@@ -297,11 +297,11 @@ class AdPayPaymentReportProcessor
                 $wallet = $this->getWalletLeft($advertiserPublicId);
                 $bonus = $this->getBonusLeft($advertiserPublicId);
 
-                $value = (int)min($experimentBudget, $isDirectDeal ? $wallet : $wallet + $bonus);
+                $value = (int)min($boost, $isDirectDeal ? $wallet : $wallet + $bonus);
 
                 $this->chargeEventValue($advertiserPublicId, $value, $wallet, $bonus, $isDirectDeal);
 
-                $this->splitExperimentBudgetBetweenHosts(
+                $this->splitBoostBetweenHosts(
                     $sspHosts,
                     $value,
                     $computationDateTime,
@@ -434,7 +434,7 @@ class AdPayPaymentReportProcessor
         }
     }
 
-    private function splitExperimentBudgetBetweenHosts(
+    private function splitBoostBetweenHosts(
         array $sspHosts,
         int $value,
         DateTimeInterface $computationDateTime,

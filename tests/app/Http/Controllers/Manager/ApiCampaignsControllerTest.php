@@ -233,8 +233,8 @@ final class ApiCampaignsControllerTest extends TestCase
                 'excludes' => $excludes,
             ],
             'bidStrategyUuid' => $bidStrategy->uuid,
-            'experimentBudget' => 5,
-            'experimentEndAt' => (new DateTimeImmutable('+5 days'))->format(DateTimeInterface::ATOM),
+            'boostBudget' => 5,
+            'boostEndAt' => (new DateTimeImmutable('+5 days'))->format(DateTimeInterface::ATOM),
         ];
         $response = $this->patch($uri, $campaignData);
 
@@ -256,8 +256,8 @@ final class ApiCampaignsControllerTest extends TestCase
         self::assertNull($campaign->time_end);
         self::assertEquals($requires, $campaign->targeting_requires);
         self::assertEquals($excludes, $campaign->targeting_excludes);
-        self::assertEquals((int)(5 * 1e11), $campaign->experiment_budget);
-        self::assertNotNull($campaign->experiment_end_at);
+        self::assertEquals((int)(5 * 1e11), $campaign->boost_budget);
+        self::assertNotNull($campaign->boost_end_at);
     }
 
     public function testEditCampaignFailWhileInvalidUid(): void

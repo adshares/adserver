@@ -46,8 +46,8 @@ class CampaignFactory extends Factory
             'targeting_excludes' => [],
             'targeting_requires' => [],
             'bid_strategy_uuid' => '00000000000000000000000000000000',
-            'experiment_budget' => 0,
-            'experiment_end_at' => null,
+            'boost_budget' => 0,
+            'boost_end_at' => null,
         ];
     }
 }

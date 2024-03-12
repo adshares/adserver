@@ -384,14 +384,14 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         $this->artisan(self::COMMAND_SIGNATURE);
     }
 
-    public function testHandleExperimentBudgets(): void
+    public function testHandleBoostBudgets(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
 
         $campaign = Campaign::factory()->create([
             'budget' => 5_000_000_000,
-            'experiment_budget' => 5_000_000_000,
+            'boost_budget' => 5_000_000_000,
             'status' => Campaign::STATUS_ACTIVE,
             'user_id' => $user,
         ]);

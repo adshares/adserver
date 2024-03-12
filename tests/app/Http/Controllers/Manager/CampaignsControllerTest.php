@@ -90,8 +90,8 @@ final class CampaignsControllerTest extends TestCase
             'vendor',
             'dateStart',
             'dateEnd',
-            'experimentBudget',
-            'experimentEndAt',
+            'boostBudget',
+            'boostEndAt',
         ],
         'targeting' => [
             'requires',
@@ -335,13 +335,13 @@ final class CampaignsControllerTest extends TestCase
         ];
     }
 
-    public function testAddCampaignWithLowExperimentalBudget(): void
+    public function testAddCampaignWithLowBoostBudget(): void
     {
-        Config::updateAdminSettings([Config::CAMPAIGN_EXPERIMENT_MIN_BUDGET => (int)2e11]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => (int)2e11]);
         $this->createUser();
 
         $campaignData = $this->getCampaignData();
-        $campaignData['basicInformation']['experimentBudget'] = (int)1e11;
+        $campaignData['basicInformation']['boostBudget'] = (int)1e11;
 
         $response = $this->postJson(self::URI, ['campaign' => $campaignData]);
 
@@ -416,8 +416,8 @@ final class CampaignsControllerTest extends TestCase
                 'vendor' => null,
                 'dateStart' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
                 'dateEnd' => (new DateTimeImmutable('+2 weeks'))->format(DateTimeInterface::ATOM),
-                'experiment_budget' => 0,
-                'experiment_end_at' => null,
+                'boost_budget' => 0,
+                'boost_end_at' => null,
             ],
             'targeting' => [
                 'requires' => [],
