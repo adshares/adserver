@@ -138,6 +138,7 @@ class PaymentDetailsProcessor
                 $calculatedFees['paid_amount'],
                 $exchangeRateValue,
                 $exchangeRate->fromClick($calculatedFees['paid_amount']),
+                true,
             )->save();
 
             $to = DateTimeImmutable::createFromMutable(
@@ -171,6 +172,35 @@ class PaymentDetailsProcessor
             $totalOperatorFee,
             $totalEventValue - $totalLicenseFee - $totalOperatorFee,
         );
+    }
+
+    public function processAllocation(
+        AdsPayment $adsPayment,
+        int $allocationAmount,
+    ): PaymentProcessingResult {
+        $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
+
+        $campaignIds = NetworkCampaign::fetchActiveCampaignsFromHost($adsPayment->address)
+            ->map(fn (NetworkCampaign $campaign) => $campaign->id);
+        $value = (int)($allocationAmount / count($campaignIds));
+
+        foreach ($campaignIds as $campaignId) {
+            NetworkBoostPayment::create(
+                $adsPayment->tx_time,
+                $adsPayment->id,
+                $campaignId,
+                $value,
+                0,
+                0,
+                $value,
+                $exchangeRateValue,
+                $exchangeRate->fromClick($value),
+                false,
+            )->save();
+        }
+
+        return new PaymentProcessingResult($allocationAmount);
     }
 
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void

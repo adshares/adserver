@@ -132,4 +132,15 @@ class NetworkCampaign extends Model
             ->get()
             ->keyBy('demand_campaign_id');
     }
+
+    public static function fetchActiveCampaignsFromHost(string $sourceAddress): Collection
+    {
+        return self::query()
+            ->select('network_campaigns.*')
+            ->where('network_campaigns.source_address', $sourceAddress)
+            ->where('network_campaigns.status', Status::STATUS_ACTIVE)
+            ->join('network_banners', 'network_campaigns.id', '=', 'network_banners.network_campaign_id')
+            ->where('network_banners.status', Status::STATUS_ACTIVE)
+            ->get();
+    }
 }

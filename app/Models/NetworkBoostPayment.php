@@ -34,6 +34,7 @@ use Illuminate\Support\Collection;
  * @property DateTimeInterface created_at
  * @property DateTimeInterface updated_at
  * @property DateTimeInterface pay_time
+ * @property bool is_direct
  * @property int ads_payment_id
  * @property int network_campaign_id
  * @property int total_amount
@@ -68,6 +69,7 @@ class NetworkBoostPayment extends Model
         int $paidAmount,
         float $exchangeRate,
         int $paidAmountCurrency,
+        bool $isDirect,
     ): self {
         $p = new self();
         $p->pay_time = $payTime;
@@ -79,6 +81,7 @@ class NetworkBoostPayment extends Model
         $p->paid_amount = $paidAmount;
         $p->exchange_rate = $exchangeRate;
         $p->paid_amount_currency = $paidAmountCurrency;
+        $p->is_direct = $isDirect;
         return $p;
     }
 

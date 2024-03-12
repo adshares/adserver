@@ -277,7 +277,11 @@ SQL;
                 $incomingPayment->amount - $resultsCollection->eventValueSum(),
             );
             if ($allocationAmount > 0) {
-                $resultsCollection->add(new PaymentProcessingResult($allocationAmount));
+                $allocationDetails = $this->paymentDetailsProcessor->processAllocation(
+                    $incomingPayment,
+                    $allocationAmount,
+                );
+                $resultsCollection->add($allocationDetails);
             }
         }
 

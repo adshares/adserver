@@ -102,6 +102,7 @@ return new class extends Migration {
         Schema::create('network_boost_payments', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->timestamps();
+            $table->boolean('is_direct');
             $table->unsignedBigInteger('ads_payment_id');
             $table->foreign('ads_payment_id')
                 ->references('id')

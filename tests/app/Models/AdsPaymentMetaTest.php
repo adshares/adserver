@@ -21,28 +21,21 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Adshares\Adserver\Tests\Models;
 
-use Adshares\Adserver\Models\NetworkBoostPayment;
-use DateTimeImmutable;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\AdsPaymentMeta;
+use Adshares\Adserver\Tests\TestCase;
 
-/**
- * @extends Factory<NetworkBoostPayment>
- */
-class NetworkBoostPaymentFactory extends Factory
+class AdsPaymentMetaTest extends TestCase
 {
-    public function definition(): array
+    public function testAdsPayment(): void
     {
-        return [
-            'is_direct' => true,
-            'pay_time' => new DateTimeImmutable(),
-            'total_amount' => 100_000_000_000,
-            'license_fee' => 0,
-            'operator_fee' => 0,
-            'paid_amount' => 100_000_000_000,
-            'exchange_rate' => 1,
-            'paid_amount_currency' => 100_000_000_000,
-        ];
+        $adsPayment = AdsPayment::factory()->create();
+        $adsPaymentMeta = AdsPaymentMeta::factory()->create([
+            'ads_payment_id' => $adsPayment,
+        ]);
+
+        self::assertNotNull($adsPaymentMeta->adsPayment);
     }
 }

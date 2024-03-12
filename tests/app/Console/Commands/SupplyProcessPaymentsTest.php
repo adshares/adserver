@@ -25,6 +25,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\AdsPaymentMeta;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
@@ -299,6 +300,16 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             'case_id' => $caseId,
             'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
         ]);
+        NetworkCampaign::factory()
+            ->count(2)
+            ->create([
+                'source_address' => '0001-00000004-DBEB',
+            ])
+            ->each(
+                function (NetworkCampaign $campaign) {
+                    NetworkBanner::factory()->create(['network_campaign_id' => $campaign->id]);
+                }
+            );
 
         $allocationAmount = 123_000_000_000;
         $demandClientMock = self::createMock(DemandClient::class);
@@ -346,6 +357,10 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         self::assertDatabaseCount(AdsPaymentMeta::class, 1);
         $adsPaymentMeta = AdsPaymentMeta::first();
         self::assertEquals($adsPayment->id, $adsPaymentMeta->ads_payment_id);
+        self::assertDatabaseCount(NetworkBoostPayment::class, 2);
+        self::assertDatabaseHas(NetworkBoostPayment::class, [
+            'total_amount' => (int)floor($allocationAmount / 2),
+        ]);
     }
 
     public function adsProcessAllocationDataProvider(): array
