@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use Adshares\Adserver\Models\NetworkBoostPayment;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -34,7 +35,7 @@ class NetworkBoostPaymentFactory extends Factory
     public function definition(): array
     {
         return [
-            'pay_time' => $this->faker->dateTime,
+            'pay_time' => new DateTimeImmutable(),
             'total_amount' => 100_000_000_000,
             'license_fee' => 0,
             'operator_fee' => 0,
