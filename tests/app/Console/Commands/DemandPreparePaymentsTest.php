@@ -147,27 +147,27 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => null,
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
             ],
             [
                 'ads_address' => hex2bin('000100000002'),
                 'amount' => 500,
-                'type' => TurnoverEntryType::DspLicenseFee->name,
+                'type' => TurnoverEntryType::DspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 250,
-                'type' => TurnoverEntryType::DspOperatorFee->name,
+                'type' => TurnoverEntryType::DspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 125,
-                'type' => TurnoverEntryType::DspCommunityFee->name,
+                'type' => TurnoverEntryType::DspCommunityFee,
             ],
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 125,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspExpense,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -221,27 +221,27 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => null,
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
             ],
             [
                 'ads_address' => hex2bin('000100000002'),
                 'amount' => 100,
-                'type' => TurnoverEntryType::DspLicenseFee->name,
+                'type' => TurnoverEntryType::DspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 450,
-                'type' => TurnoverEntryType::DspOperatorFee->name,
+                'type' => TurnoverEntryType::DspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 150,
-                'type' => TurnoverEntryType::DspCommunityFee->name,
+                'type' => TurnoverEntryType::DspCommunityFee,
             ],
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 300,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspExpense,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -294,27 +294,27 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => null,
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
             ],
             [
                 'ads_address' => hex2bin('000100000002'),
                 'amount' => 500,
-                'type' => TurnoverEntryType::DspLicenseFee->name,
+                'type' => TurnoverEntryType::DspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 250,
-                'type' => TurnoverEntryType::DspOperatorFee->name,
+                'type' => TurnoverEntryType::DspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 125,
-                'type' => TurnoverEntryType::DspCommunityFee->name,
+                'type' => TurnoverEntryType::DspCommunityFee,
             ],
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 125,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspExpense,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -360,7 +360,7 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspJoiningFeeAllocation,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -422,22 +422,22 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => null,
                 'amount' => 2000,
-                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
             ],
             [
                 'ads_address' => null,
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspOperatorFee->name,
+                'type' => TurnoverEntryType::DspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 500,
-                'type' => TurnoverEntryType::DspCommunityFee->name,
+                'type' => TurnoverEntryType::DspCommunityFee,
             ],
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 500,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspExpense,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));

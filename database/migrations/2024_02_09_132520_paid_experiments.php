@@ -28,26 +28,9 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        $allowedTypes = [
-            TurnoverEntryType::DspAdvertisersExpense,
-            TurnoverEntryType::DspLicenseFee,
-            TurnoverEntryType::DspOperatorFee,
-            TurnoverEntryType::DspCommunityFee,
-            TurnoverEntryType::DspExpense,
-            TurnoverEntryType::SspIncome,
-            TurnoverEntryType::SspLicenseFee,
-            TurnoverEntryType::SspOperatorFee,
-            TurnoverEntryType::SspPublishersIncome,
-            TurnoverEntryType::DspJoiningFeeIncome,
-            TurnoverEntryType::SspJoiningFeeExpense,
-        ];
-        $allowed = join(',', array_map(fn($status) => "'" . $status->value . "'", $allowedTypes));
-        DB::statement(
-            sprintf(
-                'ALTER TABLE `turnover_entries` CHANGE `type` `type` ENUM(%s) NOT NULL',
-                $allowed,
-            )
-        );
+        Schema::table('turnover_entries', function (Blueprint $table) {
+            $table->string('type')->change();
+        });
 
         Schema::table('campaigns', function (Blueprint $table) {
             $table->bigInteger('boost_budget')
@@ -195,10 +178,6 @@ return new class extends Migration {
             $table->dropColumn(['boost_budget', 'boost_end_at']);
         });
 
-        DB::delete('DELETE FROM turnover_entries WHERE type IN (?, ?)', [
-            TurnoverEntryType::DspJoiningFeeIncome->value,
-            TurnoverEntryType::SspJoiningFeeExpense->value,
-        ]);
         $allowedTypes = [
             TurnoverEntryType::DspAdvertisersExpense,
             TurnoverEntryType::DspLicenseFee,
@@ -210,7 +189,8 @@ return new class extends Migration {
             TurnoverEntryType::SspOperatorFee,
             TurnoverEntryType::SspPublishersIncome,
         ];
-        $allowed = join(',', array_map(fn($status) => "'" . $status->value . "'", $allowedTypes));
+        $allowed = join(',', array_map(fn($status) => "'" . $status->name . "'", $allowedTypes));
+        DB::delete(sprintf('DELETE FROM turnover_entries WHERE type NOT IN (%s)', $allowed));
         DB::statement(
             sprintf(
                 'ALTER TABLE `turnover_entries` CHANGE `type` `type` ENUM(%s) NOT NULL',

@@ -27,9 +27,8 @@ final class PaymentProcessingResult
 {
     public function __construct(
         private readonly int $currentEventValueSum,
-        private readonly int $currentLicenseFeeSum = 0,
-        private readonly int $currentOperatorFeeSum = 0,
-        private readonly int $currentPublisherIncome = 0,
+        private readonly int $currentLicenseFeeSum,
+        private readonly int $currentOperatorFeeSum,
     ) {
     }
 
@@ -46,10 +45,5 @@ final class PaymentProcessingResult
     public function operatorFeePartialSum(): int
     {
         return $this->currentOperatorFeeSum;
-    }
-
-    public function publisherPartialIncome(): int
-    {
-        return $this->currentPublisherIncome;
     }
 }

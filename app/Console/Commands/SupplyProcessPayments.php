@@ -192,12 +192,7 @@ SQL;
             if ($offset > 0) {
                 $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_BOOST, [$incomingPayment->id]);
                 $resultsCollection->add(
-                    new PaymentProcessingResult(
-                        $sum->total_amount,
-                        $sum->license_fee,
-                        $sum->operator_fee,
-                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
-                    )
+                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
                 );
             }
             do {
@@ -233,12 +228,7 @@ SQL;
             if ($offset > 0) {
                 $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
                 $resultsCollection->add(
-                    new PaymentProcessingResult(
-                        $sum->total_amount,
-                        $sum->license_fee,
-                        $sum->operator_fee,
-                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
-                    )
+                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
                 );
             }
 
@@ -277,11 +267,7 @@ SQL;
                 $incomingPayment->amount - $resultsCollection->eventValueSum(),
             );
             if ($allocationAmount > 0) {
-                $allocationDetails = $this->paymentDetailsProcessor->processAllocation(
-                    $incomingPayment,
-                    $allocationAmount,
-                );
-                $resultsCollection->add($allocationDetails);
+                $this->paymentDetailsProcessor->processAllocation($incomingPayment, $allocationAmount);
             }
         }
 
@@ -356,7 +342,7 @@ SQL;
             TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::SspOperatorFee, $totalOperatorFeeSum);
         }
 
-        $totalPublisherIncome = $resultsCollection->publisherIncomeSum();
+        $totalPublisherIncome = $totalEventValue - $totalLicenseFee - $totalOperatorFeeSum;
         if ($totalPublisherIncome > 0) {
             TurnoverEntry::increaseOrInsert(
                 $hourTimestamp,

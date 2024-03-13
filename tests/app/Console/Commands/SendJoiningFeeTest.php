@@ -22,6 +22,8 @@
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Ads\Command\SendOneCommand;
+use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\RawResponse;
 use Adshares\Ads\Response\TransactionResponse;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
@@ -41,6 +43,45 @@ class SendJoiningFeeTest extends ConsoleTestCase
                 'amount' => '10000',
             ],
         )->assertExitCode(0);
+    }
+
+    public function testHandleWhileInvalidAddress(): void
+    {
+        $mockAdsClient = $this->createMock(AdsClient::class);
+        $mockAdsClient->method('runTransaction')->willReturn($this->sendOne());
+        $this->app->bind(AdsClient::class, fn() => $mockAdsClient);
+
+        $this->artisan(
+            'ops:supply:joining-fee',
+            [
+                'address' => '0001000000018B4E',
+                'amount' => '10000',
+            ],
+        )->assertExitCode(1)
+            ->expectsOutputToContain('Invalid address');
+    }
+
+    public function testHandleWhileSendingFailed(): void
+    {
+        $mockAdsClient = $this->createMock(AdsClient::class);
+        $mockAdsClient->method('runTransaction')
+            ->willThrowException(
+                new CommandException(
+                    new SendOneCommand('0001-00000001-8B4E', 10_000_000_000_000),
+                    'Test command exception',
+                    0,
+                )
+            );
+        $this->app->bind(AdsClient::class, fn() => $mockAdsClient);
+
+        $this->artisan(
+            'ops:supply:joining-fee',
+            [
+                'address' => '0001-00000001-8B4E',
+                'amount' => '10000',
+            ],
+        )->assertExitCode(1)
+            ->expectsOutputToContain('Sending failed');
     }
 
     private function sendOne(): TransactionResponse

@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
@@ -37,6 +38,7 @@ use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -92,12 +94,7 @@ class PaymentDetailsProcessor
             $totalEventValue += $eventValue;
         }
 
-        return new PaymentProcessingResult(
-            $totalEventValue,
-            $totalLicenseFee,
-            $totalOperatorFee,
-            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
-        );
+        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
     }
 
     public function processBoost(
@@ -166,24 +163,29 @@ class PaymentDetailsProcessor
             $totalEventValue += $value;
         }
 
-        return new PaymentProcessingResult(
-            $totalEventValue,
-            $totalLicenseFee,
-            $totalOperatorFee,
-            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
-        );
+        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
     }
 
     public function processAllocation(
         AdsPayment $adsPayment,
         int $allocationAmount,
-    ): PaymentProcessingResult {
-        $exchangeRate = $this->fetchExchangeRate();
-        $exchangeRateValue = $exchangeRate->getValue();
+    ): void {
+        TurnoverEntry::increaseOrInsert(
+            DateUtils::getDateTimeRoundedToCurrentHour(),
+            TurnoverEntryType::SspJoiningFeeRefund,
+            $allocationAmount,
+            $adsPayment->address,
+        );
 
         $campaignIds = NetworkCampaign::fetchActiveCampaignsFromHost($adsPayment->address)
             ->map(fn (NetworkCampaign $campaign) => $campaign->id);
+        if ($campaignIds->isEmpty()) {
+            return;
+        }
         $value = (int)($allocationAmount / count($campaignIds));
+
+        $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
 
         foreach ($campaignIds as $campaignId) {
             NetworkBoostPayment::create(
@@ -199,8 +201,6 @@ class PaymentDetailsProcessor
                 false,
             )->save();
         }
-
-        return new PaymentProcessingResult($allocationAmount);
     }
 
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void

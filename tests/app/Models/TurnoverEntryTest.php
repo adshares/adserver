@@ -40,8 +40,6 @@ class TurnoverEntryTest extends TestCase
         'SspLicenseFee',
         'SspOperatorFee',
         'SspPublishersIncome',
-        'DspJoiningFeeIncome',
-        'SspJoiningFeeExpense',
     ];
 
     public function testIncreaseOrInsertWhileNotPresent(): void

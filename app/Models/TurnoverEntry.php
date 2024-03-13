@@ -65,8 +65,6 @@ class TurnoverEntry extends Model
         'SUM(IF(type = "SspLicenseFee", amount, 0)) AS SspLicenseFee',
         'SUM(IF(type = "SspOperatorFee", amount, 0)) AS SspOperatorFee',
         'SUM(IF(type = "SspPublishersIncome", amount, 0)) AS SspPublishersIncome',
-        'SUM(IF(type = "DspJoiningFeeIncome", amount, 0)) AS DspJoiningFeeIncome',
-        'SUM(IF(type = "SspJoiningFeeExpense", amount, 0)) AS SspJoiningFeeExpense',
     ];
 
     protected $casts = [
@@ -190,8 +188,6 @@ class TurnoverEntry extends Model
             'SspLicenseFee' => 0,
             'SspOperatorFee' => 0,
             'SspPublishersIncome' => 0,
-            'DspJoiningFeeIncome' => 0,
-            'SspJoiningFeeExpense' => 0,
         ];
 
         foreach ($rows as $row) {
@@ -209,8 +205,6 @@ class TurnoverEntry extends Model
                 'SspLicenseFee' => (int)$row->SspLicenseFee,
                 'SspOperatorFee' => (int)$row->SspOperatorFee,
                 'SspPublishersIncome' => (int)$row->SspPublishersIncome,
-                'DspJoiningFeeIncome' => (int)$row->DspJoiningFeeIncome,
-                'SspJoiningFeeExpense' => (int)$row->SspJoiningFeeExpense,
                 'date' => $date->format(DateTimeInterface::ATOM),
             ];
             DateUtils::advanceStartDate($resolution, $date);
@@ -225,14 +219,16 @@ class TurnoverEntry extends Model
 
     public static function getJoiningFeeExpense(string $adsAddress): int
     {
-        return (int)self::where('type', TurnoverEntryType::SspJoiningFeeExpense->value)
+        return (int)self::query()
+            ->where('type', TurnoverEntryType::SspJoiningFeeExpense->name)
             ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
             ->sum('amount');
     }
 
     public static function getJoiningFeeIncome(string $adsAddress): int
     {
-        return (int)self::where('type', TurnoverEntryType::DspJoiningFeeIncome->value)
+        return (int)self::query()
+            ->where('type', TurnoverEntryType::DspJoiningFeeIncome->name)
             ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
             ->sum('amount');
     }

@@ -122,7 +122,8 @@ class DemandPreparePayments extends BaseCommand
             $this->saveCommunityPayment($communityAccountAddress, $totalCommunityFee, $hourTimestamp);
             DB::commit();
         }
-        while (true) {
+
+        do {
             $events = EventLog::fetchUnpaidEvents($from, $to, $chunkSize);
 
             $eventCount = count($events);
@@ -157,7 +158,7 @@ class DemandPreparePayments extends BaseCommand
             $this->saveLicensePayment($licenseAccountAddress, $totalLicenseFee, $hourTimestamp);
             $this->saveCommunityPayment($communityAccountAddress, $totalCommunityFee, $hourTimestamp);
             DB::commit();
-        }
+        } while ($eventCount === $chunkSize);
 
         do {
             $events = EventBoostLog::fetchUnpaid($from, $to, $chunkSize);
@@ -172,7 +173,7 @@ class DemandPreparePayments extends BaseCommand
             $totalOperatorFee = 0;
             $totalCommunityFee = 0;
             $logIds = [];
-            $groupedEvents = $this->processAndGroupEventsByRecipient(
+            $groupedBoosts = $this->processAndGroupEventsByRecipient(
                 $events,
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
@@ -183,12 +184,12 @@ class DemandPreparePayments extends BaseCommand
                 $totalCommunityFee,
                 $logIds,
             );
-            $this->info(sprintf('In that, there are %d recipients', count($groupedEvents)));
+            $this->info(sprintf('In that, there are %d recipients', count($groupedBoosts)));
 
             DB::beginTransaction();
             $this->storeEventValue($totalEventValue, $hourTimestamp);
             $this->storeOperatorFee($totalOperatorFee, $hourTimestamp);
-            $this->saveEventsPayments($groupedEvents, $hourTimestamp);
+            $this->saveEventsPayments($groupedBoosts, $hourTimestamp);
             $this->saveLicensePayment($licenseAccountAddress, $totalLicenseFee, $hourTimestamp);
             $this->saveCommunityPayment($communityAccountAddress, $totalCommunityFee, $hourTimestamp);
             DB::commit();
@@ -273,14 +274,10 @@ class DemandPreparePayments extends BaseCommand
         }
     }
 
-    private function storeEventValue(int $totalEventValue, DateTimeInterface $hourTimestamp): void
+    private function storeEventValue(int $value, DateTimeInterface $hourTimestamp): void
     {
-        if ($totalEventValue > 0) {
-            TurnoverEntry::increaseOrInsert(
-                $hourTimestamp,
-                TurnoverEntryType::DspAdvertisersExpense,
-                $totalEventValue,
-            );
+        if ($value > 0) {
+            TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::DspAdvertisersExpense, $value);
         }
     }
 
@@ -388,7 +385,12 @@ class DemandPreparePayments extends BaseCommand
                     $amount = $logs->sum('amount');
                     $payment = $this->savePayment($payTo, $amount);
                     if ($amount > 0) {
-                        TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::DspExpense, $amount, $payTo);
+                        TurnoverEntry::increaseOrInsert(
+                            $hourTimestamp,
+                            TurnoverEntryType::DspJoiningFeeAllocation,
+                            $amount,
+                            $payTo,
+                        );
                     }
                     /** @var JoiningFeeLog $log */
                     foreach ($logs as $log) {

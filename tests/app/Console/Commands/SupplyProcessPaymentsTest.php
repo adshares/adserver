@@ -152,22 +152,22 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => hex2bin('000100000004'),
                 'amount' => $totalAmount,
-                'type' => TurnoverEntryType::SspIncome->name,
+                'type' => TurnoverEntryType::SspIncome,
             ],
             [
                 'ads_address' => hex2bin('FFFF00000000'),
                 'amount' => $licenseFee,
-                'type' => TurnoverEntryType::SspLicenseFee->name,
+                'type' => TurnoverEntryType::SspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => $operatorFee,
-                'type' => TurnoverEntryType::SspOperatorFee->name,
+                'type' => TurnoverEntryType::SspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => $publishersIncome,
-                'type' => TurnoverEntryType::SspPublishersIncome->name,
+                'type' => TurnoverEntryType::SspPublishersIncome,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -259,22 +259,22 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => hex2bin('000100000004'),
                 'amount' => $totalAmount,
-                'type' => TurnoverEntryType::SspIncome->name,
+                'type' => TurnoverEntryType::SspIncome,
             ],
             [
                 'ads_address' => hex2bin('FFFF00000000'),
                 'amount' => $licenseFee,
-                'type' => TurnoverEntryType::SspLicenseFee->name,
+                'type' => TurnoverEntryType::SspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => $operatorFee,
-                'type' => TurnoverEntryType::SspOperatorFee->name,
+                'type' => TurnoverEntryType::SspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => $publishersIncome,
-                'type' => TurnoverEntryType::SspPublishersIncome->name,
+                'type' => TurnoverEntryType::SspPublishersIncome,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -347,7 +347,7 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => hex2bin('000100000004'),
                 'amount' => $allocationAmount,
-                'type' => TurnoverEntryType::SspIncome->name,
+                'type' => TurnoverEntryType::SspJoiningFeeRefund,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -369,6 +369,66 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             'equal to payment' => [123_000_000_000],
             'greater than payment' => [150_000_000_000],
         ];
+    }
+
+    public function testAdsProcessAllocationWhileNoActiveCampaigns(): void
+    {
+        $demandClient = $this->getDummyDemandClient();
+        $networkHost = self::registerHost($demandClient);
+
+        $caseId = Uuid::v4()->hex();
+        NetworkCase::factory()->create([
+            'case_id' => $caseId,
+            'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
+        ]);
+
+        $allocationAmount = 123_000_000_000;
+        $demandClientMock = self::createMock(DemandClient::class);
+        $demandClientMock->method('fetchPaymentDetailsMeta')->willReturn([
+            'allocation' => [
+                'count' => 1,
+                'sum' => $allocationAmount,
+            ],
+            'boost' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
+            'events' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
+        ]);
+        $demandClientMock->expects(self::never())->method('fetchPaymentDetails');
+        $demandClientMock->expects(self::never())->method('fetchBoostDetails');
+        $this->app->bind(DemandClient::class, fn() => $demandClientMock);
+
+        $adsPayment = AdsPayment::factory()->create([
+            'txid' => self::TX_ID_SEND_MANY,
+            'amount' => $allocationAmount,
+            'address' => $networkHost->address,
+            'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
+        ]);
+
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])
+            ->assertExitCode(0);
+
+        self::assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        self::assertAdPaymentProcessedEventDispatched(1);
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => $allocationAmount,
+                'type' => TurnoverEntryType::SspJoiningFeeRefund,
+            ],
+        ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+        self::assertDatabaseCount(AdsPaymentMeta::class, 1);
+        $adsPaymentMeta = AdsPaymentMeta::first();
+        self::assertEquals($adsPayment->id, $adsPaymentMeta->ads_payment_id);
+        self::assertDatabaseEmpty(NetworkBoostPayment::class);
     }
 
     public function testAdsProcessEventPaymentWhileDetailsCountIsEqualToLimit(): void
@@ -399,22 +459,22 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => hex2bin('000100000004'),
                 'amount' => $totalAmount,
-                'type' => TurnoverEntryType::SspIncome->name,
+                'type' => TurnoverEntryType::SspIncome,
             ],
             [
                 'ads_address' => hex2bin('FFFF00000000'),
                 'amount' => $licenseFee,
-                'type' => TurnoverEntryType::SspLicenseFee->name,
+                'type' => TurnoverEntryType::SspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => $operatorFee,
-                'type' => TurnoverEntryType::SspOperatorFee->name,
+                'type' => TurnoverEntryType::SspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => $publishersIncome,
-                'type' => TurnoverEntryType::SspPublishersIncome->name,
+                'type' => TurnoverEntryType::SspPublishersIncome,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
@@ -633,12 +693,12 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             [
                 'ads_address' => hex2bin('000100000004'),
                 'amount' => $totalAmount,
-                'type' => TurnoverEntryType::SspIncome->name,
+                'type' => TurnoverEntryType::SspIncome,
             ],
             [
                 'ads_address' => null,
                 'amount' => $totalAmount,
-                'type' => TurnoverEntryType::SspPublishersIncome->name,
+                'type' => TurnoverEntryType::SspPublishersIncome,
             ],
         ];
         foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
