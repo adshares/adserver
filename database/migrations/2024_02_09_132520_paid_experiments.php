@@ -148,6 +148,7 @@ return new class extends Migration {
         Schema::create('publisher_boost_ledger_entries', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->timestamps();
+            $table->softDeletes();
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')
                 ->references('id')
@@ -156,11 +157,11 @@ return new class extends Migration {
                 ->onDelete('CASCADE');
             $table->bigInteger('amount');
             $table->binary('ads_address');
-            $table->unsignedBigInteger('network_campaign_id')->nullable();
         });
         DB::statement('ALTER TABLE publisher_boost_ledger_entries MODIFY ads_address VARBINARY(6)');
         Schema::table('publisher_boost_ledger_entries', function (Blueprint $table) {
             $table->index('ads_address');
+            $table->index('created_at');
         });
     }
 

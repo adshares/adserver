@@ -155,7 +155,7 @@ class PaymentDetailsProcessor
             foreach ($users as $user) {
                 $weight = $countByPublisherPublicId[$user->uuid] / $totalCount;
                 $amount = (int)floor($calculatedFees['paid_amount'] * $weight);
-                PublisherBoostLedgerEntry::create($user->id, $amount, $adsPayment->address, $campaign->id);
+                PublisherBoostLedgerEntry::create($user->id, $amount, $adsPayment->address);
             }
 
             $totalLicenseFee += $calculatedFees['license_fee'];
