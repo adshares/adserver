@@ -24,10 +24,12 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Utilities\AdsUtils;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 /**
  * @property int id
@@ -36,6 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property DateTimeInterface|null deleted_at
  * @property int user_id
  * @property int amount
+ * @property int amount_left
  * @property string ads_address
  */
 class PublisherBoostLedgerEntry extends Model
@@ -54,8 +57,21 @@ class PublisherBoostLedgerEntry extends Model
         $entry = new self();
         $entry->user_id = $userId;
         $entry->amount = $amount;
+        $entry->amount_left = $amount;
         $entry->ads_address = $adsAddress;
         $entry->save();
+    }
+
+    public static function deleteOutdated(): int
+    {
+        $date = new DateTimeImmutable('-3 months');
+        $builder = self::query()
+            ->where('created_at', '<', $date);
+
+        $amount = $builder->sum('amount_left');
+        $builder->delete();
+
+        return $amount;
     }
 
     public static function getAvailableBoost(int $userId, string $adsAddress): int
@@ -63,6 +79,27 @@ class PublisherBoostLedgerEntry extends Model
         return self::query()
             ->where('user_id', $userId)
             ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
-            ->sum('amount');
+            ->sum('amount_left');
+    }
+
+    public static function withdraw(int $userId, string $adsAddress, int $amount): void
+    {
+        self::query()
+            ->where('user_id', $userId)
+            ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
+            ->orderBy('created_at')
+            ->chunk(20, static function (Collection $entries) use ($amount) {
+                /** @var PublisherBoostLedgerEntry $entry */
+                foreach ($entries as $entry) {
+                    if ($amount <= 0) {
+                        break;
+                    }
+                    $amountToWithdraw = min($amount, $entry->amount_left);
+                    $amount -= $amountToWithdraw;
+                    $entry->amount_left -= $amountToWithdraw;
+                    $entry->save();
+                }
+                return $amount > 0;
+            });
     }
 }

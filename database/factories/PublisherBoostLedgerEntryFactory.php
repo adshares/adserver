@@ -22,6 +22,8 @@
 namespace Database\Factories;
 
 use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
+use Adshares\Adserver\Models\User;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -31,7 +33,15 @@ class PublisherBoostLedgerEntryFactory extends Factory
 {
     public function definition(): array
     {
+        $now = new DateTimeImmutable();
         return [
+            'created_at' => $now,
+            'updated_at' => $now,
+            'deleted_at' => null,
+            'amount' => 100_000_000_000,
+            'amount_left' => 100_000_000_000,
+            'ads_address' => '0001-00000001-8B4E',
+            'user_id' => User::factory()->create(),
         ];
     }
 }

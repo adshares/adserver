@@ -182,6 +182,10 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
         $networkHost = self::registerHost($demandClient);
 
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 1, 0);
+        $totalAmount = 11000;
+        $licenseFee = 110;
+        $operatorFee = 108;
+        $publishersIncome = 10782;
 
         $networkCampaign = NetworkCampaign::factory()->create();
         $user1 = User::factory()->create();
@@ -207,12 +211,21 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             'ads_address' => '0001-00000004-DBEB',
             'user_id' => $user1->id,
             'amount' => 5_000,
-            'network_campaign_id' => $networkCampaign->id,
+            'amount_left' => 5_000,
+        ]);
+        $oldDate = new DateTimeImmutable('-6 months');
+        PublisherBoostLedgerEntry::factory()->create([
+            'created_at' => $oldDate,
+            'updated_at' => $oldDate,
+            'ads_address' => '0001-00000004-DBEB',
+            'user_id' => $user1->id,
+            'amount' => 5_000,
+            'amount_left' => 3_250,
         ]);
 
         AdsPayment::factory()->create([
             'txid' => self::TX_ID_SEND_MANY,
-            'amount' => 11_000,
+            'amount' => $totalAmount,
             'address' => $networkHost->address,
             'status' => AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE,
         ]);
@@ -227,6 +240,42 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
             5_000 - 981,
             PublisherBoostLedgerEntry::getAvailableBoost($user1->id, '0001-00000004-DBEB'),
         );
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => $totalAmount,
+                'type' => TurnoverEntryType::SspIncome,
+            ],
+            [
+                'ads_address' => hex2bin('FFFF00000000'),
+                'amount' => $licenseFee,
+                'type' => TurnoverEntryType::SspLicenseFee,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $operatorFee,
+                'type' => TurnoverEntryType::SspOperatorFee,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => $publishersIncome,
+                'type' => TurnoverEntryType::SspPublishersIncome,
+            ],
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => 3_250,
+                'type' => TurnoverEntryType::SspBoostOperatorIncome,
+            ],
+            [
+                'ads_address' => hex2bin('000100000004'),
+                'amount' => 981,
+                'type' => TurnoverEntryType::SspBoostPublishersIncome,
+            ],
+        ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
     }
 
     public function testAdsProcessBoostPayment(): void
@@ -272,9 +321,9 @@ class SupplyProcessPaymentsTest extends ConsoleTestCase
                 'type' => TurnoverEntryType::SspOperatorFee,
             ],
             [
-                'ads_address' => null,
+                'ads_address' => hex2bin('000100000004'),
                 'amount' => $publishersIncome,
-                'type' => TurnoverEntryType::SspPublishersIncome,
+                'type' => TurnoverEntryType::SspBoostLocked,
             ],
         ];
         self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));

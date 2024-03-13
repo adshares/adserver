@@ -156,6 +156,7 @@ return new class extends Migration {
                 ->onUpdate('RESTRICT')
                 ->onDelete('CASCADE');
             $table->bigInteger('amount');
+            $table->bigInteger('amount_left');
             $table->binary('ads_address');
         });
         DB::statement('ALTER TABLE publisher_boost_ledger_entries MODIFY ads_address VARBINARY(6)');

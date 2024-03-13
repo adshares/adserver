@@ -24,10 +24,10 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Services;
 
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
-use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
@@ -94,7 +94,12 @@ class PaymentDetailsProcessor
             $totalEventValue += $eventValue;
         }
 
-        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
+        return new PaymentProcessingResult(
+            $totalEventValue,
+            $totalLicenseFee,
+            $totalOperatorFee,
+            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
+        );
     }
 
     public function processBoost(
@@ -163,6 +168,13 @@ class PaymentDetailsProcessor
             $totalEventValue += $value;
         }
 
+        TurnoverEntry::increaseOrInsert(
+            DateUtils::getDateTimeRoundedToCurrentHour(),
+            TurnoverEntryType::SspBoostLocked,
+            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
+            $adsPayment->address,
+        );
+
         return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
     }
 
@@ -178,7 +190,7 @@ class PaymentDetailsProcessor
         );
 
         $campaignIds = NetworkCampaign::fetchActiveCampaignsFromHost($adsPayment->address)
-            ->map(fn (NetworkCampaign $campaign) => $campaign->id);
+            ->map(fn(NetworkCampaign $campaign) => $campaign->id);
         if ($campaignIds->isEmpty()) {
             return;
         }
@@ -220,6 +232,17 @@ class PaymentDetailsProcessor
             )
             : ExchangeRate::ONE(Currency::ADS);
 
+        $freedAmount = PublisherBoostLedgerEntry::deleteOutdated();
+        if ($freedAmount > 0) {
+            TurnoverEntry::increaseOrInsert(
+                DateUtils::getDateTimeRoundedToCurrentHour(),
+                TurnoverEntryType::SspBoostOperatorIncome,
+                $freedAmount,
+                $adsPayment->address,
+            );
+        }
+        $totalUsedBoost = 0;
+
         foreach ($splitPayments as $splitPayment) {
             if (null === $user = User::fetchByUuid($splitPayment->publisher_id)) {
                 Log::warning(
@@ -243,7 +266,8 @@ class PaymentDetailsProcessor
                 $amount += $boost;
 
                 $usedBoost = $usePaidAmountCurrency ? $exchangeRate->toClick($boost) : $boost;
-                PublisherBoostLedgerEntry::create($user->id, -$usedBoost, $adsPayment->address);
+                PublisherBoostLedgerEntry::withdraw($user->id, $adsPayment->address, $usedBoost);
+                $totalUsedBoost += $usedBoost;
             }
 
             UserLedgerEntry::constructWithAddressAndTransaction(
@@ -255,6 +279,15 @@ class PaymentDetailsProcessor
                 $adServerAddress,
                 $adsPayment->txid
             )->save();
+        }
+
+        if ($totalUsedBoost > 0) {
+            TurnoverEntry::increaseOrInsert(
+                DateUtils::getDateTimeRoundedToCurrentHour(),
+                TurnoverEntryType::SspBoostPublishersIncome,
+                $totalUsedBoost,
+                $adsPayment->address,
+            );
         }
     }
 

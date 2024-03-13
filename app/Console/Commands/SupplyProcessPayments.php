@@ -228,7 +228,12 @@ SQL;
             if ($offset > 0) {
                 $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
                 $resultsCollection->add(
-                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
+                    new PaymentProcessingResult(
+                        $sum->total_amount,
+                        $sum->license_fee,
+                        $sum->operator_fee,
+                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
+                    )
                 );
             }
 
@@ -342,7 +347,7 @@ SQL;
             TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::SspOperatorFee, $totalOperatorFeeSum);
         }
 
-        $totalPublisherIncome = $totalEventValue - $totalLicenseFee - $totalOperatorFeeSum;
+        $totalPublisherIncome = $resultsCollection->publisherIncomeSum();
         if ($totalPublisherIncome > 0) {
             TurnoverEntry::increaseOrInsert(
                 $hourTimestamp,

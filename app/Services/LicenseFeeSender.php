@@ -88,6 +88,15 @@ final class LicenseFeeSender
         );
     }
 
+    public function publisherIncomeSum(): int
+    {
+        return array_reduce(
+            $this->results,
+            fn (int $carry, PaymentProcessingResult $result) => $carry + $result->publisherPartialIncome(),
+            0,
+        );
+    }
+
     public function sendAllLicensePayments(): ?NetworkPayment
     {
         $receiverAddress = $this->licenseAddress();
