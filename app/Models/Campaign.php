@@ -340,7 +340,7 @@ class Campaign extends Model
         $this->landing_url = $value["target_url"];
         $this->max_cpc = $value["max_cpc"];
         $this->max_cpm = $value["max_cpm"];
-        if ($value["budget"] < 0 || $value["boost_budget"] < 0) {
+        if ($value["budget"] < 0 || ($value["boost_budget"] ?? 0) < 0) {
             throw new InvalidArgumentException('Budget needs to be non-negative');
         }
         $this->budget = $value["budget"];
@@ -348,7 +348,7 @@ class Campaign extends Model
         $this->vendor = $value["vendor"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
-        $this->boost_budget = $value["boost_budget"];
+        $this->boost_budget = $value["boost_budget"] ?? 0;
         $this->boost_end_at = $value["boost_end_at"] ?? null;
     }
 

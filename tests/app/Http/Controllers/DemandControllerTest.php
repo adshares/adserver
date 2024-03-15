@@ -136,6 +136,28 @@ final class DemandControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
+    public function testPaymentDetailsFailWhenLimitTooBig(): void
+    {
+        $this->login();
+
+        $accountAddress = '0001-00000001-8B4E';
+        $transactionId = '0001:00000001:0001';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s?limit=100000',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
     public function testPaymentDetailsFailWhenAccountAddressIsInvalid(): void
     {
         $this->login();

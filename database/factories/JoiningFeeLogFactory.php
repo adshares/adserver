@@ -33,6 +33,7 @@ class JoiningFeeLogFactory extends Factory
     public function definition(): array
     {
         return [
+            'amount' => 10_000_000_000_000,
             'computed_at' => new DateTimeImmutable(),
             'pay_to' => '0001-00000001-8B4E',
         ];

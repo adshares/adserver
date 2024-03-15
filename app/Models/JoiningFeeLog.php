@@ -74,7 +74,7 @@ class JoiningFeeLog extends Model
         $log->save();
     }
 
-    public static function fetchUnpaid(DateTimeInterface $from, ?DateTimeInterface $to, ?int $limit): Collection
+    public static function fetchUnpaid(DateTimeInterface $from, ?DateTimeInterface $to, ?int $limit = null): Collection
     {
         $query = self::query()
             ->whereNotNull('amount')
