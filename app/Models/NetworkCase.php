@@ -69,7 +69,6 @@ WHERE created_at BETWEEN ? AND ?
 LIMIT 1;
 SQL;
 
-    /** @var array */
     protected $fillable = [
         'case_id',
         'publisher_id',
@@ -80,15 +79,9 @@ SQL;
         'banner_id',
     ];
 
-    /** @var array */
     protected $visible = [];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation
-     *
-     * @var array
-     */
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'case_id' => 'BinHex',
         'publisher_id' => 'BinHex',
         'site_id' => 'BinHex',
@@ -192,6 +185,19 @@ SQL;
             ->where('network_cases.id', '>=', $idFrom)
             ->take($limit)
             ->skip($offset)
+            ->get();
+    }
+
+    public static function countForCampaignIdByPublisherPublicId(
+        string $campaignId,
+        DateTimeInterface $from,
+        DateTimeInterface $to,
+    ): Collection {
+        return self::query()
+            ->select('publisher_id', DB::raw('COUNT(*) as count'))
+            ->where('campaign_id', hex2bin($campaignId))
+            ->whereBetween('created_at', [$from, $to])
+            ->groupBy('publisher_id')
             ->get();
     }
 

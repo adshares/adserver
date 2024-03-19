@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,6 +45,24 @@ class InfoTest extends TestCase
         self::expectException(RuntimeException::class);
 
         $info->setSupplyFee(0.1);
+    }
+
+    public function testValidateCapabilities(): void
+    {
+        $info = $this->getInfo();
+
+        self::expectException(RuntimeException::class);
+
+        $info->validateCapabilities(['invalid']);
+    }
+
+    public function testGetters(): void
+    {
+        $info = $this->getInfo();
+
+        self::assertEquals('AdServer', $info->getName());
+        self::assertEquals('https://panel.example.com', $info->getPanelUrl());
+        self::assertEquals(0, $info->getJoiningFee());
     }
 
     private function getInfo(array $merge = []): Info

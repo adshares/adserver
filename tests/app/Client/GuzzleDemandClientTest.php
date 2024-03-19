@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -383,7 +383,7 @@ JSON
                             . '/0001:00000001:0001'
                             . '/0001-00000005-CBCA'
                             . '/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00'
-                            . '/\?limit=1&offset=0~',
+                            . '/\?limit=1~',
                         $path,
                     ),
                 ),

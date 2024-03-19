@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -44,11 +44,6 @@ class NetworkCampaign extends Model
     use BinHex;
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $dates = [
         'date_start',
         'date_end',
@@ -61,11 +56,6 @@ class NetworkCampaign extends Model
         'targeting_excludes' => 'json',
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'uuid',
         'demand_campaign_id',
@@ -88,21 +78,11 @@ class NetworkCampaign extends Model
         'status',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'id',
     ];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'demand_campaign_id' => 'BinHex',
         'publisher_id' => 'BinHex',
@@ -128,12 +108,7 @@ class NetworkCampaign extends Model
 
     public static function findSupplyIdsByDemandIdsAndAddress(array $demandIds, string $sourceAddress): array
     {
-        $binDemandIds = array_map(
-            function (string $item) {
-                return hex2bin($item);
-            },
-            $demandIds
-        );
+        $binDemandIds = array_map(fn(string $item) => hex2bin($item), $demandIds);
 
         $campaigns = self::whereIn('demand_campaign_id', $binDemandIds)
             ->where('source_address', $sourceAddress)
@@ -141,11 +116,31 @@ class NetworkCampaign extends Model
             ->get();
 
         $ids = [];
-
         foreach ($campaigns as $campaign) {
             $ids[$campaign->demand_campaign_id] = $campaign->uuid;
         }
 
         return $ids;
+    }
+
+    public static function fetchByDemandIdsAndAddress(array $demandIds, string $sourceAddress): Collection
+    {
+        $binDemandIds = array_map(fn(string $item) => hex2bin($item), $demandIds);
+        return self::query()
+            ->whereIn('demand_campaign_id', $binDemandIds)
+            ->where('source_address', $sourceAddress)
+            ->get()
+            ->keyBy('demand_campaign_id');
+    }
+
+    public static function fetchActiveCampaignsFromHost(string $sourceAddress): Collection
+    {
+        return self::query()
+            ->select('network_campaigns.*')
+            ->where('network_campaigns.source_address', $sourceAddress)
+            ->where('network_campaigns.status', Status::STATUS_ACTIVE)
+            ->join('network_banners', 'network_campaigns.id', '=', 'network_banners.network_campaign_id')
+            ->where('network_banners.status', Status::STATUS_ACTIVE)
+            ->get();
     }
 }

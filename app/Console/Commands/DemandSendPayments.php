@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,9 +33,7 @@ class DemandSendPayments extends BaseCommand
     public const COMMAND_SIGNATURE = 'ops:demand:payments:send';
 
     public const STATUS_OK = 0;
-
     public const STATUS_LOCKED = 1;
-
     public const STATUS_ERROR_ADS = 2;
 
     protected $signature = self::COMMAND_SIGNATURE;
@@ -46,7 +44,6 @@ class DemandSendPayments extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
-
             return self::STATUS_LOCKED;
         }
 
@@ -68,7 +65,6 @@ class DemandSendPayments extends BaseCommand
 
         if (!$paymentCount) {
             $this->release();
-
             return self::STATUS_OK;
         }
 
@@ -85,7 +81,6 @@ class DemandSendPayments extends BaseCommand
                 )
             );
             $this->release();
-
             return self::STATUS_ERROR_ADS;
         }
 

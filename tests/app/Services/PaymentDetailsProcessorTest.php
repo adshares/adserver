@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -52,7 +52,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $adsPayment = $this->createAdsPayment(10000);
 
-        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
+        $paymentDetailsProcessor->processPaidEvents($adsPayment, [], 0);
 
         $this->assertCount(0, NetworkPayment::all());
     }
@@ -89,7 +89,7 @@ final class PaymentDetailsProcessorTest extends TestCase
             ];
         }
 
-        $result = $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), $paymentDetails, 0);
+        $result = $paymentDetailsProcessor->processPaidEvents($adsPayment, $paymentDetails, 0);
 
         $expectedLicenseAmount = 0;
         $expectedOperatorAmount = 0;
@@ -208,6 +208,7 @@ final class PaymentDetailsProcessorTest extends TestCase
         $adsPayment->txid = '0002:000017C3:0001';
         $adsPayment->amount = $amount;
         $adsPayment->address = '0002-00000007-055A';
+        $adsPayment->tx_time = new DateTime();
         $adsPayment->save();
 
         return $adsPayment;

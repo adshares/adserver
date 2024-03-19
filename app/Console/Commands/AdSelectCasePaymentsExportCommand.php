@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,14 +34,10 @@ class AdSelectCasePaymentsExportCommand extends BaseCommand
 
     protected $description = 'Export payments to AdSelect';
 
-    private AdSelectCaseExporter $adSelectCaseExporter;
-
     public function __construct(
         Locker $locker,
-        AdSelectCaseExporter $adSelectCaseExporter
+        private readonly AdSelectCaseExporter $adSelectCaseExporter,
     ) {
-        $this->adSelectCaseExporter = $adSelectCaseExporter;
-
         parent::__construct($locker);
     }
 
@@ -49,17 +45,21 @@ class AdSelectCasePaymentsExportCommand extends BaseCommand
     {
         if (!$this->lock()) {
             $this->info('[AdSelectCaseExport] Command ' . $this->signature . ' already running.');
-
             return;
         }
 
         $this->info('[AdSelectCaseExport] Start command ' . $this->signature);
 
         try {
-            $casePaymentIdFrom = $this->adSelectCaseExporter->getCasePaymentIdToExport();
-            $exportedCount = $this->adSelectCaseExporter->exportCasePayments($casePaymentIdFrom);
+            $exportedCount = $this->adSelectCaseExporter->exportCasePayments();
+            $this->info(sprintf('[AdSelectCaseExport] Exported %s payment(s)', $exportedCount));
+        } catch (UnexpectedClientResponseException | RuntimeException $exception) {
+            $this->error($exception->getMessage());
+        }
 
-            $this->info(sprintf('[AdSelectCaseExport] Exported %s payments', $exportedCount));
+        try {
+            $exportedCount = $this->adSelectCaseExporter->exportBoostPayments();
+            $this->info(sprintf('[AdSelectCaseExport] Exported %s boost payment(s)', $exportedCount));
         } catch (UnexpectedClientResponseException | RuntimeException $exception) {
             $this->error($exception->getMessage());
         }

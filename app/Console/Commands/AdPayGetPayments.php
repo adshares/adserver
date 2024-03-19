@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Exceptions\Demand\AdPayReportMissingEventsException;
 use Adshares\Adserver\Exceptions\Demand\AdPayReportNotReadyException;
 use Adshares\Adserver\Facades\DB;
@@ -56,7 +57,15 @@ class AdPayGetPayments extends BaseCommand
                             {--c|chunkSize=10000}';
     protected $description = 'Updates events with payment data fetched from adpay';
 
-    public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): int
+    public function __construct(
+        private readonly AdPay $adPay,
+        private readonly ExchangeRateReader $exchangeRateReader,
+        Locker $locker,
+    ) {
+        parent::__construct($locker);
+    }
+
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . self::COMMAND_SIGNATURE . ' already running');
@@ -66,8 +75,9 @@ class AdPayGetPayments extends BaseCommand
         $this->info('Start command ' . self::COMMAND_SIGNATURE);
 
         $timestamp = $this->getReportTimestamp();
+        $dateTime = new DateTime('@' . $timestamp);
         try {
-            $exchangeRate = $this->getExchangeRate($exchangeRateReader, new DateTime('@' . $timestamp));
+            $exchangeRate = $this->getExchangeRate($dateTime);
         } catch (ExchangeRateNotAvailableException $exception) {
             $this->release();
             throw $exception;
@@ -83,7 +93,7 @@ class AdPayGetPayments extends BaseCommand
 
         do {
             try {
-                $calculations = $this->getCalculations($adPay, $timestamp, $limit, $offset);
+                $calculations = $this->getCalculations($timestamp, $limit, $offset);
             } catch (AdPayReportNotReadyException | UnexpectedClientResponseException $recoverableException) {
                 $this->info(
                     sprintf(
@@ -110,7 +120,7 @@ class AdPayGetPayments extends BaseCommand
                 return self::STATUS_REQUEST_FAILED;
             }
             $calculationsCount = count($calculations);
-            $this->info("Found {$calculationsCount} calculations.");
+            $this->info(sprintf('Found %d calculations.', $calculationsCount));
 
             $eventIds = [];
             $conversionIds = [];
@@ -133,12 +143,14 @@ class AdPayGetPayments extends BaseCommand
             $offset += $limit;
         } while ($limit === $calculationsCount);
 
+        $reportProcessor->allocateCampaignBoostBudgets($dateTime);
+
         $ledgerEntriesCount = $this->processExpenses($reportProcessor->getAdvertiserExpenses());
         ConversionDefinition::updateCostAndOccurrences($reportProcessor->getProcessedConversionDefinitions());
 
         DB::commit();
 
-        $this->info("Created {$ledgerEntriesCount} Ledger Entries.");
+        $this->info(sprintf('Created %d Ledger Entries.', $ledgerEntriesCount));
         $this->release();
 
         return self::STATUS_OK;
@@ -161,11 +173,11 @@ class AdPayGetPayments extends BaseCommand
         }
     }
 
-    private function getExchangeRate(ExchangeRateReader $exchangeRateReader, DateTime $dateTime): ExchangeRate
+    private function getExchangeRate(DateTime $dateTime): ExchangeRate
     {
         $appCurrency = Currency::from(config('app.currency'));
         $exchangeRate = match ($appCurrency) {
-            Currency::ADS => $exchangeRateReader->fetchExchangeRate($dateTime),
+            Currency::ADS => $this->exchangeRateReader->fetchExchangeRate($dateTime),
             default => ExchangeRate::ONE($appCurrency),
         };
         $this->info(sprintf('Exchange rate for %s is %f', $dateTime->format('Y-m-d H:i:s'), $exchangeRate->getValue()));
@@ -173,9 +185,9 @@ class AdPayGetPayments extends BaseCommand
         return $exchangeRate;
     }
 
-    private function getCalculations(AdPay $adPay, int $timestamp, int $limit, int $offset): array
+    private function getCalculations(int $timestamp, int $limit, int $offset): array
     {
-        return $adPay->getPayments(
+        return $this->adPay->getPayments(
             $timestamp,
             (bool)$this->option('recalculate'),
             (bool)$this->option('force'),

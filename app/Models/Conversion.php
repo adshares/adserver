@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,8 +28,9 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Carbon\Carbon;
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -92,7 +93,7 @@ class Conversion extends Model
         'weight',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'case_id' => 'BinHex',
         'group_id' => 'BinHex',
@@ -125,8 +126,8 @@ class Conversion extends Model
     }
 
     public static function fetchUnpaidConversions(
-        DateTime $from,
-        ?DateTime $to = null,
+        DateTimeInterface $from,
+        ?DateTimeInterface $to = null,
         int $limit = null
     ): EloquentCollection {
         $query = self::whereNotNull('event_value_currency')
@@ -172,6 +173,17 @@ class Conversion extends Model
         return null !== self::where('conversion_definition_id', $conversionDefinitionId)
             ->whereIn('case_id', $binaryCaseIds)
             ->first();
+    }
+
+    public static function fetchPaidConversionsByPayTo(DateTimeInterface $from, array $adsAddresses): Collection
+    {
+        $payTo = array_map(fn($adsAddress) => hex2bin(AdsUtils::decodeAddress($adsAddress)), $adsAddresses);
+        return self::query()
+            ->selectRaw('pay_to, SUM(event_value) AS value')
+            ->where('created_at', '>=', $from)
+            ->whereIn('pay_to', $payTo)
+            ->groupBy('pay_to')
+            ->get();
     }
 
     public function setStatus(int $status): void

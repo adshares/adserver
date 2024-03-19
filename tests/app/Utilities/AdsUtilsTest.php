@@ -171,4 +171,35 @@ final class AdsUtilsTest extends TestCase
 
         AdsUtils::normalizeTxid($input);
     }
+
+    /**
+     * @dataProvider encodeMessageProvider
+     */
+    public function testEncodeMessage(string $message, string $expected): void
+    {
+        $result = AdsUtils::encodeMessage($message);
+
+        self::assertEquals($expected, $result);
+    }
+
+    public function encodeMessageProvider(): array
+    {
+        return [
+            'short' => [
+                'Hello world',
+                '48656c6c6f20776f726c64000000000000000000000000000000000000000000'
+            ],
+            'long' => [
+                'Hello world Hello world Hello world Hello world',
+                '48656c6c6f20776f726c642048656c6c6f20776f726c642048656c6c6f20776f',
+            ],
+        ];
+    }
+
+    public function testDecodeMessage(): void
+    {
+        $result = AdsUtils::decodeMessage('48656c6c6f20776f726c64000000000000000000000000000000000000000000');
+
+        self::assertEquals('Hello world', $result);
+    }
 }

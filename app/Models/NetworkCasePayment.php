@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,7 +43,7 @@ use Illuminate\Support\Facades\DB;
  * @property int license_fee
  * @property int operator_fee
  * @property int paid_amount
- * @property string exchange_rate
+ * @property float exchange_rate
  * @property int paid_amount_currency
  * @mixin Builder
  */
@@ -73,12 +73,7 @@ class NetworkCasePayment extends Model
 
     protected $visible = [];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation
-     *
-     * @var array
-     */
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         /** Mutators from @see NetworkCase::class */
         'case_id' => 'BinHex',
         'publisher_id' => 'BinHex',
@@ -89,7 +84,7 @@ class NetworkCasePayment extends Model
     ];
 
     public static function create(
-        DateTime $payTime,
+        DateTimeInterface $payTime,
         int $adsPaymentId,
         int $totalAmount,
         int $licenseFee,
@@ -128,6 +123,15 @@ class NetworkCasePayment extends Model
                 $join->on('network_case_payments.network_case_id', '=', 'network_cases.id');
             }
         )->where('ads_payment_id', $adsPaymentId)->groupBy('publisher_id')->get();
+    }
+
+    public static function fetchExchangeRateUsedByAdsPaymentId(int $adsPaymentId): float
+    {
+        return self::query()
+            ->select('exchange_rate')
+            ->where('ads_payment_id', $adsPaymentId)
+            ->first()
+            ->exchange_rate;
     }
 
     public static function fetchPaymentsToExport(

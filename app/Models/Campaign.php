@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -77,6 +77,8 @@ use Illuminate\Support\Facades\DB;
  * @property array basic_information
  * @property array|null classifications
  * @property array targeting
+ * @property int $boost_budget
+ * @property Carbon|null $boost_end_at
  * @mixin Builder
  */
 class Campaign extends Model
@@ -103,6 +105,7 @@ class Campaign extends Model
     public const URL_MAXIMAL_LENGTH = 1024;
 
     protected $dates = [
+        'boost_end_at',
         'deleted_at',
         'time_start',
         'time_end',
@@ -138,6 +141,8 @@ class Campaign extends Model
         'time_end',
         'conversion_click',
         'bid_strategy_uuid',
+        'boost_budget',
+        'boost_end_at',
     ];
 
     protected $visible = [
@@ -156,11 +161,12 @@ class Campaign extends Model
         'bid_strategy',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
         'bid_strategy_uuid' => 'BinHex',
+        'boost_end_at' => 'DateAtom',
     ];
 
     protected $appends = [
@@ -224,18 +230,8 @@ class Campaign extends Model
 
     public static function fetchRequiredBudgetsPerUser(): Collection
     {
-        $query = self::where('status', self::STATUS_ACTIVE)
-            ->where(
-                static function ($q) {
-                    $dateTime = DateUtils::getDateTimeRoundedToNextHour();
-                    $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
-                }
-            );
-
-        /** @var Collection $all */
-        $all = $query->get();
-
-        return $all->groupBy('user_id')
+        return self::fetchActiveCampaigns(DateUtils::getDateTimeRoundedToNextHour())
+            ->groupBy('user_id')
             ->map(
                 static function (Collection $collection) {
                     return $collection->reduce(
@@ -250,21 +246,23 @@ class Campaign extends Model
 
     private static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): AdvertiserBudget
     {
-        $query = self::where('status', self::STATUS_ACTIVE)->where(
-            static function ($q) {
-                $dateTime = DateUtils::getDateTimeRoundedToCurrentHour();
-                $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
-            }
-        );
+        return self::fetchActiveCampaigns(DateUtils::getDateTimeRoundedToCurrentHour())
+            ->reduce(
+                static function (AdvertiserBudget $carry, Campaign $campaign) {
+                    return $carry->add($campaign->advertiserBudget());
+                },
+                new AdvertiserBudget(),
+            );
+    }
 
-        $statics = $query->get();
-
-        return $statics->reduce(
-            static function (AdvertiserBudget $carry, Campaign $campaign) {
-                return $carry->add($campaign->advertiserBudget());
-            },
-            new AdvertiserBudget()
-        );
+    public static function fetchActiveCampaigns(DateTimeInterface $dateTime): Collection
+    {
+        return self::where('status', self::STATUS_ACTIVE)
+            ->where(
+                fn($q) => $q->where('time_end', '>=', $dateTime)
+                    ->orWhere('time_end', null)
+            )
+            ->get();
     }
 
     public function banners(): HasMany
@@ -342,7 +340,7 @@ class Campaign extends Model
         $this->landing_url = $value["target_url"];
         $this->max_cpc = $value["max_cpc"];
         $this->max_cpm = $value["max_cpm"];
-        if ($value["budget"] < 0) {
+        if ($value["budget"] < 0 || ($value["boost_budget"] ?? 0) < 0) {
             throw new InvalidArgumentException('Budget needs to be non-negative');
         }
         $this->budget = $value["budget"];
@@ -350,6 +348,8 @@ class Campaign extends Model
         $this->vendor = $value["vendor"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
+        $this->boost_budget = $value["boost_budget"] ?? 0;
+        $this->boost_end_at = $value["boost_end_at"] ?? null;
     }
 
     public function getBasicInformationAttribute(): array
@@ -365,6 +365,8 @@ class Campaign extends Model
             "vendor" => $this->vendor,
             "date_start" => $this->time_start,
             "date_end" => $this->time_end,
+            "boost_budget" => $this->boost_budget,
+            "boost_end_at" => $this->boost_end_at,
         ];
     }
 
@@ -416,6 +418,16 @@ class Campaign extends Model
         if ($this->budget < config('app.campaign_min_budget')) {
             throw new InvalidArgumentException(
                 sprintf('Budget must be at least %d', config('app.campaign_min_budget'))
+            );
+        }
+
+        $boostBudget = $this->getEffectiveBoostBudget();
+        if (
+            (0 !== $boostBudget || ($this->isCpa() && config('app.campaign_boost_min_budget_for_cpa_required')))
+            && $boostBudget < config('app.campaign_boost_min_budget')
+        ) {
+            throw new InvalidArgumentException(
+                sprintf('Boost budget must be at least %d', config('app.campaign_boost_min_budget'))
             );
         }
 
@@ -499,12 +511,18 @@ class Campaign extends Model
 
     public function advertiserBudget(): AdvertiserBudget
     {
-        return new AdvertiserBudget($this->budget, $this->isDirectDeal() ? 0 : $this->budget);
+        $budget = $this->budget + $this->getEffectiveBoostBudget();
+        return new AdvertiserBudget($budget, $this->isDirectDeal() ? 0 : $budget);
     }
 
     private function isAutoCpm(): bool
     {
         return $this->max_cpm === null;
+    }
+
+    private function isCpa(): bool
+    {
+        return 0 === $this->max_cpm;
     }
 
     public function isDirectDeal(): bool
@@ -540,5 +558,12 @@ class Campaign extends Model
     public function hasClickConversionAdvanced(): bool
     {
         return Campaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
+    }
+
+    public function getEffectiveBoostBudget(): int
+    {
+        return (null === $this->boost_end_at || $this->boost_end_at > Carbon::now())
+            ? $this->boost_budget
+            : 0;
     }
 }

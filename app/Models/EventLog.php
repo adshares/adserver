@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -34,6 +34,7 @@ use Adshares\Adserver\ViewModel\MetaverseVendor;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -145,19 +146,9 @@ SQL;
         'domain',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
@@ -175,8 +166,8 @@ SQL;
     ];
 
     public static function fetchUnpaidEvents(
-        DateTime $from,
-        ?DateTime $to = null,
+        DateTimeInterface $from,
+        ?DateTimeInterface $to = null,
         int $limit = null
     ): Collection {
         $query = self::whereNotNull('event_value_currency')
@@ -372,7 +363,7 @@ SQL;
         return self::select(DB::raw('DISTINCT FLOOR(UNIX_TIMESTAMP(created_at)/3600)*3600 AS ts'))
             ->whereIn('id', $ids)
             ->get()
-            ->pluck('ts')
+            ->map(fn ($item) => (int)$item->ts)
             ->all();
     }
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -40,9 +40,13 @@ interface AdSelect
 
     public function exportCasePayments(Collection $casePayments): void;
 
+    public function exportBoostPayments(Collection $boostPayments): void;
+
     public function getLastExportedCaseId(): int;
 
     public function getLastExportedCaseClickId(): int;
 
     public function getLastExportedCasePaymentId(): int;
+
+    public function getLastExportedBoostPaymentId(): int;
 }

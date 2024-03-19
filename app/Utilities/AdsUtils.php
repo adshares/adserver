@@ -150,4 +150,21 @@ final class AdsUtils
 
         return sprintf('%s:%s:%s', substr($x, 0, 4), substr($x, 4, 8), substr($x, 12, 4));
     }
+
+    public static function encodeMessage(string $message): string
+    {
+        $hex = array_values(unpack('H*', $message))[0];
+        $padded = str_pad($hex, 64, '0');
+
+        return substr($padded, 0, 64);
+    }
+
+    public static function decodeMessage(string $hex): string
+    {
+        while (str_ends_with($hex, '00')) {
+            $hex = substr($hex, 0, -2);
+        }
+
+        return pack('H*', $hex);
+    }
 }

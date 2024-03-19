@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,7 +27,9 @@ use Adshares\Adserver\Console\Commands\DemandPreparePayments;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
@@ -141,34 +143,34 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             });
         });
 
-        self::assertDatabaseCount(TurnoverEntry::class, 5);
         $expectedTurnoverEntries = [
             [
                 'ads_address' => null,
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
             ],
             [
                 'ads_address' => hex2bin('000100000002'),
                 'amount' => 500,
-                'type' => TurnoverEntryType::DspLicenseFee->name,
+                'type' => TurnoverEntryType::DspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 250,
-                'type' => TurnoverEntryType::DspOperatorFee->name,
+                'type' => TurnoverEntryType::DspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 125,
-                'type' => TurnoverEntryType::DspCommunityFee->name,
+                'type' => TurnoverEntryType::DspCommunityFee,
             ],
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 125,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspExpense,
             ],
         ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
         foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
             self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
         }
@@ -215,34 +217,153 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
             });
         });
 
-        self::assertDatabaseCount(TurnoverEntry::class, 5);
         $expectedTurnoverEntries = [
             [
                 'ads_address' => null,
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
             ],
             [
                 'ads_address' => hex2bin('000100000002'),
                 'amount' => 100,
-                'type' => TurnoverEntryType::DspLicenseFee->name,
+                'type' => TurnoverEntryType::DspLicenseFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 450,
-                'type' => TurnoverEntryType::DspOperatorFee->name,
+                'type' => TurnoverEntryType::DspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 150,
-                'type' => TurnoverEntryType::DspCommunityFee->name,
+                'type' => TurnoverEntryType::DspCommunityFee,
             ],
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 300,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspExpense,
             ],
         ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+    }
+
+    public function testHandleEventBoostFees(): void
+    {
+        Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->mockCommunityFeeReader(0.5);
+        $this->mockLicenseReader(0.5);
+        /** @var EventBoostLog $event */
+        $event = EventBoostLog::factory()->create([
+            'event_value_currency' => 1000,
+            'exchange_rate' => 1,
+            'event_value' => 1000,
+            'pay_to' => new AccountId('0001-00000001-8B4E'),
+        ]);
+
+        $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE)
+            ->expectsOutput('Found 1 payable boost events.')
+            ->expectsOutput('In that, there are 1 recipients')
+            ->expectsOutput('and a license fee of 500 clicks payable to 0001-00000002-BB2D')
+            ->expectsOutput('and a community fee of 125 clicks payable to 0001-00000024-FF89')
+            ->assertExitCode(0);
+
+        $event->refresh();
+
+        self::assertNotEmpty($event->payment_id);
+        self::assertEquals(500, $event->license_fee);
+        self::assertEquals(250, $event->operator_fee);
+        self::assertEquals(125, $event->community_fee);
+        self::assertEquals(125, $event->paid_amount);
+
+        $payments = Payment::all();
+        self::assertCount(3, $payments);// adserver + license + community
+
+        $payments->each(function (Payment $payment) {
+            self::assertNotEmpty($payment->account_address);
+            self::assertEquals(Payment::STATE_NEW, $payment->state);
+            $payment->events->each(function (EventLog $entry) use ($payment) {
+                self::assertEquals($entry->pay_to, $payment->account_address);
+            });
+        });
+
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => null,
+                'amount' => 1000,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
+            ],
+            [
+                'ads_address' => hex2bin('000100000002'),
+                'amount' => 500,
+                'type' => TurnoverEntryType::DspLicenseFee,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 250,
+                'type' => TurnoverEntryType::DspOperatorFee,
+            ],
+            [
+                'ads_address' => null,
+                'amount' => 125,
+                'type' => TurnoverEntryType::DspCommunityFee,
+            ],
+            [
+                'ads_address' => hex2bin('000100000001'),
+                'amount' => 125,
+                'type' => TurnoverEntryType::DspExpense,
+            ],
+        ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
+        foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
+            self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
+        }
+    }
+
+    public function testHandleJoiningFees(): void
+    {
+        Config::updateAdminSettings([Config::OPERATOR_TX_FEE => 0.5]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $this->mockCommunityFeeReader(0.5);
+        $this->mockLicenseReader(0.5);
+        /** @var JoiningFeeLog $log */
+        $log = JoiningFeeLog::factory()->create([
+            'amount' => 1000,
+            'pay_to' => '0001-00000001-8B4E',
+        ]);
+
+        $this->artisan(DemandPreparePayments::COMMAND_SIGNATURE)
+            ->expectsOutput('Found 1 payable joining fees.')
+            ->expectsOutput('In that, there are 1 recipients')
+            ->assertExitCode(0);
+
+        $log->refresh();
+
+        self::assertNotEmpty($log->payment_id);
+        self::assertEquals(1000, $log->amount);
+
+        $payments = Payment::all();
+        self::assertCount(1, $payments);// SSP
+
+        $payments->each(function (Payment $payment) {
+            self::assertNotEmpty($payment->account_address);
+            self::assertEquals(Payment::STATE_NEW, $payment->state);
+            $payment->events->each(function (EventLog $entry) use ($payment) {
+                self::assertEquals($entry->pay_to, $payment->account_address);
+            });
+        });
+
+        $expectedTurnoverEntries = [
+            [
+                'ads_address' => hex2bin('000100000001'),
+                'amount' => 1000,
+                'type' => TurnoverEntryType::DspJoiningFeeAllocation,
+            ],
+        ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
         foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
             self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
         }
@@ -297,29 +418,29 @@ class DemandPreparePaymentsTest extends ConsoleTestCase
         self::assertEquals(250, $conversion->community_fee);
         self::assertEquals(250, $conversion->paid_amount);
 
-        self::assertDatabaseCount(TurnoverEntry::class, 4);
         $expectedTurnoverEntries = [
             [
                 'ads_address' => null,
                 'amount' => 2000,
-                'type' => TurnoverEntryType::DspAdvertisersExpense->name,
+                'type' => TurnoverEntryType::DspAdvertisersExpense,
             ],
             [
                 'ads_address' => null,
                 'amount' => 1000,
-                'type' => TurnoverEntryType::DspOperatorFee->name,
+                'type' => TurnoverEntryType::DspOperatorFee,
             ],
             [
                 'ads_address' => null,
                 'amount' => 500,
-                'type' => TurnoverEntryType::DspCommunityFee->name,
+                'type' => TurnoverEntryType::DspCommunityFee,
             ],
             [
                 'ads_address' => hex2bin('000100000001'),
                 'amount' => 500,
-                'type' => TurnoverEntryType::DspExpense->name,
+                'type' => TurnoverEntryType::DspExpense,
             ],
         ];
+        self::assertDatabaseCount(TurnoverEntry::class, count($expectedTurnoverEntries));
         foreach ($expectedTurnoverEntries as $expectedTurnoverEntry) {
             self::assertDatabaseHas(TurnoverEntry::class, $expectedTurnoverEntry);
         }

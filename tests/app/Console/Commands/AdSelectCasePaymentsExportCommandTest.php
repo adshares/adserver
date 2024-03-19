@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -45,13 +45,16 @@ class AdSelectCasePaymentsExportCommandTest extends ConsoleTestCase
             AdSelectCaseExporter::class,
             function () {
                 $adSelectCaseExporter = self::createMock(AdSelectCaseExporter::class);
-                $adSelectCaseExporter->method('getCasePaymentIdToExport')->willReturn(0);
                 $adSelectCaseExporter->method('exportCasePayments')->willReturn(1);
+                $adSelectCaseExporter->method('exportBoostPayments')->willReturn(2);
                 return $adSelectCaseExporter;
             }
         );
 
-        $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        $this->artisan(self::SIGNATURE)
+            ->expectsOutputToContain('[AdSelectCaseExport] Exported 1 payment(s)')
+            ->expectsOutputToContain('[AdSelectCaseExport] Exported 2 boost payment(s)')
+            ->assertExitCode(0);
     }
 
     public function testExportAdSelectError(): void
@@ -61,12 +64,18 @@ class AdSelectCasePaymentsExportCommandTest extends ConsoleTestCase
             function () {
                 $adSelectCaseExporter = self::createMock(AdSelectCaseExporter::class);
                 $adSelectCaseExporter
-                    ->method('getCasePaymentIdToExport')
-                    ->willThrowException(new UnexpectedClientResponseException('test'));
+                    ->method('exportCasePayments')
+                    ->willThrowException(new UnexpectedClientResponseException('test1'));
+                $adSelectCaseExporter
+                    ->method('exportBoostPayments')
+                    ->willThrowException(new UnexpectedClientResponseException('test2'));
                 return $adSelectCaseExporter;
             }
         );
 
-        $this->artisan(self::SIGNATURE)->assertExitCode(0);
+        $this->artisan(self::SIGNATURE)
+            ->expectsOutputToContain('test1')
+            ->expectsOutputToContain('test2')
+            ->assertExitCode(0);
     }
 }

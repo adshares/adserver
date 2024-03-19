@@ -68,6 +68,7 @@ class NetworkHostFactory extends Factory
             AppMode::OPERATIONAL,
             $domain,
             false,
+            0,
         );
 
         $info->setDemandFee(0.01);

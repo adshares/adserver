@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int id
@@ -37,6 +38,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property DateTime updated_at
  * @property int last_offset
  * @property DateTime tx_time
+ * @property AdsPaymentMeta|null adspaymentmeta
  * @mixin Builder
  */
 class AdsPayment extends Model
@@ -49,7 +51,10 @@ class AdsPayment extends Model
     public const STATUS_EVENT_PAYMENT = 2;
     public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
     public const STATUS_EVENT_PAYMENT_CANDIDATE = 4;
+    public const STATUS_JOINING_FEE = 5;
     public const STATUS_RESERVED = 64;
+
+    public const MESSAGE_JOINING_FEE = 'Adshares joining fee';
 
     protected $casts = [
         'amount' => 'int',
@@ -78,5 +83,10 @@ class AdsPayment extends Model
     public static function fetchByStatus(int $status): Collection
     {
         return self::where('status', $status)->get();
+    }
+
+    public function adsPaymentMeta(): HasOne
+    {
+        return $this->hasOne(AdsPaymentMeta::class);
     }
 }

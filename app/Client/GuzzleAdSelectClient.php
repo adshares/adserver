@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,11 +27,11 @@ use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\CaseClickMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\CaseMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\CasePaymentMapper;
+use Adshares\Adserver\Client\Mapper\AdSelect\BoostPaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -58,6 +58,8 @@ use Throwable;
 
 class GuzzleAdSelectClient implements AdSelect
 {
+    private const URI_BOOST_PAYMENT_EXPORT = '/api/v1/boost-payments';
+    private const URI_BOOST_PAYMENT_LAST_EXPORTED_ID = self::URI_BOOST_PAYMENT_EXPORT . '/last';
     private const URI_CASE_EXPORT = '/api/v1/cases';
     private const URI_CASE_LAST_EXPORTED_ID = '/api/v1/cases/last';
     private const URI_CASE_CLICK_EXPORT = '/api/v1/clicks';
@@ -398,6 +400,19 @@ class GuzzleAdSelectClient implements AdSelect
         $this->export(self::URI_CASE_PAYMENT_EXPORT, $options);
     }
 
+    public function exportBoostPayments(Collection $boostPayments): void
+    {
+        $mapped = $boostPayments
+            ->map(fn($payment) => BoostPaymentMapper::map($payment))
+            ->toArray();
+
+        $options = [
+            RequestOptions::JSON => ['payments' => $mapped],
+        ];
+
+        $this->export(self::URI_BOOST_PAYMENT_EXPORT, $options);
+    }
+
     public function export(string $uri, array $options): void
     {
         try {
@@ -429,6 +444,11 @@ class GuzzleAdSelectClient implements AdSelect
     public function getLastExportedCasePaymentId(): int
     {
         return $this->getLastExportedId(self::URI_CASE_PAYMENT_LAST_EXPORTED_ID);
+    }
+
+    public function getLastExportedBoostPaymentId(): int
+    {
+        return $this->getLastExportedId(self::URI_BOOST_PAYMENT_LAST_EXPORTED_ID);
     }
 
     private function getLastExportedId(string $uri): int

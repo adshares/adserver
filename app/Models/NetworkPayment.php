@@ -33,6 +33,9 @@ use Illuminate\Support\Collection;
 /**
  * @property int id
  * @property int amount
+ * @property string|null receiver_address
+ * @property string|null tx_id
+ * @property int|null tx_time
  * @mixin Builder
  */
 class NetworkPayment extends Model
@@ -64,7 +67,7 @@ class NetworkPayment extends Model
         'ads_payment_id',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'receiver_address' => 'AccountAddress',
         'sender_address' => 'AccountAddress',
         'tx_id' => 'TransactionId',

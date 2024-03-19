@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\AdsPaymentMeta;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\TurnoverEntry;
@@ -41,6 +42,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use stdClass;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class SupplyProcessPayments extends BaseCommand
@@ -52,6 +54,13 @@ SELECT IFNULL(SUM(total_amount), 0) AS total_amount,
        IFNULL(SUM(license_fee), 0)  AS license_fee,
        IFNULL(SUM(operator_fee), 0) AS operator_fee
 FROM network_case_payments
+WHERE ads_payment_id = ?
+SQL;
+    private const SQL_QUERY_GET_PROCESSED_BOOST = <<<SQL
+SELECT IFNULL(SUM(total_amount), 0) AS total_amount,
+       IFNULL(SUM(license_fee), 0)  AS license_fee,
+       IFNULL(SUM(operator_fee), 0) AS operator_fee
+FROM network_boost_payments
 WHERE ads_payment_id = ?
 SQL;
 
@@ -106,9 +115,27 @@ SQL;
                 continue;
             }
 
+            if (null === ($networkHost = NetworkHost::fetchByAddress($adsPayment->address))) {
+                ++$processedPaymentsTotal;
+                continue;
+            }
+
+            if (null === $adsPayment->adsPaymentMeta()->first()) {
+                try {
+                    $meta = $this->demandClient->fetchPaymentDetailsMeta($networkHost->host, $adsPayment->txid);
+                } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
+                    if (Response::HTTP_NOT_FOUND !== $unexpectedClientResponseException->getCode()) {
+                        ++$processedPaymentsTotal;
+                        continue;
+                    }
+                    $meta = [];
+                }
+                $adsPayment->adsPaymentMeta()->save(new AdsPaymentMeta(['meta' => $meta]));
+            }
+
             DB::beginTransaction();
             try {
-                $this->handleEventPaymentCandidate($adsPayment);
+                $this->handleEventPaymentCandidate($adsPayment, $networkHost);
                 $adsPayment->save();
 
                 DB::commit();
@@ -142,47 +169,111 @@ SQL;
         $this->info('End command ' . $this->getName());
     }
 
-    private function handleEventPaymentCandidate(AdsPayment $incomingPayment): void
+    private function handleEventPaymentCandidate(AdsPayment $incomingPayment, NetworkHost $networkHost): void
     {
-        if (null === ($networkHost = NetworkHost::fetchByAddress($incomingPayment->address))) {
+        /** @var AdsPaymentMeta $adsPaymentMeta */
+        $adsPaymentMeta = $incomingPayment->adsPaymentMeta()->first();
+        $meta = $adsPaymentMeta->meta;
+
+        $areEvents = !isset($meta['events']['count']) || ($meta['events']['count'] > 0);
+        $isBoost = ($meta['boost']['count'] ?? 0) > 0;
+        $isAllocation = ($meta['allocation']['sum'] ?? 0) > 0;
+
+        if (!$areEvents && !$isBoost && !$isAllocation) {
             return;
         }
 
         $resultsCollection = new LicenseFeeSender($this->adsClient, $this->licenseReader, $incomingPayment);
 
         $limit = (int)$this->option('chunkSize');
-        $offset = $incomingPayment->last_offset ?? 0;
-        if ($offset > 0) {
-            $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
-            $resultsCollection->add(
-                new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
-            );
-        }
-        $transactionTime = $incomingPayment->tx_time;
 
-        for ($paymentDetailsSize = $limit; $paymentDetailsSize === $limit;) {
-            try {
-                $paymentDetails = $this->demandClient->fetchPaymentDetails(
-                    $networkHost->host,
-                    $incomingPayment->txid,
-                    $limit,
-                    $offset
+        if ($isBoost) {
+            $offset = $meta['boost']['offset'] ?? 0;
+            if ($offset > 0) {
+                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_BOOST, [$incomingPayment->id]);
+                $resultsCollection->add(
+                    new PaymentProcessingResult($sum->total_amount, $sum->license_fee, $sum->operator_fee)
                 );
-                $paymentDetailsSize = count($paymentDetails);
-            } catch (EmptyInventoryException | UnexpectedClientResponseException) {
-                return;
+            }
+            do {
+                try {
+                    $boostDetails = $this->demandClient->fetchBoostDetails(
+                        $networkHost->host,
+                        $incomingPayment->txid,
+                        $limit,
+                        $offset,
+                    );
+                } catch (EmptyInventoryException) {
+                    break;
+                } catch (UnexpectedClientResponseException) {
+                    return;
+                }
+
+                $processPaymentDetails = $this->paymentDetailsProcessor->processBoost(
+                    $incomingPayment,
+                    $boostDetails,
+                    $resultsCollection->eventValueSum(),
+                );
+                $resultsCollection->add($processPaymentDetails);
+
+                $offset += count($boostDetails);
+                $meta['boost']['offset'] = $offset;
+                $adsPaymentMeta->meta = $meta;
+                $adsPaymentMeta->save();
+            } while (count($boostDetails) === $limit);
+        }
+
+        if ($areEvents) {
+            $offset = $incomingPayment->last_offset ?? 0;
+            if ($offset > 0) {
+                $sum = DB::selectOne(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
+                $resultsCollection->add(
+                    new PaymentProcessingResult(
+                        $sum->total_amount,
+                        $sum->license_fee,
+                        $sum->operator_fee,
+                        $sum->total_amount - $sum->license_fee - $sum->operator_fee,
+                    )
+                );
             }
 
-            $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
-                $incomingPayment,
-                $transactionTime,
-                $paymentDetails,
-                $resultsCollection->eventValueSum()
+            do {
+                try {
+                    $paymentDetails = $this->demandClient->fetchPaymentDetails(
+                        $networkHost->host,
+                        $incomingPayment->txid,
+                        $limit,
+                        $offset,
+                    );
+                } catch (EmptyInventoryException) {
+                    break;
+                } catch (UnexpectedClientResponseException) {
+                    return;
+                }
+
+                $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
+                    $incomingPayment,
+                    $paymentDetails,
+                    $resultsCollection->eventValueSum()
+                );
+                $resultsCollection->add($processPaymentDetails);
+
+                $offset += count($paymentDetails);
+                $incomingPayment->last_offset = $offset;
+                $meta['events']['offset'] = $offset;
+                $adsPaymentMeta->meta = $meta;
+                $adsPaymentMeta->save();
+            } while (count($paymentDetails) === $limit);
+        }
+
+        if ($isAllocation) {
+            $allocationAmount = min(
+                $meta['allocation']['sum'],
+                $incomingPayment->amount - $resultsCollection->eventValueSum(),
             );
-
-            $resultsCollection->add($processPaymentDetails);
-
-            $incomingPayment->last_offset = $offset += $limit;
+            if ($allocationAmount > 0) {
+                $this->paymentDetailsProcessor->processAllocation($incomingPayment, $allocationAmount);
+            }
         }
 
         $this->storeTurnoverEntries($resultsCollection, $incomingPayment);
@@ -256,7 +347,7 @@ SQL;
             TurnoverEntry::increaseOrInsert($hourTimestamp, TurnoverEntryType::SspOperatorFee, $totalOperatorFeeSum);
         }
 
-        $totalPublisherIncome = $totalEventValue - $totalLicenseFee - $totalOperatorFeeSum;
+        $totalPublisherIncome = $resultsCollection->publisherIncomeSum();
         if ($totalPublisherIncome > 0) {
             TurnoverEntry::increaseOrInsert(
                 $hourTimestamp,

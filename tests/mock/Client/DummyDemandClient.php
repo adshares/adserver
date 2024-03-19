@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,14 +31,17 @@ use Adshares\Config\RegistrationMode;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Dto\InfoStatistics;
 use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use DateTimeImmutable;
 
-final class DummyDemandClient implements DemandClient
+class DummyDemandClient implements DemandClient
 {
     public array $campaigns;
+    private static ?array $boostDetails = null;
+    private static ?array $paymentDetails = null;
 
     public function __construct()
     {
@@ -133,14 +136,36 @@ final class DummyDemandClient implements DemandClient
         return new CampaignCollection(...$this->campaigns);
     }
 
+    public function fetchPaymentDetailsMeta(string $host, string $transactionId): array
+    {
+        return [
+            'allocation' => [
+                'count' => 0,
+                'sum' => 0,
+            ],
+            'boost' => (null === self::$boostDetails) ? [
+                'count' => 0,
+                'sum' => 0,
+            ] : [
+                'count' => count(self::$boostDetails),
+                'sum' => array_reduce(self::$boostDetails, fn($carry, $item) => $carry + $item['value'], 0),
+            ],
+            'events' => (null === self::$paymentDetails) ? [
+                'count' => 0,
+                'sum' => 0,
+            ] : [
+                'count' => count(self::$paymentDetails),
+                'sum' => array_reduce(self::$paymentDetails, fn($carry, $item) => $carry + $item['event_value'], 0),
+            ],
+        ];
+    }
+
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        static $arr;
-
-        if ($arr === null) {
-            $arr = [];
+        if (self::$paymentDetails === null) {
+            self::$paymentDetails = [];
             for ($i = 0; $i < $limit; $i++) {
-                $arr[] = [
+                self::$paymentDetails[] = [
                     'case_id' => Uuid::v4()->hex(),
                     'event_id' => Uuid::v4()->hex(),
                     'event_type' => 'view',
@@ -149,7 +174,7 @@ final class DummyDemandClient implements DemandClient
                     'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
                     'event_value' => 1000,
                 ];
-                $arr[] = [
+                self::$paymentDetails[] = [
                     'case_id' => Uuid::v4()->hex(),
                     'event_id' => Uuid::v4()->hex(),
                     'event_type' => 'click',
@@ -160,10 +185,32 @@ final class DummyDemandClient implements DemandClient
                 ];
             }
         } else {
-            return array_chunk($arr, $limit, false)[(int)floor($offset / $limit)];
+            if ($offset >= count(self::$paymentDetails)) {
+                throw new EmptyInventoryException('Empty list');
+            }
+            return array_chunk(self::$paymentDetails, $limit)[(int)floor($offset / $limit)];
         }
 
-        return $arr;
+        return self::$paymentDetails;
+    }
+
+    public function fetchBoostDetails(string $host, string $transactionId, int $limit, int $offset): array
+    {
+        if (self::$boostDetails === null) {
+            self::$boostDetails = [];
+            for ($i = 0; $i < $limit; $i++) {
+                self::$boostDetails[] = [
+                    'campaign_id' => Uuid::v4()->hex(),
+                    'value' => 20_000,
+                ];
+            }
+        } else {
+            if ($offset >= count(self::$boostDetails)) {
+                throw new EmptyInventoryException('Empty list');
+            }
+            return array_chunk(self::$boostDetails, $limit)[(int)floor($offset / $limit)];
+        }
+        return self::$boostDetails;
     }
 
     public function fetchInfo(UrlInterface $infoUrl): Info
@@ -185,6 +232,7 @@ final class DummyDemandClient implements DemandClient
             AppMode::OPERATIONAL,
             'example.com',
             false,
+            0,
         );
 
         $info->setDemandFee(0.01);
@@ -192,5 +240,11 @@ final class DummyDemandClient implements DemandClient
         $info->setStatistics(new InfoStatistics(7, 1, 0));
 
         return $info;
+    }
+
+    public function reset(): void
+    {
+        self::$boostDetails = null;
+        self::$paymentDetails = null;
     }
 }

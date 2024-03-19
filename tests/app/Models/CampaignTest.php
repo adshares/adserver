@@ -24,14 +24,18 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Closure;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
+use InvalidArgumentException;
 
 class CampaignTest extends TestCase
 {
@@ -294,5 +298,130 @@ class CampaignTest extends TestCase
                 true,
             ],
         ];
+    }
+
+    /**
+     * @dataProvider advertiserBudgetProvider
+     */
+    public function testAdvertiserBudget(
+        int $budget,
+        int $boostBudget,
+        ?DateTimeImmutable $boostEndAt,
+        int $expectedBudget,
+    ): void {
+        $campaign = Campaign::factory()->makeOne([
+            'budget' => $budget,
+            'boost_budget' => $boostBudget,
+            'boost_end_at' => $boostEndAt?->format(DateTimeInterface::ATOM),
+        ]);
+
+        self::assertEquals($expectedBudget, $campaign->advertiserBudget()->total());
+    }
+
+    public function advertiserBudgetProvider(): array
+    {
+        return [
+            'budget' => [
+                1000,
+                0,
+                null,
+                1000,
+            ],
+            'budget with boost' => [
+                1000,
+                100,
+                null,
+                1100,
+            ],
+            'budget with ongoing boost' => [
+                1000,
+                100,
+                new DateTimeImmutable('+1 day'),
+                1100,
+            ],
+            'budget with ended boost' => [
+                1000,
+                100,
+                new DateTimeImmutable('-1 day'),
+                1000,
+            ],
+        ];
+    }
+
+    public function testCheckBudgetLimitsWhileNoBoostBudget(): void
+    {
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $campaign = Campaign::factory()->makeOne([
+            'budget' => 1000,
+            'boost_budget' => 0,
+        ]);
+
+        $campaign->checkBudgetLimits();
+
+        self::assertEquals(0, $campaign->boost_budget);
+    }
+
+    public function testCheckBudgetLimitsWhileNoBoostBudgetAndCpaCampaign(): void
+    {
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $campaign = Campaign::factory()->create([
+            'budget' => 1000,
+            'boost_budget' => 0,
+            'max_cpm' => 0,
+        ]);
+        Conversiondefinition::factory()->create([
+            'campaign_id' => $campaign->id,
+            'value' => 20,
+        ]);
+
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('Boost budget must be at least 300');
+
+        $campaign->checkBudgetLimits();
+    }
+
+    public function testCheckBudgetLimitsWhileNoBoostBudgetAndCpaCampaignButMinIsNotRequiredForCpa(): void
+    {
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET_FOR_CPA_REQUIRED => false]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $campaign = Campaign::factory()->create([
+            'budget' => 1000,
+            'boost_budget' => 0,
+            'max_cpm' => 0,
+        ]);
+        Conversiondefinition::factory()->create([
+            'campaign_id' => $campaign->id,
+            'value' => 20,
+        ]);
+
+        $campaign->checkBudgetLimits();
+
+        self::assertEquals(0, $campaign->boost_budget);
+    }
+
+    public function testCheckBudgetLimitsWhileBoostBudgetIsTooLow(): void
+    {
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_BUDGET => 500]);
+        Config::updateAdminSettings([Config::CAMPAIGN_MIN_CPA => 20]);
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => 300]);
+        DatabaseConfigReader::overwriteAdministrationConfig();
+        $campaign = Campaign::factory()->makeOne([
+            'budget' => 1000,
+            'boost_budget' => 100,
+        ]);
+
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('Boost budget must be at least 300');
+
+        $campaign->checkBudgetLimits();
     }
 }

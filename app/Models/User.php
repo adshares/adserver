@@ -175,7 +175,7 @@ class User extends Authenticatable
         'roles',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'uuid' => 'BinHex',
         'wallet_address' => 'AddressWithNetwork'
     ];
@@ -350,6 +350,14 @@ class User extends Authenticatable
     public static function fetchByUuid(string $uuid): ?self
     {
         return self::where('uuid', hex2bin($uuid))->first();
+    }
+
+    public static function fetchByUuids(array $uuids): Collection
+    {
+        $binUuids = array_map(fn(string $uuid) => hex2bin($uuid), $uuids);
+        return self::query()
+            ->whereIn('uuid', $binUuids)
+            ->get();
     }
 
     public static function fetchByEmail(string $email): ?self

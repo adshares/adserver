@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,6 +26,7 @@ namespace Adshares\Tests\Common\Domain\ValueObject;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 class AccountIdTest extends TestCase
 {
@@ -75,13 +76,12 @@ class AccountIdTest extends TestCase
     private const VALID_LOOSE_PATTERN = '/^[0-9A-F]{4}-[0-9A-F]{8}-([0-9A-F]{4}|XXXX)$/i';
 
     /**
-     * @test
      * @dataProvider validStringProvider
      *
      * @param string $string
      * @param bool $strict
      */
-    public function createFromStringWithStrength(string $string, bool $strict): void
+    public function testCreateFromStringWithStrength(string $string, bool $strict): void
     {
         $id = new AccountId($string, $strict);
 
@@ -104,13 +104,12 @@ class AccountIdTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider invalidStringProvider
      *
      * @param string $string
      * @param bool $strict
      */
-    public function failCreatingFromInvalidStringWithStrength(string $string, bool $strict): void
+    public function testFailCreatingFromInvalidStringWithStrength(string $string, bool $strict): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -133,8 +132,7 @@ class AccountIdTest extends TestCase
         return array_merge($invalidStrings, $invalidStrings2, $looselyValidStrings);
     }
 
-    /** @test */
-    public function createFromIncompleteString(): void
+    public function testCreateFromIncompleteString(): void
     {
         self::assertSame('ABCD-1234ABCD-27B9', (string)AccountId::fromIncompleteString('ABCD-1234ABCD'));
         self::assertSame('ABCD-1234ABCD-27B9', (string)AccountId::fromIncompleteString('ABCD-1234ABCD', true));
@@ -142,13 +140,12 @@ class AccountIdTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider invalidPairProvider
      *
      * @param string $string
      * @param bool $strict
      */
-    public function failCreatingFromInvalidPairWithStrength(string $string, bool $strict): void
+    public function testFailCreatingFromInvalidPairWithStrength(string $string, bool $strict): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -167,22 +164,19 @@ class AccountIdTest extends TestCase
         return array_merge($invalidPairs, $invalidPairs2);
     }
 
-    /** @test */
-    public function createFromStringWithoutStrength(): void
+    public function testCreateFromStringWithoutStrength(): void
     {
         self::assertSame('ABCD-1234ABCD-27B9', (string)new AccountId('ABCD-1234ABCD-27B9'));
     }
 
-    /** @test */
-    public function createRandom(): void
+    public function testCreateRandom(): void
     {
         self::assertSame(1, preg_match(self::VALID_STRICT_PATTERN, (string)AccountId::random()));
         self::assertSame(1, preg_match(self::VALID_STRICT_PATTERN, (string)AccountId::random(true)));
         self::assertSame(1, preg_match(self::VALID_LOOSE_PATTERN, (string)AccountId::random(false)));
     }
 
-    /** @test */
-    public function equalityChecker(): void
+    public function testEqualityChecker(): void
     {
         $one = new AccountId('ABCD-1234ABCD-27B9');
         $one1 = new AccountId('ABCD-1234ABCD-27B9');
@@ -220,5 +214,7 @@ class AccountIdTest extends TestCase
         self::assertFalse($twoX->equals($one, true));
         self::assertFalse($twoX->equals($one, false));
         self::assertFalse($twoX->equals($one));
+
+        self::assertFalse($one->equals(new stdClass()));
     }
 }

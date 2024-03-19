@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,10 +27,13 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
+use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
@@ -41,6 +44,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -73,6 +77,14 @@ UNION ALL
 SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM event_logs WHERE payment_id IN (%s)
 LIMIT ?
 OFFSET ?;
+SQL;
+    private const SQL_QUERY_SELECT_EVENTS_AGGREGATES_FOR_PAYMENT_DETAILS_TEMPLATE = <<<SQL
+SELECT SUM(m._count) AS _count, SUM(m._sum) AS _sum FROM
+(
+  SELECT COUNT(1) AS _count, SUM(paid_amount) AS _sum FROM conversions WHERE payment_id IN (%s)
+  UNION ALL
+  SELECT COUNT(1) AS _count, SUM(paid_amount) AS _sum FROM event_logs WHERE payment_id IN (%s)
+) AS m;
 SQL;
 
     public function __construct(
@@ -464,21 +476,22 @@ SQL;
         string $signature,
         Request $request
     ): JsonResponse {
-        $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
-        $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
-        $datetime = DateTime::createFromFormat(DateTimeInterface::ATOM, $date);
-
-        if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
-            throw new BadRequestHttpException('Input data are invalid.');
+        $limit = (int)$request->get('limit', self::PAYMENT_DETAILS_LIMIT_DEFAULT);
+        if ($limit > self::PAYMENT_DETAILS_LIMIT_MAX) {
+            throw new BadRequestHttpException(sprintf('Maximum limit of %d exceeded', self::PAYMENT_DETAILS_LIMIT_MAX));
         }
+        $offset = (int)$request->get('offset', 0);
+        [$transactionIdDecoded, $accountAddressDecoded] = $this->decodeTransactionIdAndAddressOrFail(
+            $transactionId,
+            $accountAddress,
+            $date,
+            $signature,
+        );
 
-        if (!$this->paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
-            throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
-        }
-
-        $payments = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded);
-
-        if ($payments->isEmpty()) {
+        $paymentIds = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded)
+            ->pluck('id')
+            ->toArray();
+        if (empty($paymentIds)) {
             throw new NotFoundHttpException(
                 sprintf(
                     'Payment for given transaction %s is not found.',
@@ -487,24 +500,105 @@ SQL;
             );
         }
 
-        $limit = (int)$request->get('limit', self::PAYMENT_DETAILS_LIMIT_DEFAULT);
-        if ($limit > self::PAYMENT_DETAILS_LIMIT_MAX) {
-            throw new BadRequestHttpException(sprintf('Maximum limit of %d exceeded', self::PAYMENT_DETAILS_LIMIT_MAX));
+        $isBoostRequested = str_contains($request->getRequestUri(), '/boost-details/');
+        if ($isBoostRequested) {
+            $data = EventBoostLog::fetchPaid($paymentIds, $accountAddressDecoded, $limit, $offset)
+                ->map(fn(EventBoostLog $log) => [
+                    'campaign_id' => $log->campaign_id,
+                    'value' => $log->paid_amount,
+                ]);
+        } else {
+            $data = $this->fetchPaidConversionsAndEvents($paymentIds, $limit, $offset);
         }
 
-        return self::json($this->fetchPaidConversionsAndEvents(
-            $payments->pluck('id')->toArray(),
-            $limit,
-            (int)$request->get('offset', 0)
-        ));
+        return self::json($data);
     }
 
-    private static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset): array
-    {
+    public function paymentDetailsMeta(
+        string $transactionId,
+        string $accountAddress,
+        string $date,
+        string $signature,
+    ): JsonResponse {
+        [$transactionIdDecoded, $accountAddressDecoded] = $this->decodeTransactionIdAndAddressOrFail(
+            $transactionId,
+            $accountAddress,
+            $date,
+            $signature,
+        );
+
+        $paymentIds = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded)
+            ->pluck('id')
+            ->toArray();
         if (empty($paymentIds)) {
-            return [];
+            $data = [
+                'allocation' => [
+                    'count' => 0,
+                    'sum' => 0,
+                ],
+                'boost' => [
+                    'count' => 0,
+                    'sum' => 0,
+                ],
+                'events' => [
+                    'count' => 0,
+                    'sum' => 0,
+                ],
+            ];
+        } else {
+            $data = [
+                'allocation' => [
+                    'count' => JoiningFeeLog::countPaid($paymentIds, $accountAddressDecoded),
+                    'sum' => JoiningFeeLog::sumAmountPaid($paymentIds, $accountAddressDecoded),
+                ],
+                'boost' => [
+                    'count' => EventBoostLog::countPaid($paymentIds, $accountAddressDecoded),
+                    'sum' => EventBoostLog::sumAmountPaid($paymentIds, $accountAddressDecoded),
+                ],
+                'events' => $this->fetchMetaPaidConversionsAndEvents($paymentIds),
+            ];
         }
 
+        return self::json($data);
+    }
+
+    private function decodeTransactionIdAndAddressOrFail(
+        string $transactionId,
+        string $accountAddress,
+        string $date,
+        string $signature,
+    ): array {
+        if (
+            null === ($transactionIdDecoded = AdsUtils::decodeTxId($transactionId))
+            || null === ($accountAddressDecoded = AdsUtils::decodeAddress($accountAddress))
+            || false === ($datetime = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $date))
+        ) {
+            throw new BadRequestHttpException('Input data are invalid.');
+        }
+        if (!$this->paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
+            throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
+        }
+        return [$transactionIdDecoded, $accountAddressDecoded];
+    }
+
+    private static function fetchMetaPaidConversionsAndEvents(array $paymentIds): array
+    {
+        $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1) . '?';
+        $query = sprintf(
+            self::SQL_QUERY_SELECT_EVENTS_AGGREGATES_FOR_PAYMENT_DETAILS_TEMPLATE,
+            $whereInPlaceholder,
+            $whereInPlaceholder,
+        );
+
+        $select = DB::select($query, array_merge($paymentIds, $paymentIds));
+        return [
+            'count' => (int)$select[0]->_count,
+            'sum' => (int)$select[0]->_sum,
+        ];
+    }
+
+    private static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset = 0): array
+    {
         $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1) . '?';
         $query = sprintf(
             self::SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE,
@@ -522,9 +616,14 @@ SQL;
         $campaigns = [];
 
         $whitelist = config('app.inventory_export_whitelist');
-        if (!empty($whitelist)) {
+        if (!empty($whitelist) || config('app.joining_fee_enabled')) {
             $account = $this->authenticator->verifyRequest($request);
-            if (!in_array($account, $whitelist)) {
+
+            if (!empty($whitelist) && !in_array($account, $whitelist)) {
+                throw new AccessDeniedHttpException();
+            }
+
+            if (config('app.joining_fee_enabled') && $this->isSspDenied($account)) {
                 throw new AccessDeniedHttpException();
             }
         }
@@ -588,6 +687,12 @@ SQL;
         }
 
         return self::json($campaigns, Response::HTTP_OK);
+    }
+
+    private function isSspDenied(string $adsAddress): bool
+    {
+        $sspHost = SspHost::fetchByAdsAddress($adsAddress);
+        return !($sspHost?->accepted ?? false) || $sspHost->banned;
     }
 
     /**

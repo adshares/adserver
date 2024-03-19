@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,10 +21,14 @@
 
 namespace Adshares\Common\Application\Service;
 
+use Adshares\Common\Application\Service\Exception\SignatureVerifierException;
 use DateTimeInterface;
 
 interface SignatureVerifier
 {
+    /**
+     * @throws SignatureVerifierException
+     */
     public function createFromTransactionId(
         string $privateKey,
         string $transactionId,
@@ -32,6 +36,9 @@ interface SignatureVerifier
         DateTimeInterface $date
     ): string;
 
+    /**
+     * @throws SignatureVerifierException
+     */
     public function verifyTransactionId(
         string $publicKey,
         string $signature,
@@ -40,8 +47,14 @@ interface SignatureVerifier
         DateTimeInterface $date
     ): bool;
 
+    /**
+     * @throws SignatureVerifierException
+     */
     public function createFromNonce(string $privateKey, string $nonce, DateTimeInterface $date): string;
 
+    /**
+     * @throws SignatureVerifierException
+     */
     public function verifyNonce(
         string $publicKey,
         string $signature,

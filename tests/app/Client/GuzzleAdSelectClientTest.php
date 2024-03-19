@@ -47,6 +47,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 class GuzzleAdSelectClientTest extends TestCase
@@ -67,6 +68,10 @@ class GuzzleAdSelectClientTest extends TestCase
         'rpm',
         'request_id',
     ];
+    private const URI_BOOST_PAYMENT_EXPORT = '/api/v1/boost-payments';
+    private const URI_CASE_EXPORT = '/api/v1/cases';
+    private const URI_CASE_CLICK_EXPORT = '/api/v1/clicks';
+    private const URI_CASE_PAYMENT_EXPORT = '/api/v1/payments';
 
     public function testExportInventory(): void
     {
@@ -589,6 +594,154 @@ class GuzzleAdSelectClientTest extends TestCase
         self::expectException(RuntimeException::class);
 
         $guzzleAdSelectClient->findBanners($zones, $context, $impressionId);
+    }
+
+    /**
+     * @dataProvider exportProvider
+     */
+    public function testExport(string $exportFunction, string $expectedUri, string $expectedKey): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler([
+            new Response(201),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $guzzleAdSelectClient->{$exportFunction}(new Collection());
+
+        self::assertCount(1, $container);
+        /** @var Request $request */
+        $request = $container[0]['request'];
+        self::assertEquals('POST', $request->getMethod());
+        self::assertEquals('https://example.com' . $expectedUri, $request->getUri());
+        self::assertTrue($request->hasHeader('Content-Type'));
+        self::assertContains('application/json', $request->getHeader('Content-Type'));
+        $body = json_decode($request->getBody()->getContents(), true);
+        self::assertArrayHasKey($expectedKey, $body);
+    }
+
+    public function exportProvider(): array
+    {
+        return [
+            'exportBoostPayments' => ['exportBoostPayments', self::URI_BOOST_PAYMENT_EXPORT, 'payments'],
+            'exportCases' => ['exportCases', self::URI_CASE_EXPORT, 'cases'],
+            'exportCaseClicks' => ['exportCaseClicks', self::URI_CASE_CLICK_EXPORT, 'clicks'],
+            'exportCasePayments' => ['exportCasePayments', self::URI_CASE_PAYMENT_EXPORT, 'payments'],
+        ];
+    }
+
+    public function testExportFail(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler([
+            new Response(422),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        self::expectException(UnexpectedClientResponseException::class);
+
+        $guzzleAdSelectClient->exportBoostPayments(new Collection());
+    }
+
+    /**
+     * @dataProvider getExportedIdProvider
+     */
+    public function testGetExportedId(string $function, string $expectedUri): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+        $mock = new MockHandler([
+            new Response(200, body: json_encode(['id' => 123])),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $id = $guzzleAdSelectClient->{$function}();
+
+        self::assertEquals(123, $id);
+        /** @var Request $request */
+        $request = $container[0]['request'];
+        self::assertEquals('GET', $request->getMethod());
+        self::assertEquals('https://example.com' . $expectedUri, $request->getUri());
+    }
+
+    public function getExportedIdProvider(): array
+    {
+        return [
+            'getLastExportedBoostPaymentId' => [
+                'getLastExportedBoostPaymentId',
+                self::URI_BOOST_PAYMENT_EXPORT . '/last',
+            ],
+            'getLastExportedCaseId' => ['getLastExportedCaseId', self::URI_CASE_EXPORT . '/last'],
+            'getLastExportedCaseClickId' => ['getLastExportedCaseClickId', self::URI_CASE_CLICK_EXPORT . '/last'],
+            'getLastExportedCasePaymentId' => ['getLastExportedCasePaymentId', self::URI_CASE_PAYMENT_EXPORT . '/last'],
+        ];
+    }
+
+    public function testGetExportedIdNotFound(): void
+    {
+        $mock = new MockHandler([
+            new Response(404, body: 'Not found'),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        $id = $guzzleAdSelectClient->getLastExportedCaseId();
+
+        self::assertEquals(0, $id);
+    }
+
+    public function testGetExportedIdFailOnInvalidResponseStatus(): void
+    {
+        $mock = new MockHandler([
+            new Response(422, body: 'Unprocessable entity'),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        self::expectException(UnexpectedClientResponseException::class);
+
+        $guzzleAdSelectClient->getLastExportedCaseId();
+    }
+
+    public function testGetExportedIdFailOnEmptyResponse(): void
+    {
+        $mock = new MockHandler([
+            new Response(201),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        self::expectException(RuntimeException::class);
+
+        $guzzleAdSelectClient->getLastExportedCaseId();
+    }
+
+    public function testGetExportedIdFailOnInvalidResponse(): void
+    {
+        $mock = new MockHandler([
+            new Response(200, body: 123)
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['base_uri' => 'https://example.com', 'handler' => $handlerStack]);
+        $guzzleAdSelectClient = new GuzzleAdSelectClient($client);
+
+        self::expectException(UnexpectedClientResponseException::class);
+
+        $guzzleAdSelectClient->getLastExportedCaseId();
     }
 
     private static function campaign(): Campaign
