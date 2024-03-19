@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,12 +27,17 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\EventConversionLog;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\ServeDomain;
+use Adshares\Adserver\Models\SspHost;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\Utilities\AdsAuthenticator;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Crypt;
@@ -43,26 +48,28 @@ use function uniqid;
 
 final class DemandControllerTest extends TestCase
 {
-    private const PAYMENT_DETAIL_URL = '/payment-details';
-
+    private const BOOST_DETAILS_URL = '/boost-details';
+    private const PAYMENT_DETAILS_URL = '/payment-details';
+    private const PAYMENT_DETAILS_META_URL = '/payment-details-meta';
     private const INVENTORY_LIST_URL = '/adshares/inventory/list';
+    private const PAYMENTS_DETAILS_META_STRUCTURE = [
+        'allocation' => [
+            'count',
+            'sum',
+        ],
+        'boost' => [
+            'count',
+            'sum',
+        ],
+        'events' => [
+            'count',
+            'sum',
+        ],
+    ];
 
     public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGivenTransactionIdAndAddress(): void
     {
-        $this->app->bind(
-            PaymentDetailsVerify::class,
-            function () {
-                $signatureVerify = $this->createMock(PaymentDetailsVerify::class);
-
-                $signatureVerify
-                    ->expects($this->once())
-                    ->method('verify')
-                    ->willReturn(true);
-
-                return $signatureVerify;
-            }
-        );
-
+        $this->mockPaymentDetailsVerifier();
         $this->login();
 
         $accountAddress = '0001-00000001-8B4E';
@@ -93,7 +100,7 @@ final class DemandControllerTest extends TestCase
 
         $url = sprintf(
             '%s/%s/%s/%s/%s',
-            self::PAYMENT_DETAIL_URL,
+            self::PAYMENT_DETAILS_URL,
             $transactionId,
             $accountAddress,
             $date,
@@ -107,8 +114,182 @@ final class DemandControllerTest extends TestCase
         $this->assertCount(5, $content);
     }
 
+    public function testPaymentDetailsFailWhenTransactionIdIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '1';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPaymentDetailsFailWhenLimitTooBig(): void
+    {
+        $this->login();
+
+        $accountAddress = '0001-00000001-8B4E';
+        $transactionId = '0001:00000001:0001';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s?limit=100000',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPaymentDetailsFailWhenAccountAddressIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '1';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPaymentDetailsFailWhenDateIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPaymentDetailsFailWhenSignatureIsInvalid(): void
+    {
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testBoostDetails(): void
+    {
+        $this->app->bind(
+            PaymentDetailsVerify::class,
+            function () {
+                $signatureVerify = $this->createMock(PaymentDetailsVerify::class);
+                $signatureVerify->method('verify')
+                    ->willReturn(true);
+                return $signatureVerify;
+            }
+        );
+        $this->login();
+
+        $transactionId = '0001:00000001:0001';
+        $accountAddress = '0001-00000001-8B4E';
+        $date = '2018-01-01T10:10:00+00:00';
+        $payment1 = Payment::factory()->create([
+            'account_address' => $accountAddress,
+            'tx_id' => $transactionId,
+        ]);
+        $payment2 = Payment::factory()->create([
+            'account_address' => '0001-00000002-BB2D',
+            'tx_id' => $transactionId,
+        ]);
+        $campaignId = Uuid::v4()->hex();
+        EventBoostLog::factory()->create([
+            'campaign_id' => $campaignId,
+            'paid_amount' => 100,
+            'pay_to' => $accountAddress,
+            'payment_id' => $payment1,
+        ]);
+        EventBoostLog::factory()->create([
+            'campaign_id' => $campaignId,
+            'paid_amount' => 30,
+            'pay_to' => $accountAddress,
+            'payment_id' => $payment2,
+        ]);
+        EventBoostLog::factory()->create([
+            'campaign_id' => $campaignId,
+            'paid_amount' => 50,
+            'pay_to' => '0001-00000002-BB2D',
+            'payment_id' => $payment1,
+        ]);
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::BOOST_DETAILS_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment([
+            'campaign_id' => $campaignId,
+            'value' => 100,
+        ]);
+    }
+
     public function testInventoryList(): void
     {
+        Config::updateAdminSettings([Config::JOINING_FEE_ENABLED => false]);
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
         $user = $this->login();
 
@@ -173,12 +354,90 @@ final class DemandControllerTest extends TestCase
         $this->assertEquals($campaignActive->vendor, $content[0]['vendor']);
     }
 
+    public function testInventoryListWhileSspDidNotPayJoiningFee(): void
+    {
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = $this->login();
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+        Banner::factory()->create([
+            'campaign_id' => $campaign,
+            'creative_contents' => 'dummy',
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [...$this->getAuthenticationHeader()],
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testInventoryListWhileSspPaidJoiningFee(): void
+    {
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = $this->login();
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+        Banner::factory()->create([
+            'campaign_id' => $campaign,
+            'creative_contents' => 'dummy',
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+        SspHost::factory()->create([
+            'accepted' => true,
+            'ads_address' => '0001-00000005-CBCA',
+        ]);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [...$this->getAuthenticationHeader()],
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function testInventoryListWhileSspPaidJoiningFeeButWasBanned(): void
+    {
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = $this->login();
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+        Banner::factory()->create([
+            'campaign_id' => $campaign,
+            'creative_contents' => 'dummy',
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+        SspHost::factory()->create([
+            'accepted' => true,
+            'ads_address' => '0001-00000005-CBCA',
+            'banned_at' => new DateTimeImmutable('-1 hour'),
+        ]);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [...$this->getAuthenticationHeader()],
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     /**
      * @throws Throwable
      */
     public function testInventoryListWithCdn(): void
     {
-        Config::updateAdminSettings([Config::CDN_PROVIDER => 'skynet']);
+        Config::updateAdminSettings([
+            Config::CDN_PROVIDER => 'skynet',
+            Config::JOINING_FEE_ENABLED => false,
+        ]);
         ServeDomain::factory()->create(['base_url' => 'https://example.com']);
         $user = $this->login();
 
@@ -251,34 +510,24 @@ final class DemandControllerTest extends TestCase
             ]
         );
 
-        /** @var AdsAuthenticator $authenticator */
-        $authenticator = $this->app->make(AdsAuthenticator::class);
-
-        Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D']);
+        Config::updateAdminSettings([
+            Config::INVENTORY_EXPORT_WHITELIST => '0001-00000002-BB2D',
+            Config::JOINING_FEE_ENABLED => false,
+        ]);
 
         $response = $this->getJson(self::INVENTORY_LIST_URL);
         $response->assertStatus(401);
 
         $response = $this->getJson(
             self::INVENTORY_LIST_URL,
-            [
-                'Authorization' => $authenticator->getHeader(
-                    config('app.adshares_address'),
-                    Crypt::decryptString(config('app.adshares_secret'))
-                )
-            ]
+            [...$this->getAuthenticationHeader()],
         );
         $response->assertStatus(403);
 
         Config::updateAdminSettings([Config::INVENTORY_EXPORT_WHITELIST => '0001-00000003-AB0C,0001-00000005-CBCA']);
         $response = $this->getJson(
             self::INVENTORY_LIST_URL,
-            [
-                'Authorization' => $authenticator->getHeader(
-                    config('app.adshares_address'),
-                    Crypt::decryptString(config('app.adshares_secret'))
-                )
-            ]
+            [...$this->getAuthenticationHeader()],
         );
         $response->assertSuccessful();
         $content = json_decode($response->getContent(), true);
@@ -483,6 +732,85 @@ final class DemandControllerTest extends TestCase
         self::assertDatabaseEmpty(EventLog::class);
     }
 
+    public function testPaymentDetailsMeta(): void
+    {
+        $this->mockPaymentDetailsVerifier();
+        $this->login();
+
+        $accountAddress = '0001-00000001-8B4E';
+        $transactionId = '0001:00000001:0001';
+        $date = '2018-01-01T10:10:00+00:00';
+        $payment1 = Payment::factory()->create([
+            'account_address' => $accountAddress,
+            'tx_id' => $transactionId,
+        ]);
+        $payment2 = Payment::factory()->create([
+            'account_address' => '0001-00000002-BB2D',
+            'tx_id' => $transactionId,
+        ]);
+        EventLog::factory()->create(['paid_amount' => 2, 'payment_id' => $payment1]);
+        EventConversionLog::factory()->create(['paid_amount' => 3, 'payment_id' => $payment1]);
+        EventLog::factory()->create(['paid_amount' => 3, 'payment_id' => $payment1]);
+        EventLog::factory()->create(['paid_amount' => 5, 'payment_id' => $payment2]);
+        EventBoostLog::factory()->create(['paid_amount' => 7, 'payment_id' => $payment1]);
+        EventBoostLog::factory()->create(['paid_amount' => 11, 'payment_id' => $payment2]);
+        JoiningFeeLog::factory()->create(['amount' => 13, 'payment_id' => $payment1]);
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_META_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::PAYMENTS_DETAILS_META_STRUCTURE);
+
+        $content = json_decode($response->getContent(), true);
+        $this->assertEquals(1, $content['allocation']['count']);
+        $this->assertEquals(13, $content['allocation']['sum']);
+        $this->assertEquals(1, $content['boost']['count']);
+        $this->assertEquals(7, $content['boost']['sum']);
+        $this->assertEquals(2, $content['events']['count']);
+        $this->assertEquals(5, $content['events']['sum']);
+    }
+
+    public function testPaymentDetailsMetaWhileNoEvents(): void
+    {
+        $this->mockPaymentDetailsVerifier();
+        $this->login();
+
+        $accountAddress = '0001-00000001-8B4E';
+        $transactionId = '0001:00000001:0001';
+        $date = '2018-01-01T10:10:00+00:00';
+
+        $url = sprintf(
+            '%s/%s/%s/%s/%s',
+            self::PAYMENT_DETAILS_META_URL,
+            $transactionId,
+            $accountAddress,
+            $date,
+            sha1(uniqid())
+        );
+
+        $response = $this->getJson($url);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::PAYMENTS_DETAILS_META_STRUCTURE);
+
+        $content = json_decode($response->getContent(), true);
+        $this->assertEquals(0, $content['allocation']['count']);
+        $this->assertEquals(0, $content['allocation']['sum']);
+        $this->assertEquals(0, $content['boost']['count']);
+        $this->assertEquals(0, $content['boost']['sum']);
+        $this->assertEquals(0, $content['events']['count']);
+        $this->assertEquals(0, $content['events']['sum']);
+    }
+
     public function testInitContext(): void
     {
         /** @var EventLog $event */
@@ -515,6 +843,34 @@ final class DemandControllerTest extends TestCase
             'pto' => '0001-00000005-CBCA',
         ];
         return [$query, $banner];
+    }
+
+    private function mockPaymentDetailsVerifier(): void
+    {
+        $this->app->bind(
+            PaymentDetailsVerify::class,
+            function () {
+                $signatureVerify = $this->createMock(PaymentDetailsVerify::class);
+                $signatureVerify
+                    ->expects($this->once())
+                    ->method('verify')
+                    ->willReturn(true);
+                return $signatureVerify;
+            }
+        );
+    }
+
+    private function getAuthenticationHeader(): array
+    {
+        /** @var AdsAuthenticator $authenticator */
+        $authenticator = $this->app->make(AdsAuthenticator::class);
+
+        return [
+            'Authorization' => $authenticator->getHeader(
+                config('app.adshares_address'),
+                Crypt::decryptString(config('app.adshares_secret'))
+            )
+        ];
     }
 
     private static function buildServeUri(string $uuid): string

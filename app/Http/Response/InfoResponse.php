@@ -82,6 +82,7 @@ final class InfoResponse implements Arrayable
                 AppMode::getAppMode(),
                 config('app.ads_txt_domain'),
                 config('app.ads_txt_check_demand_enabled'),
+                config('app.joining_fee_enabled') ? config('app.joining_fee_value') : 0,
             )
         );
     }

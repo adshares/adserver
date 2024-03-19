@@ -35,9 +35,12 @@ use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\JoiningFee;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
+use Adshares\Adserver\Models\SspHost;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
@@ -45,8 +48,8 @@ use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Mock\Client\DummyDemandClient;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use Exception;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
@@ -57,6 +60,7 @@ class AdsProcessTxTest extends ConsoleTestCase
     private const TX_ID_CONNECTION = '0001:00000608:0002';
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
     private const TX_ID_SEND_ONE = '0001:00000083:0001';
+    private const TX_ID_JOINING_FEE = '0001:00000084:0001';
 
     /**
      * @dataProvider depositProvider
@@ -345,6 +349,51 @@ class AdsProcessTxTest extends ConsoleTestCase
         ];
     }
 
+    public function testProcessNetworkPayment(): void
+    {
+        $this->insertAdsPaymentNetworkPayment();
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+
+        self::assertDatabaseHas(TurnoverEntry::class, [
+            'ads_address' => hex2bin('000100000000'),
+            'amount' => 15_000_000_000_000,
+            'type' => TurnoverEntryType::DspJoiningFeeIncome,
+        ]);
+        self::assertDatabaseHas(SspHost::class, [
+            'accepted' => true,
+            'ads_address' => hex2bin('000100000000'),
+        ]);
+        self::assertDatabaseHas(JoiningFee::class, [
+            'ads_address' => hex2bin('000100000000'),
+            'left_amount' => 15_000_000_000_000,
+            'total_amount' => 15_000_000_000_000,
+        ]);
+    }
+
+    public function testProcessNetworkPaymentWhileLessThanFee(): void
+    {
+        Config::updateAdminSettings([Config::JOINING_FEE_VALUE => 20_000_000_000_000]);
+        $this->insertAdsPaymentNetworkPayment();
+
+        $this->artisan(self::COMMAND)->assertSuccessful();
+
+        self::assertDatabaseHas(TurnoverEntry::class, [
+            'ads_address' => hex2bin('000100000000'),
+            'amount' => 15_000_000_000_000,
+            'type' => TurnoverEntryType::DspJoiningFeeIncome,
+        ]);
+        self::assertDatabaseHas(SspHost::class, [
+            'accepted' => false,
+            'ads_address' => hex2bin('000100000000'),
+        ]);
+        self::assertDatabaseHas(JoiningFee::class, [
+            'ads_address' => hex2bin('000100000000'),
+            'left_amount' => 15_000_000_000_000,
+            'total_amount' => 15_000_000_000_000,
+        ]);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -378,6 +427,18 @@ class AdsProcessTxTest extends ConsoleTestCase
         $adsTx->save();
     }
 
+    private function insertAdsPaymentNetworkPayment(): void
+    {
+        AdsPayment::factory()->create(
+            [
+                'address' => '0001-00000000-9B6F',
+                'amount' => 15_000_000_000_000,
+                'status' => AdsPayment::STATUS_NEW,
+                'txid' => self::TX_ID_JOINING_FEE,
+            ]
+        );
+    }
+
     private function setupUser(): User
     {
         /** @var User $user */
@@ -408,6 +469,7 @@ class AdsProcessTxTest extends ConsoleTestCase
                     self::TX_ID_CONNECTION,
                     self::TX_ID_SEND_MANY,
                     self::TX_ID_SEND_ONE,
+                    self::TX_ID_JOINING_FEE,
                 ];
                 $map = [];
                 foreach ($txIds as $txId) {
@@ -473,20 +535,13 @@ class AdsProcessTxTest extends ConsoleTestCase
      */
     private function getTx(string $txid): GetTransactionResponse
     {
-        switch ($txid) {
-            case self::TX_ID_CONNECTION:
-                $response = $this->getTxConnection();
-                break;
-            case self::TX_ID_SEND_MANY:
-                $response = $this->getTxSendMany();
-                break;
-            case self::TX_ID_SEND_ONE:
-                $response = $this->getTxSendOne();
-                break;
-
-            default:
-                throw new Exception();
-        }
+        $response = match ($txid) {
+            self::TX_ID_CONNECTION => $this->getTxConnection(),
+            self::TX_ID_SEND_MANY => $this->getTxSendMany(),
+            self::TX_ID_SEND_ONE => $this->getTxSendOne(),
+            self::TX_ID_JOINING_FEE => $this->getTxSendOneJoiningFee(),
+            default => throw new Exception(),
+        };
 
         return new GetTransactionResponse(json_decode($response, true));
     }
@@ -644,6 +699,63 @@ class AdsProcessTxTest extends ConsoleTestCase
                 "target_address": "0001-00000005-CBCA",
                 "amount": "1.00000000000",
                 "message": "0000000000000000000000000000000000000000000000000000000000000123",
+                "signature": "86A3F063531BAC0F779F6172FAEDF09A6606D64FBEC69E4B6ED779D17'
+            . '1FEA7C94E1D430F1782E4621F10D758E1A4D6039162B8303AD359A38A2590D05E0AF909"
+            }
+        }';
+    }
+
+    private function getTxSendOneJoiningFee(): string
+    {
+        return '{
+            "current_block_time": "1539179872",
+            "previous_block_time": "1539179840",
+            "tx": {
+                "data": "140100000000007A05BE5B0100830000000100",
+                "signature": "4A6BBAEB8BCEF9702FF5AADEFE2CD3CF74F2F7D5F555F7F2D7E4E96F4CF4511E7B'
+            . '894289452AC50AA63964638D4E2EB428ED910309DDC477519CFE428B067F06",
+                "time": "1539179898",
+                "account_msid": "0",
+                "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+                "account_hashout": "1A2CDFA26C7FDD12BD98D1009F34A5B88CDCB2F7DC7E6282BEEDD13B8A0B4684",
+                "deduct": "0.00000000000",
+                "fee": "0.00000000000"
+            },
+            "network_tx": {
+                "id": "0001:00000084:0001",
+                "block_time": "1539178368",
+                "block_id": "5BBDFF80",
+                "node": "1",
+                "node_msid": "131",
+                "node_mpos": "1",
+                "size": "125",
+                "hashpath_size": "7",
+                "data": "04010000000000010000008EFFBD5B01000000000000E876481700000000000000000000'
+            . '0000000000000000000000000000000000000000000000000086A3F063531BAC0F779F6172FAEDF09A6'
+            . '606D64FBEC69E4B6ED779D171FEA7C94E1D430F1782E4621F10D758E1A4D6039162B8303AD359A38A2590D05E0AF909",
+                "hashpath": [
+                    "4F6441EDA96E38F5994C09F497D1BB15C3CF860163A4BA3703190BF1CF602E42",
+                    "7A6068E0B7A098FE0994C9427D8A39A0B7462951EAA80DA0310F8A0B0A2C7E61",
+                    "D20418CD011D63997A59391AB9BF1DE35C624C1B6000C21338305BEB378594E9",
+                    "1904710E9FD4BA678B28BA5ACBFEB17C43020EC27A5A842771F76738A132CEB6",
+                    "F1221A7CAD4E5873EA13449D072DF6B99E7EEC005CCE76A44A12D548FF0583B3",
+                    "B6E8891D131FCD325D93C4D587A0DA6F0E8C8F0602638235A750FD83D6D8101C",
+                    "DB00586D8E108F14BD53328B63DFE1E8B94E7A9728FDE6D20545966C57934AF8"
+                ]
+            },
+            "txn": {
+                "type": "send_one",
+                "node": "1",
+                "user": "0",
+                "msg_id": "1",
+                "time": "1539178382",
+                "target_node": "1",
+                "target_user": "5",
+                "sender_fee": "0.00050000000",
+                "sender_address": "0001-00000000-9B6F",
+                "target_address": "0001-00000005-CBCA",
+                "amount": "150.00000000000",
+                "message": "4164736861726573206A6F696E696E6720666565000000000000000000000000",
                 "signature": "86A3F063531BAC0F779F6172FAEDF09A6606D64FBEC69E4B6ED779D17'
             . '1FEA7C94E1D430F1782E4621F10D758E1A4D6039162B8303AD359A38A2590D05E0AF909"
             }

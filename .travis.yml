@@ -1,4 +1,4 @@
-dist: bionic
+dist: jammy
 language: php
 sudo: false
 services: mysql
@@ -6,6 +6,7 @@ git:
   depth: false
 php:
   - 8.1
+jdk: openjdk17
 cache:
   directories:
     - $HOME/.composer/cache/files
@@ -25,7 +26,7 @@ before_install:
   - sudo add-apt-repository ppa:adshares/releases -y
   - sudo apt-get update -q
   - sudo apt-get install libsodium-dev ads -y
-  - wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.$(lsb_release -cs)_amd64.deb && sudo apt install -y ./wkhtmltox_0.12.6-1.$(lsb_release -cs)_amd64.deb
+  - wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.$(lsb_release -cs)_amd64.deb && sudo apt install -y ./wkhtmltox_0.12.6.1-2.$(lsb_release -cs)_amd64.deb
   - yes | pecl install imagick
   - mkdir -p /tmp/ads/cache
   - chmod 777 -R /tmp/ads
@@ -37,6 +38,8 @@ before_install:
   - mkdir -p storage/framework/{sessions,views,cache}
   - chmod 777 -R storage
   - mysql_tzinfo_to_sql /usr/share/zoneinfo 2>/dev/null | mysql mysql
+  - export JAVA_HOME=/usr/local/lib/jvm/openjdk17
+  - export PATH="$JAVA_HOME/bin:$PATH"
 
 install:
   - yarn install && yarn run prod

@@ -64,6 +64,7 @@ final class Info
         private readonly string $appMode,
         private readonly string $adsTxtDomain,
         private readonly bool $adsTxtRequired,
+        private readonly int $joiningFee = 0,
     ) {
         $this->validateCapabilities($capabilities);
     }
@@ -101,6 +102,7 @@ final class Info
             $data['mode'] ?? AppMode::OPERATIONAL,
             $data['adsTxtDomain'] ?? DomainReader::domain($data['serverUrl']),
             $data['adsTxtRequired'] ?? false,
+            $data['joiningFee'] ?? 0,
         );
 
         if (isset($data['demandFee'])) {
@@ -136,6 +138,7 @@ final class Info
             'mode' => $this->appMode,
             'adsTxtDomain' => $this->adsTxtDomain,
             'adsTxtRequired' => $this->adsTxtRequired,
+            'joiningFee' => $this->joiningFee,
         ];
 
         if (null !== $this->supportEmail) {
@@ -243,6 +246,11 @@ final class Info
     public function isAdsTxtRequired(): bool
     {
         return $this->adsTxtRequired;
+    }
+
+    public function getJoiningFee(): int
+    {
+        return $this->joiningFee;
     }
 
     public function hasDemandCapabilities(): bool

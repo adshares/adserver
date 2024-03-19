@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -48,10 +48,10 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
         NetworkHost::factory()->create(['address' => '0001-00000005-CBCA']);
 
         $this->artisan('ops:demand:inventory:import')
-            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000002-BB2D')
-            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000003-AB0C')
-            ->expectsOutput('[Inventory Importer] Importing inventory from 0001-00000005-CBCA')
-            ->expectsOutput('[Inventory Importer] Finished importing data from 3/3 inventories')
+            ->expectsOutputToContain('[Inventory Importer] Importing inventory from 0001-00000002-BB2D')
+            ->expectsOutputToContain('[Inventory Importer] Importing inventory from 0001-00000003-AB0C')
+            ->expectsOutputToContain('[Inventory Importer] Importing inventory from 0001-00000005-CBCA')
+            ->expectsOutputToContain('[Inventory Importer] Finished importing data from 3/3 inventories')
             ->assertExitCode(0);
         self::assertDatabaseHas(
             NetworkHost::class,

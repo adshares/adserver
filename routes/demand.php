@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -47,6 +47,14 @@ Route::get('/context/{id}', [DemandController::class, 'context']);
 Route::get(
     '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}',
     [DemandController::class, 'paymentDetails']
+);
+Route::get(
+    '/boost-details/{transactionId}/{accountAddress}/{date}/{signature}',
+    [DemandController::class, 'paymentDetails']
+);
+Route::get(
+    '/payment-details-meta/{transactionId}/{accountAddress}/{date}/{signature}',
+    [DemandController::class, 'paymentDetailsMeta']
 );
 
 Route::group(

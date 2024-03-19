@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,16 +24,22 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Services;
 
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\NetworkBoostPayment;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
+use Adshares\Adserver\Models\PublisherBoostLedgerEntry;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Model\Currency;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use DateTime;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
+use DateTimeImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -47,19 +53,16 @@ class PaymentDetailsProcessor
 
     public function processPaidEvents(
         AdsPayment $adsPayment,
-        DateTime $transactionTime,
         array $paymentDetails,
         int $carriedEventValueSum
     ): PaymentProcessingResult {
-        $adsPaymentId = $adsPayment->id;
-
         $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
+
         $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), config('app.payment_rx_fee'));
         $totalLicenseFee = 0;
         $totalOperatorFee = 0;
         $totalEventValue = 0;
-
-        $exchangeRateValue = $exchangeRate->getValue();
 
         $cases = $this->fetchNetworkCasesForPaymentDetails($paymentDetails);
 
@@ -74,8 +77,8 @@ class PaymentDetailsProcessor
             $calculatedFees = $feeCalculator->calculateFee($eventValue);
 
             $networkCasePayment = NetworkCasePayment::create(
-                $transactionTime,
-                $adsPaymentId,
+                $adsPayment->tx_time,
+                $adsPayment->id,
                 $eventValue,
                 $calculatedFees['license_fee'],
                 $calculatedFees['operator_fee'],
@@ -91,7 +94,125 @@ class PaymentDetailsProcessor
             $totalEventValue += $eventValue;
         }
 
+        return new PaymentProcessingResult(
+            $totalEventValue,
+            $totalLicenseFee,
+            $totalOperatorFee,
+            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
+        );
+    }
+
+    public function processBoost(
+        AdsPayment $adsPayment,
+        array $boostDetails,
+        int $carriedEventValueSum,
+    ): PaymentProcessingResult {
+        $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
+
+        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), config('app.payment_rx_fee'));
+        $totalLicenseFee = 0;
+        $totalOperatorFee = 0;
+        $totalEventValue = 0;
+
+        $campaigns = NetworkCampaign::fetchByDemandIdsAndAddress(
+            array_map(fn(array $detail) => $detail['campaign_id'], $boostDetails),
+            $adsPayment->address,
+        );
+
+        foreach ($boostDetails as $boostDetail) {
+            /** @var NetworkCampaign $campaign */
+            if (null === $campaign = $campaigns->get($boostDetail['campaign_id'])) {
+                continue;
+            }
+
+            $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
+            $value = min($spendableAmount, $boostDetail['value']);
+            $calculatedFees = $feeCalculator->calculateFee($value);
+
+            NetworkBoostPayment::create(
+                $adsPayment->tx_time,
+                $adsPayment->id,
+                $campaign->id,
+                $value,
+                $calculatedFees['license_fee'],
+                $calculatedFees['operator_fee'],
+                $calculatedFees['paid_amount'],
+                $exchangeRateValue,
+                $exchangeRate->fromClick($calculatedFees['paid_amount']),
+                true,
+            )->save();
+
+            $to = DateTimeImmutable::createFromMutable(
+                DateUtils::getDateTimeRoundedToCurrentHour($adsPayment->tx_time)
+            );
+            $from = $to->modify('-1 hour');
+            $cases = NetworkCase::countForCampaignIdByPublisherPublicId($campaign->uuid, $from, $to);
+            $countByPublisherPublicId = [];
+            $userUuids = [];
+            $totalCount = 0;
+            foreach ($cases as $case) {
+                $countByPublisherPublicId[$case->publisher_id] = $case->count;
+                $userUuids[] = $case->publisher_id;
+                $totalCount += $case->count;
+            }
+            $users = User::fetchByUuids($userUuids);
+            foreach ($users as $user) {
+                $weight = $countByPublisherPublicId[$user->uuid] / $totalCount;
+                $amount = (int)floor($calculatedFees['paid_amount'] * $weight);
+                PublisherBoostLedgerEntry::create($user->id, $amount, $adsPayment->address);
+            }
+
+            $totalLicenseFee += $calculatedFees['license_fee'];
+            $totalOperatorFee += $calculatedFees['operator_fee'];
+            $totalEventValue += $value;
+        }
+
+        TurnoverEntry::increaseOrInsert(
+            DateUtils::getDateTimeRoundedToCurrentHour(),
+            TurnoverEntryType::SspBoostLocked,
+            $totalEventValue - $totalLicenseFee - $totalOperatorFee,
+            $adsPayment->address,
+        );
+
         return new PaymentProcessingResult($totalEventValue, $totalLicenseFee, $totalOperatorFee);
+    }
+
+    public function processAllocation(
+        AdsPayment $adsPayment,
+        int $allocationAmount,
+    ): void {
+        TurnoverEntry::increaseOrInsert(
+            DateUtils::getDateTimeRoundedToCurrentHour(),
+            TurnoverEntryType::SspJoiningFeeRefund,
+            $allocationAmount,
+            $adsPayment->address,
+        );
+
+        $campaignIds = NetworkCampaign::fetchActiveCampaignsFromHost($adsPayment->address)
+            ->map(fn(NetworkCampaign $campaign) => $campaign->id);
+        if ($campaignIds->isEmpty()) {
+            return;
+        }
+        $value = (int)($allocationAmount / count($campaignIds));
+
+        $exchangeRate = $this->fetchExchangeRate();
+        $exchangeRateValue = $exchangeRate->getValue();
+
+        foreach ($campaignIds as $campaignId) {
+            NetworkBoostPayment::create(
+                $adsPayment->tx_time,
+                $adsPayment->id,
+                $campaignId,
+                $value,
+                0,
+                0,
+                $value,
+                $exchangeRateValue,
+                $exchangeRate->fromClick($value),
+                false,
+            )->save();
+        }
     }
 
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
@@ -103,8 +224,27 @@ class PaymentDetailsProcessor
             $usePaidAmountCurrency
         );
 
+        $exchangeRate = $usePaidAmountCurrency
+            ? new ExchangeRate(
+                $adsPayment->tx_time,
+                NetworkCasePayment::fetchExchangeRateUsedByAdsPaymentId($adsPayment->id),
+                Currency::from(config('app.currency'))->value,
+            )
+            : ExchangeRate::ONE(Currency::ADS);
+
+        $freedAmount = PublisherBoostLedgerEntry::deleteOutdated();
+        if ($freedAmount > 0) {
+            TurnoverEntry::increaseOrInsert(
+                DateUtils::getDateTimeRoundedToCurrentHour(),
+                TurnoverEntryType::SspBoostOperatorIncome,
+                $freedAmount,
+                $adsPayment->address,
+            );
+        }
+        $totalUsedBoost = 0;
+
         foreach ($splitPayments as $splitPayment) {
-            if (null === ($user = User::fetchByUuid($splitPayment->publisher_id))) {
+            if (null === $user = User::fetchByUuid($splitPayment->publisher_id)) {
                 Log::warning(
                     sprintf(
                         '[PaymentDetailsProcessor] User id (%s) does not exist. AdsPayment id (%s). Amount (%s).',
@@ -113,11 +253,23 @@ class PaymentDetailsProcessor
                         $splitPayment->paid_amount
                     )
                 );
-
                 continue;
             }
 
             $amount = (int)$splitPayment->paid_amount;
+            $availableBoost = PublisherBoostLedgerEntry::getAvailableBoost($user->id, $adsPayment->address);
+            $boost = min(
+                $amount,
+                $usePaidAmountCurrency ? $exchangeRate->fromClick($availableBoost) : $availableBoost,
+            );
+            if ($boost > 0) {
+                $amount += $boost;
+
+                $usedBoost = $usePaidAmountCurrency ? $exchangeRate->toClick($boost) : $boost;
+                PublisherBoostLedgerEntry::withdraw($user->id, $adsPayment->address, $usedBoost);
+                $totalUsedBoost += $usedBoost;
+            }
+
             UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
                 $amount,
@@ -127,6 +279,15 @@ class PaymentDetailsProcessor
                 $adServerAddress,
                 $adsPayment->txid
             )->save();
+        }
+
+        if ($totalUsedBoost > 0) {
+            TurnoverEntry::increaseOrInsert(
+                DateUtils::getDateTimeRoundedToCurrentHour(),
+                TurnoverEntryType::SspBoostPublishersIncome,
+                $totalUsedBoost,
+                $adsPayment->address,
+            );
         }
     }
 
@@ -145,11 +306,7 @@ class PaymentDetailsProcessor
 
     private function fetchNetworkCasesForPaymentDetails(array $paymentDetails): Collection
     {
-        $caseIds = [];
-        foreach ($paymentDetails as $paymentDetail) {
-            $caseIds[] = $paymentDetail['case_id'];
-        }
-
+        $caseIds = array_map(fn(array $paymentDetail) => $paymentDetail['case_id'], $paymentDetails);
         return NetworkCase::fetchByCaseIds($caseIds);
     }
 }

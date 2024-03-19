@@ -30,7 +30,14 @@ use Adshares\Adserver\Exceptions\Demand\AdPayReportNotReadyException;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\Conversion;
+use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\EventBoostLog;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\JoiningFee;
+use Adshares\Adserver\Models\JoiningFeeLog;
+use Adshares\Adserver\Models\SspHost;
+use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
@@ -41,10 +48,10 @@ use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
+use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTime;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Collection;
-
-use function json_decode;
 
 class AdPayGetPaymentsTest extends ConsoleTestCase
 {
@@ -375,5 +382,93 @@ class AdPayGetPaymentsTest extends ConsoleTestCase
         self::expectException(ExchangeRateNotAvailableException::class);
 
         $this->artisan(self::COMMAND_SIGNATURE);
+    }
+
+    public function testHandleBoostBudgets(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'budget' => 5_000_000_000,
+            'boost_budget' => 5_000_000_000,
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+        $conversionDefinition = ConversionDefinition::factory()->create([
+            'campaign_id' => $campaign->id,
+        ]);
+        Conversion::factory()->create([
+            'conversion_definition_id' => $conversionDefinition->id,
+            'pay_to' => '0001-00000001-8B4E',
+            'event_value' => 35_000_000_000_000,
+        ]);
+        EventBoostLog::factory()->create([
+            'pay_to' => '0001-00000001-8B4E',
+            'event_value' => 5_000_000_000_000,
+        ]);
+
+        Campaign::factory()->create([
+            'budget' => 5_000_000_000,
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+
+        UserLedgerEntry::factory()->create([
+            'amount' => 60_006_000_600,// 20_000_000_000,
+            'user_id' => $user,
+            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+        ]);
+
+        TurnoverEntry::factory()
+            ->count(2)
+            ->sequence(
+                ['ads_address' => '0001-00000001-8B4E'],
+                ['ads_address' => '0001-00000002-BB2D'],
+            )->create([
+                'amount' => 10_000_000_000_000,
+                'type' => TurnoverEntryType::DspJoiningFeeIncome,
+            ]);
+        $joiningFeeDate = new DateTimeImmutable('-90 minutes');
+        JoiningFee::factory()
+            ->count(2)
+            ->sequence(
+                ['ads_address' => '0001-00000001-8B4E'],
+                ['ads_address' => '0001-00000002-BB2D'],
+            )->create([
+                'created_at' => $joiningFeeDate,
+                'updated_at' => $joiningFeeDate,
+                'total_amount' => 10_000_000_000_000,
+                'left_amount' => 10_000_000_000_000,
+            ]);
+        SspHost::factory()
+            ->count(2)
+            ->sequence(
+                ['ads_address' => '0001-00000001-8B4E'],
+                ['ads_address' => '0001-00000002-BB2D'],
+            )->create([
+                'accepted' => true,
+            ]);
+
+        $this->artisan(self::COMMAND_SIGNATURE)
+            ->assertExitCode(AdPayGetPayments::STATUS_OK);
+
+        $this->assertEquals(45_004_500_450, $user->getWalletBalance());//15_000_000_000
+        $this->assertDatabaseHas(EventBoostLog::class, [
+            'event_value_currency' => 4_000_000_000,
+            'pay_to' => hex2bin('000100000001'),
+        ]);
+        $this->assertDatabaseHas(EventBoostLog::class, [
+            'event_value_currency' => 1_000_000_000,
+            'pay_to' => hex2bin('000100000002'),
+        ]);
+        $this->assertDatabaseHas(JoiningFeeLog::class, [
+            'amount' => 4_811_205_831 + 7_697_929_329,
+            'pay_to' => hex2bin('000100000001'),
+        ]);
+        $this->assertDatabaseHas(JoiningFeeLog::class, [
+            'amount' => 4_811_205_831 + 1_924_482_332,
+            'pay_to' => hex2bin('000100000002'),
+        ]);
     }
 }

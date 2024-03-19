@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,9 +26,10 @@ namespace Adshares\Adserver\Services\Supply;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkCasePayment;
+use Adshares\Adserver\Models\NetworkBoostPayment;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
-use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Illuminate\Support\Collection;
@@ -126,10 +127,11 @@ class AdSelectCaseExporter
         return $exported;
     }
 
-    public function exportCasePayments(int $casePaymentIdFrom): int
+    public function exportCasePayments(): int
     {
         $exported = 0;
         $caseIdMax = $this->getCaseIdToExport();
+        $casePaymentIdFrom = $this->getCasePaymentIdToExport();
 
         $maxId = NetworkCasePayment::max('id');
         $totalEstimate = $maxId - $casePaymentIdFrom + 1;
@@ -156,6 +158,26 @@ class AdSelectCaseExporter
 
         $this->output->writeln("");
         return $exported;
+    }
+
+    public function exportBoostPayments(): int
+    {
+        $exportedCount = 0;
+        $boostPaymentIdFrom = $this->getBoostPaymentIdToExport();
+
+        do {
+            $boostPayments = NetworkBoostPayment::fetchPaymentsToExport($boostPaymentIdFrom, self::PACKAGE_SIZE);
+            if ($boostPayments->isEmpty()) {
+                break;
+            }
+
+            $this->adSelectClient->exportBoostPayments($boostPayments);
+
+            $boostPaymentIdFrom = $boostPayments->last()->id + 1;
+            $exportedCount += $boostPayments->count();
+        } while ($boostPayments->count() === self::PACKAGE_SIZE);
+
+        return $exportedCount;
     }
 
     public function getCaseIdToExport(): int
@@ -212,8 +234,23 @@ class AdSelectCaseExporter
         return $payment->id;
     }
 
-    private function getExportedPeriodStart(): DateTime
+    public function getBoostPaymentIdToExport(): int
     {
-        return new DateTime('-2 days');
+        $paymentId = $this->adSelectClient->getLastExportedBoostPaymentId();
+        if ($paymentId > 0) {
+            return $paymentId + 1;
+        }
+
+        $periodStart = $this->getExportedPeriodStart();
+        if (null === $payment = NetworkBoostPayment::fetchOldest($periodStart)) {
+            throw new RuntimeException(sprintf('No payment since %s', $periodStart->format(DateTimeInterface::ATOM)));
+        }
+
+        return $payment->id;
+    }
+
+    private function getExportedPeriodStart(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('-2 days');
     }
 }

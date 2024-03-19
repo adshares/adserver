@@ -71,7 +71,7 @@ class TurnoverEntry extends Model
         'type' => TurnoverEntryType::class,
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'ads_address' => 'AccountAddress',
     ];
 
@@ -215,5 +215,21 @@ class TurnoverEntry extends Model
         }
         $result[0]['date'] = $from->format(DateTimeInterface::ATOM);
         return $result;
+    }
+
+    public static function getJoiningFeeExpense(string $adsAddress): int
+    {
+        return (int)self::query()
+            ->where('type', TurnoverEntryType::SspJoiningFeeExpense->name)
+            ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
+            ->sum('amount');
+    }
+
+    public static function getJoiningFeeIncome(string $adsAddress): int
+    {
+        return (int)self::query()
+            ->where('type', TurnoverEntryType::DspJoiningFeeIncome->name)
+            ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
+            ->sum('amount');
     }
 }

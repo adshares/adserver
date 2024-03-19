@@ -90,6 +90,8 @@ final class CampaignsControllerTest extends TestCase
             'vendor',
             'dateStart',
             'dateEnd',
+            'boostBudget',
+            'boostEndAt',
         ],
         'targeting' => [
             'requires',
@@ -333,6 +335,19 @@ final class CampaignsControllerTest extends TestCase
         ];
     }
 
+    public function testAddCampaignWithLowBoostBudget(): void
+    {
+        Config::updateAdminSettings([Config::CAMPAIGN_BOOST_MIN_BUDGET => (int)2e11]);
+        $this->createUser();
+
+        $campaignData = $this->getCampaignData();
+        $campaignData['basicInformation']['boostBudget'] = (int)1e11;
+
+        $response = $this->postJson(self::URI, ['campaign' => $campaignData]);
+
+        $response->assertJson(['basicInformation' => ['status' => Campaign::STATUS_INACTIVE]]);
+    }
+
     private function getCampaignData(array $mergeData = []): array
     {
         return array_merge(
@@ -401,6 +416,8 @@ final class CampaignsControllerTest extends TestCase
                 'vendor' => null,
                 'dateStart' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
                 'dateEnd' => (new DateTimeImmutable('+2 weeks'))->format(DateTimeInterface::ATOM),
+                'boost_budget' => 0,
+                'boost_end_at' => null,
             ],
             'targeting' => [
                 'requires' => [],

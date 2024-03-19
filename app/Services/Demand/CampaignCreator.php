@@ -90,6 +90,12 @@ class CampaignCreator
             throw new RuntimeException('Default bid strategy is missing');
         }
 
+        $boostBudget = self::validateAndExtractClickAmount($input['boost_budget'] ?? 0, 'boostBudget');
+        $boostEndAt = $input['boost_end_at'] ?? null;
+        if (null !== $boostEndAt) {
+            self::validateDate($boostEndAt, 'boostEndAt');
+        }
+
         $campaign = new Campaign([
             'landing_url' => $landingUrl,
             'name' => $name,
@@ -104,6 +110,8 @@ class CampaignCreator
             'time_start' => $timeStart,
             'time_end' => $timeEnd,
             'bid_strategy_uuid' => $bidStrategy->uuid,
+            'boost_budget' => $boostBudget,
+            'boost_end_at' => $boostEndAt,
         ]);
 
         self::validateOutdated($campaign);
@@ -190,6 +198,26 @@ class CampaignCreator
             $value = $input['bid_strategy_uuid'];
             self::validateBidStrategyUuid($value);
             $campaign->bid_strategy_uuid = $value;
+        }
+
+        if (array_key_exists('boost_budget', $input)) {
+            $value = self::validateAndExtractClickAmount($input['boost_budget'], 'boostBudget');
+            $checkLimits = true;
+            $campaign->boost_budget = $value;
+        }
+
+        if (array_key_exists('boost_end_at', $input)) {
+            $value = $input['boost_end_at'];
+            if (null !== $value) {
+                self::validateDate($value, 'boostEndAt');
+                if (
+                    DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $campaign->time_start)
+                    > DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $value)
+                ) {
+                    throw new InvalidArgumentException('Field `boostEndAt` must be later than `dateStart`');
+                }
+            }
+            $campaign->boost_end_at = $value;
         }
 
         if ($checkLimits) {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,37 +29,25 @@ use Adshares\Adserver\Services\Supply\NetworkImpressionUpdater;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 
-use function sprintf;
-
 class AdSelectCaseExportCommand extends BaseCommand
 {
     protected $signature = 'ops:adselect:case:export';
 
     protected $description = 'Export cases and matching click events to AdSelect';
 
-    /** @var AdSelectCaseExporter */
-    private $adSelectCaseExporter;
-
-    /** @var NetworkImpressionUpdater */
-    private $networkImpressionUpdater;
-
     public function __construct(
         Locker $locker,
-        AdSelectCaseExporter $adSelectCaseExporter,
-        NetworkImpressionUpdater $networkImpressionUpdater
+        private readonly AdSelectCaseExporter $adSelectCaseExporter,
+        private readonly NetworkImpressionUpdater $networkImpressionUpdater,
     ) {
-        $this->adSelectCaseExporter = $adSelectCaseExporter;
-        $this->networkImpressionUpdater = $networkImpressionUpdater;
-
         parent::__construct($locker);
     }
 
-    public function handle(): void
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info('[AdSelectCaseExport] Command ' . $this->signature . ' already running.');
-
-            return;
+            return self::FAILURE;
         }
 
         $this->info('[AdSelectCaseExport] Start command ' . $this->signature);
@@ -70,6 +58,7 @@ class AdSelectCaseExportCommand extends BaseCommand
         $this->exportCaseClicks();
 
         $this->info('[AdSelectCaseExport] Finished exporting to AdSelect.');
+        return self::SUCCESS;
     }
 
     private function updateImpressions(): void
