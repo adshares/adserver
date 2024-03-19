@@ -27,8 +27,8 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventBoostLog;
+use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\JoiningFeeLog;
 use Adshares\Adserver\Models\Payment;
@@ -623,7 +623,7 @@ SQL;
                 throw new AccessDeniedHttpException();
             }
 
-            if (config('app.joining_fee_enabled') && !(SspHost::fetchByAdsAddress($account)?->accepted ?? false)) {
+            if (config('app.joining_fee_enabled') && $this->isSspDenied($account)) {
                 throw new AccessDeniedHttpException();
             }
         }
@@ -687,6 +687,12 @@ SQL;
         }
 
         return self::json($campaigns, Response::HTTP_OK);
+    }
+
+    private function isSspDenied(string $adsAddress): bool
+    {
+        $sspHost = SspHost::fetchByAdsAddress($adsAddress);
+        return !($sspHost?->accepted ?? false) || $sspHost->banned;
     }
 
     /**

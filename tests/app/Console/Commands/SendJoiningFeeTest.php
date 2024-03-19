@@ -84,6 +84,21 @@ class SendJoiningFeeTest extends ConsoleTestCase
             ->expectsOutputToContain('Sending failed');
     }
 
+    public function testHandleWhileInvalidTransactionId(): void
+    {
+        $mockAdsClient = $this->createMock(AdsClient::class);
+        $this->app->bind(AdsClient::class, fn() => $mockAdsClient);
+
+        $this->artisan(
+            'ops:supply:joining-fee',
+            [
+                'address' => '0001-00000001-8B4E',
+                'amount' => '10000',
+            ],
+        )->assertExitCode(1)
+            ->expectsOutputToContain('Transaction ID is null');
+    }
+
     private function sendOne(): TransactionResponse
     {
         // phpcs:disable Generic.Files.LineLength.TooLong

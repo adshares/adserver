@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Utilities\AdsUtils;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,6 +39,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property DateTimeInterface|null deleted_at
  * @property string ads_address
  * @property boolean accepted
+ * @property DateTimeInterface|null banned_at
+ * @property boolean banned
  * @mixin Builder
  */
 class SspHost extends Model
@@ -75,5 +78,16 @@ class SspHost extends Model
     {
         $this->accepted = true;
         $this->save();
+    }
+
+    public function ban(): void
+    {
+        $this->banned_at = new DateTimeImmutable();
+        $this->save();
+    }
+
+    public function getBannedAttribute(): bool
+    {
+        return null !== $this->banned_at;
     }
 }

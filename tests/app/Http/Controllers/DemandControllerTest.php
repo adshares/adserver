@@ -402,6 +402,33 @@ final class DemandControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
+    public function testInventoryListWhileSspPaidJoiningFeeButWasBanned(): void
+    {
+        ServeDomain::factory()->create(['base_url' => 'https://example.com']);
+        $user = $this->login();
+        $campaign = Campaign::factory()->create([
+            'status' => Campaign::STATUS_ACTIVE,
+            'user_id' => $user,
+        ]);
+        Banner::factory()->create([
+            'campaign_id' => $campaign,
+            'creative_contents' => 'dummy',
+            'status' => Banner::STATUS_ACTIVE,
+        ]);
+        SspHost::factory()->create([
+            'accepted' => true,
+            'ads_address' => '0001-00000005-CBCA',
+            'banned_at' => new DateTimeImmutable('-1 hour'),
+        ]);
+
+        $response = $this->getJson(
+            self::INVENTORY_LIST_URL,
+            [...$this->getAuthenticationHeader()],
+        );
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     /**
      * @throws Throwable
      */

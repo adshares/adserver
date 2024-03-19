@@ -113,6 +113,7 @@ return new class extends Migration {
             $table->softDeletes();
             $table->binary('ads_address');
             $table->boolean('accepted')->default(false);
+            $table->timestamp('banned_at')->nullable();
         });
         DB::statement('ALTER TABLE ssp_hosts MODIFY ads_address VARBINARY(6)');
 
