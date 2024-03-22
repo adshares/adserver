@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2022 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -313,7 +313,7 @@ class AdsProcessTx extends BaseCommand
         if (
             config('app.joining_fee_enabled') &&
             !$sspHost->accepted &&
-            TurnoverEntry::getJoiningFeeIncome($transaction->getSenderAddress()) > config('app.joining_fee_value')
+            TurnoverEntry::getJoiningFeeIncome($transaction->getSenderAddress()) >= config('app.joining_fee_value')
         ) {
             $sspHost->accept();
         }

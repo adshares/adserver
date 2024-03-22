@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Single line logs
+### Fixed
+- Joining fee does not have to be greater than required
 
 ## [2.8.0] - 2024-03-19
 ### Added
