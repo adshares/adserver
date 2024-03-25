@@ -33,20 +33,17 @@ use Adshares\Adserver\Http\Resources\UserResource;
 use Adshares\Adserver\Mail\AuthRecovery;
 use Adshares\Adserver\Mail\UserBanned;
 use Adshares\Adserver\Mail\UserEmailActivate;
-use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Models\RefLink;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Models\UserSettings;
-use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ServerEventLogRepository;
 use Adshares\Adserver\Repository\Common\UserRepository;
+use Adshares\Adserver\Services\Common\Exception\UserDeletionException;
+use Adshares\Adserver\Services\Common\UserDelete;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
 use Adshares\Common\Domain\ValueObject\ChartResolution;
@@ -267,10 +264,9 @@ class ServerMonitoringController extends Controller
         return new UserResource($user);
     }
 
-    public function deleteUser(
-        CampaignRepository $campaignRepository,
-        int $userId,
-    ): JsonResponse {
+    public function deleteUser(UserDelete $userDelete, int $userId): JsonResponse
+    {
+        /** @var User $authenticatedUser */
         $authenticatedUser = Auth::user();
         if ($authenticatedUser->id === $userId) {
             throw new UnprocessableEntityHttpException('Cannot delete self');
@@ -280,33 +276,9 @@ class ServerMonitoringController extends Controller
             throw new HttpException(Response::HTTP_FORBIDDEN, 'User cannot be deleted');
         }
 
-        DB::beginTransaction();
         try {
-            $campaigns = $campaignRepository->findByUserId($userId);
-            foreach ($campaigns as $campaign) {
-                $campaignRepository->delete($campaign);
-            }
-            BidStrategy::deleteByUserId($userId);
-
-            $sites = $user->sites();
-            foreach ($sites->get() as $site) {
-                $site->zones()->delete();
-            }
-            $sites->delete();
-
-            RefLink::fetchByUser($userId)->each(fn(RefLink $refLink) => $refLink->delete());
-            Token::deleteByUserId($userId);
-            Classification::deleteByUserId($userId);
-            UserSettings::deleteByUserId($userId);
-
-            $user->maskEmailAndWalletAddress();
-            $user->clearApiKey();
-            $user->delete();
-
-            DB::commit();
-        } catch (Throwable $throwable) {
-            DB::rollBack();
-            Log::error(sprintf('Exception during user deletion: (%s)', $throwable->getMessage()));
+            $userDelete->deleteUser($user);
+        } catch (UserDeletionException) {
             throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
         return self::json([], Response::HTTP_NO_CONTENT);
