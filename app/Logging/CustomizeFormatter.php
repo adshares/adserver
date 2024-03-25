@@ -40,7 +40,7 @@ class CustomizeFormatter
     public function __invoke($logger)
     {
         foreach ($logger->getHandlers() as $handler) {
-            $handler->setFormatter(new LineFormatter(self::FORMAT, self::DATE_FORMAT, true, true));
+            $handler->setFormatter(new LineFormatter(self::FORMAT, self::DATE_FORMAT, false, true));
         }
     }
 }
