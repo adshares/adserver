@@ -57,7 +57,7 @@ class TargetingTest extends TestCase
         Targeting::fromArray(self::data([$field => 0]));
     }
 
-    private static function data(array $mergeData = [], string $remove = null): array
+    private static function data(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'user' => [],

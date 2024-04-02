@@ -46,7 +46,7 @@ class AdsAuthenticator
     private Ads $adsClient;
     private LoggerInterface $logger;
 
-    public function __construct(SignatureVerifier $signatureVerifier, Ads $adsClient, LoggerInterface $logger = null)
+    public function __construct(SignatureVerifier $signatureVerifier, Ads $adsClient, ?LoggerInterface $logger = null)
     {
         if (null === $logger) {
             $logger = new NullLogger();

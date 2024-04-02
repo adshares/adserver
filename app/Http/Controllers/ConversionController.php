@@ -234,7 +234,7 @@ class ConversionController extends Controller
         }
     }
 
-    private function processConversion(string $uuid, Request $request, Response $response = null): void
+    private function processConversion(string $uuid, Request $request, ?Response $response = null): void
     {
         $conversionDefinition = $this->fetchConversionDefinitionOrFail($uuid);
 
@@ -284,7 +284,7 @@ class ConversionController extends Controller
         DB::commit();
     }
 
-    private function processConversionClick(string $campaignUuid, Request $request, Response $response = null): void
+    private function processConversionClick(string $campaignUuid, Request $request, ?Response $response = null): void
     {
         $campaign = Campaign::fetchByUuid($campaignUuid);
 

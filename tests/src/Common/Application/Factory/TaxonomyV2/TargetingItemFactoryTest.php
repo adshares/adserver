@@ -157,7 +157,7 @@ class TargetingItemFactoryTest extends TestCase
         TargetingItemFactory::fromArray(self::inputData(['type' => 'invalid']));
     }
 
-    private static function inputData(array $mergeData = [], string $remove = null): array
+    private static function inputData(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'type' => 'input',
@@ -172,7 +172,7 @@ class TargetingItemFactoryTest extends TestCase
         return $data;
     }
 
-    private static function dictionaryData(array $mergeData = [], string $remove = null): array
+    private static function dictionaryData(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'type' => 'dict',
@@ -201,7 +201,7 @@ class TargetingItemFactoryTest extends TestCase
         return $data;
     }
 
-    private static function nestedItem(array $mergeData = [], string $remove = null): array
+    private static function nestedItem(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'label' => 'Health',

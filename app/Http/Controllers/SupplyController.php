@@ -198,7 +198,7 @@ class SupplyController extends Controller
         Request $request,
         AdUser $contextProvider,
         AdSelect $bannerFinder,
-        string $data = null
+        ?string $data = null,
     ) {
         if (!$data) {
             if ('GET' === $request->getRealMethod()) {

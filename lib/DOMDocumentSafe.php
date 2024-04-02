@@ -27,7 +27,7 @@ use DOMXPath;
 
 class DOMDocumentSafe extends DOMDocument
 {
-    public function saveHTML(DOMNode $node = null): string|false
+    public function saveHTML(?DOMNode $node = null): string|false
     {
         $xpath = new DOMXPath($this);
         $script_texts = [];
