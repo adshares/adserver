@@ -96,7 +96,7 @@ class GuzzleAdSelectClient implements AdSelect
             throw new UnexpectedClientResponseException(
                 sprintf(
                     '[ADSELECT] Export inventory to %s failed (%s).',
-                    $this->client->getConfig()['base_uri'],
+                    config('app.adselect_url'),
                     $exception->getMessage()
                 ),
                 $exception->getCode(),
@@ -126,7 +126,7 @@ class GuzzleAdSelectClient implements AdSelect
                 sprintf(
                     '[ADSELECT] Delete campaigns (%s) from %s failed (%s).',
                     json_encode($mapped),
-                    $this->client->getConfig()['base_uri'],
+                    config('app.adselect_url'),
                     $exception->getMessage()
                 ),
                 $exception->getCode(),
@@ -246,9 +246,9 @@ class GuzzleAdSelectClient implements AdSelect
             } catch (Throwable $exception) {
                 throw new UnexpectedClientResponseException(
                     sprintf(
-                        '[ADSELECT] Find banners (%s) from %s failed (%s).',
-                        json_encode($existingZones),
-                        $this->client->getConfig()['base_uri'],
+                        '[ADSELECT] Find banners for zones (%s) from %s failed (%s).',
+                        json_encode($zoneIds),
+                        config('app.adselect_url'),
                         $exception->getMessage()
                     ),
                     $exception->getCode(),
@@ -421,7 +421,7 @@ class GuzzleAdSelectClient implements AdSelect
             throw new UnexpectedClientResponseException(
                 sprintf(
                     '[ADSELECT] Export to (%s) (%s) failed (%s).',
-                    $this->client->getConfig()['base_uri'],
+                    config('app.adselect_url'),
                     $uri,
                     $exception->getMessage()
                 ),
@@ -464,7 +464,7 @@ class GuzzleAdSelectClient implements AdSelect
                 sprintf(
                     '[ADSELECT] Fetch last id (%s) from (%s) failed (%s).',
                     $uri,
-                    $this->client->getConfig()['base_uri'],
+                    config('app.adselect_url'),
                     $exception->getMessage()
                 ),
                 $exception->getCode(),
@@ -490,7 +490,7 @@ class GuzzleAdSelectClient implements AdSelect
                 sprintf(
                     '[ADSELECT] Could not fetch last id (%s) from (%s). Id is required, given (%s).',
                     $uri,
-                    $this->client->getConfig()['base_uri'],
+                    config('app.adselect_url'),
                     $body
                 )
             );

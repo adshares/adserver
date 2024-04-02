@@ -43,8 +43,8 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Models\UserSettings;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Common\UserDelete;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Adserver\ViewModel\Role;
 use Adshares\Adserver\ViewModel\ServerEventType;
@@ -1298,6 +1298,10 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testDeleteUser(): void
     {
+        $userDeleteMock = self::createMock(UserDelete::class);
+        $userDeleteMock->expects(self::once())
+            ->method('deleteUser');
+        $this->app->bind(UserDelete::class, fn () => $userDeleteMock);
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create([
@@ -1310,8 +1314,7 @@ final class ServerMonitoringControllerTest extends TestCase
         /** @var Banner $banner */
         $banner = Banner::factory()->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
         $banner->classifications()->save(BannerClassification::prepare('test_classifier'));
-        /** @var ConversionDefinition $conversionDefinition */
-        $conversionDefinition = Conversiondefinition::factory()->create(
+        Conversiondefinition::factory()->create(
             [
                 'campaign_id' => $campaign->id,
                 'limit_type' => 'in_budget',
@@ -1326,8 +1329,7 @@ final class ServerMonitoringControllerTest extends TestCase
 
         /** @var Site $site */
         $site = Site::factory()->create(['user_id' => $user->id]);
-        /** @var Zone $zone */
-        $zone = Zone::factory()->create(['site_id' => $site->id]);
+        Zone::factory()->create(['site_id' => $site->id]);
 
         RefLink::factory()->create(['user_id' => $user->id]);
         Token::generate(Token::PASSWORD_CHANGE, $user, ['password' => 'qwerty123']);
@@ -1352,22 +1354,6 @@ final class ServerMonitoringControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
-        self::assertNotEmpty(User::withTrashed()->find($user->id)->deleted_at);
-        self::assertNull(User::withTrashed()->find($user->id)->api_token);
-        self::assertEmpty(User::withTrashed()->where('email', $user->email)->get());
-        self::assertEmpty(User::withTrashed()->where('wallet_address', $user->wallet_address)->get());
-        self::assertEmpty(UserSettings::where('user_id', $user->id)->get());
-        self::assertNotEmpty(Campaign::withTrashed()->find($campaign->id)->deleted_at);
-        self::assertNotEmpty(Banner::withTrashed()->find($banner->id)->deleted_at);
-        self::assertEmpty(BannerClassification::all());
-        self::assertNotEmpty(ConversionDefinition::withTrashed()->find($conversionDefinition->id)->deleted_at);
-        self::assertNotEmpty(BidStrategy::withTrashed()->find($bidStrategy->id)->deleted_at);
-        self::assertNotEmpty(BidStrategyDetail::withTrashed()->find($bidStrategyDetail->id)->deleted_at);
-        self::assertNotEmpty(Site::withTrashed()->find($site->id)->deleted_at);
-        self::assertNotEmpty(Zone::withTrashed()->find($zone->id)->deleted_at);
-        self::assertEmpty(RefLink::where('user_id', $user->id)->get());
-        self::assertEmpty(Token::where('user_id', $user->id)->get());
-        self::assertEmpty(Classification::where('user_id', $user->id)->get());
     }
 
     public function testDeleteUserFailWhileAdminDeletedHimself(): void
@@ -1403,9 +1389,12 @@ final class ServerMonitoringControllerTest extends TestCase
 
     public function testDeleteUserWhileDatabaseException(): void
     {
-        DB::shouldReceive('beginTransaction')->andReturnUndefined();
-        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
-        DB::shouldReceive('rollback')->andReturnUndefined();
+        $userDeleteMock = self::createMock(UserDelete::class);
+        $userDeleteMock->expects(self::once())
+            ->method('deleteUser')
+            ->willThrowException(new RuntimeException('test-exception'));
+        $this->app->bind(UserDelete::class, fn () => $userDeleteMock);
+
         $this->setUpAdmin();
         /** @var User $user */
         $user = User::factory()->create();
