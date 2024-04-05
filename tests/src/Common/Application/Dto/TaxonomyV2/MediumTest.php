@@ -78,7 +78,7 @@ class MediumTest extends TestCase
         Medium::fromArray(self::data(['formats' => []]));
     }
 
-    private static function data(array $mergeData = [], string $remove = null): array
+    private static function data(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'name' => 'web',

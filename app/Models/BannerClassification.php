@@ -50,13 +50,9 @@ class BannerClassification extends Model
     use BinHex;
 
     public const STATUS_NEW = 0;
-
     public const STATUS_IN_PROGRESS = 1;
-
     public const STATUS_ERROR = 2;
-
     public const STATUS_SUCCESS = 3;
-
     public const STATUS_FAILURE = 4;
 
     protected $casts = [
@@ -68,7 +64,7 @@ class BannerClassification extends Model
         'signed_at',
     ];
 
-    protected $traitAutomate = [
+    protected array $traitAutomate = [
         'signature' => 'BinHex',
     ];
 

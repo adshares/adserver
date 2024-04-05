@@ -276,7 +276,7 @@ class UserLedgerEntry extends Model
         int $amount,
         int $status,
         int $type,
-        RefLink $refLink = null,
+        ?RefLink $refLink = null,
         string $currency = 'ADS',
         ?int $currencyAmount = null
     ): self {

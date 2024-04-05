@@ -361,7 +361,7 @@ final class CampaignsControllerTest extends TestCase
         );
     }
 
-    private function getBannerData(array $mergeData = [], string $remove = null): array
+    private function getBannerData(array $mergeData = [], ?string $remove = null): array
     {
         /** @var UploadedFileModel $file */
         $file = UploadedFileModel::factory()->create(['user_id' => User::first()]);

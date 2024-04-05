@@ -38,24 +38,19 @@ class BannerClassificationsRequestCommand extends BaseCommand
     protected $signature = 'ops:demand:classification:request';
     protected $description = 'Requests banner classification from classifiers';
 
-    private ClassifierExternalClient $client;
-    private ClassifierExternalRepository $classifierRepository;
-
     public function __construct(
-        ClassifierExternalClient $client,
-        ClassifierExternalRepository $classifierRepository,
-        Locker $locker
+        private readonly ClassifierExternalClient $client,
+        private readonly ClassifierExternalRepository $classifierRepository,
+        Locker $locker,
     ) {
-        $this->client = $client;
-        $this->classifierRepository = $classifierRepository;
         parent::__construct($locker);
     }
 
-    public function handle(): void
+    public function handle(): int
     {
         if (!$this->lock()) {
             $this->info('Command ' . $this->signature . ' already running');
-            return;
+            return self::FAILURE;
         }
 
         $this->info('Start command ' . $this->signature);
@@ -67,9 +62,11 @@ class BannerClassificationsRequestCommand extends BaseCommand
             $dataSet = $this->prepareData($classifications);
             $this->processData($dataSet);
             $offset += $classifications->count();
-        } while (!$classifications->isEmpty());
+        } while (self::DATA_BATCH === $classifications->count());
 
         $this->info('Finish command ' . $this->signature);
+
+        return self::SUCCESS;
     }
 
     private function prepareData(Collection $classifications): array

@@ -189,7 +189,7 @@ class ServerConfigurationController extends Controller
     private const REJECTED_DOMAINS = 'rejectedDomains';
     private const RULE_NULLABLE = 'nullable';
 
-    public function fetch(string $key = null): JsonResponse
+    public function fetch(?string $key = null): JsonResponse
     {
         if (null !== $key) {
             self::validateKey($key);
@@ -203,7 +203,7 @@ class ServerConfigurationController extends Controller
         return self::json($data);
     }
 
-    public function fetchPlaceholders(string $key = null): JsonResponse
+    public function fetchPlaceholders(?string $key = null): JsonResponse
     {
         if (null !== $key) {
             self::validatePlaceholderKey($key);

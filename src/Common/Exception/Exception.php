@@ -30,14 +30,9 @@ use function json_decode;
 
 class Exception extends PhpException
 {
-    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
+    public function __construct(string $message = '', int $code = 0, ?Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
-    }
-
-    public static function fromOther(PhpException $exception)
-    {
-        return new static($exception->getMessage(), $exception->getCode(), $exception);
     }
 
     public static function cleanMessage(string $message): string

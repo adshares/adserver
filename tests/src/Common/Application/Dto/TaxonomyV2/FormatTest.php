@@ -100,7 +100,7 @@ class FormatTest extends TestCase
         Format::fromArray(self::data(['scopes' => []]));
     }
 
-    private static function data(array $mergeData = [], string $remove = null): array
+    private static function data(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'type' => 'image',

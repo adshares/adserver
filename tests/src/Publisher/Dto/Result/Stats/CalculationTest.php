@@ -21,29 +21,27 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Advertiser\Dto\Result\Stats;
+namespace Adshares\Tests\Publisher\Dto\Result\Stats;
 
-class Calculation
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Publisher\Dto\Result\Stats\Calculation;
+
+class CalculationTest extends TestCase
 {
-    public function __construct(
-        private readonly int $clicks,
-        private readonly int $impressions,
-        private readonly float $ctr,
-        private readonly int $averageCpc,
-        private readonly int $averageCpm,
-        private readonly int $cost,
-    ) {
-    }
-
-    public function toArray(): array
+    public function testToArray(): void
     {
-        return [
-            'clicks' => $this->clicks,
-            'impressions' => $this->impressions,
-            'ctr' => $this->ctr,
-            'averageCpc' => $this->averageCpc,
-            'averageCpm' => $this->averageCpm,
-            'cost' => $this->cost,
-        ];
+        $calculation = new Calculation(1, 2, 3.14, 4, 5, 6);
+
+        self::assertEquals(
+            [
+                'clicks' => 1,
+                'impressions' => 2,
+                'ctr' => 3.14,
+                'averageRpc' => 4,
+                'averageRpm' => 5,
+                'revenue' => 6,
+            ],
+            $calculation->toArray(),
+        );
     }
 }

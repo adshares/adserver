@@ -22,6 +22,7 @@
 namespace Adshares\Adserver\Tests;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Events\ServerEvent;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
@@ -42,6 +43,7 @@ use Adshares\Mock\Client\DummyAdsClient;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyAdsRpcClient;
 use Adshares\Mock\Client\DummyAdUserClient;
+use Adshares\Mock\Client\DummyClassifierExternalClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Adshares\Mock\Client\DummySupplyClient;
@@ -138,6 +140,7 @@ abstract class TestCase extends BaseTestCase
                 return new DummyAdUserClient();
             }
         );
+        $this->app->bind(ClassifierExternalClient::class, fn() => new DummyClassifierExternalClient());
         $this->app->bind(
             ConfigurationRepository::class,
             static function () {
@@ -163,7 +166,7 @@ abstract class TestCase extends BaseTestCase
         $this->app->bind(SupplyClient::class, fn() => new DummySupplyClient());
     }
 
-    protected function login(User $user = null): User
+    protected function login(?User $user = null): User
     {
         if (null === $user) {
             $user = User::factory()->create();
@@ -172,7 +175,7 @@ abstract class TestCase extends BaseTestCase
         return $user;
     }
 
-    protected static function assertServerEventDispatched(ServerEventType $type, array $properties = null): void
+    protected static function assertServerEventDispatched(ServerEventType $type, ?array $properties = null): void
     {
         Event::assertDispatched(
             fn (ServerEvent $event) =>

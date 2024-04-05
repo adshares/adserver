@@ -288,8 +288,8 @@ class Site extends Model
         bool $onlyAcceptedBanners,
         int $status = Site::STATUS_ACTIVE,
         string $primaryLanguage = 'en',
-        array $categoriesByUser = null,
-        array $filtering = null,
+        ?array $categoriesByUser = null,
+        ?array $filtering = null,
         bool $onlyDirectDeals = false,
     ): Site {
         if ($categoriesByUser === null) {

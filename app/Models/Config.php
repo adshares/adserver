@@ -335,7 +335,7 @@ class Config extends Model
         return $config->value;
     }
 
-    public static function fetchDateTime(string $key, DateTime $default = null): DateTime
+    public static function fetchDateTime(string $key, ?DateTime $default = null): DateTime
     {
         $dateString = self::fetchByKeyOrDefault($key);
 

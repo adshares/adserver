@@ -134,7 +134,7 @@ abstract class MySqlQueryBuilder
         return $dateTime->format('Y-m-d H:i:s');
     }
 
-    public static function convertMySqlDateToDateTime(string $mysqlDate, DateTimeZone $dateTimeZone = null): DateTime
+    public static function convertMySqlDateToDateTime(string $mysqlDate, ?DateTimeZone $dateTimeZone = null): DateTime
     {
         return DateTime::createFromFormat('Y-m-d H:i:s', $mysqlDate, $dateTimeZone);
     }

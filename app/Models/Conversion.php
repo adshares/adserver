@@ -128,7 +128,7 @@ class Conversion extends Model
     public static function fetchUnpaidConversions(
         DateTimeInterface $from,
         ?DateTimeInterface $to = null,
-        int $limit = null
+        ?int $limit = null,
     ): EloquentCollection {
         $query = self::whereNotNull('event_value_currency')
             ->where('payment_status', AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED)

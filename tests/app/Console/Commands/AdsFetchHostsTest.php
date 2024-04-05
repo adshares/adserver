@@ -405,7 +405,7 @@ class AdsFetchHostsTest extends ConsoleTestCase
         );
     }
 
-    private static function getInfoData(array $mergeData = [], string $remove = null): array
+    private static function getInfoData(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge(
             [

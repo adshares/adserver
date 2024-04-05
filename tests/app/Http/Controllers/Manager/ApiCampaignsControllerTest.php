@@ -570,7 +570,7 @@ final class ApiCampaignsControllerTest extends TestCase
         return sprintf('%s/%s', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
     }
 
-    private static function buildUriBanner(Campaign $campaign, Banner $banner = null): string
+    private static function buildUriBanner(Campaign $campaign, ?Banner $banner = null): string
     {
         $uri = sprintf('%s/%s/creatives', self::URI_CAMPAIGNS, Uuid::fromString($campaign->uuid)->toString());
         if (null !== $banner) {
