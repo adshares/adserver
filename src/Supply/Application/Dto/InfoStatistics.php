@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,28 +25,18 @@ namespace Adshares\Supply\Application\Dto;
 
 final class InfoStatistics
 {
-    /** @var int */
-    private $users;
-
-    /** @var int */
-    private $campaigns;
-
-    /** @var int */
-    private $sites;
-
     public function __construct(
-        int $users,
-        int $campaigns,
-        int $sites
+        private readonly int $users,
+        private readonly int $campaigns,
+        private readonly int $sites,
+        private readonly int $dsp,
+        private readonly ?int $ssp,
     ) {
-        $this->users = $users;
-        $this->campaigns = $campaigns;
-        $this->sites = $sites;
     }
 
     public static function fromArray(array $data): self
     {
-        return new self($data['users'], $data['campaigns'], $data['sites']);
+        return new self($data['users'], $data['campaigns'], $data['sites'], $data['dsp'] ?? 0, $data['ssp'] ?? null);
     }
 
     public function toArray(): array
@@ -55,6 +45,8 @@ final class InfoStatistics
             'users' => $this->users,
             'campaigns' => $this->campaigns,
             'sites' => $this->sites,
+            'dsp' => $this->dsp,
+            'ssp' => $this->ssp,
         ];
     }
 }

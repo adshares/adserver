@@ -60,7 +60,7 @@ class MockDataNetworkHostsSeeder extends Seeder
 
         $info->setDemandFee(0.01);
         $info->setSupplyFee(0.01);
-        $info->setStatistics(new InfoStatistics(1, 1, 1));
+        $info->setStatistics(new InfoStatistics(1, 1, 1, 1, 1));
 
         NetworkHost::factory()->create([
             'address' => $info->getAdsAddress(),

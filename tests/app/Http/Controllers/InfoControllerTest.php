@@ -60,6 +60,8 @@ class InfoControllerTest extends TestCase
                     'users' => 0,
                     'campaigns' => 0,
                     'sites' => 0,
+                    'dsp' => 0,
+                    'ssp' => 0,
                 ],
                 'mode' => 'operational',
                 'adsTxtDomain' => 'example.com',

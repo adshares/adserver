@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Command deleting users
+- Additional adserver statistics
 ### Changed
 - Single line logs
 ### Fixed

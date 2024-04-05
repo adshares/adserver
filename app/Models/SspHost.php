@@ -63,10 +63,16 @@ class SspHost extends Model
         return $sspHost;
     }
 
-    public static function fetchAccepted(): Collection
+    public static function fetchAccepted(array $whitelist = []): Collection
     {
-        return SspHost::where('accepted', true)
-            ->get();
+        $query = SspHost::where('accepted', true);
+        if (!empty($whitelist)) {
+            $query->whereIn(
+                'ads_address',
+                array_map(fn($adsAddress) => hex2bin(AdsUtils::decodeAddress($adsAddress)), $whitelist),
+            );
+        }
+        return $query->get();
     }
 
     public static function fetchByAdsAddress(string $adsAddress): ?SspHost
