@@ -163,6 +163,25 @@ final class StatisticsGlobalControllerTest extends TestCase
         $response->assertJsonFragment(['expense' => 50_000_000_000]);
     }
 
+    public function testFetchDemandTurnoverFailWhileDateOutOfRange(): void
+    {
+        self::initTurnoverEntries();
+        $uri = str_replace(
+            [
+                '{from}',
+                '{to}',
+            ],
+            [
+                urlencode('2024-04-01T00:00:00+00:00'),
+                urlencode('2024-04-02T23:59:59+00:00'),
+            ],
+            self::DEMAND_TURNOVER_URI,
+        );
+        $response = $this->getJson($uri);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     public function testFetchDemandTurnoverFailWhileInvalidInput(): void
     {
         self::initTurnoverEntries();
@@ -224,6 +243,25 @@ final class StatisticsGlobalControllerTest extends TestCase
         $response->assertJsonFragment(['expense' => 130_000_000]);
         $response->assertJsonFragment(['operatorIncome' => 22_000_000_000]);
         $response->assertJsonFragment(['publishersIncome' => 40_000_000_000]);
+    }
+
+    public function testFetchSupplyTurnoverFailWhileDateOutOfRange(): void
+    {
+        self::initTurnoverEntries();
+        $uri = str_replace(
+            [
+                '{from}',
+                '{to}',
+            ],
+            [
+                urlencode('2024-04-01T00:00:00+00:00'),
+                urlencode('2024-04-02T23:59:59+00:00'),
+            ],
+            self::SUPPLY_TURNOVER_URI,
+        );
+        $response = $this->getJson($uri);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testFetchSupplyTurnoverFailWhileInvalidInput(): void

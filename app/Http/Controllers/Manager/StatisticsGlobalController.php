@@ -93,6 +93,10 @@ class StatisticsGlobalController extends Controller
         if (false === $from || false === $to) {
             throw new UnprocessableEntityHttpException('Invalid date format');
         }
+        $minDate = TurnoverEntry::fetchFirstJoiningFee()?->hour_timestamp;
+        if (null === $minDate || $to < $minDate) {
+            throw new NotFoundHttpException('No entry');
+        }
 
         $turnoverEntries = TurnoverEntry::fetchByHourTimestamp($from, $to);
         $expense = 0;
@@ -128,6 +132,10 @@ class StatisticsGlobalController extends Controller
         $to = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $to);
         if (false === $from || false === $to) {
             throw new UnprocessableEntityHttpException('Invalid date format');
+        }
+        $minDate = TurnoverEntry::fetchFirstJoiningFee()?->hour_timestamp;
+        if (null === $minDate || $to < $minDate) {
+            throw new NotFoundHttpException('No entry');
         }
 
         $turnoverEntries = TurnoverEntry::fetchByHourTimestamp($from, $to);
