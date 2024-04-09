@@ -28,7 +28,9 @@ use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Repository\Demand\MySqlDemandServerStatisticsRepository;
 use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -57,6 +59,7 @@ class StatisticsGlobalController extends Controller
     ];
 
     public function __construct(
+        private readonly ConfigurationRepository $configurationRepository,
         private readonly MySqlDemandServerStatisticsRepository $demandRepository,
         private readonly MySqlSupplyServerStatisticsRepository $supplyRepository,
         private readonly TotalFeeReader $totalFeeReader,
@@ -84,6 +87,40 @@ class StatisticsGlobalController extends Controller
     public function fetchDemandBannersSizes(): array
     {
         return $this->demandRepository->fetchBannersSizes();
+    }
+
+    public function fetchDemandBannersTypes(): array
+    {
+        $data = [];
+
+        $taxonomy = $this->configurationRepository->fetchTaxonomy();
+        foreach ($taxonomy->getMedia() as $medium) {
+            $types = [];
+            foreach ($medium->getFormats() as $format) {
+                $formatType = $format->getType();
+                if (in_array($formatType, [Banner::TYPE_HTML, Banner::TYPE_IMAGE, Banner::TYPE_VIDEO], true)) {
+                    $types[] = 'display';
+                } elseif (Banner::TYPE_DIRECT_LINK === $formatType) {
+                    $scopes = array_keys($format->getScopes());
+                    if (!empty(array_intersect($scopes, ['pop-under', 'pop-up']))) {
+                        $types[] = 'pop';
+                    }
+                    if (!empty(array_diff($scopes, ['pop-under', 'pop-up']))) {
+                        $types[] = 'smart-link';
+                    }
+                } elseif (Banner::TYPE_MODEL === $formatType) {
+                    $types[] = 'model';
+                }
+            }
+            $types = array_values(array_unique($types));
+            $data[] = [
+                'medium' => $medium->getLabel(),
+                'vendor' => $medium->getVendorLabel(),
+                'types' => $types,
+            ];
+        }
+
+        return $data;
     }
 
     public function fetchDemandTurnover(string $from, string $to): array

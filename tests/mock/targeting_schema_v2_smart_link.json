@@ -1,0 +1,117 @@
+{
+  "meta": {
+    "name": "mod-smart-link",
+    "version": "4.2.0"
+  },
+  "parameters": {
+  },
+  "media": [
+    {
+      "name": "web",
+      "label": "Website",
+      "formats": [
+        {
+          "type": "image",
+          "mimes": [
+            "image/png"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle"
+          }
+        },
+        {
+          "type": "html",
+          "mimes": [
+            "text/html"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle"
+          }
+        },
+        {
+          "type": "video",
+          "mimes": [
+            "video/mp4"
+          ],
+          "scopes": {
+            "300x250": "Medium Rectangle"
+          }
+        },
+        {
+          "type": "direct",
+          "mimes": [
+            "text/plain"
+          ],
+          "scopes": {
+            "pop-up": "Pop Up",
+            "pop-under": "Pop Under",
+            "300x250": "Medium Rectangle"
+          }
+        }
+      ],
+      "targeting": {
+        "user": [],
+        "site": [],
+        "device": []
+      }
+    },
+    {
+      "name": "metaverse",
+      "label": "Metaverse",
+      "formats": [
+        {
+          "type": "image",
+          "mimes": [
+            "image/png"
+          ],
+          "scopes": {
+            "300x1050": "Portrait"
+          }
+        },
+        {
+          "type": "video",
+          "mimes": [
+            "video/mp4"
+          ],
+          "scopes": {
+            "300x1050": "Portrait"
+          }
+        }
+      ],
+      "targeting": {
+        "user": [],
+        "site": [],
+        "device": []
+      }
+    }
+  ],
+  "vendors": [
+    {
+      "medium": "metaverse",
+      "name": "cryptovoxels",
+      "label": "Voxels",
+      "formats": [
+        {
+          "path": "$[?(@.type=image)].mimes",
+          "value": [
+            "image/jpeg",
+            "image/png"
+          ]
+        },
+        {
+          "path": "$[]",
+          "value": {
+            "type": "model",
+            "mimes": [
+              "model/voxel"
+            ],
+            "scopes": {
+              "cube": "Cube"
+            }
+          }
+        }
+      ],
+      "targeting": []
+    }
+  ]
+}

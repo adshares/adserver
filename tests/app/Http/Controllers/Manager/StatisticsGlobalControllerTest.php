@@ -28,6 +28,8 @@ use Adshares\Adserver\Models\TurnoverEntry;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Factory\TaxonomyV2Factory;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Supply\Domain\ValueObject\TurnoverEntryType;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +38,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class StatisticsGlobalControllerTest extends TestCase
 {
-    private const DEMAND_BANNERS_URI = '/stats/demand/banners/sizes';
+    private const DEMAND_BANNERS_SIZES_URI = '/stats/demand/banners/sizes';
+    private const DEMAND_BANNERS_TYPES_URI = '/stats/demand/banners/types';
     private const DEMAND_CAMPAIGNS_URI = '/stats/demand/campaigns';
     private const DEMAND_DOMAINS_URI = '/stats/demand/domains';
     private const DEMAND_STATISTICS_URI = '/stats/demand/statistics';
@@ -47,13 +50,20 @@ final class StatisticsGlobalControllerTest extends TestCase
     private const SUPPLY_TURNOVER_URI = '/stats/supply/turnover/{from}/{to}';
     private const SUPPLY_ZONES_URI = '/stats/supply/zones/sizes';
 
-    private const BANNERS_STRUCTURE = [
+    private const BANNERS_SIZES_STRUCTURE = [
         '*' => [
             'size',
             'medium',
             'vendor',
             'impressions',
             'number',
+        ],
+    ];
+    private const BANNERS_TYPES_STRUCTURE = [
+        '*' => [
+            'medium',
+            'vendor',
+            'types',
         ],
     ];
     private const CAMPAIGNS_STRUCTURE = [
@@ -135,11 +145,41 @@ final class StatisticsGlobalControllerTest extends TestCase
     {
         self::insertView();
 
-        $response = $this->getJson(self::DEMAND_BANNERS_URI);
+        $response = $this->getJson(self::DEMAND_BANNERS_SIZES_URI);
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::BANNERS_STRUCTURE);
+        $response->assertJsonStructure(self::BANNERS_SIZES_STRUCTURE);
         $response->assertJsonFragment(['number' => 1]);
+    }
+
+    public function testFetchDemandBannersTypes(): void
+    {
+        $expectedTypes = [
+            'display',
+            'model',
+            'pop',
+            'smart-link',
+        ];
+        $taxonomy = TaxonomyV2Factory::fromJson(
+            file_get_contents(base_path('tests/mock/targeting_schema_v2_smart_link.json'))
+        );
+        $configurationRepositoryMock = self::createMock(ConfigurationRepository::class);
+        $configurationRepositoryMock->method('fetchTaxonomy')->willReturn($taxonomy);
+        $this->app->bind(ConfigurationRepository::class, fn() => $configurationRepositoryMock);
+        self::insertView();
+
+        $response = $this->getJson(self::DEMAND_BANNERS_TYPES_URI);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::BANNERS_TYPES_STRUCTURE);
+        $types = array_reduce(
+            $response->json(),
+            fn(array $carry, array $item) => array_values(array_unique(array_merge($carry, $item['types']))),
+            [],
+        );
+        foreach ($expectedTypes as $expectedType) {
+            self::assertContains($expectedType, $types);
+        }
     }
 
     public function testFetchDemandTurnover(): void

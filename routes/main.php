@@ -42,6 +42,7 @@ Route::get('/stats/demand/turnover/{from}/{to}', [StatisticsGlobalController::cl
 Route::get('/stats/demand/domains', [StatisticsGlobalController::class, 'fetchDemandDomains']);
 Route::get('/stats/demand/campaigns', [StatisticsGlobalController::class, 'fetchDemandCampaigns']);
 Route::get('/stats/demand/banners/sizes', [StatisticsGlobalController::class, 'fetchDemandBannersSizes']);
+Route::get('/stats/demand/banners/types', [StatisticsGlobalController::class, 'fetchDemandBannersTypes']);
 
 Route::get('/stats/supply/statistics', [StatisticsGlobalController::class, 'fetchSupplyStatistics']);
 Route::get('/stats/supply/turnover/{from}/{to}', [StatisticsGlobalController::class, 'fetchSupplyTurnover']);
