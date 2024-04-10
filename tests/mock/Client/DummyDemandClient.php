@@ -237,7 +237,7 @@ class DummyDemandClient implements DemandClient
 
         $info->setDemandFee(0.01);
         $info->setSupplyFee(0.01);
-        $info->setStatistics(new InfoStatistics(7, 1, 0));
+        $info->setStatistics(new InfoStatistics(7, 1, 0, 1, 1));
 
         return $info;
     }
