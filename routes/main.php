@@ -27,6 +27,7 @@ use Adshares\Adserver\Http\Controllers\Manager\InvoicesController;
 use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Controllers\Manager\StatisticsGlobalController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
+use Adshares\Adserver\Http\Middleware\StatisticsCollectorAccess;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [InfoController::class, 'info'])
@@ -37,19 +38,21 @@ Route::get('/info.json', [InfoController::class, 'info'])
 Route::get('/upload-preview/{type}/{uuid}', [CampaignsController::class, 'uploadPreview'])
     ->name('app.campaigns.upload_preview');
 
-Route::get('/stats/demand/statistics', [StatisticsGlobalController::class, 'fetchDemandStatistics']);
-Route::get('/stats/demand/turnover/{from}/{to}', [StatisticsGlobalController::class, 'fetchDemandTurnover']);
-Route::get('/stats/demand/domains', [StatisticsGlobalController::class, 'fetchDemandDomains']);
-Route::get('/stats/demand/campaigns', [StatisticsGlobalController::class, 'fetchDemandCampaigns']);
-Route::get('/stats/demand/banners/sizes', [StatisticsGlobalController::class, 'fetchDemandBannersSizes']);
-Route::get('/stats/demand/banners/types', [StatisticsGlobalController::class, 'fetchDemandBannersTypes']);
+Route::middleware([StatisticsCollectorAccess::class])->group(function () {
+    Route::get('/stats/demand/statistics', [StatisticsGlobalController::class, 'fetchDemandStatistics']);
+    Route::get('/stats/demand/turnover/{from}/{to}', [StatisticsGlobalController::class, 'fetchDemandTurnover']);
+    Route::get('/stats/demand/domains', [StatisticsGlobalController::class, 'fetchDemandDomains']);
+    Route::get('/stats/demand/campaigns', [StatisticsGlobalController::class, 'fetchDemandCampaigns']);
+    Route::get('/stats/demand/banners/sizes', [StatisticsGlobalController::class, 'fetchDemandBannersSizes']);
+    Route::get('/stats/demand/banners/types', [StatisticsGlobalController::class, 'fetchDemandBannersTypes']);
 
-Route::get('/stats/supply/statistics', [StatisticsGlobalController::class, 'fetchSupplyStatistics']);
-Route::get('/stats/supply/turnover/{from}/{to}', [StatisticsGlobalController::class, 'fetchSupplyTurnover']);
-Route::get('/stats/supply/domains', [StatisticsGlobalController::class, 'fetchSupplyDomains']);
-Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fetchSupplyZonesSizes']);
+    Route::get('/stats/supply/statistics', [StatisticsGlobalController::class, 'fetchSupplyStatistics']);
+    Route::get('/stats/supply/turnover/{from}/{to}', [StatisticsGlobalController::class, 'fetchSupplyTurnover']);
+    Route::get('/stats/supply/domains', [StatisticsGlobalController::class, 'fetchSupplyDomains']);
+    Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fetchSupplyZonesSizes']);
 
-Route::get('/stats/server/{date}', [StatisticsGlobalController::class, 'fetchServerStatisticsAsFile']);
+    Route::get('/stats/server/{date}', [StatisticsGlobalController::class, 'fetchServerStatisticsAsFile']);
+});
 
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy'])->name('privacy-url');
 Route::get('/policies/terms.html', [InfoController::class, 'terms'])->name('terms-url');

@@ -21,6 +21,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Http\Middleware\StatisticsCollectorAccess;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
@@ -108,6 +109,12 @@ final class StatisticsGlobalControllerTest extends TestCase
             'number',
         ],
     ];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(StatisticsCollectorAccess::class);
+    }
 
     public function testFetchDemandStatistics(): void
     {
