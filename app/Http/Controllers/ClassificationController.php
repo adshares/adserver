@@ -67,10 +67,7 @@ class ClassificationController extends Controller
         $inputs = $request->all();
         $this->validateClassificationRequest($inputs, $classifier);
 
-        $bannerPublicIds = [];
-        foreach ($inputs as $input) {
-            $bannerPublicIds[] = $input['id'];
-        }
+        $bannerPublicIds = array_map(fn($item) => $item['id'], $inputs);
         $banners = Banner::fetchBannerByPublicIds($bannerPublicIds)->keyBy('uuid');
         $campaignIds = [];
 

@@ -119,7 +119,7 @@ class Token extends Model
         return true;
     }
 
-    public static function check($uuid, int $user_id = null, $tag = null)
+    public static function check($uuid, ?int $user_id = null, $tag = null): array|bool
     {
         try {
             $uuid = hex2bin($uuid);
@@ -170,7 +170,7 @@ class Token extends Model
         return true;
     }
 
-    public static function generate(string $tag, ?User $user, array $payload = null): self
+    public static function generate(string $tag, ?User $user, ?array $payload = null): self
     {
         return self::generateToken($tag, self::VALIDITY_PERIODS[$tag], optional($user)->id, $payload);
     }

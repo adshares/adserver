@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -135,7 +135,6 @@ class Config extends Model
     public const INVOICE_ENABLED = 'invoice-enabled';
     public const INVOICE_NUMBER_FORMAT = 'invoice-number-format';
     public const JOINING_FEE_ALLOCATION_MIN = 'joining-fee-allocation-min';
-    public const JOINING_FEE_ALLOCATION_PERIOD_IN_HOURS = 'joining-fee-allocation-period-in-hours';
     public const JOINING_FEE_ENABLED = 'joining-fee-enabled';
     public const JOINING_FEE_MIN_VALUE = 'joining-fee-min-value';
     public const JOINING_FEE_VALUE = 'joining-fee-value';
@@ -336,7 +335,7 @@ class Config extends Model
         return $config->value;
     }
 
-    public static function fetchDateTime(string $key, DateTime $default = null): DateTime
+    public static function fetchDateTime(string $key, ?DateTime $default = null): DateTime
     {
         $dateString = self::fetchByKeyOrDefault($key);
 

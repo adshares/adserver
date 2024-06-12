@@ -67,7 +67,7 @@ class TaxonomyV2Test extends TestCase
         TaxonomyV2::fromArray(self::data(['media' => [0]]));
     }
 
-    private static function data(array $mergeData = [], string $remove = null): array
+    private static function data(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge(
             [

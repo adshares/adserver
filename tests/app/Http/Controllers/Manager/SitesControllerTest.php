@@ -367,7 +367,7 @@ class SitesControllerTest extends TestCase
         ];
     }
 
-    private static function simpleSiteData(array $mergeData = [], string $remove = null): array
+    private static function simpleSiteData(array $mergeData = [], ?string $remove = null): array
     {
         $siteData = array_merge(
             [
@@ -396,7 +396,7 @@ class SitesControllerTest extends TestCase
         return $siteData;
     }
 
-    private static function filtering(array $mergeData = [], string $remove = null): array
+    private static function filtering(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge(
             [
@@ -417,7 +417,7 @@ class SitesControllerTest extends TestCase
         return $data;
     }
 
-    private static function simpleAdUnit(array $mergeData = [], string $remove = null): array
+    private static function simpleAdUnit(array $mergeData = [], ?string $remove = null): array
     {
         $adUnit = array_merge(
             [

@@ -101,7 +101,7 @@ final class CampaignCreatorTest extends TestCase
         $creator->prepareCampaignFromInput(self::getCampaignData());
     }
 
-    private static function getCampaignData(array $merge = [], string $remove = null): array
+    private static function getCampaignData(array $merge = [], ?string $remove = null): array
     {
         $data = array_merge([
             'status' => 'active',

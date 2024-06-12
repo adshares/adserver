@@ -198,7 +198,7 @@ class TaxonomyV2FactoryTest extends TestCase
         return file_get_contents(base_path('tests/mock/targeting_schema_v2.json'));
     }
 
-    private static function customVendor(array $mergeData = [], string $remove = null): array
+    private static function customVendor(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'medium' => 'metaverse',

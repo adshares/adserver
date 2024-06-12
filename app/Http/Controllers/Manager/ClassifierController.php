@@ -101,7 +101,7 @@ class ClassifierController extends Controller
         )->toArray();
     }
 
-    public function add(Request $request, int $siteId = null): JsonResponse
+    public function add(Request $request, ?int $siteId = null): JsonResponse
     {
         $input = $request->request->all();
         $classification = $input['classification'];

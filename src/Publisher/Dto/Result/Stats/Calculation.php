@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2021 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,38 +25,14 @@ namespace Adshares\Publisher\Dto\Result\Stats;
 
 class Calculation
 {
-    /** @var int */
-    private $clicks;
-
-    /** @var int */
-    private $impressions;
-
-    /** @var float */
-    private $ctr;
-
-    /** @var int */
-    private $averageRpc;
-
-    /** @var int */
-    private $averageRpm;
-
-    /** @var int */
-    private $revenue;
-
     public function __construct(
-        int $clicks,
-        int $impressions,
-        float $ctr,
-        int $averageRpc,
-        int $averageRpm,
-        int $revenue
+        private readonly int $clicks,
+        private readonly int $impressions,
+        private readonly float $ctr,
+        private readonly int $averageRpc,
+        private readonly int $averageRpm,
+        private readonly int $revenue,
     ) {
-        $this->clicks = $clicks;
-        $this->impressions = $impressions;
-        $this->ctr = $ctr;
-        $this->averageRpc = $averageRpc;
-        $this->averageRpm = $averageRpm;
-        $this->revenue = $revenue;
     }
 
     public function toArray(): array

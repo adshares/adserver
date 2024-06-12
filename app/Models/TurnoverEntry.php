@@ -68,6 +68,7 @@ class TurnoverEntry extends Model
     ];
 
     protected $casts = [
+        'hour_timestamp' => 'immutable_datetime',
         'type' => TurnoverEntryType::class,
     ];
 
@@ -231,5 +232,16 @@ class TurnoverEntry extends Model
             ->where('type', TurnoverEntryType::DspJoiningFeeIncome->name)
             ->where('ads_address', hex2bin(AdsUtils::decodeAddress($adsAddress)))
             ->sum('amount');
+    }
+
+    public static function fetchFirstJoiningFee(): ?self
+    {
+        return self::query()
+            ->whereIn(
+                'type',
+                [TurnoverEntryType::DspJoiningFeeIncome->name, TurnoverEntryType::SspJoiningFeeExpense->name],
+            )
+            ->orderBy('hour_timestamp')
+            ->first();
     }
 }

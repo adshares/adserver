@@ -1073,7 +1073,7 @@ SQL;
         array $result,
         ChartResolution $resolution,
     ): array {
-        if (count($result) === 0) {
+        if (empty($result)) {
             return [];
         }
 
@@ -1182,7 +1182,7 @@ SQL;
 
     private static function overwriteStartDate(DateTimeInterface $dateStart, array $result): array
     {
-        if (count($result) > 0) {
+        if (!empty($result)) {
             $result[0][0] = $dateStart->format(DateTimeInterface::ATOM);
         }
 

@@ -56,7 +56,7 @@ class MetaTest extends TestCase
         Meta::fromArray(self::data([$field => 0]));
     }
 
-    private static function data(array $mergeData = [], string $remove = null): array
+    private static function data(array $mergeData = [], ?string $remove = null): array
     {
         $data = array_merge([
             'name' => 'simple',

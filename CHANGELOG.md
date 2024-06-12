@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.0] - 2024-06-11
+### Added
+- Command deleting users
+- Additional adserver statistics
+- Securing adserver statistics
+### Changed
+- Single line logs
+### Fixed
+- Joining fee does not have to be greater than required
+
 ## [2.8.0] - 2024-03-19
 ### Added
 - Boosting events
@@ -980,7 +990,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.8.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.9.0...develop
+[2.9.0]: https://github.com/adshares/adserver/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/adshares/adserver/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/adshares/adserver/compare/v2.6.4...v2.7.0
 [2.6.4]: https://github.com/adshares/adserver/compare/v2.6.3...v2.6.4

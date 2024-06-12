@@ -21,32 +21,27 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Supply\Application\Dto;
+namespace Adshares\Tests\Publisher\Dto\Result\Stats;
 
-final class InfoStatistics
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Publisher\Dto\Result\Stats\Calculation;
+
+class CalculationTest extends TestCase
 {
-    public function __construct(
-        private readonly int $users,
-        private readonly int $campaigns,
-        private readonly int $sites,
-        private readonly int $dsp,
-        private readonly ?int $ssp,
-    ) {
-    }
-
-    public static function fromArray(array $data): self
+    public function testToArray(): void
     {
-        return new self($data['users'], $data['campaigns'], $data['sites'], $data['dsp'] ?? 0, $data['ssp'] ?? null);
-    }
+        $calculation = new Calculation(1, 2, 3.14, 4, 5, 6);
 
-    public function toArray(): array
-    {
-        return [
-            'users' => $this->users,
-            'campaigns' => $this->campaigns,
-            'sites' => $this->sites,
-            'dsp' => $this->dsp,
-            'ssp' => $this->ssp,
-        ];
+        self::assertEquals(
+            [
+                'clicks' => 1,
+                'impressions' => 2,
+                'ctr' => 3.14,
+                'averageRpc' => 4,
+                'averageRpm' => 5,
+                'revenue' => 6,
+            ],
+            $calculation->toArray(),
+        );
     }
 }

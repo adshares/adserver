@@ -77,6 +77,7 @@ class SiteRankUpdateCommand extends BaseCommand
         $this->notificationDateTimeThreshold =
             Config::fetchDateTime(Config::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD);
 
+        $page = 0;
         $processedSiteCount = 0;
         do {
             if ($isOptionAll) {
@@ -88,8 +89,10 @@ class SiteRankUpdateCommand extends BaseCommand
             $this->update($sites);
 
             $lastId = $sites->last()->id ?? 0;
-            $processedSiteCount += $sites->count();
-        } while ($sites->count() === self::CHUNK_SIZE);
+            $siteCount = $sites->count();
+            $this->info(sprintf('Page: %d (+%d)', ++$page, $siteCount));
+            $processedSiteCount += $siteCount;
+        } while ($siteCount === self::CHUNK_SIZE);
 
         $this->sendEmails();
         ServerEvent::dispatch(ServerEventType::SiteRankUpdated, ['processedSiteCount' => $processedSiteCount]);

@@ -31,7 +31,7 @@ final class DateUtils
 {
     public const HOUR = 3600;
 
-    public static function getDateTimeRoundedToNextHour(DateTime $date = null): DateTime
+    public static function getDateTimeRoundedToNextHour(?DateTime $date = null): DateTime
     {
         $roundedDate = (null === $date) ? new DateTime() : clone $date;
         $roundedDate->setTime(1 + (int)$roundedDate->format("H"), 0, 0);
@@ -39,7 +39,7 @@ final class DateUtils
         return $roundedDate;
     }
 
-    public static function getDateTimeRoundedToCurrentHour(DateTime $date = null): DateTime
+    public static function getDateTimeRoundedToCurrentHour(?DateTime $date = null): DateTime
     {
         $roundedDate = (null === $date) ? new DateTime() : clone $date;
         $roundedDate->setTime((int)$roundedDate->format("H"), 0, 0);

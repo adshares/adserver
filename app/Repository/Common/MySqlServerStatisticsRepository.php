@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018-2023 Adshares sp. z o.o.
+ * Copyright (c) 2018-2024 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,6 +24,8 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Repository\Common;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\SspHost;
 use Adshares\Supply\Application\Dto\InfoStatistics;
 
 class MySqlServerStatisticsRepository
@@ -32,7 +34,7 @@ class MySqlServerStatisticsRepository
     {
         $result = DB::select(
             <<<SQL
- SELECT 
+ SELECT
        (SELECT COUNT(*) AS count
         FROM users
         WHERE deleted_at IS NULL
@@ -60,6 +62,18 @@ SQL
 
         $row = $result[0];
 
-        return new InfoStatistics((int)$row->users, (int)$row->campaigns, (int)$row->sites);
+        $importWhitelist = config('app.inventory_import_whitelist');
+        $dsp = NetworkHost::fetchHosts($importWhitelist)->count();
+
+        $exportWhitelist = config('app.inventory_export_whitelist');
+        if (config('app.joining_fee_enabled')) {
+            $ssp = SspHost::fetchAccepted($exportWhitelist)
+                ->map(fn($sspHost) => $sspHost->ads_address)
+                ->count();
+        } else {
+            $ssp = empty($exportWhitelist) ? null : count($exportWhitelist);
+        }
+
+        return new InfoStatistics((int)$row->users, (int)$row->campaigns, (int)$row->sites, $dsp, $ssp);
     }
 }

@@ -73,7 +73,7 @@ class NetworkHostFactory extends Factory
 
         $info->setDemandFee(0.01);
         $info->setSupplyFee(0.01);
-        $info->setStatistics(new InfoStatistics(1, 1, 1));
+        $info->setStatistics(new InfoStatistics(1, 1, 1, 1, 1));
 
         return [
             'address' => $this->faker->randomElement($addresses)->toString(),

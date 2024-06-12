@@ -19,31 +19,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Services\Common\Exception;
 
-namespace Adshares\Advertiser\Dto\Result\Stats;
+use Adshares\Common\Exception\RuntimeException;
 
-class Calculation
+class UserDeletionException extends RuntimeException
 {
-    public function __construct(
-        private readonly int $clicks,
-        private readonly int $impressions,
-        private readonly float $ctr,
-        private readonly int $averageCpc,
-        private readonly int $averageCpm,
-        private readonly int $cost,
-    ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'clicks' => $this->clicks,
-            'impressions' => $this->impressions,
-            'ctr' => $this->ctr,
-            'averageCpc' => $this->averageCpc,
-            'averageCpm' => $this->averageCpm,
-            'cost' => $this->cost,
-        ];
-    }
 }
