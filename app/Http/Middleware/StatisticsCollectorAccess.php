@@ -42,10 +42,10 @@ class StatisticsCollectorAccess
      *
      * @param Request $request
      * @param Closure(Request): (Response|RedirectResponse) $next
-     * @return Response|RedirectResponse
+     * @return mixed
      * @throws AuthenticationException
      */
-    public function handle(Request $request, Closure $next): Response|RedirectResponse
+    public function handle(Request $request, Closure $next): mixed
     {
         $account = $this->adsAuthenticator->verifyRequest($request);
         if ($account !== self::STATISTICS_COLLECTOR_ADS_ADDRESS) {
