@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.1] - 2024-06-13
+### Fixed
+- Statistics access middleware passes while using chain of middlewares (JSON response)
+
 ## [2.9.0] - 2024-06-11
 ### Added
 - Command deleting users
@@ -990,7 +994,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v2.9.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v2.9.1...develop
+[2.9.1]: https://github.com/adshares/adserver/compare/v2.9.0...v2.9.1
 [2.9.0]: https://github.com/adshares/adserver/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/adshares/adserver/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/adshares/adserver/compare/v2.6.4...v2.7.0
